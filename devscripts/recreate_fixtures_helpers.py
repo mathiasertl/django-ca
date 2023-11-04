@@ -20,7 +20,6 @@ import importlib
 import json
 import os
 import shutil
-import subprocess
 import tempfile
 from datetime import datetime, timezone as tz
 from pathlib import Path
@@ -28,8 +27,9 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 from unittest.mock import patch
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import (
     BestAvailableEncryption,
     Encoding,
@@ -46,22 +46,17 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
-from devscripts import config, utils
+from devscripts import config
 from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import bytes_to_hex, ca_storage, format_name, serialize_name, x509_name
+from django_ca.utils import bytes_to_hex, ca_storage, parse_serialized_name_attributes, serialize_name
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-def genpkey(*args: str) -> "subprocess.CompletedProcess[Any]":
-    """Convenience wrapper for the openssl genpkey program."""
-    return utils.run(["openssl", "genpkey"] + list(args), stderr=subprocess.DEVNULL)
 
 
 class CertificateEncoder(json.JSONEncoder):
@@ -77,58 +72,46 @@ class CertificateEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def _create_key(path: Path, key_type: ParsableKeyType) -> None:
+def _create_key(path: Path, key_type: ParsableKeyType) -> CertificateIssuerPrivateKeyTypes:
     if key_type == "RSA":
-        utils.run(["openssl", "genrsa", "-out", str(path), str(DEFAULT_KEY_SIZE)], stderr=subprocess.DEVNULL)
+        key: CertificateIssuerPrivateKeyTypes = rsa.generate_private_key(
+            public_exponent=65537, key_size=DEFAULT_KEY_SIZE
+        )
     elif key_type == "DSA":
-        genpkey(
-            "-genparam",
-            "-algorithm",
-            "DSA",
-            "-out",
-            str(path.with_suffix(".param")),
-            "-pkeyopt",
-            "dsa_paramgen_bits:2048",
-            "-pkeyopt",
-            "dsa_paramgen_md:sha256",
-        )
-        genpkey("-paramfile", str(path.with_suffix(".param")), "-out", str(path))
+        key = dsa.generate_private_key(2048)
     elif key_type == "EC":
-        utils.run(
-            ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-out", str(path)],
-            stderr=subprocess.DEVNULL,
-        )
+        key = ec.generate_private_key(ec.SECP256R1())
     elif key_type == "Ed25519":
-        genpkey("-algorithm", "ED25519", "-out", str(path))
+        key = ed25519.Ed25519PrivateKey.generate()
     elif key_type == "Ed448":
-        genpkey("-algorithm", "ED448", "-out", str(path))
+        key = ed448.Ed448PrivateKey.generate()
     else:
         raise ValueError(f"Unknown key type: {key_type}")
 
+    encoded = key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    with open(path, "wb") as f:
+        f.write(encoded)
+    return key
+
 
 def _create_csr(
-    key_path: Path, path: Path, subject: str = "/CN=ignored.example.com", key_type: ParsableKeyType = "RSA"
+    key_path: Path, path: Path, subject: x509.Name, key_type: ParsableKeyType = "RSA"
 ) -> x509.CertificateSigningRequest:
-    _create_key(key_path, key_type)
-    utils.run(
-        [
-            "openssl",
-            "req",
-            "-new",
-            "-key",
-            str(key_path),
-            "-out",
-            str(path),
-            "-utf8",
-            "-batch",
-            "-subj",
-            subject,
-        ]
-    )
+    key = _create_key(key_path, key_type)
+    csr_builder = x509.CertificateSigningRequestBuilder().subject_name(subject)
 
-    with open(path, encoding="utf-8") as stream:
-        csr = stream.read()
-    return x509.load_pem_x509_csr(csr.encode("utf-8"))
+    if isinstance(key, (ed448.Ed448PrivateKey, ed25519.Ed25519PrivateKey)):
+        csr = csr_builder.sign(key, algorithm=None)
+    else:
+        csr = csr_builder.sign(key, algorithm=hashes.SHA256())
+
+    with open(path, "wb") as stream:
+        stream.write(csr.public_bytes(serialization.Encoding.PEM))
+    return csr
 
 
 def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict[str, Any]) -> None:
@@ -219,7 +202,6 @@ def _copy_cert(
 
     data["crl"] = cert.ca.crl_url
     data["subject"] = serialize_name(cert.subject)
-    data["subject_str"] = format_name(cert.subject)
     data["parsed_cert"] = cert
 
     _update_cert_data(cert, data)
@@ -243,7 +225,6 @@ def _update_contrib(
         "valid_until": parsed.not_valid_after.strftime(TIMEFORMAT),
         "serial": cert.serial,
         "subject": serialize_name(cert.subject),
-        "subject_str": format_name(cert.subject),
         "md5": cert.get_fingerprint(hashes.MD5()),
         "sha1": cert.get_fingerprint(hashes.SHA1()),
         "sha256": cert.get_fingerprint(hashes.SHA256()),
@@ -342,7 +323,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
             ca = CertificateAuthority.objects.init(
                 name=data[name]["name"],
                 password=data[name].get("password"),
-                subject=x509_name(data[name]["subject"]),
+                subject=x509.Name(parse_serialized_name_attributes((data[name]["subject"]))),
                 expires=datetime.now(tz=tz.utc) + data[name]["expires"],
                 key_type=data[name]["key_type"],
                 key_size=data[name].get("key_size"),
@@ -373,7 +354,7 @@ def create_certs(
         name = f"{ca.name}-cert"
         key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
         csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
-        csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+        csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
         csr = _create_csr(
             key_path,
             csr_path,
@@ -405,7 +386,7 @@ def create_certs(
 
         key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
         csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
-        csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+        csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
         csr = _create_csr(
             key_path,
             csr_path,
@@ -433,6 +414,7 @@ def create_certs(
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
+# pylint: disable-next=too-many-statements
 def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> None:
     """Create special-interest certificates (edge cases etc.)."""
     # create a cert with absolutely no extensions
@@ -440,7 +422,7 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
-    csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     freeze_now = now
@@ -449,7 +431,7 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
     with freeze_time(freeze_now):
         no_ext_now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         pwd = data[ca.name].get("password")
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])])
+        subject = x509.Name(parse_serialized_name_attributes(data[name]["subject"]))
 
         builder = x509.CertificateBuilder()
         builder = builder.not_valid_before(no_ext_now)
@@ -481,7 +463,7 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
-    csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     with freeze_time(now + data[name]["delta"]):
@@ -490,7 +472,7 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=x509_name(data[name]["subject"]),
+            subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
@@ -505,7 +487,7 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
     ca.crl_url = ""
     key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
-    csr_subject = format_name(x509_name(data[name]["csr_subject"].items()))
+    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     with freeze_time(now + data[name]["delta"]):
@@ -514,11 +496,43 @@ def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtu
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=x509_name(data[name]["subject"]),
+            subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
             expires=data[name]["expires"],
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
         )
+    data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
+    _copy_cert(dest, cert, data[name], key_path, csr_path)
+
+    # Create a certificate with no subjects
+    name = "empty-subject"
+    ca = CertificateAuthority.objects.get(name=data[name]["ca"])
+    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+    csr = _create_csr(key_path, csr_path, subject=csr_subject)
+
+    freeze_now = now
+    if delay:
+        freeze_now += data[name]["delta"]
+    with freeze_time(freeze_now):
+        no_ext_now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        pwd = data[ca.name].get("password")
+
+        builder = x509.CertificateBuilder()
+        builder = builder.not_valid_before(no_ext_now)
+        builder = builder.not_valid_after(no_ext_now + data[name]["expires"])
+        builder = builder.serial_number(x509.random_serial_number())
+        builder = builder.subject_name(x509.Name([]))
+        builder = builder.issuer_name(x509.Name([]))
+        builder = builder.public_key(csr.public_key())
+        for ext in data[name]["extensions"].values():
+            builder = builder.add_extension(ext.value, ext.critical)
+
+        x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256())
+        cert = Certificate(ca=ca)
+        cert.update_certificate(x509_cert)
+
     data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 

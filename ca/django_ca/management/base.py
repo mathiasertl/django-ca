@@ -544,6 +544,7 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             self.stdout.write("* Status: Valid")
 
     def output_name(self, name: x509.Name, indent: str = "  ") -> None:
+        """Output a name as a list."""
         for key, value in name_for_display(name):
             self.stdout.write(f"{indent}* {key}: {value}")
 

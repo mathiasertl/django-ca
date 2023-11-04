@@ -17,6 +17,7 @@ import binascii
 import re
 import shlex
 import typing
+import warnings
 from datetime import datetime, timedelta, timezone as tz
 from ipaddress import ip_address, ip_network
 from typing import Iterator, List, Optional, Tuple, Type, Union
@@ -30,6 +31,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
@@ -38,6 +40,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.constants import NAME_OID_DISPLAY_NAMES
+from django_ca.deprecation import RemovedInDjangoCA129Warning
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -131,13 +134,13 @@ def encode_dns(name: str) -> str:
 def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
     """Convert a x509 name or relative name into the canonical form for distinguished names.
 
-    This function does not take care of sorting the subject in any meaningful order.
+    .. deprecated:: 1.27.0
 
-    Examples::
-
-        >>> format_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
-        '/CN=example.com'
+       This function is deprecated in 1.27.0 and will be removed in 1.29.0.
     """
+    warnings.warn(
+        "This function is deprecated and will be removed in 1.29.0.", category=RemovedInDjangoCA129Warning
+    )
 
     def _format_value(val: str) -> str:
         # If val contains no unsafe chars, return it unchanged
@@ -156,7 +159,9 @@ def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> st
 def format_name_rfc4514(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
     """Format the given (relative distinguished) name as RFC4514 compatible string.
 
-    This adds OIDs from :py:attr:`~django_ca.constants.NAME_OID_NAMES` to the output string.
+    This function deviates from RFC 4514 by displaying the name attributes as they appear in the certificate,
+    and *not* in reverse order (which is not used anywhere else). It also adds OID name mappings from
+    :py:attr:`~django_ca.constants.NAME_OID_NAMES` to the output string.
 
     >>> format_name_rfc4514(
     ...     x509.Name(
@@ -167,13 +172,15 @@ def format_name_rfc4514(subject: Union[x509.Name, x509.RelativeDistinguishedName
     ...         ]
     ...     )
     ... )
-    'emailAddress=user@example.com,CN=example.com,C=AT'
+    'C=AT,CN=example.com,emailAddress=user@example.com'
 
     """
+    # Get reverse-order subject
+    subject = subject.__class__(reversed(list(subject)))
     return subject.rfc4514_string(attr_name_overrides=constants.RFC4514_NAME_OVERRIDES)
 
 
-def serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
+def _serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
     if isinstance(name_attribute.value, bytes):
         return bytes_to_hex(name_attribute.value)
     return name_attribute.value
@@ -197,7 +204,7 @@ def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> Se
         ... ]))
         [{'oid': '2.5.4.6', 'value': 'AT'}, {'oid': '2.5.4.3', 'value': 'example.com'}]
     """
-    return [{"oid": attr.oid.dotted_string, "value": serialize_name_attribute_value(attr)} for attr in name]
+    return [{"oid": attr.oid.dotted_string, "value": _serialize_name_attribute_value(attr)} for attr in name]
 
 
 def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> List[Tuple[str, str]]:
@@ -213,7 +220,7 @@ def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> 
     [('commonName (CN)', 'example.com')]
     """
     return [
-        (NAME_OID_DISPLAY_NAMES.get(attr.oid, attr.oid.dotted_string), serialize_name_attribute_value(attr))
+        (NAME_OID_DISPLAY_NAMES.get(attr.oid, attr.oid.dotted_string), _serialize_name_attribute_value(attr))
         for attr in name
     ]
 
@@ -236,14 +243,13 @@ def parse_serialized_name_attributes(name: SerializedName) -> List[x509.NameAttr
     attrs: List[x509.NameAttribute] = []
     for attr_dict in name:
         oid = x509.ObjectIdentifier(attr_dict["oid"])
-        raw_value = attr_dict["value"]
+        value = attr_dict["value"]
 
         if oid == NameOID.X500_UNIQUE_IDENTIFIER:
-            value: Union[str, bytes] = hex_to_bytes(raw_value)
+            attrs.append(x509.NameAttribute(oid=oid, value=hex_to_bytes(value), _type=_ASN1Type.BitString))
         else:
-            value = raw_value
+            attrs.append(x509.NameAttribute(oid=oid, value=value))
 
-        attrs.append(x509.NameAttribute(oid=oid, value=value))
     return attrs
 
 
@@ -257,7 +263,7 @@ def format_general_name(name: x509.GeneralName) -> str:
     'IP:127.0.0.1'
     """
     if isinstance(name, x509.DirectoryName):
-        value = format_name(name.value)
+        value = format_name_rfc4514(name.value)
     else:
         value = name.value
     return f"{SAN_NAME_MAPPINGS[type(name)]}:{value}"

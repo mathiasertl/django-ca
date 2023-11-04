@@ -21,7 +21,7 @@ import typing
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Iterable, Iterator, Tuple, Type
+from typing import Iterable, Iterator, List, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -38,8 +38,10 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings, constants, utils
+from django_ca.deprecation import RemovedInDjangoCA129Warning
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.utils import dns, rdn, uri
+from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
     format_general_name,
@@ -55,6 +57,7 @@ from django_ca.utils import (
     parse_hash_algorithm,
     parse_key_curve,
     parse_name_x509,
+    parse_serialized_name_attributes,
     read_file,
     serialize_name,
     split_str,
@@ -86,6 +89,33 @@ def test_read_file() -> None:
 
     assert read_file(name) == data
     assert read_file(path) == data
+
+
+@pytest.mark.parametrize(
+    "attributes,expected",
+    [
+        ([(NameOID.COMMON_NAME, "example.com")], [x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
+        (
+            [(NameOID.COUNTRY_NAME, "AT"), (NameOID.COMMON_NAME, "example.com")],
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
+            ],
+        ),
+        (
+            [(NameOID.X500_UNIQUE_IDENTIFIER, "65:78:61:6D:70:6C:65")],
+            [x509.NameAttribute(NameOID.X500_UNIQUE_IDENTIFIER, b"example", _type=_ASN1Type.BitString)],
+        ),
+    ],
+)
+def test_parse_serialized_name_attributes(
+    attributes: List[Tuple[x509.ObjectIdentifier, str]], expected: List[x509.NameAttribute]
+) -> None:
+    """Test :py:func:`django_ca.utils.parse_serialized_name_attributes`."""
+    serialized: List[SerializedObjectIdentifier] = [
+        {"oid": attr[0].dotted_string, "value": attr[1]} for attr in attributes
+    ]
+    assert parse_serialized_name_attributes(serialized) == expected
 
 
 class ParseNameX509TestCase(TestCase):
@@ -278,11 +308,6 @@ class ParseNameX509TestCase(TestCase):
 
 class RelativeNameTestCase(TestCase):
     """Some tests related to relative names."""
-
-    def test_format(self) -> None:
-        """Test formatting..."""
-        val = rdn([(NameOID.COMMON_NAME, "example.com")])
-        self.assertEqual(format_name(val), "/CN=example.com")
 
     def test_parse(self) -> None:
         """Test parsing..."""
@@ -623,7 +648,7 @@ class FormatGeneralNameTest(TestCase):
                 ]
             )
         )
-        self.assertEqual(format_general_name(name), "dirname:/C=AT/CN=example.com")
+        self.assertEqual(format_general_name(name), "dirname:C=AT,CN=example.com")
 
 
 class ParseHashAlgorithm(TestCase):
@@ -656,7 +681,10 @@ class FormatNameTestCase(TestCase):
     def assertFormatParse(self, value: str) -> None:  # pylint: disable=invalid-name
         """Test formatting and then parsing again the given value as common name."""
         name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, value)])
-        self.assertEqual(name, x509_name(format_name(name)))
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
+        ):
+            self.assertEqual(name, x509_name(format_name(name)))
 
         # Same, but with a different value in front
         name = x509.Name(
@@ -665,7 +693,10 @@ class FormatNameTestCase(TestCase):
                 x509.NameAttribute(NameOID.COMMON_NAME, value),
             ]
         )
-        self.assertEqual(name, x509_name(format_name(name)))
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
+        ):
+            self.assertEqual(name, x509_name(format_name(name)))
 
         # Same, but with a different value at the end
         name = x509.Name(
@@ -674,7 +705,10 @@ class FormatNameTestCase(TestCase):
                 x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
             ]
         )
-        self.assertEqual(name, x509_name(format_name(name)))
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
+        ):
+            self.assertEqual(name, x509_name(format_name(name)))
 
         # Same, but with values both before and after the value in question
         name = x509.Name(
@@ -684,7 +718,10 @@ class FormatNameTestCase(TestCase):
                 x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
             ]
         )
-        self.assertEqual(name, x509_name(format_name(name)))
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
+        ):
+            self.assertEqual(name, x509_name(format_name(name)))
 
     def test_x509(self) -> None:
         """Test passing a x509.Name."""
@@ -700,7 +737,10 @@ class FormatNameTestCase(TestCase):
                 x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
             ]
         )
-        self.assertEqual(format_name(name), subject)
+        with self.assertWarnsRegex(
+            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
+        ):
+            self.assertEqual(format_name(name), subject)
 
     def test_escaping(self) -> None:
         """Test various edge cases when quoting/unquoting strings."""

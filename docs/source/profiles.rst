@@ -84,7 +84,6 @@ using this profile. A simple profile might look like this:
             extended_key_usage:
               value:
                 - clientAuth
-              
 
 After defining a profile, it can be immediately used with the Python API, the Admin web interface (WSGI
 servers typically need to reload the code to see the new profile) or the command line:

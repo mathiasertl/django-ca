@@ -28,6 +28,14 @@ from devscripts import config
 from devscripts.commands import DevCommand
 from devscripts.out import warn
 
+
+def format_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
+    """Wrapper around format_name_rfc4514 avoiding a top-level import."""
+    from django_ca.utils import format_name_rfc4514  # pylint: disable=import-outside-toplevel
+
+    return format_name_rfc4514(name)
+
+
 HASH_NAMES = {
     hashes.SHA1: "SHA-1",
     hashes.SHA256: "SHA-256",
@@ -264,7 +272,7 @@ def update_cert_data(prefix: str, dirname: str, cert_data: Dict[str, CertInfo], 
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
     from django_ca import constants
-    from django_ca.utils import bytes_to_hex, format_general_name, format_name
+    from django_ca.utils import bytes_to_hex, format_general_name
 
     # pylint: enable=import-outside-toplevel
 
@@ -478,7 +486,7 @@ def update_cert_data(prefix: str, dirname: str, cert_data: Dict[str, CertInfo], 
 def update_crl_data() -> None:  # pylint: disable=too-many-locals
     """Update CRL data."""
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
-    from django_ca.utils import bytes_to_hex, format_general_name, format_name
+    from django_ca.utils import bytes_to_hex, format_general_name
 
     # pylint: enable=import-outside-toplevel
 

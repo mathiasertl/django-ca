@@ -6,17 +6,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -28,27 +28,48 @@
             "ca": "child",
             "cat": "generated",
             "cn": "all-extensions.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "all-extensions.csr",
-            "csr_subject": {
-                "C": "AT",
-                "CN": "csr.all-extensions.example.com",
-                "L": "csr.Vienna",
-                "O": "csr.Example",
-                "OU": "csr.Example OU",
-                "ST": "csr.Vienna",
-                "emailAddress": "csr.user@example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "csr.Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "csr.Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "csr.Example"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "csr.Example OU"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.all-extensions.example.com"
+                },
+                {
+                    "oid": "1.2.840.113549.1.9.1",
+                    "value": "csr.user@example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -90,7 +111,7 @@
                     "key_agreement"
                 ]
             },
-            "md5": "17:26:92:4E:D2:AF:2C:16:C6:DB:76:8F:95:FF:B3:0E",
+            "md5": "EB:31:61:35:CA:CF:1B:E2:42:09:8F:BE:63:E5:CB:2D",
             "name": "all-extensions",
             "name_constraints": {
                 "critical": true,
@@ -120,39 +141,39 @@
             },
             "pub_der_filename": "all-extensions.pub.der",
             "pub_filename": "all-extensions.pub",
-            "serial": "54ADC1413BDB1DA9783F0444B8012C67A78670B7",
-            "sha1": "78:E6:A4:10:A9:98:61:A2:0C:85:2E:BF:95:A1:BF:D6:C1:99:F1:35",
-            "sha256": "46:8B:91:62:39:47:69:1A:9A:61:94:49:16:B9:54:2A:68:82:18:D4:77:9B:FB:46:DF:C8:63:33:DF:2A:80:DF",
-            "sha512": "FD:AB:1F:42:11:AF:35:C9:65:66:57:F9:46:C1:F3:68:88:EE:98:2F:5A:FB:97:6D:CE:81:E1:39:4D:02:E3:BF:7A:67:C1:53:B5:63:B2:37:E2:88:EC:24:03:4A:52:F0:CD:B9:A8:FD:92:4E:48:7C:C5:D3:3A:2F:A4:D9:39:77",
+            "serial": "677CB1C65CF077B5F35A83BA31A06A18DEC4B75E",
+            "sha1": "A2:5E:D3:AB:A0:4B:D5:70:78:C9:D2:9F:19:4B:4D:09:EF:3D:02:00",
+            "sha256": "6F:4F:9B:CC:A2:65:B1:8D:29:C1:07:97:DA:6A:7D:78:70:B8:17:8C:47:89:84:89:ED:FF:81:EF:A9:C2:A9:EB",
+            "sha512": "88:2E:02:04:C7:FA:BD:86:21:07:A8:8C:AF:6C:C4:3D:3B:3A:97:0E:19:95:A8:A6:BB:80:88:E9:71:45:A2:EA:25:EB:54:15:57:AD:AA:7A:07:69:F5:F0:BC:53:E0:33:CD:F8:71:5A:05:B0:1F:DF:A5:4F:7B:F0:99:B4:08:17",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Example"
-                ],
-                [
-                    "OU",
-                    "Example OU"
-                ],
-                [
-                    "CN",
-                    "all-extensions.example.com"
-                ],
-                [
-                    "emailAddress",
-                    "user@example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Example"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Example OU"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "all-extensions.example.com"
+                },
+                {
+                    "oid": "1.2.840.113549.1.9.1",
+                    "value": "user@example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -164,9 +185,8 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "A9:68:81:C6:D4:21:5F:E5:58:6F:56:87:4D:66:1E:19:90:35:24:14"
+                "value": "88:8C:7E:C8:CC:83:F0:81:5E:F6:9D:15:09:BB:AD:D3:1F:41:D8:DB"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Example/OU=Example OU/CN=all-extensions.example.com/emailAddress=user@example.com",
             "tls_feature": {
                 "critical": true,
                 "value": [
@@ -175,8 +195,8 @@
                 ]
             },
             "type": "cert",
-            "valid_from": "2023-03-04 19:00:00",
-            "valid_until": "2023-09-03 19:00:00"
+            "valid_from": "2023-10-31 14:00:00",
+            "valid_until": "2024-05-01 14:00:00"
         },
         "alt-extensions": {
             "algorithm": "sha256",
@@ -184,10 +204,10 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
@@ -228,20 +248,46 @@
                             "ca_compromise",
                             "key_compromise"
                         ],
-                        "relative_name": "/CN=rdn.ca.example.com"
+                        "relative_name": [
+                            {
+                                "oid": "2.5.4.3",
+                                "value": "rdn.ca.example.com"
+                            }
+                        ]
                     }
                 ]
             },
             "csr_filename": "alt-extensions.csr",
-            "csr_subject": {
-                "C": "AT",
-                "CN": "csr.alt-extensions.example.com",
-                "L": "csr.Vienna",
-                "O": "csr.Example",
-                "OU": "csr.Example OU",
-                "ST": "csr.Vienna",
-                "emailAddress": "csr.user@example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "csr.Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "csr.Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "csr.Example"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "csr.Example OU"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.alt-extensions.example.com"
+                },
+                {
+                    "oid": "1.2.840.113549.1.9.1",
+                    "value": "csr.user@example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": true,
                 "value": [
@@ -270,7 +316,7 @@
                     "key_agreement"
                 ]
             },
-            "md5": "03:C8:7D:92:24:0C:91:4F:CC:72:B8:3A:44:CE:4E:BC",
+            "md5": "13:C3:2F:28:0F:61:BE:2D:D3:80:F6:C7:EE:78:43:45",
             "name": "alt-extensions",
             "name_constraints": {
                 "critical": true,
@@ -286,39 +332,39 @@
             },
             "pub_der_filename": "alt-extensions.pub.der",
             "pub_filename": "alt-extensions.pub",
-            "serial": "59D4525157243769AAA59FE14553D07568C6B420",
-            "sha1": "14:C6:F6:FC:53:97:98:30:64:FB:65:FF:54:FF:9F:F0:D6:80:B6:87",
-            "sha256": "65:08:39:CB:9A:E0:23:4A:E6:9C:C1:D6:DA:51:D4:C0:0D:38:B6:81:34:20:F8:48:56:13:8A:08:2B:B0:73:51",
-            "sha512": "4E:15:B4:AC:BE:75:8A:AB:3B:6D:D1:73:AE:0A:06:A3:3E:82:06:51:F9:F4:2A:66:E5:5A:C8:44:41:EE:17:05:6E:5A:86:44:77:BC:D6:A2:17:26:86:AD:3C:A4:3F:60:19:91:28:EC:77:23:68:23:E9:20:CB:86:2E:C4:C2:C5",
+            "serial": "24436AC44B037EE9E177F4BC4B6649E9001AE0F6",
+            "sha1": "2C:54:C0:83:57:69:7E:B8:4B:73:2E:B4:02:33:89:57:C1:33:48:0A",
+            "sha256": "11:46:5C:C1:1B:6E:EE:E0:F3:B7:14:70:EB:10:24:A0:EB:64:27:6B:45:F7:9C:A9:8B:51:5F:3F:17:3D:D7:65",
+            "sha512": "F0:9F:57:85:2E:16:94:50:5E:3E:DF:27:5E:61:B7:B7:31:C0:A5:C5:EA:A3:88:FA:65:F7:EA:B1:10:94:B4:43:99:28:39:68:CE:BD:BD:13:C4:EF:CD:91:A6:C9:EC:07:22:C1:91:D6:BD:63:AE:90:7D:F9:45:AF:DA:E2:40:76",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Example"
-                ],
-                [
-                    "OU",
-                    "Example OU"
-                ],
-                [
-                    "CN",
-                    "alt-extensions.example.com"
-                ],
-                [
-                    "emailAddress",
-                    "user@example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Example"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Example OU"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "alt-extensions.example.com"
+                },
+                {
+                    "oid": "1.2.840.113549.1.9.1",
+                    "value": "user@example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": true,
@@ -333,9 +379,8 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "18:4A:73:57:6C:76:DC:BD:59:A6:DB:E5:04:8A:82:97:61:41:0B:54"
+                "value": "BD:5D:1F:A4:C8:86:8F:B7:F4:BE:0F:5C:F1:62:16:08:CE:6D:76:B5"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Example/OU=Example OU/CN=alt-extensions.example.com/emailAddress=user@example.com",
             "tls_feature": {
                 "critical": false,
                 "value": [
@@ -343,8 +388,8 @@
                 ]
             },
             "type": "cert",
-            "valid_from": "2023-03-04 19:00:00",
-            "valid_until": "2023-09-03 19:00:00"
+            "valid_from": "2023-10-31 14:00:00",
+            "valid_until": "2024-05-01 14:00:00"
         },
         "child": {
             "algorithm": "sha256",
@@ -352,17 +397,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/ca/"
+                        "URI:http://localhost:8000/django_ca/ocsp/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/ca/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "1D:A4:C5:32:40:CE:E3:CA:54:1A:D3:9B:6B:DE:82:C8:D0:64:6D:48"
+                    "key_identifier": "A2:04:74:08:64:0D:E8:59:73:41:13:72:21:EE:E1:37:E7:AA:85:09"
                 }
             },
             "basic_constraints": {
@@ -372,25 +417,28 @@
                     "path_length": 0
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "cat": "generated",
-            "crl": "http://localhost:8000/django_ca/crl/ca/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/",
+            "crl": "http://localhost:8000/django_ca/crl/ca/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/ca/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/"
+                            "URI:http://localhost:8000/django_ca/crl/ca/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/"
                         ]
                     }
                 ]
             },
-            "crl_url": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl_url": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.child.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.child.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der",
             "key_der_filename": "child.key.der",
             "key_filename": "child.key",
             "key_size": 2048,
@@ -403,31 +451,30 @@
                 ]
             },
             "max_path_length": 0,
-            "md5": "8E:20:47:BF:40:8B:7D:0F:B8:20:8D:84:91:BA:3E:BE",
+            "md5": "EB:7E:5F:FE:52:30:0F:B7:B3:19:F7:7F:72:3F:29:E3",
             "name": "child",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/",
             "parent": "root",
             "path_length": 0,
             "pub_der_filename": "child.pub.der",
             "pub_filename": "child.pub",
-            "serial": "6B1F876325B19FEDC7D28CC1E1B422EB45092AA8",
-            "sha1": "FD:9C:18:C9:B8:97:19:AD:D7:68:4A:7D:BC:32:19:B9:6A:1A:63:94",
-            "sha256": "DA:38:E2:AC:AD:0B:FC:FE:72:A9:34:45:17:39:61:DA:BA:35:CF:6D:5C:B9:8C:28:16:E8:5D:33:61:87:E3:E8",
-            "sha512": "5D:FB:94:82:73:0B:66:AB:98:16:32:02:F4:3F:3D:AE:C8:7A:71:55:C9:5B:D2:F9:95:8F:60:C4:BF:47:F4:26:7D:B8:FD:33:5C:CF:B0:6A:94:33:74:36:D1:0C:64:65:93:4F:6F:A8:D0:E6:20:C4:BD:21:BC:2F:0E:BD:BC:B5",
+            "serial": "7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C",
+            "sha1": "20:6C:CE:66:92:54:37:00:69:DE:73:22:B9:DC:AC:C1:63:33:E1:1A",
+            "sha256": "58:52:10:A9:48:E9:53:96:26:A7:7C:07:77:45:A4:DC:03:3A:E8:6A:80:F5:22:B1:26:B0:FB:01:1F:D8:1A:05",
+            "sha512": "8F:EB:B6:5F:DA:7D:E6:85:95:B8:50:45:E4:42:01:54:17:97:93:4A:6A:7E:46:F7:0B:35:46:C0:C7:29:54:D6:18:20:8A:32:8D:CD:98:C7:1B:A9:04:F6:6B:34:7F:AA:1B:F6:F7:6E:4C:64:36:20:44:75:52:47:03:AB:5D:03",
             "subject": [
-                [
-                    "CN",
-                    "child.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "child.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                "value": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
             },
-            "subject_str": "/CN=child.example.com",
             "type": "ca",
-            "valid_from": "2023-02-15 19:00:00",
-            "valid_until": "2024-02-16 19:00:00"
+            "valid_from": "2023-10-14 14:00:00",
+            "valid_until": "2024-10-14 14:00:00"
         },
         "child-cert": {
             "algorithm": "sha256",
@@ -435,17 +482,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -457,21 +504,24 @@
             "ca": "child",
             "cat": "generated",
             "cn": "child-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "child-cert.csr",
-            "csr_subject": {
-                "CN": "csr.child-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.child-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -491,39 +541,39 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "40:68:4C:38:0A:E7:A6:88:F5:DC:3B:FF:1A:47:23:31",
+            "md5": "6A:6A:97:E5:24:3C:09:D6:BA:9C:17:F6:03:AB:81:43",
             "name": "child-cert",
             "pub_der_filename": "child-cert.pub.der",
             "pub_filename": "child-cert.pub",
-            "serial": "1B53C35810A7A3B8C9DDCA9D919755C589825086",
-            "sha1": "C8:47:7F:E9:1F:B5:0C:EB:76:61:F3:A0:35:CA:86:78:AB:F1:20:F8",
-            "sha256": "1A:BD:30:E2:7C:94:D8:DA:F5:E8:8E:5A:BC:7F:F4:2B:8B:D4:31:80:31:1B:83:E0:38:13:3E:24:10:E2:3F:1C",
-            "sha512": "C0:BE:E6:78:C0:7A:18:A0:B1:9B:44:52:15:0B:0E:F3:B7:7E:6D:78:5D:A7:2B:E8:BB:F8:F9:0E:78:E1:D6:07:53:35:80:8E:47:1F:D3:60:82:DF:1F:AA:F4:F4:44:71:13:A8:4A:AE:13:9C:9B:2E:8D:B4:D9:54:F0:18:10:C5",
+            "serial": "56D9383232911159C309A7BC730811EA593B617",
+            "sha1": "78:0B:59:D9:71:3B:50:01:4D:50:B0:3E:0B:CC:1F:C5:F8:9E:C6:90",
+            "sha256": "E8:F6:9C:BC:F0:D2:17:96:FA:1E:19:69:A6:66:3E:26:04:3E:76:98:32:1C:EC:66:15:37:92:0B:3E:04:06:5E",
+            "sha512": "99:9B:76:E2:FD:5E:56:CA:C0:B9:8F:E7:B6:04:EE:2D:BE:E1:01:A3:6D:BE:8F:55:62:DE:84:86:6E:7C:4C:CB:AB:9B:B8:D0:3E:88:B6:52:71:3A:0A:07:55:97:F3:3D:DB:C3:8C:2A:5D:4E:10:0D:C6:D1:4A:2E:00:F9:C2:12",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "child-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "child-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -533,12 +583,11 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "15:B3:F5:7A:8E:B1:B2:DB:5D:9A:F4:7B:1C:22:14:98:85:E5:F9:17"
+                "value": "FB:8A:D0:7F:A5:48:6C:C2:D9:A7:DF:CC:DE:79:85:9D:37:75:5F:FB"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=child-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
         },
         "comodo": {
             "basic_constraints": {
@@ -569,32 +618,31 @@
             "sha256": "52:F0:E1:C4:E5:8E:C6:29:29:1B:60:31:7F:07:46:71:B8:5D:7E:A8:0D:5B:07:27:34:63:53:4B:32:B4:02:34",
             "sha512": "58:BB:C2:36:BF:9F:F6:95:AC:21:82:FF:A7:95:E3:69:F6:F1:82:79:85:1B:CC:F6:2E:5B:3E:AB:D2:B4:4E:9C:26:FA:B8:88:B8:ED:6C:78:C6:4B:C2:4B:10:1E:3B:00:3F:92:B1:D9:D9:A4:34:69:CB:90:91:56:4A:C2:B0:B0",
             "subject": [
-                [
-                    "C",
-                    "GB"
-                ],
-                [
-                    "ST",
-                    "Greater Manchester"
-                ],
-                [
-                    "L",
-                    "Salford"
-                ],
-                [
-                    "O",
-                    "COMODO CA Limited"
-                ],
-                [
-                    "CN",
-                    "COMODO RSA Certification Authority"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "GB"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Greater Manchester"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Salford"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "COMODO CA Limited"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "COMODO RSA Certification Authority"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "BB:AF:7E:02:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4"
             },
-            "subject_str": "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Certification Authority",
             "type": "ca",
             "valid_from": "2010-01-19 00:00:00",
             "valid_until": "2038-01-18 23:59:59"
@@ -653,8 +701,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -676,32 +724,31 @@
             "sha256": "02:AB:57:E4:E6:7A:0C:B4:8D:D2:FF:34:83:0E:8A:C4:0F:44:76:FB:08:CA:6B:E3:F5:CD:84:6F:64:68:40:F0",
             "sha512": "A3:E6:46:0D:47:02:FA:41:09:65:8B:2B:ED:2D:83:47:FB:CD:73:20:24:C1:06:F3:38:3C:A1:05:3C:EE:7B:33:AF:F1:22:D8:92:6A:E6:80:15:D8:02:57:24:34:D5:F3:81:60:A9:9F:46:D8:2B:F0:5C:AF:4A:43:2B:E9:25:7E",
             "subject": [
-                [
-                    "C",
-                    "GB"
-                ],
-                [
-                    "ST",
-                    "Greater Manchester"
-                ],
-                [
-                    "L",
-                    "Salford"
-                ],
-                [
-                    "O",
-                    "COMODO CA Limited"
-                ],
-                [
-                    "CN",
-                    "COMODO RSA Domain Validation Secure Server CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "GB"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Greater Manchester"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Salford"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "COMODO CA Limited"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "COMODO RSA Domain Validation Secure Server CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "90:AF:6A:3A:94:5A:0B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7"
             },
-            "subject_str": "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Domain Validation Secure Server CA",
             "type": "ca",
             "valid_from": "2014-02-12 00:00:00",
             "valid_until": "2029-02-11 23:59:59"
@@ -762,8 +809,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -783,18 +830,18 @@
             "sha256": "D5:F8:44:D8:FB:CC:82:88:97:A0:5E:E7:97:42:74:9B:F3:18:44:13:5D:C7:F9:03:C2:4F:85:D4:BC:E6:74:54",
             "sha512": "1E:3D:13:53:CE:E4:03:86:E4:6D:DF:B3:EA:D1:53:99:40:5D:48:CA:3D:B8:95:CE:CE:8F:61:DE:A1:22:98:81:B1:F8:4E:08:C1:4C:C4:00:7C:3E:BD:BF:7F:44:F1:53:3E:C3:BF:2C:46:3A:D1:3C:3E:1B:60:AA:91:C9:6B:A6",
             "subject": [
-                [
-                    "OU",
-                    "Domain Control Validated"
-                ],
-                [
-                    "OU",
-                    "PositiveSSL"
-                ],
-                [
-                    "CN",
-                    "kode.im"
-                ]
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Domain Control Validated"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "PositiveSSL"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "kode.im"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -807,7 +854,6 @@
                 "critical": false,
                 "value": "F2:CB:1F:E9:6E:D5:43:E3:85:75:98:5F:97:7C:B0:59:7F:D5:C0:C0"
             },
-            "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL/CN=kode.im",
             "type": "cert",
             "valid_from": "2015-12-06 00:00:00",
             "valid_until": "2018-12-01 23:59:59"
@@ -879,32 +925,31 @@
             "sha256": "7E:0E:16:C0:05:6F:41:A9:F4:C6:1F:57:15:03:C3:BC:F0:79:E2:BD:DB:22:8B:F2:21:9A:C3:12:00:49:6B:5C",
             "sha512": "AE:05:D4:D5:29:A2:A8:12:9F:C8:E2:22:E2:6B:12:C0:7F:59:12:AC:3A:06:2F:12:E7:0D:D3:18:59:E1:98:C5:F4:01:F5:69:1E:00:96:D3:11:A7:5D:8A:D7:CC:B3:0F:50:8D:6D:AA:5A:5B:04:5C:D4:B5:75:89:09:59:63:EA",
             "subject": [
-                [
-                    "C",
-                    "GB"
-                ],
-                [
-                    "ST",
-                    "Greater Manchester"
-                ],
-                [
-                    "L",
-                    "Salford"
-                ],
-                [
-                    "O",
-                    "COMODO CA Limited"
-                ],
-                [
-                    "CN",
-                    "COMODO RSA Extended Validation Secure Server CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "GB"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Greater Manchester"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Salford"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "COMODO CA Limited"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "COMODO RSA Extended Validation Secure Server CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "39:DA:FF:CA:28:14:8A:A8:74:13:08:B9:E4:0E:A9:D2:FA:7E:9D:69"
             },
-            "subject_str": "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO RSA Extended Validation Secure Server CA",
             "type": "ca",
             "valid_from": "2012-02-12 00:00:00",
             "valid_until": "2027-02-11 23:59:59"
@@ -965,8 +1010,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -1009,58 +1054,58 @@
             "sha256": "24:A7:87:E1:B8:C4:63:92:AB:AD:99:4C:69:29:37:44:0B:CE:FA:FD:1B:33:25:6B:93:A1:1F:5A:73:9C:A2:7A",
             "sha512": "00:5F:39:28:70:F3:1E:42:E1:52:A0:C0:7A:D9:A0:C1:F3:09:5B:D7:DA:8F:25:7D:69:3F:D8:A9:59:F7:A9:69:95:F3:25:B4:D6:E4:1E:A6:2D:FB:56:98:BE:C7:BD:92:DE:47:20:30:F7:17:3E:C7:AB:18:7D:AD:47:A7:26:4E",
             "subject": [
-                [
-                    "serialNumber",
-                    "3910805"
-                ],
-                [
-                    "jurisdictionCountryName",
-                    "US"
-                ],
-                [
-                    "jurisdictionStateOrProvinceName",
-                    "Delaware"
-                ],
-                [
-                    "businessCategory",
-                    "Private Organization"
-                ],
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "postalCode",
-                    "07013"
-                ],
-                [
-                    "ST",
-                    "New Jersey"
-                ],
-                [
-                    "L",
-                    "Clifton"
-                ],
-                [
-                    "street",
-                    "Suite 100"
-                ],
-                [
-                    "street",
-                    "1255 Broad St"
-                ],
-                [
-                    "O",
-                    "Comodo Security Solutions, Inc."
-                ],
-                [
-                    "OU",
-                    "COMODO EV SSL"
-                ],
-                [
-                    "CN",
-                    "www.comodo.com"
-                ]
+                {
+                    "oid": "2.5.4.5",
+                    "value": "3910805"
+                },
+                {
+                    "oid": "1.3.6.1.4.1.311.60.2.1.3",
+                    "value": "US"
+                },
+                {
+                    "oid": "1.3.6.1.4.1.311.60.2.1.2",
+                    "value": "Delaware"
+                },
+                {
+                    "oid": "2.5.4.15",
+                    "value": "Private Organization"
+                },
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.17",
+                    "value": "07013"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "New Jersey"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Clifton"
+                },
+                {
+                    "oid": "2.5.4.9",
+                    "value": "Suite 100"
+                },
+                {
+                    "oid": "2.5.4.9",
+                    "value": "1255 Broad St"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Comodo Security Solutions, Inc."
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "COMODO EV SSL"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "www.comodo.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -1073,7 +1118,6 @@
                 "critical": false,
                 "value": "44:3E:73:30:EB:0B:1B:A7:A7:9D:0F:DA:79:96:4D:1A:87:E9:9D:21"
             },
-            "subject_str": "/serialNumber=3910805/jurisdictionCountryName=US/jurisdictionStateOrProvinceName=Delaware/businessCategory=Private Organization/C=US/postalCode=07013/ST=New Jersey/L=Clifton/street=Suite 100/street=1255 Broad St/O=Comodo Security Solutions, Inc./OU=COMODO EV SSL/CN=www.comodo.com",
             "type": "cert",
             "valid_from": "2018-03-14 00:00:00",
             "valid_until": "2020-03-13 23:59:59"
@@ -1114,28 +1158,27 @@
             "sha256": "74:31:E5:F4:C3:C1:CE:46:90:77:4F:0B:61:E0:54:40:88:3B:A9:A0:1E:D0:0B:A6:AB:D7:80:6E:D3:B1:18:CF",
             "sha512": "7B:9C:F0:79:B9:76:9D:FA:9E:B2:E2:8C:F5:A4:DA:99:22:B0:F8:0E:41:50:97:D3:26:BF:20:54:75:05:A6:AB:1B:7A:C6:A8:38:46:D0:B8:25:3E:91:68:B1:F9:15:B8:97:4A:EC:84:4A:9B:31:C3:AD:CA:B3:AE:C8:9F:CD:07",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "DigiCert Inc"
-                ],
-                [
-                    "OU",
-                    "www.digicert.com"
-                ],
-                [
-                    "CN",
-                    "DigiCert High Assurance EV Root CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "DigiCert Inc"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "www.digicert.com"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "DigiCert High Assurance EV Root CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "B1:3E:C3:69:03:F8:BF:47:01:D4:98:26:1A:08:02:EF:63:64:2B:C3"
             },
-            "subject_str": "/C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA",
             "type": "ca",
             "valid_from": "2006-11-10 00:00:00",
             "valid_until": "2031-11-10 00:00:00"
@@ -1176,28 +1219,27 @@
             "sha256": "43:48:A0:E9:44:4C:78:CB:26:5E:05:8D:5E:89:44:B4:D8:4F:96:62:BD:26:DB:25:7F:89:34:A4:43:C7:01:61",
             "sha512": "53:B4:44:E5:65:18:32:01:A6:1E:EB:46:12:09:B2:DC:30:89:5E:EC:A4:87:23:8D:15:A0:26:73:5F:22:9A:81:9E:5B:19:CB:D7:E2:FA:27:68:AB:2A:64:F6:EB:CD:9D:1E:72:13:41:C9:ED:5D:D0:9F:C0:D5:E4:3D:68:BC:A7",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "DigiCert Inc"
-                ],
-                [
-                    "OU",
-                    "www.digicert.com"
-                ],
-                [
-                    "CN",
-                    "DigiCert Global Root CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "DigiCert Inc"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "www.digicert.com"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "DigiCert Global Root CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "03:DE:50:35:56:D1:4C:BB:66:F0:A3:E2:1B:1B:C3:97:B2:3D:D1:55"
             },
-            "subject_str": "/C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert Global Root CA",
             "type": "ca",
             "valid_from": "2006-11-10 00:00:00",
             "valid_until": "2031-11-10 00:00:00"
@@ -1251,8 +1293,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -1274,28 +1316,27 @@
             "sha256": "19:40:0B:E5:B7:A3:1F:B7:33:91:77:00:78:9D:2F:0A:24:71:C0:C9:D5:06:C0:E5:04:C0:6C:16:D7:CB:17:C0",
             "sha512": "C6:CD:75:20:2A:A3:50:77:2A:93:D6:DF:1C:CC:B0:47:38:41:E7:0B:9C:F2:14:9B:E3:46:84:8D:D1:95:38:6C:B7:E1:51:9D:AA:93:6B:CE:FD:7E:0C:2C:EE:39:CA:3F:B8:11:93:3B:9E:88:E0:22:A0:22:C5:B9:F2:B5:E9:2E",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "DigiCert Inc"
-                ],
-                [
-                    "OU",
-                    "www.digicert.com"
-                ],
-                [
-                    "CN",
-                    "DigiCert SHA2 High Assurance Server CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "DigiCert Inc"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "www.digicert.com"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "DigiCert SHA2 High Assurance Server CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "51:68:FF:90:AF:02:07:75:3C:CC:D9:65:64:62:A2:12:B8:59:72:3B"
             },
-            "subject_str": "/C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert SHA2 High Assurance Server CA",
             "type": "ca",
             "valid_from": "2013-10-22 12:00:00",
             "valid_until": "2028-10-22 12:00:00"
@@ -1361,8 +1402,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -1399,26 +1440,26 @@
             "sha256": "9C:6B:86:2E:26:36:90:E6:FC:23:D8:F2:B5:B1:0C:5C:DB:27:4B:7E:9D:C7:A8:F5:E1:1D:9F:F8:66:FE:99:80",
             "sha512": "9F:F9:DA:79:C0:61:0E:65:A1:04:96:13:58:02:07:B3:3B:9D:CE:55:EF:C3:64:E8:BC:D5:C0:69:96:CF:AF:07:B6:ED:0C:BA:A7:D4:53:F7:DA:02:A5:E6:7C:5E:86:17:7C:CB:1F:FC:53:60:14:D6:0F:FE:D8:5A:DE:A6:D5:4B",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "ST",
-                    "California"
-                ],
-                [
-                    "L",
-                    "Sunnyvale"
-                ],
-                [
-                    "O",
-                    "Oath Inc"
-                ],
-                [
-                    "CN",
-                    "*.www.yahoo.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "California"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Sunnyvale"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Oath Inc"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "*.www.yahoo.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -1473,7 +1514,6 @@
                 "critical": false,
                 "value": "56:F7:45:D4:84:D1:3C:95:AD:58:14:2E:F4:D1:CC:2F:11:C0:73:F6"
             },
-            "subject_str": "/C=US/ST=California/L=Sunnyvale/O=Oath Inc/CN=*.www.yahoo.com",
             "type": "cert",
             "valid_from": "2019-02-01 00:00:00",
             "valid_until": "2019-07-31 12:00:00"
@@ -1548,24 +1588,23 @@
             "sha256": "15:4C:43:3C:49:19:29:C5:EF:68:6E:83:8E:32:36:64:A0:0E:6A:0D:82:2C:CC:95:8F:B4:DA:B0:3E:49:A0:8F",
             "sha512": "C2:28:77:F0:69:60:D0:81:45:93:CA:41:30:5C:4B:25:3D:A7:33:44:96:AF:FF:1A:8B:45:88:57:4E:1A:AB:30:86:EF:24:8E:F0:6F:28:AD:C3:CC:4F:49:23:C6:36:E3:8A:48:35:42:C1:85:F0:36:BC:2B:0C:99:E7:64:C9:EE",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "DigiCert Inc"
-                ],
-                [
-                    "CN",
-                    "DigiCert SHA2 Secure Server CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "DigiCert Inc"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "DigiCert SHA2 Secure Server CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "0F:80:61:1C:82:31:61:D5:2F:28:E7:8D:46:38:B4:2C:E1:C6:D9:E2"
             },
-            "subject_str": "/C=US/O=DigiCert Inc/CN=DigiCert SHA2 Secure Server CA",
             "type": "ca",
             "valid_from": "2013-03-08 12:00:00",
             "valid_until": "2023-03-08 12:00:00"
@@ -1631,8 +1670,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -1669,26 +1708,26 @@
             "sha256": "37:45:C8:12:54:64:25:35:86:59:99:30:CC:E3:85:63:24:84:E7:44:16:AC:22:5D:3C:9A:8D:15:A5:07:7F:D5",
             "sha512": "81:46:61:CF:EC:CC:FD:A4:C5:13:EA:4B:28:A4:E7:AF:9F:1C:DB:F4:C9:BF:14:15:78:03:4B:DA:0F:A0:EC:C5:B5:0D:C2:B0:96:BB:3E:2F:FC:D9:B8:C3:18:FB:12:9A:B1:85:47:A7:0B:9C:36:FA:8B:33:7D:A7:7E:6F:0C:A7",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Standard Verlagsgesellschaft m.b.H."
-                ],
-                [
-                    "OU",
-                    "IT"
-                ],
-                [
-                    "CN",
-                    "www.derstandard.at"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Standard Verlagsgesellschaft m.b.H."
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "IT"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "www.derstandard.at"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -1710,7 +1749,6 @@
                 "critical": false,
                 "value": "08:D7:53:9D:80:0B:FA:B0:39:7E:74:D8:55:DD:A7:EB:C8:BE:16:9C"
             },
-            "subject_str": "/C=AT/L=Vienna/O=Standard Verlagsgesellschaft m.b.H./OU=IT/CN=www.derstandard.at",
             "type": "cert",
             "valid_from": "2019-06-07 00:00:00",
             "valid_until": "2020-08-05 12:00:00"
@@ -1720,7 +1758,7 @@
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "D7:CA:17:25:74:B5:D0:03:F8:36:7E:8D:97:1B:6C:66:14:9D:CE:F5"
+                    "key_identifier": "04:F8:95:A9:F2:21:23:01:F2:7F:8C:2E:47:A3:96:E1:A6:3B:67:37"
                 }
             },
             "basic_constraints": {
@@ -1730,14 +1768,17 @@
                     "path_length": 3
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6/",
             "cat": "generated",
-            "crl_url": "http://localhost:8000/django_ca/crl/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/",
+            "crl_url": "http://localhost:8000/django_ca/crl/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.dsa.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.dsa.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6.der",
             "key_der_filename": "dsa.key.der",
             "key_filename": "dsa.key",
             "key_size": 2048,
@@ -1750,30 +1791,29 @@
                 ]
             },
             "max_path_length": 3,
-            "md5": "E9:F9:E9:C2:50:7D:18:86:D9:5D:C9:C7:53:6F:A6:49",
+            "md5": "E1:97:C2:20:3A:42:20:9C:22:59:57:2E:6A:71:B3:9B",
             "name": "dsa",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6/cert/",
             "path_length": 3,
             "pub_der_filename": "dsa.pub.der",
             "pub_filename": "dsa.pub",
-            "serial": "3F2E372F2CF47CE41709BA4E3EAD89B5CA848669",
-            "sha1": "AE:C8:75:63:F8:18:E5:A4:6E:68:80:BD:EE:56:19:CA:0F:10:5A:C2",
-            "sha256": "23:3C:D3:6C:15:D0:C7:16:59:DD:F8:BF:E5:7D:B3:5B:B6:1F:D3:BD:68:84:3F:E0:16:2E:D7:B9:4A:0F:43:77",
-            "sha512": "35:00:72:52:C3:BB:90:8C:D7:34:65:41:A3:AB:92:3F:FE:F0:15:03:70:0D:17:59:5A:1B:EC:8D:E3:EB:15:54:23:F6:13:FF:6F:7C:09:66:92:1B:87:EF:10:F3:47:D5:9A:C7:98:54:9A:2D:3A:4E:F1:95:04:11:0B:B8:53:29",
+            "serial": "104C09B1AD250FA15F9CE0AB776EC21532FBFBC6",
+            "sha1": "D2:4E:FF:F0:43:9B:13:E3:F2:5D:7A:50:98:8A:3E:9B:4D:20:5C:D0",
+            "sha256": "21:3C:4A:82:EB:26:64:FC:E2:FF:C0:D2:FB:AD:E8:01:EF:24:2B:B0:68:8E:6E:11:02:44:53:10:F9:76:72:C6",
+            "sha512": "35:E7:EC:51:0D:29:AD:5B:A2:D1:2A:FB:9E:96:9C:5A:07:C9:E6:A3:03:B0:1D:30:05:06:2B:71:FF:44:05:57:7B:D4:EA:13:8B:A4:DE:6A:BF:F4:B5:F6:3D:E3:37:27:EB:93:53:E7:32:C0:F1:9A:C6:D0:F1:22:5E:FB:1F:EA",
             "subject": [
-                [
-                    "CN",
-                    "dsa.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "dsa.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "D7:CA:17:25:74:B5:D0:03:F8:36:7E:8D:97:1B:6C:66:14:9D:CE:F5"
+                "value": "04:F8:95:A9:F2:21:23:01:F2:7F:8C:2E:47:A3:96:E1:A6:3B:67:37"
             },
-            "subject_str": "/CN=dsa.example.com",
             "type": "ca",
-            "valid_from": "2023-02-12 19:00:00",
-            "valid_until": "2024-02-13 19:00:00"
+            "valid_from": "2023-10-11 14:00:00",
+            "valid_until": "2024-10-11 14:00:00"
         },
         "dsa-cert": {
             "algorithm": "sha256",
@@ -1781,17 +1821,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669.der"
+                        "URI:http://localhost:8000/django_ca/issuer/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "D7:CA:17:25:74:B5:D0:03:F8:36:7E:8D:97:1B:6C:66:14:9D:CE:F5"
+                    "key_identifier": "04:F8:95:A9:F2:21:23:01:F2:7F:8C:2E:47:A3:96:E1:A6:3B:67:37"
                 }
             },
             "basic_constraints": {
@@ -1803,21 +1843,24 @@
             "ca": "dsa",
             "cat": "generated",
             "cn": "dsa-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/",
+            "crl": "http://localhost:8000/django_ca/crl/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/3F2E372F2CF47CE41709BA4E3EAD89B5CA848669/"
+                            "URI:http://localhost:8000/django_ca/crl/104C09B1AD250FA15F9CE0AB776EC21532FBFBC6/"
                         ]
                     }
                 ]
             },
             "csr_filename": "dsa-cert.csr",
-            "csr_subject": {
-                "CN": "csr.dsa-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.dsa-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -1837,39 +1880,39 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "7B:FF:22:0B:50:42:A4:16:7A:74:E1:52:98:68:78:B5",
+            "md5": "C8:03:2F:CE:4C:F5:2A:A9:68:1D:80:EE:75:C4:F7:EA",
             "name": "dsa-cert",
             "pub_der_filename": "dsa-cert.pub.der",
             "pub_filename": "dsa-cert.pub",
-            "serial": "4C08D702BBBC9938F5CB56AEA7D04F94F6EF2541",
-            "sha1": "9D:65:68:4C:D8:42:9B:F7:E3:D1:B7:65:F7:AF:77:FC:B8:C0:8C:1D",
-            "sha256": "80:24:EB:AE:01:FA:06:AB:92:1E:89:95:C9:B4:C0:B3:25:F7:4F:38:6D:45:F0:F7:21:2B:B4:43:8F:73:DF:2C",
-            "sha512": "1E:17:0F:F6:4B:D3:10:FA:8C:09:CC:CC:D1:C4:B9:C3:0C:8A:F2:F0:09:C4:D8:11:63:BE:D8:5B:8D:2F:81:7F:28:86:18:9C:D6:14:5F:55:DF:FC:5B:1C:52:B8:10:9F:92:9D:50:3F:BA:84:AD:3B:3B:8B:33:99:67:C3:EC:82",
+            "serial": "24F94E0D22B1D3084E83E9CFA4ADECBE145FB6F8",
+            "sha1": "70:D2:61:43:A0:EF:3C:F0:46:9B:EF:EE:23:60:50:39:85:79:D3:B8",
+            "sha256": "23:6D:99:6C:C2:BC:69:71:7A:F5:EC:93:8E:CC:E5:1B:3F:10:09:57:0D:DD:CF:B3:6A:B5:E0:D0:4F:CE:69:4B",
+            "sha512": "52:64:73:15:5D:E3:3F:AA:7A:BF:3C:2E:5D:D2:F9:D9:03:5E:EA:77:D0:24:5E:85:E9:56:D5:0C:C3:64:6F:9F:CB:C4:DB:37:4C:C1:EE:06:DE:F3:D0:0E:5B:05:86:94:05:F0:42:7E:8E:E7:0B:9F:91:4A:9F:21:29:18:2F:04",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "dsa-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "dsa-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -1879,12 +1922,11 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "8A:A7:4B:48:2C:C2:DE:D8:98:73:64:71:B2:2D:57:4D:66:AB:18:07"
+                "value": "44:84:9B:1F:8D:CA:8E:84:02:C8:81:67:03:48:30:F5:24:FA:E1:ED"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=dsa-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
         },
         "dst_root_x3": {
             "basic_constraints": {
@@ -1915,20 +1957,19 @@
             "sha256": "06:87:26:03:31:A7:24:03:D9:09:F1:05:E6:9B:CF:0D:32:E1:BD:24:93:FF:C6:D9:20:6D:11:BC:D6:77:07:39",
             "sha512": "6A:BB:AC:E2:AC:9E:CA:4C:E6:68:7E:82:D2:D9:43:0B:CF:FE:12:F5:34:E6:60:D5:DD:B8:70:A0:10:EB:CB:98:EC:73:B6:82:A2:BA:A8:AD:5D:AA:87:8C:BA:D7:CE:63:3D:CA:BA:1A:0D:BC:98:5B:C3:73:96:78:18:4C:98:FF",
             "subject": [
-                [
-                    "O",
-                    "Digital Signature Trust Co."
-                ],
-                [
-                    "CN",
-                    "DST Root CA X3"
-                ]
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Digital Signature Trust Co."
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "DST Root CA X3"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10"
             },
-            "subject_str": "/O=Digital Signature Trust Co./CN=DST Root CA X3",
             "type": "ca",
             "valid_from": "2000-09-30 21:12:19",
             "valid_until": "2021-09-30 14:01:15"
@@ -1938,7 +1979,7 @@
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "B5:32:5D:73:8E:F3:89:73:55:7D:FF:B6:1F:DD:83:50:CA:54:96:80"
+                    "key_identifier": "C0:FC:9A:B4:72:78:CF:47:84:B6:02:59:F4:F9:9B:54:64:30:AC:5A"
                 }
             },
             "basic_constraints": {
@@ -1948,14 +1989,17 @@
                     "path_length": 1
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/4F214CE0D8313B64F889CA09F8938CE1298F4C52/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/62654B160231CFAAD7639A12916D9FC455A708E2/",
             "cat": "generated",
-            "crl_url": "http://localhost:8000/django_ca/crl/4F214CE0D8313B64F889CA09F8938CE1298F4C52/",
+            "crl_url": "http://localhost:8000/django_ca/crl/62654B160231CFAAD7639A12916D9FC455A708E2/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.ec.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/4F214CE0D8313B64F889CA09F8938CE1298F4C52.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.ec.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/62654B160231CFAAD7639A12916D9FC455A708E2.der",
             "key_der_filename": "ec.key.der",
             "key_filename": "ec.key",
             "key_type": "EC",
@@ -1967,30 +2011,29 @@
                 ]
             },
             "max_path_length": 1,
-            "md5": "3E:68:02:B8:A1:78:E0:D3:2C:02:0C:1C:64:9A:83:81",
+            "md5": "F3:D4:4B:4D:1C:BC:47:7B:C5:D7:7C:DB:1C:F2:C4:B9",
             "name": "ec",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/4F214CE0D8313B64F889CA09F8938CE1298F4C52/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/62654B160231CFAAD7639A12916D9FC455A708E2/cert/",
             "path_length": 1,
             "pub_der_filename": "ec.pub.der",
             "pub_filename": "ec.pub",
-            "serial": "4F214CE0D8313B64F889CA09F8938CE1298F4C52",
-            "sha1": "7B:BC:4F:DB:DA:15:51:41:A8:80:91:1C:3D:B4:30:B4:8D:8A:43:0B",
-            "sha256": "F1:6A:7E:1B:ED:4D:20:B1:83:17:3D:1B:40:08:CE:51:43:38:AA:5C:2E:F7:0D:FF:62:DC:09:8D:1C:9E:45:53",
-            "sha512": "08:A7:B6:6F:F9:A5:3E:30:DB:3C:D8:74:29:56:EF:45:55:EE:E0:31:20:8F:E7:05:04:72:E2:77:F5:2F:A7:A8:A4:DC:D4:92:C6:71:C0:48:94:FC:BE:69:BD:38:48:0C:B4:A4:3D:28:35:A1:C1:2D:24:0D:39:DE:D8:60:A2:7B",
+            "serial": "62654B160231CFAAD7639A12916D9FC455A708E2",
+            "sha1": "E7:E7:8A:55:C7:FD:67:AA:9C:FD:CC:9F:C3:D1:62:3E:A2:CB:92:ED",
+            "sha256": "47:9D:FF:15:8D:75:1C:1F:91:5A:EB:F3:50:96:6A:2B:A0:38:6D:8E:1A:9B:2A:87:28:54:A3:0A:48:61:95:C7",
+            "sha512": "27:11:43:46:7C:AD:38:27:BB:2B:61:18:19:CE:48:B9:14:0F:0B:31:E9:D9:6E:FF:54:29:88:22:2E:A5:85:7F:C9:80:03:B2:01:1A:E5:F3:FF:9C:0D:C7:C5:AD:8C:4F:DD:11:51:32:8B:E5:C4:64:58:48:42:A7:6E:75:F6:42",
             "subject": [
-                [
-                    "CN",
-                    "ec.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "ec.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "B5:32:5D:73:8E:F3:89:73:55:7D:FF:B6:1F:DD:83:50:CA:54:96:80"
+                "value": "C0:FC:9A:B4:72:78:CF:47:84:B6:02:59:F4:F9:9B:54:64:30:AC:5A"
             },
-            "subject_str": "/CN=ec.example.com",
             "type": "ca",
-            "valid_from": "2023-02-12 19:00:00",
-            "valid_until": "2024-02-13 19:00:00"
+            "valid_from": "2023-10-11 14:00:00",
+            "valid_until": "2024-10-11 14:00:00"
         },
         "ec-cert": {
             "algorithm": "sha256",
@@ -1998,17 +2041,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/4F214CE0D8313B64F889CA09F8938CE1298F4C52.der"
+                        "URI:http://localhost:8000/django_ca/issuer/62654B160231CFAAD7639A12916D9FC455A708E2.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/4F214CE0D8313B64F889CA09F8938CE1298F4C52/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/62654B160231CFAAD7639A12916D9FC455A708E2/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "B5:32:5D:73:8E:F3:89:73:55:7D:FF:B6:1F:DD:83:50:CA:54:96:80"
+                    "key_identifier": "C0:FC:9A:B4:72:78:CF:47:84:B6:02:59:F4:F9:9B:54:64:30:AC:5A"
                 }
             },
             "basic_constraints": {
@@ -2020,21 +2063,24 @@
             "ca": "ec",
             "cat": "generated",
             "cn": "ec-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/4F214CE0D8313B64F889CA09F8938CE1298F4C52/",
+            "crl": "http://localhost:8000/django_ca/crl/62654B160231CFAAD7639A12916D9FC455A708E2/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/4F214CE0D8313B64F889CA09F8938CE1298F4C52/"
+                            "URI:http://localhost:8000/django_ca/crl/62654B160231CFAAD7639A12916D9FC455A708E2/"
                         ]
                     }
                 ]
             },
             "csr_filename": "ec-cert.csr",
-            "csr_subject": {
-                "CN": "csr.ec-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.ec-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -2053,39 +2099,39 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "40:AE:BC:5D:5E:EA:4A:9B:F1:8B:5C:64:6C:34:F7:C0",
+            "md5": "FF:14:18:C9:B2:21:1B:4D:03:5D:53:BD:A3:09:2C:31",
             "name": "ec-cert",
             "pub_der_filename": "ec-cert.pub.der",
             "pub_filename": "ec-cert.pub",
-            "serial": "5CB69B37D65CCFD8344B1C753B11D1697336534A",
-            "sha1": "6E:60:F4:19:DD:2E:80:A1:85:E3:51:92:BB:3B:99:6D:51:5B:59:D2",
-            "sha256": "55:B5:5D:0A:FF:55:8F:C5:ED:A8:87:AE:C5:05:04:3A:B1:26:57:08:6F:C1:B3:A4:68:68:4A:83:DA:F5:3D:65",
-            "sha512": "9C:37:F1:26:71:BE:0F:57:53:F7:A4:0F:36:3A:DE:D1:5C:20:4B:DF:AF:C2:51:6B:B6:E8:3E:AF:F9:63:27:62:F4:F2:D5:FF:B4:2E:7E:AC:1F:5C:8C:60:11:BE:1D:B1:1C:C7:40:A9:0A:8A:1F:71:4F:F0:4B:64:CD:43:0C:5D",
+            "serial": "5192D033F1C8019E1CDCE6205BA49F1832B8705D",
+            "sha1": "41:55:FE:CD:78:8D:DB:66:66:50:8A:34:0B:CC:F7:31:99:E4:ED:89",
+            "sha256": "0C:FB:01:C8:86:FD:3B:3C:B0:22:7B:3F:59:4C:3C:AF:C4:F1:FF:24:EE:1D:B9:93:90:62:79:54:84:57:B2:7D",
+            "sha512": "79:FA:BA:89:F2:65:53:64:07:16:14:61:E7:81:57:D3:1E:08:28:60:B8:6A:2A:48:29:69:B6:F6:BD:AD:F0:AD:F6:93:9B:38:8D:15:B8:C9:77:4B:9A:3B:7A:87:82:10:D9:33:87:92:3B:72:6C:3D:11:FB:47:F0:D0:31:FF:02",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "ec-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "ec-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -2095,19 +2141,18 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "BF:BF:FB:7B:2E:62:6D:57:EC:33:03:9E:34:BF:54:E8:49:A6:60:AD"
+                "value": "06:49:51:8F:D5:21:25:46:21:4D:3A:E7:7D:08:1A:BB:7A:8E:1C:73"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=ec-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
         },
         "ed25519": {
             "algorithm": null,
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "FC:11:8C:BF:20:5A:55:57:AD:A4:90:4A:D7:22:83:44:C0:D3:16:EF"
+                    "key_identifier": "0C:92:40:64:AA:B1:BD:34:EF:11:C0:4F:BE:B5:46:BD:74:65:A8:47"
                 }
             },
             "basic_constraints": {
@@ -2117,14 +2162,17 @@
                     "path_length": 1
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/340886700A0F6EA989172963FD372A49CCC388EB/",
             "cat": "generated",
-            "crl_url": "http://localhost:8000/django_ca/crl/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/",
+            "crl_url": "http://localhost:8000/django_ca/crl/340886700A0F6EA989172963FD372A49CCC388EB/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.ed25519.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/1C7835ABCFD9AA8241042B9E86A66468A3C8244E.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.ed25519.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/340886700A0F6EA989172963FD372A49CCC388EB.der",
             "key_der_filename": "ed25519.key.der",
             "key_filename": "ed25519.key",
             "key_type": "Ed25519",
@@ -2136,30 +2184,29 @@
                 ]
             },
             "max_path_length": 1,
-            "md5": "65:15:54:6B:A2:54:CF:B1:19:6D:7D:40:B3:66:E1:88",
+            "md5": "F9:57:CE:57:0F:F4:27:E4:2B:57:1D:7E:95:0B:F0:C5",
             "name": "ed25519",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/340886700A0F6EA989172963FD372A49CCC388EB/cert/",
             "path_length": 1,
             "pub_der_filename": "ed25519.pub.der",
             "pub_filename": "ed25519.pub",
-            "serial": "1C7835ABCFD9AA8241042B9E86A66468A3C8244E",
-            "sha1": "30:81:4F:0F:BD:8D:C1:B5:5B:78:75:CE:39:98:2A:45:04:E7:4D:87",
-            "sha256": "D8:AD:C9:A7:67:9D:C4:A2:CF:CF:BB:B6:7D:4E:9B:04:52:DA:86:40:40:91:5B:C6:FD:90:D9:35:5F:D6:87:33",
-            "sha512": "A0:82:DB:75:3F:BF:4F:91:8E:84:BB:2D:59:F5:B3:E5:82:BF:8C:0E:EB:EA:D2:91:79:73:47:15:16:FD:3F:E9:8F:19:DE:D3:6D:C1:38:51:DF:33:35:F2:EA:28:51:6B:71:90:7B:B2:17:99:C0:F1:04:BC:49:52:BB:39:26:3E",
+            "serial": "340886700A0F6EA989172963FD372A49CCC388EB",
+            "sha1": "C2:20:BE:B8:48:C4:CF:20:F9:70:E1:59:11:06:C7:49:A5:A2:DA:C8",
+            "sha256": "F5:89:D9:2F:B4:B0:CD:D6:DE:E6:15:7D:08:4C:C0:54:9B:1F:2F:BA:92:18:5B:3D:63:E3:CC:F1:F8:D3:D8:0C",
+            "sha512": "34:CE:3A:29:26:38:C0:B7:B8:44:AC:9C:98:74:B4:4D:4B:3D:5E:24:2E:07:15:0E:5E:22:95:85:FB:60:C8:01:B8:4E:7F:1C:D0:CA:B2:05:0F:57:C4:2D:CE:CB:7E:BF:60:CE:1F:83:5B:DD:FA:CD:32:E5:E2:5C:A8:15:2A:43",
             "subject": [
-                [
-                    "CN",
-                    "ed25519.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "ed25519.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "FC:11:8C:BF:20:5A:55:57:AD:A4:90:4A:D7:22:83:44:C0:D3:16:EF"
+                "value": "0C:92:40:64:AA:B1:BD:34:EF:11:C0:4F:BE:B5:46:BD:74:65:A8:47"
             },
-            "subject_str": "/CN=ed25519.example.com",
             "type": "ca",
-            "valid_from": "2023-02-12 19:00:00",
-            "valid_until": "2024-02-13 19:00:00"
+            "valid_from": "2023-10-11 14:00:00",
+            "valid_until": "2024-10-11 14:00:00"
         },
         "ed25519-cert": {
             "algorithm": null,
@@ -2167,17 +2214,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/1C7835ABCFD9AA8241042B9E86A66468A3C8244E.der"
+                        "URI:http://localhost:8000/django_ca/issuer/340886700A0F6EA989172963FD372A49CCC388EB.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/340886700A0F6EA989172963FD372A49CCC388EB/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "FC:11:8C:BF:20:5A:55:57:AD:A4:90:4A:D7:22:83:44:C0:D3:16:EF"
+                    "key_identifier": "0C:92:40:64:AA:B1:BD:34:EF:11:C0:4F:BE:B5:46:BD:74:65:A8:47"
                 }
             },
             "basic_constraints": {
@@ -2189,21 +2236,24 @@
             "ca": "ed25519",
             "cat": "generated",
             "cn": "ed25519-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/",
+            "crl": "http://localhost:8000/django_ca/crl/340886700A0F6EA989172963FD372A49CCC388EB/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/1C7835ABCFD9AA8241042B9E86A66468A3C8244E/"
+                            "URI:http://localhost:8000/django_ca/crl/340886700A0F6EA989172963FD372A49CCC388EB/"
                         ]
                     }
                 ]
             },
             "csr_filename": "ed25519-cert.csr",
-            "csr_subject": {
-                "CN": "csr.ed25519-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.ed25519-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -2222,39 +2272,39 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "08:02:B9:C8:61:04:02:C3:9D:80:A3:23:7C:CA:48:6F",
+            "md5": "72:EB:45:7A:EB:76:76:09:09:72:45:2F:37:7A:FA:B3",
             "name": "ed25519-cert",
             "pub_der_filename": "ed25519-cert.pub.der",
             "pub_filename": "ed25519-cert.pub",
-            "serial": "35A7D038ABA3208317C6CC8D40077887C0E8FE01",
-            "sha1": "B1:1E:A2:5D:B3:59:2D:A5:FB:C3:69:98:0A:49:64:F1:75:17:93:A9",
-            "sha256": "19:5B:95:14:1F:F5:47:7B:C2:75:67:E1:06:AC:D8:AB:B4:08:9D:11:EE:04:92:F6:5C:0E:F9:03:CD:99:D8:93",
-            "sha512": "22:B3:2F:C2:B5:F4:F3:30:7E:0A:25:C0:4B:07:FC:C4:D7:77:84:61:1E:D0:17:22:81:32:64:0F:FA:B8:47:2E:6D:4F:A1:70:9A:4B:41:28:F8:B4:08:3B:26:4D:05:84:9C:CF:00:1B:3D:08:A5:A7:91:12:6C:FA:45:CC:A1:CB",
+            "serial": "3CC496D14BDDD2B16C99A5B7AA97B66B121F61D3",
+            "sha1": "5A:42:6B:88:7D:93:CB:1C:F3:E2:0B:43:93:1A:E3:17:6A:E1:68:32",
+            "sha256": "CC:E1:F8:88:20:10:E2:B3:94:A5:C6:14:77:5B:3D:78:A0:3D:76:A0:B1:6A:3E:5D:98:77:CD:B7:73:FB:52:60",
+            "sha512": "8A:2E:DF:63:F1:8B:47:22:5C:5A:E5:81:38:1A:7D:09:B4:76:28:66:C1:1B:4C:B1:9E:DD:A6:D5:D5:D3:DE:2F:CF:19:2B:BC:70:63:46:6A:E1:D3:18:FC:17:51:A9:42:DA:5D:87:37:D8:F6:85:A5:58:06:67:77:55:C5:51:3C",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "ed25519-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "ed25519-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -2264,19 +2314,18 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "65:AD:FF:02:3C:03:8C:7E:6C:A2:14:9A:D1:58:F2:0D:B3:F1:34:58"
+                "value": "46:23:E5:2E:8D:3C:CB:14:8D:FB:F8:4E:73:02:4B:C6:CB:6F:19:9A"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=ed25519-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
         },
         "ed448": {
             "algorithm": null,
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "03:8F:76:58:A0:B2:6B:86:25:87:92:5F:F8:C1:9A:A1:6A:0A:80:2E"
+                    "key_identifier": "B8:5A:23:24:CC:CD:3C:C3:B9:99:9A:9D:49:E9:61:43:FB:EC:E8:39"
                 }
             },
             "basic_constraints": {
@@ -2286,14 +2335,17 @@
                     "path_length": 1
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/778A8A8D9EB551877643A9F3A8449CF32589FDB8/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F/",
             "cat": "generated",
-            "crl_url": "http://localhost:8000/django_ca/crl/778A8A8D9EB551877643A9F3A8449CF32589FDB8/",
+            "crl_url": "http://localhost:8000/django_ca/crl/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.ed448.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/778A8A8D9EB551877643A9F3A8449CF32589FDB8.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.ed448.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F.der",
             "key_der_filename": "ed448.key.der",
             "key_filename": "ed448.key",
             "key_type": "Ed448",
@@ -2305,30 +2357,29 @@
                 ]
             },
             "max_path_length": 1,
-            "md5": "0E:7F:17:3F:3A:1A:E2:AE:74:B3:58:5F:B4:39:C3:94",
+            "md5": "4E:73:50:40:27:15:30:CD:A6:86:D5:17:2E:B3:E1:3B",
             "name": "ed448",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/778A8A8D9EB551877643A9F3A8449CF32589FDB8/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F/cert/",
             "path_length": 1,
             "pub_der_filename": "ed448.pub.der",
             "pub_filename": "ed448.pub",
-            "serial": "778A8A8D9EB551877643A9F3A8449CF32589FDB8",
-            "sha1": "CC:EA:0F:64:96:C1:3B:A3:AD:9B:32:DA:19:F0:50:1D:5E:09:0A:2E",
-            "sha256": "7C:55:E8:DF:1D:8A:BF:7E:02:B4:62:48:80:ED:AF:99:49:8E:51:0E:06:3C:DC:EF:75:9A:AF:E8:D1:12:CC:20",
-            "sha512": "57:0A:4F:1F:6D:A0:23:C1:50:C3:E5:9E:AD:CA:4E:A1:98:04:FD:CA:0A:DB:45:CC:A5:A1:5D:28:42:97:F1:76:E5:B6:44:57:30:F3:FE:CD:F9:3C:43:71:4F:9E:51:67:43:FB:44:B8:B0:91:C6:60:AE:28:B1:88:5D:F0:D1:05",
+            "serial": "520B6C4C1520CE8952863DA7EE3F4F66D9386D0F",
+            "sha1": "26:DB:6C:03:81:08:CB:33:25:A7:0C:D3:E4:47:FA:89:78:24:68:4F",
+            "sha256": "79:FB:07:14:6D:85:FF:AC:76:55:A4:2D:08:4B:06:E1:39:CD:4A:58:9E:3D:25:1E:DF:54:F3:44:64:3A:FB:54",
+            "sha512": "56:D7:74:F0:A9:19:C5:6C:F9:8F:92:D5:8A:68:83:14:75:53:D1:EE:B8:04:10:72:A9:66:6A:E4:58:75:17:F5:4B:05:79:F8:C2:C7:CE:E3:13:60:23:B3:BD:73:BA:A9:6B:24:0B:A8:98:68:72:F5:0C:78:C6:19:30:57:07:F7",
             "subject": [
-                [
-                    "CN",
-                    "ed448.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "ed448.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "03:8F:76:58:A0:B2:6B:86:25:87:92:5F:F8:C1:9A:A1:6A:0A:80:2E"
+                "value": "B8:5A:23:24:CC:CD:3C:C3:B9:99:9A:9D:49:E9:61:43:FB:EC:E8:39"
             },
-            "subject_str": "/CN=ed448.example.com",
             "type": "ca",
-            "valid_from": "2023-02-12 19:00:00",
-            "valid_until": "2024-02-13 19:00:00"
+            "valid_from": "2023-10-11 14:00:00",
+            "valid_until": "2024-10-11 14:00:00"
         },
         "ed448-cert": {
             "algorithm": null,
@@ -2336,17 +2387,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/778A8A8D9EB551877643A9F3A8449CF32589FDB8.der"
+                        "URI:http://localhost:8000/django_ca/issuer/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/778A8A8D9EB551877643A9F3A8449CF32589FDB8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "03:8F:76:58:A0:B2:6B:86:25:87:92:5F:F8:C1:9A:A1:6A:0A:80:2E"
+                    "key_identifier": "B8:5A:23:24:CC:CD:3C:C3:B9:99:9A:9D:49:E9:61:43:FB:EC:E8:39"
                 }
             },
             "basic_constraints": {
@@ -2358,21 +2409,24 @@
             "ca": "ed448",
             "cat": "generated",
             "cn": "ed448-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/778A8A8D9EB551877643A9F3A8449CF32589FDB8/",
+            "crl": "http://localhost:8000/django_ca/crl/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/778A8A8D9EB551877643A9F3A8449CF32589FDB8/"
+                            "URI:http://localhost:8000/django_ca/crl/520B6C4C1520CE8952863DA7EE3F4F66D9386D0F/"
                         ]
                     }
                 ]
             },
             "csr_filename": "ed448-cert.csr",
-            "csr_subject": {
-                "CN": "csr.ed448-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.ed448-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -2391,39 +2445,39 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "C0:AC:D7:25:C1:71:40:3D:CE:48:19:A7:DC:E9:52:5E",
+            "md5": "AA:FA:24:1B:94:55:D5:BE:7B:F8:1C:F3:A8:01:98:F1",
             "name": "ed448-cert",
             "pub_der_filename": "ed448-cert.pub.der",
             "pub_filename": "ed448-cert.pub",
-            "serial": "34BFF798867DB4ADF85E0360A22602FFBFD45137",
-            "sha1": "06:FF:87:8F:DE:73:B4:0E:0A:18:D8:F3:D4:AC:84:41:14:13:4C:DC",
-            "sha256": "AA:70:A5:C6:F2:98:5B:6F:1C:72:F3:4B:56:65:8A:C0:58:5D:50:7A:10:7C:24:41:FB:31:CC:C4:28:9F:C1:C9",
-            "sha512": "2D:DA:17:B7:21:A9:E9:FC:E6:1B:55:8B:20:F7:6E:98:99:9E:FF:34:44:EE:DB:4E:40:9D:F8:6C:18:8A:18:27:B5:98:83:09:CC:05:56:DA:A8:BB:72:00:53:03:47:91:EF:80:BA:95:B0:26:10:BC:09:3C:B4:39:71:68:70:D3",
+            "serial": "3F1C5DC79B23FB36F9AD5F01C22D0FF712E365B7",
+            "sha1": "BC:EA:C1:5F:E5:5F:0E:4A:9A:4C:8D:FD:B0:B6:0A:F8:24:98:77:5C",
+            "sha256": "57:99:1C:82:78:75:0F:56:E1:2D:D8:54:01:39:7A:FA:4A:10:4C:CA:2C:97:DA:B7:C2:CA:CB:40:DA:7D:A2:90",
+            "sha512": "2C:B4:C5:F1:D8:DB:7C:5C:BC:51:BC:23:28:54:55:55:26:4D:51:0E:09:40:19:BC:B9:FF:FC:72:FB:04:66:45:19:99:4A:EE:1C:16:88:BC:8C:B9:0C:ED:8D:1C:D9:12:03:2C:30:11:FB:60:FD:3F:1F:A3:F9:D9:1D:C2:5A:50",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "ed448-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "ed448-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -2433,12 +2487,41 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "95:98:A8:CF:3A:6F:78:0D:DA:42:DD:80:26:4C:A2:75:3E:9B:B9:CB"
+                "value": "77:DB:04:A7:38:5A:41:E6:43:D2:85:C0:C5:84:86:AF:B2:5B:96:51"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=ed448-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
+        },
+        "empty-subject": {
+            "algorithm": "sha256",
+            "ca": "child",
+            "cat": "generated",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
+            "csr_filename": "empty-subject.csr",
+            "csr_subject": [],
+            "key_der_filename": "empty-subject.key.der",
+            "key_filename": "empty-subject.key",
+            "key_size": 2048,
+            "key_type": "RSA",
+            "md5": "2F:B9:35:E0:22:B8:47:C6:76:3E:A6:17:60:B4:54:F1",
+            "name": "empty-subject",
+            "pub_der_filename": "empty-subject.pub.der",
+            "pub_filename": "empty-subject.pub",
+            "serial": "565C2619A764B31C5F7D28B1ED68A86786338D2B",
+            "sha1": "68:98:9E:9C:02:53:D7:D5:70:CC:B9:85:CA:2A:24:D4:46:C9:66:65",
+            "sha256": "86:89:A3:FB:6A:AC:EC:08:3D:F4:30:C3:0A:A5:88:0A:4C:0D:27:94:49:51:BC:47:56:25:35:9A:76:66:98:EA",
+            "sha512": "30:39:49:CE:37:7C:00:7F:9A:0E:38:5D:13:49:85:5B:FB:08:80:14:0B:BC:72:EB:DB:3E:78:F4:2B:4B:06:B7:DF:A4:AA:38:E2:43:30:CE:EE:81:89:D3:1E:FE:1F:8F:B7:F9:0A:AC:EC:01:DF:93:21:23:0C:48:0C:33:93:E3",
+            "subject": [],
+            "subject_alternative_name": {
+                "critical": true,
+                "value": [
+                    "DNS:empty-subject.example.com"
+                ]
+            },
+            "type": "cert",
+            "valid_from": "2023-10-26 14:00:00",
+            "valid_until": "2024-04-26 14:00:00"
         },
         "geotrust": {
             "authority_key_identifier": {
@@ -2468,24 +2551,23 @@
             "sha256": "FF:85:6A:2D:25:1D:CD:88:D3:66:56:F4:50:12:67:98:CF:AB:AA:DE:40:79:9C:72:2D:E4:D2:B5:DB:36:A7:3A",
             "sha512": "F7:55:01:0B:4C:FB:8F:9F:0B:7F:CB:15:4C:5B:FB:9C:4B:80:15:B5:D6:55:0A:2A:E4:9E:9F:E1:BE:27:17:4F:CD:B6:06:B0:E9:64:CC:CA:16:56:5A:AD:C4:81:DA:EC:1B:DD:8A:7A:92:E5:12:25:87:19:48:0B:EA:6A:60:49",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "GeoTrust Inc."
-                ],
-                [
-                    "CN",
-                    "GeoTrust Global CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GeoTrust Inc."
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "GeoTrust Global CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "C0:7A:98:68:8D:89:FB:AB:05:64:0C:11:7D:AA:7D:65:B8:CA:CC:4E"
             },
-            "subject_str": "/C=US/O=GeoTrust Inc./CN=GeoTrust Global CA",
             "type": "ca",
             "valid_from": "2002-05-21 04:00:00",
             "valid_until": "2022-05-21 04:00:00"
@@ -2519,28 +2601,27 @@
             "sha256": "EB:D4:10:40:E4:BB:3E:C7:42:C9:E3:81:D3:1E:F2:A4:1A:48:B6:68:5C:96:E7:CE:F3:C1:DF:6C:D4:33:1C:99",
             "sha512": "54:BA:00:4D:54:35:E8:B1:05:31:43:1C:39:2E:D9:97:76:12:0D:36:38:08:13:7D:E7:EB:59:03:04:63:F8:63:CA:DD:02:BD:F9:18:F5:96:B6:D2:09:64:B3:17:25:C2:36:3C:D7:60:17:99:CA:A9:36:0A:1C:36:FE:81:9F:BD",
             "subject": [
-                [
-                    "C",
-                    "BE"
-                ],
-                [
-                    "O",
-                    "GlobalSign nv-sa"
-                ],
-                [
-                    "OU",
-                    "Root CA"
-                ],
-                [
-                    "CN",
-                    "GlobalSign Root CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "BE"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GlobalSign nv-sa"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Root CA"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "GlobalSign Root CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "60:7B:66:1A:45:0D:97:CA:89:50:2F:7D:04:CD:34:A8:FF:FC:FD:4B"
             },
-            "subject_str": "/C=BE/O=GlobalSign nv-sa/OU=Root CA/CN=GlobalSign Root CA",
             "type": "ca",
             "valid_from": "1998-09-01 12:00:00",
             "valid_until": "2028-01-28 12:00:00"
@@ -2609,24 +2690,23 @@
             "sha256": "BF:DF:4C:F3:F1:43:AD:0D:B9:12:D8:AB:3A:7C:12:F6:17:B9:EA:60:CE:8B:1F:4E:44:F7:42:70:FB:21:B1:9B",
             "sha512": "04:18:E3:3F:ED:67:24:15:5D:2A:6C:70:2F:99:E2:E8:C9:B0:B7:FD:16:3D:9B:5C:7A:FC:E9:F0:1C:B1:51:24:2A:E7:A0:11:1D:BA:FE:E1:94:8C:5E:05:B9:28:10:6C:63:9A:C0:F3:66:3A:BE:A2:AB:CE:A8:3B:2E:3C:1A:0D",
             "subject": [
-                [
-                    "C",
-                    "BE"
-                ],
-                [
-                    "O",
-                    "GlobalSign nv-sa"
-                ],
-                [
-                    "CN",
-                    "GlobalSign Domain Validation CA - SHA256 - G2"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "BE"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GlobalSign nv-sa"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "GlobalSign Domain Validation CA - SHA256 - G2"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "EA:4E:7C:D4:80:2D:E5:15:81:86:26:8C:82:6D:C0:98:A4:CF:97:0F"
             },
-            "subject_str": "/C=BE/O=GlobalSign nv-sa/CN=GlobalSign Domain Validation CA - SHA256 - G2",
             "type": "ca",
             "valid_from": "2014-02-20 10:00:00",
             "valid_until": "2024-02-20 10:00:00"
@@ -2687,8 +2767,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -2708,14 +2788,14 @@
             "sha256": "3D:5C:C1:84:07:8A:D8:52:15:F0:AD:A1:01:5D:21:16:EA:9D:0C:E5:79:39:C6:B7:98:7E:D6:27:FB:9B:81:31",
             "sha512": "D9:60:11:C8:B7:7A:05:35:D2:CA:D0:8E:CD:CC:A5:3B:CF:AB:28:59:2D:39:1F:0F:74:E2:35:3C:5F:26:17:89:27:7C:93:EA:22:38:C1:08:32:99:AA:1C:9F:29:57:A0:57:BE:C2:D3:9F:6B:BD:E0:31:5D:D1:F7:11:FC:B9:8B",
             "subject": [
-                [
-                    "OU",
-                    "Domain Control Validated"
-                ],
-                [
-                    "CN",
-                    "www.ajabber.me"
-                ]
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Domain Control Validated"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "www.ajabber.me"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -2728,7 +2808,6 @@
                 "critical": false,
                 "value": "52:5A:45:5B:D4:9D:AC:65:30:BD:67:80:6C:D1:A1:3E:09:F7:FD:92"
             },
-            "subject_str": "/OU=Domain Control Validated/CN=www.ajabber.me",
             "type": "cert",
             "valid_from": "2016-03-28 17:32:44",
             "valid_until": "2017-03-29 17:32:44"
@@ -2778,24 +2857,23 @@
             "sha256": "CA:42:DD:41:74:5F:D0:B8:1E:B9:02:36:2C:F9:D8:BF:71:9D:A1:BD:1B:1E:FC:94:6F:5B:4C:99:F4:2C:1B:9E",
             "sha512": "DE:82:56:35:4E:EA:96:4A:DC:D0:28:5F:A6:A5:7B:4F:31:CF:7E:D8:6B:BF:29:2E:F0:E8:7B:6E:C4:31:D4:3E:5E:C2:F5:77:F0:72:09:88:15:EC:B6:D9:77:BE:C1:47:E0:75:48:62:FF:29:CD:CA:91:4D:65:AF:CE:EA:09:8F",
             "subject": [
-                [
-                    "OU",
-                    "GlobalSign Root CA - R2"
-                ],
-                [
-                    "O",
-                    "GlobalSign"
-                ],
-                [
-                    "CN",
-                    "GlobalSign"
-                ]
+                {
+                    "oid": "2.5.4.11",
+                    "value": "GlobalSign Root CA - R2"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GlobalSign"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "GlobalSign"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "9B:E2:07:57:67:1C:1E:C0:6A:06:DE:59:B4:9A:2D:DF:DC:19:86:2E"
             },
-            "subject_str": "/OU=GlobalSign Root CA - R2/O=GlobalSign/CN=GlobalSign",
             "type": "ca",
             "valid_from": "2006-12-15 08:00:00",
             "valid_until": "2021-12-15 08:00:00"
@@ -2864,36 +2942,35 @@
             "sha256": "97:3A:41:27:6F:FD:01:E0:27:A2:AA:D4:9E:34:C3:78:46:D3:E9:76:FF:6A:62:0B:67:12:E3:38:32:04:1A:A6",
             "sha512": "42:C5:B2:23:34:CD:08:C7:27:FD:EC:4A:CA:8D:F6:EC:64:5A:FA:8D:D7:FC:27:8D:26:A2:C8:00:C8:1D:7C:FF:86:FC:10:7E:6D:7F:28:F1:A8:E4:FA:F0:21:6F:D4:D2:A9:AF:22:D6:97:14:CA:90:99:E4:57:D1:B2:D5:18:8A",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "ST",
-                    "Arizona"
-                ],
-                [
-                    "L",
-                    "Scottsdale"
-                ],
-                [
-                    "O",
-                    "GoDaddy.com, Inc."
-                ],
-                [
-                    "OU",
-                    "http://certs.godaddy.com/repository/"
-                ],
-                [
-                    "CN",
-                    "Go Daddy Secure Certificate Authority - G2"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Arizona"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Scottsdale"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GoDaddy.com, Inc."
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "http://certs.godaddy.com/repository/"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "Go Daddy Secure Certificate Authority - G2"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "40:C2:BD:27:8E:CC:34:83:30:A2:33:D7:FB:6C:B3:F0:B4:2C:80:CE"
             },
-            "subject_str": "/C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./OU=\"http://certs.godaddy.com/repository/\"/CN=Go Daddy Secure Certificate Authority - G2",
             "type": "ca",
             "valid_from": "2011-05-03 07:00:00",
             "valid_until": "2031-05-03 07:00:00"
@@ -2954,8 +3031,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -2998,14 +3075,14 @@
             "sha256": "07:C0:45:58:F8:5E:4E:A7:A4:DD:A0:20:93:A0:06:34:DB:80:FC:2F:7B:93:EE:46:9F:A2:7E:8F:E3:4E:50:4F",
             "sha512": "7D:24:F0:7A:4E:84:A8:E3:42:E4:28:1F:61:82:F4:63:F7:D1:63:E0:CF:53:E5:C3:AF:CF:05:92:A6:3D:FA:BD:B6:F8:9B:1E:00:61:DF:B7:EB:9B:95:80:BD:87:D2:B5:91:AB:E1:F7:E8:86:D9:F2:70:7B:CD:AB:92:13:53:2D",
             "subject": [
-                [
-                    "OU",
-                    "Domain Control Validated"
-                ],
-                [
-                    "CN",
-                    "derstandard.at"
-                ]
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Domain Control Validated"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "derstandard.at"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -3065,7 +3142,6 @@
                 "critical": false,
                 "value": "2E:30:1A:46:41:F0:E8:1B:72:02:59:41:8A:CF:9D:1B:FA:98:8D:9E"
             },
-            "subject_str": "/OU=Domain Control Validated/CN=derstandard.at",
             "type": "cert",
             "valid_from": "2019-03-27 09:13:53",
             "valid_until": "2021-03-27 09:13:53"
@@ -3099,32 +3175,31 @@
             "sha256": "45:14:0B:32:47:EB:9C:C8:C5:B4:F0:D7:B5:30:91:F7:32:92:08:9E:6E:5A:63:E2:74:9D:D3:AC:A9:19:8E:DA",
             "sha512": "C5:09:CD:54:52:65:9A:E9:4C:67:3A:47:B6:8E:2C:0A:A8:AD:17:78:04:C8:AE:29:49:30:6E:92:32:B7:0A:B5:B5:33:4D:1A:BE:53:A2:5E:CA:F0:C6:09:87:1B:33:84:97:73:B4:ED:F2:77:DD:34:60:69:03:8F:69:5D:76:FB",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "ST",
-                    "Arizona"
-                ],
-                [
-                    "L",
-                    "Scottsdale"
-                ],
-                [
-                    "O",
-                    "GoDaddy.com, Inc."
-                ],
-                [
-                    "CN",
-                    "Go Daddy Root Certificate Authority - G2"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Arizona"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Scottsdale"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GoDaddy.com, Inc."
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "Go Daddy Root Certificate Authority - G2"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "3A:9A:85:07:10:67:28:B6:EF:F6:BD:05:41:6E:20:C1:94:DA:0F:DE"
             },
-            "subject_str": "/C=US/ST=Arizona/L=Scottsdale/O=GoDaddy.com, Inc./CN=Go Daddy Root Certificate Authority - G2",
             "type": "ca",
             "valid_from": "2009-09-01 00:00:00",
             "valid_until": "2037-12-31 23:59:59"
@@ -3178,8 +3253,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -3201,24 +3276,23 @@
             "sha256": "BE:0C:CD:54:D4:CE:CD:A1:BD:5E:5D:9E:CC:85:A0:4C:2C:1F:93:A5:22:0D:77:FD:E8:8F:E9:AD:08:1F:64:1B",
             "sha512": "0C:9A:4F:B7:B2:D5:82:33:AC:86:18:8C:29:AA:B3:F1:83:1E:1A:B4:7C:72:B1:F0:98:CA:2B:EB:09:74:6D:B9:AF:1D:94:4A:8A:93:01:DC:FC:BE:1A:85:20:98:4B:E2:5B:00:64:7F:46:BD:32:03:C0:33:E2:4F:2D:82:2C:6E",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "Google Trust Services"
-                ],
-                [
-                    "CN",
-                    "Google Internet Authority G3"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Google Trust Services"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "Google Internet Authority G3"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "77:C2:B8:50:9A:67:76:76:B1:2D:C2:86:D0:83:A0:7E:A6:7E:BA:4B"
             },
-            "subject_str": "/C=US/O=Google Trust Services/CN=Google Internet Authority G3",
             "type": "ca",
             "valid_from": "2017-06-15 00:00:42",
             "valid_until": "2021-12-15 00:00:42"
@@ -3296,26 +3370,26 @@
             "sha256": "8E:33:94:CB:09:96:C3:19:21:8C:9E:69:5E:34:76:67:9E:78:EA:87:01:74:5B:51:98:F8:ED:37:B5:7F:AF:1F",
             "sha512": "1C:3E:AC:11:FA:91:8D:E6:99:3C:1F:50:72:C1:51:56:63:0B:16:83:DB:63:FC:23:DA:7B:10:7F:76:E9:D0:C8:01:96:BF:26:9A:1D:17:57:45:C5:22:92:73:1E:02:C0:73:1A:E5:7B:2E:B4:D9:67:17:B1:F5:41:6F:E8:5E:35",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "ST",
-                    "California"
-                ],
-                [
-                    "L",
-                    "Mountain View"
-                ],
-                [
-                    "O",
-                    "Google LLC"
-                ],
-                [
-                    "CN",
-                    "www.google.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "California"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Mountain View"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Google LLC"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "www.google.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -3327,7 +3401,6 @@
                 "critical": false,
                 "value": "1F:0D:A6:EA:EA:2B:6E:96:1B:5C:99:B5:C3:3D:6F:5F:4B:0D:BE:9F"
             },
-            "subject_str": "/C=US/ST=California/L=Mountain View/O=Google LLC/CN=www.google.com",
             "type": "cert",
             "valid_from": "2019-03-26 13:38:23",
             "valid_until": "2019-06-18 13:24:00"
@@ -3361,24 +3434,23 @@
             "sha256": "5D:56:49:9B:E4:D2:E0:8B:CF:CA:D0:8A:3E:38:72:3D:50:50:3B:DE:70:69:48:E4:2F:55:60:30:19:E5:28:AE",
             "sha512": "BD:D0:4F:04:2D:A0:10:28:4F:C5:A4:EE:8D:9F:35:60:D3:54:34:0F:1D:8B:8D:6C:BF:6B:0D:D8:85:0F:51:E9:D1:C0:47:DB:68:A4:1D:93:18:78:EB:90:3F:22:61:4D:4C:F5:8F:77:FB:27:A3:F0:D3:5C:99:BD:99:64:7C:BB",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "IdenTrust"
-                ],
-                [
-                    "CN",
-                    "IdenTrust Commercial Root CA 1"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "IdenTrust"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "IdenTrust Commercial Root CA 1"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "ED:44:19:C0:D3:F0:06:8B:EE:A4:7B:BE:42:E7:26:54:C8:8E:36:76"
             },
-            "subject_str": "/C=US/O=IdenTrust/CN=IdenTrust Commercial Root CA 1",
             "type": "ca",
             "valid_from": "2014-01-16 18:12:23",
             "valid_until": "2034-01-16 18:12:23"
@@ -3463,24 +3535,23 @@
             "sha256": "7F:DC:E3:BF:41:03:C2:68:4B:3A:DB:B5:79:28:84:BD:45:C7:50:94:C2:17:78:88:63:95:03:46:F7:9C:90:A3",
             "sha512": "95:BE:D1:89:BF:57:5A:88:E7:93:5F:59:67:15:4F:74:90:8D:3C:32:66:2C:3F:0B:66:AF:85:22:A6:AF:22:65:3F:D6:93:A3:9E:FE:36:39:F5:13:44:66:C4:6A:16:EB:B7:E8:49:89:0F:DE:84:32:4D:E6:45:FF:E7:E8:92:B1",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "Let's Encrypt"
-                ],
-                [
-                    "CN",
-                    "Let's Encrypt Authority X1"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Let's Encrypt"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "Let's Encrypt Authority X1"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
             },
-            "subject_str": "/C=US/O=\"Let's Encrypt\"/CN=\"Let's Encrypt Authority X1\"",
             "type": "ca",
             "valid_from": "2015-10-19 22:33:36",
             "valid_until": "2020-10-19 22:33:36"
@@ -3534,8 +3605,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -3555,10 +3626,10 @@
             "sha256": "02:DC:D8:E1:8D:7A:44:87:76:51:FA:3F:81:C4:01:A5:A1:43:91:2C:DA:23:6A:F5:78:00:83:FA:D6:4F:25:D0",
             "sha512": "CC:F7:55:D2:B0:A3:02:AE:43:BE:CF:8D:87:4D:EF:41:61:87:24:47:81:8E:79:A8:78:57:35:2A:EE:51:58:26:A6:32:DB:21:F1:B1:BA:96:61:56:7D:B5:2F:7D:68:8D:A4:4D:2A:55:DB:2E:1E:DF:1E:5C:38:B8:6E:F5:D3:F5",
             "subject": [
-                [
-                    "CN",
-                    "id.er.tl"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "id.er.tl"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -3570,7 +3641,6 @@
                 "critical": false,
                 "value": "F4:F3:B8:F5:43:90:2E:A2:7F:DD:51:4A:5F:3E:AC:FB:F1:33:EE:95"
             },
-            "subject_str": "/CN=id.er.tl",
             "type": "cert",
             "valid_from": "2016-03-11 13:17:00",
             "valid_until": "2016-06-09 13:17:00"
@@ -3647,24 +3717,23 @@
             "sha256": "25:84:7D:66:8E:B4:F0:4F:DD:40:B1:2B:6B:07:40:C5:67:DA:7D:02:43:08:EB:6C:2C:96:FE:41:D9:DE:21:8D",
             "sha512": "2E:1E:12:DA:CB:35:0E:69:31:7A:7F:37:D7:69:F4:6F:16:F4:37:CF:8D:39:23:19:27:9C:93:51:5E:56:00:BA:ED:3D:3A:CD:5D:C8:3B:67:3E:8C:60:CF:7F:BA:0D:CE:00:A4:D1:62:A3:B9:66:A3:EB:F7:24:87:C3:76:FC:A0",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "Let's Encrypt"
-                ],
-                [
-                    "CN",
-                    "Let's Encrypt Authority X3"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Let's Encrypt"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "Let's Encrypt Authority X3"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1"
             },
-            "subject_str": "/C=US/O=\"Let's Encrypt\"/CN=\"Let's Encrypt Authority X3\"",
             "type": "ca",
             "valid_from": "2016-03-17 16:40:46",
             "valid_until": "2021-03-17 16:40:46"
@@ -3715,8 +3784,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -3753,10 +3822,10 @@
             "sha256": "7D:8B:B8:72:09:90:5D:60:95:F3:94:7D:B6:7B:D4:7B:51:80:0A:46:7F:E4:0E:FC:85:73:9A:D0:F8:99:A2:34",
             "sha512": "AE:35:4C:A5:42:E5:38:EC:F4:58:38:4A:21:04:86:DF:20:58:B4:CC:36:A8:DA:EA:FC:FD:48:09:63:C0:8D:02:C9:56:61:6F:68:7D:89:53:1A:0F:3A:CB:C1:45:F0:35:9E:BC:03:58:C9:AC:72:49:FC:79:6C:83:81:D3:7E:E4",
             "subject": [
-                [
-                    "CN",
-                    "jabber.at"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "jabber.at"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -3777,7 +3846,6 @@
                 "critical": false,
                 "value": "77:37:2D:FC:89:22:11:A0:61:E0:AC:6C:F4:1D:98:31:1B:B2:B3:88"
             },
-            "subject_str": "/CN=jabber.at",
             "type": "cert",
             "valid_from": "2019-06-25 02:40:03",
             "valid_until": "2019-09-23 02:40:03"
@@ -3787,33 +3855,35 @@
             "ca": "child",
             "cat": "generated",
             "cn": "no-extensions.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "csr_filename": "no-extensions.csr",
-            "csr_subject": {
-                "CN": "csr.no-extensions.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.no-extensions.example.com"
+                }
+            ],
             "key_der_filename": "no-extensions.key.der",
             "key_filename": "no-extensions.key",
             "key_size": 2048,
             "key_type": "RSA",
-            "md5": "2C:84:D6:7C:C5:67:1C:5C:37:0E:FA:BE:B6:11:A9:7C",
+            "md5": "8B:66:71:C1:F9:C6:7E:76:77:CC:73:24:1F:89:1C:2E",
             "name": "no-extensions",
             "pub_der_filename": "no-extensions.pub.der",
             "pub_filename": "no-extensions.pub",
-            "serial": "236AD0BCFB9C839AFFB75A54902E1F2AA3B89908",
-            "sha1": "DC:B4:1C:BF:0D:1A:DF:BB:4E:56:AF:20:8C:CC:70:43:B4:67:44:FC",
-            "sha256": "F9:23:B7:04:62:00:CB:F1:CB:99:8A:33:72:38:48:E3:6B:48:B5:4D:10:C8:AC:A7:2C:B8:2F:54:64:47:A4:6D",
-            "sha512": "4F:13:0B:C0:09:16:37:0F:D7:B6:DE:7B:7A:21:F5:98:FF:D2:C3:CC:88:C2:DE:94:E5:84:E2:3D:BC:DA:36:16:F1:EF:38:73:B9:2A:1D:64:3F:FC:CC:90:EE:60:EC:40:63:5A:6E:21:6B:7B:F8:21:10:9B:16:B9:8A:EE:A8:3E",
+            "serial": "3D9498F0BCBD8221B95CCF1C69521937D649090A",
+            "sha1": "B4:CB:81:42:69:CA:CE:13:79:52:2A:81:5D:A1:D7:3E:28:DA:AB:CD",
+            "sha256": "48:3B:14:16:5B:E0:1F:6A:73:A4:2E:0E:20:D2:C3:80:7C:74:4A:55:69:40:22:4C:8D:52:DE:DE:84:99:7F:86",
+            "sha512": "1B:78:FB:84:38:0A:E1:A2:AF:49:9F:15:55:7E:6B:8F:17:87:E1:17:F7:34:39:6A:64:BA:C4:33:52:65:42:88:10:BE:43:74:EA:01:0C:87:63:83:B7:A2:AC:39:89:FF:98:99:C6:0F:8F:52:30:5D:9F:DB:8E:EC:91:B7:78:8A",
             "subject": [
-                [
-                    "CN",
-                    "no-extensions.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "no-extensions.example.com"
+                }
             ],
-            "subject_str": "/CN=no-extensions.example.com",
             "type": "cert",
-            "valid_from": "2023-02-27 19:00:00",
-            "valid_until": "2023-08-29 19:00:00"
+            "valid_from": "2023-10-26 14:00:00",
+            "valid_until": "2024-04-26 14:00:00"
         },
         "profile-client": {
             "algorithm": "sha256",
@@ -3821,17 +3891,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -3843,21 +3913,24 @@
             "ca": "child",
             "cat": "generated",
             "cn": "profile-client.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "profile-client.csr",
-            "csr_subject": {
-                "CN": "csr.profile-client.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.profile-client.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3874,40 +3947,40 @@
                     "digital_signature"
                 ]
             },
-            "md5": "D6:8C:D8:8A:3E:C7:F9:57:38:DE:F4:8A:9C:8C:53:D2",
+            "md5": "E7:10:C6:98:E7:D4:AD:2A:48:62:84:E9:4C:8C:C0:81",
             "name": "profile-client",
             "profile": "client",
             "pub_der_filename": "profile-client.pub.der",
             "pub_filename": "profile-client.pub",
-            "serial": "3685BF8020E43C7B07902EC7FF478B1EC66CFA78",
-            "sha1": "E4:2E:9C:A8:16:6E:60:0D:47:9F:83:11:CF:70:4D:F7:A5:09:6B:87",
-            "sha256": "EF:F6:67:27:82:A3:1A:78:7D:EC:86:F4:A8:E2:88:1B:F8:A7:79:79:E9:AB:2F:EF:52:53:8B:B0:72:C4:01:17",
-            "sha512": "24:BF:2A:06:CB:7F:69:54:E1:89:34:B6:18:BB:CC:5F:52:5B:57:83:8F:BF:14:DD:B8:ED:70:B7:1F:DC:A6:93:21:81:0E:25:0F:F2:7E:94:0A:2F:14:A2:5E:D1:A1:F6:F5:21:D3:77:91:1D:C7:43:0A:C8:3F:A7:68:64:48:9C",
+            "serial": "27CE611301CCCF14536781E7EB41BA6AD76CE298",
+            "sha1": "31:F0:FA:AD:54:F7:9E:C4:7B:4C:44:C0:EC:EF:CD:CC:BF:F2:17:42",
+            "sha256": "8F:87:76:A1:93:4A:60:19:E0:17:6D:28:D9:C1:0D:06:C7:8E:C6:FE:27:90:11:37:B2:DB:CC:59:92:F6:26:F7",
+            "sha512": "8E:74:06:E6:64:64:41:42:88:9F:80:8E:84:70:69:6B:18:BA:89:5B:F7:AA:FB:54:50:FF:0B:E5:37:19:19:FF:2D:DA:B2:BD:35:3A:56:54:AE:77:DE:C7:A4:70:C4:78:60:6E:D0:D5:50:15:46:16:E7:7E:3D:EC:AA:64:86:13",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "profile-client.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "profile-client.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -3917,12 +3990,11 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "B3:96:3A:9A:EF:32:F2:42:7B:F0:CC:72:D1:A1:06:27:9B:07:39:4B"
+                "value": "27:33:8F:8B:C1:F7:4F:2C:23:1D:93:F5:F4:71:E6:A4:8E:46:6F:5E"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-client.example.com",
             "type": "cert",
-            "valid_from": "2023-02-22 19:00:00",
-            "valid_until": "2023-08-24 19:00:00"
+            "valid_from": "2023-10-21 14:00:00",
+            "valid_until": "2024-04-21 14:00:00"
         },
         "profile-enduser": {
             "algorithm": "sha256",
@@ -3930,17 +4002,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -3952,21 +4024,24 @@
             "ca": "child",
             "cat": "generated",
             "cn": "profile-enduser.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "profile-enduser.csr",
-            "csr_subject": {
-                "CN": "csr.profile-enduser.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.profile-enduser.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -3987,49 +4062,48 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "93:B3:09:40:E0:23:5E:D3:35:79:0F:77:0C:C4:B6:7F",
+            "md5": "AD:0F:BB:69:E6:2A:F2:C2:5A:72:81:F2:39:2D:C5:43",
             "name": "profile-enduser",
             "profile": "enduser",
             "pub_der_filename": "profile-enduser.pub.der",
             "pub_filename": "profile-enduser.pub",
-            "serial": "4AC04177605A81E527120E52AC98E406A643AF52",
-            "sha1": "A5:C6:C8:E7:C1:C0:ED:46:43:41:A1:00:6E:10:9E:B3:C7:38:41:BE",
-            "sha256": "59:B2:09:D8:A0:DF:25:B3:A8:C5:CB:13:9C:12:2C:A6:50:53:35:60:7D:2A:83:96:AF:A4:03:E6:8C:DA:07:C1",
-            "sha512": "8E:F4:E1:9E:8F:72:3D:7F:A2:6D:75:99:F6:39:38:D3:88:8A:26:A3:A7:03:98:02:01:45:56:6E:58:AB:7D:D1:01:80:83:43:9D:D1:38:43:73:41:33:E8:7E:11:10:94:FA:FD:04:4B:34:86:20:E6:4D:59:94:39:F5:97:1D:FD",
+            "serial": "2A6EC0E96B89523E0C5F37598BF30F4E68117930",
+            "sha1": "B5:EC:73:79:08:25:FE:E5:18:50:66:B0:D4:69:6E:A7:1E:62:50:8F",
+            "sha256": "E3:33:3C:A0:DC:FA:B7:54:88:63:61:61:BF:9F:1D:3C:E0:A5:C0:0C:91:62:00:E4:E5:9E:03:C0:1A:EC:FB:32",
+            "sha512": "4C:04:6F:CD:69:CA:3D:2B:89:05:66:0F:5E:1D:F9:1D:48:B3:E0:AF:61:60:9A:A1:61:99:5D:73:13:D9:90:F6:CF:56:80:89:C5:C4:A8:F3:0B:7F:A8:6A:81:00:E9:0E:D2:07:31:A5:0A:90:B9:00:73:2E:B1:A3:C5:73:CD:9A",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "profile-enduser.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "profile-enduser.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "43:27:8F:C1:BA:51:3B:42:2B:B7:91:75:C7:D3:A4:21:16:F1:12:32"
+                "value": "6A:5D:4E:88:11:25:1C:AB:13:DA:18:71:9D:2D:13:E7:FE:7A:8F:EA"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-enduser.example.com",
             "type": "cert",
-            "valid_from": "2023-02-22 19:00:00",
-            "valid_until": "2023-08-24 19:00:00"
+            "valid_from": "2023-10-21 14:00:00",
+            "valid_until": "2024-04-21 14:00:00"
         },
         "profile-ocsp": {
             "algorithm": "sha256",
@@ -4037,14 +4111,14 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -4056,21 +4130,24 @@
             "ca": "child",
             "cat": "generated",
             "cn": "profile-ocsp.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "profile-ocsp.csr",
-            "csr_subject": {
-                "CN": "csr.profile-ocsp.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.profile-ocsp.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -4089,7 +4166,7 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "18:FD:80:05:82:47:51:2A:E7:70:68:A3:36:A3:7C:FF",
+            "md5": "19:D3:4C:E5:4B:53:D0:BA:0B:67:FE:AE:0C:E8:6C:FF",
             "name": "profile-ocsp",
             "ocsp_no_check": {
                 "critical": false,
@@ -4098,24 +4175,23 @@
             "profile": "ocsp",
             "pub_der_filename": "profile-ocsp.pub.der",
             "pub_filename": "profile-ocsp.pub",
-            "serial": "60087445E7181598A621E1BEE3EDB259FE6A640A",
-            "sha1": "32:A7:9C:D3:87:7A:E4:84:6F:07:78:A6:2D:E8:9B:5C:A0:C1:72:67",
-            "sha256": "9E:CC:2E:D5:4A:1C:80:63:F8:2E:69:29:4C:17:70:12:C8:5A:CF:E3:62:FC:40:EC:AF:5B:D8:08:DC:E2:AB:31",
-            "sha512": "2C:A4:D2:BF:90:76:32:D7:AE:36:FF:E2:35:3B:DD:DC:8B:59:CE:07:BF:26:6A:FB:F1:AB:AA:66:99:FA:F4:6E:3B:69:45:A5:DE:D3:B7:AC:15:E8:7F:40:CE:39:12:29:C0:4D:1E:64:2C:A0:A3:1E:68:56:21:2B:7D:04:AD:2C",
+            "serial": "4108A9E28F350BE09FC063E34AD3CAFD808189E8",
+            "sha1": "69:AD:B7:F3:0F:AB:51:3A:93:98:8B:09:8D:DD:46:39:39:9A:55:D1",
+            "sha256": "D4:31:3B:21:94:C4:2B:07:FF:FD:4D:39:52:CC:81:85:99:07:EA:35:8B:F2:EE:05:47:51:56:2A:1D:17:F4:8C",
+            "sha512": "97:6C:53:AB:43:2F:39:8F:0D:5D:F0:3B:A8:85:2C:8C:5D:B8:44:4E:D3:D8:90:5D:DA:21:86:D8:FA:70:E6:DB:74:29:A8:3F:BA:55:75:D9:84:8B:07:AE:E9:CD:88:B0:9F:A7:92:44:9A:3C:C4:73:E7:92:E3:0C:AB:71:77:1D",
             "subject": [
-                [
-                    "CN",
-                    "profile-ocsp.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "profile-ocsp.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "BB:4C:E6:2F:01:88:6B:29:96:9D:EA:82:D9:96:77:27:39:91:E8:28"
+                "value": "F1:E0:65:EB:94:B4:28:25:84:1D:4D:D9:9A:25:A6:9D:94:03:91:73"
             },
-            "subject_str": "/CN=profile-ocsp.example.com",
             "type": "cert",
-            "valid_from": "2023-02-22 19:00:00",
-            "valid_until": "2023-08-24 19:00:00"
+            "valid_from": "2023-10-21 14:00:00",
+            "valid_until": "2024-04-21 14:00:00"
         },
         "profile-server": {
             "algorithm": "sha256",
@@ -4123,17 +4199,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -4145,21 +4221,24 @@
             "ca": "child",
             "cat": "generated",
             "cn": "profile-server.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "profile-server.csr",
-            "csr_subject": {
-                "CN": "csr.profile-server.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.profile-server.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -4179,40 +4258,40 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "97:CF:DB:69:73:94:DE:E6:48:FC:44:17:AE:FF:3E:7B",
+            "md5": "0D:18:C1:2F:1F:57:1E:63:75:9C:C6:22:5E:55:41:17",
             "name": "profile-server",
             "profile": "server",
             "pub_der_filename": "profile-server.pub.der",
             "pub_filename": "profile-server.pub",
-            "serial": "4EC85B2D6EC8735273445002D2D5391129752682",
-            "sha1": "10:38:DD:7E:E7:AA:EA:26:23:58:67:5E:A7:A5:A2:E5:75:81:80:DD",
-            "sha256": "1D:2D:3D:06:85:06:0D:A2:20:4A:73:E7:4B:9D:A8:06:D6:82:2F:A1:F6:3B:E0:BC:05:E7:19:A2:22:47:E5:83",
-            "sha512": "4B:3B:CA:1E:64:08:73:A3:85:9C:7B:D9:A8:30:F8:28:A6:72:65:80:BD:6C:D4:70:F1:F1:FA:D5:9B:E0:EC:3E:7B:DB:CC:1C:82:56:65:86:34:EA:B5:CD:B1:38:C5:18:44:F1:40:28:F6:26:A2:B9:90:8A:46:26:94:19:17:C2",
+            "serial": "751DDD895F406028C5A869FDC4696BAC0E214849",
+            "sha1": "20:1F:C8:A1:8D:EA:3C:D2:62:B9:08:FA:65:97:2B:C3:03:B9:B3:F6",
+            "sha256": "B4:1C:66:93:BB:C8:6D:0D:A9:94:3F:4A:83:2A:36:88:3F:12:82:EB:E7:9D:61:AE:C3:D3:77:CC:07:24:86:65",
+            "sha512": "7E:FA:45:5A:28:E7:F6:A9:EB:48:A4:C3:E7:1C:86:AB:47:14:55:91:A2:08:8C:26:4E:30:82:6A:A1:FC:44:4D:FA:03:C2:F0:38:A6:16:F8:E2:31:35:50:8C:9A:5A:D0:59:C7:94:A5:D0:3D:98:D6:0E:13:78:24:D8:4B:42:93",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "profile-server.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "profile-server.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -4222,12 +4301,11 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "67:F6:29:B9:38:79:C2:C8:3C:97:F3:6D:6F:ED:FE:1B:D5:84:96:24"
+                "value": "39:F7:A4:F0:FF:42:6F:0A:55:CD:B7:57:AC:04:F7:36:8B:CE:E5:EB"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-server.example.com",
             "type": "cert",
-            "valid_from": "2023-02-22 19:00:00",
-            "valid_until": "2023-08-24 19:00:00"
+            "valid_from": "2023-10-21 14:00:00",
+            "valid_until": "2024-04-21 14:00:00"
         },
         "profile-webserver": {
             "algorithm": "sha256",
@@ -4235,17 +4313,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "13:B0:DD:6A:37:82:CD:BD:24:F9:FF:3C:F7:3A:4C:C9:F8:84:B7:EE"
+                    "key_identifier": "B3:F6:6D:A9:7D:A3:62:68:18:D2:25:F2:D0:F0:A6:E9:FD:50:C7:7A"
                 }
             },
             "basic_constraints": {
@@ -4257,21 +4335,24 @@
             "ca": "child",
             "cat": "generated",
             "cn": "profile-webserver.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/",
+            "crl": "http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/6B1F876325B19FEDC7D28CC1E1B422EB45092AA8/"
+                            "URI:http://localhost:8000/django_ca/crl/7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "profile-webserver.csr",
-            "csr_subject": {
-                "CN": "csr.profile-webserver.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.profile-webserver.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -4290,40 +4371,40 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "D1:82:F0:8E:A8:62:0C:1A:55:18:E1:32:42:80:AA:21",
+            "md5": "3A:5E:9B:AA:DB:47:21:F4:0C:05:0B:95:A6:40:26:84",
             "name": "profile-webserver",
             "profile": "webserver",
             "pub_der_filename": "profile-webserver.pub.der",
             "pub_filename": "profile-webserver.pub",
-            "serial": "60B981399BE6A3B58B30FA160AE1482457844213",
-            "sha1": "38:5D:F7:24:F2:71:B7:C6:4E:67:FC:7D:1D:2A:6B:7C:C4:0B:42:26",
-            "sha256": "63:70:97:AB:B1:D1:F6:90:D5:E3:AE:0A:8E:BC:A2:27:E9:46:86:8D:8E:00:11:4C:94:24:35:DC:A3:A0:DA:4A",
-            "sha512": "6C:7B:F5:C4:C7:94:44:64:93:CE:5F:9C:DB:01:C5:EC:48:48:BB:BB:71:48:EB:AC:29:4B:63:A0:3C:02:F5:9C:B1:C6:D6:63:15:7D:FF:10:D0:C4:9D:63:C1:E6:FC:17:20:66:05:D4:AB:E1:B3:3F:70:4D:2D:E2:F2:56:F9:DA",
+            "serial": "2C45FB2BC972783E6DA8731EF0DB3B7685DD7DFA",
+            "sha1": "7E:69:C8:52:95:6D:88:02:8C:90:8A:38:F4:90:CD:0A:A6:4E:A3:B5",
+            "sha256": "C6:61:54:DC:8B:7E:53:FC:29:42:1B:29:C2:FE:44:4F:B1:29:67:88:A2:55:D4:FC:AC:B1:2D:D2:87:8C:79:43",
+            "sha512": "AC:CD:74:32:05:8C:36:F6:B5:BA:60:70:7A:6E:10:74:DD:D0:CC:41:1C:59:4E:CE:82:64:0A:F1:54:41:26:E4:81:C9:70:8E:CE:DF:93:6F:0B:CD:2B:C5:46:59:09:B0:64:B2:BE:B3:77:15:FA:16:CF:BF:AE:08:D0:36:56:A8",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "profile-webserver.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "profile-webserver.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -4333,19 +4414,18 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "29:E6:EE:F1:FA:DE:C9:21:0C:55:52:C0:D4:74:93:51:38:A5:34:CD"
+                "value": "0C:37:30:D9:FC:40:97:6A:A8:04:F2:D9:65:C8:90:5A:8E:95:75:F9"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=profile-webserver.example.com",
             "type": "cert",
-            "valid_from": "2023-02-22 19:00:00",
-            "valid_until": "2023-08-24 19:00:00"
+            "valid_from": "2023-10-21 14:00:00",
+            "valid_until": "2024-04-21 14:00:00"
         },
         "pwd": {
             "algorithm": "sha256",
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "75:89:81:E1:E0:9E:42:F6:0D:73:AA:5A:E1:4A:76:5E:78:E9:C0:36"
+                    "key_identifier": "8F:56:D9:A3:C6:85:8C:8A:99:1D:E5:65:BE:52:3F:71:96:AB:2B:E3"
                 }
             },
             "basic_constraints": {
@@ -4355,14 +4435,17 @@
                     "path_length": 2
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/16E09FA62B5807A1E498653A740EB33F75873F9C/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/249EF4414BB177780F914B386B3D4B00A11D2909/",
             "cat": "generated",
-            "crl_url": "http://localhost:8000/django_ca/crl/16E09FA62B5807A1E498653A740EB33F75873F9C/",
+            "crl_url": "http://localhost:8000/django_ca/crl/249EF4414BB177780F914B386B3D4B00A11D2909/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.pwd.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/16E09FA62B5807A1E498653A740EB33F75873F9C.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.pwd.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/249EF4414BB177780F914B386B3D4B00A11D2909.der",
             "key_der_filename": "pwd.key.der",
             "key_filename": "pwd.key",
             "key_size": 2048,
@@ -4375,31 +4458,30 @@
                 ]
             },
             "max_path_length": 2,
-            "md5": "E2:CC:B7:EB:12:7C:31:5A:05:38:49:05:8D:62:BF:18",
+            "md5": "09:22:CC:0C:E9:C0:B8:03:08:91:B0:3C:63:BB:8B:F1",
             "name": "pwd",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/16E09FA62B5807A1E498653A740EB33F75873F9C/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/249EF4414BB177780F914B386B3D4B00A11D2909/cert/",
             "password": "testpassword",
             "path_length": 2,
             "pub_der_filename": "pwd.pub.der",
             "pub_filename": "pwd.pub",
-            "serial": "16E09FA62B5807A1E498653A740EB33F75873F9C",
-            "sha1": "F3:F0:C2:CE:13:49:FD:92:4B:8F:F4:4D:54:18:63:1F:6D:A4:47:96",
-            "sha256": "95:CB:20:7A:7B:88:73:45:AC:5A:C9:91:07:9A:C0:34:88:2D:AD:28:C2:20:72:57:AF:E3:13:F3:0E:D8:DF:4B",
-            "sha512": "B1:84:EF:8B:02:0F:DB:EC:15:41:0D:50:E2:B4:20:90:50:E2:BC:FA:6D:6B:BD:1C:E7:94:DC:AD:D8:8A:5C:64:D0:8A:95:F8:26:AD:9D:AE:3F:C0:CA:03:9E:9F:2C:E1:3B:70:17:A5:B0:39:8A:0B:A1:EF:85:5B:7B:1B:22:A7",
+            "serial": "249EF4414BB177780F914B386B3D4B00A11D2909",
+            "sha1": "E8:8A:A9:33:50:D0:43:1D:72:DB:3B:8C:AD:2C:62:CF:24:EB:D3:63",
+            "sha256": "73:CA:8A:AE:4D:72:77:57:CC:81:6B:2F:37:48:73:BE:CB:95:3F:D1:24:CA:19:9E:16:D2:2F:A0:7C:F6:10:D4",
+            "sha512": "F6:BB:A4:F0:46:8C:48:9D:83:C7:E4:EC:41:88:13:72:8C:86:F9:A8:D7:F5:E3:36:99:2C:0A:E4:DF:BC:05:A4:53:C9:1C:49:EA:B0:08:C5:FD:02:DD:16:88:97:C5:CC:6B:A7:F9:A9:D6:08:2F:9F:CC:7E:1A:D3:9D:65:72:A4",
             "subject": [
-                [
-                    "CN",
-                    "pwd.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "pwd.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "75:89:81:E1:E0:9E:42:F6:0D:73:AA:5A:E1:4A:76:5E:78:E9:C0:36"
+                "value": "8F:56:D9:A3:C6:85:8C:8A:99:1D:E5:65:BE:52:3F:71:96:AB:2B:E3"
             },
-            "subject_str": "/CN=pwd.example.com",
             "type": "ca",
-            "valid_from": "2023-02-12 19:00:00",
-            "valid_until": "2024-02-13 19:00:00"
+            "valid_from": "2023-10-11 14:00:00",
+            "valid_until": "2024-10-11 14:00:00"
         },
         "pwd-cert": {
             "algorithm": "sha256",
@@ -4407,17 +4489,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/16E09FA62B5807A1E498653A740EB33F75873F9C.der"
+                        "URI:http://localhost:8000/django_ca/issuer/249EF4414BB177780F914B386B3D4B00A11D2909.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/16E09FA62B5807A1E498653A740EB33F75873F9C/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/249EF4414BB177780F914B386B3D4B00A11D2909/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "75:89:81:E1:E0:9E:42:F6:0D:73:AA:5A:E1:4A:76:5E:78:E9:C0:36"
+                    "key_identifier": "8F:56:D9:A3:C6:85:8C:8A:99:1D:E5:65:BE:52:3F:71:96:AB:2B:E3"
                 }
             },
             "basic_constraints": {
@@ -4429,21 +4511,24 @@
             "ca": "pwd",
             "cat": "generated",
             "cn": "pwd-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/16E09FA62B5807A1E498653A740EB33F75873F9C/",
+            "crl": "http://localhost:8000/django_ca/crl/249EF4414BB177780F914B386B3D4B00A11D2909/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/16E09FA62B5807A1E498653A740EB33F75873F9C/"
+                            "URI:http://localhost:8000/django_ca/crl/249EF4414BB177780F914B386B3D4B00A11D2909/"
                         ]
                     }
                 ]
             },
             "csr_filename": "pwd-cert.csr",
-            "csr_subject": {
-                "CN": "csr.pwd-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.pwd-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -4463,39 +4548,39 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "6B:60:28:65:15:C9:37:85:25:EE:DB:4A:1F:05:35:DB",
+            "md5": "00:3D:B1:D9:29:BF:33:0F:A1:AA:B1:8D:CC:BB:96:CC",
             "name": "pwd-cert",
             "pub_der_filename": "pwd-cert.pub.der",
             "pub_filename": "pwd-cert.pub",
-            "serial": "547236230D61D9756AC54FB8B4374458BBD60F0",
-            "sha1": "8B:7E:CA:2F:B5:99:D6:AA:FA:20:AC:EA:E2:C6:67:AA:16:9E:9E:8D",
-            "sha256": "01:D8:47:ED:9C:77:80:40:09:3A:CA:1B:11:86:EF:EA:DC:5E:2F:2A:A1:0D:FA:9D:42:6B:0A:18:10:A6:52:3A",
-            "sha512": "D6:B3:EE:E8:9C:E2:52:35:6B:98:CB:E4:2F:88:08:42:46:EA:F2:3D:AE:B8:77:04:B9:C0:B1:10:FC:59:1B:78:D1:5A:91:99:35:A0:80:08:CF:D3:29:CA:74:F6:86:B1:F8:D4:16:6B:EA:AA:2F:87:FD:A5:5D:F0:A4:9C:B3:37",
+            "serial": "139FFF8DD78FEAD3451824EFEA4934EDE6A2B574",
+            "sha1": "4A:F2:1D:EB:D6:D3:61:DA:FD:6A:C1:CC:27:5B:FC:C2:BA:A3:32:D6",
+            "sha256": "CD:A6:36:54:A6:E6:39:7D:88:26:E6:47:9A:A9:34:17:3A:E9:8A:DB:DD:2F:08:A3:90:FB:C6:81:54:6A:C0:79",
+            "sha512": "49:60:CD:84:2F:B6:F5:A3:AE:F5:FB:E9:A6:08:20:64:D8:4B:6E:56:F9:7E:46:A3:72:1B:99:C9:B0:0A:B2:97:62:20:E1:5A:86:93:33:78:21:5C:76:DB:D4:A2:71:B1:FB:24:5C:E1:35:F5:B0:E0:10:15:35:AD:F4:A4:45:59",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "pwd-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "pwd-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -4505,12 +4590,11 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "4D:2A:3E:27:58:E6:7F:4A:52:AC:FD:81:7E:90:27:5F:80:98:C0:E9"
+                "value": "6A:31:EF:91:0B:F8:49:69:62:9C:4B:02:A1:60:57:FF:54:2A:85:21"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=pwd-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
         },
         "rapidssl_g3": {
             "authority_information_access": {
@@ -4576,24 +4660,23 @@
             "sha256": "BC:3F:03:A4:36:24:0E:DB:A5:F8:37:14:F6:F6:77:E3:4B:37:F9:B1:F0:C0:8C:1E:55:8D:98:1E:27:9E:82:09",
             "sha512": "AD:FA:57:19:DF:2C:C6:B0:50:C1:C7:E2:AB:AD:AE:A8:64:85:9F:7C:A7:DB:B9:DC:76:3B:D8:35:56:2D:3B:9F:3A:A0:BB:C3:3F:96:77:09:A1:AF:07:5C:C7:86:78:48:D4:23:7A:20:7B:38:26:BD:BD:86:A9:ED:7D:0D:C3:5A",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "GeoTrust Inc."
-                ],
-                [
-                    "CN",
-                    "RapidSSL SHA256 CA - G3"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "GeoTrust Inc."
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "RapidSSL SHA256 CA - G3"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "C3:9C:F3:FC:D3:46:08:34:BB:CE:46:7F:A0:7C:5B:F3:E2:08:CB:59"
             },
-            "subject_str": "/C=US/O=GeoTrust Inc./CN=RapidSSL SHA256 CA - G3",
             "type": "ca",
             "valid_from": "2014-08-29 21:39:32",
             "valid_until": "2022-05-20 21:39:32"
@@ -4650,8 +4733,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -4671,22 +4754,22 @@
             "sha256": "3F:E2:53:0A:A6:AB:8E:AB:29:E2:5F:B1:FD:1A:6B:EF:2F:D4:87:98:1B:C7:38:B2:5A:3C:EA:80:83:AF:10:AF",
             "sha512": "1E:23:3E:F2:70:60:5F:F0:B9:39:76:0A:42:8F:CC:EC:D6:C4:C0:12:A9:DB:B0:E5:5B:6F:19:DB:A2:02:FA:93:6C:DC:1B:3D:8D:27:44:C7:BC:73:0D:32:0E:FE:4B:3A:0B:04:A5:B6:49:3C:90:EF:A6:E2:28:CE:8C:A3:C7:58",
             "subject": [
-                [
-                    "OU",
-                    "GT12798798"
-                ],
-                [
-                    "OU",
-                    "See www.rapidssl.com/resources/cps (c)15"
-                ],
-                [
-                    "OU",
-                    "Domain Control Validated - RapidSSL(R)"
-                ],
-                [
-                    "CN",
-                    "*.jabber.de"
-                ]
+                {
+                    "oid": "2.5.4.11",
+                    "value": "GT12798798"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "See www.rapidssl.com/resources/cps (c)15"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Domain Control Validated - RapidSSL(R)"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "*.jabber.de"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -4695,7 +4778,6 @@
                     "DNS:jabber.de"
                 ]
             },
-            "subject_str": "/OU=GT12798798/OU=\"See www.rapidssl.com/resources/cps (c)15\"/OU=Domain Control Validated - RapidSSL(R)/CN=*.jabber.de",
             "type": "cert",
             "valid_from": "2015-01-22 15:22:02",
             "valid_until": "2019-01-25 07:43:21"
@@ -4705,7 +4787,7 @@
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "1D:A4:C5:32:40:CE:E3:CA:54:1A:D3:9B:6B:DE:82:C8:D0:64:6D:48"
+                    "key_identifier": "A2:04:74:08:64:0D:E8:59:73:41:13:72:21:EE:E1:37:E7:AA:85:09"
                 }
             },
             "basic_constraints": {
@@ -4715,20 +4797,23 @@
                     "path_length": null
                 }
             },
-            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/",
+            "ca_crl_url": "http://localhost:8000/django_ca/crl/ca/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/",
             "cat": "generated",
             "children": [
                 [
                     "child",
-                    "6B1F876325B19FEDC7D28CC1E1B422EB45092AA8"
+                    "7F74848B8B54BD1E20E0B3A007D1D9CC5D55228C"
                 ]
             ],
-            "crl_url": "http://localhost:8000/django_ca/crl/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/",
+            "crl_url": "http://localhost:8000/django_ca/crl/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/",
             "csr_filename": false,
-            "csr_subject": {
-                "CN": "csr.root.example.com"
-            },
-            "issuer_url": "http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der",
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.root.example.com"
+                }
+            ],
+            "issuer_url": "http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der",
             "key_der_filename": "root.key.der",
             "key_filename": "root.key",
             "key_size": 2048,
@@ -4740,30 +4825,29 @@
                     "key_cert_sign"
                 ]
             },
-            "md5": "55:34:DF:E3:73:E5:F4:78:55:33:4E:A3:8E:60:A0:25",
+            "md5": "40:AF:A2:9D:4F:E9:EA:3D:2A:C3:66:72:4A:50:6F:2E",
             "name": "root",
-            "ocsp_url": "http://localhost:8000/django_ca/ocsp/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/cert/",
+            "ocsp_url": "http://localhost:8000/django_ca/ocsp/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/cert/",
             "path_length": null,
             "pub_der_filename": "root.pub.der",
             "pub_filename": "root.pub",
-            "serial": "605C11DBA6C612F1687EDD04B7AC773DC02C3E8B",
-            "sha1": "8C:1C:47:F0:07:30:8F:F8:1B:B6:74:8B:94:2E:4B:6A:10:12:EC:AF",
-            "sha256": "15:E7:45:24:24:CA:D3:40:F9:BB:3F:D9:2A:42:54:75:4A:37:19:5E:58:7A:08:B8:34:3C:13:D8:C5:DA:0A:EB",
-            "sha512": "7B:8A:74:07:80:9C:2D:76:07:C4:D1:7C:0F:73:7A:85:AB:3A:39:8B:95:6D:77:4B:2D:6D:47:04:E0:AA:60:8B:B7:FD:BE:7D:0A:65:91:72:45:EC:D0:BC:75:C1:4C:D5:CC:93:46:B3:81:B2:C2:53:7D:52:60:11:A9:F5:AF:5D",
+            "serial": "39A47D94F170F95B06A75E55FA6A43DFC93FFC2C",
+            "sha1": "D1:DF:9A:0D:EA:32:78:8E:4C:C9:AC:EB:97:A7:45:F7:37:52:85:85",
+            "sha256": "66:19:75:0B:B7:B2:9C:26:58:99:A9:D8:82:82:95:BB:E6:E2:86:95:AC:94:04:5D:54:66:1A:27:03:BC:3C:A0",
+            "sha512": "E9:E8:F5:A9:B7:50:4B:31:24:66:49:5F:3B:04:32:41:B7:4A:D1:F0:1F:56:CD:7F:E8:C2:80:92:DA:B4:BA:93:CE:D1:F0:9C:8B:7C:70:BB:4B:63:D3:61:95:06:D6:D7:A4:C9:8F:99:77:C0:D5:F7:0D:80:08:46:96:68:5F:21",
             "subject": [
-                [
-                    "CN",
-                    "root.example.com"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "root.example.com"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
-                "value": "1D:A4:C5:32:40:CE:E3:CA:54:1A:D3:9B:6B:DE:82:C8:D0:64:6D:48"
+                "value": "A2:04:74:08:64:0D:E8:59:73:41:13:72:21:EE:E1:37:E7:AA:85:09"
             },
-            "subject_str": "/CN=root.example.com",
             "type": "ca",
-            "valid_from": "2023-02-12 19:00:00",
-            "valid_until": "2024-02-13 19:00:00"
+            "valid_from": "2023-10-11 14:00:00",
+            "valid_until": "2024-10-11 14:00:00"
         },
         "root-cert": {
             "algorithm": "sha256",
@@ -4771,17 +4855,17 @@
                 "critical": false,
                 "value": {
                     "issuers": [
-                        "URI:http://localhost:8000/django_ca/issuer/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B.der"
+                        "URI:http://localhost:8000/django_ca/issuer/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C.der"
                     ],
                     "ocsp": [
-                        "URI:http://localhost:8000/django_ca/ocsp/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/cert/"
+                        "URI:http://localhost:8000/django_ca/ocsp/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/cert/"
                     ]
                 }
             },
             "authority_key_identifier": {
                 "critical": false,
                 "value": {
-                    "key_identifier": "1D:A4:C5:32:40:CE:E3:CA:54:1A:D3:9B:6B:DE:82:C8:D0:64:6D:48"
+                    "key_identifier": "A2:04:74:08:64:0D:E8:59:73:41:13:72:21:EE:E1:37:E7:AA:85:09"
                 }
             },
             "basic_constraints": {
@@ -4793,21 +4877,24 @@
             "ca": "root",
             "cat": "generated",
             "cn": "root-cert.example.com",
-            "crl": "http://localhost:8000/django_ca/crl/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/",
+            "crl": "http://localhost:8000/django_ca/crl/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/",
             "crl_distribution_points": {
                 "critical": false,
                 "value": [
                     {
                         "full_name": [
-                            "URI:http://localhost:8000/django_ca/crl/605C11DBA6C612F1687EDD04B7AC773DC02C3E8B/"
+                            "URI:http://localhost:8000/django_ca/crl/39A47D94F170F95B06A75E55FA6A43DFC93FFC2C/"
                         ]
                     }
                 ]
             },
             "csr_filename": "root-cert.csr",
-            "csr_subject": {
-                "CN": "csr.root-cert.example.com"
-            },
+            "csr_subject": [
+                {
+                    "oid": "2.5.4.3",
+                    "value": "csr.root-cert.example.com"
+                }
+            ],
             "extended_key_usage": {
                 "critical": false,
                 "value": [
@@ -4827,40 +4914,40 @@
                     "key_encipherment"
                 ]
             },
-            "md5": "0E:EB:3B:E4:88:BE:7E:FB:5D:2A:46:33:71:E0:46:79",
+            "md5": "B4:3C:15:AF:53:FF:D5:B5:77:0B:33:0C:20:D8:23:88",
             "name": "root-cert",
             "path_length": null,
             "pub_der_filename": "root-cert.pub.der",
             "pub_filename": "root-cert.pub",
-            "serial": "7C53C5A195766A8CD2CE6A16464A11877D3F6AD",
-            "sha1": "DA:F5:3B:22:72:0C:52:1A:E6:28:68:EB:DC:11:13:D5:ED:39:33:A5",
-            "sha256": "9C:25:AD:6B:D2:A3:0C:52:14:A7:D9:E1:A8:22:B5:CD:40:E2:85:83:48:EF:2D:23:2F:B2:74:8B:7C:4D:9A:C6",
-            "sha512": "FE:4E:79:BA:E5:70:DB:90:65:A0:4C:24:40:CB:0F:D0:05:5B:74:7A:DA:CE:33:7B:71:F2:74:D2:0E:9E:51:7D:2D:CA:2B:53:86:28:F0:81:3E:51:FD:74:CB:5D:CD:08:80:30:C6:93:98:F2:F5:87:05:D0:E0:C3:19:C9:B0:A6",
+            "serial": "49B4E713E22D93215F6D765440CB897285A59E4A",
+            "sha1": "7F:4E:93:DE:E0:A6:7C:9D:4C:EF:87:32:83:4B:5B:B7:48:9F:29:CC",
+            "sha256": "9D:60:16:E2:EE:B4:4E:0D:CA:EC:1C:50:6F:80:D5:44:59:D6:51:CD:BD:46:0D:5B:32:22:7B:AD:84:75:37:30",
+            "sha512": "5A:A7:05:D9:E4:23:90:97:16:88:42:11:93:76:21:E0:79:87:10:20:8B:52:8F:56:E4:E4:6D:66:C5:13:02:2A:82:AA:C3:8B:18:36:33:C5:09:10:EB:CC:53:34:F3:61:58:83:C0:06:35:BE:35:84:48:C5:68:F0:B0:B4:2D:77",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Vienna"
-                ],
-                [
-                    "L",
-                    "Vienna"
-                ],
-                [
-                    "O",
-                    "Django CA"
-                ],
-                [
-                    "OU",
-                    "Django CA Testsuite"
-                ],
-                [
-                    "CN",
-                    "root-cert.example.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Vienna"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Django CA"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Django CA Testsuite"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "root-cert.example.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -4870,12 +4957,11 @@
             },
             "subject_key_identifier": {
                 "critical": false,
-                "value": "FB:AC:73:76:54:7B:FE:3A:AB:FA:99:16:01:09:38:E7:18:D5:03:9E"
+                "value": "98:65:00:6D:A8:EB:9A:CB:EF:FB:B8:0A:09:C5:6B:F2:B4:F1:D8:3E"
             },
-            "subject_str": "/C=AT/ST=Vienna/L=Vienna/O=Django CA/OU=Django CA Testsuite/CN=root-cert.example.com",
             "type": "cert",
-            "valid_from": "2023-02-17 19:00:00",
-            "valid_until": "2023-08-19 19:00:00"
+            "valid_from": "2023-10-16 14:00:00",
+            "valid_until": "2024-04-16 14:00:00"
         },
         "startssl_class2": {
             "authority_information_access": {
@@ -4944,28 +5030,27 @@
             "sha256": "D6:5B:2B:D1:AA:72:BC:20:04:5F:5C:56:A8:1C:36:2E:D5:65:BA:47:B7:B4:9C:70:C0:4F:76:53:07:08:E2:08",
             "sha512": "FF:37:9C:78:F0:C5:61:A6:20:8A:5C:55:85:AD:1C:19:5D:9F:25:B1:57:69:24:1F:F4:0B:F9:74:03:6D:C4:EE:31:39:B6:2C:92:72:14:2B:9E:87:55:95:F3:06:1A:A5:B9:A4:84:B1:50:39:31:26:D1:D1:A6:51:CC:72:1D:46",
             "subject": [
-                [
-                    "C",
-                    "IL"
-                ],
-                [
-                    "O",
-                    "StartCom Ltd."
-                ],
-                [
-                    "OU",
-                    "Secure Digital Certificate Signing"
-                ],
-                [
-                    "CN",
-                    "StartCom Class 2 Primary Intermediate Server CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "IL"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "StartCom Ltd."
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Secure Digital Certificate Signing"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "StartCom Class 2 Primary Intermediate Server CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "11:DB:23:45:FD:54:CC:6A:71:6F:84:8A:03:D7:BE:F7:01:2F:26:86"
             },
-            "subject_str": "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
             "type": "ca",
             "valid_from": "2007-10-14 20:57:09",
             "valid_until": "2022-10-14 20:57:09"
@@ -5063,30 +5148,30 @@
             "sha256": "6E:3A:EF:65:38:D9:86:BE:5D:F6:B7:7C:65:CF:2E:F5:50:0F:60:3C:0D:BC:B4:81:B2:7D:79:64:25:73:36:B4",
             "sha512": "90:77:9E:6C:7C:76:A9:46:3E:87:B4:A1:31:5B:AF:6F:BC:CB:BB:A6:5D:BA:69:59:3B:0E:FB:97:DC:85:C8:9A:D4:03:D5:A7:29:8C:8B:A2:7B:A4:AA:1E:B7:FE:A0:2D:01:1A:B1:A5:D7:B7:32:06:2F:FB:CB:23:91:0E:18:23",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Wien"
-                ],
-                [
-                    "L",
-                    "Wien"
-                ],
-                [
-                    "O",
-                    "Mathias Ertl"
-                ],
-                [
-                    "CN",
-                    "www.fsinf.at"
-                ],
-                [
-                    "emailAddress",
-                    "hostmaster@fsinf.at"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Wien"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Wien"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Mathias Ertl"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "www.fsinf.at"
+                },
+                {
+                    "oid": "1.2.840.113549.1.9.1",
+                    "value": "hostmaster@fsinf.at"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -5099,7 +5184,6 @@
                 "critical": false,
                 "value": "C7:AA:D9:A4:F0:BC:D1:C1:1B:05:D2:19:71:0A:86:F8:58:0F:F0:99"
             },
-            "subject_str": "/C=AT/ST=Wien/L=Wien/O=Mathias Ertl/CN=www.fsinf.at/emailAddress=hostmaster@fsinf.at",
             "type": "cert",
             "valid_from": "2014-08-28 06:00:55",
             "valid_until": "2016-08-28 03:19:19"
@@ -5178,28 +5262,27 @@
             "sha256": "EA:4E:5D:2B:9C:99:56:0F:13:DD:09:4B:81:21:A6:23:BF:DD:90:20:38:DF:D6:D7:72:CE:32:FF:AB:EC:09:4D",
             "sha512": "6A:4B:D3:83:B2:19:27:F4:4F:09:26:38:19:D2:91:7E:DB:D8:A8:EA:58:D9:7D:AC:48:C2:6A:1E:88:E5:C7:06:26:91:36:6F:79:30:07:05:DA:4B:68:B5:BF:91:53:47:72:41:F7:60:3F:AF:4A:C0:3D:1C:DE:69:AB:AE:F3:28",
             "subject": [
-                [
-                    "C",
-                    "IL"
-                ],
-                [
-                    "O",
-                    "StartCom Ltd."
-                ],
-                [
-                    "OU",
-                    "StartCom Certification Authority"
-                ],
-                [
-                    "CN",
-                    "StartCom Class 3 OV Server CA"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "IL"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "StartCom Ltd."
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "StartCom Certification Authority"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "StartCom Class 3 OV Server CA"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "B1:3F:1C:92:7B:92:B0:5A:25:B3:38:FB:9C:07:A4:26:50:32:E3:51"
             },
-            "subject_str": "/C=IL/O=StartCom Ltd./OU=StartCom Certification Authority/CN=StartCom Class 3 OV Server CA",
             "type": "ca",
             "valid_from": "2015-12-16 01:00:05",
             "valid_until": "2030-12-16 01:00:05"
@@ -5287,26 +5370,26 @@
             "sha256": "EC:DF:99:7E:F6:EC:00:A1:E7:A2:2A:6C:46:0C:FD:7D:09:57:E2:E8:91:81:BE:F3:13:F9:9C:C2:B3:D8:F6:11",
             "sha512": "4E:53:2F:C4:CF:FB:14:5B:36:97:04:C8:DB:13:3D:F9:F8:53:47:35:38:19:F7:D3:84:D5:59:C8:61:1D:BF:9C:79:54:78:F1:F1:44:84:BA:9D:95:62:10:0F:16:6B:EA:AD:56:0E:64:82:FD:C6:B7:CF:C2:71:86:0F:15:F0:E6",
             "subject": [
-                [
-                    "C",
-                    "AT"
-                ],
-                [
-                    "ST",
-                    "Wien"
-                ],
-                [
-                    "L",
-                    "Wien"
-                ],
-                [
-                    "O",
-                    "Adspired Technologies GmbH"
-                ],
-                [
-                    "CN",
-                    "adverity.com"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "AT"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Wien"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Wien"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "Adspired Technologies GmbH"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "adverity.com"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -5320,7 +5403,6 @@
                 "critical": false,
                 "value": "F0:72:65:5E:21:AA:16:76:2C:6F:D0:63:53:0C:68:D5:89:50:2A:73"
             },
-            "subject_str": "/C=AT/ST=Wien/L=Wien/O=Adspired Technologies GmbH/CN=adverity.com",
             "type": "cert",
             "valid_from": "2016-02-02 11:33:36",
             "valid_until": "2019-02-02 11:33:36"
@@ -5381,28 +5463,27 @@
             "sha256": "E1:78:90:EE:09:A3:FB:F4:F4:8B:9C:41:4A:17:D6:37:B7:A5:06:47:E9:BC:75:23:22:72:7F:CC:17:42:A9:11",
             "sha512": "C7:5F:96:18:C9:84:D7:6B:56:F3:D9:8A:0B:5C:EF:F5:1F:F0:80:84:FD:6B:1F:14:C2:E5:85:71:D7:09:5F:CC:55:ED:30:6A:4B:B3:AA:C1:7F:3F:B9:F4:BF:42:02:47:AE:41:D9:F8:B5:44:64:15:D9:20:F3:2B:5D:66:7E:1A",
             "subject": [
-                [
-                    "C",
-                    "IL"
-                ],
-                [
-                    "O",
-                    "StartCom Ltd."
-                ],
-                [
-                    "OU",
-                    "Secure Digital Certificate Signing"
-                ],
-                [
-                    "CN",
-                    "StartCom Certification Authority"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "IL"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "StartCom Ltd."
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "Secure Digital Certificate Signing"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "StartCom Certification Authority"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "4E:0B:EF:1A:A4:40:5B:A5:17:69:87:30:CA:34:68:43:D0:41:AE:F2"
             },
-            "subject_str": "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Certification Authority",
             "type": "ca",
             "valid_from": "2006-09-17 19:46:37",
             "valid_until": "2036-09-17 19:46:36"
@@ -5467,11 +5548,11 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
+                    "serverAuth",
                     "clientAuth",
                     "ipsecEndSystem",
                     "ipsecTunnel",
-                    "ipsecUser",
-                    "serverAuth"
+                    "ipsecUser"
                 ]
             },
             "key_filename": false,
@@ -5493,28 +5574,27 @@
             "sha256": "B3:9C:4A:45:96:D3:19:1A:FA:3B:3D:25:4D:28:E5:C4:82:FC:D0:D5:00:E0:A9:33:7F:99:27:7C:B8:A2:EE:F8",
             "sha512": "2E:E1:35:83:26:BD:C5:3B:9F:32:AB:D6:31:DB:0F:6F:34:71:86:3A:21:A2:56:EB:DF:6A:26:93:4D:48:2C:BB:DF:B2:84:7D:93:0B:84:5B:8C:36:E4:52:AC:4C:1B:B0:35:33:D1:49:5C:05:26:CC:2C:6A:17:30:F2:32:34:DC",
             "subject": [
-                [
-                    "C",
-                    "US"
-                ],
-                [
-                    "O",
-                    "IdenTrust"
-                ],
-                [
-                    "OU",
-                    "TrustID Server"
-                ],
-                [
-                    "CN",
-                    "TrustID Server CA A52"
-                ]
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "IdenTrust"
+                },
+                {
+                    "oid": "2.5.4.11",
+                    "value": "TrustID Server"
+                },
+                {
+                    "oid": "2.5.4.3",
+                    "value": "TrustID Server CA A52"
+                }
             ],
             "subject_key_identifier": {
                 "critical": false,
                 "value": "A2:56:24:3C:D0:D4:15:B9:E8:BF:78:A3:13:10:58:48:2E:16:54:E1"
             },
-            "subject_str": "/C=US/O=IdenTrust/OU=TrustID Server/CN=TrustID Server CA A52",
             "type": "ca",
             "valid_from": "2014-03-20 18:05:38",
             "valid_until": "2022-03-20 18:05:38"
@@ -5577,8 +5657,8 @@
             "extended_key_usage": {
                 "critical": false,
                 "value": [
-                    "clientAuth",
-                    "serverAuth"
+                    "serverAuth",
+                    "clientAuth"
                 ]
             },
             "key_filename": false,
@@ -5598,26 +5678,26 @@
             "sha256": "ED:44:72:CC:D1:8F:26:4A:06:E1:77:36:C1:01:E7:54:AA:FB:48:1F:5B:10:69:E2:29:52:81:C0:3F:C7:D1:6F",
             "sha512": "8B:FD:84:56:05:49:8B:72:6B:2E:3A:71:BE:9A:7C:2A:9C:78:16:93:0B:83:19:A6:2A:5D:51:B2:AC:65:30:F4:C5:1D:ED:F6:28:91:19:4F:09:07:C5:EF:B5:A4:73:2D:49:F6:3D:0C:3D:3C:5B:D5:31:E2:6C:2A:FB:9F:56:E4",
             "subject": [
-                [
-                    "CN",
-                    "identrust.com"
-                ],
-                [
-                    "O",
-                    "IDENTRUST SERVICES LLC"
-                ],
-                [
-                    "L",
-                    "Salt Lake City"
-                ],
-                [
-                    "ST",
-                    "Utah"
-                ],
-                [
-                    "C",
-                    "US"
-                ]
+                {
+                    "oid": "2.5.4.3",
+                    "value": "identrust.com"
+                },
+                {
+                    "oid": "2.5.4.10",
+                    "value": "IDENTRUST SERVICES LLC"
+                },
+                {
+                    "oid": "2.5.4.7",
+                    "value": "Salt Lake City"
+                },
+                {
+                    "oid": "2.5.4.8",
+                    "value": "Utah"
+                },
+                {
+                    "oid": "2.5.4.6",
+                    "value": "US"
+                }
             ],
             "subject_alternative_name": {
                 "critical": false,
@@ -5634,7 +5714,6 @@
                 "critical": false,
                 "value": "BE:59:F0:29:27:4B:FC:0A:81:52:7C:DF:CD:02:D8:8F:A8:E5:C2:24"
             },
-            "subject_str": "/CN=identrust.com/O=IDENTRUST SERVICES LLC/L=Salt Lake City/ST=Utah/C=US",
             "type": "cert",
             "valid_from": "2017-09-14 23:36:54",
             "valid_until": "2020-09-13 23:36:54"
@@ -5648,8 +5727,8 @@
         "nonce": {
             "filename": "nonce.req",
             "name": "nonce",
-            "nonce": "56:F9:49:F7:3F:3B:8E:BE:1B:51:A0:0B:09:DD:A3:F5"
+            "nonce": "EA:C0:98:91:38:6F:44:1E:D5:CC:B5:20:DD:3C:EC:BA"
         }
     },
-    "timestamp": "2023-02-12T19:00:00+00:00"
+    "timestamp": "2023-10-11T14:00:00+00:00"
 }
