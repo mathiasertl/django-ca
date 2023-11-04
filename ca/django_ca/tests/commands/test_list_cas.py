@@ -67,6 +67,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 {CERT_DATA['geotrust']['serial_colons']} - {CERT_DATA['geotrust']['name']}
 {CERT_DATA['startssl_class2']['serial_colons']} - {CERT_DATA['startssl_class2']['name']}
 {CERT_DATA['digicert_sha2']['serial_colons']} - {CERT_DATA['digicert_sha2']['name']}
+{CERT_DATA['globalsign_dv']['serial_colons']} - {CERT_DATA['globalsign_dv']['name']}
 {CERT_DATA['dsa']['serial_colons']} - {CERT_DATA['dsa']['name']}
 {CERT_DATA['ec']['serial_colons']} - {CERT_DATA['ec']['name']}
 {CERT_DATA['ed25519']['serial_colons']} - {CERT_DATA['ed25519']['name']}
@@ -74,7 +75,6 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 {CERT_DATA['pwd']['serial_colons']} - {CERT_DATA['pwd']['name']}
 {CERT_DATA['root']['serial_colons']} - {CERT_DATA['root']['name']}
 {CERT_DATA['child']['serial_colons']} - {CERT_DATA['child']['name']}
-{CERT_DATA['globalsign_dv']['serial_colons']} - {CERT_DATA['globalsign_dv']['name']}
 {CERT_DATA['comodo_ev']['serial_colons']} - {CERT_DATA['comodo_ev']['name']}
 {CERT_DATA['globalsign']['serial_colons']} - {CERT_DATA['globalsign']['name']}
 {CERT_DATA['digicert_ha_intermediate']['serial_colons']} - {CERT_DATA['digicert_ha_intermediate']['name']}

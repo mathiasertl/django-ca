@@ -21,11 +21,7 @@ from ninja import ModelSchema, Schema
 from pydantic import Field
 
 from django_ca import ca_settings, constants
-from django_ca.api.extension_schemas import (
-    DATETIME_EXAMPLE,
-    ExtensionsSchema,
-    NameAttributeSchema,
-)
+from django_ca.api.extension_schemas import DATETIME_EXAMPLE, ExtensionsSchema, NameAttributeSchema
 from django_ca.constants import ReasonFlags
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder, X509CertMixin

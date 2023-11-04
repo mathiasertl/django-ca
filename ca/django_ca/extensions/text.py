@@ -21,7 +21,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 from django_ca import typehints
 from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, NAME_OID_DISPLAY_NAMES
 from django_ca.extensions.utils import key_usage_items, signed_certificate_timestamp_values
-from django_ca.utils import bytes_to_hex, format_general_name, format_name
+from django_ca.utils import bytes_to_hex, format_general_name
 
 
 def _authority_information_access_as_text(value: typehints.InformationAccessExtensionType) -> str:

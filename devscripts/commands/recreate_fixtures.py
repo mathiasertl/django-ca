@@ -64,7 +64,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         override_tmpcadir,
         regenerate_ocsp_files,
     )
-    from django_ca.utils import format_name, x509_name
 
     # pylint: enable=import-outside-toplevel
     # The time-offsets from now from which CAs/certs are valid starts 25 days in the past, with the largest
@@ -164,18 +163,31 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         "profile-enduser": {"ca": "child", "delta": timedelta(days=10), "csr": True},
         "profile-ocsp": {"ca": "child", "delta": timedelta(days=10), "csr": True},
         "no-extensions": {"ca": "child", "delta": timedelta(days=15), "csr": True},
+        "empty-subject": {
+            "ca": "child",
+            "delta": timedelta(days=15),
+            "csr": True,
+            "subject": [],
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=True,
+                    value=x509.SubjectAlternativeName([x509.DNSName("empty-subject.example.com")]),
+                ),
+            },
+        },
         "all-extensions": {
             "ca": "child",
             "delta": timedelta(days=20),
             "csr": True,
             "subject": [
-                ["C", "AT"],
-                ["ST", "Vienna"],
-                ["L", "Vienna"],
-                ["O", "Example"],
-                ["OU", "Example OU"],
-                ["CN", "all-extensions.example.com"],
-                ["emailAddress", "user@example.com"],
+                {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+                {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+                {"oid": NameOID.LOCALITY_NAME.dotted_string, "value": "Vienna"},
+                {"oid": NameOID.ORGANIZATION_NAME.dotted_string, "value": "Example"},
+                {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "Example OU"},
+                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "all-extensions.example.com"},
+                {"oid": NameOID.EMAIL_ADDRESS.dotted_string, "value": "user@example.com"},
             ],
             "extensions": {
                 "extended_key_usage": x509.Extension(
@@ -274,13 +286,13 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
             "delta": timedelta(days=20),
             "csr": True,
             "subject": [
-                ["C", "AT"],
-                ["ST", "Vienna"],
-                ["L", "Vienna"],
-                ["O", "Example"],
-                ["OU", "Example OU"],
-                ["CN", "alt-extensions.example.com"],
-                ["emailAddress", "user@example.com"],
+                {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+                {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+                {"oid": NameOID.LOCALITY_NAME.dotted_string, "value": "Vienna"},
+                {"oid": NameOID.ORGANIZATION_NAME.dotted_string, "value": "Example"},
+                {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "Example OU"},
+                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "alt-extensions.example.com"},
+                {"oid": NameOID.EMAIL_ADDRESS.dotted_string, "value": "user@example.com"},
             ],
             "extensions": {
                 "authority_key_identifier": x509.Extension(
@@ -400,9 +412,18 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         cert_values.setdefault("type", "cert")
         cert_values.setdefault("cat", "generated")
         cert_values.setdefault("algorithm", hashes.SHA256())
-        cert_values.setdefault("subject", [["CN", f"{cert_name}.example.com"]])
-        cert_values["subject_str"] = format_name(x509_name(cert_values["subject"]))
-        cert_values["csr_subject"] = {k: f"csr.{v}" if k != "C" else v for k, v in cert_values["subject"]}
+        subject = cert_values.setdefault(
+            "subject", [{"oid": NameOID.COMMON_NAME.dotted_string, "value": f"{cert_name}.example.com"}]
+        )
+        cert_values["csr_subject"] = [
+            {
+                "oid": elem["oid"],
+                "value": f"csr.{elem['value']}"
+                if elem["oid"] != NameOID.COUNTRY_NAME.dotted_string
+                else elem["value"],
+            }
+            for elem in subject
+        ]
         cert_values["key_filename"] = f"{cert_name}.key"
         cert_values["pub_filename"] = f"{cert_name}.pub"
         cert_values["key_der_filename"] = f"{cert_name}.key.der"
@@ -419,7 +440,16 @@ def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
         if cert_values.get("type") == "ca":
             data[cert_name].setdefault("expires", timedelta(days=ca_validity))
         else:
-            data[cert_name]["cn"] = f"{cert_name}.example.com"
+            if common_name := next(
+                (
+                    attr
+                    for attr in data[cert_name]["subject"]
+                    if attr["oid"] == NameOID.COMMON_NAME.dotted_string
+                ),
+                None,  # empty-subject has no common name
+            ):
+                data[cert_name]["cn"] = common_name["value"]
+
             data[cert_name].setdefault("expires", timedelta(days=cert_validity))
 
     ocsp_data = {}

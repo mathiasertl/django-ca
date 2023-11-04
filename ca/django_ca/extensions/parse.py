@@ -38,11 +38,7 @@ from django_ca.typehints import (
     ParsableSubjectKeyIdentifier,
     ParsableUserNotice,
 )
-from django_ca.utils import (
-    hex_to_bytes,
-    parse_general_name,
-    parse_serialized_name_attributes,
-)
+from django_ca.utils import hex_to_bytes, parse_general_name, parse_serialized_name_attributes
 
 ##########################################
 # Parsers for sub-elements of extensions #

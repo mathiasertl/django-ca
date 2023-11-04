@@ -34,7 +34,7 @@ import django
 from django_ca.constants import EXTENSION_KEYS
 from django_ca.extensions import serialize_extension
 from django_ca.tests.base.typehints import CsrDict, KeyDict, PubDict
-from django_ca.utils import add_colons, format_name
+from django_ca.utils import add_colons
 
 try:
     import tomllib
@@ -105,7 +105,7 @@ CERT_DATA["multiple_ous"] = {
         ["OU", "(c) 1998 VeriSign, Inc. - For authorized use only"],
         ["OU", "VeriSign Trust Network"],
     ],
-    "subject_str": "/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network",  # noqa: E501
+    # "subject_str": "/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network",  # noqa: E501
     "cn": "",
     "key_filename": False,
     "csr_filename": False,
@@ -129,7 +129,7 @@ CERT_DATA["cloudflare_1"] = {
         ["OU", "PositiveSSL Multi-Domain"],
         ["CN", "sni24142.cloudflaressl.com"],
     ],
-    "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com",
+    # "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com",
     "cn": "sni24142.cloudflaressl.com",
     "key_filename": False,
     "csr_filename": False,
@@ -365,7 +365,7 @@ for _name, _cert_data in CERT_DATA.items():
 
     # Data derived from public key
     _cert_data["issuer"] = _cert.issuer
-    _cert_data["issuer_str"] = format_name(_cert_data["issuer"])
+    # _cert_data["issuer_str"] = format_name(_cert_data["issuer"])
     _cert_data["serial_colons"] = add_colons(_cert_data["serial"])
     _cert_data["valid_from"] = _cert.not_valid_before  # TODO: make tz-aware
     _cert_data["valid_until"] = _cert.not_valid_after  # TODO: make tz-aware

@@ -28,9 +28,11 @@ from django_ca.tests.base.utils import override_tmpcadir
 expected = {
     "ec": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -68,9 +70,11 @@ Digest:
 {pub[pem]}""",
     "ed25519": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -108,9 +112,11 @@ Digest:
 {pub[pem]}""",
     "ed448": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -194,9 +200,11 @@ Digest:
 {pub[pem]}""",
     "root": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -235,9 +243,11 @@ Digest:
 {pub[pem]}""",
     "root-no-extensions": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -266,9 +276,11 @@ Digest:
 {pub[pem]}""",
     "root-no-wrap": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -295,9 +307,11 @@ Digest:
 """,
     "root-properties": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -340,9 +354,11 @@ Digest:
 {pub[pem]}""",
     "root-acme-disabled": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -378,9 +394,11 @@ Digest:
 {pub[pem]}""",
     "root-sign-options": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {name}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -425,9 +443,17 @@ Digest:
 {pub[pem]}""",
     "globalsign": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): BE
+  * organizationName (O): GlobalSign nv-sa
+  * organizationalUnitName (OU): Root CA
+  * commonName (CN): GlobalSign Root CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): BE
+  * organizationName (O): GlobalSign nv-sa
+  * organizationalUnitName (OU): Root CA
+  * commonName (CN): GlobalSign Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -556,9 +582,15 @@ Digest:
 {pub[pem]}""",
     "identrust_root_1": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): IdenTrust
+  * commonName (CN): IdenTrust Commercial Root CA 1
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): IdenTrust
+  * commonName (CN): IdenTrust Commercial Root CA 1
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -593,9 +625,15 @@ Digest:
 {pub[pem]}""",
     "globalsign_r2_root": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * organizationalUnitName (OU): GlobalSign Root CA - R2
+  * organizationName (O): GlobalSign
+  * commonName (CN): GlobalSign
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * organizationalUnitName (OU): GlobalSign Root CA - R2
+  * organizationName (O): GlobalSign
+  * commonName (CN): GlobalSign
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -691,9 +729,15 @@ Digest:
 {pub[pem]}""",
     "rapidssl_g3": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): GeoTrust Inc.
+  * commonName (CN): RapidSSL SHA256 CA - G3
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): GeoTrust Inc.
+  * commonName (CN): GeoTrust Global CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -736,9 +780,15 @@ Digest:
 {pub[pem]}""",
     "geotrust": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): GeoTrust Inc.
+  * commonName (CN): GeoTrust Global CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): GeoTrust Inc.
+  * commonName (CN): GeoTrust Global CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -828,9 +878,17 @@ Digest:
 {pub[pem]}""",
     "digicert_ha_intermediate": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert SHA2 High Assurance Server CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert High Assurance EV Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -875,9 +933,13 @@ Digest:
 {pub[pem]}""",
     "dst_root_x3": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * organizationName (O): Digital Signature Trust Co.
+  * commonName (CN): DST Root CA X3
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * organizationName (O): Digital Signature Trust Co.
+  * commonName (CN): DST Root CA X3
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -912,9 +974,16 @@ Digest:
 {pub[pem]}""",
     "globalsign_dv": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): BE
+  * organizationName (O): GlobalSign nv-sa
+  * commonName (CN): GlobalSign Domain Validation CA - SHA256 - G2
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): BE
+  * organizationName (O): GlobalSign nv-sa
+  * organizationalUnitName (OU): Root CA
+  * commonName (CN): GlobalSign Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -957,9 +1026,20 @@ Digest:
 {pub[pem]}""",
     "godaddy_g2_intermediate": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * stateOrProvinceName (ST): Arizona
+  * localityName (L): Scottsdale
+  * organizationName (O): GoDaddy.com, Inc.
+  * organizationalUnitName (OU): http://certs.godaddy.com/repository/
+  * commonName (CN): Go Daddy Secure Certificate Authority - G2
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * stateOrProvinceName (ST): Arizona
+  * localityName (L): Scottsdale
+  * organizationName (O): GoDaddy.com, Inc.
+  * commonName (CN): Go Daddy Root Certificate Authority - G2
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -1002,9 +1082,19 @@ Digest:
 {pub[pem]}""",
     "godaddy_g2_root": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * stateOrProvinceName (ST): Arizona
+  * localityName (L): Scottsdale
+  * organizationName (O): GoDaddy.com, Inc.
+  * commonName (CN): Go Daddy Root Certificate Authority - G2
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * stateOrProvinceName (ST): Arizona
+  * localityName (L): Scottsdale
+  * organizationName (O): GoDaddy.com, Inc.
+  * commonName (CN): Go Daddy Root Certificate Authority - G2
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -1039,9 +1129,15 @@ Digest:
 {pub[pem]}""",
     "google_g3": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): Google Trust Services
+  * commonName (CN): Google Internet Authority G3
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * organizationalUnitName (OU): GlobalSign Root CA - R2
+  * organizationName (O): GlobalSign
+  * commonName (CN): GlobalSign
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -1086,9 +1182,14 @@ Digest:
 {pub[pem]}""",
     "letsencrypt_x1": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): Let's Encrypt
+  * commonName (CN): Let's Encrypt Authority X1
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * organizationName (O): Digital Signature Trust Co.
+  * commonName (CN): DST Root CA X3
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -1133,9 +1234,14 @@ Digest:
 {pub[pem]}""",
     "letsencrypt_x3": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): Let's Encrypt
+  * commonName (CN): Let's Encrypt Authority X3
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * organizationName (O): Digital Signature Trust Co.
+  * commonName (CN): DST Root CA X3
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -1178,9 +1284,17 @@ Digest:
 {pub[pem]}""",
     "startssl_root": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): IL
+  * organizationName (O): StartCom Ltd.
+  * organizationalUnitName (OU): Secure Digital Certificate Signing
+  * commonName (CN): StartCom Certification Authority
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): IL
+  * organizationName (O): StartCom Ltd.
+  * organizationalUnitName (OU): Secure Digital Certificate Signing
+  * commonName (CN): StartCom Certification Authority
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -1223,9 +1337,17 @@ Digest:
 {pub[pem]}""",
     "startssl_class2": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): IL
+  * organizationName (O): StartCom Ltd.
+  * organizationalUnitName (OU): Secure Digital Certificate Signing
+  * commonName (CN): StartCom Class 2 Primary Intermediate Server CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): IL
+  * organizationName (O): StartCom Ltd.
+  * organizationalUnitName (OU): Secure Digital Certificate Signing
+  * commonName (CN): StartCom Certification Authority
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -1268,9 +1390,17 @@ Digest:
 {pub[pem]}""",
     "startssl_class3": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): IL
+  * organizationName (O): StartCom Ltd.
+  * organizationalUnitName (OU): StartCom Certification Authority
+  * commonName (CN): StartCom Class 3 OV Server CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): IL
+  * organizationName (O): StartCom Ltd.
+  * organizationalUnitName (OU): Secure Digital Certificate Signing
+  * commonName (CN): StartCom Certification Authority
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -1315,9 +1445,16 @@ Digest:
 {pub[pem]}""",
     "trustid_server_a52": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): IdenTrust
+  * organizationalUnitName (OU): TrustID Server
+  * commonName (CN): TrustID Server CA A52
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): IdenTrust
+  * commonName (CN): IdenTrust Commercial Root CA 1
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -1409,9 +1546,16 @@ Digest:
 {pub[pem]}""",
     "digicert_sha2": """* Name: {name}
 * Enabled: Yes
-* Subject: {subject_str}
+* Subject:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * commonName (CN): DigiCert SHA2 Secure Server CA
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): DigiCert Inc
+  * organizationalUnitName (OU): www.digicert.com
+  * commonName (CN): DigiCert Global Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Expired
@@ -1470,7 +1614,6 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
-        self.maxDiff = None
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
             stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
             data = self.get_cert_context(name)

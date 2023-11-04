@@ -29,9 +29,16 @@ from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir
 
 expected = {
-    "root-cert": """* Subject: {subject_str}
+    "root-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): root.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -59,9 +66,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "child-cert": """* Subject: {subject_str}
+    "child-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -89,9 +103,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "ec-cert": """* Subject: {subject_str}
+    "ec-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): ec.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -119,9 +140,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "ed25519-cert": """* Subject: {subject_str}
+    "ed25519-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): ed25519.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -149,9 +177,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "ed448-cert": """* Subject: {subject_str}
+    "ed448-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): ed448.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -179,9 +214,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "pwd-cert": """* Subject: {subject_str}
+    "pwd-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): pwd.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -209,9 +251,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "dsa-cert": """* Subject: {subject_str}
+    "dsa-cert": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): dsa.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -239,9 +288,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "profile-client": """* Subject: {subject_str}
+    "profile-client": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -269,9 +325,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "profile-server": """* Subject: {subject_str}
+    "profile-server": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -299,9 +362,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "profile-webserver": """* Subject: {subject_str}
+    "profile-webserver": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -329,9 +399,16 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "profile-enduser": """* Subject: {subject_str}
+    "profile-enduser": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -357,9 +434,11 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "profile-ocsp": """* Subject: {subject_str}
+    "profile-ocsp": """* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -387,9 +466,11 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "no-extensions": """* Subject: {subject_str}
+    "no-extensions": """* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {ca}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -401,9 +482,33 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "all-extensions": """* Subject: {subject_str}
+    "empty-subject": """* Subject: (empty)
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer: (empty)
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+* No watchers
+
+Certificate extensions:
+* Subject Alternative Name{subject_alternative_name_critical}:
+{subject_alternative_name_text}
+
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+""",
+    "all-extensions": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Example
+  * organizationalUnitName (OU): Example OU
+  * commonName (CN): all-extensions.example.com
+  * emailAddress: user@example.com
+* Serial: {serial_colons}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -448,9 +553,17 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 """,
-    "alt-extensions": """* Subject: {subject_str}
+    "alt-extensions": """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Example
+  * organizationalUnitName (OU): Example OU
+  * commonName (CN): alt-extensions.example.com
+  * emailAddress: user@example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -526,9 +639,16 @@ Digest:
             else:
                 self.assertEqual(
                     stdout,
-                    """* Subject: {subject_str}
+                    """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {ca}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: {status}
@@ -567,9 +687,16 @@ Digest:
             stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
             self.assertEqual(
                 stdout,
-                """* Subject: {subject_str}
+                """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {ca}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: {status}
@@ -602,7 +729,7 @@ Digest:
             self.assertEqual(stderr, "")
 
             context = self.get_cert_context(name)
-            self.assertEqual(stdout, expected[name].format(**context))
+            self.assertEqual(stdout, expected[name].format(**context), name)
 
     def test_revoked(self) -> None:
         """Test viewing a revoked cert."""
@@ -612,9 +739,16 @@ Digest:
         stdout, stderr = self.cmd("view_cert", self.cert.serial, pem=False, wrap=False, extensions=False)
         self.assertEqual(
             stdout,
-            """* Subject: {subject_str}
+            """* Subject:
+  * countryName (C): AT
+  * stateOrProvinceName (ST): Vienna
+  * localityName (L): Vienna
+  * organizationName (O): Django CA
+  * organizationalUnitName (OU): Django CA Testsuite
+  * commonName (CN): child-cert.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): child.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Revoked
@@ -641,9 +775,11 @@ Digest:
         self.assertEqual(
             stdout,
             # pylint: disable-next=consider-using-f-string
-            """* Subject: {subject_str}
+            """* Subject:
+  * commonName (CN): {name}.example.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * commonName (CN): {ca}.example.com
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -686,9 +822,17 @@ Digest:
 
         self.assertContrib(
             "godaddy_g2_intermediate-cert",
-            """* Subject: {subject_str}
+            """* Subject:
+  * organizationalUnitName (OU): Domain Control Validated
+  * commonName (CN): derstandard.at
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * stateOrProvinceName (ST): Arizona
+  * localityName (L): Scottsdale
+  * organizationName (O): GoDaddy.com, Inc.
+  * organizationalUnitName (OU): http://certs.godaddy.com/repository/
+  * commonName (CN): Go Daddy Secure Certificate Authority - G2
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -746,9 +890,13 @@ Digest:
 
         self.assertContrib(
             "letsencrypt_x3-cert",
-            """* Subject: {subject_str}
+            """* Subject:
+  * commonName (CN): jabber.at
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): Let's Encrypt
+  * commonName (CN): Let's Encrypt Authority X3
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -786,9 +934,17 @@ Digest:
         # pylint: disable=consider-using-f-string
         self.assertContrib(
             "cloudflare_1",
-            """* Subject: {subject_str}
+            """* Subject:
+  * organizationalUnitName (OU): Domain Control Validated
+  * organizationalUnitName (OU): PositiveSSL Multi-Domain
+  * commonName (CN): sni24142.cloudflaressl.com
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): GB
+  * stateOrProvinceName (ST): Greater Manchester
+  * localityName (L): Salford
+  * organizationName (O): COMODO CA Limited
+  * commonName (CN): COMODO ECC Domain Validation Secure Server CA 2
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid
@@ -827,9 +983,19 @@ Digest:
         """Test special contrib case with multiple OUs."""
         self.assertContrib(
             "multiple_ous",
-            """* Subject: {subject_str}
+            """* Subject:
+  * countryName (C): US
+  * organizationName (O): VeriSign, Inc.
+  * organizationalUnitName (OU): Class 3 Public Primary Certification Authority - G2
+  * organizationalUnitName (OU): (c) 1998 VeriSign, Inc. - For authorized use only
+  * organizationalUnitName (OU): VeriSign Trust Network
 * Serial: {serial_colons}
-* Issuer: {issuer_str}
+* Issuer:
+  * countryName (C): US
+  * organizationName (O): VeriSign, Inc.
+  * organizationalUnitName (OU): Class 3 Public Primary Certification Authority - G2
+  * organizationalUnitName (OU): (c) 1998 VeriSign, Inc. - For authorized use only
+  * organizationalUnitName (OU): VeriSign Trust Network
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
 * Status: Valid

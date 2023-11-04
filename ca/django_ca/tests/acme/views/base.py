@@ -101,7 +101,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
         """
         link_relations = link_relations or {}
-        self.assertEqual(response["Content-Type"], "application/problem+json")
+        self.assertEqual(response["Content-Type"], "application/problem+json", response.content)
         self.assertLinkRelations(response, ca=ca, **link_relations)
         data = response.json()
         self.assertEqual(data["type"], f"urn:ietf:params:acme:error:{typ}", f"detail={data['detail']}")

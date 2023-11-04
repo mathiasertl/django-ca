@@ -74,7 +74,6 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
-        self.maxDiff = None
         subject = [
             x509.NameAttribute(
                 oid=oid, value="AT" if name in ("countryName", "jurisdictionCountryName") else f"test-{name}"
