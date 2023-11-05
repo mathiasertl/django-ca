@@ -34,7 +34,13 @@ from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ExtensionMapping, ParsableKeyType
+from django_ca.typehints import (
+    AllowedHashTypes,
+    ArgumentGroup,
+    ExtensionMapping,
+    ParsableKeyType,
+    SubjectFormats,
+)
 from django_ca.utils import (
     format_general_name,
     parse_general_name,
@@ -148,6 +154,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             default=timedelta(365 * 10),
             help="CA certificate expires in DAYS days (default: %(default)s).",
         )
+        self.add_subject_format_option(general_group)
         self.add_algorithm(
             general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
@@ -247,7 +254,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
     def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
         self,
         name: str,
-        subject: x509.Name,
+        subject: str,
         parent: Optional[CertificateAuthority],
         expires: timedelta,
         key_size: Optional[int],
@@ -299,6 +306,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         # OCSP responder configuration
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
+        # subject_format will be removed in django-ca 2.2
+        subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
         if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
@@ -356,16 +365,19 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             responder_value = format_general_name(ca_issuer.access_location)
             raise CommandError(f"{responder_value}: CA issuer cannot be added to root CAs.")
 
+        # Parse the subject
+        parsed_subject = self.parse_x509_name(subject, subject_format)
+
         # We require a valid common name
-        common_name = next((attr.value for attr in subject if attr.oid == NameOID.COMMON_NAME), False)
+        common_name = next((attr.value for attr in parsed_subject if attr.oid == NameOID.COMMON_NAME), False)
         if not common_name:
-            raise CommandError("Subject must contain a common name (/CN=...).")
+            raise CommandError("Subject must contain a common name (CN=...).")
 
         # See if we can work with the private key
         if parent:
             self.test_private_key(parent, parent_password)
 
-        subject = sort_name(subject)
+        parsed_subject = sort_name(parsed_subject)
         extensions: ExtensionMapping = {
             ExtensionOID.KEY_USAGE: x509.Extension(
                 oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage
@@ -464,7 +476,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         try:
             ca = CertificateAuthority.objects.init(
                 name=name,
-                subject=subject,
+                subject=parsed_subject,
                 expires=expires_datetime,
                 algorithm=algorithm,
                 parent=parent,

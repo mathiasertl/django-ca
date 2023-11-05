@@ -17,7 +17,7 @@ import typing
 import warnings
 from datetime import datetime, timedelta
 from threading import local
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -101,12 +101,18 @@ class Profile:
             extensions = {}
 
         if subject is None:
-            self.subject: Optional[Union[typing.Literal[False], x509.Name]] = ca_settings.CA_DEFAULT_SUBJECT
+            self.subject: Optional[x509.Name] = ca_settings.CA_DEFAULT_SUBJECT
         elif subject is False:
-            self.subject = False
+            self.subject = None
         elif isinstance(subject, x509.Name):
             self.subject = subject
         else:
+            warnings.warn(
+                f"{subject}: Support for passing a value of type {subject.__class__} is deprecated and will "
+                "be removed in django-ca 1.28.0.",
+                RemovedInDjangoCA128Warning,
+                stacklevel=2,
+            )
             self.subject = x509_name(subject)
 
         if algorithm is not None:
@@ -291,7 +297,7 @@ class Profile:
             add_issuer_alternative_name=add_issuer_alternative_name,
         )
 
-        if self.subject is not False and self.subject is not None:
+        if self.subject is not None:
             if subject is not None:
                 subject = merge_x509_names(self.subject, subject)
             else:
@@ -385,7 +391,7 @@ class Profile:
                 extensions[EXTENSION_KEYS[key]] = serialize_extension(extension)
 
         serialized_name = None
-        if self.subject is not None and self.subject is not False:
+        if self.subject is not None:
             serialized_name = serialize_name(self.subject)
 
         data: SerializedProfile = {

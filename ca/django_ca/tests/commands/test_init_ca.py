@@ -772,15 +772,15 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_no_cn(self) -> None:
         """Test creating a CA with no CommonName."""
         name = "test_no_cn"
-        subject = "/ST=/L=/O=/OU=smth"
-        error = r"^Subject must contain a common name \(/CN=...\)\.$"
+        subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit"
+        error = r"^Subject must contain a common name \(CN=\.\.\.\)\.$"
         with self.assertCreateCASignals(False, False), self.assertCommandError(error):
-            self.cmd("init_ca", name, subject)
+            self.cmd("init_ca", name, subject, subject_format="rfc4514")
 
         error = r"CommonName must not be an empty value"
-        subject = "/ST=/L=/O=/OU=smth/CN="
+        subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN="
         with self.assertCreateCASignals(False, False), self.assertCommandError(error):
-            self.cmd("init_ca", name, subject)
+            self.cmd("init_ca", name, subject, subject_format="rfc4514")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self) -> None:

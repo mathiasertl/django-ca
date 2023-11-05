@@ -25,7 +25,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID
 
 from django.test import TestCase, override_settings
 
@@ -366,26 +366,28 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
         )
 
 
-class NameActionTestCase(ParserTestCaseMixin, TestCase):
-    """Test NameAction."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("--name", action=actions.NameAction)
-
-    def test_basic(self) -> None:
-        """Test basic functionality of action."""
-        namespace = self.parser.parse_args(["--name=/CN=example.com"])
-        self.assertEqual(namespace.name, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]))
-
-    def test_error(self) -> None:
-        """Test false option values."""
-        self.assertParserError(
-            ["--name=/WRONG=foobar"],
-            "usage: {script} [-h] [--name NAME]\n"
-            "{script}: error: argument --name: Unknown x509 name field: WRONG\n",
-        )
+# Class is not tested until django-ca 2.0, where RFC 4514 parsing is enabled.
+# class NameActionTestCase(ParserTestCaseMixin, TestCase):
+#     """Test NameAction."""
+#
+#     def setUp(self) -> None:
+#         super().setUp()
+#         self.parser = argparse.ArgumentParser()
+#         self.parser.add_argument("--name", action=actions.NameAction)
+#
+#     def test_basic(self) -> None:
+#         """Test basic functionality of action."""
+#         namespace = self.parser.parse_args(["--name=/CN=example.com"])
+#         expected = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+#         self.assertEqual(namespace.name, expected)
+#
+#     def test_error(self) -> None:
+#         """Test false option values."""
+#         self.assertParserError(
+#             ["--name=/WRONG=foobar"],
+#             "usage: {script} [-h] [--name NAME]\n"
+#             "{script}: error: argument --name: Unknown x509 name field: WRONG\n",
+#         )
 
 
 class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):

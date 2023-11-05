@@ -29,7 +29,7 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.typehints import AllowedHashTypes, ExtensionMapping
+from django_ca.typehints import AllowedHashTypes, ExtensionMapping, SubjectFormats
 
 
 class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
@@ -61,11 +61,11 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals
+    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
-        subject: Optional[x509.Name],
+        subject: Optional[str],
         expires: Optional[timedelta],
         watch: List[str],
         password: Optional[bytes],
@@ -96,6 +96,8 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
+        # subject_format will be removed in django-ca 2.2
+        subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
         if ca is None:
@@ -114,7 +116,9 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             watchers = list(cert.watchers.all())
 
         if subject is None:
-            subject = cert.subject
+            parsed_subject = cert.subject
+        else:
+            parsed_subject = self.parse_x509_name(subject, subject_format)
 
         # Process any extensions given via the command-line
         extensions: ExtensionMapping = {}
@@ -169,7 +173,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         # NOTE: This can only happen here in two edge cases:
         #   * Pass a subject without common name AND a certificate does *not* have a subject alternative name.
         #   * An imported certificate that has neither Common Name nor subject alternative name.
-        common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        common_names = parsed_subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         if not common_names and ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in extensions:
             raise CommandError(
                 "Must give at least a Common Name in --subject or one or more "
@@ -182,7 +186,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 csr=cert.csr.loaded,
                 profile=profile_obj,
                 expires=expires,
-                subject=subject,
+                subject=parsed_subject,
                 algorithm=algorithm,
                 extensions=extensions.values(),
                 password=password,
