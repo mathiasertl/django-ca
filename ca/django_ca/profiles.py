@@ -63,6 +63,7 @@ class Profile:
     class can be used to create a signed certificate based on the given CA::
 
         >>> from cryptography import x509
+        >>> from cryptography.x509.oid import NameOID
         >>> Profile(
         ...     "example",
         ...     subject=x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")]),

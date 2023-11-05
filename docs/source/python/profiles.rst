@@ -9,9 +9,9 @@ cases.  Instead, you can simply pass a name of the profile instead. For example,
 the ``webserver`` profile::
 
    # Note: "csr" is a predefined variable, see https://cryptography.io/en/latest/x509/tutorial/
-   >>> from django_ca.models import Certificate
    >>> from cryptography import x509
    >>> from cryptography.x509.oid import NameOID
+   >>> from django_ca.models import Certificate
    >>> from django_ca.profiles import profiles
    >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
    >>> Certificate.objects.create_cert(ca, csr, profile=profiles['webserver'], subject=subject)
@@ -20,7 +20,11 @@ the ``webserver`` profile::
 But you can also create your own profile manually to create a special type of certificate::
 
    >>> from django_ca.models import CertificateAuthority
-   >>> profile = Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
+   >>> profile = Profile(
+   ...     'example',
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT')]),
+   ...     extensions={'ocsp_no_check': {}}
+   ... )
    >>> ca = CertificateAuthority.objects.first()
    >>> profile.create_cert(ca, csr, subject=subject)
    <Certificate(subject=<Name(C=AT,CN=example.com)>, ...)>
