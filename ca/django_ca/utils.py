@@ -40,7 +40,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.constants import NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA129Warning
+from django_ca.deprecation import RemovedInDjangoCA128Warning, RemovedInDjangoCA129Warning
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -489,15 +489,6 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
             continue
 
     return x509.Name(attributes)
-
-
-def x509_relative_name(name: ParsableName) -> x509.RelativeDistinguishedName:
-    """Parse a relative name (RDN) into a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
-
-    >>> x509_relative_name('/CN=example.com')
-    <RelativeDistinguishedName(CN=example.com)>
-    """
-    return x509.RelativeDistinguishedName(parse_name_x509(name))
 
 
 def validate_email(addr: str) -> str:
