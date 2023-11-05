@@ -14,6 +14,7 @@
 """Module for handling certificate profiles."""
 
 import typing
+import warnings
 from datetime import datetime, timedelta
 from threading import local
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
@@ -25,6 +26,7 @@ from django.urls import reverse
 
 from django_ca import ca_settings, constants, typehints
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS
+from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.extensions import parse_extension, serialize_extension
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.signals import pre_sign_cert
@@ -60,7 +62,12 @@ class Profile:
     but you can also create your own profile to create a different type of certificate. An instance of this
     class can be used to create a signed certificate based on the given CA::
 
-        >>> Profile('example', subject='/C=AT', extensions={'ocsp_no_check': {}})
+        >>> from cryptography import x509
+        >>> Profile(
+        ...     "example",
+        ...     subject=x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")]),
+        ...     extensions={"ocsp_no_check": {}}
+        ... )
         <Profile: example>
     """
 
@@ -70,7 +77,7 @@ class Profile:
     def __init__(
         self,
         name: str,
-        subject: Optional[Union[typing.Literal[False], x509.Name, Iterable[Tuple[str, str]]]] = None,
+        subject: Optional[Union[typing.Literal[False], x509.Name]] = None,
         algorithm: Optional[str] = None,
         extensions: Optional[
             Dict[str, Optional[Union[ParsableExtension, x509.Extension[x509.ExtensionType]]]]
@@ -91,6 +98,7 @@ class Profile:
             expires = timedelta(days=expires)
         if extensions is None:
             extensions = {}
+
         if subject is None:
             self.subject: Optional[Union[typing.Literal[False], x509.Name]] = ca_settings.CA_DEFAULT_SUBJECT
         elif subject is False:
