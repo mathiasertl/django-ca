@@ -33,11 +33,11 @@ Creating CAs
 Use ``CertificateAuthority.objects.init()`` to create new certificate authorities. The method has many options
 but is designed to provide defaults that work in most cases::
 
+   >>> from cryptography.x509.oid import NameOID
    >>> from django_ca.models import CertificateAuthority
-   >>> from django_ca.utils import x509_name
    >>> ca = CertificateAuthority.objects.init(
    ...   name='ca',
-   ...   subject=x509_name('/CN=ca.example.com'),
+   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
    ...   path_length=1  # so we can create one level of intermediate CAs
    ... )
    >>> ca
@@ -48,7 +48,7 @@ intermediate CA, simply pass the parent::
 
    >>> child = CertificateAuthority.objects.init(
    ...   name='child',
-   ...   subject=x509_name('/CN=child.example.com'),
+   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
    ...   parent=ca)
    >>> child.parent
    <CertificateAuthority: ca>
@@ -61,7 +61,7 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    >>> from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
    >>> full = CertificateAuthority.objects.init(
    ...   name='full',
-   ...   subject=x509_name('/CN=full.example.com'),
+   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
    ...   issuer_url='http://full.example.com/full.der',
    ...
@@ -93,7 +93,7 @@ There are some more parameters to configure how the CA will be signed::
    >>> from cryptography.hazmat.primitives import hashes
    >>> CertificateAuthority.objects.init(
    ...   name='props',
-   ...   subject=x509_name('/CN=child.example.com'),
+   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
    ...   algorithm=hashes.SHA256(),  # SHA512 would be the default
    ...   path_length=3,  # three levels of intermediate CAs allowed,
    ...   password=b'foobar',  # encrypt private key with this password
@@ -126,7 +126,9 @@ using ``Certificate.objects``, e.g.::
    >>> csr  # doctest: +ELLIPSIS
    <...CertificateSigningRequest object at ...>
    >>> from django_ca.models import Certificate
-   >>> Certificate.objects.create_cert(csr=csr, ca=ca, subject=x509_name('/CN=example.com'))
+   >>> Certificate.objects.create_cert(
+   ...     csr=csr, ca=ca, subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+   ... )
    <Certificate: example.com>
 
 .. autoclass:: django_ca.managers.CertificateManager

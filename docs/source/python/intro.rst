@@ -33,6 +33,7 @@ Certificate Authorities are represented by the :py:class:`~django_ca.models.Cert
 a standard Django model, which means you can use the :doc:`QuerySet API <django:ref/models/querysets>` to
 retrieve and manipulate CAs::
 
+   >>> from cryptography.x509.oid import NameOID
    >>> from django_ca.models import CertificateAuthority
    >>> ca = CertificateAuthority.objects.get(name='root')
    >>> ca.enabled = False
@@ -45,7 +46,8 @@ creates a minimal CA::
    >>> from django_ca.utils import x509_name
    >>> from datetime import datetime
    >>> CertificateAuthority.objects.init(
-   ...     name='ca-two', subject=x509_name('/CN=ca.example.com'))
+   ...     name='ca-two', subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
+   ... )
    <CertificateAuthority: ca-two>
 
 Please see :ref:`models-certificate-authority` for a more detailed description on how to handle CAs.
@@ -65,7 +67,9 @@ Much like with certificate authorities, creating a new certificate requires a ma
 :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`::
 
    >>> from django_ca.utils import x509_name
-   >>> Certificate.objects.create_cert(ca, csr, subject=x509_name('/CN=example.com'))
+   >>> Certificate.objects.create_cert(
+   ...     ca, csr, subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+   ... )
    <Certificate: example.com>
 
 *******
