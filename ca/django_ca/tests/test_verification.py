@@ -73,8 +73,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
     def init_ca(self, name: str, **kwargs: Any) -> CertificateAuthority:
         """Create a CA."""
-        self.cmd("init_ca", name, f"/CN={name}", **kwargs)
-        return CertificateAuthority.objects.get(name=name)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
+        return CertificateAuthority.objects.init(name, subject, **kwargs)
 
     @contextmanager
     def crl(
