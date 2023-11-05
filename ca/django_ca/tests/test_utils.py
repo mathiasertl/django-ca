@@ -40,7 +40,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings, constants, utils
 from django_ca.deprecation import RemovedInDjangoCA129Warning
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
-from django_ca.tests.base.utils import dns, rdn, uri
+from django_ca.tests.base.utils import dns, uri
 from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
@@ -66,7 +66,6 @@ from django_ca.utils import (
     validate_private_key_parameters,
     validate_public_key_parameters,
     x509_name,
-    x509_relative_name,
 )
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
@@ -304,14 +303,6 @@ class ParseNameX509TestCase(TestCase):
         with self.assertRaisesRegex(ValueError, "^Unknown x509 name field: ABC$") as e:
             parse_name_x509(f"/{field}=example.com")
         self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
-
-
-class RelativeNameTestCase(TestCase):
-    """Some tests related to relative names."""
-
-    def test_parse(self) -> None:
-        """Test parsing..."""
-        self.assertEqual(x509_relative_name("/CN=example.com"), rdn([(NameOID.COMMON_NAME, "example.com")]))
 
 
 @pytest.mark.parametrize(
