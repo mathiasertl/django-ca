@@ -30,7 +30,7 @@ from django_ca import ca_settings, constants
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
-from django_ca.typehints import AllowedHashTypes, ExtensionMapping
+from django_ca.typehints import AllowedHashTypes, ExtensionMapping, SubjectFormats
 
 
 class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
@@ -100,7 +100,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
     def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
         self,
         ca: CertificateAuthority,
-        subject: Optional[x509.Name],
+        subject: Optional[str],
         expires: Optional[timedelta],
         watch: List[str],
         password: Optional[bytes],
@@ -135,6 +135,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
+        # subject_format will be removed in django-ca 2.2
+        subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
@@ -187,9 +189,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         if tls_feature is not None:
             self._add_extension(extensions, tls_feature, tls_feature_critical)
 
-        cname = None
+        # Parse the subject
+        parsed_subject = None
         if subject is not None:
-            cname = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+            parsed_subject = self.parse_x509_name(subject, subject_format)
+
+        cname = None
+        if parsed_subject is not None:
+            cname = parsed_subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         if not cname and ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in extensions:
             raise CommandError(
                 "Must give at least a Common Name in --subject or one or more "
@@ -223,7 +230,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 expires=expires,
                 extensions=extensions.values(),
                 password=password,
-                subject=subject,
+                subject=parsed_subject,
                 algorithm=algorithm,
             )
         except Exception as ex:

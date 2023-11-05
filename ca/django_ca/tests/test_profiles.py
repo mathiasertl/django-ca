@@ -23,8 +23,11 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase, override_settings
 
+import pytest
+
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
+from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
@@ -102,21 +105,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         self.assertNotEqual(profile, None)
 
     def test_init_django_ca_values(self) -> None:
-        """Test django-ca extensions as extensions."""
-        prof1 = Profile(
-            "test",
-            subject=[("C", "AT"), ("CN", self.hostname)],
-            extensions={
-                "ocsp_no_check": {},
-            },
-        )
-        prof2 = Profile(
-            "test",
-            subject=[("C", "AT"), ("CN", self.hostname)],
-            extensions={
-                "ocsp_no_check": ocsp_no_check(),
-            },
-        )
+        """Test passing serialized extensions leads to equal profiles."""
+        prof1 = Profile("test", subject=self.subject, extensions={"ocsp_no_check": {}})
+        prof2 = Profile("test", subject=self.subject, extensions={"ocsp_no_check": ocsp_no_check()})
         self.assertEqual(prof1, prof2)
 
     def test_init_none_extension(self) -> None:
@@ -161,7 +152,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             "test",
             cn_in_san=True,
             description=desc,
-            subject=[("CN", self.hostname)],
+            subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)]),
             extensions={
                 EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
             },
@@ -191,7 +182,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[])
+        prof = Profile("example")
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -201,7 +192,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 add_issuer_alternative_name=False,
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
@@ -217,7 +207,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
         subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
-        prof = Profile("example", subject=[])
+        prof = Profile("example", subject=False)
 
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
@@ -251,7 +241,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
 
         prof = Profile(
             "example",
-            subject=[("C", "AT")],
+            subject=x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")]),
             add_crl_url=False,
             add_ocsp_url=False,
             add_issuer_url=False,
@@ -302,7 +292,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test passing an extension that is removed by the profile."""
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", subject=[("C", "AT")], extensions={"ocsp_no_check": None})
+        prof = Profile("example", extensions={"ocsp_no_check": None})
 
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
@@ -314,25 +304,19 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test writing the common name into the SAN."""
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        subject = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
-            ]
-        )
 
-        prof = Profile("example", subject=[("C", "AT")], add_issuer_alternative_name=False, cn_in_san=False)
+        prof = Profile("example", subject=False, add_issuer_alternative_name=False, cn_in_san=False)
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
 
         # Create the same cert, but pass cn_in_san=True to create_cert
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject, cn_in_san=True)
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
@@ -349,7 +333,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[subject_alternative_name(dns(self.hostname))],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
@@ -366,7 +350,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[subject_alternative_name(dns(self.hostname + ".added"))],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
@@ -381,7 +365,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 prof, ca, csr, cn_in_san=True, extensions=[subject_alternative_name(dns(self.hostname))]
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, subject)
+        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
@@ -398,7 +382,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
             value=x509.SubjectKeyIdentifier(b"custom value"),
         )
 
-        prof = Profile("example", subject=[])
+        prof = Profile("example")
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -412,7 +396,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[ski],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
@@ -427,7 +410,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_add_distribution_point_with_ca_crldp(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
-        prof = Profile("example", subject=[])
+        prof = Profile("example")
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
@@ -450,7 +433,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[added_crldp],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
 
         self.assertExtensions(
@@ -471,7 +453,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         root = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[], algorithm="SHA-512")
+        prof = Profile("example", algorithm="SHA-512")
 
         # Make sure that algorithm does not match what is the default profile above, so that we can test it
         self.assertIsInstance(root.algorithm, hashes.SHA256)
@@ -493,7 +475,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_issuer_alternative_name_override(self) -> None:
         """Pass a custom Issuer Alternative Name which overwrites the CA value."""
-        prof = Profile("example", subject=[])
+        prof = Profile("example")
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
@@ -516,7 +498,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[issuer_alternative_name(added_ian_uri)],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
 
         self.assertExtensions(
@@ -534,7 +515,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     @override_tmpcadir()
     def test_merge_authority_information_access_existing_values(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
-        prof = Profile("example", subject=[])
+        prof = Profile("example")
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
@@ -562,7 +543,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[added_aia],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
 
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
 
@@ -587,7 +567,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+        prof = Profile("example", extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -598,7 +578,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[ocsp_no_check()],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
         self.assertExtensions(
             cert,
             [
@@ -615,7 +594,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         # Profile with extensions (will be overwritten by the command line).
         prof = Profile(
             "example",
-            subject=[],
             extensions={
                 EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
@@ -648,7 +626,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 extensions=[expected_authority_information_access],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
 
         extensions = cert.x509_extensions
         self.assertEqual(
@@ -660,7 +637,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test partial overwriting of the Authority Information Access extension."""
         prof = Profile(
             "example",
-            subject=[],
             extensions={
                 EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
@@ -693,7 +669,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 ],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
 
         extensions = cert.x509_extensions
         self.assertEqual(
@@ -721,7 +696,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
                 ],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
 
         extensions = cert.x509_extensions
         self.assertEqual(
@@ -738,7 +712,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", subject=[("C", "AT")])
+        prof = Profile("example")
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=None)
@@ -749,7 +723,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test what happens when the SAN has nothing usable as CN."""
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", subject=[], extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+        prof = Profile("example", extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with self.mockSignal(pre_sign_cert) as pre:
@@ -763,7 +737,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         cname = "foo bar"
 
-        prof = Profile("example", subject=[("C", "AT"), ("CN", cname)])
+        prof = Profile("example", subject=x509.Name([x509.NameAttribute(x509.NameOID.COMMON_NAME, cname)]))
         msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
         with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr)
@@ -792,6 +766,25 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         """Test repr()."""
         for name in ca_settings.CA_PROFILES:
             self.assertEqual(repr(profiles[name]), f"<Profile: {name}>")
+
+
+def test_deprecated_subject_value() -> None:
+    """Test deprecated subject values."""
+    value = "/C=AT/L=Vienna/ST=Vienna"
+    msg = (
+        rf"^{value}: Support for passing a value of type .* is deprecated and will be removed in "
+        "django-ca 1.28.0.$"
+    )
+    with pytest.warns(RemovedInDjangoCA128Warning, match=msg):
+        prof = Profile("test", value)  # type: ignore[arg-type]  # what we test
+
+    assert prof.subject == x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
+        ]
+    )
 
 
 class GetProfileTestCase(TestCase):

@@ -39,8 +39,14 @@ from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
-from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ExtensionMapping
-from django_ca.utils import add_colons, name_for_display
+from django_ca.typehints import (
+    ActionsContainer,
+    AllowedHashTypes,
+    ArgumentGroup,
+    ExtensionMapping,
+    SubjectFormats,
+)
+from django_ca.utils import add_colons, name_for_display, parse_name_rfc4514, x509_name
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -246,6 +252,31 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     def _add_extension(self, extensions: ExtensionMapping, value: x509.ExtensionType, critical: bool) -> None:
         """Add an extension to the passed extension dictionary."""
         extensions[value.oid] = x509.Extension(oid=value.oid, critical=critical, value=value)
+
+    def add_subject_format_option(self, parser: ActionsContainer) -> None:
+        """Add the --subject-format option."""
+        parser.add_argument(
+            "--subject-format",
+            choices=("openssl", "rfc4514"),
+            default="openssl",
+            help='Format for parsing the subject. Use "openssl" (the default before django-ca 2.0) to pass '
+            'slash-separated subjects (e.g. "/C=AT/O=Org/CN=example.com") and "rfc4514" to pass RFC 4514 '
+            'conforming strings (e.g. "C=AT,O=Org,CN=example.com"). The default is %(default)s, but will '
+            "switch to rfc4514 in django-ca 2.0. Support for openssl-style strings will be removed in "
+            "django-ca 2.2.",
+        )
+
+    def parse_x509_name(self, value: str, name_format: SubjectFormats) -> x509.Name:
+        """Parse a `name` in the given `format`."""
+        if name_format == "openssl":
+            return x509_name(value)
+        if name_format == "rfc4514":
+            try:
+                return parse_name_rfc4514(value)
+            except ValueError as ex:
+                raise CommandError(str(ex)) from ex
+        # COVERAGE NOTE: Already covered by argparse
+        raise ValueError(f"{name_format}: Unknown subject format.")  # pragma: no cover
 
     def add_authority_information_access_group(
         self,
@@ -462,6 +493,9 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
     def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""
         group = parser.add_argument_group("Certificate subject", self.subject_help)
+
+        # Add the --subject-format option
+        self.add_subject_format_option(group)
 
         # NOTE: Don't set the default value here because it would mask the user not setting anything at all.
         self.add_subject(

@@ -300,7 +300,8 @@ class ParseNameX509TestCase(TestCase):
     def test_unknown(self) -> None:
         """Test unknown field."""
         field = "ABC"
-        with self.assertRaisesRegex(ValueError, "^Unknown x509 name field: ABC$") as e:
+
+        with self.assertRaisesRegex(ValueError, rf"^Unknown x509 name field: {field}$") as e:
             parse_name_x509(f"/{field}=example.com")
         self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
 
@@ -461,7 +462,7 @@ class ParseGeneralNameTest(TestCase):
     def test_dirname(self) -> None:
         """Test parsing a dirname."""
         self.assertEqual(
-            parse_general_name("/CN=example.com"),
+            parse_general_name("dirname:CN=example.com"),
             x509.DirectoryName(
                 x509.Name(
                     [
@@ -471,17 +472,7 @@ class ParseGeneralNameTest(TestCase):
             ),
         )
         self.assertEqual(
-            parse_general_name("dirname:/CN=example.com"),
-            x509.DirectoryName(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                    ]
-                )
-            ),
-        )
-        self.assertEqual(
-            parse_general_name("dirname:/C=AT/CN=example.com"),
+            parse_general_name("dirname:C=AT,CN=example.com"),
             x509.DirectoryName(
                 x509.Name(
                     [
@@ -1049,15 +1040,23 @@ class X509NameTestCase(TestCase):
 
     def test_str(self) -> None:
         """Test passing a string."""
-        subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
+        subject = [
+            ("C", "AT"),
+            ("ST", "Vienna"),
+            ("L", "Vienna"),
+            ("O", "O"),
+            ("OU", "OU"),
+            ("CN", "example.com"),
+            ("emailAddress", "user@example.com"),
+        ]
         self.assertEqual(x509_name(subject), self.name)
 
     def test_multiple_other(self) -> None:
         """Test multiple other tokens (only OUs work)."""
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "countryName" fields$'):
-            x509_name("/C=AT/C=DE")
+            x509_name([("C", "AT"), ("C", "DE")])
         with self.assertRaisesRegex(ValueError, '^Subject contains multiple "commonName" fields$'):
-            x509_name("/CN=AT/CN=FOO")
+            x509_name([("CN", "AT"), ("CN", "FOO")])
 
 
 class MergeX509NamesTestCase(TestCase):

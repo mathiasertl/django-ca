@@ -16,7 +16,7 @@
 import argparse
 import typing
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -198,6 +198,11 @@ ParsableAuthorityKeyIdentifierDict = typing.TypedDict(
 
 
 SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical": bool})
+
+############
+# Literals #
+############
+SubjectFormats = Literal["openssl", "rfc4514"]  # pragma: only django-ca<=2.2  # will be removed in 2.2
 
 ################
 # Type aliases #

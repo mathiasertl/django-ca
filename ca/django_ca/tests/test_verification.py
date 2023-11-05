@@ -110,7 +110,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     ) -> Iterator[str]:
         """Create a signed certificate in a temporary directory."""
         stdin = self.csr_pem.encode()
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
+        # subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
+        subject = f"CN={hostname}"
 
         with tempfile.TemporaryDirectory() as tempdir:
             out_path = os.path.join(tempdir, f"{hostname}.pem")
