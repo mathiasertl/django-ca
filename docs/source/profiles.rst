@@ -157,38 +157,21 @@ profile, with the first DNS name requested by the client used as common name. Yo
 being used for each certificate authority via the admin interface or via ``manage.py edit_ca --acme-profile``.
 
 When signing certificates via the API, this value is *not* used, the caller is expected to provide the full
-subject. When signing certificates via the admin interface, this subject will be prefilled in the subject
-field of the form.
+subject. When signing certificates via the admin interface, this subject will be the default values in the
+subject field of the form.
 
 When issuing certificates via the command line, the given subject is merged with the subject of the profile,
 with explicitly given values taking precedence. For example, given the following configuration:
 
 .. tab:: Python
 
-   .. code-block:: python
-
-      CA_PROFILES = {
-          "example": {
-              "description": "Profile defining a custom subject.",
-              "subject": (
-                  ("C", "AT"),
-                  ("ST", "Vienna"),
-              ),
-              # ... other options
-          }
-      }
+   .. literalinclude:: /include/config/profiles_subject_example.py
+      :language: python
 
 .. tab:: YAML
 
-   .. code-block:: YAML
-
-      CA_PROFILES:
-        example:
-          description: Profile defining a custom subject.
-          subject:
-            - [ C, AT ]
-            - [ ST, Vienna ]
-          # ... any other options
+   .. literalinclude:: /include/config/profiles_subject_example.yaml
+      :language: yaml
 
 ... signing a certificate with
 

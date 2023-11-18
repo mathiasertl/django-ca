@@ -262,42 +262,21 @@ CA_DEFAULT_SUBJECT
 
    .. tab:: Python
 
-      .. code-block:: python
-
-         CA_DEFAULT_SUBJECT = (
-            ("countryName", "AT"),
-            ("2.5.4.8", "Vienna"),  # dottet string for "stateOrProvinceName"
-            ("organizationName", "orgName"),
-            ("organizationalUnitName", "orgUnitName"),
-         )
+      .. literalinclude:: /include/config/setting_default_subject_example.py
+         :language: python
 
    .. tab:: YAML
 
-      .. code-block:: YAML
-
-         CA_DEFAULT_SUBJECT:
-           - [ countryName, AT ]
-           - [ "2.5.4.8", "Vienna"]  # dottet string for "stateOrProvinceName"
-           - [ organizationName, orgName ]
-           - [ organizationalUnitName, orgUnitName ]
+      .. literalinclude:: /include/config/setting_default_subject_example.yaml
+         :language: yaml
 
    If you use Python as a configuration format, the value can also be a :py:class:`x509.Name
    <cg:cryptography.x509.Name>` instance.  For convenience, you can also give :py:class:`x509.NameAttribute
    <cg:cryptography.x509.NameAttribute>` instances in the tuple defined above, or use an
    :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as key:
 
-
-   .. code-block:: python
-
-      CA_DEFAULT_SUBJECT = (
-         ("countryName", "AT"),
-         ("2.5.4.8", "Vienna"),  # dottet string for "stateOrProvinceName"
-         (NameOID.ORGANIZATION_NAME, "orgName"),
-         x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="orgUnitName"),
-      )
-
-      # Or you just define the full name:
-      #CA_DEFAULT_SUBJECT = x509.Name(...)
+   .. literalinclude:: /include/config/setting_default_subject_cryptography.py
+      :language: python
 
 .. _settings-ca-dir:
 
