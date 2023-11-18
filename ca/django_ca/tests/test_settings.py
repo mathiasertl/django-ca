@@ -346,6 +346,19 @@ class SettingsTestCase(TestCase):
         with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL=600):
             self.assertEqual(ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))
 
+    def test_ca_default_subject(self) -> None:
+        """Test CA_DEFAULT_SUBJECT setting."""
+        with self.settings(CA_DEFAULT_SUBJECT=(("C", "AT"), ("ST", "Vienna"))):
+            self.assertEqual(
+                ca_settings.CA_DEFAULT_SUBJECT,
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
+                    ]
+                ),
+            )
+
 
 class DefaultCATestCase(TestCase):
     """Test the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting."""
@@ -437,6 +450,22 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         """Test setting an invalid CA."""
         with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$"):
             with self.settings(CA_DEFAULT_CA="0a:bc:x"):
+                pass
+
+    def test_default_subject_with_duplicate_country(self) -> None:
+        """Test the check for OIDs that must not occur multiple times."""
+        with self.assertImproperlyConfigured(
+            r'^CA_DEFAULT_SUBJECT contains multiple "countryName" fields\.$'
+        ):
+            with self.settings(CA_DEFAULT_SUBJECT=(("C", "AT"), ("C", "DE"))):
+                pass
+
+    def test_default_subject_with_empty_common_name(self) -> None:
+        """Test the check for empty common names."""
+        with self.assertImproperlyConfigured(
+            r"^CA_DEFAULT_SUBJECT: CommonName must not be an empty value\.$"
+        ):
+            with self.settings(CA_DEFAULT_SUBJECT=(("CN", ""),)):
                 pass
 
 

@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509.oid import NameOID
 
 from django.conf import global_settings, settings
 from django.core.exceptions import ImproperlyConfigured
@@ -33,6 +34,27 @@ from django_ca import constants
 
 if typing.TYPE_CHECKING:
     from django_ca.typehints import AllowedHashTypes
+
+
+def _check_name(name: x509.Name, hint: str) -> None:
+    # WARNING: This function is a duplicate of the function in utils.
+
+    multiple_oids = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.STREET_ADDRESS)
+
+    seen = set()
+
+    for attr in name:
+        oid = attr.oid
+
+        # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
+        if oid in seen and oid not in multiple_oids:
+            raise ImproperlyConfigured(
+                f'{hint} contains multiple "{constants.NAME_OID_NAMES[attr.oid]}" fields.'
+            )
+        seen.add(oid)
+
+        if oid == NameOID.COMMON_NAME and not attr.value:
+            raise ImproperlyConfigured(f"{hint}: CommonName must not be an empty value.")
 
 
 def _normalize_x509_name(value: Any, hint: str) -> Optional[x509.Name]:
@@ -61,7 +83,10 @@ def _normalize_x509_name(value: Any, hint: str) -> Optional[x509.Name]:
 
     if not name_attributes:
         return None
-    return x509.Name(name_attributes)
+
+    normalized_name = x509.Name(name_attributes)
+    _check_name(normalized_name, hint)
+    return normalized_name
 
 
 def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
@@ -253,22 +278,22 @@ CA_DEFAULT_NAME_ORDER = tuple(_normalize_name_oid(name_oid) for name_oid in CA_D
 CA_DEFAULT_PROFILE = getattr(settings, "CA_DEFAULT_PROFILE", "webserver")
 
 _CA_PROFILE_OVERRIDES = getattr(settings, "CA_PROFILES", {})
-for name, profile in _CA_PROFILE_OVERRIDES.items():
+for profile_name, profile in _CA_PROFILE_OVERRIDES.items():
     if profile is None:
-        del CA_PROFILES[name]
+        del CA_PROFILES[profile_name]
         continue
 
-    if name in CA_PROFILES:
-        CA_PROFILES[name].update(profile)
+    if profile_name in CA_PROFILES:
+        CA_PROFILES[profile_name].update(profile)
     else:
-        CA_PROFILES[name] = profile
+        CA_PROFILES[profile_name] = profile
 
-for name, profile in CA_PROFILES.items():
+for profile_name, profile in CA_PROFILES.items():
     profile.setdefault("subject", CA_DEFAULT_SUBJECT)
     profile.setdefault("cn_in_san", True)
 
     if subject := profile.get("subject"):
-        profile["subject"] = _normalize_x509_name(subject, f"subject in {name} profile.")
+        profile["subject"] = _normalize_x509_name(subject, f"subject in {profile_name} profile.")
 
 if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
