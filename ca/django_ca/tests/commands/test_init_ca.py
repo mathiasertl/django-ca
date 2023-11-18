@@ -170,50 +170,6 @@ class InitCATest(TestCaseMixin, TestCase):
         return self.test_basic()
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_subject_sort(self) -> None:
-        """Assert that the subject is sorted by default."""
-        cname = "subject-sort.example.com"
-        name = "test_subject_sort"
-        subject = f"/CN={cname}/C=AT"
-
-        ca = self.init_ca_e2e(name, subject)
-
-        # Assert that common name and that subject is in correct order.
-        self.assertEqual(ca.cn, cname)
-        self.assertEqual(
-            ca.pub.loaded.subject,
-            x509.Name(
-                [
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                    x509.NameAttribute(NameOID.COMMON_NAME, cname),
-                ]
-            ),
-        )
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_unsortable_subject(self) -> None:
-        """Test subjects that do not have any standard sorting."""
-        cname = "subject-unsortable.example.com"
-        name = "test_subject_unsortable"
-        given_name = "given-name"
-        subject = f"/CN={cname}/C=AT/givenName={given_name}"
-
-        ca = self.init_ca_e2e(name, subject)
-
-        # Assert that common name and that subject is in correct order.
-        self.assertEqual(ca.cn, cname)
-        self.assertEqual(
-            ca.pub.loaded.subject,
-            x509.Name(
-                [
-                    x509.NameAttribute(NameOID.COMMON_NAME, cname),
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                    x509.NameAttribute(NameOID.GIVEN_NAME, given_name),
-                ]
-            ),
-        )
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_arguments(self) -> None:
         """Test most arguments."""
         hostname = "example.com"

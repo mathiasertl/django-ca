@@ -15,6 +15,8 @@ ChangeLog
   :ref:`settings-ca-default-name-order` now also support a dotted string to include arbitrary object
   identifiers.
 * :ref:`settings-ca-default-name-order` can now be configured in YAML files.
+* Do not implicitly sort the subject of new certificate authorities according to
+  :ref:`settings-ca-default-name-order`. The user is expected to supply the correct order.
 
 Backwards incompatible changes
 ==============================

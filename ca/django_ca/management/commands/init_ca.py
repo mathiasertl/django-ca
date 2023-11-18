@@ -41,12 +41,7 @@ from django_ca.typehints import (
     ParsableKeyType,
     SubjectFormats,
 )
-from django_ca.utils import (
-    format_general_name,
-    parse_general_name,
-    sort_name,
-    validate_private_key_parameters,
-)
+from django_ca.utils import format_general_name, parse_general_name, validate_private_key_parameters
 
 
 class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
@@ -377,7 +372,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         if parent:
             self.test_private_key(parent, parent_password)
 
-        parsed_subject = sort_name(parsed_subject)
         extensions: ExtensionMapping = {
             ExtensionOID.KEY_USAGE: x509.Extension(
                 oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage
