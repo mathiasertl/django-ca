@@ -26,8 +26,10 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.test import TestCase
 from django.urls import reverse
 
+from freezegun import freeze_time
+
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, uri
 
@@ -115,7 +117,8 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
         with tempfile.TemporaryDirectory() as tempdir:
             out_path = os.path.join(tempdir, f"{hostname}.pem")
-            self.cmd("sign_cert", ca=ca, subject=subject, out=out_path, stdin=stdin, **kwargs)
+            with freeze_time(TIMESTAMPS["everything_valid"]):
+                self.cmd("sign_cert", ca=ca, subject=subject, out=out_path, stdin=stdin, **kwargs)
             yield out_path
 
     def openssl(self, cmd: str, *args: str, code: int = 0, **kwargs: str) -> None:
