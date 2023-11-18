@@ -70,7 +70,7 @@ def test_change_view(admin_client: Client, interesting_cert: Certificate) -> Non
                 </div>
             </div>"""
 
-    assertContains(response, text=html, html=True)  # type: ignore[arg-type]
+    assertContains(response, text=html, html=True)
 
 
 def test_change_watchers(admin_client: Client, root_cert: Certificate) -> None:
@@ -84,7 +84,7 @@ def test_change_watchers(admin_client: Client, root_cert: Certificate) -> None:
     response = admin_client.post(root_cert.admin_change_url, data={"watchers": [watcher.pk]})
 
     assert response.status_code == 302
-    assertRedirects(response, root_cert.admin_changelist_url)  # type: ignore[arg-type]
+    assertRedirects(response, root_cert.admin_changelist_url)
     assert list(root_cert.watchers.all()) == [watcher]
 
 
@@ -115,7 +115,7 @@ def test_change_view_with_revoked_certificate(admin_client: Client, child_cert: 
             </div>
         """
 
-    assertContains(response, text=html, html=True)  # type: ignore[arg-type]
+    assertContains(response, text=html, html=True)
 
 
 def test_change_view_with_no_subject_alternative_name(
@@ -159,7 +159,7 @@ def test_change_view_with_no_subject_alternative_name(
                 </div>
             </div>"""
 
-    assertContains(response, text=html, html=True)  # type: ignore[arg-type]
+    assertContains(response, text=html, html=True)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])

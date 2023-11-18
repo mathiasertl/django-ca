@@ -334,11 +334,9 @@ class GenericOCSPView(OCSPView):
 
     auto_ca: CertificateAuthority
 
-    # NOINSPECTION/TYPE NOTE: It's okay to be more specific here
+    # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
-    def dispatch(  # type: ignore[override]
-        self, request: HttpRequest, serial: str, **kwargs: Any
-    ) -> "HttpResponseBase":
+    def dispatch(self, request: HttpRequest, serial: str, **kwargs: Any) -> "HttpResponseBase":
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:

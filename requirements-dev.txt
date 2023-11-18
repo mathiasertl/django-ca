@@ -12,6 +12,6 @@ ruff
 
 tox>=4.4.6
 # pytest-xdist allows running tests in parallel ("pytest -n 3")
-pytest-xdist==3.3.1
+pytest-xdist==3.4.0
 
 wheel-inspect
