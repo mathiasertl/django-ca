@@ -32,6 +32,7 @@ from _pytest.python import Metafunc
 from pytest_cov.plugin import CovPlugin
 from pytest_django.fixtures import SettingsWrapper
 
+from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings
 from django_ca.models import Certificate
 from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
