@@ -241,11 +241,15 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         cert = Certificate.objects.get()
         self.assertIsInstance(cert.algorithm, hashes.SHA256)
 
-    @override_tmpcadir()
-    def test_subject_sort(self) -> None:
-        """Test that subject is sorted on the command line."""
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=(("ST", "Vienna"),))
+    def test_subject_sort_with_profile_subject(self) -> None:
+        """Test that subject is sorted on the command line.
+
+        The subject given in the profile must be updated with the given subject, and the order would not be
+        clear otherwise.
+        """
         cname = "subject-sort.example.com"
-        subject = f"CN={cname},C=AT"
+        subject = f"CN={cname},C=AT"  # not the default order
         stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
@@ -267,7 +271,44 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             x509.Name(
                 [
                     x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
                     x509.NameAttribute(NameOID.COMMON_NAME, cname),
+                ]
+            ),
+        )
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
+    def test_subject_sort_with_no_common_name(self) -> None:
+        """Test that the subject is sorted when the CommonName is added via SubjectAlternativeName.
+
+        The subject must be ordered if the CommonName is coming from the SubjectAlternativeName extension, as
+        the position of the CommonName would otherwise not be clear.
+        """
+        subject = "emailAddress=user@example.com,C=AT"  # not the default order
+        stdin = self.csr_pem.encode()
+        cmdline = [
+            "sign_cert",
+            f"--subject={subject}",
+            "--subject-format=rfc4514",
+            f"--ca={self.ca.serial}",
+            f"--alt={self.hostname}",
+        ]
+
+        with self.assertCreateCertSignals() as (pre, post):
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+
+        self.assertEqual(stderr, "")
+
+        cert = Certificate.objects.get()
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(
+            cert.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
+                    x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
                 ]
             ),
         )
@@ -791,6 +832,74 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
 
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
+    def test_unsortable_subject_with_no_profile_subject(self) -> None:
+        """Test passing a subject that cannot be sorted.
+
+        The subject of the certificate will be identical to the given subject, with no sorting applied. This
+        requires that the profile does **not** define a subject (as given and profile subject would have to be
+        merged) and the passed subject already contains a CommonName (as it would have to be added in the
+        "correct" location from the SubjectAlternativeName extension).
+        """
+        stdin = self.csr_pem.encode()
+        with self.assertCreateCertSignals() as (pre, post):
+            stdout, stderr = self.cmd(
+                "sign_cert",
+                ca=self.ca,
+                subject_format="rfc4514",
+                subject=f"inn=weird,CN={self.hostname}",
+                stdin=stdin,
+            )
+        self.assertEqual(stderr, "")
+
+        cert = Certificate.objects.get(cn=self.hostname)
+        self.assertPostIssueCert(post, cert)
+        self.assertSignature([self.ca], cert)
+        self.assertEqual(
+            cert.pub.loaded.subject,
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.INN, "weird"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
+                ]
+            ),
+        )
+        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=(("C", "AT"),))
+    def test_unsortable_subject_with_profile_subject(self) -> None:
+        """Test passing a subject that cannot be sorted, but the profile also defines a subject.
+
+        The given subject and subject in the profile cannot be merged in any predictable order, so this is an
+        error.
+        """
+        stdin = self.csr_pem.encode()
+        subject = f"inn=weird,CN={self.hostname}"
+        with self.assertCommandError(rf"^{subject}: Unsortable name$"), self.assertCreateCertSignals(
+            False, False
+        ):
+            self.cmd("sign_cert", ca=self.ca, subject_format="rfc4514", subject=subject, stdin=stdin)
+
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
+    def test_unsortable_subject_with_no_common_name(self) -> None:
+        """Test passing a subject that cannot be sorted and has no CommonName.
+
+        The position of the CommonName added via the SubjectAlternativeName extension cannot be determined.
+        """
+        stdin = self.csr_pem.encode()
+        subject = "inn=weird"
+        with self.assertCommandError(rf"^{subject}: Unsortable name$"), self.assertCreateCertSignals(
+            False, False
+        ):
+            self.cmd(
+                "sign_cert",
+                ca=self.ca,
+                subject_format="rfc4514",
+                subject=subject,
+                subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
+                stdin=stdin,
+            )
+
     @override_tmpcadir()
     def test_expiry_too_late(self) -> None:
         """Test signing with an expiry after the CA expires."""
@@ -801,7 +910,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         with self.assertCommandError(
             rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
         ), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=self.ca, alt={"value": ["example.com"]}, expires=expires, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject=self.hostname, expires=expires, stdin=stdin)
 
     @override_tmpcadir()
     def test_revoked_ca(self) -> None:

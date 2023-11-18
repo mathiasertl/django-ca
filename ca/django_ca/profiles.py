@@ -44,7 +44,6 @@ from django_ca.utils import (
     parse_expires,
     parse_general_name,
     serialize_name,
-    sort_name,
     x509_name,
 )
 
@@ -308,7 +307,6 @@ class Profile:
 
         if subject is None:
             raise ValueError("Cannot determine subject for certificate.")
-        subject = sort_name(subject)
 
         if algorithm is None and ca.algorithm:
             if self.algorithm is not None:
