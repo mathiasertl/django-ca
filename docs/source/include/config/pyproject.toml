@@ -1,0 +1,6 @@
+[tool.ruff]
+# Extend the root pyproject.toml for ruff
+extend = "../../../../pyproject.toml"
+
+# do not enable "D"/pydocstyle, otherwise every example would have to have a module docstring
+select = ["E", "F", "I", "G", "DJ"]

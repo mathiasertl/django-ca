@@ -42,9 +42,10 @@ ubuntu-releases = [
 ]
 
 [django-ca.validation]
-# list glob-style patterns to exclude from any check
+# list glob-style patterns to exclude from any check (currently only license headers)
 excludes = [
     "ca/django_ca/migrations/*.py",
+    "docs/source/include/config/*.py",
 ]
 # Files known to be stand-alone scripts (-> they include a shebang line)
 standalone-scripts = [
