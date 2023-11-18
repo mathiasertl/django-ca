@@ -246,13 +246,15 @@ CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 CA_DEFAULT_SUBJECT
    Default: ``None``
 
+   .. Describe here the syntax of this value. Profiles describe how the value is used.
+
    The default subject for :doc:`profiles` that don't define their own subject. You can use this setting to
    define a default subject for all profiles without having to define the subject in every profile.
 
-   Please see :ref:`profiles-subject` for the effects of this value.
+   Please see :ref:`profiles-subject` for how this value used when signing certificates.
 
-   Any value given here must have its attribute type named in :ref:`settings-ca-default-name-order`, otherwise
-   signing certificates will fail.
+   Note that signing via the command-line or ACMEv2, the subject attributes of a certificate will be sorted
+   according to :ref:`settings-ca-default-name-order`, regardless of the order given here.
 
    In its most trivial form, this value is a ``tuple`` consisting of two-tuples naming the attribute type and
    value. Attribute types must be one of the values in :py:attr:`~django_ca.constants.NAME_OID_TYPES` or a
