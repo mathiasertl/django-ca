@@ -17,6 +17,10 @@ ChangeLog
 * :ref:`settings-ca-default-name-order` can now be configured in YAML files.
 * Do not implicitly sort the subject of new certificate authorities according to
   :ref:`settings-ca-default-name-order`. The user is expected to supply the correct order.
+* When signing certificates via the command line, implicitly sort the subject only when the profile defines a
+  subject and/or the CommonName is not given and added via the SubjectAlternativeName extension. If neither is
+  the case, the user is expected to supply the correct order.
+
 
 Backwards incompatible changes
 ==============================

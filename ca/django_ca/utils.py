@@ -79,14 +79,6 @@ MULTIPLE_OIDS = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, Nam
 NAME_CASE_MAPPINGS = {k.upper(): v for k, v in constants.NAME_OID_TYPES.items()}
 
 
-def sort_name(name: x509.Name) -> x509.Name:
-    """Returns the subject in the correct order for a x509 subject."""
-    try:
-        return x509.Name(sorted(name, key=lambda attr: ca_settings.CA_DEFAULT_NAME_ORDER.index(attr.oid)))
-    except ValueError:
-        return name
-
-
 def encode_url(url: str) -> str:
     """IDNA encoding for domains in URLs.
 
@@ -468,9 +460,9 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
     """
     attributes: List[x509.NameAttribute] = []
     if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
-        raise ValueError(f"{base}: Unsortable name")
+        raise ValueError(f"{format_name_rfc4514(base)}: Unsortable name")
     if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in update):
-        raise ValueError(f"{update}: Unsortable name")
+        raise ValueError(f"{format_name_rfc4514(update)}: Unsortable name")
 
     for oid in ca_settings.CA_DEFAULT_NAME_ORDER:
         update_attributes = update.get_attributes_for_oid(oid)

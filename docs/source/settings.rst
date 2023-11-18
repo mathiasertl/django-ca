@@ -186,9 +186,22 @@ CA_DEFAULT_NAME_ORDER
 
    .. versionadded:: 1.24.0
 
-   Default order to use for x509 Names (such as the certificates subject). Must be a ``tuple``, with the
-   values being either a :py:class:`~cg:cryptography.x509.oid.NameOID` or a ``str``. String values must be one of
-   the values listed in :py:attr:`~django_ca.constants.NAME_OID_TYPES` or the dotted string value of the OID:
+   Default order to use for x509 Names (such as the certificates subject). The value is used when signing
+   certificates to normalize the order of x509 name fields in the certificates subject.
+
+   This setting is used when signing certificates via ACMEv2 to determine the position of the
+   CommonName field if the selected profile defines a subject fragment (see :ref:`profiles-subject` for more
+   information).
+
+   The setting is also used when signing certificates via the command-line to determine the position of the
+   CommonName field if only subject alternative names are defined via the command-line and/or if the selected
+   profile defines a subject fragment.
+
+   On most applications, the order does not matter, but is relevant in LDAP applications.
+
+   The value must be a ``tuple``, with the values being either a :py:class:`~cg:cryptography.x509.oid.NameOID`
+   or a ``str``. String values must be one or the values listed in
+   :py:attr:`~django_ca.constants.NAME_OID_TYPES` or the dotted string value of the OID:
 
    .. tab:: Python
 
