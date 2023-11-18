@@ -142,30 +142,67 @@ Option                          Default   Description
 Configure the subject
 =====================
 
+.. Describe here how the value is used. The settings describe the syntax.
+
 The subject in a profile serves as a default value for subjects when signing certificates. You can use the
 :ref:`settings-ca-default-subject` setting to set a default value for all profiles. If a profile should not
-use :ref:`settings-ca-default-subject` as a default, set ``False`` for the subject.
+set any setting (despite :ref:`settings-ca-default-subject` being set), set ``False`` for the subject.
 
-The value is used when signing certificates. When issuing certificates via ACMEv2, the subject of the
-retrieved certificate will use the subject of the profile, with the first DNS name requested by the client
-used as common name.
+The format used for the subject is the same as the :ref:`settings-ca-default-subject` setting, please refer
+to the settings documentation for the exact syntax. When signing via the command line or issuing certificates
+via ACMEv2, the subject will be sorted according to :ref:`settings-ca-default-name-order`.
 
-When issuing certificates via the command line or the admin interface, the given subject is merged with the
-subject of the profile, with explicitly given values taking precedence. As an example, given a profile
-defining this subject::
+When issuing certificates via ACMEv2, the subject of the issued certificate will be the subject of the
+profile, with the first DNS name requested by the client used as common name. You can configure the profile
+being used for each certificate authority via the admin interface or via ``manage.py edit_ca --acme-profile``.
 
-    "subject": (
-        ("C", "AT"),
-        ("ST", "Vienna"),
-    )
+When signing certificates via the API, this value is *not* used, the caller is expected to provide the full
+subject. When signing certificates via the admin interface, this subject will be prefilled in the subject
+field of the form.
 
-... signing a certificate with ``manage.py sign_cert --subject=/CN=example.com`` will give the certificate
-a subject of ``/C=AT/ST=Vienna/CN=example.com``. If you sign with
-``--subject=/ST=Styria/L=Graz/CN=graz.example.com``, you will get
-``/C=AT/ST=Styria/L=Graz/CN=graz.example.com`` as a subject.
+When issuing certificates via the command line, the given subject is merged with the subject of the profile,
+with explicitly given values taking precedence. For example, given the following configuration:
 
-As with :ref:`settings-ca-default-subject` , name types given here must be given in
-:ref:`settings-ca-default-name-order`.
+.. tab:: Python
+
+   .. code-block:: python
+
+      CA_PROFILES = {
+          "example": {
+              "description": "Profile defining a custom subject.",
+              "subject": (
+                  ("C", "AT"),
+                  ("ST", "Vienna"),
+              ),
+              # ... other options
+          }
+      }
+
+.. tab:: YAML
+
+   .. code-block:: YAML
+
+      CA_PROFILES:
+        example:
+          description: Profile defining a custom subject.
+          subject:
+            - [ C, AT ]
+            - [ ST, Vienna ]
+          # ... any other options
+
+... signing a certificate with
+
+.. code-block:: console
+
+   $ manage.py sign_cert --subject-format rfc4514 --subject "CN=example.com" ...
+
+will give the certificate a subject of ``C=AT,ST=Vienna,CN=example.com``. If you sign with
+
+.. code-block:: console
+
+   $ manage.py sign_cert --subject-format rfc4514 --subject "ST=Styria,L=Graz,CN=graz.example.com" ...
+
+you will get ``C=AT,ST=Styria,L=Graz,CN=graz.example.com`` as a subject.
 
 Configure extensions
 ====================

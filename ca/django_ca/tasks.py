@@ -171,7 +171,7 @@ def sign_certificate(  # pylint: disable=too-many-locals
 ) -> int:
     """Sign a certificate from the given order with the given parameters."""
     order = CertificateOrder.objects.select_related("certificate_authority").get(pk=order_pk)
-    ca = order.certificate_authority
+    ca: CertificateAuthority = order.certificate_authority
 
     parsed_algorithm = parsed_expires = None
     parsed_csr = x509.load_pem_x509_csr(csr.encode())
