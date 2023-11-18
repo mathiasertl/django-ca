@@ -295,11 +295,9 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
-    # NOINSPECTION/TYPE NOTE: It's okay to be more specific here
+    # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
-    def dispatch(  # type: ignore[override]
-        self, request: HttpRequest, serial: str, slug: Optional[str] = None
-    ) -> "HttpResponseBase":
+    def dispatch(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> "HttpResponseBase":
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -480,9 +478,9 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
        * `RFC 8555, section 7.2 <https://tools.ietf.org/html/rfc8555#section-7.2>`_
     """
 
-    # NOINSPECTION/TYPE NOTE: It's okay to be more specific here
+    # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
-    def dispatch(self, request: HttpRequest, serial: str) -> "HttpResponseBase":  # type: ignore[override]
+    def dispatch(self, request: HttpRequest, serial: str) -> "HttpResponseBase":
         if not ca_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 

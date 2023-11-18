@@ -5,8 +5,8 @@ freezegun==1.2.2
 pyOpenSSL>=23
 pyrfc3339==1.1
 pytest-cov==4.1.0
-pytest-env==1.1.0
-pytest-django==4.5.2
+pytest-env==1.1.1
+pytest-django==4.7.0
 pytest-random-order==1.1.0
 pytest==7.4.3
 requests-mock==1.11.0

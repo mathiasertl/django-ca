@@ -1,5 +1,5 @@
 build==1.0.3
 twine==4.0.2
-wheel==0.41.2
+wheel==0.41.3
 # See pyproject.toml for reasoning for required minimum version
 setuptools>=68.1

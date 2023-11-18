@@ -301,7 +301,7 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
     def get_fields(self) -> Tuple[forms.MultipleChoiceField]:
         return (forms.MultipleChoiceField(choices=self.choices, required=False),)
 
-    def get_value(self, value: List[str]) -> Optional[ExtensionTypeTypeVar]:  # type: ignore[override]
+    def get_value(self, value: List[str]) -> Optional[ExtensionTypeTypeVar]:
         if not value:
             return None
         return self.get_values(value)
@@ -325,7 +325,7 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
         ReasonsField(required=False),  # reasons
     )
 
-    def get_value(  # type: ignore[override]
+    def get_value(
         self,
         full_name: List[x509.GeneralName],
         relative_distinguished_name: Optional[x509.RelativeDistinguishedName],
@@ -372,7 +372,7 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
     fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
     widget = widgets.AuthorityInformationAccessWidget
 
-    def get_value(  # type: ignore[override]
+    def get_value(
         self, ca_issuers: List[x509.GeneralName], ocsp: List[x509.GeneralName]
     ) -> Optional[x509.AuthorityInformationAccess]:
         if not ca_issuers and not ocsp:
@@ -404,7 +404,7 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies]):
     )
     widget = widgets.CertificatePoliciesWidget
 
-    def get_value(  # type: ignore[override]
+    def get_value(
         self, policy_identifier: x509.ObjectIdentifier, practice_statements: str, explicit_text: str
     ) -> Optional[x509.CertificatePolicies]:
         if not policy_identifier or not (practice_statements or explicit_text):
@@ -452,9 +452,7 @@ class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
     fields = (GeneralNamesField(required=False),)
     widget = widgets.IssuerAlternativeNameWidget
 
-    def get_value(  # type: ignore[override]
-        self, value: List[x509.GeneralName]
-    ) -> Optional[x509.IssuerAlternativeName]:
+    def get_value(self, value: List[x509.GeneralName]) -> Optional[x509.IssuerAlternativeName]:
         if not value:
             return None
         return x509.IssuerAlternativeName(general_names=value)
@@ -480,7 +478,7 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
     fields = (forms.BooleanField(required=False),)
     widget = widgets.OCSPNoCheckWidget
 
-    def get_value(self, value: bool) -> Optional[x509.OCSPNoCheck]:  # type: ignore[override]
+    def get_value(self, value: bool) -> Optional[x509.OCSPNoCheck]:
         if value is True:
             return self.extension_type()
         return None
