@@ -103,11 +103,12 @@ dependencies = [
     "idna>=3.2",
     "josepy>=1.13.0",
     "packaging",
+    "pydantic>=2.5",
     "requests",
 ]
 
 [project.optional-dependencies]
-api = ["django-ninja==0.22.2"]
+api = ["django-ninja>=1.0"]
 redis = [
     "hiredis>=2.0.0",
     "redis>=4.3",
@@ -420,6 +421,13 @@ filterwarnings = [
     # acme uses X509Extension in acme.crypto_util.gen_ss_cert(). See also:
     #   https://github.com/certbot/certbot/issues/9828
     "ignore:^X509Extension support in pyOpenSSL is deprecated\\. You should use the APIs in cryptography\\.$::acme",
+
+    # django-ninja still uses class-based configuration, deprecated in Pydantic 2.0
+    "ignore:^Support for class-based `config` is deprecated, use ConfigDict instead.::pydantic",
+
+    # django-ninja still uses general_plain_validator_function, deprecated in Pydantic 2.0
+    #   https://github.com/vitalik/django-ninja/pull/922
+    "ignore:^`general_plain_validator_function` is deprecated.::",
 ]
 
 [tool.ruff]

@@ -14,14 +14,21 @@
 """Pydantic Schemas for the API."""
 
 import abc
-from datetime import datetime
+from datetime import datetime, timezone as tz
 from typing import List, Optional
 
 from ninja import ModelSchema, Schema
-from pydantic import Field
+from pydantic import Field, field_serializer
+
+from cryptography import x509
 
 from django_ca import ca_settings, constants
-from django_ca.api.extension_schemas import DATETIME_EXAMPLE, ExtensionsSchema, NameAttributeSchema
+from django_ca.api.extension_schemas import (
+    DATETIME_EXAMPLE,
+    CertificatePoliciesSchema,
+    ExtensionsSchema,
+    NameAttributeSchema,
+)
 from django_ca.constants import ReasonFlags
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder, X509CertMixin
@@ -31,31 +38,39 @@ from django_ca.typehints import SerializedExtension
 class X509BaseSchema(ModelSchema, abc.ABC):
     """Base schema for CAs and Certificates."""
 
-    created: datetime = Field(description="When the certificate was created.", example=DATETIME_EXAMPLE)
+    created: datetime = Field(
+        description="When the certificate was created.", json_schema_extra={"example": DATETIME_EXAMPLE}
+    )
     not_after: datetime = Field(
-        description="The certificate is not valid after this date.", example=DATETIME_EXAMPLE
+        description="The certificate is not valid after this date.",
+        json_schema_extra={"example": DATETIME_EXAMPLE},
     )
     not_before: datetime = Field(
-        description="The certificate is not valid before this date.", example=DATETIME_EXAMPLE
+        description="The certificate is not valid before this date.",
+        json_schema_extra={"example": DATETIME_EXAMPLE},
     )
     pem: str = Field(
         description="The public key formatted as PEM.",
-        example="-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
+        json_schema_extra={"example": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n"},
     )
-    serial: str = Field(description="Serial (in hex) of the certificate.", example="ABC...0123")
+    serial: str = Field(
+        description="Serial (in hex) of the certificate.", json_schema_extra={"example": "ABC...0123"}
+    )
     subject: List[NameAttributeSchema] = Field(description="The subject as list of name attributes.")
     issuer: List[NameAttributeSchema] = Field(description="The issuer as list of name attributes.")
-    revoked: bool = Field(description="If the certificate was revoked.", example=False)
-    updated: datetime = Field(description="When the certificate was last updated.", example=DATETIME_EXAMPLE)
+    revoked: bool = Field(description="If the certificate was revoked.", json_schema_extra={"example": False})
+    updated: datetime = Field(
+        description="When the certificate was last updated.", json_schema_extra={"example": DATETIME_EXAMPLE}
+    )
 
-    class Config:  # pylint: disable=missing-class-docstring
+    class Meta:  # pylint: disable=missing-class-docstring
         model = X509CertMixin
-        model_fields = sorted(["created", "revoked", "serial", "updated"])
+        fields = sorted(["revoked", "serial"])
 
-    @staticmethod
-    def resolve_created(obj: X509CertMixin) -> datetime:
+    @field_serializer("created")
+    def serialize_created(self, created: datetime) -> datetime:
         """Strip microseconds from the attribute."""
-        return obj.created.replace(microsecond=0)
+        return created.replace(microsecond=0)
 
     @staticmethod
     def resolve_pem(obj: X509CertMixin) -> str:
@@ -72,10 +87,10 @@ class X509BaseSchema(ModelSchema, abc.ABC):
         """Convert the issuer to its serialized representation."""
         return [NameAttributeSchema(oid=attr.oid.dotted_string, value=attr.value) for attr in obj.issuer]
 
-    @staticmethod
-    def resolve_updated(obj: X509CertMixin) -> datetime:
+    @field_serializer("updated")
+    def serialize_updated(self, updated: datetime) -> datetime:
         """Strip microseconds from the attribute."""
-        return obj.updated.replace(microsecond=0)
+        return updated.replace(microsecond=0)
 
 
 class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
@@ -85,10 +100,11 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
     """
 
     name: str = Field(description="The human-readable name of the certificate authority.")
+    sign_certificate_policies: Optional[CertificatePoliciesSchema] = Field(default=None)
 
-    class Config:  # pylint: disable=missing-class-docstring
+    class Meta:  # pylint: disable=missing-class-docstring
         model = CertificateAuthority
-        model_fields = [
+        fields = [
             "name",
             "caa_identity",
             "website",
@@ -106,12 +122,19 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
             "acme_requires_contact",
         ]
 
-    @staticmethod
-    def resolve_sign_certificate_policies(obj: CertificateAuthority) -> Optional[SerializedExtension]:
-        """Convert cryptography extensions to JSON serializable objects."""
-        if obj.sign_certificate_policies is None:
-            return None
-        return serialize_extension(obj.sign_certificate_policies)
+    #
+    # @staticmethod
+    # def resolve_sign_certificate_policies(obj: CertificateAuthority) -> Optional[SerializedExtension]:
+    #     """Convert cryptography extensions to JSON serializable objects."""
+    #     if obj.sign_certificate_policies is None:
+    #         return None
+    #     return serialize_extension(obj.sign_certificate_policies)
+    # @field_serializer("sign_certificate_policies")
+    # def serialize_sign_certificate_policies(
+    #     self, sign_certificate_policies: x509.Extension[x509.CertificatePolicies]
+    # ) -> str:
+    #     """Strip microseconds from the attribute."""
+    #     return ["list"]
 
 
 class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema):
@@ -121,11 +144,9 @@ class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema)
         description="If the certificate authority can be used to sign certificates via the API."
     )
 
-    class Config(X509BaseSchema.Config):  # pylint: disable=missing-class-docstring
+    class Meta(X509BaseSchema.Meta):  # pylint: disable=missing-class-docstring
         model = CertificateAuthority
-        model_fields = sorted(
-            X509BaseSchema.Config.model_fields + CertificateAuthorityBaseSchema.Config.model_fields
-        )
+        fields = sorted(X509BaseSchema.Meta.fields + CertificateAuthorityBaseSchema.Meta.fields)
 
     @staticmethod
     def resolve_can_sign_certificates(obj: CertificateAuthority) -> bool:
@@ -142,26 +163,33 @@ class CertificateAuthorityFilterSchema(Schema):
 class CertificateAuthorityUpdateSchema(CertificateAuthorityBaseSchema):
     """Schema for updating certificate authorities."""
 
-    # TYPE NOTE: model_fields_optional does not capture explicitly named fields, so we repeat this
+    # TYPE NOTE: fields_optional does not capture explicitly named fields, so we repeat this
     # with Optional[str], which is an incompatible override
     name: Optional[str] = Field(  # type: ignore[assignment]
-        description="The human-readable name of the certificate authority.", required=False
+        description="The human-readable name of the certificate authority.",
+        default=None,
+        json_schema_extra={"required": False},
     )
 
-    class Config(CertificateAuthorityBaseSchema.Config):  # pylint: disable=missing-class-docstring
-        model_fields_optional = "__all__"
+    class Meta(CertificateAuthorityBaseSchema.Meta):  # pylint: disable=missing-class-docstring
+        fields_optional = "__all__"
 
 
 class CertificateOrderSchema(ModelSchema):
     """Schema for certificate orders."""
 
     user: str = Field(alias="user.get_username", description="Username of the user.")
-    serial: Optional[str] = Field(alias="certificate.serial")
-    updated: datetime = Field(description="When the order was last updated.", example=DATETIME_EXAMPLE)
+    serial: Optional[str] = Field(alias="certificate.serial", default=None)
+    created: datetime = Field(
+        description="When the order was created.", json_schema_extra={"example": DATETIME_EXAMPLE}
+    )
+    updated: datetime = Field(
+        description="When the order was last updated.", json_schema_extra={"example": DATETIME_EXAMPLE}
+    )
 
-    class Config:  # pylint: disable=missing-class-docstring
+    class Meta:  # pylint: disable=missing-class-docstring
         model = CertificateOrder
-        model_fields = sorted(["created", "updated", "slug", "status", "user"])
+        fields = sorted(["created", "updated", "slug", "status", "user"])
 
 
 class CertificateSchema(X509BaseSchema):
@@ -172,9 +200,9 @@ class CertificateSchema(X509BaseSchema):
     )
     profile: str = Field(description="The profile that the certificate was generated with.")
 
-    class Config(X509BaseSchema.Config):  # pylint: disable=missing-class-docstring
+    class Meta(X509BaseSchema.Meta):  # pylint: disable=missing-class-docstring
         model = Certificate
-        model_fields = sorted(X509BaseSchema.Config.model_fields + ["autogenerated", "profile"])
+        fields = sorted(X509BaseSchema.Meta.fields + ["autogenerated", "profile"])
 
 
 class CertificateFilterSchema(Schema):
@@ -187,7 +215,7 @@ class CertificateFilterSchema(Schema):
     profile: Optional[str] = Field(
         description="Only return certificates generated with the given profile.",
         default=None,
-        enum=sorted(ca_settings.CA_PROFILES),
+        json_schema_extra={"enum": list(sorted(ca_settings.CA_PROFILES))},
     )
     revoked: bool = Field(default=False, description="Include revoked certificates.")
 
@@ -198,7 +226,7 @@ class SignCertificateSchema(Schema):
     algorithm: Optional[str] = Field(
         default=None,
         description="Hash algorithm used for signing (default: same as in the certificate authority).",
-        enum=sorted(constants.HASH_ALGORITHM_TYPES),
+        json_schema_extra={"enum": list(sorted(constants.HASH_ALGORITHM_TYPES))},
     )
     autogenerated: bool = Field(
         default=False, description="If the certificate should be marked as auto-generated."
@@ -206,20 +234,23 @@ class SignCertificateSchema(Schema):
     csr: str = Field(
         title="CSR",
         description="The certificate signing request (CSR) in PEM format",
-        example="-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----\n",
+        json_schema_extra={
+            "example": "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----\n"
+        },
     )
     expires: Optional[datetime] = Field(
         description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
-        example=DATETIME_EXAMPLE,
+        default_factory=lambda: datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES,
+        json_schema_extra={"example": DATETIME_EXAMPLE},
     )
     extensions: ExtensionsSchema = Field(
-        default_factory=ExtensionsSchema,
+        default_factory=lambda: ExtensionsSchema(),
         description="**Optional** additional extensions to add to the certificate.",
     )
     profile: str = Field(
         description="Issue the certificate with the given profile.",
         default=ca_settings.CA_DEFAULT_PROFILE,
-        enum=sorted(ca_settings.CA_PROFILES),
+        json_schema_extra={"enum": list(sorted(ca_settings.CA_PROFILES))},
     )
     subject: List[NameAttributeSchema] = Field(description="The subject as list of name attributes.")
 

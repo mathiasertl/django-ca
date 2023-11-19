@@ -426,16 +426,9 @@ def test_crldp_with_full_name_and_relative_name(api_client: Client) -> None:
     assert response.json() == {
         "detail": [
             {
-                "loc": [
-                    "body",
-                    "data",
-                    "extensions",
-                    "crl_distribution_points",
-                    "value",
-                    0,
-                    "__root__",
-                ],
-                "msg": "Distribution point must contain either full_name OR relative_name.",
+                "ctx": {"error": "Distribution point must contain either full_name OR relative_name."},
+                "loc": ["body", "data", "extensions", "crl_distribution_points", "value", 0],
+                "msg": "Value error, Distribution point must contain either full_name OR relative_name.",
                 "type": "value_error",
             }
         ]
@@ -464,16 +457,9 @@ def test_crldp_with_no_full_name_or_relative_name(api_client: Client) -> None:
     assert response.json() == {
         "detail": [
             {
-                "loc": [
-                    "body",
-                    "data",
-                    "extensions",
-                    "crl_distribution_points",
-                    "value",
-                    0,
-                    "__root__",
-                ],
-                "msg": "Distribution point must contain one of full_name OR relative_name.",
+                "ctx": {"error": "Distribution point must contain one of full_name OR relative_name."},
+                "loc": ["body", "data", "extensions", "crl_distribution_points", "value", 0],
+                "msg": "Value error, Distribution point must contain one of full_name OR relative_name.",
                 "type": "value_error",
             }
         ]
@@ -496,8 +482,9 @@ def test_with_invalid_key_usage(api_client: Client) -> None:
     assert response.json() == {
         "detail": [
             {
+                "ctx": {"error": "unknown: Invalid key usage."},
                 "loc": ["body", "data", "extensions", "key_usage", "value"],
-                "msg": "unknown: Invalid key usage.",
+                "msg": "Value error, unknown: Invalid key usage.",
                 "type": "value_error",
             }
         ]

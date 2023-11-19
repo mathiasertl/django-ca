@@ -12,7 +12,6 @@
 # <http://www.gnu.org/licenses/>.
 
 """Endpoint implementation for the API."""
-import json
 from http import HTTPStatus
 from typing import List
 
@@ -95,7 +94,7 @@ def update_certificate_authority(
     All request body fields are optional, so you can also update only individual fields.
     """
     ca = get_certificate_authority(serial, expired=True)
-    for attr, value in data.dict(exclude_unset=True).items():
+    for attr, value in data.model_dump(exclude_unset=True).items():
         setattr(ca, attr, value)
 
     try:
@@ -127,10 +126,7 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
         certificate_authority=ca, user=request.auth  # type: ignore[attr-defined]
     )
 
-    # NOTE: Pydantic 1 does not support creating a JSON-serializable dict straight away. Pydantic 2 supports
-    # data.model_dump(mode="json"). See:
-    #   https://stackoverflow.com/questions/65622045/pydantic-convert-to-jsonable-dict-not-full-json-string
-    parameters = json.loads(data.json(exclude_unset=True))
+    parameters = data.model_dump(mode="json", exclude_unset=True)
 
     # start task only after commit, see:
     #   https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit

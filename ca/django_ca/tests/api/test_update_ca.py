@@ -89,7 +89,7 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
             "serial": CERT_DATA["root"]["serial"],
             "sign_certificate_policies": {
                 "critical": constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES],
-                "value": [{"policy_identifier": "1.1.1", "policy_qualifiers": None}],
+                "value": [{"policy_identifier": "1.1.1"}],
             },
             "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
             "updated": iso_format(TIMESTAMPS["everything_valid"]),
@@ -108,7 +108,8 @@ def test_update(
 
     response = request(api_client, payload)
     assert response.status_code == HTTPStatus.OK, response.content
-    assert response.json() == expected_response, response.json()
+    assert root.sign_certificate_policies is not None
+    assert response.json() == expected_response, response.json()["sign_certificate_policies"]
 
     root.refresh_from_db()
     for field, expected in payload.items():

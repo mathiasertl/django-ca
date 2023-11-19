@@ -32,12 +32,13 @@ from django_ca.api.extension_schemas import NameAttributeSchema
 )
 def test_name_attribute_schema(oid: x509.ObjectIdentifier, value: str) -> None:
     """Test NameAttributeSchema."""
-    encoded = NameAttributeSchema(oid=oid.dotted_string, value=value).json()
+    encoded = NameAttributeSchema(oid=oid.dotted_string, value=value).model_dump_json()
     assert json.loads(encoded) == {"oid": oid.dotted_string, "value": value}
 
 
-@pytest.mark.xfail(reason="json_encoders doesn't work for Union[] attributes in pydantic 1.10.12.")
 def test_name_attribute_with_bytes() -> None:
-    """Test name attribute with bytes. This does not currently work."""
-    encoded = NameAttributeSchema(oid=NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, value=b"\x00\x01").json()
+    """Test name attribute with bytes."""
+    encoded = NameAttributeSchema(
+        oid=NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, value=b"\x00\x01"
+    ).model_dump_json()
     assert json.loads(encoded) == {"oid": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "AAE="}
