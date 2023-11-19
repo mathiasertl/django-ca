@@ -910,7 +910,14 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         with self.assertCommandError(
             rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
         ), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=self.ca, subject=self.hostname, expires=expires, stdin=stdin)
+            self.cmd(
+                "sign_cert",
+                ca=self.ca,
+                subject_format="rfc4514",
+                subject=f"CN={self.hostname}",
+                expires=expires,
+                stdin=stdin,
+            )
 
     @override_tmpcadir()
     def test_revoked_ca(self) -> None:
@@ -921,12 +928,20 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         with self.assertCommandError(r"^Certificate Authority is revoked\.$"), self.assertCreateCertSignals(
             False, False
         ):
-            self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
+            self.cmd(
+                "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=stdin
+            )
 
     def test_invalid_algorithm(self) -> None:
         """Test passing an invalid algorithm."""
         with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
-            self.cmd("sign_cert", ca=self.cas["ed448"], subject=self.subject, algorithm=hashes.SHA512())
+            self.cmd(
+                "sign_cert",
+                ca=self.cas["ed448"],
+                subject_format="rfc4514",
+                subject=f"CN={self.hostname}",
+                algorithm=hashes.SHA512(),
+            )
 
     @override_tmpcadir()
     def test_no_cn_or_san(self) -> None:
@@ -963,7 +978,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         msg = r"^Certificate Authority has expired\.$"
         with self.assertCommandError(msg), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=self.ca, subject=self.subject, stdin=stdin)
+            self.cmd(
+                "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=stdin
+            )
 
     @override_tmpcadir()
     def test_help_text(self) -> None:
