@@ -45,6 +45,8 @@ Deprecation notices
 
 * The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
+* This is the last release to support Django 3.2.
+* This is the last release to support acme 2.6.0.
 
 REST API changes
 ================
