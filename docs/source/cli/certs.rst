@@ -79,11 +79,14 @@ can update existing profiles and even add new ones.
 Subject and alternative names
 =============================
 
-The Certificate's Subject (that is, it's CommonName) and the names given in the ``SubjectAlternativeName``
+The certificate's subject (that is, it's CommonName) and the names given in the ``SubjectAlternativeName``
 extension define where the certificate is valid.
 
+For format for subjects is documented at :ref:`subjects_on_cli`, the format used for names in the
+``SubjectAlternativeName`` name extension is described in :ref:`names_on_cli`.
+
 The CommonName is usually added to the ``SubjectAlternativeName`` extension as well and vice versa. This means
-that these two will give the same CommonName and ``subjectAltName``:
+that these two will give the same CommonName and ``SubjectAlternativeName``:
 
 .. code-block:: console
 

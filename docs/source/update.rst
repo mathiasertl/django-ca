@@ -7,6 +7,60 @@ method used.
 
 This document lists special update instructions when you update to a certain version.
 
+.. _update_126:
+
+*****************************
+Update from 1.26.0 or earlier
+*****************************
+
+Update notes when upgrading to 1.27.0 or later.
+
+.. _update_126_rfc4514_subjects:
+
+RFC 4514 subjects
+=================
+
+.. NOTE:: The new format is described in detail in :ref:`subjects_on_cli`.
+
+``django-ca==1.27.0`` adds support for RFC 4514-style subjects, while support for the old OpenSSL-style format
+is deprecated. The subject format can be named with the ``--subject-format={rfc4514,openssl}`` option, with
+the default switching from ``openssl`` to ``rfc4514`` in ``django-ca==2.0``. The old format will be removed
+in ``django-ca==2.2``.
+
+The ``--subject-format`` is supported by the :command:`manage.py init_ca`, :command:`manage.py sign_cert` and
+:command:`manage.py resign_cert` commands. The following migration examples are valid for all commands.
+
+In ``django-ca==1.26.0``, you would create a certificate authority like this:
+
+.. code-block:: console
+
+   $ python manage.py init_ca NameOfCA /C=AT/O=MyOrg/OU=MyOrgUnit/CN=ca.example.com
+
+With ``django-ca>=1.27.0``, this command will show a warning about the old format. It will work unchanged
+until ``django-ca==1.29.0``. The default will switch to the RFC 4514 format in ``django-ca==2.0``.
+
+To future-proof your code, pass ``--subject-format=rfc4514`` and use an RFC 4514  subject instead:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --subject-format=rfc4514 \
+   >     NameOfCA C=AT,O=MyOrg,OU=MyOrgUnit,CN=ca.example.com
+
+In ``django-ca==2.0``, you will be able to remove the ``--subject-format=rfc4514`` option, as it will become
+the default:
+
+.. code-block:: console
+
+   $ python manage.py init_ca NameOfCA C=AT,O=MyOrg,OU=MyOrgUnit,CN=ca.example.com
+
+The default will switch from ``openssl`` to ``rfc4514`` in ``django-ca==2.0``, meaning in ``django-ca>=2.0``,
+you can use the old format (until support will be removed in ``django-ca==2.2``):
+
+.. code-block:: console
+
+   $ python manage.py init_ca --subject-format=openssl \
+   >     NameOfCA /C=AT/O=MyOrg/OU=MyOrgUnit/CN=ca.example.com
+
 .. _update_124:
 
 *****************************
