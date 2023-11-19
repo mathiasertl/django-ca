@@ -70,7 +70,8 @@ def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
         container,
         "sign_cert",
         f"--ca={ca}",
-        f"--subject=/CN={subject}",
+        "--subject-format=rfc4514",
+        f"--subject=CN={subject}",
         input=csr.encode("utf-8"),
         compose_args=["-T"],
         **kwargs,
@@ -434,15 +435,24 @@ def test_acme(release: str, image: str) -> int:
             # Start containers
             with _compose_up(env=environ):
                 _validate_container_versions(release, env=environ)
-                _manage("backend", "init_ca", "--path-length=1", "Root", "/CN=Root", env=environ)
+                _manage(
+                    "backend",
+                    "init_ca",
+                    "--path-length=1",
+                    "--subject-format=rfc4514",
+                    "Root",
+                    "CN=Root",
+                    env=environ,
+                )
                 _manage(
                     "backend",
                     "init_ca",
                     "--acme-enable",
                     "--parent=Root",
                     "--path=ca/shared",
+                    "--subject-format=rfc4514",
                     "Child",
-                    "/CN=Child",
+                    "CN=Child",
                     env=environ,
                 )
                 try:

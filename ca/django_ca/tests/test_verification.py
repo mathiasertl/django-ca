@@ -118,7 +118,15 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             out_path = os.path.join(tempdir, f"{hostname}.pem")
             with freeze_time(TIMESTAMPS["everything_valid"]):
-                self.cmd("sign_cert", ca=ca, subject=subject, out=out_path, stdin=stdin, **kwargs)
+                self.cmd(
+                    "sign_cert",
+                    ca=ca,
+                    subject_format="rfc4514",
+                    subject=subject,
+                    out=out_path,
+                    stdin=stdin,
+                    **kwargs,
+                )
             yield out_path
 
     def openssl(self, cmd: str, *args: str, code: int = 0, **kwargs: str) -> None:

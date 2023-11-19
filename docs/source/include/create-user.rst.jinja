@@ -11,13 +11,13 @@ the admin interface) and create a root and intermediate CA:
 
    {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}root@host:{{ path|default('~') }}# {{ manage }} createsuperuser{% endfilter %}
    ...
-   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}root@host:{{ path|default('~') }}# {{ manage }} init_ca --path-length=1 Root "/CN=Root"{% endfilter %}
-   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}root@host:{{ path|default('~') }}# {{ manage }} init_ca {% if shared %}--path=ca/shared/ {% endif %} --acme-enable --parent="Root" Intermediate "/CN=Intermediate"{% endfilter %}
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}root@host:{{ path|default('~') }}# {{ manage }} init_ca --path-length=1 --subject-format=rfc4514 Root "CN=Root"{% endfilter %}
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ") %}root@host:{{ path|default('~') }}# {{ manage }} init_ca {% if shared %}--path=ca/shared/ {% endif %} --acme-enable --parent="Root" --subject-format=rfc4514 Intermediate "CN=Intermediate"{% endfilter %}
 {% endif %}
 
 There are a few things to break down in the above commands:
 
-* The subject (``/CN=...``) in the CA is only used by browsers to display the name of a CA. It can be any
+* The subject (``CN=...``) in the CA is only used by browsers to display the name of a CA. It can be any
   human readable value and does not have to be a domain name.
 * The first positional argument to ``init_ca``, ("Root", "Intermediate") is just a human readable name used to
   identify the CA within the command-line interface and web interface. Unlike the CommonName, it must be

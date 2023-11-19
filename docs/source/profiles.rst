@@ -278,7 +278,7 @@ CRL Distribution Points
 The ``value`` is a list of dicts describing distribution points. Each distribution point has either a
 ``full_name`` or a ``relative_name`` key (they are mutually exclusive). ``full_name`` is a list of names as
 described in :ref:`names_on_cli`, ``relative_name`` is a string with a relative name, e.g.
-``/CN=example.com``. A distribution point may also have a list of names in ``crl_issuers`` and a list of
+``CN=example.com``. A distribution point may also have a list of names in ``crl_issuers`` and a list of
 reasons in ``reasons`` as named in :py:class:`~cg:cryptography.x509.ReasonFlags`.
 
 Please note that in practice, the extension typically `only` uses a single ``full_name`` entry, all other

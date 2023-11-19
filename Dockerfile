@@ -67,7 +67,6 @@ COPY docs/source/ docs/source/
 COPY devscripts/ devscripts/
 ARG FAIL_UNDER=100
 ENV COVERAGE_FILE=/tmp/.coverage
-RUN pytest -h
 RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium
 
 ###############

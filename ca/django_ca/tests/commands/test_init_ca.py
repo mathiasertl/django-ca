@@ -71,7 +71,8 @@ class InitCATest(TestCaseMixin, TestCase):
         return self.cmd(
             "init_ca",
             name,
-            f"/C=AT/ST=Vienna/L=Vienna/O=Org/OU=OrgUnit/CN={name}",
+            f"C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN={name}",
+            subject_format="rfc4514",
             stdout=stdout,
             stderr=stderr,
             **kwargs,
@@ -180,7 +181,8 @@ class InitCATest(TestCaseMixin, TestCase):
 
         ca = self.init_ca_e2e(
             name,
-            "/CN=args.example.com",
+            "CN={self.hostname}",
+            "--subject-format=rfc4514",
             "--algorithm=SHA-256",  # hashes.SHA256(),
             "--key-type=EC",
             "--expires=720",
@@ -228,7 +230,8 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test adding various extensions."""
         ca = self.init_ca_e2e(
             "extensions",
-            "/CN=extensions.example.com",
+            f"CN={self.hostname}",
+            "--subject-format=rfc4514",
             # Basic Constraints extension
             "--path-length=3",
             # Certificate Policies extension
@@ -349,7 +352,8 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test setting non-default critical values."""
         ca = self.init_ca_e2e(
             "extensions",
-            "/CN=extensions.example.com",
+            "CN=extensions.example.com",
+            "--subject-format=rfc4514",
             # Certificate Policies extension:
             "--policy-identifier=anyPolicy",
             "--certificate-policies-critical",
@@ -411,7 +415,8 @@ class InitCATest(TestCaseMixin, TestCase):
 
         ca = self.init_ca_e2e(
             "extensions_with_formatting",
-            "/CN=extensions_with_formatting.example.com",
+            "CN={self.hostname}",
+            "--subject-format=rfc4514",
             f"--parent={root.serial}",
             "--ocsp-responder=https://example.com/ocsp/{OCSP_PATH}",
             "--ca-issuer=https://example.com/ca-issuer/{CA_ISSUER_PATH}",
@@ -451,7 +456,8 @@ class InitCATest(TestCaseMixin, TestCase):
 
         ca = self.init_ca_e2e(
             "extensions_with_formatting",
-            "/CN=extensions_with_formatting.example.com",
+            "CN={self.hostname}",
+            "--subject-format=rfc4514",
             f"--parent={root.serial}",
             "--ocsp-responder=DNS:example.com",
             "--ca-issuer=DNS:example.net",
@@ -496,8 +502,9 @@ class InitCATest(TestCaseMixin, TestCase):
 
         ca = self.init_ca_e2e(
             "extensions_with_formatting",
-            "/CN=extensions_with_formatting.example.com",
+            "CN=extensions_with_formatting.example.com",
             f"--parent={root.serial}",
+            "--subject-format=rfc4514",
             # Certificate Policies extension
             "--sign-policy-identifier=anyPolicy",
             "--sign-certification-practice-statement=https://example.com/cps1/",
@@ -538,7 +545,8 @@ class InitCATest(TestCaseMixin, TestCase):
             name,
             "--sign-issuer-alternative-name=example.com",
             "--sign-issuer-alternative-name=https://example.com",
-            f"/CN={name}",
+            "--subject-format=rfc4514",
+            f"CN={name}",
         )
         self.assertEqual(ca.issuer_alt_name, "DNS:example.com,URI:https://example.com")
 
@@ -547,7 +555,8 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test ACME arguments."""
         ca = self.init_ca_e2e(
             "Test CA",
-            "/CN=acme.example.com",
+            "CN=acme.example.com",
+            "--subject-format=rfc4514",
             "--acme-enable",
             "--acme-disable-account-registration",
             "--acme-contact-optional",
@@ -564,8 +573,9 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test REST API arguments."""
         ca = self.init_ca_e2e(
             "Test CA",
-            "/CN=api.example.com",
+            f"CN={self.hostname}",
             "--api-enable",
+            "--subject-format=rfc4514",
         )
 
         self.assertIs(ca.api_enabled, True)
@@ -573,26 +583,27 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, CA_ENABLE_ACME=False, CA_ENABLE_REST_API=False)
     def test_disabled_arguments(self) -> None:
         """Test that ACME/REST API options don't work when feature is disabled."""
+        command = ["init_ca", "Test CA", "--subject-format=rfc4514", "CN=example.com"]
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-enable"])
+            self.cmd_e2e(command + ["--acme-enable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-disable"])
+            self.cmd_e2e(command + ["--acme-disable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-disable-account-registration"])
+            self.cmd_e2e(command + ["--acme-disable-account-registration"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-enable-account-registration"])
+            self.cmd_e2e(command + ["--acme-enable-account-registration"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-contact-optional"])
+            self.cmd_e2e(command + ["--acme-contact-optional"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--acme-profile=client"])
+            self.cmd_e2e(command + ["--acme-profile=client"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(["init_ca", "Test CA", "/CN=example.com", "--api-enable"])
+            self.cmd_e2e(command + ["--api-enable"])
 
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:
@@ -605,7 +616,8 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test ACME arguments."""
         ca = self.init_ca_e2e(
             "Test CA",
-            "/CN=ocsp-responder.example.com",
+            f"CN={self.hostname}",
+            "--subject-format=rfc4514",
             "--ocsp-responder-key-validity=10",
             "--ocsp-response-validity=3600",
         )
@@ -617,12 +629,12 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_invalid_ocsp_responder_arguments(self) -> None:
         """Test naming an unknown profile."""
         self.assertE2EError(
-            ["init_ca", "/CN=example.com", "--ocsp-responder-key-validity=0"],
+            ["init_ca", "--subject-format=rfc4514", "CN=example.com", "--ocsp-responder-key-validity=0"],
             stderr=re.compile(r"--ocsp-responder-key-validity: DAYS must be equal or greater then 1\."),
         )
 
         self.assertE2EError(
-            ["init_ca", "/CN=example.com", "--ocsp-response-validity=10"],
+            ["init_ca", "--subject-format=rfc4514", "CN=example.com", "--ocsp-response-validity=10"],
             stderr=re.compile(r"--ocsp-response-validity: SECONDS must be equal or greater then 600\."),
         )
 
@@ -660,7 +672,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_permitted(self) -> None:
         """Test the NameConstraints extension with 'permitted'."""
         name = "test_permitted"
-        ca = self.init_ca_e2e(name, "--permit-name", "DNS:.com", f"/CN={name}")
+        ca = self.init_ca_e2e(name, "--subject-format=rfc4514", "--permit-name", "DNS:.com", f"CN={name}")
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
             name_constraints(permitted=[dns(".com")], critical=True),
@@ -670,7 +682,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_excluded(self) -> None:
         """Test the NameConstraints extension with 'excluded'."""
         name = "test_excluded"
-        ca = self.init_ca_e2e(name, "--exclude-name", "DNS:.com", f"/CN={name}")
+        ca = self.init_ca_e2e(name, "--subject-format=rfc4514", "--exclude-name", "DNS:.com", f"CN={name}")
         self.assertEqual(
             ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
             name_constraints(excluded=[dns(".com")], critical=True),
@@ -705,7 +717,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test creating a CA with empty subject fields."""
         name = "test_empty_subject_fields"
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd("init_ca", name, f"/L=/CN={self.hostname}")
+            out, err = self.cmd("init_ca", name, f"L=,CN={self.hostname}", subject_format="rfc4514")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -1073,7 +1085,8 @@ class InitCATest(TestCaseMixin, TestCase):
         issuer_uri_two = "http://issuer.example.com/two"
         ca = self.init_ca_e2e(
             name,
-            f"/CN={name}",
+            f"CN={name}",
+            "--subject-format=rfc4514",
             f"--parent={root.serial}",
             # NOTE: mixing the order of arguments here. This way we make sure that the values are properly
             # sorted (by method) in the assertion for the extension.
