@@ -31,7 +31,7 @@ class RemovedInDjangoCA128Warning(PendingDeprecationWarning):
 
 
 class RemovedInDjangoCA129Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.28."""
+    """Warning if a feature will be removed in django-ca==1.29."""
 
     version = "1.29"
 

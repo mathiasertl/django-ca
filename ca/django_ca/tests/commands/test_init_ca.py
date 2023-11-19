@@ -79,7 +79,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
     def init_ca_e2e(
-        self, name: str, *args: str, chain: Optional[List[CertificateAuthority]] = None, **kwargs: Any
+        self, name: str, *args: str, chain: Optional[List[CertificateAuthority]] = None
     ) -> CertificateAuthority:
         """Run a init_ca command via cmd_e2e()."""
         if chain is None:
@@ -1151,3 +1151,20 @@ class InitCATest(TestCaseMixin, TestCase):
             False, False
         ):
             self.init_ca(key_size=2049)
+
+    @override_tmpcadir()
+    def test_deprecated_subject_format(self) -> None:
+        """Test passing a subject in the deprecated OpenSSL-style format."""
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        name = "Test CA"
+
+        with self.assertCreateCASignals() as (pre, post):
+            out, err = self.cmd("init_ca", name, f"/CN={name}", stdout=stdout, stderr=stderr)
+        self.assertEqual(out, "")
+        # message is too long, just make sure it's there:
+        self.assertIn(f"WARNING: /CN={name}: openssl-style format is deprecated", err)
+
+        ca: CertificateAuthority = CertificateAuthority.objects.get(name=name)
+        self.assertEqual(ca.cn, name)
+        self.assertEqual(ca.pub.loaded.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)]))

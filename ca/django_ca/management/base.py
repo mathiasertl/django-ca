@@ -46,7 +46,7 @@ from django_ca.typehints import (
     ExtensionMapping,
     SubjectFormats,
 )
-from django_ca.utils import add_colons, name_for_display, parse_name_rfc4514, x509_name
+from django_ca.utils import add_colons, format_name_rfc4514, name_for_display, parse_name_rfc4514, x509_name
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -269,7 +269,14 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     def parse_x509_name(self, value: str, name_format: SubjectFormats) -> x509.Name:
         """Parse a `name` in the given `format`."""
         if name_format == "openssl":
-            return x509_name(value)
+            name = x509_name(value)
+            self.stderr.write(
+                f"WARNING: {value}: openssl-style format is deprecated, use --subject-format=rfc4514 "
+                "and pass an RFC 4514 compatible subject string instead. It will become default in "
+                "django-ca 2.0, and support for the old format will be removed in django-ca 2.2. "
+                f"The given subject looks like this in RFC4514:\n\n    {format_name_rfc4514(name)}"
+            )
+            return name
         if name_format == "rfc4514":
             try:
                 return parse_name_rfc4514(value)
