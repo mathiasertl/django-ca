@@ -72,6 +72,57 @@ Command                   Description
 ``dump_crl``              Write the certificate revocation list (CRL), see :doc:`/crl`.
 ========================= ===============================================================
 
+.. _subjects_on_cli:
+
+****************************
+Subjects on the command-line
+****************************
+
+.. WARNING::
+
+   The support for RFC 4514 was added in ``django-ca==1.27`` and until ``django-ca==2.0``, the default is
+   still an older format that is similar to how the command-line of ``openssl`` parses subjects. If you
+   upgrade from an older version, please refer to the :ref:`migration information
+   <update_126_rfc4514_subjects>`.
+
+Subjects passed on the command-line (when creating a certificate authority or signing a certificate) use an
+`RFC 4514 <https://datatracker.ietf.org/doc/html/rfc4514>`_-compatible format, with support for additional
+key names.
+
+.. NOTE::
+
+   `RFC 4514 <https://datatracker.ietf.org/doc/html/rfc4514>`_ defines that elements shall be parsed in
+   *reverse* order, similar to how some LDAP applications show subjects. Since the rest of the world displays
+   subjects in the order as they appear in the certificate, **django-ca** does so as well.
+
+
+Subject attributes are comma-separated, keys can be any value specified in RFC 4514. The following shows how
+to create a certificate authority with a country, organization and common name in the subject:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --subject-format=rfc4514 \
+   >     NameOfCA C=AT,O=MyOrg,CN=ca.example.com
+
+... but you can also use more special fields named in :py:attr:`~django_ca.constants.NAME_OID_NAMES`, e.g. a
+more verbose common name and an email address:
+
+.. code-block:: console
+
+   $ python manage.py init_ca --subject-format=rfc4514 \
+   >     NameOfCA C=AT,O=MyOrg,commonName=ca.example.com,emailAddress=admin@ca.example.com
+
+As defined in RFC 4514, you can also use dotted strings to name arbitrary attributes. This example uses the
+RFC 4514 defined key ``C`` for ``countryName``, the long format ``organizationName`` from
+:py:attr:`~django_ca.constants.NAME_OID_NAMES` and the dotted string for ``commonName`` (but *any* other
+valid dotted string could be used as well):
+
+.. code-block:: console
+
+   $ python manage.py init_ca --subject-format=rfc4514 \
+   >     NameOfCA C=AT,organizationName=MyOrg,2.5.4.3=ca.example.com
+
+
 .. _names_on_cli:
 
 *************************

@@ -10,7 +10,16 @@ ChangeLog
 1.27.0 (TBR)
 ************
 
-* Add support for Python 3.12.
+.. NOTE::
+
+   django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
+   :ref:`update_126_rfc4514_subjects` for migration information.
+
+* Add support for Python 3.12 and acme 2.7.0.
+* Add support for passing subjects in RFC 4514 format when creating certificate authorities and certificates
+  via the ``--subject-format=rfc4514`` option. This format will become the default in django-ca 2.0.
+* Support for subjects in OpenSSL-style format when creating certificate authorities and certificates is
+  deprecated and will issue a warning. Support for this format will be removed in django-ca 2.2.
 * :ref:`settings-ca-default-subject`, :ref:`subjects in profiles <profiles-subject>` and
   :ref:`settings-ca-default-name-order` now also support a dotted string to include arbitrary object
   identifiers.
@@ -21,7 +30,6 @@ ChangeLog
   subject and/or the CommonName is not given and added via the SubjectAlternativeName extension. If neither is
   the case, the user is expected to supply the correct order.
 
-
 Backwards incompatible changes
 ==============================
 
@@ -31,6 +39,12 @@ Backwards incompatible changes
   ``--sign-ocsp-responder``.
 * Support for non-standard algorithm names in profile settings was removed.
 * Drop support for ``Django==4.1``, ``cryptography==40.x``, ``acme==1.25.0`` and ``celery==5.2.x``.
+
+Deprecation notices
+===================
+
+* The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
+* Support for OpenSSL-style subjects will be removed in django-ca 2.2.
 
 REST API changes
 ================
