@@ -108,16 +108,11 @@ Release process
 * Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Create and upload a package for PyPi::
 
-      $ ./dev.py build wheel
-      $ twine upload dist/*
+      $ ./dev.py build wheel --upload
 
-* Tag and upload the docker image  (note that we create a image revision by appending ``-1``)::
+* Build and upload the docker image::
 
-      $ docker tag mathiasertl/django-ca:$version mathiasertl/django-ca
-      $ docker tag mathiasertl/django-ca:$version mathiasertl/django-ca:$version-1
-      $ docker push mathiasertl/django-ca:$version-1
-      $ docker push mathiasertl/django-ca:$version
-      $ docker push mathiasertl/django-ca
+      $ ./dev.py build --upload
 
 ***************
 After a release
