@@ -28,6 +28,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
+import django
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.messages import constants as messages
@@ -335,6 +336,9 @@ class CertificateMixin(
 @admin.register(CertificateAuthority)
 class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], CertificateAuthorityAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.CertificateAuthority`."""
+
+    if django.VERSION >= (5, 0):  # pragma: django>=5.0 branch
+        formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
 
     fieldsets = [
         (
@@ -1164,6 +1168,9 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
     @admin.register(AcmeAccount)
     class AcmeAccountAdmin(AcmeAccountAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAccount`."""
+
+        if django.VERSION >= (5, 0):  # pragma: django>=5.0 branch
+            formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
 
         list_display = ("first_contact", "ca", "slug", "status", "created", "terms_of_service_agreed")
         list_filter = ("ca", "status", "terms_of_service_agreed")
