@@ -22,8 +22,7 @@ from datetime import date
 
 from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.out import err, ok
-from devscripts.utils import redirect_output
+from devscripts.out import err
 
 if typing.TYPE_CHECKING:
     from git import Repo
@@ -102,33 +101,15 @@ ChangeLog
 
         return repo
 
-    def validate_state(self) -> None:
-        """Validate state of various config files."""
-        state = importlib.import_module("devscripts.validation.state")
-        with redirect_output() as stream:
-            errors = state.validate_main()
-
-        if errors == 0:
-            ok("State validated.")
-        else:
-            print(stream.getvalue())
-            raise RuntimeError("State validation failed.")
-
     def handle(self, args: argparse.Namespace) -> None:
-        # Validation modules is imported on execution so that external libraries used there do not
-        # automatically become dependencies for all other dev.py commands.
-        docker = importlib.import_module("devscripts.validation.docker")
-        docker_compose = importlib.import_module("devscripts.validation.docker_compose")
-        wheel = importlib.import_module("devscripts.validation.wheel")
-
         repo = self.pre_tag_checks(args.release)
 
         git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
         try:
-            self.validate_state()
-            docker.validate(release=args.release, prune=True, build=True)
-            docker_compose.validate(release=args.release, prune=False, build=False)
-            wheel.validate(release=args.release)
+            self.command("validate", "state")
+            self.command("validate", "docker", "--docker-prune")
+            self.command("validate", "docker-compose", "--no-rebuild")
+            self.command("validate", "wheel")
 
             if args.delete_tag:
                 repo.delete_tag(git_tag)

@@ -53,6 +53,7 @@ class DevCommand:
     """Base class for all dev.py sub-commands."""
 
     _docker_client: Optional["docker.client.DockerClient"] = None
+    parser: argparse.ArgumentParser
 
     modules: Tuple[Tuple[str, str], ...] = tuple()
     help_text: str = ""
@@ -164,6 +165,11 @@ class DevCommand:
         except subprocess.CalledProcessError as ex:
             raise CommandError(f"{args[0]} returned with exit status {ex.returncode}.") from ex
 
+    def command(self, *args: str) -> Any:
+        """Run a dev.py command."""
+        parsed_args = self.parser.parse_args(args)
+        return parsed_args.func(self.parser, parsed_args)
+
 
 class DevSubCommand(DevCommand):
     """Base class for commands that take further sub-commands."""
@@ -196,7 +202,7 @@ def add_subcommands(parser: argparse.ArgumentParser, path: str, dest: str = "com
             continue
 
         # Instantiate command class and add its arguments
-        command = command_cls(**kwargs)
+        command = command_cls(parser=parser, **kwargs)
 
         name = name.replace("_", "-")
         description = command.description
