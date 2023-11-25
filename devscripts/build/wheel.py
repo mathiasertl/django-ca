@@ -32,10 +32,14 @@ class Command(DevCommand):
     django_ca: ModuleType
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--upload", default=False, action="store_true", help="Upload Wheel to to PyPI.")
+        parser.add_argument("--release", help="Version to build (default: current version).")
 
     def handle(self, args: argparse.Namespace) -> None:
-        release = self.django_ca.__version__
+        if args.release:
+            release = args.release
+        else:
+            release = self.django_ca.__version__
+
         destination_dir = config.ROOT_DIR / "dist"
 
         os.makedirs(destination_dir, exist_ok=True)
@@ -50,6 +54,3 @@ class Command(DevCommand):
         )
         self.docker_run(image, volumes=[f"{destination_dir}:/dist/"], user=f"{os.getuid()}:{os.getgid()}")
         ok(f"Built Wheel in {destination_dir}")
-
-        if args.upload:
-            self.run("twine", "upload", "dist/*")

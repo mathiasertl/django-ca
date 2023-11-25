@@ -35,7 +35,7 @@ from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
-from devscripts.validation.docker import build_docker_image, docker_cp
+from devscripts.validation.docker import docker_cp
 
 
 @contextmanager
@@ -544,11 +544,20 @@ class Command(DevCommand):
         )
 
     def handle(self, args: argparse.Namespace) -> None:
-        release = self.django_ca.__version__
+        if args.docker_prune:
+            self.run("docker", "system", "prune", "-af")
 
         print("Validating docker compose setup...")
-        tag = build_docker_image(release=release, prune=args.docker_prune, build=args.build)
-        info(f"Using {tag} as docker image.")
+        if args.release:
+            release = args.release
+            docker_tag = self.get_docker_tag(args.release)
+        elif args.build:
+            release, docker_tag = self.command("build", "docker")
+        else:
+            release = self.django_ca.__version__
+            docker_tag = self.get_docker_tag(release)
+
+        info(f"Using {docker_tag} as docker image.")
 
         errors = 0
 

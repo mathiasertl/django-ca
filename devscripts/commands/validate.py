@@ -30,6 +30,9 @@ class Command(DevSubCommand):
 
     docker_options = argparse.ArgumentParser(add_help=False)
     docker_options.add_argument(
+        "--release", help="Assume that we are building RELEASE (implies --no-rebuild)."
+    )
+    docker_options.add_argument(
         "--docker-prune",
         default=False,
         action="store_true",

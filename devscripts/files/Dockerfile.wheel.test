@@ -1,0 +1,8 @@
+# Dockerfile to test wheels in an isolated environment
+
+ARG IMAGE
+FROM $IMAGE as test
+WORKDIR /work/
+ADD devscripts/standalone/test-imports.py devscripts/standalone/test-imports.py
+COPY pyproject.toml ./
+COPY dist/* dist/

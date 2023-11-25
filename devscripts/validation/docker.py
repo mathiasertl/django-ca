@@ -21,7 +21,7 @@ from typing import Sequence
 from django.core.management.utils import get_random_secret_key
 
 from devscripts import config, utils
-from devscripts.commands import DevCommand
+from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
@@ -169,6 +169,19 @@ class Command(DevCommand):
         return [self.parent.docker_options]  # type: ignore[attr-defined]  # see pylint above
 
     def handle(self, args: argparse.Namespace) -> None:
-        release = self.django_ca.__version__
-        docker_tag = build_docker_image(release=release, prune=args.docker_prune, build=args.build)
-        validate_docker_image(release, docker_tag)
+        if args.docker_prune:
+            self.run("docker", "system", "prune", "-af")
+
+        if args.release:
+            release = args.release
+            docker_tag = self.get_docker_tag(args.release)
+        elif args.build:
+            release, docker_tag = self.command("build", "docker")
+        else:
+            release = self.django_ca.__version__
+            docker_tag = self.get_docker_tag(release)
+
+        errors = validate_docker_image(release, docker_tag)
+
+        if errors != 0:
+            raise CommandError(f"A total of {errors} error(s) found!")

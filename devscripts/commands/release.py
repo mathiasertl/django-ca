@@ -22,8 +22,7 @@ from datetime import date
 
 from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.out import err, ok
-from devscripts.utils import redirect_output
+from devscripts.out import err, info, ok
 
 if typing.TYPE_CHECKING:
     from git import Repo
@@ -45,10 +44,24 @@ class Command(DevCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            "--delete-tag",
+            "--dry-run",
             action="store_true",
             default=False,
-            help="Delete the tag again after release (for testing).",
+            help="Delete the tag, don't upload release artifacts (for testing).",
+        )
+        parser.add_argument(
+            "--no-rebuild",
+            action="store_false",
+            default=True,
+            dest="build",
+            help="Do not build release artifacts (for testing, assumes that they have been built before).",
+        )
+        parser.add_argument(
+            "--no-upload",
+            dest="upload",
+            default=True,
+            action="store_false",
+            help="Do not upload release artifacts.",
         )
         parser.add_argument("release", help="The actual release you want to build.")
 
@@ -102,36 +115,50 @@ ChangeLog
 
         return repo
 
-    def validate_state(self) -> None:
-        """Validate state of various config files."""
-        state = importlib.import_module("devscripts.validation.state")
-        with redirect_output() as stream:
-            errors = state.validate_main()
-
-        if errors == 0:
-            ok("State validated.")
-        else:
-            print(stream.getvalue())
-            raise RuntimeError("State validation failed.")
-
     def handle(self, args: argparse.Namespace) -> None:
-        # Validation modules is imported on execution so that external libraries used there do not
-        # automatically become dependencies for all other dev.py commands.
-        docker = importlib.import_module("devscripts.validation.docker")
-        docker_compose = importlib.import_module("devscripts.validation.docker_compose")
-        wheel = importlib.import_module("devscripts.validation.wheel")
-
         repo = self.pre_tag_checks(args.release)
 
         git_tag = repo.create_tag(args.release, sign=True, message=f"version {args.release}")
         try:
-            self.validate_state()
-            docker.validate(release=args.release, prune=True, build=True)
-            docker_compose.validate(release=args.release, prune=False, build=False)
-            wheel.validate(release=args.release)
+            self.command("validate", "state")
 
-            if args.delete_tag:
+            if args.build:
+                # Clean up before creating any release artifacts
+                self.run("docker", "system", "prune", "-af")
+                self.command("clean")
+
+                # Build release artifacts
+                self.command("build", "wheel", "--release", args.release)
+                docker_tag = self.command("build", "docker", "--release", args.release)
+                ok("Finished building release artifacts.")
+            else:
+                docker_tag = self.get_docker_tag(args.release)
+
+            self.command("validate", "docker", "--no-rebuild", "--release", args.release)
+            self.command("validate", "docker-compose", "--no-rebuild", "--release", args.release)
+            self.command("validate", "wheel")
+            ok("Finished validation.")
+
+            if args.dry_run:
                 repo.delete_tag(git_tag)
+            else:  # This is a real release, so upload artifacts
+                info("Uploading release artifacts...")
+
+                # Prepare alternative Docker tags
+                revision_tag = f"{docker_tag}-1"
+                latest_tag = f"{config.DOCKER_TAG}:latest"
+                self.run("docker", "tag", docker_tag, revision_tag)
+                self.run("docker", "tag", docker_tag, latest_tag)
+
+                # Upload wheel
+                self.run("twine", "upload", "dist/*")
+
+                # Upload Docker image
+                self.run("docker", "push", docker_tag)
+                self.run("docker", "push", revision_tag)
+                self.run("docker", "push", latest_tag)
+                ok("Uploaded release artifacts.")
+
         except Exception as ex:
             repo.delete_tag(git_tag)
             raise CommandError(str(ex)) from ex

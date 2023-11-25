@@ -112,7 +112,7 @@ class Command(DevCommand):
             # build the image
             image, _logs = client.images.build(
                 path=str(config.ROOT_DIR),
-                dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel"),
+                dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel.test"),
                 buildargs={"IMAGE": f"python:{pyver}"},
                 target="test",
             )

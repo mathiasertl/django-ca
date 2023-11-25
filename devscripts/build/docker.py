@@ -31,18 +31,23 @@ class Command(DevCommand):
     django_ca: ModuleType
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--upload", default=False, action="store_true", help="Upload Docker image.")
-        parser.add_argument("--revision", default=1, type=int, help="Image revision (default: %(default)s).")
+        parser.add_argument(
+            "--prune", dest="docker_prune", default=True, help="Remove Docker data before building image."
+        )
+        parser.add_argument("--release", help="Version to use (default: current version).")
 
-    def handle(self, args: argparse.Namespace) -> None:
-        release = self.django_ca.__version__
-        tag = f"{config.DOCKER_TAG}:{release}"
-        info(f"Building Docker image as {tag}")
+    def handle(self, args: argparse.Namespace) -> str:  # type: ignore[override]
+        if args.release:
+            release = args.release
+        else:
+            release = self.django_ca.__version__
+
+        tag = self.get_docker_tag(release)
+
+        info(f"Building Docker image as {tag} ...")
+
+        # NOTE: docker-py does not yet support BuildKit, so we call the CLI directly. See also:
+        #   https://github.com/docker/docker-py/issues/2230
         self.run("docker", "build", "-t", tag, ".", env={"DOCKER_BUILDKIT": "1"}, cwd=config.ROOT_DIR)
-        self.run("docker", "tag", tag, f"{tag}-1")
-        self.run("docker", "tag", tag, f"{config.DOCKER_TAG}:latest")
 
-        if args.upload:
-            self.run("docker", "push", tag)
-            self.run("docker", "push", f"{tag}-1")
-            self.run("docker", "push", f"{config.DOCKER_TAG}:latest")
+        return args.release, tag
