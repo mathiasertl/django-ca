@@ -6,9 +6,9 @@ ChangeLog
 
 .. _changelog-1.27.0:
 
-************
-1.27.0 (TBR)
-************
+*******************
+1.27.0 (2023-11-25)
+*******************
 
 .. NOTE::
 
@@ -16,6 +16,7 @@ ChangeLog
    :ref:`update_126_rfc4514_subjects` for migration information.
 
 * Add support for Python 3.12 and acme 2.7.0.
+* Update the Docker image to use Alpine Linux 3.18 with Python 3.12.
 * Add support for passing subjects in RFC 4514 format when creating certificate authorities and certificates
   via the ``--subject-format=rfc4514`` option. This format will become the default in django-ca 2.0.
 * Support for subjects in OpenSSL-style format when creating certificate authorities and certificates is
@@ -47,6 +48,7 @@ Deprecation notices
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
 * This is the last release to support Django 3.2.
 * This is the last release to support acme 2.6.0.
+* This is the last release to support Alpine 3.16.
 
 REST API changes
 ================

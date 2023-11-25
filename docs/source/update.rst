@@ -33,6 +33,7 @@ The ``--subject-format`` is supported by the :command:`manage.py init_ca`, :comm
 In ``django-ca==1.26.0``, you would create a certificate authority like this:
 
 .. code-block:: console
+   :caption: **OLD** syntax
 
    $ python manage.py init_ca NameOfCA /C=AT/O=MyOrg/OU=MyOrgUnit/CN=ca.example.com
 
@@ -42,6 +43,7 @@ until ``django-ca==1.29.0``. The default will switch to the RFC 4514 format in `
 To future-proof your code, pass ``--subject-format=rfc4514`` and use an RFC 4514  subject instead:
 
 .. code-block:: console
+   :caption: **NEW** syntax
 
    $ python manage.py init_ca --subject-format=rfc4514 \
    >     NameOfCA C=AT,O=MyOrg,OU=MyOrgUnit,CN=ca.example.com
@@ -50,6 +52,7 @@ In ``django-ca==2.0``, you will be able to remove the ``--subject-format=rfc4514
 the default:
 
 .. code-block:: console
+   :caption: django-ca>=2.0
 
    $ python manage.py init_ca NameOfCA C=AT,O=MyOrg,OU=MyOrgUnit,CN=ca.example.com
 
@@ -57,6 +60,7 @@ The default will switch from ``openssl`` to ``rfc4514`` in ``django-ca==2.0``, m
 you can use the old format (until support will be removed in ``django-ca==2.2``):
 
 .. code-block:: console
+   :caption: legacy syntax, available in django-ca>=2.0,<2.3
 
    $ python manage.py init_ca --subject-format=openssl \
    >     NameOfCA /C=AT/O=MyOrg/OU=MyOrgUnit/CN=ca.example.com

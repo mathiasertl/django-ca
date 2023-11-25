@@ -22,7 +22,7 @@ alpine = [
 
 # Blacklist images that are just no longer built
 docker-image-blacklist = [
-    #"python:3.11-alpine3.14",
+    "python:3.12-alpine3.16",
 ]
 
 # List of tested Debian releases:
@@ -35,10 +35,10 @@ debian-releases = [
 # List of tested Ubuntu releases:
 #   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
 ubuntu-releases = [
-    "focal",  # until 2025-04-23
-    "jammy",  # until 2027-04-21
-    "lunar",  # until 2024-01-20
-    "mantic",  # until 2024-07
+    "focal",  # 20.04, until 2025-04-23
+    "jammy",  # 22.04, until 2027-04-21
+    "lunar",  # 23.04, until 2024-01-20
+    "mantic",  # 23.10, until 2024-07
 ]
 
 [django-ca.validation]
