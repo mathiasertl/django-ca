@@ -95,24 +95,18 @@ Create a release with::
 
 The release script will:
 
-* validate the current state in your repository
-* create a new signed git tag
-* build and test the Docker image
-* Test the various tutorials
+* Validate the current state in your repository.
+* Create a new signed git tag.
+* Build and validate the Python Wheel.
+* Build and test the Docker image.
+* Test the various tutorials.
+* Upload Python Wheel and Docker image.
 
-***************
-Release process
-***************
+************************
+Create release on GitHub
+************************
 
-* Push the tag: :command:`git push origin --tags`
-* Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
-* Create and upload a package for PyPi::
-
-      $ ./dev.py build wheel --upload
-
-* Build and upload the docker image::
-
-      $ ./dev.py build --upload
+Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 
 ***************
 After a release
