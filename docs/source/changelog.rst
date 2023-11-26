@@ -4,7 +4,23 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.28.0:
+
+************
+1.27.0 (TBR)
+************
+
 .. _changelog-1.27.0:
+
+Backwards incompatible changes
+==============================
+
+* Drop support for ``Django~=3.2``, ``acme~=2.6`` and Alpine Linux 3.16.
+
+Deprecation notices
+===================
+
+* This is the last release to support Python 3.8.
 
 *******************
 1.27.0 (2023-11-26)
@@ -39,7 +55,7 @@ Backwards incompatible changes
   favor of ``--sign-ca-issuer``, ``--sign-issuer-alternative-name``, ``--sign-crl-full-name`` and
   ``--sign-ocsp-responder``.
 * Support for non-standard algorithm names in profile settings was removed.
-* Drop support for ``Django==4.1``, ``cryptography==40.x``, ``acme==1.25.0`` and ``celery==5.2.x``.
+* Drop support for ``Django~=4.1``, ``cryptography~=40.x``, ``acme~=1.25.0`` and ``celery~=5.2.x``.
 
 Deprecation notices
 ===================
