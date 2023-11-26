@@ -47,9 +47,16 @@ def cleanup(root: Path, dry: bool = False) -> None:
     remove(root / "build", dry=dry)
     remove(root / ".coverage", dry=dry)
     remove(root / ".docker", dry=dry)
+    remove(root / ".idea", dry=dry)
     remove(root / ".mypy_cache", dry=dry)
+    remove(root / ".pytest_cache", dry=dry)
+    remove(root / ".ruff_cache", dry=dry)
     remove(root / "contrib/selenium/geckodriver", dry=dry)
     remove(root / "docs/source/_files/docker-compose.yml", dry=dry)
+    for path in root.glob("*.crl"):
+        remove(path, dry=dry)
+    for path in root.glob("*.pem"):
+        remove(path, dry=dry)
     for path in root.rglob("__pycache__/"):
         remove(path, dry=dry)
     for path in root.rglob("*.pyc"):
