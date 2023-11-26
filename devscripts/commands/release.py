@@ -129,7 +129,7 @@ ChangeLog
 
                 # Build release artifacts
                 self.command("build", "wheel", "--release", args.release)
-                docker_tag = self.command("build", "docker", "--release", args.release)
+                _release, docker_tag = self.command("build", "docker", "--release", args.release)
                 ok("Finished building release artifacts.")
             else:
                 docker_tag = self.get_docker_tag(args.release)

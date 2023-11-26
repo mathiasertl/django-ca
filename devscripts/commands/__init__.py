@@ -79,7 +79,7 @@ class DevCommand:
         """Method that is supposed to be implemented by sub-commands."""
         raise NotImplementedError
 
-    def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> Any:
         """Default argparse entry point."""
         for mod_name, pip_name in self.modules:
             mod = importlib.import_module(mod_name)
@@ -91,7 +91,7 @@ class DevCommand:
             config.SHOW_COMMAND_OUTPUT = True
 
         try:
-            self.handle(args)
+            return self.handle(args)
         except ParserError as ex:
             parser.error(ex.value)
         except CommandError as ex:
