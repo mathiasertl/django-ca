@@ -394,7 +394,7 @@ POSTGRES_PASSWORD=mysecretpassword
             shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
 
             with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
-                info(f"Start current version ({last_release}).")
+                info(f"Start current version ({release}).")
                 # Make sure we have the new version
                 _validate_container_versions(release)
 

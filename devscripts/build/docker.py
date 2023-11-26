@@ -15,6 +15,7 @@
 
 import argparse
 from types import ModuleType
+from typing import Tuple
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -36,7 +37,7 @@ class Command(DevCommand):
         )
         parser.add_argument("--release", help="Version to use (default: current version).")
 
-    def handle(self, args: argparse.Namespace) -> str:  # type: ignore[override]
+    def handle(self, args: argparse.Namespace) -> Tuple[str, str]:  # type: ignore[override]
         if args.release:
             release = args.release
         else:
