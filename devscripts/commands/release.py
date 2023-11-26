@@ -150,6 +150,9 @@ ChangeLog
                 self.run("docker", "tag", docker_tag, revision_tag)
                 self.run("docker", "tag", docker_tag, latest_tag)
 
+                # Push GIT tag
+                repo.remotes.origin.push(refspec=git_tag)
+
                 # Upload wheel
                 self.run("twine", "upload", "dist/*")
 
@@ -157,6 +160,7 @@ ChangeLog
                 self.run("docker", "push", docker_tag)
                 self.run("docker", "push", revision_tag)
                 self.run("docker", "push", latest_tag)
+
                 ok("Uploaded release artifacts.")
 
         except Exception as ex:
