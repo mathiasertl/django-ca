@@ -7,10 +7,8 @@ ChangeLog
 .. _changelog-1.28.0:
 
 ************
-1.27.0 (TBR)
+1.28.0 (TBR)
 ************
-
-.. _changelog-1.27.0:
 
 Backwards incompatible changes
 ==============================
@@ -21,6 +19,9 @@ Deprecation notices
 ===================
 
 * This is the last release to support Python 3.8.
+* This is the last release to have the ``psycopg3`` extra. Use the normal ``postgres`` extra instead.
+
+.. _changelog-1.27.0:
 
 *******************
 1.27.0 (2023-11-26)
