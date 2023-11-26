@@ -18,7 +18,7 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import TestCase
 from django.urls import reverse
 
-from pyvirtualdisplay import Display
+from pyvirtualdisplay.display import Display
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
