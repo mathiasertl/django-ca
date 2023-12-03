@@ -460,6 +460,7 @@ jinja_filters = {
 
 qualname_overrides = {
     "AllowedHashTypes": "django_ca.typehints.AllowedHashTypes",
+    "OtherNames": "django_ca.typehints.OtherNames",
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
     "ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
@@ -513,6 +514,9 @@ nitpick_ignore = [
     ("py:class", "django.http.request.HttpRequest"),
     ("py:class", "django.http.response.HttpResponse"),
     ("py:class", "django_ca.typehints.AllowedHashTypes"),
+    ("py:class", "django_ca.typehints.OtherNames"),
+    # asn1crypto is really used only for OtherNames, so we do not link it
+    ("py:class", "asn1crypto.core.Primitive"),
     # Pydantic root model signature does not currently work
     ("py:class", "RootModelRootType"),
 ]

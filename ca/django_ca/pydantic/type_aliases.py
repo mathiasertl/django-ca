@@ -13,9 +13,20 @@
 
 """Reusable type aliases for Pydantic models."""
 
+from typing import Any, List, TypeVar
+
 from pydantic import AfterValidator, BeforeValidator
 from typing_extensions import Annotated
 
 from django_ca.pydantic import validators
 
+NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=List[Any])
+
 OIDType = Annotated[str, BeforeValidator(validators.oid_parser), AfterValidator(validators.oid_validator)]
+
+# A list validated to be non-empty and have a unique set of elements.
+NonEmptyOrderedSet = Annotated[
+    NonEmptyOrderedSetTypeVar,
+    AfterValidator(validators.unique_str_validator),
+    AfterValidator(validators.non_empty_validator),
+]

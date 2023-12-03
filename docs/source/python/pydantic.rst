@@ -28,3 +28,12 @@ Name
 
 .. autoclass:: django_ca.pydantic.name.NameModel
    :members:
+
+GeneralName
+===========
+
+.. autoclass:: django_ca.pydantic.general_name.GeneralNameModel
+   :members:
+
+.. autoclass:: django_ca.pydantic.general_name.OtherNameModel
+   :members:

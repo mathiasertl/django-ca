@@ -55,7 +55,9 @@ class MappingDocumentor(DataDocumenter):
             return f"``{value}``"
         if isinstance(value, str):
             return f'``"{value}"``'
-        if isinstance(value, type) and issubclass(value, (hashes.HashAlgorithm, ec.EllipticCurve)):
+        if isinstance(value, type) and issubclass(
+            value, (hashes.HashAlgorithm, ec.EllipticCurve, x509.GeneralName)
+        ):
             return f":py:class:`~cg:{value.__module__}.{value.__name__}`"
         if isinstance(value, x509.ObjectIdentifier):
             # First, try to find out if the OID is an ExtensionOID member

@@ -19,6 +19,7 @@ from collections import defaultdict
 from types import MappingProxyType
 from typing import Type
 
+import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
@@ -29,7 +30,7 @@ from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
 if typing.TYPE_CHECKING:
-    from django_ca.typehints import AllowedHashTypes
+    from django_ca.typehints import AllowedHashTypes, OtherNames
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
@@ -263,6 +264,23 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
     )
 )
 
+#: Map for types of general names.
+# TODO: test completeness
+GENERAL_NAME_TYPES: "MappingProxyType[str, Type[x509.GeneralName]]" = MappingProxyType(
+    {
+        "email": x509.RFC822Name,
+        "URI": x509.UniformResourceIdentifier,
+        "IP": x509.IPAddress,
+        "DNS": x509.DNSName,
+        "RID": x509.RegisteredID,
+        "dirName": x509.DirectoryName,
+        "otherName": x509.OtherName,
+    }
+)
+GENERAL_NAME_NAMES: "MappingProxyType[Type[x509.GeneralName], str]" = MappingProxyType(
+    {v: k for k, v in GENERAL_NAME_TYPES.items()}
+)
+
 # Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
 # ``--algorithm`` command line parameter.
 HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingProxyType(
@@ -408,6 +426,39 @@ NAME_OID_TYPES = MappingProxyType(
             "SN": NameOID.SURNAME,
             "userid": NameOID.USER_ID,
         },
+    }
+)
+
+#: Names supported for parsing :py:class:`~cg:cryptography.x509.OtherName` values.
+OTHER_NAME_TYPES: "MappingProxyType[OtherNames, asn1crypto.core.Primitive]" = MappingProxyType(
+    {
+        "UTF8String": asn1crypto.core.UTF8String,
+        "UNIVERSALSTRING": asn1crypto.core.UniversalString,
+        "IA5STRING": asn1crypto.core.IA5String,
+        "BOOLEAN": asn1crypto.core.Boolean,
+        "UTCTIME": asn1crypto.core.UTCTime,
+        "GENERALIZEDTIME": asn1crypto.core.GeneralizedTime,
+        "NULL": asn1crypto.core.Null,
+        "INTEGER": asn1crypto.core.Integer,
+        "OctetString": asn1crypto.core.OctetString,
+    }
+)
+
+# Inverse of OTHER_NAME_TYPES
+OTHER_NAME_NAMES: "MappingProxyType[asn1crypto.core.Primitive, OtherNames]" = MappingProxyType(
+    {v: k for k, v in OTHER_NAME_TYPES.items()}
+)
+
+#: Aliases for parsing :py:class:`~cg:cryptography.x509.OtherName` values.
+OTHER_NAME_ALIASES: "MappingProxyType[str, OtherNames]" = MappingProxyType(
+    {
+        "UTF8": "UTF8String",
+        "UNIV": "UNIVERSALSTRING",
+        "IA5": "IA5STRING",
+        "BOOL": "BOOLEAN",
+        "UTC": "UTCTIME",
+        "GENTIME": "GENERALIZEDTIME",
+        "INT": "INTEGER",
     }
 )
 

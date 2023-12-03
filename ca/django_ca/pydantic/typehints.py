@@ -23,3 +23,10 @@ class SerializedName(TypedDict):
 
     oid: str
     value: str
+
+
+class SerializedGeneralName(TypedDict):
+    """TypedDict for a serialized x509.GeneralName."""
+
+    type: GeneralNameTypes
+    value: str

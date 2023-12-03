@@ -30,8 +30,8 @@ def assert_cryptography_model(
 ) -> CryptographyModelTypeVar:
     """Test that a cryptography model matches the expected value."""
     model = model_class(**parameters)
-    assert model.cryptography == expected, (model.cryptography, expected)
-    assert model == model_class.model_validate(expected)
+    assert model.cryptography == expected
+    assert model == model_class.model_validate(expected), (model, model_class.model_validate(expected))
     assert model == model_class.model_validate_json(model.model_dump_json())  # test JSON serialization
     return model  # for any further tests on the model
 

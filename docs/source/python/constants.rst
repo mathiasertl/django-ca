@@ -19,6 +19,9 @@
 .. autodata:: django_ca.constants.EXTENSION_KEY_OIDS
    :no-value:
 
+.. automapping:: django_ca.constants.GENERAL_NAME_TYPES
+   :no-value:
+
 .. automapping:: django_ca.constants.HASH_ALGORITHM_NAMES
    :no-value:
 
@@ -34,3 +37,20 @@
 .. automodule:: django_ca.constants
    :members: ReasonFlags
 
+
+.. _constants-other-names:
+
+****************
+OtherName values
+****************
+
+The two mappings given here give a list of types that can be used for specifying OtherName values. They are a
+subset of the values supported in :manpage:`ASN1_GENERATE_NCONF(3SSL)`.
+
+.. automapping:: django_ca.constants.OTHER_NAME_TYPES
+   :no-value:
+
+Aliases are shortcuts for other types, for example ``BOOL`` is equivalent to ``BOOLEAN``:
+
+.. automapping:: django_ca.constants.OTHER_NAME_ALIASES
+   :no-value:

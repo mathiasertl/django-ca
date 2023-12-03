@@ -14,6 +14,7 @@
 """Various type aliases used in throughout django-ca."""
 
 import argparse
+import ipaddress
 import typing
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
@@ -206,6 +207,19 @@ SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical
 ############
 SubjectFormats = Literal["openssl", "rfc4514"]  # pragma: only django-ca<=2.2  # will be removed in 2.2
 
+#: Valid OtherName types
+OtherNames = Literal[
+    "UTF8String",
+    "UNIVERSALSTRING",
+    "IA5STRING",
+    "BOOLEAN",
+    "NULL",
+    "UTCTIME",
+    "GENERALIZEDTIME",
+    "INTEGER",
+    "OctetString",
+]
+
 ################
 # Type aliases #
 ################
@@ -378,4 +392,9 @@ CRLExtensionType = Union[x509.FreshestCRL, x509.CRLDistributionPoints]
 InformationAccessExtensionType = Union[x509.AuthorityInformationAccess, x509.SubjectInformationAccess]
 SignedCertificateTimestampType = Union[
     x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps
+]
+
+#: Union of all IP address types
+IPAddressType = Union[
+    ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network
 ]
