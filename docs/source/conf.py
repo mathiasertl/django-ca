@@ -359,6 +359,7 @@ intersphinx_mapping = {
     ),
     "acme": ("https://acme-python.readthedocs.io/en/stable/", None),
     "josepy": ("https://josepy.readthedocs.io/en/stable/", None),
+    "pydantic": ("https://docs.pydantic.dev/latest/", None),
 }
 
 rst_epilog = f"""
@@ -512,6 +513,8 @@ nitpick_ignore = [
     ("py:class", "django.http.request.HttpRequest"),
     ("py:class", "django.http.response.HttpResponse"),
     ("py:class", "django_ca.typehints.AllowedHashTypes"),
+    # Pydantic root model signature does not currently work
+    ("py:class", "RootModelRootType"),
 ]
 
 

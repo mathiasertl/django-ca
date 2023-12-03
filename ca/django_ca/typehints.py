@@ -24,6 +24,8 @@ from cryptography.x509.certificate_transparency import SignedCertificateTimestam
 
 from django.core.management.base import CommandParser
 
+# IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
+
 # Module level imports to enable forward references. See also:
 #
 #   https://peps.python.org/pep-0484/#forward-references

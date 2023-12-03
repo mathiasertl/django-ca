@@ -53,6 +53,7 @@ Welcome to django-ca's documentation!
    python/utils
    python/constants
    python/acme_messages
+   python/pydantic
    python/tasks
    python/typehints
 

@@ -54,3 +54,10 @@ def test_python_models(globs: Dict[str, Any]) -> None:
     """Test python/models.rst."""
     failures, _tests = doctest.testfile(os.path.join(BASE, "python", "models.rst"), globs=globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
+
+
+@override_tmpcadir()
+def test_python_pydantic_models(globs: Dict[str, Any]) -> None:
+    """Test python/models.rst."""
+    failures, _tests = doctest.testfile(os.path.join(BASE, "python", "pydantic.rst"), globs=globs)
+    assert failures == 0, f"{failures} doctests failed, see above for output."
