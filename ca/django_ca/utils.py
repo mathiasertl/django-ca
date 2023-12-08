@@ -273,6 +273,8 @@ def format_general_name(name: x509.GeneralName) -> str:
     """
     if isinstance(name, x509.DirectoryName):
         value = format_name_rfc4514(name.value)
+    elif isinstance(name, x509.OtherName):
+        value = format_other_name(name)
     else:
         value = name.value
     return f"{SAN_NAME_MAPPINGS[type(name)]}:{value}"
@@ -755,6 +757,96 @@ def generate_private_key(
     raise ValueError(f"{key_type}: Unknown key type.")
 
 
+def parse_other_name(name: str) -> x509.OtherName:
+    """Parse a formatted :py:class:`~cg:cryptography.x509.OtherName` instance."""
+    try:
+        dotted_string, asn1_typ_and_value = name.split(";", 1)
+        oid = x509.ObjectIdentifier(dotted_string)
+        asn_typ, asn1_value = asn1_typ_and_value.split(":", 1)
+    except ValueError as ex:
+        raise ValueError(f"Incorrect otherName format: {name}") from ex
+
+    # Get DER representation of the value for x509.OtherName()
+    if asn_typ in ("UTF8", "UTF8String"):
+        der_value = asn1crypto.core.UTF8String(asn1_value).dump()
+    elif asn_typ in ("UNIV", "UNIVERSALSTRING"):
+        der_value = asn1crypto.core.UniversalString(asn1_value).dump()
+    elif asn_typ in ("IA5", "IA5STRING"):
+        der_value = asn1crypto.core.IA5String(asn1_value).dump()
+    elif asn_typ in ("BOOL", "BOOLEAN"):
+        # nconf allows for true, y, yes, false, n and no as valid values
+        if asn1_value.lower() in ("true", "y", "yes"):
+            der_value = asn1crypto.core.Boolean(True).dump()
+        elif asn1_value.lower() in ("false", "n", "no"):
+            der_value = asn1crypto.core.Boolean(False).dump()
+        else:
+            raise ValueError(
+                f"Unsupported {asn_typ} specification for otherName: {asn1_value}: Must be TRUE or FALSE"
+            )
+    elif asn_typ in ("UTC", "UTCTIME"):
+        parsed_datetime = datetime.strptime(asn1_value, "%y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
+        der_value = asn1crypto.core.UTCTime(parsed_datetime).dump()
+    elif asn_typ in ("GENTIME", "GENERALIZEDTIME"):
+        parsed_datetime = datetime.strptime(asn1_value, "%Y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
+        der_value = asn1crypto.core.GeneralizedTime(parsed_datetime).dump()
+    elif asn_typ == "NULL":
+        if asn1_value:
+            raise ValueError("Invalid NULL specification for otherName: Value must not be present")
+        der_value = asn1crypto.core.Null().dump()
+    elif asn_typ in ("INT", "INTEGER"):
+        if asn1_value.startswith("0x"):
+            der_value = asn1crypto.core.Integer(int(asn1_value, 16)).dump()
+        else:
+            der_value = asn1crypto.core.Integer(int(asn1_value)).dump()
+    elif asn_typ == "OctetString":
+        der_value = asn1crypto.core.OctetString(bytes(bytearray.fromhex(asn1_value))).dump()
+    else:
+        raise ValueError(f"Unsupported ASN type in otherName: {asn_typ}")
+
+    return x509.OtherName(oid, der_value)
+
+
+def format_other_name(other_name: x509.OtherName) -> str:
+    """Format a :py:class:`~cg:cryptography.x509.OtherName` to a string."""
+    oid = other_name.type_id.dotted_string
+    loaded = asn1crypto.core.load(other_name.value)
+
+    if isinstance(loaded, asn1crypto.core.UTF8String):
+        typ = "UTF8String"
+        value = loaded.native
+    elif isinstance(loaded, asn1crypto.core.UniversalString):
+        typ = "UNIVERSALSTRING"
+        value = loaded.native
+    elif isinstance(loaded, asn1crypto.core.IA5String):
+        typ = "IA5STRING"
+        value = loaded.native
+    elif isinstance(loaded, asn1crypto.core.Boolean):
+        typ = "BOOLEAN"
+        if loaded.native is True:
+            value = "TRUE"
+        else:
+            value = "FALSE"
+    elif isinstance(loaded, asn1crypto.core.UTCTime):
+        typ = "UTCTIME"
+        value = loaded.native.strftime("%y%m%d%H%M%SZ")
+    elif isinstance(loaded, asn1crypto.core.GeneralizedTime):
+        typ = "GENERALIZEDTIME"
+        value = loaded.native.strftime("%Y%m%d%H%M%SZ")
+    elif isinstance(loaded, asn1crypto.core.Null):
+        typ = "NULL"
+        value = ""
+    elif isinstance(loaded, asn1crypto.core.Integer):
+        typ = "INTEGER"
+        value = loaded.native
+    elif isinstance(loaded, asn1crypto.core.OctetString):
+        typ = "OctetString"
+        value = binascii.hexlify(loaded.native).upper().decode("ascii")
+    else:
+        raise ValueError(f"Unsupported ASN type in otherName: {type(loaded).__name__}")
+
+    return f"{oid};{typ}:{value}"
+
+
 def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     """Parse a general name from user input.
 
@@ -808,7 +900,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     ValueError: Invalid domain: bar com
 
     """
-    # pylint: disable=too-many-return-statements,too-many-branches,too-many-statements
+    # pylint: disable=too-many-return-statements,too-many-branches
 
     if isinstance(name, x509.GeneralName):
         return name
@@ -874,51 +966,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     elif typ == "rid":
         return x509.RegisteredID(x509.ObjectIdentifier(name))
     elif typ == "othername":
-        try:
-            dotted_string, asn1_typ_and_value = name.split(";", 1)
-            oid = x509.ObjectIdentifier(dotted_string)
-            asn_typ, asn1_value = asn1_typ_and_value.split(":", 1)
-        except ValueError as ex:
-            raise ValueError(f"Incorrect otherName format: {name}") from ex
-
-        # Get DER representation of the value for x509.OtherName()
-        if asn_typ in ("UTF8", "UTF8String"):
-            der_value = asn1crypto.core.UTF8String(asn1_value).dump()
-        elif asn_typ in ("UNIV", "UNIVERSALSTRING"):
-            der_value = asn1crypto.core.UniversalString(asn1_value).dump()
-        elif asn_typ in ("IA5", "IA5STRING"):
-            der_value = asn1crypto.core.IA5String(asn1_value).dump()
-        elif asn_typ in ("BOOL", "BOOLEAN"):
-            # nconf allows for true, y, yes, false, n and no as valid values
-            if asn1_value.lower() in ("true", "y", "yes"):
-                der_value = asn1crypto.core.Boolean(True).dump()
-            elif asn1_value.lower() in ("false", "n", "no"):
-                der_value = asn1crypto.core.Boolean(False).dump()
-            else:
-                raise ValueError(
-                    f"Unsupported {asn_typ} specification for otherName: {asn1_value}: Must be TRUE or FALSE"
-                )
-        elif asn_typ in ("UTC", "UTCTIME"):
-            parsed_datetime = datetime.strptime(asn1_value, "%y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
-            der_value = asn1crypto.core.UTCTime(parsed_datetime).dump()
-        elif asn_typ in ("GENTIME", "GENERALIZEDTIME"):
-            parsed_datetime = datetime.strptime(asn1_value, "%Y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
-            der_value = asn1crypto.core.GeneralizedTime(parsed_datetime).dump()
-        elif asn_typ == "NULL":
-            if asn1_value:
-                raise ValueError("Invalid NULL specification for otherName: Value must not be present")
-            der_value = asn1crypto.core.Null().dump()
-        elif asn_typ in ("INT", "INTEGER"):
-            if asn1_value.startswith("0x"):
-                der_value = asn1crypto.core.Integer(int(asn1_value, 16)).dump()
-            else:
-                der_value = asn1crypto.core.Integer(int(asn1_value)).dump()
-        elif asn_typ == "OctetString":
-            der_value = asn1crypto.core.OctetString(bytes(bytearray.fromhex(asn1_value))).dump()
-        else:
-            raise ValueError(f"Unsupported ASN type in otherName: {asn_typ}")
-
-        return x509.OtherName(oid, der_value)
+        return parse_other_name(name)
     elif typ == "dirname":
         return x509.DirectoryName(parse_name_rfc4514(name))
     else:

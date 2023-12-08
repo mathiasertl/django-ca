@@ -404,13 +404,6 @@ class GeneratePrivateKeyTestCase(TestCase):
 class ParseGeneralNameTest(TestCase):
     """Test :py:func:`django_ca.utils.parse_general_name`."""
 
-    def assertOtherName(self, typ: str, value: str, expected: bytes) -> None:  # pylint: disable=invalid-name
-        """Assert that the otherName of given type and value is parsed to the respective DER encoded value."""
-        self.assertEqual(
-            parse_general_name(f"otherName:2.5.4.3;{typ}:{value}"),
-            x509.OtherName(NameOID.COMMON_NAME, expected),
-        )
-
     def test_ipv4(self) -> None:
         """Test parsing an IPv4 address."""
         self.assertEqual(parse_general_name("1.2.3.4"), x509.IPAddress(ipaddress.ip_address("1.2.3.4")))
@@ -493,54 +486,6 @@ class ParseGeneralNameTest(TestCase):
         """Test parsing a Registered ID."""
         self.assertEqual(parse_general_name("rid:2.5.4.3"), x509.RegisteredID(NameOID.COMMON_NAME))
 
-    def test_othername(self) -> None:
-        """Test parsing an otherName name."""
-        self.assertOtherName("UTF8", "example", b"\x0c\x07example")
-        # try fooling the parser with too many delimiters
-        self.assertOtherName("UTF8", "example;wrong:val", b"\x0c\x11example;wrong:val")
-
-        for typ in ("UNIV", "UNIVERSALSTRING"):
-            self.assertOtherName(typ, "ex", b"\x1c\x08\x00\x00\x00e\x00\x00\x00x")
-        for typ in ("IA5", "IA5STRING"):
-            self.assertOtherName(typ, "example", b"\x16\x07example")
-        for typ in ("BOOL", "BOOLEAN"):
-            for val in ["TRUE", "true", "y", "Y", "YES", "yes"]:
-                self.assertOtherName(typ, val, b"\x01\x01\xff")
-            for val in ["FALSE", "false", "N", "n", "NO", "no"]:
-                self.assertOtherName(typ, val, b"\x01\x01\x00")
-        for typ in ("INT", "INTEGER"):
-            self.assertOtherName(typ, "0", b"\x02\x01\x00")
-            self.assertOtherName(typ, "1", b"\x02\x01\x01")
-            self.assertOtherName(typ, "-1", b"\x02\x01\xff")
-            self.assertOtherName(typ, "0x123", b"\x02\x02\x01#")
-        for typ in ("GENTIME", "GENERALIZEDTIME"):
-            self.assertOtherName(typ, "202110052214Z", b"\x18\x0f20211005220104Z")
-        for typ in ("UTC", "UTCTIME"):
-            self.assertOtherName(typ, "2110052214Z", b"\x17\r211005220104Z")
-        self.assertOtherName("NULL", "", b"\x05\x00")
-
-    def test_othername_format_errors(self) -> None:
-        """Test various otherName formats."""
-        with self.assertRaisesRegex(ValueError, r"^Incorrect otherName format: no_asn1_data$"):
-            parse_general_name("otherName:no_asn1_data")
-        with self.assertRaisesRegex(ValueError, r"^Incorrect otherName format: no_dotted_string;asn1_value$"):
-            parse_general_name("otherName:no_dotted_string;asn1_value")
-        with self.assertRaisesRegex(ValueError, r"^Incorrect otherName format: 1.2.3;no_asn1_data$"):
-            parse_general_name("otherName:1.2.3;no_asn1_data")
-
-    def test_othername_errors(self) -> None:
-        """Test some error conditions."""
-        with self.assertRaises(ValueError):
-            parse_general_name("otherName:2.5.4.3;UTC:123")
-        with self.assertRaisesRegex(
-            ValueError, r"^Unsupported BOOL specification for otherName: WRONG: Must be TRUE or FALSE$"
-        ):
-            parse_general_name("otherName:2.5.4.3;BOOL:WRONG")
-        with self.assertRaisesRegex(
-            ValueError, r"^Invalid NULL specification for otherName: Value must not be present$"
-        ):
-            parse_general_name("otherName:2.5.4.3;NULL:VALUE")
-
     def test_unicode_domains(self) -> None:
         """Test some unicode domains."""
         self.assertEqual(
@@ -574,22 +519,6 @@ class ParseGeneralNameTest(TestCase):
 
         with self.assertRaisesRegex(ValueError, "^Invalid domain: $"):
             parse_general_name("email:user@")
-
-    def test_othername_octetstring(self) -> None:
-        """Test an octet string."""
-        self.assertEqual(
-            parse_general_name("otherName:1.3.6.1.4.1.311.25.1;OctetString:09CFF1A8F6DEFD4B85CE95FFA1B54217"),
-            x509.OtherName(
-                x509.oid.ObjectIdentifier("1.3.6.1.4.1.311.25.1"),
-                b"\x04\x10\t\xcf\xf1\xa8\xf6\xde\xfdK\x85\xce\x95\xff\xa1\xb5B\x17",
-            ),
-        )
-
-        with self.assertRaisesRegex(ValueError, "^Incorrect otherName format: foobar$"):
-            parse_general_name("otherName:foobar")
-
-        with self.assertRaisesRegex(ValueError, "^Unsupported ASN type in otherName: MagicString$"):
-            parse_general_name("otherName:1.2.3;MagicString:Broken")
 
     def test_error(self) -> None:
         """Try parsing an unparsable IP address (b/c it has a network)."""
@@ -1214,7 +1143,8 @@ class GetCertBuilderTestCase(TestCase):
         builder = get_cert_builder(after, serial=123)
         self.assertEqual(builder._serial_number, 123)  # pylint: disable=protected-access
         self.assertEqual(
-            builder._not_valid_after, datetime(2022, 10, 23, 11, 21)  # pylint: disable=protected-access
+            builder._not_valid_after,  # pylint: disable=protected-access
+            datetime(2022, 10, 23, 11, 21),
         )
 
     @freeze_time("2021-01-23 14:42:11")
