@@ -13,7 +13,7 @@
 
 """Typehints used in some pydantic models."""
 
-from typing import Literal, TypedDict
+from typing import Any, Dict, Literal, TypedDict
 
 GeneralNameTypes = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName"]
 
@@ -30,3 +30,12 @@ class SerializedGeneralName(TypedDict):
 
     type: GeneralNameTypes
     value: str
+
+
+# TODO: check if we need this outside of tests
+class SerializedExtensionDict(TypedDict):
+    """TypedDict for a serialized x509.Extension."""
+
+    oid: str
+    critical: bool
+    value: Dict[str, Any]

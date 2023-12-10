@@ -24,13 +24,27 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.certificate_transparency import LogEntryType
-from cryptography.x509.oid import ExtendedKeyUsageOID as _ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import (
+    AuthorityInformationAccessOID,
+    ExtendedKeyUsageOID as _ExtendedKeyUsageOID,
+    ExtensionOID,
+    NameOID,
+    SubjectInformationAccessOID,
+)
 
 from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
 if typing.TYPE_CHECKING:
-    from django_ca.typehints import AllowedHashTypes, OtherNames
+    from django_ca.typehints import AccessMethods, AllowedHashTypes, KeyUsages, OtherNames
+
+ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = MappingProxyType(
+    {
+        "ocsp": AuthorityInformationAccessOID.OCSP,
+        "ca_issuers": AuthorityInformationAccessOID.CA_ISSUERS,
+        "ca_repository": SubjectInformationAccessOID.CA_REPOSITORY,
+    }
+)
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
@@ -135,6 +149,7 @@ EXTENSION_CRITICAL_HELP = MappingProxyType(
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: _("SHOULD be non-critical"),
         ExtensionOID.ISSUING_DISTRIBUTION_POINT: _("is critical"),
         ExtensionOID.KEY_USAGE: _("SHOULD be critical"),
+        ExtensionOID.MS_CERTIFICATE_TEMPLATE: _("may or may not be critical."),
         ExtensionOID.NAME_CONSTRAINTS: _("MUST be critical"),
         ExtensionOID.OCSP_NO_CHECK: _("SHOULD be a non-critical"),  # defined in RFC 2560
         ExtensionOID.POLICY_CONSTRAINTS: _("MUST be critical"),
@@ -202,6 +217,7 @@ EXTENSION_KEYS = MappingProxyType(
         ExtensionOID.ISSUING_DISTRIBUTION_POINT: "issuing_distribution_point",  # CRL extension
         ExtensionOID.KEY_USAGE: "key_usage",
         ExtensionOID.NAME_CONSTRAINTS: "name_constraints",  # CA only
+        ExtensionOID.MS_CERTIFICATE_TEMPLATE: "ms_certificate_template",
         ExtensionOID.OCSP_NO_CHECK: "ocsp_no_check",  # RFC 2560 does not really define a spelling
         ExtensionOID.POLICY_CONSTRAINTS: "policy_constraints",  # CA only
         ExtensionOID.POLICY_MAPPINGS: "policy_mappings",  # CA only
@@ -235,6 +251,7 @@ EXTENSION_NAMES = MappingProxyType(
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: "Issuer Alternative Name",
         ExtensionOID.ISSUING_DISTRIBUTION_POINT: "Issuing Distribution Point",
         ExtensionOID.KEY_USAGE: "Key Usage",
+        ExtensionOID.MS_CERTIFICATE_TEMPLATE: "MS Certificate Template",
         ExtensionOID.NAME_CONSTRAINTS: "Name Constraints",
         ExtensionOID.OCSP_NO_CHECK: "OCSP No Check",  # RFC 2560 does not really define a spelling
         ExtensionOID.POLICY_CONSTRAINTS: "Policy Constraints",
@@ -310,7 +327,7 @@ HASH_ALGORITHM_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = MappingP
 )
 
 #: Map of `kwargs` for :py:class:`~cg:cryptography.x509.KeyUsage` to names in RFC 5280.
-KEY_USAGE_NAMES = MappingProxyType(
+KEY_USAGE_NAMES: "MappingProxyType[KeyUsages, str]" = MappingProxyType(
     {
         "crl_sign": "cRLSign",
         "data_encipherment": "dataEncipherment",
@@ -481,7 +498,14 @@ PRIVATE_KEY_TYPES = (
 )
 PARSABLE_KEY_TYPES = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
 
-#: Map of human-readable names/serialized values to TLSFeatureTypes.
+TLS_FEATURE_KEYS = MappingProxyType(
+    {
+        x509.TLSFeatureType.status_request: "status_request",
+        x509.TLSFeatureType.status_request_v2: "status_request_v2",
+    }
+)
+
+#: Map of human-readable names/serialized values to :py:class:`~cg:cryptography.x509.TLSFeatureType` members.
 TLS_FEATURE_NAMES = MappingProxyType(
     {
         # https://tools.ietf.org/html/rfc6066.html:

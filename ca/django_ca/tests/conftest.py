@@ -24,6 +24,8 @@ from unittest.mock import patch
 
 import coverage
 
+from cryptography import x509
+
 import pytest
 from _pytest.config import Config as PytestConfig
 from _pytest.config.argparsing import Parser
@@ -41,7 +43,11 @@ from django_ca.tests.base.conftest_helpers import (
     generate_pub_fixture,
     generate_usable_ca_fixture,
     interesting_certificate_names,
+    precertificate_signed_certificate_timestamps_cert_names,
     setup_pragmas,
+    signed_certificate_timestamp_cert_names,
+    signed_certificate_timestamps_cert_names,
+    unusable_cert_names,
     usable_ca_names,
     usable_cert_names,
 )
@@ -163,7 +169,36 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
 for name in usable_ca_names:
     globals()[name] = generate_ca_fixture(name)
     globals()[f"usable_{name}"] = generate_usable_ca_fixture(name)
-for name in usable_ca_names + usable_cert_names:
+for name in usable_ca_names + usable_cert_names + unusable_cert_names:
     globals()[f"{name.replace('-', '_')}_pub"] = generate_pub_fixture(name)
 for name in usable_cert_names:
     globals()[name.replace("-", "_")] = generate_cert_fixture(name)
+
+
+@pytest.fixture(params=signed_certificate_timestamp_cert_names)
+def signed_certificate_timestamp_pub(request: "SubRequest") -> Iterator[x509.Certificate]:
+    """Parametrized fixture for certificates that have any SCT extension."""
+    name = request.param.replace("-", "_")
+
+    yield request.getfixturevalue(f"{name}_pub")
+
+
+@pytest.fixture(params=signed_certificate_timestamps_cert_names)
+def signed_certificate_timestamps_pub(  # pragma: no cover
+    request: "SubRequest"
+) -> Iterator[x509.Certificate]:
+    """Parametrized fixture for certificates that have a SignedCertificateTimestamps extension.
+
+    .. NOTE:: There are no certificates with this extension right now, so this fixture is in fact never run.
+    """
+    name = request.param.replace("-", "_")
+
+    yield request.getfixturevalue(f"{name}_pub")
+
+
+@pytest.fixture(params=precertificate_signed_certificate_timestamps_cert_names)
+def precertificate_signed_certificate_timestamps_pub(request: "SubRequest") -> Iterator[x509.Certificate]:
+    """Parametrized fixture for certificates that have a PrecertSignedCertificateTimestamps extension."""
+    name = request.param.replace("-", "_")
+
+    yield request.getfixturevalue(f"{name}_pub")

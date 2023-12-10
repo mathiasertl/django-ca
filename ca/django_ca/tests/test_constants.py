@@ -26,14 +26,9 @@ from django.test import TestCase
 from django_ca import constants
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
-IGNORED_EXTENSIONS = [
-    x509.ObjectIdentifier(
-        "1.3.6.1.4.1.311.21.7"
-    ),  # only cryptography<=41  # replace with ExtensionOID.MS_CERTIFICATE_TEMPLATE
-]
 KNOWN_EXTENSION_OIDS = list(
     filter(
-        lambda attr: isinstance(attr, x509.ObjectIdentifier) and attr not in IGNORED_EXTENSIONS,
+        lambda attr: isinstance(attr, x509.ObjectIdentifier),
         [getattr(ExtensionOID, attr) for attr in dir(ExtensionOID)],
     )
 )
@@ -142,7 +137,8 @@ class CompletenessTestCase(TestCase):
 
     def test_oid_default_critical(self) -> None:
         """Test completeness of EXTENSION_DEFAULT_CRITICAL."""
-        self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_DEFAULT_CRITICAL.keys())
+        known_oids = [oid for oid in KNOWN_EXTENSION_OIDS if oid != ExtensionOID.MS_CERTIFICATE_TEMPLATE]
+        self.assertCountEqual(known_oids, constants.EXTENSION_DEFAULT_CRITICAL.keys())
 
     def test_oid_critical_help(self) -> None:
         """Test completeness of EXTENSION_CRITICAL_HELP."""

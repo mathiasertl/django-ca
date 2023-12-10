@@ -116,7 +116,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-ca"
-copyright = "2016 - 2022, Mathias Ertl"
+copyright = "2016 - 2023, Mathias Ertl"
 author = "Mathias Ertl"
 
 import django_ca  # NOQA: E402
@@ -368,6 +368,7 @@ rst_epilog = f"""
 .. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
 .. |Name| replace:: :py:class:`~cg:cryptography.x509.Name`
 .. |RelativeDistinguishedName| replace:: :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`
+.. _RFC 5280: https://datatracker.ietf.org/doc/html/rfc5280
 """
 
 html_theme = "sphinx_rtd_theme"
@@ -460,6 +461,7 @@ jinja_filters = {
 
 qualname_overrides = {
     "AllowedHashTypes": "django_ca.typehints.AllowedHashTypes",
+    "KeyUsages": "django_ca.typehints.KeyUsages",
     "OtherNames": "django_ca.typehints.OtherNames",
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
@@ -515,6 +517,8 @@ nitpick_ignore = [
     ("py:class", "django.http.response.HttpResponse"),
     ("py:class", "django_ca.typehints.AllowedHashTypes"),
     ("py:class", "django_ca.typehints.OtherNames"),
+    ("py:class", "django_ca.typehints.ExtensionTypeTypeVar"),
+    ("py:class", "django_ca.typehints.KeyUsages"),
     # asn1crypto is really used only for OtherNames, so we do not link it
     ("py:class", "asn1crypto.core.Primitive"),
     # Pydantic root model signature does not currently work

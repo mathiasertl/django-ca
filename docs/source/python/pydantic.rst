@@ -37,3 +37,29 @@ GeneralName
 
 .. autoclass:: django_ca.pydantic.general_name.OtherNameModel
    :members:
+
+Extensions
+==========
+
+.. automodule:: django_ca.pydantic.extensions
+   :members:
+   :exclude-members: CRLNumberModel, DeltaCRLIndicatorModel, ExtensionModel, BaseExtensionModel,
+        NoValueExtensionModel, AlternativeNameBaseModel, CRLExtensionBaseModel, InformationAccessBaseModel,
+        SignedCertificateTimestampBaseModel
+
+.. _pydantic_extension_attributes:
+
+Extension attributes
+====================
+
+.. automodule:: django_ca.pydantic.extension_attributes
+   :members:
+
+CRL extensions
+==============
+
+Models for CRL extensions are not currently used within the project itself.
+
+.. autoclass:: django_ca.pydantic.extensions.CRLNumberModel
+
+.. autoclass:: django_ca.pydantic.extensions.DeltaCRLIndicatorModel

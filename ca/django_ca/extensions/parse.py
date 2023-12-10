@@ -13,7 +13,7 @@
 
 """Module to parse serialized extensions into cryptography objects."""
 
-from typing import Iterable, Iterator, List, Optional, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -247,7 +247,7 @@ def _parse_freshest_crl(
 
 
 def _parse_key_usage(value: Iterator[str]) -> x509.KeyUsage:
-    kwargs = {k: k in value or v in value for k, v in KEY_USAGE_NAMES.items()}
+    kwargs: Dict[str, bool] = {k: k in value or v in value for k, v in KEY_USAGE_NAMES.items()}
     return x509.KeyUsage(**kwargs)
 
 

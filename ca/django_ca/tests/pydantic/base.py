@@ -12,17 +12,19 @@
 # <http://www.gnu.org/licenses/>.
 
 """Shared code for Pydantic-related tests."""
-
-from typing import Any, Dict, List, Tuple, Type, TypeVar
+import re
+from typing import Any, Dict, List, Tuple, Type, TypeVar, Union
 
 from pydantic import ValidationError
 
 import pytest
 
 from django_ca.pydantic.base import CryptographyModel
+from django_ca.pydantic.extensions import ExtensionModel
 
 CryptographyModelTypeVar = TypeVar("CryptographyModelTypeVar", bound=CryptographyModel[Any])
-ExpectedErrors = List[Tuple[str, Tuple[str, ...], str]]
+ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])
+ExpectedErrors = List[Tuple[str, Tuple[str, ...], Union[str, "re.Pattern[str]"]]]
 
 
 def assert_cryptography_model(
@@ -47,5 +49,9 @@ def assert_validation_errors(
     assert len(expected_errors) == len(errors), errors
     for expected, actual in zip(expected_errors, errors):
         assert expected[0] == actual["type"], actual["type"]
-        assert expected[1] == actual["loc"], actual["loc"]
-        assert expected[2] == actual["msg"], actual["msg"]
+        assert expected[1] == actual["loc"], (actual["loc"], actual["msg"])
+        if isinstance(expected[2], str):
+            assert expected[2] == actual["msg"], actual["msg"]
+        else:
+            pattern: re.Pattern[str] = expected[2]
+            assert pattern.search(actual["msg"]), actual["msg"]

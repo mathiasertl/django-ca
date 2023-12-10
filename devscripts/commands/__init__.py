@@ -28,7 +28,7 @@ from devscripts import config, utils
 from devscripts.out import err, info
 
 if typing.TYPE_CHECKING:
-    import docker  # NOQA: F401  # flake8 does not detect that this is for type-hinting.
+    import docker  # noqa: F401  # flake8 does not detect that this is for type-hinting.
     from docker.client import DockerClient
     from docker.models.images import Image
 
@@ -99,7 +99,7 @@ class DevCommand:
             sys.exit(ex.code)
 
     @property
-    def docker(self) -> "docker":  # NOQA: F811  # flake8 detects the TYPE_CHECKING protected module.
+    def docker(self) -> "docker":  # noqa: F811  # flake8 detects the TYPE_CHECKING protected module.
         """Get the docker Python library."""
         return importlib.import_module("docker")
 

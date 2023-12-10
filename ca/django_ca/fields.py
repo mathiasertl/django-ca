@@ -467,7 +467,7 @@ class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
     widget = widgets.KeyUsageWidget
 
     def get_values(self, value: List[str]) -> Optional[x509.KeyUsage]:
-        values = {choice: choice in value for choice in KEY_USAGE_NAMES}
+        values: Dict[str, bool] = {choice: choice in value for choice in KEY_USAGE_NAMES}
         return x509.KeyUsage(**values)
 
 

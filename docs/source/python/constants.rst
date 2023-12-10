@@ -2,6 +2,9 @@
 ``django_ca.constants`` - constants
 ###################################
 
+.. automapping:: django_ca.constants.ACCESS_METHOD_TYPES
+   :annotation:
+
 .. automapping:: django_ca.constants.ELLIPTIC_CURVE_TYPES
    :annotation:
 
@@ -34,8 +37,10 @@
 .. automapping:: django_ca.constants.NAME_OID_TYPES
    :no-value:
 
-.. automodule:: django_ca.constants
-   :members: ReasonFlags
+.. automapping:: django_ca.constants.TLS_FEATURE_NAMES
+   :no-value:
+
+.. autoclass:: django_ca.constants.ReasonFlags
 
 
 .. _constants-other-names:

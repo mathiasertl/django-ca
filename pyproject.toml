@@ -346,6 +346,7 @@ disable = [
     "assignment-from-no-return",
     "import-error",  # mypy: import
     "abstract-class-instantiated",  # mypy: abstract
+    "not-an-iterable",
 
     # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
     # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually
@@ -432,6 +433,7 @@ filterwarnings = [
 
 [tool.ruff]
 select = ["D", "E", "F", "I", "G", "DJ"]
+#extend-select = ["RUF100"]  # detect unused suppression comments
 extend-exclude = ["migrations", "stubs"]
 line-length = 110
 ignore = [

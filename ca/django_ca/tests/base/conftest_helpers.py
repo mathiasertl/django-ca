@@ -210,8 +210,13 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
 
 def load_pub(name: str) -> x509.Certificate:
     """Load a public key from file."""
-    with open(os.path.join(FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
-        return x509.load_der_x509_certificate(stream.read())
+    conf = CERT_DATA[name]
+    if conf["cat"] == "sphinx-contrib":
+        with open(conf["pub_path"], "rb") as stream:
+            return x509.load_pem_x509_certificate(stream.read())
+    else:
+        with open(os.path.join(FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
+            return x509.load_der_x509_certificate(stream.read())
 
 
 def load_ca(
@@ -262,4 +267,17 @@ unusable_cert_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "cert" and name not in usable_ca_names
 ]
 interesting_certificate_names = ["child-cert", "all-extensions", "alt-extensions", "no-extensions"]
+
+signed_certificate_timestamp_cert_names = [
+    name
+    for name, conf in CERT_DATA.items()
+    if "precertificate_signed_certificate_timestamps" in conf or "signed_certificate_timestamps" in conf
+]
+precertificate_signed_certificate_timestamps_cert_names = [
+    name for name, conf in CERT_DATA.items() if "precertificate_signed_certificate_timestamps" in conf
+]
+signed_certificate_timestamps_cert_names = [
+    name for name, conf in CERT_DATA.items() if "signed_certificate_timestamps" in conf
+]
+
 all_cert_names = usable_cert_names + unusable_cert_names

@@ -1020,7 +1020,7 @@ OCSP
 CRLs
 ====
 
-* Issued CRLs now confirm to `RFC 5280 <https://tools.ietf.org/html/rfc5280.html>`_:
+* Issued CRLs now confirm to `RFC 5280`_:
 
   * Add the `CRL Number <https://tools.ietf.org/html/rfc5280.html#section-5.2.3>`_ extension.
   * Add the `Authority Key Identifier <https://tools.ietf.org/html/rfc5280.html#section-5.2.1>`_ extension.

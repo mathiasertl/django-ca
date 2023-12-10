@@ -31,6 +31,7 @@ from django_ca.constants import (
     REVOCATION_REASONS,
 )
 from django_ca.extensions.utils import certificate_policies_is_simple
+from django_ca.typehints import KeyUsages
 from django_ca.utils import format_general_name
 
 log = logging.getLogger(__name__)
@@ -460,7 +461,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.KEY_USAGE
 
-    def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> Tuple[List[str], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> Tuple[List[KeyUsages], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = []

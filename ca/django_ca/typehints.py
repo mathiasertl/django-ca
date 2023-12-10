@@ -44,11 +44,6 @@ class SupportsLessThan(typing.Protocol):
 # pylint: disable-next=invalid-name
 JSON = Union[Dict[str, "JSON"], List["JSON"], str, int, float, bool, None]
 
-# from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
-
-CRLExtensionTypeTypeVar = typing.TypeVar(
-    "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL
-)
 
 #: Hash algorithms that can be used for signing certificates.
 #: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
@@ -64,19 +59,6 @@ AllowedHashTypes = typing.Union[
 ]
 
 ExtensionDict = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
-
-KeyUsages = typing.Literal[
-    "cRLSign",
-    "dataEncipherment",
-    "decipherOnly",
-    "digitalSignature",
-    "encipherOnly",
-    "keyAgreement",
-    "keyCertSign",
-    "keyEncipherment",
-    "nonRepudiation",  # http://marc.info/?t=107176106300005&r=1&w=2
-]
-
 
 ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
@@ -158,9 +140,6 @@ ParsablePolicyInformation = typing.TypedDict(
 
 PolicyQualifier = Union[str, x509.UserNotice]
 
-ExtensionTypeTypeVar = typing.TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
-# """A type variable for a :py:class:`~cg:cryptography.x509.ExtensionType` instance."""
-
 ParsableExtension = typing.TypedDict(
     "ParsableExtension",
     {
@@ -171,21 +150,6 @@ ParsableExtension = typing.TypedDict(
     },
     total=False,
 )
-
-if typing.TYPE_CHECKING:
-    ExtensionTypeVar = x509.Extension[ExtensionTypeTypeVar]
-    ExtensionType = x509.Extension[x509.ExtensionType]
-    SubjectKeyIdentifierType = x509.Extension[x509.SubjectKeyIdentifier]
-    UnrecognizedExtensionType = x509.Extension[x509.UnrecognizedExtension]
-    TLSFeatureExtensionType = x509.Extension[x509.TLSFeature]
-    PrecertificateSignedCertificateTimestampsType = x509.Extension[
-        x509.PrecertificateSignedCertificateTimestamps
-    ]
-else:
-    ExtensionType = ExtensionTypeVar = x509.Extension
-    SubjectKeyIdentifierType = (
-        TLSFeatureExtensionType
-    ) = UnrecognizedExtensionType = PrecertificateSignedCertificateTimestampsType = x509.ExtensionType
 
 
 BasicConstraintsBase = typing.TypedDict("BasicConstraintsBase", {"ca": bool})
@@ -207,6 +171,36 @@ SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical
 ############
 SubjectFormats = Literal["openssl", "rfc4514"]  # pragma: only django-ca<=2.2  # will be removed in 2.2
 
+#: Serialized values of :py:class:`~cg:cryptography.x509.certificate_transparency.LogEntryType` instances.
+LogEntryTypes = Literal["precertificate", "x509_certificate"]
+
+#: Serialized access method for :py:class:`~cg:cryptography.x509.AccessDescription` instances.
+AccessMethods = Literal["ocsp", "ca_issuers", "ca_repository"]
+
+#: List of possible values for :py:class:`~cg:cryptography.x509.KeyUsage` instances.
+KeyUsages = Literal[
+    "crl_sign",
+    "data_encipherment",
+    "decipher_only",
+    "digital_signature",
+    "encipher_only",
+    "key_agreement",
+    "key_cert_sign",
+    "key_encipherment",
+    "content_commitment",
+]
+
+DistributionPointReasons = Literal[
+    "key_compromise",
+    "ca_compromise",
+    "affiliation_changed",
+    "superseded",
+    "cessation_of_operation",
+    "certificate_hold",
+    "privilege_withdrawn",
+    "aa_compromise",
+]
+
 #: Valid OtherName types
 OtherNames = Literal[
     "UTF8String",
@@ -219,6 +213,21 @@ OtherNames = Literal[
     "INTEGER",
     "OctetString",
 ]
+
+# only py<3.8: python3.9 supports DistributionPointReasons | Literal["unspecified", "remove_from_crl"]
+Reasons = Literal[
+    "key_compromise",
+    "ca_compromise",
+    "affiliation_changed",
+    "superseded",
+    "cessation_of_operation",
+    "certificate_hold",
+    "privilege_withdrawn",
+    "aa_compromise",
+    "unspecified",
+    "remove_from_crl",
+]
+
 
 ################
 # Type aliases #
@@ -235,6 +244,29 @@ ActionsContainer = Union[CommandParser, ArgumentGroup]
 ############
 # pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
 X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
+
+ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=x509.Extension[x509.ExtensionType])
+
+# A TypeVar bound to :py:class:`~cg:cryptography.x509.ExtensionType`.
+ExtensionTypeTypeVar = typing.TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
+
+
+AlternativeNameTypeVar = typing.TypeVar(
+    "AlternativeNameTypeVar", x509.SubjectAlternativeName, x509.IssuerAlternativeName
+)
+CRLExtensionTypeTypeVar = typing.TypeVar(
+    "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL
+)
+InformationAccessTypeVar = typing.TypeVar(
+    "InformationAccessTypeVar", x509.AuthorityInformationAccess, x509.SubjectInformationAccess
+)
+NoValueExtensionTypeVar = typing.TypeVar("NoValueExtensionTypeVar", x509.OCSPNoCheck, x509.PrecertPoison)
+
+SignedCertificateTimestampTypeVar = typing.TypeVar(
+    "SignedCertificateTimestampTypeVar",
+    x509.PrecertificateSignedCertificateTimestamps,
+    x509.SignedCertificateTimestamps,
+)
 
 
 #####################
@@ -261,7 +293,6 @@ SerializedAuthorityKeyIdentifier = typing.TypedDict(
 )
 
 
-# pylint: disable-next=inherit-non-class; False positive
 class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
@@ -349,7 +380,6 @@ ParsableAuthorityInformationAccess = typing.TypedDict(
 )
 
 
-# pylint: disable-next=inherit-non-class; False positive
 class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 

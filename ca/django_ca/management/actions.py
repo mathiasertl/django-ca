@@ -18,7 +18,7 @@ import argparse
 import getpass
 import typing
 from datetime import timedelta
-from typing import Any, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -760,7 +760,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
                 self, f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage."
             )
 
-        key_usages = {k: v in values for k, v in KEY_USAGE_NAMES.items()}
+        key_usages: Dict[str, bool] = {k: v in values for k, v in KEY_USAGE_NAMES.items()}
         try:
             extension_type = x509.KeyUsage(**key_usages)
         except ValueError as ex:
