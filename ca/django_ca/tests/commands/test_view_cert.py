@@ -874,10 +874,10 @@ Digest:
         context = self.get_cert_context(name)
         context[
             "id1"
-        ] = "6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13"  # NOQA: E501
+        ] = "6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13"
         context[
             "id2"
-        ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"  # NOQA: E501
+        ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"
         sct = """* Precertificate Signed Certificate Timestamps{precertificate_signed_certificate_timestamps_critical}:
   * Precertificate ({precertificate_signed_certificate_timestamps_serialized[0][version]}):
       Timestamp: {precertificate_signed_certificate_timestamps_serialized[0][timestamp]}

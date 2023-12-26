@@ -20,6 +20,7 @@ from pydantic import BaseModel, RootModel
 from pydantic.root_model import RootModelRootType
 
 CryptographyModelTypeVar = typing.TypeVar("CryptographyModelTypeVar")
+DATETIME_EXAMPLE = "2023-07-30T10:06:35Z"
 
 
 class CryptographyModel(BaseModel, typing.Generic[CryptographyModelTypeVar]):

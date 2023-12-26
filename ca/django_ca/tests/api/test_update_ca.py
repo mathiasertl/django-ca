@@ -89,7 +89,8 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
             "serial": CERT_DATA["root"]["serial"],
             "sign_certificate_policies": {
                 "critical": constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES],
-                "value": [{"policy_identifier": "1.1.1"}],
+                "type": "certificate_policies",
+                "value": [{"policy_identifier": "1.1.1", "policy_qualifiers": None}],
             },
             "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
             "updated": iso_format(TIMESTAMPS["everything_valid"]),
@@ -105,11 +106,11 @@ def test_update(
     # Make sure that we actually also intend to change things
     assert root.terms_of_service != payload["terms_of_service"]
     assert root.website != payload["website"]
+    assert root.sign_certificate_policies is None
 
     response = request(api_client, payload)
     assert response.status_code == HTTPStatus.OK, response.content
-    assert root.sign_certificate_policies is not None
-    assert response.json() == expected_response, response.json()["sign_certificate_policies"]
+    assert response.json() == expected_response
 
     root.refresh_from_db()
     for field, expected in payload.items():
@@ -149,6 +150,32 @@ def test_minimal_update(
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
+def test_clear_sign_certificate_policies(
+    root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
+) -> None:
+    """Test clearing the ``sign_certificate_policies`` flag."""
+    assert root.sign_certificate_policies is None
+    root.sign_certificate_policies = certificate_policies(
+        x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier("1.1.1"), policy_qualifiers=None)
+    )
+    root.save()
+
+    for field in payload:
+        if field == "sign_certificate_policies":
+            expected_response[field] = None
+        else:
+            expected_response[field] = getattr(root, field)
+
+    response = request(api_client, {"sign_certificate_policies": None})
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == expected_response, response.json()
+
+    root.refresh_from_db()
+    assert root.name == "root"
+    assert root.sign_certificate_policies is None
+
+
+@freeze_time(TIMESTAMPS["everything_valid"])
 def test_validation(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -185,9 +212,11 @@ class TestPermissions(APIPermissionTestBase):
     path = path
 
     def request(self, client: Client) -> HttpResponse:
+        """Make a standard request."""
         return request(client, {"ocsp_responder_key_validity": 10})
 
     def test_disabled_ca(self, api_client: Client, root: CertificateAuthority) -> None:
+        """Test that this request works for disabled CAs."""
         super().test_disabled_ca(api_client, root)
 
         # Make sure that fields where not updated in the database

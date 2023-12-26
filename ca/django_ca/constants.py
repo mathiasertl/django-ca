@@ -36,7 +36,7 @@ from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
 if typing.TYPE_CHECKING:
-    from django_ca.typehints import AccessMethods, AllowedHashTypes, KeyUsages, OtherNames
+    from django_ca.typehints import AccessMethods, AllowedHashTypes, HashAlgorithms, KeyUsages, OtherNames
 
 ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = MappingProxyType(
     {
@@ -300,7 +300,7 @@ GENERAL_NAME_NAMES: "MappingProxyType[Type[x509.GeneralName], str]" = MappingPro
 
 # Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
 # ``--algorithm`` command line parameter.
-HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingProxyType(
+HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], HashAlgorithms]" = MappingProxyType(
     {
         hashes.SHA224: "SHA-224",
         hashes.SHA256: "SHA-256",
@@ -322,7 +322,7 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], str]" = MappingP
 )
 
 #: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
-HASH_ALGORITHM_TYPES: "MappingProxyType[str, Type[AllowedHashTypes]]" = MappingProxyType(
+HASH_ALGORITHM_TYPES: "MappingProxyType[HashAlgorithms, Type[AllowedHashTypes]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
 )
 

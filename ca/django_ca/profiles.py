@@ -34,6 +34,7 @@ from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
     ExtensionMapping,
+    HashAlgorithms,
     ParsableExtension,
     SerializedExtension,
     SerializedProfile,
@@ -78,7 +79,7 @@ class Profile:
         self,
         name: str,
         subject: Optional[Union[typing.Literal[False], x509.Name]] = None,
-        algorithm: Optional[str] = None,
+        algorithm: Optional[HashAlgorithms] = None,
         extensions: Optional[
             Dict[str, Optional[Union[ParsableExtension, x509.Extension[x509.ExtensionType]]]]
         ] = None,

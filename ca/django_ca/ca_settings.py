@@ -33,7 +33,7 @@ from django.utils.translation import gettext_lazy as _
 from django_ca import constants
 
 if typing.TYPE_CHECKING:
-    from django_ca.typehints import AllowedHashTypes
+    from django_ca.typehints import AllowedHashTypes, HashAlgorithms
 
 
 def _check_name(name: x509.Name, hint: str) -> None:
@@ -105,8 +105,8 @@ def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
     raise ImproperlyConfigured(f"{value}: Must be a x509.ObjectIdentifier or str.")
 
 
-def _get_hash_algorithm(setting: str, default: str) -> "AllowedHashTypes":
-    raw_value = getattr(settings, setting, default)
+def _get_hash_algorithm(setting: str, default: "HashAlgorithms") -> "AllowedHashTypes":
+    raw_value: "HashAlgorithms" = getattr(settings, setting, default)
     try:
         return constants.HASH_ALGORITHM_TYPES[raw_value]()
     except KeyError as ex2:

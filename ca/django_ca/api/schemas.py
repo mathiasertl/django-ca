@@ -14,25 +14,18 @@
 """Pydantic Schemas for the API."""
 
 import abc
-from datetime import datetime, timezone as tz
-from typing import List, Optional
+from datetime import datetime
+from typing import Optional
 
-from ninja import ModelSchema, Schema
-from pydantic import Field, field_serializer
+from ninja import Field, ModelSchema, Schema
+from pydantic import field_serializer
 
-from cryptography import x509
-
-from django_ca import ca_settings, constants
-from django_ca.api.extension_schemas import (
-    DATETIME_EXAMPLE,
-    CertificatePoliciesSchema,
-    ExtensionsSchema,
-    NameAttributeSchema,
-)
+from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
-from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder, X509CertMixin
-from django_ca.typehints import SerializedExtension
+from django_ca.pydantic.base import DATETIME_EXAMPLE
+from django_ca.pydantic.extensions import CertificatePoliciesModel
+from django_ca.pydantic.name import NameModel
 
 
 class X509BaseSchema(ModelSchema, abc.ABC):
@@ -51,13 +44,14 @@ class X509BaseSchema(ModelSchema, abc.ABC):
     )
     pem: str = Field(
         description="The public key formatted as PEM.",
+        alias="pub.pem",
         json_schema_extra={"example": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n"},
     )
     serial: str = Field(
         description="Serial (in hex) of the certificate.", json_schema_extra={"example": "ABC...0123"}
     )
-    subject: List[NameAttributeSchema] = Field(description="The subject as list of name attributes.")
-    issuer: List[NameAttributeSchema] = Field(description="The issuer as list of name attributes.")
+    subject: NameModel = Field(description="The subject as list of name attributes.")
+    issuer: NameModel = Field(description="The issuer as list of name attributes.")
     revoked: bool = Field(description="If the certificate was revoked.", json_schema_extra={"example": False})
     updated: datetime = Field(
         description="When the certificate was last updated.", json_schema_extra={"example": DATETIME_EXAMPLE}
@@ -72,21 +66,6 @@ class X509BaseSchema(ModelSchema, abc.ABC):
         """Strip microseconds from the attribute."""
         return created.replace(microsecond=0)
 
-    @staticmethod
-    def resolve_pem(obj: X509CertMixin) -> str:
-        """Convert the public certificate to its PEM format."""
-        return obj.pub.pem
-
-    @staticmethod
-    def resolve_subject(obj: X509CertMixin) -> List[NameAttributeSchema]:
-        """Convert the subject to its RFC 4514 representation."""
-        return [NameAttributeSchema(oid=attr.oid.dotted_string, value=attr.value) for attr in obj.subject]
-
-    @staticmethod
-    def resolve_issuer(obj: X509CertMixin) -> List[NameAttributeSchema]:
-        """Convert the issuer to its serialized representation."""
-        return [NameAttributeSchema(oid=attr.oid.dotted_string, value=attr.value) for attr in obj.issuer]
-
     @field_serializer("updated")
     def serialize_updated(self, updated: datetime) -> datetime:
         """Strip microseconds from the attribute."""
@@ -100,7 +79,12 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
     """
 
     name: str = Field(description="The human-readable name of the certificate authority.")
-    sign_certificate_policies: Optional[CertificatePoliciesSchema] = Field(default=None)
+    sign_certificate_policies: Optional[CertificatePoliciesModel] = Field(
+        default=None,
+        json_schema_extra={
+            "description": "The CertificatePolicies extension added to newly signed certificates."
+        },
+    )
 
     class Meta:  # pylint: disable=missing-class-docstring
         model = CertificateAuthority
@@ -122,20 +106,6 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
             "acme_requires_contact",
         ]
 
-    #
-    # @staticmethod
-    # def resolve_sign_certificate_policies(obj: CertificateAuthority) -> Optional[SerializedExtension]:
-    #     """Convert cryptography extensions to JSON serializable objects."""
-    #     if obj.sign_certificate_policies is None:
-    #         return None
-    #     return serialize_extension(obj.sign_certificate_policies)
-    # @field_serializer("sign_certificate_policies")
-    # def serialize_sign_certificate_policies(
-    #     self, sign_certificate_policies: x509.Extension[x509.CertificatePolicies]
-    # ) -> str:
-    #     """Strip microseconds from the attribute."""
-    #     return ["list"]
-
 
 class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema):
     """Schema for serializing a certificate authority."""
@@ -150,7 +120,7 @@ class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema)
 
     @staticmethod
     def resolve_can_sign_certificates(obj: CertificateAuthority) -> bool:
-        """Strip microseconds from the attribute."""
+        """Resolve the can_sign_certificates flag."""
         return obj.key_exists
 
 
@@ -218,41 +188,6 @@ class CertificateFilterSchema(Schema):
         json_schema_extra={"enum": list(sorted(ca_settings.CA_PROFILES))},
     )
     revoked: bool = Field(default=False, description="Include revoked certificates.")
-
-
-class SignCertificateSchema(Schema):
-    """Schema for signing certificates."""
-
-    algorithm: Optional[str] = Field(
-        default=None,
-        description="Hash algorithm used for signing (default: same as in the certificate authority).",
-        json_schema_extra={"enum": list(sorted(constants.HASH_ALGORITHM_TYPES))},
-    )
-    autogenerated: bool = Field(
-        default=False, description="If the certificate should be marked as auto-generated."
-    )
-    csr: str = Field(
-        title="CSR",
-        description="The certificate signing request (CSR) in PEM format",
-        json_schema_extra={
-            "example": "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----\n"
-        },
-    )
-    expires: Optional[datetime] = Field(
-        description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
-        default_factory=lambda: datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES,
-        json_schema_extra={"example": DATETIME_EXAMPLE},
-    )
-    extensions: ExtensionsSchema = Field(
-        default_factory=lambda: ExtensionsSchema(),
-        description="**Optional** additional extensions to add to the certificate.",
-    )
-    profile: str = Field(
-        description="Issue the certificate with the given profile.",
-        default=ca_settings.CA_DEFAULT_PROFILE,
-        json_schema_extra={"enum": list(sorted(ca_settings.CA_PROFILES))},
-    )
-    subject: List[NameAttributeSchema] = Field(description="The subject as list of name attributes.")
 
 
 class RevokeCertificateSchema(Schema):

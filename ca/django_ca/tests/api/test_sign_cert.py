@@ -22,7 +22,7 @@ from typing import Any, Dict, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.contrib.auth.models import AbstractUser
 from django.db.models import Model
@@ -99,7 +99,7 @@ def sign_certificate(
     # Issue a signing request
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         response = request(client, data)
-        assert response.status_code == HTTPStatus.OK, response.content
+        assert response.status_code == HTTPStatus.OK, response.content.decode()
 
         # Get order before on_commit callbacks are called to test pending state
         order: CertificateOrder = CertificateOrder.objects.get(certificate_authority=ca)
@@ -247,14 +247,22 @@ def test_sign_certificate_with_extensions(
         ca=usable_root,
         data={
             "subject": default_subject,
-            "extensions": {
-                "authority_information_access": {
-                    "value": {
-                        "issuers": ["http://api.issuer.example.com"],
-                        "ocsp": ["http://api.ocsp.example.com"],
-                    },
+            "extensions": [
+                {
+                    "type": "authority_information_access",
+                    "value": [
+                        {
+                            "access_method": "ca_issuers",
+                            "access_location": {"type": "URI", "value": "http://api.issuer.example.com"},
+                        },
+                        {
+                            "access_method": "ocsp",
+                            "access_location": {"type": "URI", "value": "http://api.ocsp.example.com"},
+                        },
+                    ],
                 },
-                "certificate_policies": {
+                {
+                    "type": "certificate_policies",
                     "value": [
                         {"policy_identifier": "1.1.1"},
                         {
@@ -270,35 +278,42 @@ def test_sign_certificate_with_extensions(
                                 },
                             ],
                         },
-                    ]
+                    ],
                 },
-                "crl_distribution_points": {
+                {
+                    "type": "crl_distribution_points",
                     "value": [
-                        {"full_name": ["http://api.crl1.example.com"]},
+                        {"full_name": [{"type": "URI", "value": "http://api.crl1.example.com"}]},
                         {
-                            "full_name": ["http://api.crl2.example.com"],
-                            "crl_issuer": ["http://api.crl2.example.com"],
-                            "reasons": ["keyCompromise"],
+                            "full_name": [{"type": "URI", "value": "http://api.crl2.example.com"}],
+                            "crl_issuer": [{"type": "URI", "value": "http://api.crl2.example.com"}],
+                            "reasons": ["key_compromise"],
                         },
                         {
                             "relative_name": [
                                 {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
                             ]
                         },
-                    ]
+                    ],
                 },
-                "extended_key_usage": {"value": ["serverAuth", "1.2.3"]},
-                "freshest_crl": {"value": [{"full_name": ["http://api.freshest-crl.example.com"]}]},
-                "key_usage": {"value": ["keyEncipherment"]},
-                "ocsp_no_check": {},
-                "subject_alternative_name": {
+                {"type": "extended_key_usage", "value": ["serverAuth", "1.2.3"]},
+                {
+                    "type": "freshest_crl",
+                    "value": [
+                        {"full_name": [{"type": "URI", "value": "http://api.freshest-crl.example.com"}]}
+                    ],
+                },
+                {"type": "key_usage", "value": ["key_encipherment"]},
+                {"type": "ocsp_no_check"},
+                {
+                    "type": "subject_alternative_name",
                     "critical": not constants.EXTENSION_DEFAULT_CRITICAL[
                         ExtensionOID.SUBJECT_ALTERNATIVE_NAME
                     ],
-                    "value": ["DNS:example.com", "IP:127.0.0.1"],
+                    "value": [{"type": "DNS", "value": "example.com"}, {"type": "IP", "value": "127.0.0.1"}],
                 },
-                "tls_feature": {"value": ["OCSPMustStaple"]},
-            },
+                {"type": "tls_feature", "value": ["OCSPMustStaple"]},
+            ],
         },
         expected_response=expected_response,
     )
@@ -307,8 +322,21 @@ def test_sign_certificate_with_extensions(
     exts = cert.x509_extensions
 
     # Test Authority Information Access extension
-    assert exts[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == authority_information_access(
-        ca_issuers=[uri("http://api.issuer.example.com")], ocsp=[uri("http://api.ocsp.example.com")]
+    assert exts[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == x509.Extension(
+        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+        critical=False,
+        value=x509.AuthorityInformationAccess(
+            [
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                    access_location=uri("http://api.issuer.example.com"),
+                ),
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.OCSP,
+                    access_location=uri("http://api.ocsp.example.com"),
+                ),
+            ]
+        ),
     )
 
     # Test Certificate Policies extension
@@ -339,7 +367,7 @@ def test_sign_certificate_with_extensions(
 
     # Test Extended Key Usage extension
     assert exts[ExtensionOID.EXTENDED_KEY_USAGE] == extended_key_usage(
-        x509.ObjectIdentifier("1.2.3"), ExtendedKeyUsageOID.SERVER_AUTH
+        ExtendedKeyUsageOID.SERVER_AUTH, x509.ObjectIdentifier("1.2.3")
     )
 
     # Test Freshest CRL extension
@@ -378,14 +406,15 @@ def test_sign_certificate_with_subject_alternative_name(
         ca=usable_root,
         data={
             "subject": default_subject,
-            "extensions": {
-                "subject_alternative_name": {
+            "extensions": [
+                {
+                    "type": "subject_alternative_name",
                     "critical": not constants.EXTENSION_DEFAULT_CRITICAL[
                         ExtensionOID.SUBJECT_ALTERNATIVE_NAME
                     ],
-                    "value": ["DNS:example.com", "IP:127.0.0.1"],
+                    "value": [{"type": "DNS", "value": "example.com"}, {"type": "IP", "value": "127.0.0.1"}],
                 },
-            },
+            ],
         },
         expected_response=expected_response,
     )
@@ -408,27 +437,28 @@ def test_crldp_with_full_name_and_relative_name(api_client: Client) -> None:
         {
             "csr": CERT_DATA["root-cert"]["csr"]["pem"],
             "subject": default_subject,
-            "extensions": {
-                "crl_distribution_points": {
+            "extensions": [
+                {
+                    "type": "crl_distribution_points",
                     "value": [
                         {
-                            "full_name": ["http://api.crl1.example.com"],
+                            "full_name": [{"type": "URI", "value": "http://api.crl1.example.com"}],
                             "relative_name": [
                                 {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
                             ],
                         },
-                    ]
+                    ],
                 },
-            },
+            ],
         },
     )
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
     assert response.json() == {
         "detail": [
             {
-                "ctx": {"error": "Distribution point must contain either full_name OR relative_name."},
-                "loc": ["body", "data", "extensions", "crl_distribution_points", "value", 0],
-                "msg": "Value error, Distribution point must contain either full_name OR relative_name.",
+                "ctx": {"error": "must give exactly one of full_name or relative_name."},
+                "loc": ["body", "data", "extensions", 0, "crl_distribution_points", "value", 0],
+                "msg": "Value error, must give exactly one of full_name or relative_name.",
                 "type": "value_error",
             }
         ]
@@ -444,23 +474,44 @@ def test_crldp_with_no_full_name_or_relative_name(api_client: Client) -> None:
         {
             "csr": CERT_DATA["root-cert"]["csr"]["pem"],
             "subject": default_subject,
-            "extensions": {
-                "crl_distribution_points": {
-                    "value": [
-                        {},
-                    ]
-                },
-            },
+            "extensions": [{"type": "crl_distribution_points", "value": [{}]}],
         },
     )
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
     assert response.json() == {
         "detail": [
             {
-                "ctx": {"error": "Distribution point must contain one of full_name OR relative_name."},
-                "loc": ["body", "data", "extensions", "crl_distribution_points", "value", 0],
-                "msg": "Value error, Distribution point must contain one of full_name OR relative_name.",
                 "type": "value_error",
+                "loc": ["body", "data", "extensions", 0, "crl_distribution_points", "value", 0],
+                "msg": "Value error, either full_name, relative_name or crl_issuer must be provided.",
+                "ctx": {"error": "either full_name, relative_name or crl_issuer must be provided."},
+            }
+        ]
+    }
+
+
+@pytest.mark.usefixtures("tmpcadir")
+@freeze_time(TIMESTAMPS["everything_valid"])
+def test_with_invalid_algorithm(api_client: Client) -> None:
+    """Test sending an invalid key usage."""
+    response = request(
+        api_client,
+        {
+            "csr": CERT_DATA["root-cert"]["csr"]["pem"],
+            "subject": default_subject,
+            "algorithm": "foo",
+        },
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
+
+    literal = "'SHA-224', 'SHA-256', 'SHA-384', 'SHA-512', 'SHA3/224', 'SHA3/256', 'SHA3/384' or 'SHA3/512'"
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "literal_error",
+                "loc": ["body", "data", "algorithm"],
+                "msg": f"Input should be {literal}",
+                "ctx": {"expected": literal},
             }
         ]
     }
@@ -475,17 +526,22 @@ def test_with_invalid_key_usage(api_client: Client) -> None:
         {
             "csr": CERT_DATA["root-cert"]["csr"]["pem"],
             "subject": default_subject,
-            "extensions": {"key_usage": {"value": ["unknown"]}},
+            "extensions": [{"type": "key_usage", "value": ["unknown"]}],
         },
     )
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
+
+    literal = (
+        "'crl_sign', 'data_encipherment', 'decipher_only', 'digital_signature', 'encipher_only', "
+        "'key_agreement', 'key_cert_sign', 'key_encipherment' or 'content_commitment'"
+    )
     assert response.json() == {
         "detail": [
             {
-                "ctx": {"error": "unknown: Invalid key usage."},
-                "loc": ["body", "data", "extensions", "key_usage", "value"],
-                "msg": "Value error, unknown: Invalid key usage.",
-                "type": "value_error",
+                "type": "literal_error",
+                "loc": ["body", "data", "extensions", 0, "key_usage", "value", 0],
+                "msg": f"Input should be {literal}",
+                "ctx": {"expected": literal},
             }
         ]
     }
@@ -506,4 +562,5 @@ class TestPermissions(APIPermissionTestBase):
     path = path
 
     def request(self, client: Client) -> HttpResponse:
+        """Standard request for testing permissions."""
         return request(client, {"csr": CERT_DATA["root-cert"]["csr"]["pem"], "subject": default_subject})

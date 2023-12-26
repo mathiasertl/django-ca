@@ -34,10 +34,10 @@ from django_ca.api.schemas import (
     CertificateOrderSchema,
     CertificateSchema,
     RevokeCertificateSchema,
-    SignCertificateSchema,
 )
 from django_ca.api.utils import get_certificate_authority
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
+from django_ca.pydantic.messages import SignCertificateMessage
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tasks import run_task, sign_certificate as sign_certificate_task
 
@@ -58,7 +58,8 @@ def forbidden(request: WSGIRequest, exc: Exception) -> HttpResponse:  # pylint: 
     tags=["Certificate authorities"],
 )
 def list_certificate_authorities(
-    request: WSGIRequest, filters: CertificateAuthorityFilterSchema = Query(...)
+    request: WSGIRequest,
+    filters: CertificateAuthorityFilterSchema = Query(...),  # type: ignore[type-arg]
 ) -> CertificateAuthorityQuerySet:
     """Retrieve a list of currently usable certificate authorities."""
     qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
@@ -94,13 +95,22 @@ def update_certificate_authority(
     All request body fields are optional, so you can also update only individual fields.
     """
     ca = get_certificate_authority(serial, expired=True)
-    for attr, value in data.model_dump(exclude_unset=True).items():
+
+    # sign_certificate_policies is a django_ca.pydantic.extensions.ExtensionModel, so we can generate the
+    # cryptography instance directly
+    if "sign_certificate_policies" in data.model_fields_set:
+        if data.sign_certificate_policies is None:
+            ca.sign_certificate_policies = None
+        else:
+            ca.sign_certificate_policies = data.sign_certificate_policies.cryptography
+
+    for attr, value in data.model_dump(exclude_unset=True, exclude={"sign_certificate_policies"}).items():
         setattr(ca, attr, value)
 
     try:
         ca.full_clean()
     except ValidationError as ex:
-        raise HttpError(HTTPStatus.BAD_REQUEST, ex.message_dict) from ex  # type: ignore[arg-type]
+        raise HttpError(HTTPStatus.BAD_REQUEST, str(ex)) from ex
 
     ca.save()
     return ca
@@ -113,7 +123,7 @@ def update_certificate_authority(
     summary="Sign a certificate",
     tags=["Certificates"],
 )
-def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSchema) -> CertificateOrder:
+def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateMessage) -> CertificateOrder:
     """Sign a certificate.
 
     The `extensions` value is optional and allows you to add additional extensions to the certificate. Usually
@@ -121,9 +131,10 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateSch
     """
     ca = get_certificate_authority(serial)
 
-    # TYEPHINT NOTE: django-ninja sets the user as `request.auth`, and mypy does not know about it
+    # TYPEHINT NOTE: django-ninja sets the user as `request.auth` and mypy does not know about it
     order = CertificateOrder.objects.create(
-        certificate_authority=ca, user=request.auth  # type: ignore[attr-defined]
+        certificate_authority=ca,
+        user=request.auth,  # type: ignore[attr-defined]
     )
 
     parameters = data.model_dump(mode="json", exclude_unset=True)
@@ -157,7 +168,9 @@ def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> Certi
     tags=["Certificates"],
 )
 def list_certificates(
-    request: WSGIRequest, serial: str, filters: CertificateFilterSchema = Query(...)
+    request: WSGIRequest,
+    serial: str,
+    filters: CertificateFilterSchema = Query(...),  # type: ignore[type-arg]
 ) -> CertificateQuerySet:
     """Retrieve certificates signed by the certificate authority named by `serial`."""
     ca = get_certificate_authority(serial, expired=True)  # You can list certificates of expired CAs

@@ -82,7 +82,7 @@ SerializedExtension = typing.TypedDict(
     "SerializedExtension",
     {
         "critical": bool,
-        # Value should be a generic typevar, but this is not yet supported in mypy:
+        # Value should be a generic TypeVar, but this is not yet supported in mypy:
         #   https://github.com/python/mypy/issues/3863
         "value": Any,
     },
@@ -144,7 +144,7 @@ ParsableExtension = typing.TypedDict(
     "ParsableExtension",
     {
         "critical": bool,
-        # Value should be a generic typevar, but this is not yet supported in mypy:
+        # Value should be a generic TypeVar, but this is not yet supported in mypy:
         #   https://github.com/python/mypy/issues/3863
         "value": Any,
     },
@@ -169,6 +169,16 @@ SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical
 ############
 # Literals #
 ############
+
+GeneralNames = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName"]
+
+#: Valid hash algorithm names.
+#:
+#: These names are used in various settings, with the ``--algorithm`` command line parameter and in the API.
+HashAlgorithms = Literal[
+    "SHA-224", "SHA-256", "SHA-384", "SHA-512", "SHA3/224", "SHA3/256", "SHA3/384", "SHA3/512"
+]
+
 SubjectFormats = Literal["openssl", "rfc4514"]  # pragma: only django-ca<=2.2  # will be removed in 2.2
 
 #: Serialized values of :py:class:`~cg:cryptography.x509.certificate_transparency.LogEntryType` instances.
@@ -266,6 +276,19 @@ SignedCertificateTimestampTypeVar = typing.TypeVar(
     "SignedCertificateTimestampTypeVar",
     x509.PrecertificateSignedCertificateTimestamps,
     x509.SignedCertificateTimestamps,
+)
+
+##############################
+# Serialized Pydantic models #
+##############################
+
+SerializedPydanticNameAttribute = typing.TypedDict(
+    "SerializedPydanticNameAttribute", {"oid": str, "value": str}
+)
+SerializedPydanticName = List[SerializedPydanticNameAttribute]
+
+SerializedPydanticExtension = typing.TypedDict(
+    "SerializedPydanticExtension", {"type": str, "critical": bool, "value": Any}
 )
 
 
