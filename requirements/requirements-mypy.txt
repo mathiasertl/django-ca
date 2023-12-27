@@ -1,15 +1,15 @@
 -r requirements-dev-common.txt
 -r requirements-test.txt
-mypy==1.7.1
-django-stubs==4.2.6
+mypy==1.8.0
+django-stubs==4.2.7
 types-docutils==0.20.0.3
 types-freezegun==1.1.10
 types-jinja2==2.11.9
 types-mysqlclient==2.2.0.1
-types-psycopg2==2.9.21.17
+types-psycopg2==2.9.21.20
 types-pyOpenSSL==23.3.0.0
 types-pyRFC3339==1.1.1.5
 types-redis==4.6.0.11
 types-requests==2.31.0.10
-types-setuptools==68.2.0.2
+types-setuptools==69.0.0.0
 types-tabulate==0.9.0.3

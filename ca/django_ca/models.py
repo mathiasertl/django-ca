@@ -106,6 +106,9 @@ from django_ca.utils import (
     validate_public_key_parameters,
 )
 
+if typing.TYPE_CHECKING:
+    from django_stubs_ext.db.models import manager
+
 log = logging.getLogger(__name__)
 
 
@@ -187,7 +190,7 @@ class Watcher(models.Model):
     if typing.TYPE_CHECKING:
         # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
         # See also: https://github.com/typeddjango/django-stubs/issues/1354
-        certificates: "models.manager.RelatedManager[Certificate]"
+        certificates: "manager.RelatedManager[Certificate]"
 
     def __str__(self) -> str:
         if self.name:
@@ -503,7 +506,7 @@ class CertificateAuthority(X509CertMixin):
         # See also: https://github.com/typeddjango/django-stubs/issues/1354
         children: "CertificateAuthorityManager"
         certificate_set: "CertificateManager"
-        acmeaccount_set: "models.manager.RelatedManager[AcmeAccount]"
+        acmeaccount_set: "manager.RelatedManager[AcmeAccount]"
 
     name = models.CharField(max_length=128, help_text=_("A human-readable name"), unique=True)
     """Human-readable name of the CA, only used for displaying the CA."""
@@ -1579,7 +1582,7 @@ class AcmeOrder(DjangoCAModel):
     if typing.TYPE_CHECKING:
         # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
         # See also: https://github.com/typeddjango/django-stubs/issues/1354
-        authorizations: "models.manager.RelatedManager[AcmeAuthorization]"
+        authorizations: "manager.RelatedManager[AcmeAuthorization]"
 
     account = models.ForeignKey(AcmeAccount, on_delete=models.CASCADE, related_name="orders")
     slug = models.SlugField(unique=True, default=acme_slug)
