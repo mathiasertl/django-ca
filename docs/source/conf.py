@@ -460,23 +460,31 @@ jinja_filters = {
 }
 
 qualname_overrides = {
-    "KeyUsages": "django_ca.typehints.KeyUsages",
-    "OtherNames": "django_ca.typehints.OtherNames",
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
-    "x509.GeneralName": "cg:cryptography.x509.GeneralName",
+    # x509.GeneralName fixes a build error with the typehints in constants.GENERAL_NAME_TYPES. The error seems
+    # to disappear once the typehint is unquoted, which is possible with Python 3.9. It's likely that this
+    # override can be removed once support for Python 3.8 is dropped.
+    "x509.GeneralName": "cg:cryptography.x509.GeneralName",  # pragma: only py<3.9
+    # Django documents HttpRequest and HttpResponse under re-exported path names:
+    "django.http.request.HttpRequest": "django:django.http.HttpRequest",
+    "django.http.response.HttpResponse": "django:django.http.HttpResponse",
 }
 
 # Ignore (not so important) classes where the documented name does not match the documented name.
 nitpick_ignore = [
-    # Django documents these under non-canonical path names
-    ("py:class", "django.http.request.HttpRequest"),
-    ("py:class", "django.http.response.HttpResponse"),
-    ("py:class", "django_ca.typehints.OtherNames"),
-    ("py:class", "django_ca.typehints.ExtensionTypeTypeVar"),
-    ("py:class", "django_ca.typehints.KeyUsages"),
+    # When literals are used in typehints, Sphinx does not find the reference to the literal and errors with:
+    #
+    #   docstring of django_ca.constants....:1:py:class reference target not found: <name-of-literal>
+    #
+    # Note that the above message does *not* contain the full class path, just the variable name and also
+    # claims a type of "class", when "attr" would be correct. The full path can be "fixed" with
+    # `qualname_overrides` above, but that does not fix the error. Setting "reftype" to "attr" in
+    # `resolve_canonical_names()` below also works, but you still get the same error.
+    ("py:class", "OtherNames"),
+    ("py:class", "KeyUsages"),
     # asn1crypto is really used only for OtherNames, so we do not link it
     ("py:class", "asn1crypto.core.Primitive"),
     # Pydantic root model signature does not currently work
@@ -489,8 +497,6 @@ nitpick_ignore = [
 def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
     """Resolve canonical names of types to names that resolve in intersphinx inventories.
 
-    .. NOTE:: This function can be removed if this is merged: https://github.com/pyca/cryptography/pull/7938
-
     Projects often document functions/classes under a name that is re-exported. For example, cryptography
     documents "Certificate" under ``cryptography.x509.Certificate``, but it's actually implemented in
     ``cryptography.x509.base.Certificate`` (and re-exported in x509.py).
@@ -502,7 +508,7 @@ def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
     .. seealso::
 
         * https://github.com/sphinx-doc/sphinx/issues/4826 - solves this with the "canonical" directive
-        * https://github.com/pyca/cryptography/pull/7938 - would make this function obsolete
+        * https://github.com/pyca/cryptography/pull/7938 - where this was fixed for cryptography
         * https://www.sphinx-doc.org/en/master/extdev/appapi.html#events - sphinx api docs
         * https://stackoverflow.com/a/62301461 - source of this hack
 
@@ -512,6 +518,10 @@ def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
         alias = node.get("reftarget", None)
 
         if alias is not None and alias in qualname_overrides:
+            # This does set the type to attr in the error message, but does not fix the build error with
+            # typehints described in nitpick_ignore either:
+            # if alias == "KeyUsages":
+            #     node["reftype"] = "attr"
             node["reftarget"] = qualname_overrides[alias]
 
 

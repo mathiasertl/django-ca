@@ -1,14 +1,11 @@
 -r requirements-dev-common.txt
-# doc8==1.0.0 and later requires docutils>19, but sphinx-rtd-theme==1.3.0
-# requires docutils<19, changes in doc8 are minimal:
-#   https://github.com/readthedocs/sphinx_rtd_theme/issues/1323
-doc8==0.11.2
+doc8==1.1.1
 numpydoc==1.6.0
 # django-ninja==0.22.2 requires pydantic<2, but rstcheck requires pydantic>=2
 # Enable once django-ninja~=1.0 is out
 #rstcheck==6.2.0
 sphinx-inline-tabs==2023.4.21
 sphinx-jinja==2.0.2
-sphinx_rtd_theme==1.3.0
+sphinx-rtd-theme==2.0.0
 sphinxcontrib-openapi==0.8.3
 sphinxcontrib-spelling==8.0.0
