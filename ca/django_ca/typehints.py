@@ -324,7 +324,6 @@ SerializedAuthorityKeyIdentifier = typing.TypedDict(
 )
 
 
-# pylint: disable-next=inherit-non-class  # false positive
 class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
@@ -412,7 +411,6 @@ ParsableAuthorityInformationAccess = typing.TypedDict(
 )
 
 
-# pylint: disable-next=inherit-non-class  # false positive
 class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
