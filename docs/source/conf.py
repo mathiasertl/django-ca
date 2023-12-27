@@ -460,62 +460,20 @@ jinja_filters = {
 }
 
 qualname_overrides = {
-    "AllowedHashTypes": "django_ca.typehints.AllowedHashTypes",
     "KeyUsages": "django_ca.typehints.KeyUsages",
     "OtherNames": "django_ca.typehints.OtherNames",
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
-    "ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
-    "cryptography.hazmat._oid.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
-    "cryptography.hazmat._oid.ExtendedKeyUsageOID": "cg:cryptography.x509.oid.ExtendedKeyUsageOID",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
-    "cryptography.hazmat.primitives.serialization.base.Encoding": "cg:cryptography.hazmat.primitives.serialization.Encoding",  # NOQA: E501 # black does not allow a newline here
-    "cryptography.hazmat.primitives._serialization.Encoding": "cg:cryptography.hazmat.primitives.serialization.Encoding",  # NOQA: E501 # black does not allow a newline here
-    "cryptography.x509.base.Certificate": "cg:cryptography.x509.Certificate",
-    "cryptography.x509.base.CertificateBuilder": "cg:cryptography.x509.CertificateBuilder",
-    "cryptography.x509.base.CertificateRevocationList": "cg:cryptography.x509.CertificateRevocationList",
-    "cryptography.x509.base.CertificateSigningRequest": "cg:cryptography.x509.CertificateSigningRequest",
-    "cryptography.x509.base.RevokedCertificate": "cg:cryptography.x509.RevokedCertificate",
-    "cryptography.x509.extensions.AuthorityInformationAccess": "cg:cryptography.x509.AuthorityInformationAccess",  # NOQA: E501 # black does not allow a newline here
-    "cryptography.x509.extensions.AuthorityKeyIdentifier": "cg:cryptography.x509.AuthorityKeyIdentifier",
-    "cryptography.x509.extensions.BasicConstraints": "cg:cryptography.x509.BasicConstraints",
-    "cryptography.x509.extensions.CRLDistributionPoints": "cg:cryptography.x509.CRLDistributionPoints",
-    "cryptography.x509.extensions.CertificatePolicies": "cg:cryptography.x509.CertificatePolicies",
-    "cryptography.x509.extensions.DistributionPoint": "cg:cryptography.x509.DistributionPoint",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
-    "cryptography.x509.extensions.Extension": "cg:cryptography.x509.Extension",
-    "cryptography.x509.extensions.ExtensionType": "cg:cryptography.x509.ExtensionType",
-    "cryptography.x509.extensions.FreshestCRL": "cg:cryptography.x509.FreshestCRL",
-    "cryptography.x509.extensions.InhibitAnyPolicy": "cg:cryptography.x509.InhibitAnyPolicy",
-    "cryptography.x509.extensions.IssuerAlternativeName": "cg:cryptography.x509.IssuerAlternativeName",
-    "cryptography.x509.extensions.KeyUsage": "cg:cryptography.x509.KeyUsage",
-    "cryptography.x509.extensions.NameConstraints": "cg:cryptography.x509.NameConstraints",
-    "cryptography.x509.extensions.OCSPNoCheck": "cg:cryptography.x509.OCSPNoCheck",
-    "cryptography.x509.extensions.PolicyConstraints": "cg:cryptography.x509.PolicyConstraints",
-    "cryptography.x509.extensions.PolicyInformation": "cg:cryptography.x509.PolicyInformation",
-    "cryptography.x509.extensions.PrecertPoison": "cg:cryptography.x509.PrecertPoison",
-    "cryptography.x509.extensions.PrecertificateSignedCertificateTimestamps": "cg:cryptography.x509.PrecertificateSignedCertificateTimestamps",  # NOQA: E501 # black does not allow a newline here
-    "cryptography.x509.extensions.ReasonFlags": "cg:cryptography.x509.ReasonFlags",
-    "cryptography.x509.extensions.SubjectAlternativeName": "cg:cryptography.x509.SubjectAlternativeName",
-    "cryptography.x509.extensions.SubjectKeyIdentifier": "cg:cryptography.x509.SubjectKeyIdentifier",
-    "cryptography.x509.extensions.TLSFeature": "cg:cryptography.x509.TLSFeature",
-    "cryptography.x509.extensions.TLSFeatureType": "cg:cryptography.x509.TLSFeatureType",
-    "cryptography.x509.extensions.UserNotice": "cg:cryptography.x509.UserNotice",
-    "cryptography.x509.extensions.NoticeReference": "cg:cryptography.x509.NoticeReference",
-    "cryptography.x509.general_name.GeneralName": "cg:cryptography.x509.GeneralName",
-    "cryptography.x509.name.Name": "cg:cryptography.x509.Name",
-    "cryptography.x509.name.NameAttribute": "cg:cryptography.x509.NameAttribute",
-    "cryptography.x509.name.RelativeDistinguishedName": "cg:cryptography.x509.RelativeDistinguishedName",
+    "x509.GeneralName": "cg:cryptography.x509.GeneralName",
 }
 
 # Ignore (not so important) classes where the documented name does not match the documented name.
 nitpick_ignore = [
-    # Unclear why Optional throws an error, but can be removed once resolve_internal_aliases can be removed
-    ("py:class", "python:typing.Optional"),
     # Django documents these under non-canonical path names
     ("py:class", "django.http.request.HttpRequest"),
     ("py:class", "django.http.response.HttpResponse"),
-    ("py:class", "django_ca.typehints.AllowedHashTypes"),
     ("py:class", "django_ca.typehints.OtherNames"),
     ("py:class", "django_ca.typehints.ExtensionTypeTypeVar"),
     ("py:class", "django_ca.typehints.KeyUsages"),

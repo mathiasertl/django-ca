@@ -35,8 +35,8 @@ Enable the API
 
 To enable the API, you need to set the :ref:`settings-ca-enable-rest-api` setting to ``True``.
 
-You must also enable API access individually for every certificate authority. The exact invocation depends on
-how you installed **django-ca**:
+You must also enable API access individually for every certificate authority. This can be done via the admin
+interface or via the command line. The exact invocation depends on how you installed **django-ca**:
 
 .. tab:: Django app
 
@@ -185,18 +185,12 @@ the order until the certificate is issued:
 
    .. code-block:: python
 
+      >>> csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+      >>> subject = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}]
       >>> order = requests.post(
       ...     f"{url}{serial}/sign/",
       ...     auth=auth,
-      ...     json={
-      ...         "csr": csr.public_bytes(serialization.Encoding.PEM).decode('utf-8'),
-      ...         "subject": [
-      ...             {
-      ...                 "oid": NameOID.COMMON_NAME.dotted_string,
-      ...                 "value": "example.com"
-      ...             },
-      ...         ]
-      ...     }
+      ...     json={"csr": csr_pem, "subject": subject}
       ... ).json()
       >>> status = order["status"]  # equals "pending"
       >>>

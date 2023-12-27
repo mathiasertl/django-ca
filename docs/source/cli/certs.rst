@@ -150,7 +150,7 @@ Signature hash algorithms
 When using a certificate authority based on an RSA and Elliptic Curve (EC) private key, you can override the
 signature hash algorithm used for signing the certificate with the ``--algorithm`` parameter. By default, the
 hash algorithm that was used to sign the certificate authority will be used. See
-:py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for a list of supported hash algorithms.
+:py:attr:`~django_ca.typehints.HashAlgorithms` for a list of supported hash algorithms.
 
 For example, to sign a certificate using SHA-384:
 

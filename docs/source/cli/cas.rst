@@ -115,9 +115,8 @@ For root certificate authorities, the default is configured via the
 :ref:`settings-ca-default-dsa-signature-hash-algorithm` setting for DSA keys. Intermediate certificate
 authorities will use the same hash algorithm as their parent by default.
 
-The supported signature hash algorithms are the hash algorithms in the
-:py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` constant. For example, to use SHA-384 as signature hash
-algorithm:
+The supported signature hash algorithms are the hash algorithms defined by
+:py:attr:`~django_ca.typehints.HashAlgorithms`. For example, to use SHA-384 as signature hash algorithm:
 
 .. code-block:: console
 

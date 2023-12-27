@@ -26,7 +26,13 @@ from tabulate import tabulate
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import (
+    AuthorityInformationAccessOID,
+    ExtendedKeyUsageOID,
+    ExtensionOID,
+    NameOID,
+    SubjectInformationAccessOID,
+)
 
 
 class MappingDocumentor(DataDocumenter):
@@ -74,6 +80,20 @@ class MappingDocumentor(DataDocumenter):
                 if value == getattr(NameOID, name):
                     return f":py:attr:`NameOID.{name} <cg:cryptography.x509.oid.NameOID.{name}>`"
 
+            for name in dir(AuthorityInformationAccessOID):
+                if value == getattr(AuthorityInformationAccessOID, name):
+                    return (
+                        f":py:attr:`AuthorityInformationAccessOID.{name} "
+                        f"<cg:cryptography.x509.oid.AuthorityInformationAccessOID.{name}>`"
+                    )
+
+            for name in dir(SubjectInformationAccessOID):
+                if value == getattr(SubjectInformationAccessOID, name):
+                    return (
+                        f":py:attr:`SubjectInformationAccessOID.{name} "
+                        f"<cg:cryptography.x509.oid.SubjectInformationAccessOID.{name}>`"
+                    )
+
             for name in dir(ExtendedKeyUsageOID):
                 if value == getattr(ExtendedKeyUsageOID, name):
                     return (
@@ -85,6 +105,12 @@ class MappingDocumentor(DataDocumenter):
                 return f"``{str(value)}``"
 
             return str(value)
+
+        # Unknown types are marked as inline code with the full class path.
+        if isinstance(value, type):
+            return f"``{value.__module__}.{value.__name__}``"
+        if isinstance(value, x509.TLSFeatureType):
+            return f":py:attr:`~cg:cryptography.x509.TLSFeatureType.{value.name}`"
 
         return str(value)
 

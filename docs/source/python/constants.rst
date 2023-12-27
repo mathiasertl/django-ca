@@ -25,9 +25,6 @@
 .. automapping:: django_ca.constants.GENERAL_NAME_TYPES
    :no-value:
 
-.. automapping:: django_ca.constants.HASH_ALGORITHM_NAMES
-   :no-value:
-
 .. automapping:: django_ca.constants.KEY_USAGE_NAMES
    :no-value:
 

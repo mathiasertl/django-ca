@@ -298,8 +298,7 @@ GENERAL_NAME_NAMES: "MappingProxyType[Type[x509.GeneralName], str]" = MappingPro
     {v: k for k, v in GENERAL_NAME_TYPES.items()}
 )
 
-# Map of hash algorithm types in cryptography to standard hash algorithm names. The values can be used for
-# ``--algorithm`` command line parameter.
+#: Map of hash algorithm types in cryptography to standard hash algorithm names.
 HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], HashAlgorithms]" = MappingProxyType(
     {
         hashes.SHA224: "SHA-224",

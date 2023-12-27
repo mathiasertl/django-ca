@@ -248,7 +248,7 @@ Removed in ``django-ca==1.26.0``:
 * The profile used when issuing certificates via ACMEv2 is now configurable by certificate authority. The
   default is the profile named in :ref:`settings-ca-default-profile` instead of the "server" profile.
 * The ``CA_DIGEST_ALGORITHM`` setting is now called :ref:`settings-ca-default-signature-hash-algorithm`.
-  Values must be a hash algorithm listed in :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES`.
+  Values must be a hash algorithm listed in :py:attr:`~django_ca.typehints.HashAlgorithms`.
 * The default hash algorithm for certificate authorities with a DSA private key can now be configured using
   :ref:`settings-ca-default-dsa-signature-hash-algorithm`.
 * The :ref:`settings-ca-crl-profiles` setting allows setting overriding parameters for automatically generated
@@ -269,8 +269,8 @@ supported.
   :command:`manage.py init_ca` and other commands that generate private keys.
 * The ``CA_DEFAULT_ECC_CURVE`` setting was renamed to ``CA_DEFAULT_ELLIPTIC_CURVE``.
 * Hash algorithms are now referred to by their standard name, e.g. "SHA-512" instead of
-  ":spelling:ignore:`sha512`". Please see :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for all
-  supported algorithm names.
+  ":spelling:ignore:`sha512`". Please see :py:attr:`~django_ca.typehints.HashAlgorithms` for all supported
+  algorithm names.
 
 Bugfixes
 ========
@@ -293,7 +293,7 @@ Deprecation notices
 * Support for using ``EdDSA`` as key type will be removed in ``django-ca==1.26.0``. Use ``Ed25519`` instead.
 * Support for non-standard hash algorithm names (e.g. ``sha512`` instead of ``SHA-512`` will be removed in
   ``django-ca==1.25.0``. Use standard hash algorithm names instead (see
-  :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` for supported algorithms).
+  :py:attr:`~django_ca.typehints.HashAlgorithms` for supported algorithms).
 * Support for non-standard elliptic curve names (e.g. ``SECP256R1`` instead of ``secp256r1`` will be removed
   in ``django-ca==1.25.0``. Use standard elliptic curve names instead (see
   :py:attr:`~django_ca.constants.ELLIPTIC_CURVE_TYPES` for supported curves).
