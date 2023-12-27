@@ -57,7 +57,7 @@ For a minimal installation, you can install django-ca via pip:
 
    user@host:~$ pip install django-ca
 
-There are several extras available, the ``celery`` is strongly recommended:
+There are several extras available, the ``celery` and ``redis`` extras are strongly recommended:
 
 .. include:: /include/pip-extras.rst
 
