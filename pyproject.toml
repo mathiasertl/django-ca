@@ -108,7 +108,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-api = ["django-ninja>=1.0"]
+api = ["django-ninja>=1.1"]
 redis = [
     "hiredis>=2.0.0",
     "redis>=4.3",
@@ -118,10 +118,10 @@ mysql = [
     # https://github.com/PyMySQL/mysqlclient/issues/620
     "mysqlclient<2.2"
 ]
-postgres = ["psycopg2>2.8"]
+postgres = ["psycopg[c,pool]"]
+# remove psycopg3 in django-ca==2.0
 psycopg3 = [
     "psycopg[c,pool]",
-    "Django>=4.2",
 ]
 yaml = ["PyYAML>=6.0.0"]
 
