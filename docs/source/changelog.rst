@@ -4,6 +4,26 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.28.0:
+
+************
+1.28.0 (TBR)
+************
+
+REST API changes
+================
+
+.. NOTE:: The :doc:`rest_api` is still experimental and endpoints will change without notice.
+
+The update to django-ninja 1.1 and Pydantic brings a general update on how extensions are represented. Any
+code using the API will have to be updated.
+
+* Update to ``django-ninja==1.1.0``, including a full migration to Pydantic 2.
+* The format of extensions now includes a ``type`` parameter indicating the extension type.
+* Extension objects are now more in line with `RFC 5280`_ and no longer use arbitrary abbreviations.
+* Extensions are now represented as a list.
+* General names are now represented as an object, instead of string that has to be parsed.
+
 .. _changelog-1.27.0:
 
 *******************
