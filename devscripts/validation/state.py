@@ -28,7 +28,7 @@ from termcolor import colored
 
 from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.out import err, ok
+from devscripts.out import err, info, ok
 
 if typing.TYPE_CHECKING:  # pragma: only py<3.10  # remove TYPE_CHECKING check once support for 3.9 is dropped
     # protected by TYPE_CHECKING as ParamSpec is new in Python 3.10.
@@ -138,7 +138,7 @@ def check_tox() -> int:
     # pylint: enable=consider-using-f-string
     # Check disabled as long as different Django versions support different Python versions
     if expected_env_list not in tox_config["tox"]["envlist"].splitlines():
-        errors += err(f"Expected envlist item not found: {expected_env_list}")
+        info(f"(disabled) Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
     for component in ["django", "cryptography", "acme"]:

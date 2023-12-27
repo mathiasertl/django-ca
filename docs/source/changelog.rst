@@ -10,6 +10,8 @@ ChangeLog
 1.28.0 (TBR)
 ************
 
+* Add support for ``Django~=5.0`` and ``acme==2.8.0``.
+
 REST API changes
 ================
 

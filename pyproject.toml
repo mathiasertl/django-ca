@@ -9,9 +9,9 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
-django = ["4.2"]
+django = ["4.2", "5.0"]
 cryptography = ["41.0"]
-acme = ["2.7"]
+acme = ["2.7", "2.8"]
 
 # https://alpinelinux.org/releases/
 alpine = [
@@ -70,6 +70,7 @@ description = "A Django app providing a TLS certificate authority."
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
     "Framework :: Django",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
