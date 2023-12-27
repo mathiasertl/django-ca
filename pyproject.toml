@@ -105,6 +105,7 @@ dependencies = [
     "packaging",
     "pydantic>=2.5",
     "requests",
+    "typing-extensions>=4; python_version < '3.9'",
 ]
 
 [project.optional-dependencies]

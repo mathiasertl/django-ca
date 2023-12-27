@@ -21,7 +21,6 @@ from typing import Any, Optional, Union
 
 import idna
 from pydantic import BeforeValidator, Discriminator, Tag, model_validator
-from typing_extensions import Annotated
 
 import asn1crypto.core
 from cryptography import x509
@@ -31,7 +30,7 @@ from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import OIDType
-from django_ca.typehints import GeneralNames, IPAddressType, OtherNames
+from django_ca.typehints import Annotated, GeneralNames, IPAddressType, OtherNames
 from django_ca.utils import encode_dns, encode_url, validate_email
 
 ip_address_classes = (

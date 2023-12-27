@@ -18,7 +18,6 @@ from datetime import datetime
 from typing import Any, List, Literal, Optional, Set, Union
 
 from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, model_validator
-from typing_extensions import Annotated
 
 from cryptography import x509
 from cryptography.x509 import certificate_transparency
@@ -30,7 +29,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import NonEmptyOrderedSet, OIDType
-from django_ca.typehints import DistributionPointReasons, LogEntryTypes
+from django_ca.typehints import Annotated, DistributionPointReasons, LogEntryTypes
 
 _NOTICE_REFERENCE_DESCRIPTION = (
     "A NoticeReferenceModel consists of an optional *organization* and an optional list of *notice_numbers*."

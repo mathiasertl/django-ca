@@ -17,7 +17,6 @@ import typing
 from typing import Any, List
 
 from pydantic import BeforeValidator, ConfigDict, Field, model_validator
-from typing_extensions import Annotated
 
 from cryptography import x509
 from cryptography.x509.name import _ASN1Type
@@ -26,6 +25,7 @@ from cryptography.x509.oid import NameOID
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 from django_ca.pydantic.type_aliases import OIDType
+from django_ca.typehints import Annotated
 
 _NAME_ATTRIBUTE_OID_DESCRIPTION = (
     "A dotted string representing the OID or a known alias as described in "

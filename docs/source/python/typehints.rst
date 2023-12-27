@@ -5,6 +5,7 @@
 .. automodule:: django_ca.typehints
    :members:
    :undoc-members:
+   :exclude-members: Annotated
 
 *********************
 TypeVars for generics

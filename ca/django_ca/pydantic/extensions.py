@@ -68,7 +68,6 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 from pydantic.fields import ModelPrivateAttr
 from pydantic_core.core_schema import ValidationInfo
-from typing_extensions import Annotated
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, SubjectInformationAccessOID
@@ -91,6 +90,7 @@ from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.type_aliases import NonEmptyOrderedSet
 from django_ca.typehints import (
     AlternativeNameTypeVar,
+    Annotated,
     CRLExtensionTypeTypeVar,
     ExtensionTypeTypeVar,
     InformationAccessTypeVar,

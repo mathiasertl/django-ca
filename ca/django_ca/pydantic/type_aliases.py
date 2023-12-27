@@ -16,9 +16,9 @@
 from typing import Any, List, TypeVar
 
 from pydantic import AfterValidator, BeforeValidator
-from typing_extensions import Annotated
 
 from django_ca.pydantic import validators
+from django_ca.typehints import Annotated
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=List[Any])
 

@@ -15,6 +15,7 @@
 
 import argparse
 import ipaddress
+import sys
 import typing
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
@@ -32,6 +33,13 @@ from django.core.management.base import CommandParser
 #   https://peps.python.org/pep-0484/#forward-references
 if typing.TYPE_CHECKING:
     from django_ca import models
+
+if sys.version_info[:2] < (3, 9):  # pragma: only py<3.9
+    # pylint: disable-next=useless-import-alias
+    from typing_extensions import Annotated as Annotated  # noqa: F401
+else:  # pragma: only py>=3.9
+    # pylint: disable-next=useless-import-alias
+    from typing import Annotated as Annotated  # noqa: F401
 
 
 class SupportsLessThan(typing.Protocol):
@@ -316,6 +324,7 @@ SerializedAuthorityKeyIdentifier = typing.TypedDict(
 )
 
 
+# pylint: disable-next=inherit-non-class  # false positive
 class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
@@ -403,6 +412,7 @@ ParsableAuthorityInformationAccess = typing.TypedDict(
 )
 
 
+# pylint: disable-next=inherit-non-class  # false positive
 class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     """Serialized representation of a BasicConstraints extension.
 
