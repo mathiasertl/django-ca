@@ -13,7 +13,6 @@
 
 """Base test cases for admin views and CertificateAdmin tests."""
 
-import django
 from django.contrib.auth.models import User  # pylint: disable=[imported-auth-user]  # needed for typehints
 from django.test.client import Client
 from django.urls import reverse
@@ -51,24 +50,13 @@ def test_change_view(admin_client: Client, interesting_cert: Certificate) -> Non
     response = admin_client.get(interesting_cert.admin_change_url)
     assert_cert_change_response(response, interesting_cert)
 
-    if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
-        # django 4.2 added the flex-container class
-        html = """
-            <div class="flex-container fieldBox field-revoked">
-                <label>Revoked:</label>
-                <div class="readonly">
-                    <img src="/static/admin/img/icon-no.svg" alt="False">
-                </div>
-            </div>"""
-    else:
-        # django<4.2 did not yet have the flex-container class
-        html = """
-            <div class="fieldBox field-revoked">
-                <label>Revoked:</label>
-                <div class="readonly">
-                    <img src="/static/admin/img/icon-no.svg" alt="False">
-                </div>
-            </div>"""
+    html = """
+        <div class="flex-container fieldBox field-revoked">
+            <label>Revoked:</label>
+            <div class="readonly">
+                <img src="/static/admin/img/icon-no.svg" alt="False">
+            </div>
+        </div>"""
 
     assertContains(response, text=html, html=True)
 
@@ -94,26 +82,14 @@ def test_change_view_with_revoked_certificate(admin_client: Client, child_cert: 
     response = admin_client.get(child_cert.admin_change_url)
     assert_cert_change_response(response, child_cert)
 
-    if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
-        # django 4.2 added the flex-container class
-        html = """
-            <div class="flex-container fieldBox field-revoked">
-                <label>Revoked:</label>
-                <div class="readonly">
-                    <img src="/static/admin/img/icon-yes.svg" alt="True">
-                </div>
+    html = """
+        <div class="flex-container fieldBox field-revoked">
+            <label>Revoked:</label>
+            <div class="readonly">
+                <img src="/static/admin/img/icon-yes.svg" alt="True">
             </div>
-        """
-    else:
-        # django<4.2 did not yet have the flex-container class
-        html = """
-            <div class="fieldBox field-revoked">
-                <label>Revoked:</label>
-                <div class="readonly">
-                    <img src="/static/admin/img/icon-yes.svg" alt="True">
-                </div>
-            </div>
-        """
+        </div>
+    """
 
     assertContains(response, text=html, html=True)
 
@@ -125,29 +101,10 @@ def test_change_view_with_no_subject_alternative_name(
     response = admin_client.get(no_extensions.admin_change_url)
     assert_cert_change_response(response, no_extensions)
 
-    if django.VERSION[:2] >= (4, 2):  # pragma: only django>=4.2
-        # django 4.2 added the flex-container div
-        html = """
-            <div class="form-row field-oid_2_5_29_17">
-                <div>
-                    <div class="flex-container">
-                        <label>Subject Alternative Name:</label>
-                        <div class="readonly">
-                            <span class="django-ca-extension">
-                                <div class="django-ca-extension-value">
-                                    &lt;Not present&gt;
-                                </div>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>"""
-
-    else:  # pragma: only django<4.2
-        # django<4.2 did not yet have the flex-container div
-        html = """
-            <div class="form-row field-oid_2_5_29_17">
-                <div>
+    html = """
+        <div class="form-row field-oid_2_5_29_17">
+            <div>
+                <div class="flex-container">
                     <label>Subject Alternative Name:</label>
                     <div class="readonly">
                         <span class="django-ca-extension">
@@ -157,7 +114,8 @@ def test_change_view_with_no_subject_alternative_name(
                         </span>
                     </div>
                 </div>
-            </div>"""
+            </div>
+        </div>"""
 
     assertContains(response, text=html, html=True)
 

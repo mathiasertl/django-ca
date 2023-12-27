@@ -414,8 +414,7 @@ filterwarnings = [
     #"error:datetime.datetime.utcfromtimestamp\\(\\) is deprecated::django_ca",  # pragma: only cg<42
     "error:datetime.datetime.utcnow\\(\\) is deprecated::django_ca",
 
-    "ignore:The USE_L10N setting is deprecated.::django",
-    "ignore:django.core.files.storage.get_storage_class is deprecated::django",
+    "ignore:django.core.files.storage.get_storage_class is deprecated::django",  # pragma: only django<4.2
 
     # pyOpenSSL>=23.3.0 raises this warning, acme==2.7.3 still uses the deprecated APIs.
     # acme uses X509Extension in acme.crypto_util.gen_ss_cert(). See also:
@@ -424,10 +423,6 @@ filterwarnings = [
 
     # django-ninja still uses class-based configuration, deprecated in Pydantic 2.0
     "ignore:^Support for class-based `config` is deprecated, use ConfigDict instead.::pydantic",
-
-    # django-ninja still uses general_plain_validator_function, deprecated in Pydantic 2.0
-    #   https://github.com/vitalik/django-ninja/pull/922
-    "ignore:^`general_plain_validator_function` is deprecated.::",
 ]
 
 [tool.ruff]

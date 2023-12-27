@@ -16,7 +16,6 @@
 from http import HTTPStatus
 from typing import Any, Tuple
 
-import django
 from django.db import models
 from django.templatetags.static import static
 
@@ -53,8 +52,5 @@ def assert_changelist_response(response: "HttpResponse", *objects: models.Model)
 
 def assert_css(response: "HttpResponse", path: str, media: str = "all") -> None:
     """Assert that the HTML from the given response includes the mentioned CSS."""
-    if django.VERSION[:2] <= (4, 0):  # pragma: only django<4.1
-        css = f'<link href="{static(path)}" type="text/css" media="{media}" rel="stylesheet" />'
-    else:  # pragma: only django>=4.1
-        css = f'<link href="{static(path)}" media="{media}" rel="stylesheet" />'
+    css = f'<link href="{static(path)}" media="{media}" rel="stylesheet" />'
     assertInHTML(css, response.content.decode("utf-8"), 1)

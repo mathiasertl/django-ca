@@ -17,14 +17,12 @@
 """
 
 import abc
-import json
 import typing
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
-import django
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -356,9 +354,8 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar]):
             # Otherwise, we could just pass any dict and it would work.
             self.to_python(value)
 
-            if django.VERSION < (4, 2):  # pragma: django<4.2 branch
-                return json.dumps(value)  # type: ignore[return-value]
-            return value  # type: ignore[return-value]  # pragma: django>=4.2 branch
+            return value  # type: ignore[return-value]
+
         if not isinstance(value, x509.Extension):
             raise ValidationError(
                 self.error_messages["invalid-type"],
@@ -372,10 +369,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar]):
                 params={"extension_class": self.extension_class.__name__},
             )
 
-        serialized = serialize_extension(value)
-        if django.VERSION < (4, 2):  # pragma: django<4.2 branch
-            return json.dumps(serialized)  # type: ignore[return-value]
-        return serialized  # pragma: django>=4.2 branch
+        return serialize_extension(value)
 
     def validate(self, value: x509.Extension[ExtensionTypeTypeVar], model_instance: Any) -> None:
         """Handle field-specific validation.
