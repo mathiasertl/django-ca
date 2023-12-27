@@ -307,7 +307,8 @@ class X509CertMixin(DjangoCAModel):
         """
         self.pub = LazyCertificate(value)
         self.cn = next(
-            (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME), ""  # type: ignore
+            (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME),  # type: ignore[misc]
+            "",
         )
         self.expires = self.not_after
         self.valid_from = self.not_before

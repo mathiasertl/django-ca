@@ -1406,7 +1406,8 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
         # check the JSON value from the chapter
         self.assertEqual(
-            json.loads(csr_chapter.get_attribute("data-value")), csr_subject  # type: ignore[arg-type]
+            json.loads(csr_chapter.get_attribute("data-value")),  # type: ignore[arg-type]
+            csr_subject,
         )
 
         # check that the right chapter is displayed

@@ -746,7 +746,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
     def test_unknown_signature_hash_algorithm(self) -> None:
         """Test passing an unknown hash algorithm."""
         with self.assertRaisesRegex(ValueError, r"^foo: Unknown hash algorithm\.$"):
-            Profile("wrong-algorithm", algorithm="foo")
+            Profile("wrong-algorithm", algorithm="foo")  # type: ignore[arg-type]
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
     def test_no_valid_subject(self) -> None:

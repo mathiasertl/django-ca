@@ -539,27 +539,28 @@ class ParseGeneralNameTest(TestCase):
             parse_general_name(False)  # type: ignore[arg-type]  # what we test
 
 
-class FormatGeneralNameTest(TestCase):
+@pytest.mark.parametrize(
+    "general_name,expected",
+    (
+        (dns("example.com"), "DNS:example.com"),
+        (x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")), "IP:127.0.0.1"),
+        (
+            x509.DirectoryName(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
+                    ]
+                )
+            ),
+            "dirname:C=AT,CN=example.com",
+        ),
+        (x509.OtherName(NameOID.COMMON_NAME, b"\x01\x01\xff"), "otherName:2.5.4.3;BOOLEAN:TRUE"),
+    ),
+)
+def test_format_general_name(general_name: x509.GeneralName, expected: str) -> None:
     """Test :py:func:`django_ca.utils.format_general_name`."""
-
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertEqual(format_general_name(dns("example.com")), "DNS:example.com")
-        self.assertEqual(
-            format_general_name(x509.IPAddress(ipaddress.IPv4Address("127.0.0.1"))), "IP:127.0.0.1"
-        )
-
-    def test_dirname(self) -> None:
-        """Test formatting a dirname."""
-        name = x509.DirectoryName(
-            x509.Name(
-                [
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                    x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                ]
-            )
-        )
-        self.assertEqual(format_general_name(name), "dirname:C=AT,CN=example.com")
+    assert format_general_name(general_name) == expected
 
 
 class ParseHashAlgorithm(TestCase):

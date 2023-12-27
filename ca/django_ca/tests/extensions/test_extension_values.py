@@ -153,6 +153,11 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
         "crl_issuer": [f"URI:{uri3}"],
         "reasons": [x509.ReasonFlags.ca_compromise, x509.ReasonFlags.key_compromise],
     }
+    s6: ParsableDistributionPoint = {
+        "full_name": [f"URI:{uri2}"],
+        "crl_issuer": [f"URI:{uri3}"],
+        "reasons": ["cACompromise", "keyCompromise"],
+    }
 
     cg_rdn1 = rdn([(NameOID.COMMON_NAME, "example.com")])
     serialized_rdn1 = cg_rdn1.rfc4514_string()  # no need for formatting function in utils for simple case
@@ -223,7 +228,7 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
       <li>CRL Issuer: URI:{self.uri3}</li>
       <li>Reasons: ca_compromise, key_compromise</li>
   </ul>""",
-                "serialized_alternatives": [[self.s4], [self.s5], [self.cg_dp4]],
+                "serialized_alternatives": [[self.s4], [self.s5], [self.s6], [self.cg_dp4]],
                 "serialized": [self.s4],
                 "extension_type": self.cg_dps4,
                 "text": f"""* DistributionPoint:
@@ -739,6 +744,7 @@ class ExtendedKeyUsageTestCase(ExtensionTestCaseMixin, TestCase):
                 {"serverAuth"},
                 {ExtendedKeyUsageOID.SERVER_AUTH},
                 [ExtendedKeyUsageOID.SERVER_AUTH],
+                [ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],
             ],
             "text": "* serverAuth",
         },

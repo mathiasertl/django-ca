@@ -43,9 +43,8 @@ except ImportError:  # pragma: only py<3.11
 
 
 def _load_latest_version(versions: List[str]) -> Tuple[int, int]:
-    return sorted([tuple(int(e) for e in v.split("."))[:2] for v in versions])[
-        -1
-    ]  # type: ignore[return-value]
+    parsed_versions = [tuple(int(e) for e in v.split("."))[:2] for v in versions]
+    return sorted(parsed_versions)[-1]  # type: ignore[return-value]
 
 
 _FILE_DIR = Path(__file__).resolve().parent  # dir of this file

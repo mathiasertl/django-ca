@@ -184,9 +184,9 @@ def signed_certificate_timestamp_pub(request: "SubRequest") -> Iterator[x509.Cer
 
 
 @pytest.fixture(params=signed_certificate_timestamps_cert_names)
-def signed_certificate_timestamps_pub(  # pragma: no cover
-    request: "SubRequest"
-) -> Iterator[x509.Certificate]:
+def signed_certificate_timestamps_pub(
+    request: "SubRequest",
+) -> Iterator[x509.Certificate]:  # pragma: no cover
     """Parametrized fixture for certificates that have a SignedCertificateTimestamps extension.
 
     .. NOTE:: There are no certificates with this extension right now, so this fixture is in fact never run.

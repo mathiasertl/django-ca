@@ -93,7 +93,7 @@ class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
     def parse_value(self, value: str) -> AllowedHashTypes:
         """Parse the value for this action."""
         # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
-        return constants.HASH_ALGORITHM_TYPES[value]()
+        return constants.HASH_ALGORITHM_TYPES[value]()  # type: ignore[index]
 
 
 class CertificateAction(SingleValueAction[str, Certificate]):
