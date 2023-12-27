@@ -34,6 +34,7 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
+* This is the last release to support Python 3.8.
 * The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
 
