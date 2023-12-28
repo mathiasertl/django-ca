@@ -20,7 +20,7 @@ import re
 import types
 import typing
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 import yaml
 from setuptools.config.pyprojecttoml import read_configuration
@@ -100,17 +100,48 @@ def check(
     return errors
 
 
+def check_github_action_versions(job: Dict[str, Any]) -> int:
+    """Check versions of/in GitHub actions."""
+    errors = 0
+    expected_action_versions = config.GITHUB_CONFIG["actions"]
+    for step_config in job["steps"]:
+        if step_uses := step_config.get("uses"):
+            action, action_version = step_uses.split("@", 1)
+
+            if expected_action_version := expected_action_versions.get(action):
+                if expected_action_version != action_version:
+                    errors += err(f"{action}: Have {action_version}, expected {expected_action_version}")
+            else:
+                info(f"{action}: action version not configured")
+
+            if action == "actions/setup-python":
+                py_version = step_config["with"]["python-version"]
+                if py_version not in ("${{ matrix.python-version }}", config.PYTHON_RELEASES[-1]):
+                    errors += err(f"Outdated Python version: {py_version}")
+    return errors
+
+
 def check_github_actions_tests() -> int:
     """Check GitHub actions."""
-    relpath = Path(".github", "workflows", "tests.yml")
-    check_path(relpath)
-    with open(config.ROOT_DIR / relpath, encoding="utf-8") as stream:
-        action_config = yaml.safe_load(stream)
-    matrix = action_config["jobs"]["tests"]["strategy"]["matrix"]
+    errors = 0
+    for workflow in Path(".github", "workflows").glob("*.yml"):
+        check_path(workflow)
+        with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
+            action_config = yaml.safe_load(stream)
 
-    errors = simple_diff("Python versions", tuple(matrix["python-version"]), config.PYTHON_RELEASES)
-    errors += simple_diff("Django versions", tuple(matrix["django-version"]), config.DJANGO)
-    errors += simple_diff("cryptography versions", tuple(matrix["cryptography-version"]), config.CRYPTOGRAPHY)
+        for job_name, job in action_config["jobs"].items():
+            check_github_action_versions(job)
+
+            if workflow.name == "tests.yml":
+                matrix = job["strategy"]["matrix"]
+                errors += simple_diff(
+                    "Python versions", tuple(matrix["python-version"]), config.PYTHON_RELEASES
+                )
+                errors += simple_diff("Django versions", tuple(matrix["django-version"]), config.DJANGO)
+                errors += simple_diff(
+                    "cryptography versions", tuple(matrix["cryptography-version"]), config.CRYPTOGRAPHY
+                )
+
     return errors
 
 

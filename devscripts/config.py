@@ -49,7 +49,8 @@ def minor_to_major(version: str) -> str:
 
 
 with open(PYPROJECT_PATH, "rb") as _pyproject_stream:
-    _release_config = tomllib.load(_pyproject_stream)["django-ca"]["release"]
+    _pyproject_toml = tomllib.load(_pyproject_stream)
+_release_config = _pyproject_toml["django-ca"]["release"]
 
 PYTHON_RELEASES = tuple(typing.cast(List[str], _release_config["python"]))
 DJANGO = tuple(typing.cast(List[str], _release_config["django"]))
@@ -59,6 +60,7 @@ ACME = tuple(typing.cast(List[str], _release_config["acme"]))
 ALPINE_RELEASES = tuple(typing.cast(List[str], _release_config["alpine"]))
 DEBIAN_RELEASES = tuple(typing.cast(List[str], _release_config["debian-releases"]))
 UBUNTU_RELEASES = tuple(typing.cast(List[str], _release_config["ubuntu-releases"]))
+GITHUB_CONFIG = _release_config["github"]
 
 # Compute list of valid alpine images
 _alpine_images = ["default"]

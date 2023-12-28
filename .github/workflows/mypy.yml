@@ -14,16 +14,16 @@ jobs:
     steps:
 
       - name: Acquire sources
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4.1.1
 
       - name: Setup Python
-        uses: actions/setup-python@v4.3.0
+        uses: actions/setup-python@v5.0.0
         with:
-          python-version: 3.11
+          python-version: "3.12"
           architecture: x64
 
       - name: Apply caching of dependencies
-        uses: actions/cache@v3.0.11
+        uses: actions/cache@v3.3.2
         with:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('**/requirements-*.txt') }}

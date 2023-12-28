@@ -6,7 +6,7 @@ on:
 
 jobs:
 
-  tests:
+  run:
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -25,16 +25,16 @@ jobs:
     steps:
 
       - name: Acquire sources
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4.1.1
 
       - name: Setup Python
-        uses: actions/setup-python@v4.3.0
+        uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
       - name: Apply caching of dependencies
-        uses: actions/cache@v3.0.11
+        uses: actions/cache@v3.3.2
         with:
           path: ~/.cache/pip
           key: os=${{ matrix.os }}-python=${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements-*.txt') }}
@@ -42,10 +42,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip setuptools wheel
-          pip install -r requirements.txt -r requirements/requirements-test.txt -r requirements/requirements-docs.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }}
-
-      - name: Install program
-        run: pip install -e .
+          pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }}
 
       - name: Initialize demo
         run: python dev.py init-demo
