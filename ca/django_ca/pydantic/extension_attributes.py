@@ -250,6 +250,99 @@ class DistributionPointModel(CryptographyModel[x509.DistributionPoint]):
         )
 
 
+class IssuingDistributionPointValueModel(CryptographyModel[x509.IssuingDistributionPoint]):
+    """Pydantic model wrapping :py:class:`~cg:cryptography.x509.IssuingDistributionPoint`.
+
+    >>> full_name = [{"type": "URI", "value": "https://ca.example.com/crl"}]
+    >>> IssuingDistributionPointValueModel(full_name=full_name)  # doctest: +STRIP_WHITESPACE
+    IssuingDistributionPointValueModel(
+        only_contains_user_certs=False,
+        only_contains_ca_certs=False,
+        indirect_crl=False,
+        only_contains_attribute_certs=False,
+        only_some_reasons=None,
+        full_name=[GeneralNameModel(type='URI', value='https://ca.example.com/crl')],
+        relative_name=None
+    )
+
+    Note that all attributes default to False or None and can thus be omitted, but at least one parameter
+    needs to be given.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+    only_contains_user_certs: bool = False
+    only_contains_ca_certs: bool = False
+    indirect_crl: bool = False
+    only_contains_attribute_certs: bool = False
+    only_some_reasons: Optional[Set[DistributionPointReasons]] = None
+    full_name: Optional[NonEmptyOrderedSet[List[GeneralNameModel]]] = None
+    relative_name: Optional[NameModel] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_cryptography(cls, data: Any) -> Any:  # pylint: disable=missing-function-docstring
+        if isinstance(data, x509.IssuingDistributionPoint):
+            reasons = None
+            if data.only_some_reasons:
+                reasons = [reason.name for reason in data.only_some_reasons]
+
+            return IssuingDistributionPointValueModel(
+                only_contains_user_certs=data.only_contains_user_certs,
+                only_contains_ca_certs=data.only_contains_ca_certs,
+                indirect_crl=data.indirect_crl,
+                only_contains_attribute_certs=data.only_contains_attribute_certs,
+                only_some_reasons=reasons,
+                full_name=data.full_name,
+                relative_name=data.relative_name,
+            )
+
+        return data
+
+    @model_validator(mode="after")
+    # pylint: disable-next=missing-function-docstring
+    def check_consistency(self) -> "IssuingDistributionPointValueModel":
+        if self.full_name and self.relative_name:
+            raise ValueError("only one of full_name or relative_name may be True")
+
+        crl_constraints = [
+            self.only_contains_user_certs,
+            self.only_contains_ca_certs,
+            self.indirect_crl,
+            self.only_contains_attribute_certs,
+        ]
+        if len([x for x in crl_constraints if x]) > 1:
+            raise ValueError(
+                "only one can be set: only_contains_user_certs, only_contains_ca_certs, indirect_crl, "
+                "only_contains_attribute_certs"
+            )
+
+        if not any((*crl_constraints, self.only_some_reasons, self.full_name, self.relative_name)):
+            raise ValueError("cannot create empty extension")
+
+        return self
+
+    @property
+    def cryptography(self) -> x509.IssuingDistributionPoint:
+        """Convert to a :py:class:`~cg:cryptography.x509.IssuingDistributionPoint` instance."""
+        full_name = relative_name = reasons = None
+        if self.full_name is not None:
+            full_name = [general_name.cryptography for general_name in self.full_name]
+        if self.relative_name is not None:
+            relative_name = x509.RelativeDistinguishedName(self.relative_name.cryptography)
+        if self.only_some_reasons:
+            reasons = frozenset(x509.ReasonFlags[reason] for reason in self.only_some_reasons)
+
+        return x509.IssuingDistributionPoint(
+            only_contains_user_certs=self.only_contains_user_certs,
+            only_contains_ca_certs=self.only_contains_ca_certs,
+            indirect_crl=self.indirect_crl,
+            only_contains_attribute_certs=self.only_contains_attribute_certs,
+            only_some_reasons=reasons,
+            full_name=full_name,
+            relative_name=relative_name,
+        )
+
+
 class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency.SignedCertificateTimestamp]):
     """Pydantic model wrapping ``SignedCertificateTimestamp``.
 
@@ -436,7 +529,7 @@ class UserNoticeModel(CryptographyModel[x509.UserNotice]):
     )
 
     notice_reference: Optional[NoticeReferenceModel] = None
-    explicit_text: str
+    explicit_text: Optional[str]
 
     @property
     def cryptography(self) -> x509.UserNotice:

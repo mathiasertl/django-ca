@@ -33,9 +33,11 @@ from django_ca import constants
 from django_ca.pydantic.extension_attributes import (
     AccessDescriptionModel,
     DistributionPointModel,
+    IssuingDistributionPointValueModel,
     SignedCertificateTimestampModel,
 )
 from django_ca.pydantic.extensions import (
+    EXTENSION_MODEL_OIDS,
     AlternativeNameBaseModel,
     AuthorityInformationAccessModel,
     AuthorityKeyIdentifierModel,
@@ -45,9 +47,11 @@ from django_ca.pydantic.extensions import (
     CRLNumberModel,
     DeltaCRLIndicatorModel,
     ExtendedKeyUsageModel,
+    ExtensionModelTypeVar,
     FreshestCRLModel,
     InhibitAnyPolicyModel,
     IssuerAlternativeNameModel,
+    IssuingDistributionPointModel,
     KeyUsageModel,
     MSCertificateTemplateModel,
     NameConstraintsModel,
@@ -64,12 +68,29 @@ from django_ca.pydantic.extensions import (
 from django_ca.tests.base.utils import dns, doctest_module, key_usage
 from django_ca.tests.pydantic.base import (
     ExpectedErrors,
-    ExtensionModelTypeVar,
     assert_cryptography_model,
     assert_validation_errors,
 )
 from django_ca.typehints import AlternativeNameExtensionType, AlternativeNameTypeVar
 
+DISTRIBUTION_POINT_REASONS_ERROR = (
+    "Input should be 'aa_compromise', 'affiliation_changed', 'ca_compromise', 'certificate_hold', "
+    "'cessation_of_operation', 'key_compromise', 'privilege_withdrawn' or 'superseded'"
+)
+
+KNOWN_EXTENSION_OIDS = list(
+    filter(
+        lambda attr: isinstance(attr, x509.ObjectIdentifier)
+        and attr
+        not in (
+            ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES,  # cryptography has OID, but no class
+            ExtensionOID.POLICY_MAPPINGS,  # cryptography has OID, but no class
+        ),
+        [getattr(ExtensionOID, attr) for attr in dir(ExtensionOID)],
+    )
+)
+
+NAME = {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
 GENERAL_NAME = {"type": "DNS", "value": "example.com"}
 
 MUST_BE_CRITICAL_ERROR = (
@@ -245,6 +266,60 @@ def test_distribution_point(parameters: Dict[str, Any], expected: x509.Distribut
 def test_distribution_point_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the DistributionPointModel."""
     assert_validation_errors(DistributionPointModel, parameters, expected_errors)
+
+
+@pytest.mark.parametrize(
+    "parameters,expected",
+    (
+        (
+            {"full_name": [GENERAL_NAME]},
+            x509.IssuingDistributionPoint(
+                full_name=[dns("example.com")],
+                relative_name=None,
+                only_some_reasons=None,
+                only_contains_attribute_certs=False,
+                indirect_crl=False,
+                only_contains_ca_certs=False,
+                only_contains_user_certs=False,
+            ),
+        ),
+        (
+            {"relative_name": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}]},
+            x509.IssuingDistributionPoint(
+                full_name=None,
+                relative_name=x509.RelativeDistinguishedName(
+                    [x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com")]
+                ),
+                only_some_reasons=None,
+                only_contains_attribute_certs=False,
+                indirect_crl=False,
+                only_contains_ca_certs=False,
+                only_contains_user_certs=False,
+            ),
+        ),
+        (
+            {
+                "full_name": [GENERAL_NAME],
+                "only_contains_ca_certs": True,
+                "only_some_reasons": ["key_compromise", "superseded"],
+            },
+            x509.IssuingDistributionPoint(
+                full_name=[dns("example.com")],
+                relative_name=None,
+                only_some_reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.superseded]),
+                only_contains_attribute_certs=False,
+                indirect_crl=False,
+                only_contains_ca_certs=True,
+                only_contains_user_certs=False,
+            ),
+        ),
+    ),
+)
+def test_issuing_distribution_point_value(
+    parameters: Dict[str, Any], expected: x509.IssuingDistributionPoint
+) -> None:
+    """Test the DistributionPointModel."""
+    assert_cryptography_model(IssuingDistributionPointValueModel, parameters, expected)
 
 
 def test_signed_certificate_timestamp(signed_certificate_timestamp_pub: x509.Certificate) -> None:
@@ -910,6 +985,77 @@ def test_inhibit_any_policy_errors(parameters: Dict[str, Any], expected_errors: 
     assert_validation_errors(InhibitAnyPolicyModel, parameters, expected_errors)
 
 
+@pytest.mark.parametrize("critical", (True, None))
+@pytest.mark.parametrize(
+    "parameters,issuing_distribution_point",
+    (
+        (
+            {"full_name": [GENERAL_NAME]},
+            x509.IssuingDistributionPoint(
+                full_name=[dns("example.com")],
+                relative_name=None,
+                only_some_reasons=None,
+                only_contains_attribute_certs=False,
+                indirect_crl=False,
+                only_contains_ca_certs=False,
+                only_contains_user_certs=False,
+            ),
+        ),
+    ),
+)
+def test_issuing_distribution_point(
+    critical: Optional[bool],
+    parameters: Dict[str, Any],
+    issuing_distribution_point: x509.IssuingDistributionPoint,
+) -> None:
+    """Test the IssuingDistributionPointModel."""
+    assert_extension_model(IssuingDistributionPointModel, parameters, issuing_distribution_point, critical)
+
+
+@pytest.mark.parametrize(
+    "parameters,expected_errors",
+    (
+        ({"value": {}}, [("value_error", ("value",), "Value error, cannot create empty extension")]),
+        (
+            {"value": {"full_name": [GENERAL_NAME], "relative_name": [NAME]}},
+            [("value_error", ("value",), "Value error, only one of full_name or relative_name may be True")],
+        ),
+        (  # unspecified is not a valid reason in this extension
+            {"value": {"full_name": [GENERAL_NAME], "only_some_reasons": ["unspecified", "remove_from_crl"]}},
+            [
+                ("literal_error", ("value", "only_some_reasons", 0), DISTRIBUTION_POINT_REASONS_ERROR),
+                ("literal_error", ("value", "only_some_reasons", 1), DISTRIBUTION_POINT_REASONS_ERROR),
+            ],
+        ),
+        (
+            {"value": {"only_contains_user_certs": True, "only_contains_ca_certs": True}},
+            [
+                (
+                    "value_error",
+                    ("value",),
+                    re.compile("Value error, only one can be set: only_contains_user_certs,*"),
+                ),
+            ],
+        ),
+        (
+            {"value": {"indirect_crl": True, "only_contains_attribute_certs": True}},
+            [
+                (
+                    "value_error",
+                    ("value",),
+                    re.compile("Value error, only one can be set: only_contains_user_certs,*"),
+                ),
+            ],
+        ),
+    ),
+)
+def test_issuing_distribution_point_errors(
+    parameters: Dict[str, Any], expected_errors: ExpectedErrors
+) -> None:
+    """Test errors for the IssuingDistributionPointModel model."""
+    assert_validation_errors(IssuingDistributionPointModel, parameters, expected_errors)
+
+
 @pytest.mark.parametrize("critical", (True, False, None))
 @pytest.mark.parametrize(
     "parameters,extension",
@@ -1307,3 +1453,10 @@ def test_tls_feature(
 def test_tls_feature_errors(parameters: Dict[str, bool], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the TLSFeatureModel."""
     assert_validation_errors(TLSFeatureModel, parameters, expected_errors)
+
+
+def test_extension_model_oids() -> None:
+    """Test EXTENSION_MODEL_OIDS constant for correctness and completeness."""
+    actual_oids = sorted(EXTENSION_MODEL_OIDS.values(), key=lambda oid: oid.dotted_string)
+    expected_oids = sorted(KNOWN_EXTENSION_OIDS, key=lambda oid: oid.dotted_string)
+    assert actual_oids == expected_oids

@@ -63,7 +63,8 @@ directly.
 
 import abc
 import typing
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
+from types import MappingProxyType
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 
 from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 from pydantic.fields import ModelPrivateAttr
@@ -80,6 +81,7 @@ from django_ca.pydantic.extension_attributes import (
     AuthorityKeyIdentifierValueModel,
     BasicConstraintsValueModel,
     DistributionPointModel,
+    IssuingDistributionPointValueModel,
     MSCertificateTemplateValueModel,
     NameConstraintsValueModel,
     PolicyConstraintsValueModel,
@@ -96,8 +98,12 @@ from django_ca.typehints import (
     InformationAccessTypeVar,
     KeyUsages,
     NoValueExtensionTypeVar,
+    SerializedPydanticExtension,
     SignedCertificateTimestampTypeVar,
 )
+
+if typing.TYPE_CHECKING:
+    from pydantic.main import IncEx
 
 ###############
 # Base models #
@@ -135,6 +141,24 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
     @abc.abstractmethod
     def extension_type(self) -> ExtensionTypeTypeVar:
         """ExtensionType subclass for this extension."""
+
+    if typing.TYPE_CHECKING:
+        # pylint: disable=unused-argument,missing-function-docstring
+
+        def model_dump(  # type: ignore[override]
+            self,
+            *,
+            mode: Literal["json", "python"] | str = "python",
+            include: IncEx = None,
+            exclude: IncEx = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> SerializedPydanticExtension:
+            ...
 
 
 class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
@@ -583,6 +607,31 @@ class IssuerAlternativeNameModel(AlternativeNameBaseModel[x509.IssuerAlternative
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
 
 
+class IssuingDistributionPointModel(ExtensionModel[x509.IssuingDistributionPoint]):
+    """Pydantic model for a :py:class:`~cg:cryptography.x509.IssuingDistributionPoint` extension.
+
+    The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.IssuingDistributionPointValueModel`
+    instances:
+
+    >>> full_name = [{"type": "URI", "value": "https://ca.example.com/crl"}]
+    >>> value = IssuingDistributionPointValueModel(full_name=full_name)
+    >>> IssuingDistributionPointModel(value=value)  # doctest: +ELLIPSIS
+    IssuingDistributionPointModel(critical=True, value=IssuingDistributionPointValueModel(...))
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    type: Literal["issuing_distribution_point"] = Field(default="issuing_distribution_point", repr=False)
+    critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUING_DISTRIBUTION_POINT]
+    value: IssuingDistributionPointValueModel
+    requires_critical: typing.ClassVar[bool] = True  # "is a critical CRL extension"
+
+    @property
+    def extension_type(self) -> x509.IssuingDistributionPoint:
+        """Convert to a :py:class:`~cg:cryptography.x509.IssuingDistributionPoint` instance."""
+        return self.value.cryptography
+
+
 class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.KeyUsage` extension.
 
@@ -913,6 +962,36 @@ class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):
         return x509.TLSFeature(features=features)
 
 
+EXTENSION_MODEL_OIDS = MappingProxyType(
+    {
+        AuthorityInformationAccessModel: ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+        AuthorityKeyIdentifierModel: ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+        BasicConstraintsModel: ExtensionOID.BASIC_CONSTRAINTS,
+        CRLDistributionPointsModel: ExtensionOID.CRL_DISTRIBUTION_POINTS,
+        CRLNumberModel: ExtensionOID.CRL_NUMBER,
+        CertificatePoliciesModel: ExtensionOID.CERTIFICATE_POLICIES,
+        DeltaCRLIndicatorModel: ExtensionOID.DELTA_CRL_INDICATOR,
+        ExtendedKeyUsageModel: ExtensionOID.EXTENDED_KEY_USAGE,
+        FreshestCRLModel: ExtensionOID.FRESHEST_CRL,
+        InhibitAnyPolicyModel: ExtensionOID.INHIBIT_ANY_POLICY,
+        IssuerAlternativeNameModel: ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+        IssuingDistributionPointModel: ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+        KeyUsageModel: ExtensionOID.KEY_USAGE,
+        MSCertificateTemplateModel: ExtensionOID.MS_CERTIFICATE_TEMPLATE,  # type: ignore[dict-item]
+        NameConstraintsModel: ExtensionOID.NAME_CONSTRAINTS,
+        OCSPNoCheckModel: ExtensionOID.OCSP_NO_CHECK,
+        PolicyConstraintsModel: ExtensionOID.POLICY_CONSTRAINTS,
+        PrecertPoisonModel: ExtensionOID.PRECERT_POISON,
+        PrecertificateSignedCertificateTimestampsModel: ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS,
+        SignedCertificateTimestampsModel: ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS,
+        SubjectAlternativeNameModel: ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+        SubjectInformationAccessModel: ExtensionOID.SUBJECT_INFORMATION_ACCESS,
+        SubjectKeyIdentifierModel: ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+        TLSFeatureModel: ExtensionOID.TLS_FEATURE,
+    }
+)
+
+
 SignCertificateExtension = Annotated[
     Union[
         AuthorityInformationAccessModel,
@@ -927,3 +1006,5 @@ SignCertificateExtension = Annotated[
     ],
     Field(discriminator="type"),
 ]
+
+ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])

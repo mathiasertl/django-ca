@@ -48,7 +48,7 @@ def assert_validation_errors(
     errors = ex_info.value.errors()
     assert len(expected_errors) == len(errors), errors
     for expected, actual in zip(expected_errors, errors):
-        assert expected[0] == actual["type"], actual["type"]
+        assert expected[0] == actual["type"], (actual["type"], actual["msg"])
         assert expected[1] == actual["loc"], (actual["loc"], actual["msg"])
         if isinstance(expected[2], str):
             assert expected[2] == actual["msg"], actual["msg"]
