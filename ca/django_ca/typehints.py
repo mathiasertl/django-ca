@@ -207,14 +207,14 @@ KeyUsages = Literal[
 ]
 
 DistributionPointReasons = Literal[
-    "key_compromise",
-    "ca_compromise",
-    "affiliation_changed",
-    "superseded",
-    "cessation_of_operation",
-    "certificate_hold",
-    "privilege_withdrawn",
     "aa_compromise",
+    "affiliation_changed",
+    "ca_compromise",
+    "certificate_hold",
+    "cessation_of_operation",
+    "key_compromise",
+    "privilege_withdrawn",
+    "superseded",
 ]
 
 #: Valid OtherName types
