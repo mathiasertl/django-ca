@@ -36,10 +36,10 @@ if typing.TYPE_CHECKING:
 
 if sys.version_info[:2] < (3, 9):  # pragma: only py<3.9
     # pylint: disable-next=useless-import-alias
-    from typing_extensions import Annotated as Annotated  # noqa: F401
+    from typing_extensions import Annotated as Annotated
 else:  # pragma: only py>=3.9
     # pylint: disable-next=useless-import-alias
-    from typing import Annotated as Annotated  # noqa: F401
+    from typing import Annotated as Annotated
 
 
 class SupportsLessThan(typing.Protocol):

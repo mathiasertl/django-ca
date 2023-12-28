@@ -66,6 +66,7 @@ User = get_user_model()
 
 
 def cn(common_name: str) -> x509.Name:
+    """Shortcut to get a common name."""
     return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
 
 

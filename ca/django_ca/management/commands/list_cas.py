@@ -26,7 +26,9 @@ from django_ca.querysets import CertificateAuthorityQuerySet
 from django_ca.utils import add_colons
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py list_cas` command."""
+
     help = "List available certificate authorities."
 
     def add_arguments(self, parser: CommandParser) -> None:

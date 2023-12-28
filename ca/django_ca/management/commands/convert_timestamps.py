@@ -24,7 +24,9 @@ from django.utils import timezone
 from django_ca.models import AcmeAccount, AcmeChallenge, AcmeOrder, Certificate, CertificateAuthority
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py convert_timestamps` command."""
+
     help = """Convert naive timestamps in local time to timezone aware timestamps.
 
     WARNING: This command cannot tell if it has been invoked already and will change timestamps again.

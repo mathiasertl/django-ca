@@ -227,7 +227,7 @@ class CertificateAuthorityManager(
             ),
         )
 
-    def init(
+    def init(  # noqa: PLR0912,PLR0913,PLR0915  # too-many-arguments,branches,statements
         self,
         name: str,
         subject: x509.Name,
@@ -351,10 +351,7 @@ class CertificateAuthorityManager(
         PermissionError
             If the private key file cannot be written to disk.
         """
-        # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
-        # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
-        #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
-
+        # pylint: disable=too-many-locals
         if extensions is None:
             extensions = []
         else:
@@ -365,6 +362,8 @@ class CertificateAuthorityManager(
                 if isinstance(extension, x509.Extension) is False:
                     raise ValueError(f"Cannot add extension of type {type(extension).__name__}")
 
+        # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
+        #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
         algorithm = validate_public_key_parameters(key_type, algorithm)
 
@@ -567,7 +566,7 @@ class CertificateManager(
         def revoked(self) -> "CertificateQuerySet":
             ...
 
-    def create_cert(  # pylint: disable=too-many-arguments
+    def create_cert(  # noqa: PLR0913  # too-many-arguments
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,

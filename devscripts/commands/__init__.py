@@ -28,7 +28,7 @@ from devscripts import config, utils
 from devscripts.out import err, info
 
 if typing.TYPE_CHECKING:
-    import docker  # noqa: F401  # flake8 does not detect that this is for type-hinting.
+    import docker
     from docker.client import DockerClient
     from docker.models.images import Image
 
@@ -99,7 +99,7 @@ class DevCommand:
             sys.exit(ex.code)
 
     @property
-    def docker(self) -> "docker":  # noqa: F811  # flake8 detects the TYPE_CHECKING protected module.
+    def docker(self) -> "docker":
         """Get the docker Python library."""
         return importlib.import_module("docker")
 
@@ -161,11 +161,13 @@ class DevCommand:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
         django.setup()
 
-    def run(self, *args: Union[str, "os.PathLike[str]"], check: bool = True, **kwargs: Any) -> None:
+    def run(
+        self, *args: Union[str, "os.PathLike[str]"], check: bool = True, **kwargs: Any
+    ) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run the given command."""
         str_args = tuple(str(arg) if isinstance(arg, os.PathLike) else arg for arg in args)
         try:
-            utils.run(str_args, check=check, **kwargs)
+            return utils.run(str_args, check=check, **kwargs)
         except subprocess.CalledProcessError as ex:
             raise CommandError(f"{args[0]} returned with exit status {ex.returncode}.") from ex
 

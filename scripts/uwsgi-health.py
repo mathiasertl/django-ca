@@ -19,6 +19,8 @@ import json
 import socket
 import sys
 
+READ_SIZE = 4096
+
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.3)
@@ -26,9 +28,9 @@ try:
 
         data = b""
         while True:
-            recv = s.recv(4096)
+            recv = s.recv(READ_SIZE)
             data += recv
-            if len(recv) < 4096:
+            if len(recv) < READ_SIZE:
                 break
 except OSError:
     print("Error connecting to stats server.")

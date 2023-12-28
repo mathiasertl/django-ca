@@ -143,11 +143,6 @@ Source = "https://github.com/mathiasertl/django-ca/"
 Issues = "https://github.com/mathiasertl/django-ca/issues"
 Changelog = "https://django-ca.readthedocs.io/en/latest/changelog.html"
 
-
-[tool.black]
-line-length = 110
-extend-exclude = "(migrations|stubs)/"
-
 [tool.coverage.report]
 exclude_lines = [
     "^\\s*@(abc.)?abstractmethod",
@@ -179,35 +174,6 @@ ignore = [
 ignore-path = [
     "docs/source/generated/",
 ]
-
-[tool.isort]
-profile = "black"
-skip_gitignore = true
-line_length = 110
-extend_skip = ["migrations", "stubs"]
-known_crypto = [
-    "cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"
-]
-known_django = "django"
-known_django_addon = "django_object_actions"
-known_test = [
-    "_pytest",
-    "django_webtest",
-    "freezegun",
-    "pytest",
-    "pytest_cov",
-    "pytest_django",
-    "pyvirtualdisplay",
-    "requests_mock",
-    "selenium",
-    "webtest",
-]
-known_first_party = ["django_ca", "ca"]
-sections = [
-    "FUTURE", "STDLIB", "THIRDPARTY", "CRYPTO", "DJANGO", "DJANGO_ADDON",
-    "TEST", "FIRSTPARTY", "LOCALFOLDER",
-]
-combine_as_imports = true
 
 [tool.mypy]
 strict = true
@@ -287,14 +253,8 @@ good-names = [
 exclude-protected = ["_default_manager"]
 
 [tool.pylint.design]
-# Maximum number of arguments for function / method (see R0913).
-max-args = 10
-
 # Maximum number of attributes for a class (see R0902).
 max-attributes = 20
-
-# Maximum number of branch for function / method body (see R0912).
-max-branches = 20
 
 # Maximum number of parents for a class (see R0914).
 max-locals = 20
@@ -307,9 +267,6 @@ max-public-methods = 25
 
 # Maximum number of return / yield for function / method body (see R0911).
 max-returns = 8
-
-# Maximum number of statements in function / method body (see R0915).
-max-statements = 60
 
 [tool.pylint.format]
 max-line-length = 110
@@ -339,15 +296,21 @@ disable = [
     "unused-import",
     "unused-variable",
 
-    # covered by pycodestyle:
-    "unneeded-not",
-    "line-too-long",
-    "unnecessary-semicolon",
-    "trailing-whitespace",
-    "missing-final-newline",
+    # covered by ruff/pylint:
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-statements",
+
+    # covered by ruff/pycodestyle:
     "bad-indentation",
-    "multiple-statements",
     "bare-except",
+    "line-too-long",
+    "missing-class-docstring",
+    "missing-final-newline",
+    "multiple-statements",
+    "trailing-whitespace",
+    "unnecessary-semicolon",
+    "unneeded-not",
 
     # (seems to be) covered by mypy
     "unsubscriptable-object",  # mypy: index
@@ -438,19 +401,18 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = ["D", "E", "F", "I", "G", "DJ"]
-#extend-select = ["RUF100"]  # detect unused suppression comments
+select = ["D", "E", "F", "I", "G", "DJ", "PL"]
+extend-select = ["RUF100"]  # detect unused suppression comments
 extend-exclude = ["migrations", "stubs"]
 line-length = 110
 ignore = [
-    "D101",  # Missing docstring in public class
-    "D102",  # Missing docstring in public method
-    "D103",  # Missing docstring in public function
-    "D104",  # Missing docstring in public package
-    "D105",  # Missing docstring in magic method
-    "D106",  # Missing docstring in public nested class
+    "D102",  # Missing docstring in public method - includes inherited methods
+    "D104",  # Missing docstring in public package - includes even empty __init__.py files
+    "D105",  # Missing docstring in magic method - includes __str__() etc
+    "D106",  # Missing docstring in public nested class - includes Meta/Media classes
     "D301",  # Use `r"""` if any backslashes in a docstring - incompatible with doctests!
     "D401",  # First line of docstring should be in imperative mood
+    "PLR2004",  # Magic value used in comparison - not disabled in default pylint
 ]
 
 [tool.ruff.isort]
@@ -487,6 +449,16 @@ test = [
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.pylint]
+# Maximum number of arguments allowed for a function or method definition (see: PLR0913).
+max-args = 10
+
+# Maximum number of branch for function / method body (see R0912).
+max-branches = 20
+
+# Maximum number of statements in function / method body (see R0915).
+max-statements = 60
 
 [tool.setuptools.dynamic]
 version = {attr = "django_ca.VERSION"}

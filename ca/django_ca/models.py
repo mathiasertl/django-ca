@@ -508,8 +508,7 @@ class CertificateAuthority(X509CertMixin):
         certificate_set: "CertificateManager"
         acmeaccount_set: "manager.RelatedManager[AcmeAccount]"
 
-    name = models.CharField(max_length=128, help_text=_("A human-readable name"), unique=True)
-    """Human-readable name of the CA, only used for displaying the CA."""
+    name = models.CharField(max_length=256, help_text=_("A human-readable name"), unique=True)
     enabled = models.BooleanField(default=True)
     parent = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
@@ -615,6 +614,13 @@ class CertificateAuthority(X509CertMixin):
     )
 
     _key = None
+
+    class Meta:
+        verbose_name = _("Certificate Authority")
+        verbose_name_plural = _("Certificate Authorities")
+
+    def __str__(self) -> str:
+        return self.name
 
     def key(self, password: Optional[Union[str, bytes]] = None) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key.
@@ -1374,13 +1380,6 @@ class CertificateAuthority(X509CertMixin):
         # COVERAGE NOTE: currently both extensions are always present
         return SSH_USER_CA in self.x509_extensions  # pragma: no cover
 
-    class Meta:
-        verbose_name = _("Certificate Authority")
-        verbose_name_plural = _("Certificate Authorities")
-
-    def __str__(self) -> str:
-        return self.name
-
 
 class Certificate(X509CertMixin):
     """Model representing a x509 Certificate."""
@@ -1456,12 +1455,18 @@ class CertificateOrder(DjangoCAModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text=_("User used for creating the order.")
     )
     status = models.CharField(
-        max_length=8, default=STATUS_PENDING, help_text=_("Current status of the order.")
+        max_length=8,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        help_text=_("Current status of the order."),
     )
     error_code = models.PositiveSmallIntegerField(
         null=True, blank=True, help_text=_("Machine readable error code.")
     )
     error = models.CharField(blank=True, max_length=256, help_text=_("Human readable error message."))
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.slug} ({self.get_status_display()})"
 
 
 class AcmeAccount(DjangoCAModel):
@@ -1577,13 +1582,6 @@ class AcmeOrder(DjangoCAModel):
         (STATUS_VALID, _("Valid")),
     )
 
-    objects = AcmeOrderManager.from_queryset(AcmeOrderQuerySet)()
-
-    if typing.TYPE_CHECKING:
-        # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
-        # See also: https://github.com/typeddjango/django-stubs/issues/1354
-        authorizations: "manager.RelatedManager[AcmeAuthorization]"
-
     account = models.ForeignKey(AcmeAccount, on_delete=models.CASCADE, related_name="orders")
     slug = models.SlugField(unique=True, default=acme_slug)
 
@@ -1598,6 +1596,13 @@ class AcmeOrder(DjangoCAModel):
     # NOTE: authorizations property is provided by reverse relation of the AcmeAuthorization model
     # NOTE: finalize property is provided by acme_finalize_url property
     # NOTE: certificate property is provided by reverse relation of the AcmeCertificate model
+
+    objects = AcmeOrderManager.from_queryset(AcmeOrderQuerySet)()
+
+    if typing.TYPE_CHECKING:
+        # Add typehints for relations, django-stubs has issues if the model defines a custom default manager.
+        # See also: https://github.com/typeddjango/django-stubs/issues/1354
+        authorizations: "manager.RelatedManager[AcmeAuthorization]"
 
     class Meta:
         verbose_name = _("ACME Order")
@@ -1808,8 +1813,6 @@ class AcmeChallenge(DjangoCAModel):
         (STATUS_INVALID, _("Name")),
     )
 
-    objects = AcmeChallengeManager.from_queryset(AcmeChallengeQuerySet)()
-
     auth = models.ForeignKey(AcmeAuthorization, on_delete=models.CASCADE, related_name="challenges")
     slug = models.SlugField(unique=True, default=acme_slug)
 
@@ -1824,6 +1827,8 @@ class AcmeChallenge(DjangoCAModel):
     # The token field is listed for both HTTP and DNS challenge, which are the most common types, so we
     # include it as an optional field here. It is generated when the token is first accessed.
     token = models.CharField(blank=True, max_length=64, default=acme_token)
+
+    objects = AcmeChallengeManager.from_queryset(AcmeChallengeQuerySet)()
 
     class Meta:
         unique_together = (("auth", "type"),)
@@ -1928,16 +1933,19 @@ class AcmeChallenge(DjangoCAModel):
 class AcmeCertificate(DjangoCAModel):
     """Intermediate model for certificates to be issued via ACME."""
 
-    objects = AcmeCertificateManager.from_queryset(AcmeCertificateQuerySet)()
-
     slug = models.SlugField(unique=True, default=acme_slug)
     order = models.OneToOneField(AcmeOrder, on_delete=models.CASCADE)
     cert = models.OneToOneField(Certificate, on_delete=models.CASCADE, null=True)
     csr = models.TextField(verbose_name=_("CSR"))
 
+    objects = AcmeCertificateManager.from_queryset(AcmeCertificateQuerySet)()
+
     class Meta:
         verbose_name = _("ACME Certificate")
         verbose_name_plural = _("ACME Certificate")
+
+    def __str__(self) -> str:
+        return f"{self.slug} ({self.order.get_status_display()})"
 
     @property
     def acme_url(self) -> str:

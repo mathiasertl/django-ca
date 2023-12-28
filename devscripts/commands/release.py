@@ -80,9 +80,7 @@ ChangeLog
 
 *******************
 {release} ({date.today().strftime('%Y-%m-%d')})
-*******************\n""".splitlines(
-            keepends=True
-        )
+*******************\n""".splitlines(keepends=True)
         if changelog_header != expected:
             diff = difflib.unified_diff(changelog_header, expected, fromfile=path, tofile="expected")
             raise CommandError(f"ChangeLog has improper header:\n\n{''.join(diff)}")

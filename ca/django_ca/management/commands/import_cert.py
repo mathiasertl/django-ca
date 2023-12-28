@@ -28,7 +28,9 @@ from django_ca.management.base import BaseCommand
 from django_ca.models import Certificate, CertificateAuthority
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py import_cert` command."""
+
     help = """Import an existing certificate.
 
 The authority that that signed the certificate must exist in the database."""

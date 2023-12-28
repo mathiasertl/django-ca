@@ -1,8 +1,6 @@
 -r requirements-dev-common.txt
-black==23.12.1
-flake8==6.1.0
-isort==5.13.2
 pre-commit==3.6.0
 pylint-django==2.5.5
 pylint==3.0.3
+ruff==0.1.9
 setuptools>=61

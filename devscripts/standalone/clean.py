@@ -37,6 +37,7 @@ def remove(path: Path, dry: bool) -> None:
 
 
 def cleanup(root: Path, dry: bool = False) -> None:
+    """Main cleanup function."""
     remove(root / "pip-selfcheck.json", dry=dry)
     remove(root / "geckodriver.log", dry=dry)
     remove(root / "docs/build", dry=dry)

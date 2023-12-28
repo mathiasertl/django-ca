@@ -23,7 +23,9 @@ from django_ca.management.base import BaseCommand
 from django_ca.tasks import cache_crls, run_task
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py cache_crls` command."""
+
     help = "Cache CRLs"
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:

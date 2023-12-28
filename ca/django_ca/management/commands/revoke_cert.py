@@ -29,7 +29,9 @@ from django_ca.management.mixins import CertCommandMixin
 from django_ca.models import Certificate
 
 
-class Command(CertCommandMixin, BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(CertCommandMixin, BaseCommand):
+    """Implement the :command:`manage.py revoke_cert` command."""
+
     allow_revoked = True
     help = "Revoke a certificate."
 

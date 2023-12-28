@@ -26,7 +26,9 @@ from django_ca.models import CertificateAuthority
 from django_ca.utils import add_colons, ca_storage
 
 
-class Command(BaseViewCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseViewCommand):
+    """Implement the :command:`manage.py view_ca` command."""
+
     help = "View details of a certificate authority."
 
     def add_arguments(self, parser: CommandParser) -> None:

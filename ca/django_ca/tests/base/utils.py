@@ -190,7 +190,7 @@ def subject_alternative_name(
 
 
 def subject_key_identifier(
-    cert: Union[X509CertMixin, x509.Certificate]
+    cert: Union[X509CertMixin, x509.Certificate],
 ) -> x509.Extension[x509.SubjectKeyIdentifier]:
     """Shortcut for getting a SubjectKeyIdentifier extension."""
     if isinstance(cert, X509CertMixin):
@@ -219,14 +219,14 @@ def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
 
 
 def ip(
-    name: Union[ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network]
+    name: Union[ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network],
 ) -> x509.IPAddress:
     """Shortcut to get a :py:class:`cg:cryptography.x509.IPAddress`."""
     return x509.IPAddress(name)
 
 
 def rdn(
-    name: Iterable[Tuple[x509.ObjectIdentifier, str]]
+    name: Iterable[Tuple[x509.ObjectIdentifier, str]],
 ) -> x509.RelativeDistinguishedName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.RelativeDistinguishedName`."""
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])

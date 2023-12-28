@@ -32,7 +32,9 @@ from django_ca.typehints import AllowedHashTypes, ParsableKeyType
 from django_ca.utils import add_colons, validate_private_key_parameters
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py regenerate_ocsp_keys` command."""
+
     help = "Regenerate OCSP keys."
 
     def add_arguments(self, parser: CommandParser) -> None:

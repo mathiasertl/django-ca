@@ -124,7 +124,8 @@ class KeyValueWidget(forms.MultiWidget):
 
         # TYPEHINT NOTE: attr.value may be a bytes value, but this does not really happen in practice
         encoded_name: List[Dict[str, str]] = [
-            {"key": attr.oid.dotted_string, "value": attr.value} for attr in value  # type: ignore[dict-item]
+            {"key": attr.oid.dotted_string, "value": attr.value}  # type: ignore[dict-item]
+            for attr in value
         ]
         return json.dumps(encoded_name), None, None
 

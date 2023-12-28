@@ -630,9 +630,7 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 
-{pub[pem]}""".format(
-                        status=status, **self.get_cert_context(key)
-                    ),
+{pub[pem]}""".format(status=status, **self.get_cert_context(key)),
                 )
             elif len(san.value) != 1:
                 continue  # no need to duplicate this here
@@ -676,9 +674,7 @@ Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
 
-{pub[pem]}""".format(
-                        status=status, **self.get_cert_context(key)
-                    ),
+{pub[pem]}""".format(status=status, **self.get_cert_context(key)),
                 )
             self.assertEqual(stderr, "")
 
@@ -705,9 +701,7 @@ Digest:
 Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
-""".format(
-                    status=status, **self.get_cert_context(key)
-                ),
+""".format(status=status, **self.get_cert_context(key)),
             )
             self.assertEqual(stderr, "")
 
@@ -757,9 +751,7 @@ Digest:
 Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
-""".format(
-                **CERT_DATA["child-cert"]
-            ),
+""".format(**CERT_DATA["child-cert"]),
         )
         self.assertEqual(stderr, "")
 
@@ -789,9 +781,7 @@ Digest:
 Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
-""".format(
-                **self.get_cert_context("no-extensions")
-            ),
+""".format(**self.get_cert_context("no-extensions")),
         )
         self.assertEqual(stderr, "")
 
@@ -806,9 +796,15 @@ Digest:
     @freeze_time("2019-04-01")
     def test_contrib_godaddy_derstandardat(self) -> None:
         """Test contrib godaddy cert for derstandard.at."""
-        id1 = "A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10"  # NOQA: E501
-        id2 = "EE:4B:BD:B7:75:CE:60:BA:E1:42:69:1F:AB:E1:9E:66:A3:0F:7E:5F:B0:72:D8:83:00:C4:7B:89:7A:A8:FD:CB"  # NOQA: E501
-        id3 = "44:94:65:2E:B0:EE:CE:AF:C4:40:07:D8:A8:FE:28:C0:DA:E6:82:BE:D8:CB:31:B5:3F:D3:33:96:B5:B6:81:A8"  # NOQA: E501
+        id1 = (
+            "A4:B9:09:90:B4:18:58:14:87:BB:13:A2:CC:67:70:0A:3C:35:98:04:F9:1B:DF:B8:E3:77:CD:0E:C8:0D:DC:10"
+        )
+        id2 = (
+            "EE:4B:BD:B7:75:CE:60:BA:E1:42:69:1F:AB:E1:9E:66:A3:0F:7E:5F:B0:72:D8:83:00:C4:7B:89:7A:A8:FD:CB"
+        )
+        id3 = (
+            "44:94:65:2E:B0:EE:CE:AF:C4:40:07:D8:A8:FE:28:C0:DA:E6:82:BE:D8:CB:31:B5:3F:D3:33:96:B5:B6:81:A8"
+        )
         sct = f"""* Precertificate Signed Certificate Timestamps:
   * Precertificate (v1):
       Timestamp: 2019-03-27 09:13:54.342000
@@ -974,9 +970,7 @@ Certificate extensions:
 Digest:
   SHA-256: {sha256}
   SHA-512: {sha512}
-""".format(
-                **self.get_cert_context("cloudflare_1")
-            ),
+""".format(**self.get_cert_context("cloudflare_1")),
         )
 
     def test_contrib_multiple_ous(self) -> None:

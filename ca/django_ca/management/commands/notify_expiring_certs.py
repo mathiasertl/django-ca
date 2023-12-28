@@ -27,7 +27,9 @@ from django_ca import ca_settings
 from django_ca.models import Certificate
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py notify_expiring_certs` command."""
+
     help = "Send notifications about expiring certificates to watchers."
 
     def add_arguments(self, parser: CommandParser) -> None:

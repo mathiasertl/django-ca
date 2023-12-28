@@ -71,7 +71,7 @@ def _parse_user_notice(value: ParsableUserNotice) -> x509.UserNotice:
 
 
 def _parse_policy_qualifiers(
-    value: Optional[Iterable[Union[str, x509.UserNotice, ParsableUserNotice]]]
+    value: Optional[Iterable[Union[str, x509.UserNotice, ParsableUserNotice]]],
 ) -> Optional[List[Union[str, x509.UserNotice]]]:
     if not value:
         return None
@@ -97,7 +97,7 @@ def _parse_reason(reason: Union[str, x509.ReasonFlags]) -> x509.ReasonFlags:
 
 
 def _parse_distribution_points(
-    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]]
+    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]],
 ) -> Iterator[x509.DistributionPoint]:
     for dpoint in value:
         if isinstance(dpoint, x509.DistributionPoint):
@@ -194,7 +194,7 @@ def _parse_basic_constraints(value: ParsableBasicConstraints) -> x509.BasicConst
 
 
 def _parse_certificate_policies(
-    value: Iterable[Union[x509.PolicyInformation, ParsablePolicyInformation]]
+    value: Iterable[Union[x509.PolicyInformation, ParsablePolicyInformation]],
 ) -> x509.CertificatePolicies:
     policies: List[x509.PolicyInformation] = []
     for pol in value:
@@ -218,7 +218,7 @@ def _parse_certificate_policies(
 
 
 def _parse_crl_distribution_points(
-    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]]
+    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]],
 ) -> x509.CRLDistributionPoints:
     return x509.CRLDistributionPoints(distribution_points=_parse_distribution_points(value))
 
@@ -241,7 +241,7 @@ def _parse_extended_key_usage(value: Iterable[Union[str, x509.ObjectIdentifier]]
 
 
 def _parse_freshest_crl(
-    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]]
+    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]],
 ) -> x509.FreshestCRL:
     return x509.FreshestCRL(distribution_points=_parse_distribution_points(value))
 

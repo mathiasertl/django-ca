@@ -15,7 +15,8 @@
 
 import argparse
 import os
-from typing import List, Union
+import subprocess
+from typing import Any, List, Union
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -27,7 +28,7 @@ class Command(DevCommand):
     help_text = "Run linters and manage.py check commands."
     description = help_text + " This command does **not** invoke pylint (too slow) or mypy."
 
-    def manage(self, *args: str) -> None:
+    def manage(self, *args: str) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run manage.py with warnings turned into errors."""
         python: List[Union[str, "os.PathLike[str]"]] = ["python", "-Wd"]
 
@@ -45,9 +46,8 @@ class Command(DevCommand):
         config.SHOW_COMMANDS = True
         config.SHOW_COMMAND_OUTPUT = True
 
-        self.run("isort", "--check-only", "--diff", ".")
-        self.run("flake8", ".")
-        self.run("black", "--check", ".")
+        self.run("ruff", "format", "--diff", ".")
+        self.run("ruff", "check", ".")
         self.run("pre-commit", "run", "--all-files")
 
         self.manage("check")

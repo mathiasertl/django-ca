@@ -26,7 +26,9 @@ from django_ca.models import Certificate, CertificateAuthority
 from django_ca.utils import add_colons
 
 
-class Command(BaseCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseCommand):
+    """Implement the :command:`manage.py list_certs` command."""
+
     help = "List all certificates."
 
     def add_arguments(self, parser: CommandParser) -> None:

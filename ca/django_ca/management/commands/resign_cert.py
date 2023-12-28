@@ -32,7 +32,9 @@ from django_ca.profiles import Profile, profiles
 from django_ca.typehints import AllowedHashTypes, ExtensionMapping, SubjectFormats
 
 
-class Command(BaseSignCertCommand):  # pylint: disable=missing-class-docstring
+class Command(BaseSignCertCommand):
+    """Implement the :command:`manage.py resign_cert` command."""
+
     help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
 default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 

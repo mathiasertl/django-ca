@@ -13,7 +13,7 @@
 
 """Some constants from the ACME and associated standards.
 
-.. WARNING::
+.. warning::
 
    Do **not** import anything from acme or josepy here. This module is imported by various modules in the main
    django-ca library. Importing acme/josepy would make them a non-optional dependency.
@@ -64,7 +64,7 @@ class IdentifierType(enum.Enum):
 class TlsAlpnProtocol(enum.Enum):
     """Protocol versions for TLS-ALPN-01 challenges.
 
-    .. see-also:: https://datatracker.ietf.org/doc/html/rfc8737
+    .. seealso:: https://datatracker.ietf.org/doc/html/rfc8737
     """
 
     V1 = "acme-tls/1"
