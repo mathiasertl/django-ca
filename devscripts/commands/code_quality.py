@@ -30,17 +30,20 @@ class Command(DevCommand):
 
     def manage(self, *args: str) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run manage.py with warnings turned into errors."""
-        python: List[Union[str, "os.PathLike[str]"]] = ["python", "-Wd"]
+        python: List[Union[str, "os.PathLike[str]"]] = ["python"]
 
         # Django 4.2 introduced a new way of handling storages
-        python += [
-            "-W",
-            "ignore:django.core.files.storage.get_storage_class is deprecated",
-        ]  # pragma: only django<4.2
+        known_warnings = [
+            "default",  # equivalent to "python -Wd"
+            "ignore:django.core.files.storage.get_storage_class is deprecated",  # pragma: only django<4.2
+            "ignore:X509Extension support in pyOpenSSL is deprecated",  # from acme==2.8.0
+            "ignore:Support for class-based `config` is deprecated",  # from django-ninja==1.1
+        ]
+        env = dict(os.environ, PYTHONWARNINGS=",".join(known_warnings))
 
         python.append(config.MANAGE_PY.relative_to(config.ROOT_DIR))
         python += args
-        return self.run(*python)
+        return self.run(*python, env=env)
 
     def handle(self, args: argparse.Namespace) -> None:
         config.SHOW_COMMANDS = True
