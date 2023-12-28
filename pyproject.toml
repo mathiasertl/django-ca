@@ -294,11 +294,20 @@ disable = [
     "unused-variable",
 
     # covered by ruff/pylint:
+    "typevar-name-incorrect-variance", # ruff: PLC0105
+    "typevar-double-variance",  # ruff: PLC0131
+    "single-string-used-for-slots", # ruff: PLC0205
     "too-many-arguments",  # ruff: PLR0913
     "too-many-branches",  # ruff: PLR0912
     "too-many-return-statements",  # ruff: PLR0911
-    "too-many-statements",  # PLR0915
-    "useless-import-alias",  # PLC0414
+    "too-many-statements",  # ruff: PLR0915
+    "use-sequence-for-iteration",  # ruff: PLC0208
+    "useless-import-alias",  # ruff: PLC0414
+
+    # covered by ruff/flake8-bugbear
+    "pointless-statement",  # ruff: B018
+    "expression-not-assigned",  # ruff: B018
+    "raise-missing-from",  # ruff: B904
 
     # covered by ruff/pycodestyle:
     "bad-indentation",
@@ -400,7 +409,10 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = ["D", "E", "F", "I", "G", "DJ", "PL"]
+select = [
+    "B",  # flake8-bugbear
+    "D", "E", "F", "I", "G", "DJ", "PL"
+]
 extend-select = ["RUF100"]  # detect unused suppression comments
 extend-exclude = ["migrations", "stubs"]
 line-length = 110

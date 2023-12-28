@@ -129,7 +129,7 @@ def check_github_actions_tests() -> int:
         with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
             action_config = yaml.safe_load(stream)
 
-        for job_name, job in action_config["jobs"].items():
+        for _job_name, job in action_config["jobs"].items():
             check_github_action_versions(job)
 
             if workflow.name == "tests.yml":

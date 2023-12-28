@@ -39,19 +39,19 @@ class TestDjangoCATestCase(TestCase):
 
     def deprecated_in_128(self) -> None:
         """Emit a message about deprecation in 1.28."""
-        warnings.warn(self.msg_in_128, category=RemovedInDjangoCA128Warning)
+        warnings.warn(self.msg_in_128, category=RemovedInDjangoCA128Warning)  # noqa: B028
 
     def deprecated_in_129(self) -> None:
         """Emit a message about deprecation in 1.29."""
-        warnings.warn(self.msg_in_129, category=RemovedInDjangoCA129Warning)
+        warnings.warn(self.msg_in_129, category=RemovedInDjangoCA129Warning)  # noqa: B028
 
     def deprecated_in_200(self) -> None:
         """Emit a message about deprecation in 2.0."""
-        warnings.warn(self.msg_in_200, category=RemovedInDjangoCA200Warning)
+        warnings.warn(self.msg_in_200, category=RemovedInDjangoCA200Warning)  # noqa: B028
 
     def deprecated_in_next(self) -> None:
         """Emit a message about deprecation in the next version."""
-        warnings.warn(self.msg_in_next, category=RemovedInNextVersionWarning)
+        warnings.warn(self.msg_in_next, category=RemovedInNextVersionWarning)  # noqa: B028
 
     def test_base(self) -> None:
         """Test warning messages."""

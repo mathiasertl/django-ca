@@ -50,7 +50,6 @@ class SupportsLessThan(typing.Protocol):
 # pylint: disable-next=invalid-name
 JSON = Union[Dict[str, "JSON"], List["JSON"], str, int, float, bool, None]
 
-
 #: Hash algorithms that can be used for signing certificates.
 #: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
 AllowedHashTypes = typing.Union[

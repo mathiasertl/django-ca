@@ -73,15 +73,7 @@ from django_ca.utils import ca_storage
 class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     """Tests for adding certificates."""
 
-    load_cas = (
-        "root",
-        "child",
-        "dsa",
-        "ec",
-        "ed25519",
-        "ed448",
-        "pwd",
-    )
+    load_cas = ("root", "child", "dsa", "ec", "ed25519", "ed448", "pwd")
 
     def setUp(self) -> None:
         super().setUp()
@@ -1620,7 +1612,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         """Test submitting an empty form, then filling it with values and submitting it."""
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
-        for key, field_list in form.fields.items():
+        for _key, field_list in form.fields.items():
             for field in field_list:
                 if isinstance(field, (Hidden, Submit)):
                     continue

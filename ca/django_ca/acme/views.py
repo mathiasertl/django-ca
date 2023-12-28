@@ -1042,10 +1042,10 @@ class AcmeChallengeView(AcmePostAsGetView):
     def acme_request(self, slug: str) -> AcmeResponseChallenge:
         try:
             challenge = AcmeChallenge.objects.viewable().account(self.account).url().get(slug=slug)
-        except AcmeChallenge.DoesNotExist:
+        except AcmeChallenge.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
-            raise AcmeUnauthorized()  # pylint: disable=raise-missing-from
+            raise AcmeUnauthorized() from ex
 
         # Set self.auth attribute, we need it in set_link_relations()
         self.auth = challenge.auth  # pylint: disable=attribute-defined-outside-init

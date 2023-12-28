@@ -447,7 +447,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 "PEM",
             ]
 
-        for name, ca in self.usable_cas:
+        for _name, ca in self.usable_cas:
             der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
             pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
             der_ca_key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
@@ -1010,7 +1010,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_serial(self) -> None:
         """Test getting the serial."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.serial, CERT_DATA[ca.name].get("serial"))
+            self.assertEqual(ca.serial, CERT_DATA[name].get("serial"))
 
         for name, cert in self.certs.items():
             self.assertEqual(cert.serial, CERT_DATA[name].get("serial"))
@@ -1021,7 +1021,7 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         for name, ca in self.cas.items():
             self.assertEqual(
                 ca.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
-                CERT_DATA[ca.name].get("subject_alternative_name"),
+                CERT_DATA[name].get("subject_alternative_name"),
             )
 
         for name, cert in self.certs.items():
@@ -1167,11 +1167,11 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_jwk_with_unsupported_algorithm(self) -> None:
         """Test the ValueError raised if called with an unsupported algorithm."""
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
-            self.certs["ed448-cert"].jwk  # pylint: disable=pointless-statement
+            self.certs["ed448-cert"].jwk  # noqa: B018
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
-            self.certs["ed25519-cert"].jwk  # pylint: disable=pointless-statement
+            self.certs["ed25519-cert"].jwk  # noqa: B018
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
-            self.certs["dsa-cert"].jwk  # pylint: disable=pointless-statement
+            self.certs["dsa-cert"].jwk  # noqa: B018
 
     def test_get_authority_information_access_extension(self) -> None:
         """Test getting the AuthorityInformationAccess extension for a CA."""
@@ -1491,7 +1491,7 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         # pylint: disable=no-member; false positive: pylint does not detect RelatedObjectDoesNotExist member
         with self.assertRaisesRegex(AcmeAccount.ca.RelatedObjectDoesNotExist, r"^AcmeAccount has no ca\.$"):
-            AcmeAccount().serial  # pylint: disable=expression-not-assigned
+            AcmeAccount().serial  # noqa: B018
 
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_usable(self) -> None:
@@ -1672,7 +1672,7 @@ class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         """Test that an identifier with an unknown type raises a ValueError."""
         self.auth1.type = "foo"
         with self.assertRaisesRegex(ValueError, r"^Unknown identifier type: foo$"):
-            self.auth1.identifier  # pylint: disable=pointless-statement; access to prop raises exception
+            self.auth1.identifier  # noqa: B018
 
     def test_subject_alternative_name(self) -> None:
         """Test the subject_alternative_name property."""
@@ -1742,7 +1742,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         self.chall.type = "foo"
         with self.assertRaisesRegex(ValueError, r"^foo: Unsupported challenge type\.$"):
-            self.chall.acme_challenge  # pylint: disable=pointless-statement
+            self.chall.acme_challenge  # noqa: B018
 
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_acme_validated(self) -> None:
@@ -1788,7 +1788,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
         with self.assertRaisesRegex(ValueError, r"^tls-alpn-01: Unsupported challenge type\.$"):
-            self.chall.expected  # pylint: disable=pointless-statement  # this is a computed property
+            self.chall.expected  # noqa: B018
 
     def test_get_challenge(self) -> None:
         """Test the get_challenge() function."""

@@ -312,11 +312,11 @@ class OCSPViewTestMixin(TestCaseMixin):
         self,
         certificate: Certificate,
         nonce: Optional[bytes] = None,
-        hash_algorithm: hashes.HashAlgorithm = hashes.SHA256(),
+        hash_algorithm: Type[hashes.HashAlgorithm] = hashes.SHA256,
     ) -> "HttpResponse":
         """Make an OCSP get request."""
         builder = ocsp.OCSPRequestBuilder()
-        builder = builder.add_certificate(certificate.pub.loaded, certificate.ca.pub.loaded, hash_algorithm)
+        builder = builder.add_certificate(certificate.pub.loaded, certificate.ca.pub.loaded, hash_algorithm())
 
         if nonce is not None:  # Add Nonce if requested
             builder = builder.add_extension(x509.OCSPNonce(nonce), False)
@@ -713,7 +713,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
     def test_sha512_hash_algorithm(self) -> None:
         """Test the OCSP responder with an EC-based certificate authority."""
         private_key, ocsp_cert = self.generate_ocsp_key(self.ca)
-        response = self.ocsp_get(self.cert, hash_algorithm=hashes.SHA512())
+        response = self.ocsp_get(self.cert, hash_algorithm=hashes.SHA512)
 
         self.assertOCSPResponse(
             response,

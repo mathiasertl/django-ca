@@ -59,7 +59,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             return profiles[cert.profile]
         except KeyError:
             # Occurs if the certificate specifies a profile which has since been removed from settings
-            raise CommandError(  # pylint: disable=raise-missing-from
+            raise CommandError(  # noqa: B904
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 

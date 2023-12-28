@@ -59,7 +59,7 @@ def forbidden(request: WSGIRequest, exc: Exception) -> HttpResponse:  # pylint: 
 )
 def list_certificate_authorities(
     request: WSGIRequest,
-    filters: CertificateAuthorityFilterSchema = Query(...),  # type: ignore[type-arg]
+    filters: CertificateAuthorityFilterSchema = Query(...),  # type: ignore[type-arg]  # noqa: B008
 ) -> CertificateAuthorityQuerySet:
     """Retrieve a list of currently usable certificate authorities."""
     qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
@@ -170,7 +170,7 @@ def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> Certi
 def list_certificates(
     request: WSGIRequest,
     serial: str,
-    filters: CertificateFilterSchema = Query(...),  # type: ignore[type-arg]
+    filters: CertificateFilterSchema = Query(...),  # type: ignore[type-arg]  # noqa: B008
 ) -> CertificateQuerySet:
     """Retrieve certificates signed by the certificate authority named by `serial`."""
     ca = get_certificate_authority(serial, expired=True)  # You can list certificates of expired CAs

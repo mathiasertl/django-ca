@@ -127,7 +127,7 @@ class Command(DevCommand):
 
         loaded_cas = {}
         certs = fixture_data["certs"]
-        for cert_name, cert_data in sorted(certs.items(), key=lambda t: (t[1]["type"], t[0])):
+        for _cert_name, cert_data in sorted(certs.items(), key=lambda t: (t[1]["type"], t[0])):
             cert: Union[CertificateAuthority, Certificate]  # facilitate type hinting later
             if cert_data["type"] == "ca":
                 if not cert_data["key_filename"]:

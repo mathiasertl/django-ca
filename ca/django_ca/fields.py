@@ -213,7 +213,7 @@ class GeneralNamesField(forms.CharField):
             except ValueError as ex:
                 raise forms.ValidationError(
                     self.error_messages["invalid"], params={"error": ex}, code="invalid"
-                )
+                ) from ex
         if not values:
             return None
 

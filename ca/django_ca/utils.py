@@ -133,7 +133,9 @@ def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> st
        This function is deprecated in 1.27.0 and will be removed in 1.29.0.
     """
     warnings.warn(
-        "This function is deprecated and will be removed in 1.29.0.", category=RemovedInDjangoCA129Warning
+        "This function is deprecated and will be removed in 1.29.0.",
+        category=RemovedInDjangoCA129Warning,
+        stacklevel=2,
     )
 
     def _format_value(val: str) -> str:

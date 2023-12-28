@@ -140,9 +140,10 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
             try:
                 # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
                 ca = self.get(serial=ca_settings.CA_DEFAULT_CA)
-            except self.model.DoesNotExist:
-                # pylint: disable=raise-missing-from; not useful here
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA}: CA not found.")
+            except self.model.DoesNotExist as ex:
+                raise ImproperlyConfigured(
+                    f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA}: CA not found."
+                ) from ex
 
             if ca.enabled is False:
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is disabled.")

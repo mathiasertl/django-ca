@@ -348,7 +348,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
 
         key_usage_choices = {v: k for k, v in KEY_USAGE_NAMES.items()}
 
-        for profile_name, profile in ca_settings.CA_PROFILES.items():
+        for profile in ca_settings.CA_PROFILES.values():
             choices = profile["extensions"]["key_usage"]["value"]
             choices = [key_usage_choices[choice] for choice in choices]
 

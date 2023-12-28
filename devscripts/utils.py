@@ -79,7 +79,7 @@ def _wait_for(
     for command in wait_for:
         wait_for_cmd = shlex.split(jinja_env.from_string(command["command"]).render(**context))
 
-        for i in range(0, 15):
+        for _i in range(0, 15):
             wait_for_proc = run(wait_for_cmd, check=False, **kwargs)
             if wait_for_proc.returncode == 0:
                 break

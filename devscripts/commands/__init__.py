@@ -81,7 +81,7 @@ class DevCommand:
 
     def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> Any:
         """Default argparse entry point."""
-        for mod_name, pip_name in self.modules:
+        for mod_name, _pip_name in self.modules:
             mod = importlib.import_module(mod_name)
             setattr(self, mod_name, mod)
 
@@ -198,7 +198,7 @@ def add_subcommands(parser: argparse.ArgumentParser, path: str, dest: str = "com
     module = importlib.import_module(path)
     submodules = pkgutil.iter_modules(module.__path__)
 
-    for finder, name, is_pkg in submodules:
+    for _finder, name, _is_pkg in submodules:
         # Import module
         submodule = importlib.import_module(f"{path}.{name}")
 

@@ -777,7 +777,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         if hasattr(request, "_resign_obj"):
             # resign the cert, so we add initial data from the original cert
 
-            resign_obj = getattr(request, "_resign_obj")
+            resign_obj = request._resign_obj  # pylint: disable=protected-access
             san = resign_obj.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
             if san is None:
                 san_value = []
@@ -1055,7 +1055,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             profile = profiles[data["profile"]]
 
             if hasattr(request, "_resign_obj"):
-                orig_cert: Certificate = getattr(request, "_resign_obj")
+                orig_cert: Certificate = request._resign_obj  # pylint: disable=protected-access
                 obj.csr = csr = orig_cert.csr.loaded
             else:
                 # Note: ``obj.csr`` is set by model form already

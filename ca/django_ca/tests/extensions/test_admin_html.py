@@ -676,11 +676,11 @@ DistributionPoint:
     def setUp(self) -> None:
         super().setUp()
 
-        for name, ca in self.cas.items():
+        for name in self.cas:
             self.setUpCert(name)
             self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: True")
 
-        for name, cert in self.certs.items():
+        for name in self.certs:
             self.setUpCert(name)
             self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: False")
 

@@ -411,7 +411,7 @@ class AcmeAuthorizationQuerysetTestCase(AcmeQuerySetTestCase):
         # pylint: disable=expression-not-assigned
 
         with self.assertNumQueries(1):
-            AcmeAuthorization.objects.url().get(pk=self.auth.pk).acme_url
+            AcmeAuthorization.objects.url().get(pk=self.auth.pk).acme_url  # noqa: B018
 
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
@@ -436,7 +436,7 @@ class AcmeChallengeQuerysetTestCase(AcmeQuerySetTestCase):
         # pylint: disable=expression-not-assigned
 
         with self.assertNumQueries(1):
-            AcmeChallenge.objects.url().get(pk=self.chall.pk).acme_url
+            AcmeChallenge.objects.url().get(pk=self.chall.pk).acme_url  # noqa: B018
 
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:
@@ -461,7 +461,7 @@ class AcmeCertificateQuerysetTestCase(AcmeQuerySetTestCase):
         # pylint: disable=expression-not-assigned
 
         with self.assertNumQueries(1):
-            AcmeCertificate.objects.url().get(pk=self.acme_cert.pk).acme_url
+            AcmeCertificate.objects.url().get(pk=self.acme_cert.pk).acme_url  # noqa: B018
 
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_viewable(self) -> None:

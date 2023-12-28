@@ -184,8 +184,8 @@ class FormatAction(SingleValueAction[str, Encoding]):
         """Parse the value for this action."""
         try:
             return parse_encoding(value)
-        except ValueError as e:
-            raise argparse.ArgumentError(self, str(e))
+        except ValueError as ex:
+            raise argparse.ArgumentError(self, str(ex)) from ex
 
 
 class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
@@ -471,8 +471,8 @@ class NameAction(SingleValueAction[str, str]):
         # TODO: In django-ca 2.0, parse subject here directly using parse_name_rfc4514().
         try:
             return value
-        except ValueError as e:  # pragma: no cover  # pragma: only django-ca<2.0
-            raise argparse.ArgumentError(self, str(e))
+        except ValueError as ex:  # pragma: no cover  # pragma: only django-ca<2.0
+            raise argparse.ArgumentError(self, str(ex)) from ex
 
 
 class URLAction(SingleValueAction[str, str]):
@@ -788,7 +788,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         try:
             features = [constants.TLS_FEATURE_NAMES[value] for value in values]
         except KeyError as ex:
-            raise argparse.ArgumentError(self, f"Unknown TLSFeature: {ex.args[0]}")
+            raise argparse.ArgumentError(self, f"Unknown TLSFeature: {ex.args[0]}") from ex
 
         extension_type = x509.TLSFeature(features=features)
         setattr(namespace, self.dest, extension_type)
