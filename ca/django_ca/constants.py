@@ -36,7 +36,14 @@ from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
 if typing.TYPE_CHECKING:
-    from django_ca.typehints import AccessMethods, AllowedHashTypes, HashAlgorithms, KeyUsages, OtherNames
+    from django_ca.typehints import (
+        AccessMethods,
+        AllowedHashTypes,
+        GeneralNames,
+        HashAlgorithms,
+        KeyUsages,
+        OtherNames,
+    )
 
 ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = MappingProxyType(
     {
@@ -282,8 +289,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 )
 
 #: Map for types of general names.
-# TODO: test completeness
-GENERAL_NAME_TYPES: "MappingProxyType[str, Type[x509.GeneralName]]" = MappingProxyType(
+GENERAL_NAME_TYPES: "MappingProxyType[GeneralNames, Type[x509.GeneralName]]" = MappingProxyType(
     {
         "email": x509.RFC822Name,
         "URI": x509.UniformResourceIdentifier,
@@ -294,7 +300,7 @@ GENERAL_NAME_TYPES: "MappingProxyType[str, Type[x509.GeneralName]]" = MappingPro
         "otherName": x509.OtherName,
     }
 )
-GENERAL_NAME_NAMES: "MappingProxyType[Type[x509.GeneralName], str]" = MappingProxyType(
+GENERAL_NAME_NAMES: "MappingProxyType[Type[x509.GeneralName], GeneralNames]" = MappingProxyType(
     {v: k for k, v in GENERAL_NAME_TYPES.items()}
 )
 

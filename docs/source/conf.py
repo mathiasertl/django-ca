@@ -485,6 +485,7 @@ nitpick_ignore = [
     # `resolve_canonical_names()` below also works, but you still get the same error.
     ("py:class", "OtherNames"),
     ("py:class", "KeyUsages"),
+    ("py:class", "GeneralNames"),
     # asn1crypto is really used only for OtherNames, so we do not link it
     ("py:class", "asn1crypto.core.Primitive"),
     # Pydantic root model signature does not currently work

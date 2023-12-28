@@ -175,6 +175,7 @@ SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical
 # Literals #
 ############
 
+#: Valid types of general names.
 GeneralNames = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName"]
 
 #: Valid hash algorithm names.

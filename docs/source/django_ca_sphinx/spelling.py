@@ -66,6 +66,8 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         "pyOpenSSL",
         "libffi",
         "SystemD",
+        "dirName",
+        "otherName",
     }
 
     words: typing.ClassVar[typing.Set[str]] = (

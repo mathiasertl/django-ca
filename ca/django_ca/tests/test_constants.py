@@ -14,7 +14,7 @@
 """Some sanity tests for constants."""
 
 import typing
-from typing import Set, Type
+from typing import Any, Set, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -24,8 +24,9 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase
 
 from django_ca import constants
+from django_ca.typehints import GeneralNames, HashAlgorithms
 
-SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
+SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[Any])
 KNOWN_EXTENSION_OIDS = list(
     filter(
         lambda attr: isinstance(attr, x509.ObjectIdentifier),
@@ -38,6 +39,53 @@ KNOWN_EXTENDED_KEY_USAGE_OIDS = list(
         [getattr(constants.ExtendedKeyUsageOID, attr) for attr in dir(constants.ExtendedKeyUsageOID)],
     )
 )
+
+
+def get_subclasses(cls: Type[SuperclassTypeVar]) -> Set[Type[SuperclassTypeVar]]:
+    """Recursively get a list of subclasses.
+
+    .. seealso:: https://stackoverflow.com/a/3862957
+    """
+    return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in get_subclasses(c)])
+
+
+def test_general_name_types() -> None:
+    """Test :py:attr:`~django_ca.constants.GENERAL_NAME_TYPES` for completeness."""
+    subclasses = get_subclasses(x509.GeneralName)  # type: ignore[type-var, type-abstract]
+    assert len(constants.GENERAL_NAME_TYPES) == len(subclasses)
+    assert set(constants.GENERAL_NAME_TYPES.values()) == set(subclasses)
+
+    # Make sure that keys match the typehint exactly
+    assert sorted(constants.GENERAL_NAME_TYPES) == sorted(typing.get_args(GeneralNames))
+
+
+def test_hash_algorithm_names() -> None:
+    """Test :py:attr:`~django_ca.constants.GENERAL_NAME_TYPES` for completeness."""
+    subclasses = get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
+
+    # filter out hash algorithms that are not supported right now due to them having a digest size as
+    # parameter
+    excluded_algorithms = (
+        hashes.SHAKE128,
+        hashes.SHAKE256,
+        hashes.BLAKE2b,
+        hashes.BLAKE2s,
+        hashes.SM3,
+        hashes.SHA512_224,
+        hashes.SHA512_256,
+    )
+    subclasses = set(sc for sc in subclasses if sc not in excluded_algorithms)
+
+    # These are deliberately not supported anymore:
+    if hasattr(hashes, "MD5"):
+        subclasses.remove(hashes.MD5)
+    if hasattr(hashes, "SHA1"):
+        subclasses.remove(hashes.SHA1)
+
+    assert len(constants.HASH_ALGORITHM_NAMES) == len(subclasses)
+
+    # Make sure that keys match the typehint exactly
+    assert sorted(constants.HASH_ALGORITHM_NAMES.values()) == sorted(typing.get_args(HashAlgorithms))
 
 
 class ReasonFlagsTestCase(TestCase):
@@ -54,44 +102,6 @@ class ReasonFlagsTestCase(TestCase):
 class CompletenessTestCase(TestCase):
     """Test for completeness of various constants."""
 
-    def get_subclasses(self, cls: Type[SuperclassTypeVar]) -> Set[Type[SuperclassTypeVar]]:
-        """Recursively get a list of subclasses.
-
-        .. seealso:: https://stackoverflow.com/a/3862957
-        """
-        return set(cls.__subclasses__()).union(
-            [s for c in cls.__subclasses__() for s in self.get_subclasses(c)]
-        )
-
-    @property
-    def supported_hash_algorithms(self) -> typing.Set[Type[hashes.HashAlgorithm]]:
-        """Get list of supported hash algorithms."""
-        subclasses = self.get_subclasses(hashes.HashAlgorithm)  # type: ignore[type-var, type-abstract]
-
-        # filter out hash algorithms that are not supported right now due to them having a digest size as
-        # parameter
-        subclasses = set(
-            sc
-            for sc in subclasses
-            if sc
-            not in [
-                hashes.SHAKE128,
-                hashes.SHAKE256,
-                hashes.BLAKE2b,
-                hashes.BLAKE2s,
-                hashes.SM3,
-                hashes.SHA512_224,
-                hashes.SHA512_256,
-            ]
-        )
-
-        # These are deliberately not supported anymore:
-        if hasattr(hashes, "MD5"):
-            subclasses.remove(hashes.MD5)
-        if hasattr(hashes, "SHA1"):
-            subclasses.remove(hashes.SHA1)
-        return subclasses
-
     def test_elliptic_curves(self) -> None:
         """Test that ``utils.ELLIPTIC_CURVE_TYPES`` covers all known elliptic curves.
 
@@ -100,7 +110,7 @@ class CompletenessTestCase(TestCase):
         """
         # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
         #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-        subclasses = self.get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
+        subclasses = get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
         self.assertEqual(len(constants.ELLIPTIC_CURVE_TYPES), len(subclasses))
         self.assertEqual(constants.ELLIPTIC_CURVE_TYPES, {e.name: e for e in subclasses})
 
@@ -121,10 +131,6 @@ class CompletenessTestCase(TestCase):
     def test_extension_keys(self) -> None:
         """Test completeness of the ``KNOWN_EXTENSION_OIDS`` constant."""
         self.assertCountEqual(KNOWN_EXTENSION_OIDS, constants.EXTENSION_KEYS.keys())
-
-    def test_hash_algorithm_names(self) -> None:
-        """Test completeness of the ``HASH_ALGORITHM_NAMES`` constant."""
-        self.assertEqual(len(constants.HASH_ALGORITHM_NAMES), len(self.supported_hash_algorithms))
 
     def test_nameoid(self) -> None:
         """Test that we support all NameOID instances."""
