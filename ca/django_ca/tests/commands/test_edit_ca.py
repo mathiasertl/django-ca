@@ -29,14 +29,14 @@ class EditCATestCase(TestCaseMixin, TestCase):
     issuer = "https://issuer-test.example.org"
     ian = "http://ian-test.example.org"
     ocsp_url = "http://ocsp-test.example.org"
-    crl = ["http://example.org/crl-test"]
+    crl = ("http://example.org/crl-test",)
     caa = "caa.example.com"
     website = "https://website.example.com"
     tos = "https://tos.example.com"
 
     def edit_ca(self, *args: str) -> None:
         """Shortcut for calling the edit_ca management command."""
-        stdout, stderr = self.cmd_e2e(["edit_ca", self.ca.serial] + list(args))
+        stdout, stderr = self.cmd_e2e(["edit_ca", self.ca.serial, *args])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.ca.refresh_from_db()

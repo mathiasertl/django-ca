@@ -203,7 +203,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         self.assertEqual(ca.subject, subject)
 
-        expected = extensions + [
+        expected = [
+            *extensions,
             basic_constraints(ca=True),
             key_usage(crl_sign=True, key_cert_sign=True),
             self.ext(x509.InhibitAnyPolicy(3)),

@@ -427,7 +427,7 @@ class PolicyIdentifierAction(argparse.Action):
         policy = x509.PolicyInformation(policy_identifier=oid, policy_qualifiers=[])
 
         if certificate_policies := getattr(namespace, self.dest):
-            policies = list(certificate_policies) + [policy]
+            policies = [*certificate_policies, policy]
         else:
             policies = [policy]
 
@@ -666,7 +666,7 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
         if extension is None:
             access_descriptions = [access_description]
         else:
-            access_descriptions = list(extension) + [access_description]
+            access_descriptions = [*extension, access_description]
 
         # Finally sort by OID so that we have more predictable behavior
         access_descriptions = sorted(access_descriptions, key=lambda ad: ad.access_method.dotted_string)

@@ -41,7 +41,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         key_path = str(CERT_DATA["root"]["key_path"])
         pem_path = str(CERT_DATA["root"]["pub_path"])
 
-        out, err = self.cmd_e2e(["import_ca", self.hostname] + list(args) + [key_path, pem_path])
+        out, err = self.cmd_e2e(["import_ca", self.hostname, *args, key_path, pem_path])
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 

@@ -42,7 +42,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
             arguments = []
 
         with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
-            stdout, stderr = self.cmd_e2e(["revoke_cert", cert.serial] + arguments)
+            stdout, stderr = self.cmd_e2e(["revoke_cert", cert.serial, *arguments])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 

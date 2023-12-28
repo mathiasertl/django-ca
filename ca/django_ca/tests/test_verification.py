@@ -137,7 +137,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         if kwargs.pop("verbose", False):
             print(f"openssl {cmd}")
         proc = subprocess.run(
-            ["openssl"] + shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
+            ["openssl", *shlex.split(cmd)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
         )
         stdout = proc.stdout.decode("utf-8")
         stderr = proc.stderr.decode("utf-8")

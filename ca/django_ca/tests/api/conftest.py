@@ -15,6 +15,7 @@
 
 """pytest configuration for API tests."""
 import base64
+import typing
 from http import HTTPStatus
 from typing import Any, Dict, List, Tuple, Type
 
@@ -113,7 +114,7 @@ class APIPermissionTestBase:
 
     path: str
     expected_disabled_status_code = HTTPStatus.NOT_FOUND
-    expected_disabled_response: Any = {"detail": "Not Found"}
+    expected_disabled_response: typing.ClassVar[Any] = {"detail": "Not Found"}
 
     def request(self, client: Client) -> HttpResponse:
         """Make a default request to the view under test (non-GET requests must override this)."""

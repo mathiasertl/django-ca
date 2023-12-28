@@ -131,7 +131,8 @@ class ConsoleIncludeDirective(CodeBlock):
 
     required_arguments = 0
     has_content = False
-    option_spec: OptionSpec = dict(
+    # RUFF NOTE: Suggested fix (ClassVar) does not work for overriding values.
+    option_spec: OptionSpec = dict(  # noqa: RUF012
         CodeBlock.option_spec,
         include=directives.unchanged_required,
         context=directives.unchanged_required,

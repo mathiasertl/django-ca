@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test how extensions look like in the admin interface."""
-
+import typing
 from typing import Dict
 
 from cryptography import x509
@@ -33,7 +33,7 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
 
     load_cas = "__all__"
     load_certs = "__all__"
-    admin_html: Dict[str, Dict[x509.ObjectIdentifier, str]] = {
+    admin_html: typing.ClassVar[Dict[str, Dict[x509.ObjectIdentifier, str]]] = {
         "root": {},
         "child": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['child']['path_length']}",

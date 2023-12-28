@@ -132,36 +132,11 @@ class ExtensionTestCaseMixin(TestCaseProtocol):
 class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     """Base mixin for test cases for CRL based extensions."""
 
+    dns1 = "example.org"
     uri1 = "http://ca.example.com/crl"
     uri2 = "http://ca.example.net/crl"
     uri3 = "http://ca.example.com/"
-    dns1 = "example.org"
-    rdn1: List[SerializedObjectIdentifier] = [
-        {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
-    ]
-
-    s1: ParsableDistributionPoint = {"full_name": [f"URI:{uri1}"]}
-    s2: ParsableDistributionPoint = {"full_name": [f"URI:{uri1}", f"DNS:{dns1}"]}
-    s3: ParsableDistributionPoint = {"relative_name": rdn1}
-    s4: ParsableDistributionPoint = {
-        "full_name": [f"URI:{uri2}"],
-        "crl_issuer": [f"URI:{uri3}"],
-        "reasons": ["ca_compromise", "key_compromise"],
-    }
-    s5: ParsableDistributionPoint = {
-        "full_name": [f"URI:{uri2}"],
-        "crl_issuer": [f"URI:{uri3}"],
-        "reasons": [x509.ReasonFlags.ca_compromise, x509.ReasonFlags.key_compromise],
-    }
-    s6: ParsableDistributionPoint = {
-        "full_name": [f"URI:{uri2}"],
-        "crl_issuer": [f"URI:{uri3}"],
-        "reasons": ["cACompromise", "keyCompromise"],
-    }
-
     cg_rdn1 = rdn([(NameOID.COMMON_NAME, "example.com")])
-    serialized_rdn1 = cg_rdn1.rfc4514_string()  # no need for formatting function in utils for simple case
-
     cg_dp1 = x509.DistributionPoint(full_name=[uri(uri1)], relative_name=None, crl_issuer=None, reasons=None)
     cg_dp2 = x509.DistributionPoint(
         full_name=[uri(uri1), dns(dns1)], relative_name=None, crl_issuer=None, reasons=None
@@ -180,6 +155,31 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     cg_dps4: CRLExtensionType
 
     def setUp(self) -> None:
+        super().setUp()
+
+        rdn1: List[SerializedObjectIdentifier] = [
+            {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
+        ]
+
+        s1: ParsableDistributionPoint = {"full_name": [f"URI:{self.uri1}"]}
+        s2: ParsableDistributionPoint = {"full_name": [f"URI:{self.uri1}", f"DNS:{self.dns1}"]}
+        s3: ParsableDistributionPoint = {"relative_name": rdn1}
+        s4: ParsableDistributionPoint = {
+            "full_name": [f"URI:{self.uri2}"],
+            "crl_issuer": [f"URI:{self.uri3}"],
+            "reasons": ["ca_compromise", "key_compromise"],
+        }
+        s5: ParsableDistributionPoint = {
+            "full_name": [f"URI:{self.uri2}"],
+            "crl_issuer": [f"URI:{self.uri3}"],
+            "reasons": [x509.ReasonFlags.ca_compromise, x509.ReasonFlags.key_compromise],
+        }
+        s6: ParsableDistributionPoint = {
+            "full_name": [f"URI:{self.uri2}"],
+            "crl_issuer": [f"URI:{self.uri3}"],
+            "reasons": ["cACompromise", "keyCompromise"],
+        }
+
         self.test_values = {
             "one": {
                 "admin_html": f"""DistributionPoint:
@@ -187,12 +187,12 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
       <li>Full Name: URI:{self.uri1}</li>
   </ul>""",
                 "serialized_alternatives": [
-                    [self.s1],
+                    [s1],
                     [self.cg_dp1],
                     [{"full_name": [self.uri1]}],
                     [{"full_name": [uri(self.uri1)]}],
                 ],
-                "serialized": [self.s1],
+                "serialized": [s1],
                 "extension_type": self.cg_dps1,
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}",
             },
@@ -202,12 +202,12 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
       <li>Full Name: URI:{self.uri1}, DNS:{self.dns1}</li>
   </ul>""",
                 "serialized_alternatives": [
-                    [self.s2],
+                    [s2],
                     [self.cg_dp2],
                     [{"full_name": [self.uri1, self.dns1]}],
                     [{"full_name": [uri(self.uri1), dns(self.dns1)]}],
                 ],
-                "serialized": [self.s2],
+                "serialized": [s2],
                 "extension_type": self.cg_dps2,
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{self.uri1}\n    * DNS:{self.dns1}",
             },
@@ -216,8 +216,8 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
   <ul>
       <li>Relative Name:<ul><li>commonName (CN): example.com</li></ul></li>
   </ul>""",
-                "serialized_alternatives": [[self.s3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
-                "serialized": [self.s3],
+                "serialized_alternatives": [[s3], [self.cg_dp3], [{"relative_name": self.cg_rdn1}]],
+                "serialized": [s3],
                 "extension_type": self.cg_dps3,
                 "text": "* DistributionPoint:\n  * Relative Name:\n    * commonName (CN): example.com",
             },
@@ -228,8 +228,8 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
       <li>CRL Issuer: URI:{self.uri3}</li>
       <li>Reasons: ca_compromise, key_compromise</li>
   </ul>""",
-                "serialized_alternatives": [[self.s4], [self.s5], [self.s6], [self.cg_dp4]],
-                "serialized": [self.s4],
+                "serialized_alternatives": [[s4], [s5], [s6], [self.cg_dp4]],
+                "serialized": [s4],
                 "extension_type": self.cg_dps4,
                 "text": f"""* DistributionPoint:
   * Full Name:
@@ -247,53 +247,55 @@ class AuthorityInformationAccessTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "authority_information_access"
     ext_class_name = "AuthorityInformationAccess"
 
-    uri1 = "https://example1.com"
-    uri2 = "https://example2.net"
-    uri3 = "https://example3.org"
-    uri4 = "https://example4.at"
+    def setUp(self) -> None:
+        super().setUp()
+        uri1 = "https://example1.com"
+        uri2 = "https://example2.net"
+        uri3 = "https://example3.org"
+        uri4 = "https://example4.at"
 
-    test_values = {
-        "issuer": {
-            "admin_html": f"CA Issuers:<ul><li>URI:{uri1}</li></ul>",
-            "extension_type": x509.AuthorityInformationAccess(
-                descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri1))]
-            ),
-            "serialized": {"issuers": [f"URI:{uri1}"]},
-            "serialized_alternatives": [
-                {"issuers": [uri1]},
-                {"issuers": [uri(uri1)]},
-            ],
-            "text": f"CA Issuers:\n  * URI:{uri1}",
-        },
-        "ocsp": {
-            "admin_html": f"OCSP:<ul><li>URI:{uri2}</li></ul>",
-            "extension_type": x509.AuthorityInformationAccess(
-                descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2))]
-            ),
-            "serialized": {"ocsp": [f"URI:{uri2}"]},
-            "serialized_alternatives": [
-                {"ocsp": [uri2]},
-                {"ocsp": [uri(uri2)]},
-            ],
-            "text": f"OCSP:\n  * URI:{uri2}",
-        },
-        "both": {
-            "admin_html": f"CA Issuers:<ul><li>URI:{uri2}</li></ul> OCSP:<ul><li>URI:{uri1}</li></ul>",
-            "extension_type": x509.AuthorityInformationAccess(
-                descriptions=[
-                    x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
-                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
-                ]
-            ),
-            "serialized": {"ocsp": [f"URI:{uri1}"], "issuers": [f"URI:{uri2}"]},
-            "serialized_alternatives": [
-                {"ocsp": [uri1], "issuers": [uri2]},
-                {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
-            ],
-            "text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
-        },
-        "multiple": {
-            "admin_html": f"""CA Issuers:
+        self.test_values = {
+            "issuer": {
+                "admin_html": f"CA Issuers:<ul><li>URI:{uri1}</li></ul>",
+                "extension_type": x509.AuthorityInformationAccess(
+                    descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri1))]
+                ),
+                "serialized": {"issuers": [f"URI:{uri1}"]},
+                "serialized_alternatives": [
+                    {"issuers": [uri1]},
+                    {"issuers": [uri(uri1)]},
+                ],
+                "text": f"CA Issuers:\n  * URI:{uri1}",
+            },
+            "ocsp": {
+                "admin_html": f"OCSP:<ul><li>URI:{uri2}</li></ul>",
+                "extension_type": x509.AuthorityInformationAccess(
+                    descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2))]
+                ),
+                "serialized": {"ocsp": [f"URI:{uri2}"]},
+                "serialized_alternatives": [
+                    {"ocsp": [uri2]},
+                    {"ocsp": [uri(uri2)]},
+                ],
+                "text": f"OCSP:\n  * URI:{uri2}",
+            },
+            "both": {
+                "admin_html": f"CA Issuers:<ul><li>URI:{uri2}</li></ul> OCSP:<ul><li>URI:{uri1}</li></ul>",
+                "extension_type": x509.AuthorityInformationAccess(
+                    descriptions=[
+                        x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
+                        x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
+                    ]
+                ),
+                "serialized": {"ocsp": [f"URI:{uri1}"], "issuers": [f"URI:{uri2}"]},
+                "serialized_alternatives": [
+                    {"ocsp": [uri1], "issuers": [uri2]},
+                    {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
+                ],
+                "text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
+            },
+            "multiple": {
+                "admin_html": f"""CA Issuers:
 <ul>
   <li>URI:{uri3}</li>
   <li>URI:{uri4}</li>
@@ -303,26 +305,26 @@ OCSP:
   <li>URI:{uri1}</li>
   <li>URI:{uri2}</li>
 </ul>""",
-            "serialized_alternatives": [
-                {"ocsp": [uri1, uri2], "issuers": [uri3, uri4]},
-                {"ocsp": [uri1, uri(uri2)], "issuers": [uri3, uri(uri4)]},
-                {"ocsp": [uri(uri1), uri(uri2)], "issuers": [uri(uri3), uri(uri4)]},
-            ],
-            "serialized": {
-                "ocsp": [f"URI:{uri1}", f"URI:{uri2}"],
-                "issuers": [f"URI:{uri3}", f"URI:{uri4}"],
+                "serialized_alternatives": [
+                    {"ocsp": [uri1, uri2], "issuers": [uri3, uri4]},
+                    {"ocsp": [uri1, uri(uri2)], "issuers": [uri3, uri(uri4)]},
+                    {"ocsp": [uri(uri1), uri(uri2)], "issuers": [uri(uri3), uri(uri4)]},
+                ],
+                "serialized": {
+                    "ocsp": [f"URI:{uri1}", f"URI:{uri2}"],
+                    "issuers": [f"URI:{uri3}", f"URI:{uri4}"],
+                },
+                "extension_type": x509.AuthorityInformationAccess(
+                    descriptions=[
+                        x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
+                        x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2)),
+                        x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
+                        x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri4)),
+                    ]
+                ),
+                "text": f"CA Issuers:\n  * URI:{uri3}\n  * URI:{uri4}\nOCSP:\n  * URI:{uri1}\n  * URI:{uri2}",
             },
-            "extension_type": x509.AuthorityInformationAccess(
-                descriptions=[
-                    x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
-                    x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2)),
-                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri3)),
-                    x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri4)),
-                ]
-            ),
-            "text": f"CA Issuers:\n  * URI:{uri3}\n  * URI:{uri4}\nOCSP:\n  * URI:{uri1}\n  * URI:{uri2}",
-        },
-    }
+        }
 
 
 class AuthorityKeyIdentifierTestCase(ExtensionTestCaseMixin, TestCase):
@@ -331,57 +333,57 @@ class AuthorityKeyIdentifierTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "authority_key_identifier"
     ext_class_name = "AuthorityKeyIdentifier"
 
-    b1 = b"333333"
-    b2 = b"DDDDDD"
-    b3 = b"UUUUUU"
-    hex1 = "33:33:33:33:33:33"
-    hex2 = "44:44:44:44:44:44"
-    hex3 = "55:55:55:55:55:55"
-    uri1 = "http://ca.example.com/crl"
-    dns1 = "example.org"
-    s1 = 0
-    s2 = 1
+    def setUp(self) -> None:
+        super().setUp()
+        b1 = b"333333"
+        b2 = b"DDDDDD"
+        b3 = b"UUUUUU"
+        hex1 = "33:33:33:33:33:33"
+        hex2 = "44:44:44:44:44:44"
+        hex3 = "55:55:55:55:55:55"
+        dns1 = "example.org"
+        s1 = 0
 
-    test_values = {
-        "one": {
-            "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex1}</span></li></ul>",
-            "extension_type": x509.AuthorityKeyIdentifier(b1, None, None),
-            "serialized": {"key_identifier": hex1},
-            "serialized_alternatives": [hex1, {"key_identifier": hex1}],
-            "text": f"* KeyID: {hex1}",
-        },
-        "two": {
-            "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex2}</span></li></ul>",
-            "extension_type": x509.AuthorityKeyIdentifier(b2, None, None),
-            "serialized": {"key_identifier": hex2},
-            "serialized_alternatives": [hex2],
-            "text": f"* KeyID: {hex2}",
-        },
-        "three": {
-            "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex3}</span></li></ul>",
-            "extension_type": x509.AuthorityKeyIdentifier(b3, None, None),
-            "serialized": {"key_identifier": hex3},
-            "serialized_alternatives": [hex3],
-            "text": f"* KeyID: {hex3}",
-        },
-        "issuer/serial": {
-            "admin_html": f"""<ul>
+        self.test_values = {
+            "one": {
+                "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex1}</span></li></ul>",
+                "extension_type": x509.AuthorityKeyIdentifier(b1, None, None),
+                "serialized": {"key_identifier": hex1},
+                "serialized_alternatives": [hex1, {"key_identifier": hex1}],
+                "text": f"* KeyID: {hex1}",
+            },
+            "two": {
+                "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex2}</span></li></ul>",
+                "extension_type": x509.AuthorityKeyIdentifier(b2, None, None),
+                "serialized": {"key_identifier": hex2},
+                "serialized_alternatives": [hex2],
+                "text": f"* KeyID: {hex2}",
+            },
+            "three": {
+                "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex3}</span></li></ul>",
+                "extension_type": x509.AuthorityKeyIdentifier(b3, None, None),
+                "serialized": {"key_identifier": hex3},
+                "serialized_alternatives": [hex3],
+                "text": f"* KeyID: {hex3}",
+            },
+            "issuer/serial": {
+                "admin_html": f"""<ul>
     <li>Authority certificate issuer:
         <ul><li>DNS:{dns1}</li></ul>
     </li>
 </ul>""",
-            "extension_type": x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
-            "serialized": {
-                "authority_cert_issuer": [f"DNS:{dns1}"],
-                "authority_cert_serial_number": s1,
+                "extension_type": x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
+                "serialized": {
+                    "authority_cert_issuer": [f"DNS:{dns1}"],
+                    "authority_cert_serial_number": s1,
+                },
+                "serialized_alternatives": [
+                    {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
+                    {"authority_cert_issuer": [dns1], "authority_cert_serial_number": str(s1)},
+                ],
+                "text": f"* Issuer:\n  * DNS:{dns1}\n* Serial: {s1}",
             },
-            "serialized_alternatives": [
-                {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
-                {"authority_cert_issuer": [dns1], "authority_cert_serial_number": str(s1)},
-            ],
-            "text": f"* Issuer:\n  * DNS:{dns1}\n* Serial: {s1}",
-        },
-    }
+        }
 
 
 class BasicConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
@@ -390,41 +392,43 @@ class BasicConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "basic_constraints"
     ext_class_name = "BasicConstraints"
 
-    test_values = {
-        "no_ca": {
-            "admin_html": "CA: False",
-            "extension_type": x509.BasicConstraints(ca=False, path_length=None),
-            "serialized": {"ca": False},
-            "serialized_alternatives": [
-                {"ca": False},
-                {"ca": False, "path_length": 3},  # ignored b/c ca=False
-                {"ca": False, "path_length": None},  # ignored b/c ca=False
-            ],
-            "text": "CA:FALSE",
-        },
-        "no_path_length": {
-            # include div to make sure that there's no path length
-            "admin_html": "CA: True",
-            "extension_type": x509.BasicConstraints(ca=True, path_length=None),
-            "serialized": {"ca": True, "path_length": None},
-            "serialized_alternatives": [{"ca": True}, {"ca": True, "path_length": None}],
-            "text": "CA:TRUE",
-        },
-        "path_length_zero": {
-            "admin_html": "CA: True, path length: 0",
-            "extension_type": x509.BasicConstraints(ca=True, path_length=0),
-            "serialized": {"ca": True, "path_length": 0},
-            "serialized_alternatives": [{"ca": True, "path_length": 0}],
-            "text": "CA:TRUE, path length:0",
-        },
-        "path_length_three": {
-            "admin_html": "CA: True, path length: 3",
-            "extension_type": x509.BasicConstraints(ca=True, path_length=3),
-            "serialized": {"ca": True, "path_length": 3},
-            "serialized_alternatives": [{"ca": True, "path_length": 3}],
-            "text": "CA:TRUE, path length:3",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values = {
+            "no_ca": {
+                "admin_html": "CA: False",
+                "extension_type": x509.BasicConstraints(ca=False, path_length=None),
+                "serialized": {"ca": False},
+                "serialized_alternatives": [
+                    {"ca": False},
+                    {"ca": False, "path_length": 3},  # ignored b/c ca=False
+                    {"ca": False, "path_length": None},  # ignored b/c ca=False
+                ],
+                "text": "CA:FALSE",
+            },
+            "no_path_length": {
+                # include div to make sure that there's no path length
+                "admin_html": "CA: True",
+                "extension_type": x509.BasicConstraints(ca=True, path_length=None),
+                "serialized": {"ca": True, "path_length": None},
+                "serialized_alternatives": [{"ca": True}, {"ca": True, "path_length": None}],
+                "text": "CA:TRUE",
+            },
+            "path_length_zero": {
+                "admin_html": "CA: True, path length: 0",
+                "extension_type": x509.BasicConstraints(ca=True, path_length=0),
+                "serialized": {"ca": True, "path_length": 0},
+                "serialized_alternatives": [{"ca": True, "path_length": 0}],
+                "text": "CA:TRUE, path length:0",
+            },
+            "path_length_three": {
+                "admin_html": "CA: True, path length: 3",
+                "extension_type": x509.BasicConstraints(ca=True, path_length=3),
+                "serialized": {"ca": True, "path_length": 3},
+                "serialized_alternatives": [{"ca": True, "path_length": 3}],
+                "text": "CA:TRUE, path length:3",
+            },
+        }
 
 
 class CRLDistributionPointsTestCase(CRLDistributionPointsTestCaseMixin, TestCase):
@@ -434,10 +438,12 @@ class CRLDistributionPointsTestCase(CRLDistributionPointsTestCaseMixin, TestCase
     ext_class_name = "CRLDistributionPoints"
     ext_class = x509.CRLDistributionPoints
 
-    cg_dps1 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseMixin.cg_dp1])
-    cg_dps2 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseMixin.cg_dp2])
-    cg_dps3 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseMixin.cg_dp3])
-    cg_dps4 = x509.CRLDistributionPoints([CRLDistributionPointsTestCaseMixin.cg_dp4])
+    def setUp(self) -> None:
+        self.cg_dps1 = x509.CRLDistributionPoints([self.cg_dp1])
+        self.cg_dps2 = x509.CRLDistributionPoints([self.cg_dp2])
+        self.cg_dps3 = x509.CRLDistributionPoints([self.cg_dp3])
+        self.cg_dps4 = x509.CRLDistributionPoints([self.cg_dp4])
+        super().setUp()
 
 
 class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
@@ -447,78 +453,13 @@ class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "certificate_policies"
 
     oid = "2.5.29.32.0"
-
-    text1, text2, text3, text4, text5, text6 = [f"text{i}" for i in range(1, 7)]
-
-    un1: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [text1],
-    }
-    un1_1: ParsablePolicyInformation = {
-        "policy_identifier": x509.ObjectIdentifier(oid),
-        "policy_qualifiers": [text1],
-    }
-    un2: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [
-            {
-                "explicit_text": text2,
-            }
-        ],
-    }
-    un2_1: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [x509.UserNotice(explicit_text=text2, notice_reference=None)],
-    }
-    un3: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [
-            {
-                "notice_reference": {
-                    "organization": text3,
-                    "notice_numbers": [
-                        1,
-                    ],
-                }
-            }
-        ],
-    }
-    un3_1: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [
-            {"notice_reference": x509.NoticeReference(organization=text3, notice_numbers=[1])}
-        ],
-    }
-    un4: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [
-            text4,
-            {
-                "explicit_text": text5,
-                "notice_reference": {
-                    "organization": text6,
-                    "notice_numbers": [1, 2, 3],
-                },
-            },
-        ],
-    }
-    un6: ParsablePolicyInformation = {"policy_identifier": oid, "policy_qualifiers": None}
-    un7: ParsablePolicyInformation = {
-        "policy_identifier": oid,
-        "policy_qualifiers": [
-            {
-                "explicit_text": text5,
-                "notice_reference": {
-                    "notice_numbers": [1],
-                },
-            },
-        ],
-    }
+    text1, text2, text3, text4, text5, text6 = (f"text{i}" for i in range(1, 7))
 
     xun1 = text1
     xun2 = x509.UserNotice(explicit_text=text2, notice_reference=None)
     xun3 = x509.UserNotice(
-        explicit_text=None, notice_reference=x509.NoticeReference(organization=text3, notice_numbers=[1])
+        explicit_text=None,
+        notice_reference=x509.NoticeReference(organization=text3, notice_numbers=[1]),
     )
     xun4_1 = text4
     xun4_2 = x509.UserNotice(
@@ -538,80 +479,135 @@ class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
     xpi6 = x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=None)
     xpi7 = x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[xun7])
 
-    xcp1 = x509.CertificatePolicies(policies=[xpi1])
-    xcp2 = x509.CertificatePolicies(policies=[xpi2])
-    xcp3 = x509.CertificatePolicies(policies=[xpi3])
-    xcp4 = x509.CertificatePolicies(policies=[xpi4])
-    xcp5 = x509.CertificatePolicies(policies=[xpi1, xpi2, xpi4])
-    xcp6 = x509.CertificatePolicies(policies=[xpi6])
-    xcp7 = x509.CertificatePolicies(policies=[xpi7])
+    def setUp(self) -> None:
+        super().setUp()
 
-    test_values = {
-        "one": {
-            "admin_html": f"<ul><li>Unknown OID ({oid}):<ul><li>text1</li></li></ul>",
-            "serialized_alternatives": [[un1], [un1_1], [xpi1]],
-            "serialized": [un1],
-            "extension_type": xcp1,
-            "text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * text1",
-        },
-        "two": {
-            "admin_html": f"""
+        un1: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [self.text1],
+        }
+        un1_1: ParsablePolicyInformation = {
+            "policy_identifier": x509.ObjectIdentifier(self.oid),
+            "policy_qualifiers": [self.text1],
+        }
+        un2: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [{"explicit_text": self.text2}],
+        }
+        un2_1: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [x509.UserNotice(explicit_text=self.text2, notice_reference=None)],
+        }
+        un3: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [{"notice_reference": {"organization": self.text3, "notice_numbers": [1]}}],
+        }
+        un3_1: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [
+                {"notice_reference": x509.NoticeReference(organization=self.text3, notice_numbers=[1])}
+            ],
+        }
+        un4: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [
+                self.text4,
+                {
+                    "explicit_text": self.text5,
+                    "notice_reference": {
+                        "organization": self.text6,
+                        "notice_numbers": [1, 2, 3],
+                    },
+                },
+            ],
+        }
+        un6: ParsablePolicyInformation = {"policy_identifier": self.oid, "policy_qualifiers": None}
+        un7: ParsablePolicyInformation = {
+            "policy_identifier": self.oid,
+            "policy_qualifiers": [
+                {
+                    "explicit_text": self.text5,
+                    "notice_reference": {
+                        "notice_numbers": [1],
+                    },
+                },
+            ],
+        }
+
+        xcp1 = x509.CertificatePolicies(policies=[self.xpi1])
+        xcp2 = x509.CertificatePolicies(policies=[self.xpi2])
+        xcp3 = x509.CertificatePolicies(policies=[self.xpi3])
+        xcp4 = x509.CertificatePolicies(policies=[self.xpi4])
+        xcp5 = x509.CertificatePolicies(policies=[self.xpi1, self.xpi2, self.xpi4])
+        xcp6 = x509.CertificatePolicies(policies=[self.xpi6])
+        xcp7 = x509.CertificatePolicies(policies=[self.xpi7])
+
+        self.test_values = {
+            "one": {
+                "admin_html": f"<ul><li>Unknown OID ({self.oid}):<ul><li>text1</li></li></ul>",
+                "serialized_alternatives": [[un1], [un1_1], [self.xpi1]],
+                "serialized": [un1],
+                "extension_type": xcp1,
+                "text": f"* Policy Identifier: {self.oid}\n  Policy Qualifiers:\n  * text1",
+            },
+            "two": {
+                "admin_html": f"""
 <ul>
-    <li>Unknown OID ({oid}):
+    <li>Unknown OID ({self.oid}):
         <ul>
             <li>User Notice:
                 <ul>
-                    <li>Explicit Text: {text2}</li>
+                    <li>Explicit Text: {self.text2}</li>
                 </ul>
             </li>
         </ul>
     </li>
 </ul>""",
-            "serialized_alternatives": [[un2], [un2_1], [xpi2]],
-            "serialized": [un2],
-            "extension_type": xcp2,
-            "text": f"""* Policy Identifier: {oid}
+                "serialized_alternatives": [[un2], [un2_1], [self.xpi2]],
+                "serialized": [un2],
+                "extension_type": xcp2,
+                "text": f"""* Policy Identifier: {self.oid}
   Policy Qualifiers:
   * User Notice:
-    * Explicit Text: {text2}""",
-        },
-        "three": {
-            "admin_html": f"""
+    * Explicit Text: {self.text2}""",
+            },
+            "three": {
+                "admin_html": f"""
 <ul>
-    <li>Unknown OID ({oid}):
+    <li>Unknown OID ({self.oid}):
         <ul>
             <li>User Notice:<ul>
             <li>Notice Reference:
                 <ul>
-                    <li>Organization: {text3}</li>
+                    <li>Organization: {self.text3}</li>
                     <li>Notice Numbers: [1]</li>
                 </ul>
             </li>
         </ul>
     </li>
 </ul>""",
-            "serialized_alternatives": [[un3], [un3_1], [xpi3]],
-            "serialized": [un3],
-            "extension_type": xcp3,
-            "text": f"""* Policy Identifier: {oid}
+                "serialized_alternatives": [[un3], [un3_1], [self.xpi3]],
+                "serialized": [un3],
+                "extension_type": xcp3,
+                "text": f"""* Policy Identifier: {self.oid}
   Policy Qualifiers:
   * User Notice:
     * Notice Reference:
-      * Organization: {text3}
+      * Organization: {self.text3}
       * Notice Numbers: [1]""",
-        },
-        "four": {
-            "admin_html": f"""
+            },
+            "four": {
+                "admin_html": f"""
 <ul>
-    <li>Unknown OID ({oid}):
+    <li>Unknown OID ({self.oid}):
         <ul>
-            <li>{text4}</li>
+            <li>{self.text4}</li>
             <li>User Notice:
                 <ul>
                     <li>Explicit Text: text5</li>
                     <li>Notice Reference:
                         <ul>
-                            <li>Organization: {text6}</li>
+                            <li>Organization: {self.text6}</li>
                             <li>Notice Numbers: [1, 2, 3]</li>
                         </ul>
                     </li>
@@ -620,43 +616,43 @@ class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
         </ul>
     </li>
 </ul>""",
-            "serialized_alternatives": [[un4], [xpi4]],
-            "serialized": [un4],
-            "extension_type": xcp4,
-            "text": f"""* Policy Identifier: {oid}
+                "serialized_alternatives": [[un4], [self.xpi4]],
+                "serialized": [un4],
+                "extension_type": xcp4,
+                "text": f"""* Policy Identifier: {self.oid}
   Policy Qualifiers:
-  * {text4}
+  * {self.text4}
   * User Notice:
-    * Explicit Text: {text5}
+    * Explicit Text: {self.text5}
     * Notice Reference:
-      * Organization: {text6}
+      * Organization: {self.text6}
       * Notice Numbers: [1, 2, 3]""",
-        },
-        "five": {
-            "admin_html": f"""<ul>
-  <li>Unknown OID ({oid}):
+            },
+            "five": {
+                "admin_html": f"""<ul>
+  <li>Unknown OID ({self.oid}):
     <ul>
-      <li>{text1}</li>
+      <li>{self.text1}</li>
     </ul>
   </li>
-  <li>Unknown OID ({oid}):
+  <li>Unknown OID ({self.oid}):
     <ul>
       <li>
           User Notice:
-          <ul><li>Explicit Text: {text2}</li></ul>
+          <ul><li>Explicit Text: {self.text2}</li></ul>
       </li>
     </ul>
   </li>
-  <li>Unknown OID ({oid}):
+  <li>Unknown OID ({self.oid}):
     <ul>
-      <li>{text4}</li>
+      <li>{self.text4}</li>
       <li>
           User Notice:
           <ul>
-            <li>Explicit Text: {text5}</li>
+            <li>Explicit Text: {self.text5}</li>
             <li>Notice Reference:
               <ul>
-                  <li>Organization: {text6}</li>
+                  <li>Organization: {self.text6}</li>
                   <li>Notice Numbers: [1, 2, 3]</li>
               </ul>
             </li>
@@ -665,27 +661,31 @@ class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
     </ul>
   </li>
 </ul>""",
-            "serialized_alternatives": [[un1, un2, un4], [xpi1, xpi2, xpi4], [un1, xpi2, un4]],
-            "serialized": [un1, un2, un4],
-            "extension_type": xcp5,
-            "text": f"""* Policy Identifier: {oid}
+                "serialized_alternatives": [
+                    [un1, un2, un4],
+                    [self.xpi1, self.xpi2, self.xpi4],
+                    [un1, self.xpi2, un4],
+                ],
+                "serialized": [un1, un2, un4],
+                "extension_type": xcp5,
+                "text": f"""* Policy Identifier: {self.oid}
   Policy Qualifiers:
-  * {text1}
-* Policy Identifier: {oid}
+  * {self.text1}
+* Policy Identifier: {self.oid}
   Policy Qualifiers:
   * User Notice:
-    * Explicit Text: {text2}
-* Policy Identifier: {oid}
+    * Explicit Text: {self.text2}
+* Policy Identifier: {self.oid}
   Policy Qualifiers:
-  * {text4}
+  * {self.text4}
   * User Notice:
-    * Explicit Text: {text5}
+    * Explicit Text: {self.text5}
     * Notice Reference:
-      * Organization: {text6}
+      * Organization: {self.text6}
       * Notice Numbers: [1, 2, 3]""",
-        },
-        "six": {
-            "admin_html": """
+            },
+            "six": {
+                "admin_html": """
 <ul>
   <li>Unknown OID (2.5.29.32.0)
     <ul>
@@ -693,19 +693,19 @@ class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
     </ul>
   </li>
 </ul>""",
-            "serialized": [un6],
-            "extension_type": xcp6,
-            "text": f"* Policy Identifier: {oid}\n  No Policy Qualifiers",
-            "serialized_alternatives": [[un6], [xpi6]],
-        },
-        "seven": {
-            "admin_html": f"""<ul>
-  <li>Unknown OID ({oid}):
+                "serialized": [un6],
+                "extension_type": xcp6,
+                "text": f"* Policy Identifier: {self.oid}\n  No Policy Qualifiers",
+                "serialized_alternatives": [[un6], [self.xpi6]],
+            },
+            "seven": {
+                "admin_html": f"""<ul>
+  <li>Unknown OID ({self.oid}):
     <ul>
       <li>
           User Notice:
           <ul>
-            <li>Explicit Text: {text5}</li>
+            <li>Explicit Text: {self.text5}</li>
             <li>Notice Reference:
               <ul>
                   <li>Notice Numbers: [1]</li>
@@ -716,17 +716,17 @@ class CertificatePoliciesTestCase(ExtensionTestCaseMixin, TestCase):
     </ul>
   </li>
 </ul>""",
-            "serialized": [un7],
-            "extension_type": xcp7,
-            "text": f"""* Policy Identifier: {oid}
+                "serialized": [un7],
+                "extension_type": xcp7,
+                "text": f"""* Policy Identifier: {self.oid}
   Policy Qualifiers:
   * User Notice:
-    * Explicit Text: {text5}
+    * Explicit Text: {self.text5}
     * Notice Reference:
       * Notice Numbers: [1]""",
-            "serialized_alternatives": [[un7], [xpi7]],
-        },
-    }
+                "serialized_alternatives": [[un7], [self.xpi7]],
+            },
+        }
 
 
 class ExtendedKeyUsageTestCase(ExtensionTestCaseMixin, TestCase):
@@ -735,65 +735,67 @@ class ExtendedKeyUsageTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "extended_key_usage"
     ext_class_name = "ExtendedKeyUsage"
 
-    test_values = {
-        "one": {
-            "admin_html": "<ul><li>serverAuth</li></ul>",
-            "extension_type": x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
-            "serialized": ["serverAuth"],
-            "serialized_alternatives": [
-                {"serverAuth"},
-                {ExtendedKeyUsageOID.SERVER_AUTH},
-                [ExtendedKeyUsageOID.SERVER_AUTH],
-                [ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],
-            ],
-            "text": "* serverAuth",
-        },
-        "two": {
-            "admin_html": "<ul><li>clientAuth</li><li>serverAuth</li></ul>",
-            "extension_type": x509.ExtendedKeyUsage(
-                [ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]
-            ),
-            "serialized": ["clientAuth", "serverAuth"],
-            "serialized_alternatives": [
-                {"serverAuth", "clientAuth"},
-                {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH},
-                [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
-                [ExtendedKeyUsageOID.SERVER_AUTH, "clientAuth"],
-            ],
-            "text": "* clientAuth\n* serverAuth",
-        },
-        "three": {
-            "admin_html": "<ul><li>clientAuth</li><li>serverAuth</li><li>timeStamping</li></ul>",
-            "extension_type": x509.ExtendedKeyUsage(
-                [
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                ]
-            ),
-            "serialized": ["clientAuth", "serverAuth", "timeStamping"],
-            "serialized_alternatives": [
-                {"serverAuth", "clientAuth", "timeStamping"},
-                {
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                },
-                {ExtendedKeyUsageOID.CLIENT_AUTH, "serverAuth", ExtendedKeyUsageOID.TIME_STAMPING},
-                [
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values = {
+            "one": {
+                "admin_html": "<ul><li>serverAuth</li></ul>",
+                "extension_type": x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
+                "serialized": ["serverAuth"],
+                "serialized_alternatives": [
+                    {"serverAuth"},
+                    {ExtendedKeyUsageOID.SERVER_AUTH},
+                    [ExtendedKeyUsageOID.SERVER_AUTH],
+                    [ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],
                 ],
-                [
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                "text": "* serverAuth",
+            },
+            "two": {
+                "admin_html": "<ul><li>clientAuth</li><li>serverAuth</li></ul>",
+                "extension_type": x509.ExtendedKeyUsage(
+                    [ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]
+                ),
+                "serialized": ["clientAuth", "serverAuth"],
+                "serialized_alternatives": [
+                    {"serverAuth", "clientAuth"},
+                    {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH},
+                    [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
+                    [ExtendedKeyUsageOID.SERVER_AUTH, "clientAuth"],
                 ],
-            ],
-            "text": "* clientAuth\n* serverAuth\n* timeStamping",
-        },
-    }
+                "text": "* clientAuth\n* serverAuth",
+            },
+            "three": {
+                "admin_html": "<ul><li>clientAuth</li><li>serverAuth</li><li>timeStamping</li></ul>",
+                "extension_type": x509.ExtendedKeyUsage(
+                    [
+                        ExtendedKeyUsageOID.CLIENT_AUTH,
+                        ExtendedKeyUsageOID.SERVER_AUTH,
+                        ExtendedKeyUsageOID.TIME_STAMPING,
+                    ]
+                ),
+                "serialized": ["clientAuth", "serverAuth", "timeStamping"],
+                "serialized_alternatives": [
+                    {"serverAuth", "clientAuth", "timeStamping"},
+                    {
+                        ExtendedKeyUsageOID.CLIENT_AUTH,
+                        ExtendedKeyUsageOID.SERVER_AUTH,
+                        ExtendedKeyUsageOID.TIME_STAMPING,
+                    },
+                    {ExtendedKeyUsageOID.CLIENT_AUTH, "serverAuth", ExtendedKeyUsageOID.TIME_STAMPING},
+                    [
+                        ExtendedKeyUsageOID.SERVER_AUTH,
+                        ExtendedKeyUsageOID.CLIENT_AUTH,
+                        ExtendedKeyUsageOID.TIME_STAMPING,
+                    ],
+                    [
+                        ExtendedKeyUsageOID.TIME_STAMPING,
+                        ExtendedKeyUsageOID.SERVER_AUTH,
+                        ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ],
+                ],
+                "text": "* clientAuth\n* serverAuth\n* timeStamping",
+            },
+        }
 
 
 class FreshestCRLTestCase(CRLDistributionPointsTestCaseMixin, TestCase):
@@ -803,10 +805,13 @@ class FreshestCRLTestCase(CRLDistributionPointsTestCaseMixin, TestCase):
     ext_class_name = "FreshestCRL"
     ext_class = x509.FreshestCRL
 
-    cg_dps1 = x509.FreshestCRL([CRLDistributionPointsTestCaseMixin.cg_dp1])
-    cg_dps2 = x509.FreshestCRL([CRLDistributionPointsTestCaseMixin.cg_dp2])
-    cg_dps3 = x509.FreshestCRL([CRLDistributionPointsTestCaseMixin.cg_dp3])
-    cg_dps4 = x509.FreshestCRL([CRLDistributionPointsTestCaseMixin.cg_dp4])
+    def setUp(self) -> None:
+        self.cg_dps1 = x509.FreshestCRL([self.cg_dp1])
+        self.cg_dps2 = x509.FreshestCRL([self.cg_dp2])
+        self.cg_dps3 = x509.FreshestCRL([self.cg_dp3])
+        self.cg_dps4 = x509.FreshestCRL([self.cg_dp4])
+
+        super().setUp()
 
 
 class InhibitAnyPolicyTestCase(ExtensionTestCaseMixin, TestCase):
@@ -815,22 +820,24 @@ class InhibitAnyPolicyTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "inhibit_any_policy"
     ext_class_name = "InhibitAnyPolicy"
 
-    test_values = {
-        "zero": {
-            "admin_html": "skip certs: 0",
-            "serialized_alternatives": [0],
-            "serialized": 0,
-            "extension_type": x509.InhibitAnyPolicy(0),
-            "text": "0",
-        },
-        "one": {
-            "admin_html": "skip certs: 1",
-            "serialized_alternatives": [1],
-            "serialized": 1,
-            "extension_type": x509.InhibitAnyPolicy(1),
-            "text": "1",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values = {
+            "zero": {
+                "admin_html": "skip certs: 0",
+                "serialized_alternatives": [0],
+                "serialized": 0,
+                "extension_type": x509.InhibitAnyPolicy(0),
+                "text": "0",
+            },
+            "one": {
+                "admin_html": "skip certs: 1",
+                "serialized_alternatives": [1],
+                "serialized": 1,
+                "extension_type": x509.InhibitAnyPolicy(1),
+                "text": "1",
+            },
+        }
 
 
 class IssuerAlternativeNameTestCase(ExtensionTestCaseMixin, TestCase):
@@ -927,70 +934,72 @@ class KeyUsageTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "key_usage"
     ext_class_name = "KeyUsage"
 
-    test_values = {
-        "one": {
-            "admin_html": "<ul><li>keyAgreement</li></ul>",
-            "extension_type": x509.KeyUsage(
-                digital_signature=False,
-                content_commitment=False,
-                key_encipherment=False,
-                data_encipherment=False,
-                key_agreement=True,
-                key_cert_sign=False,
-                crl_sign=False,
-                encipher_only=False,
-                decipher_only=False,
-            ),
-            "serialized": ["key_agreement"],
-            "serialized_alternatives": [{"key_agreement"}, ["keyAgreement"]],
-            "text": "* keyAgreement",
-        },
-        "two": {
-            "admin_html": "<ul><li>keyAgreement</li><li>keyEncipherment</li></ul>",
-            "extension_type": x509.KeyUsage(
-                digital_signature=False,
-                content_commitment=False,
-                key_encipherment=True,
-                data_encipherment=False,
-                key_agreement=True,
-                key_cert_sign=False,
-                crl_sign=False,
-                encipher_only=False,
-                decipher_only=False,
-            ),
-            "serialized": ["key_agreement", "key_encipherment"],
-            "serialized_alternatives": [
-                {"key_agreement", "key_encipherment"},
-                ["keyAgreement", "keyEncipherment"],
-                ["keyEncipherment", "keyAgreement"],
-                ["keyEncipherment", "key_agreement"],
-            ],
-            "text": "* keyAgreement\n* keyEncipherment",
-        },
-        "three": {
-            "admin_html": "<ul><li>keyAgreement</li><li>keyEncipherment</li><li>nonRepudiation</li></ul>",
-            "extension_type": x509.KeyUsage(
-                digital_signature=False,
-                content_commitment=True,
-                key_encipherment=True,
-                data_encipherment=False,
-                key_agreement=True,
-                key_cert_sign=False,
-                crl_sign=False,
-                encipher_only=False,
-                decipher_only=False,
-            ),
-            "serialized": ["content_commitment", "key_agreement", "key_encipherment"],
-            "serialized_alternatives": [
-                {"key_agreement", "key_encipherment", "content_commitment"},
-                ["keyAgreement", "keyEncipherment", "nonRepudiation"],
-                ["nonRepudiation", "keyAgreement", "keyEncipherment"],
-                ["nonRepudiation", "keyAgreement", "keyEncipherment"],
-                ["content_commitment", "key_agreement", "key_encipherment"],
-            ],
-            "text": "* keyAgreement\n* keyEncipherment\n* nonRepudiation",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values = {
+            "one": {
+                "admin_html": "<ul><li>keyAgreement</li></ul>",
+                "extension_type": x509.KeyUsage(
+                    digital_signature=False,
+                    content_commitment=False,
+                    key_encipherment=False,
+                    data_encipherment=False,
+                    key_agreement=True,
+                    key_cert_sign=False,
+                    crl_sign=False,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                "serialized": ["key_agreement"],
+                "serialized_alternatives": [{"key_agreement"}, ["keyAgreement"]],
+                "text": "* keyAgreement",
+            },
+            "two": {
+                "admin_html": "<ul><li>keyAgreement</li><li>keyEncipherment</li></ul>",
+                "extension_type": x509.KeyUsage(
+                    digital_signature=False,
+                    content_commitment=False,
+                    key_encipherment=True,
+                    data_encipherment=False,
+                    key_agreement=True,
+                    key_cert_sign=False,
+                    crl_sign=False,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                "serialized": ["key_agreement", "key_encipherment"],
+                "serialized_alternatives": [
+                    {"key_agreement", "key_encipherment"},
+                    ["keyAgreement", "keyEncipherment"],
+                    ["keyEncipherment", "keyAgreement"],
+                    ["keyEncipherment", "key_agreement"],
+                ],
+                "text": "* keyAgreement\n* keyEncipherment",
+            },
+            "three": {
+                "admin_html": "<ul><li>keyAgreement</li><li>keyEncipherment</li><li>nonRepudiation</li></ul>",
+                "extension_type": x509.KeyUsage(
+                    digital_signature=False,
+                    content_commitment=True,
+                    key_encipherment=True,
+                    data_encipherment=False,
+                    key_agreement=True,
+                    key_cert_sign=False,
+                    crl_sign=False,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                "serialized": ["content_commitment", "key_agreement", "key_encipherment"],
+                "serialized_alternatives": [
+                    {"key_agreement", "key_encipherment", "content_commitment"},
+                    ["keyAgreement", "keyEncipherment", "nonRepudiation"],
+                    ["nonRepudiation", "keyAgreement", "keyEncipherment"],
+                    ["nonRepudiation", "keyAgreement", "keyEncipherment"],
+                    ["content_commitment", "key_agreement", "key_encipherment"],
+                ],
+                "text": "* keyAgreement\n* keyEncipherment\n* nonRepudiation",
+            },
+        }
 
 
 class NameConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
@@ -999,47 +1008,50 @@ class NameConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "name_constraints"
     ext_class_name = "NameConstraints"
 
-    d1 = "example.com"
-    d2 = "example.net"
-
-    test_values = {
-        "permitted": {
-            "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul>",
-            "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
-            "serialized": {"permitted": [f"DNS:{d1}"]},
-            "serialized_alternatives": [
-                {"permitted": [d1]},
-                {"permitted": [f"DNS:{d1}"]},
-                {"permitted": [dns(d1)]},
-                {"permitted": [dns(d1)], "excluded": []},
-            ],
-            "text": f"Permitted:\n  * DNS:{d1}",
-        },
-        "excluded": {
-            "admin_html": f"Excluded:<ul><li>DNS:{d1}</li></ul>",
-            "serialized": {"excluded": [f"DNS:{d1}"]},
-            "serialized_alternatives": [
-                {"excluded": [d1]},
-                {"excluded": [f"DNS:{d1}"]},
-                {"excluded": [dns(d1)]},
-                {"excluded": [dns(d1)], "permitted": []},
-            ],
-            "extension_type": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
-            "text": f"Excluded:\n  * DNS:{d1}",
-        },
-        "both": {
-            "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul> Excluded:<ul><li>DNS:{d2}</li></ul>",
-            "serialized": {"excluded": [f"DNS:{d2}"], "permitted": [f"DNS:{d1}"]},
-            "serialized_alternatives": [
-                {"permitted": [d1], "excluded": [d2]},
-                {"permitted": [f"DNS:{d1}"], "excluded": [f"DNS:{d2}"]},
-                {"permitted": [dns(d1)], "excluded": [dns(d2)]},
-                {"permitted": [dns(d1)], "excluded": [d2]},
-            ],
-            "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
-            "text": f"Permitted:\n  * DNS:{d1}\nExcluded:\n  * DNS:{d2}",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        d1 = "example.com"
+        d2 = "example.net"
+        self.test_values = {
+            "permitted": {
+                "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul>",
+                "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
+                "serialized": {"permitted": [f"DNS:{d1}"]},
+                "serialized_alternatives": [
+                    {"permitted": [d1]},
+                    {"permitted": [f"DNS:{d1}"]},
+                    {"permitted": [dns(d1)]},
+                    {"permitted": [dns(d1)], "excluded": []},
+                ],
+                "text": f"Permitted:\n  * DNS:{d1}",
+            },
+            "excluded": {
+                "admin_html": f"Excluded:<ul><li>DNS:{d1}</li></ul>",
+                "serialized": {"excluded": [f"DNS:{d1}"]},
+                "serialized_alternatives": [
+                    {"excluded": [d1]},
+                    {"excluded": [f"DNS:{d1}"]},
+                    {"excluded": [dns(d1)]},
+                    {"excluded": [dns(d1)], "permitted": []},
+                ],
+                "extension_type": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
+                "text": f"Excluded:\n  * DNS:{d1}",
+            },
+            "both": {
+                "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul> Excluded:<ul><li>DNS:{d2}</li></ul>",
+                "serialized": {"excluded": [f"DNS:{d2}"], "permitted": [f"DNS:{d1}"]},
+                "serialized_alternatives": [
+                    {"permitted": [d1], "excluded": [d2]},
+                    {"permitted": [f"DNS:{d1}"], "excluded": [f"DNS:{d2}"]},
+                    {"permitted": [dns(d1)], "excluded": [dns(d2)]},
+                    {"permitted": [dns(d1)], "excluded": [d2]},
+                ],
+                "extension_type": x509.NameConstraints(
+                    permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]
+                ),
+                "text": f"Permitted:\n  * DNS:{d1}\nExcluded:\n  * DNS:{d2}",
+            },
+        }
 
 
 class OCSPNoCheckTestCase(ExtensionTestCaseMixin, TestCase):
@@ -1048,14 +1060,16 @@ class OCSPNoCheckTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "ocsp_no_check"
     ext_class_name = "OCSPNoCheck"
 
-    test_values: TestValues = {
-        "empty": {
-            "admin_html": "Yes",
-            "serialized": None,
-            "extension_type": x509.OCSPNoCheck(),
-            "text": "Yes",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values: TestValues = {
+            "empty": {
+                "admin_html": "Yes",
+                "serialized": None,
+                "extension_type": x509.OCSPNoCheck(),
+                "text": "Yes",
+            },
+        }
 
 
 class PolicyConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
@@ -1064,43 +1078,53 @@ class PolicyConstraintsTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "policy_constraints"
     ext_class_name = "PolicyConstraints"
 
-    test_values = {
-        "rep_zero": {
-            "admin_html": "<ul><li>RequireExplicitPolicy: 0</li></ul>",
-            "serialized_alternatives": [{"require_explicit_policy": 0}],
-            "serialized": {"require_explicit_policy": 0},
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=0, inhibit_policy_mapping=None),
-            "text": "* RequireExplicitPolicy: 0",
-        },
-        "rep_one": {
-            "admin_html": "<ul><li>RequireExplicitPolicy: 1</li></ul>",
-            "serialized_alternatives": [{"require_explicit_policy": 1}],
-            "serialized": {"require_explicit_policy": 1},
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
-            "text": "* RequireExplicitPolicy: 1",
-        },
-        "iap_zero": {
-            "admin_html": "<ul><li>InhibitPolicyMapping: 0</li></ul>",
-            "serialized_alternatives": [{"inhibit_policy_mapping": 0}],
-            "serialized": {"inhibit_policy_mapping": 0},
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=0),
-            "text": "* InhibitPolicyMapping: 0",
-        },
-        "iap_one": {
-            "admin_html": "<ul><li>InhibitPolicyMapping: 1</li></ul>",
-            "serialized_alternatives": [{"inhibit_policy_mapping": 1}],
-            "serialized": {"inhibit_policy_mapping": 1},
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
-            "text": "* InhibitPolicyMapping: 1",
-        },
-        "both": {
-            "admin_html": "<ul><li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 3</li></ul>",
-            "serialized_alternatives": [{"inhibit_policy_mapping": 2, "require_explicit_policy": 3}],
-            "serialized": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
-            "extension_type": x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
-            "text": "* InhibitPolicyMapping: 2\n* RequireExplicitPolicy: 3",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values = {
+            "rep_zero": {
+                "admin_html": "<ul><li>RequireExplicitPolicy: 0</li></ul>",
+                "serialized_alternatives": [{"require_explicit_policy": 0}],
+                "serialized": {"require_explicit_policy": 0},
+                "extension_type": x509.PolicyConstraints(
+                    require_explicit_policy=0, inhibit_policy_mapping=None
+                ),
+                "text": "* RequireExplicitPolicy: 0",
+            },
+            "rep_one": {
+                "admin_html": "<ul><li>RequireExplicitPolicy: 1</li></ul>",
+                "serialized_alternatives": [{"require_explicit_policy": 1}],
+                "serialized": {"require_explicit_policy": 1},
+                "extension_type": x509.PolicyConstraints(
+                    require_explicit_policy=1, inhibit_policy_mapping=None
+                ),
+                "text": "* RequireExplicitPolicy: 1",
+            },
+            "iap_zero": {
+                "admin_html": "<ul><li>InhibitPolicyMapping: 0</li></ul>",
+                "serialized_alternatives": [{"inhibit_policy_mapping": 0}],
+                "serialized": {"inhibit_policy_mapping": 0},
+                "extension_type": x509.PolicyConstraints(
+                    require_explicit_policy=None, inhibit_policy_mapping=0
+                ),
+                "text": "* InhibitPolicyMapping: 0",
+            },
+            "iap_one": {
+                "admin_html": "<ul><li>InhibitPolicyMapping: 1</li></ul>",
+                "serialized_alternatives": [{"inhibit_policy_mapping": 1}],
+                "serialized": {"inhibit_policy_mapping": 1},
+                "extension_type": x509.PolicyConstraints(
+                    require_explicit_policy=None, inhibit_policy_mapping=1
+                ),
+                "text": "* InhibitPolicyMapping: 1",
+            },
+            "both": {
+                "admin_html": "<ul><li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 3</li></ul>",
+                "serialized_alternatives": [{"inhibit_policy_mapping": 2, "require_explicit_policy": 3}],
+                "serialized": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
+                "extension_type": x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
+                "text": "* InhibitPolicyMapping: 2\n* RequireExplicitPolicy: 3",
+            },
+        }
 
 
 class PrecertPoisonTestCase(ExtensionTestCaseMixin, TestCase):
@@ -1108,14 +1132,17 @@ class PrecertPoisonTestCase(ExtensionTestCaseMixin, TestCase):
 
     ext_class_key = "precert_poison"
     ext_class_name = "PrecertPoison"
-    test_values: TestValues = {
-        "empty": {
-            "admin_html": "Yes",
-            "serialized": None,
-            "extension_type": x509.PrecertPoison(),
-            "text": "Yes",
-        },
-    }
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values: TestValues = {
+            "empty": {
+                "admin_html": "Yes",
+                "serialized": None,
+                "extension_type": x509.PrecertPoison(),
+                "text": "Yes",
+            },
+        }
 
 
 class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase):
@@ -1172,36 +1199,37 @@ class SubjectKeyIdentifierTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "subject_key_identifier"
     ext_class_name = "SubjectKeyIdentifier"
 
-    hex1 = "33:33:33:33:33:33"
-    hex2 = "44:44:44:44:44:44"
-    hex3 = "55:55:55:55:55:55"
-    b1 = b"333333"
-    b2 = b"DDDDDD"
-    b3 = b"UUUUUU"
-
-    test_values = {
-        "one": {
-            "admin_html": hex1,
-            "extension_type": x509.SubjectKeyIdentifier(b1),
-            "serialized": hex1,
-            "serialized_alternatives": [x509.SubjectKeyIdentifier(b1), b1, hex1],
-            "text": hex1,
-        },
-        "two": {
-            "admin_html": hex2,
-            "extension_type": x509.SubjectKeyIdentifier(b2),
-            "serialized": hex2,
-            "serialized_alternatives": [x509.SubjectKeyIdentifier(b2), b2, hex2],
-            "text": hex2,
-        },
-        "three": {
-            "admin_html": hex3,
-            "extension_type": x509.SubjectKeyIdentifier(b3),
-            "serialized": hex3,
-            "serialized_alternatives": [x509.SubjectKeyIdentifier(b3), b3, hex3],
-            "text": hex3,
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        hex1 = "33:33:33:33:33:33"
+        hex2 = "44:44:44:44:44:44"
+        hex3 = "55:55:55:55:55:55"
+        b1 = b"333333"
+        b2 = b"DDDDDD"
+        b3 = b"UUUUUU"
+        self.test_values = {
+            "one": {
+                "admin_html": hex1,
+                "extension_type": x509.SubjectKeyIdentifier(b1),
+                "serialized": hex1,
+                "serialized_alternatives": [x509.SubjectKeyIdentifier(b1), b1, hex1],
+                "text": hex1,
+            },
+            "two": {
+                "admin_html": hex2,
+                "extension_type": x509.SubjectKeyIdentifier(b2),
+                "serialized": hex2,
+                "serialized_alternatives": [x509.SubjectKeyIdentifier(b2), b2, hex2],
+                "text": hex2,
+            },
+            "three": {
+                "admin_html": hex3,
+                "extension_type": x509.SubjectKeyIdentifier(b3),
+                "serialized": hex3,
+                "serialized_alternatives": [x509.SubjectKeyIdentifier(b3), b3, hex3],
+                "text": hex3,
+            },
+        }
 
 
 class TLSFeatureTestCase(ExtensionTestCaseMixin, TestCase):
@@ -1210,34 +1238,38 @@ class TLSFeatureTestCase(ExtensionTestCaseMixin, TestCase):
     ext_class_key = "tls_feature"
     ext_class_name = "TLSFeature"
 
-    test_values: TestValues = {
-        "one": {
-            "admin_html": "<ul><li>status_request (OCSPMustStaple)</li></ul>",
-            "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request]),
-            "serialized": ["status_request"],
-            "text": "* status_request (OCSPMustStaple)",
-        },
-        "two": {
-            "admin_html": "<ul><li>status_request (OCSPMustStaple)</li>"
-            "<li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
-            "extension_type": x509.TLSFeature(
-                features=[TLSFeatureType.status_request, TLSFeatureType.status_request_v2]
-            ),
-            "extension_type_alternatives": [
-                x509.TLSFeature(features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request])
-            ],
-            "serialized": ["status_request", "status_request_v2"],
-            "serialized_alternatives": [
-                ["status_request_v2", "status_request"],
-                [TLSFeatureType.status_request, TLSFeatureType.status_request_v2],
-                [TLSFeatureType.status_request_v2, TLSFeatureType.status_request],
-            ],
-            "text": "* status_request (OCSPMustStaple)\n* status_request_v2 (MultipleCertStatusRequest)",
-        },
-        "three": {
-            "admin_html": "<ul><li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
-            "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request_v2]),
-            "serialized": ["status_request_v2"],
-            "text": "* status_request_v2 (MultipleCertStatusRequest)",
-        },
-    }
+    def setUp(self) -> None:
+        super().setUp()
+        self.test_values: TestValues = {
+            "one": {
+                "admin_html": "<ul><li>status_request (OCSPMustStaple)</li></ul>",
+                "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request]),
+                "serialized": ["status_request"],
+                "text": "* status_request (OCSPMustStaple)",
+            },
+            "two": {
+                "admin_html": "<ul><li>status_request (OCSPMustStaple)</li>"
+                "<li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
+                "extension_type": x509.TLSFeature(
+                    features=[TLSFeatureType.status_request, TLSFeatureType.status_request_v2]
+                ),
+                "extension_type_alternatives": [
+                    x509.TLSFeature(
+                        features=[TLSFeatureType.status_request_v2, TLSFeatureType.status_request]
+                    )
+                ],
+                "serialized": ["status_request", "status_request_v2"],
+                "serialized_alternatives": [
+                    ["status_request_v2", "status_request"],
+                    [TLSFeatureType.status_request, TLSFeatureType.status_request_v2],
+                    [TLSFeatureType.status_request_v2, TLSFeatureType.status_request],
+                ],
+                "text": "* status_request (OCSPMustStaple)\n* status_request_v2 (MultipleCertStatusRequest)",
+            },
+            "three": {
+                "admin_html": "<ul><li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
+                "extension_type": x509.TLSFeature(features=[TLSFeatureType.status_request_v2]),
+                "serialized": ["status_request_v2"],
+                "text": "* status_request_v2 (MultipleCertStatusRequest)",
+            },
+        }

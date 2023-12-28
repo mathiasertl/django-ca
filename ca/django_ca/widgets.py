@@ -88,7 +88,7 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
     help_texts: Tuple[Optional[str], ...] = ()
 
     class Media:
-        css = {
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/multiwidget.css",),
         }
 
@@ -142,7 +142,7 @@ class KeyValueWidget(forms.MultiWidget):
 
     class Media:
         js = ("django_ca/admin/js/key_value.js",)
-        css = {"all": ("django_ca/admin/css/key_value.css",)}
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/key_value.css",)}
 
 
 class SubjectWidget(KeyValueWidget):
@@ -151,7 +151,7 @@ class SubjectWidget(KeyValueWidget):
     template_name = "django_ca/admin/subject.html"
 
     class Media:
-        css = {"all": ("django_ca/admin/css/subject.css",)}
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/subject.css",)}
 
 
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
@@ -175,7 +175,7 @@ class LabeledCheckboxInput(CheckboxInput):
     template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 
     def __init__(self, label: str, wrapper_classes: Iterable[str] = tuple()) -> None:
-        self.wrapper_classes = tuple(wrapper_classes) + ("labeled-checkbox",)
+        self.wrapper_classes = (*tuple(wrapper_classes), "labeled-checkbox")
         self.label = label
         super().__init__()
 
@@ -189,7 +189,7 @@ class LabeledCheckboxInput(CheckboxInput):
         return ctx
 
     class Media:
-        css = {
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/labeledcheckboxinput.css",),
         }
 
@@ -251,7 +251,7 @@ class ProfileWidget(widgets.Select):
             "django_ca/admin/js/extensions.js",
             "django_ca/admin/js/profilewidget.js",
         )
-        css = {"all": ("django_ca/admin/css/profile.css",)}
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/profile.css",)}
 
 
 class GeneralNamesWidget(Textarea):
@@ -276,7 +276,7 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
     css_classes = ("extension",)
 
     def __init__(self, attrs: Optional[Dict[str, str]] = None, **kwargs: Any) -> None:
-        sub_widgets = self.get_widgets(**kwargs) + (CriticalInput(oid=self.oid),)
+        sub_widgets = (*self.get_widgets(**kwargs), CriticalInput(oid=self.oid))
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
     def get_widgets(self, **kwargs: Any) -> ExtensionWidgetsType:

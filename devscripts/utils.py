@@ -175,12 +175,12 @@ def get_previous_release(current_release: Optional[str] = None) -> str:
 
 def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for running a docker command."""
-    return run(["docker", "run", "--rm"] + list(args), **kwargs)
+    return run(["docker", "run", "--rm", *args], **kwargs)
 
 
 def docker_exec(container: str, *args: str) -> "subprocess.CompletedProcess[Any]":
     """Run a command in the given Docker container."""
-    return run(["docker", "exec", container] + list(args))
+    return run(["docker", "exec", container, *args])
 
 
 @contextmanager

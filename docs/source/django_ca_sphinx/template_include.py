@@ -42,7 +42,8 @@ class TemplateDirective(CodeBlock):
 
     required_arguments = 2
     has_content = False
-    option_spec: OptionSpec = dict(CodeBlock.option_spec, context=directives.unchanged)
+    # RUFF NOTE: Suggested fix (ClassVar) does not work for overriding values.
+    option_spec: OptionSpec = dict(CodeBlock.option_spec, context=directives.unchanged)  # noqa: RUF012
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)

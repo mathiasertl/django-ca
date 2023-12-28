@@ -55,6 +55,7 @@ class MappingDocumentor(DataDocumenter):
         return super().can_document_member(member, membername, isattr, parent) and isinstance(member, Mapping)
 
     def serialize_object_identifier(self, value: x509.ObjectIdentifier) -> str:
+        """Serialize an object identifier."""
         for name in dir(ExtensionOID):
             if value == getattr(ExtensionOID, name):
                 return f":py:attr:`ExtensionOID.{name} <cg:cryptography.x509.oid.ExtensionOID.{name}>`"

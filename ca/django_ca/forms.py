@@ -15,7 +15,7 @@
 
 import typing
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -34,13 +34,16 @@ from django_ca.utils import parse_general_name
 from django_ca.widgets import ProfileWidget
 
 if typing.TYPE_CHECKING:
+    from django_stubs_ext import StrPromise
+
     CertificateModelForm = forms.ModelForm[Certificate]
     X509CertMixinModelForm = forms.ModelForm[X509CertMixin]
 else:
     CertificateModelForm = X509CertMixinModelForm = forms.ModelForm
 
-HASH_ALGORITHM_CHOICES = tuple(
-    [("", "None")] + sorted([(name, name) for name in constants.HASH_ALGORITHM_TYPES], key=lambda t: t[1])
+HASH_ALGORITHM_CHOICES = (
+    ("", "None"),
+    *sorted([(name, name) for name in constants.HASH_ALGORITHM_TYPES], key=lambda t: t[1]),
 )
 
 
@@ -98,7 +101,7 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
     sign_certificate_policies = fields.CertificatePoliciesField(required=False)
 
     class Meta:
-        labels = {"acme_registration": _("Account registration")}
+        labels: typing.ClassVar[Dict[str, "StrPromise"]] = {"acme_registration": _("Account registration")}
 
 
 class CreateCertificateBaseForm(CertificateModelForm):
@@ -281,10 +284,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
     class Meta:
         model = Certificate
-        fields = [
-            "watchers",
-            "ca",
-        ]
+        fields = ("watchers", "ca")
 
 
 class CreateCertificateForm(CreateCertificateBaseForm):
@@ -292,11 +292,7 @@ class CreateCertificateForm(CreateCertificateBaseForm):
 
     class Meta:
         model = Certificate
-        fields = [
-            "csr",
-            "watchers",
-            "ca",
-        ]
+        fields = ("csr", "watchers", "ca")
 
 
 class ResignCertificateForm(CreateCertificateBaseForm):
@@ -316,10 +312,10 @@ class RevokeCertificateForm(CertificateModelForm):
 
     class Meta:
         model = Certificate
-        fields = ["revoked_reason", "compromised"]
-        field_classes = {
+        fields = ("revoked_reason", "compromised")
+        field_classes: typing.ClassVar[Dict[str, Type[forms.Field]]] = {
             "compromised": forms.SplitDateTimeField,
         }
-        widgets = {
+        widgets: typing.ClassVar[Dict[str, Type[forms.Widget]]] = {
             "compromised": AdminSplitDateTime,
         }

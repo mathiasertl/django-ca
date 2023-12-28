@@ -286,7 +286,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar]):
     """
 
     extension_class: Type[ExtensionTypeTypeVar]
-    default_error_messages = {
+    default_error_messages = {  # noqa: RUF012  # defined in base class, cannot be overwritten
         "unparsable-extension": _("The value cannot be parsed to an extension."),
         "invalid-type": _("%(value)s: Not a cryptography.x509.Extension class."),
         "invalid-extension-type": _("Expected an instance of %(extension_class)s."),

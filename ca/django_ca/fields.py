@@ -103,7 +103,9 @@ openssl req -new -key priv.pem -out csr.pem -utf8 -batch -subj '/CN=example.com'
 class ObjectIdentifierField(forms.CharField):
     """A form field for a :py:class:`~cg:cryptography.x509.ObjectIdentifier`."""
 
-    default_error_messages = {"invalid-oid": _("%(value)s: The given OID is invalid.")}
+    default_error_messages = {  # noqa: RUF012  # defined in base class
+        "invalid-oid": _("%(value)s: The given OID is invalid."),
+    }
 
     def to_python(self, value: str) -> Optional[x509.ObjectIdentifier]:  # type: ignore[override]
         if not value:
@@ -192,7 +194,7 @@ class GeneralNamesField(forms.CharField):
     """MultipleChoice field for :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`."""
 
     widget = widgets.GeneralNamesWidget
-    default_error_messages = {
+    default_error_messages = {  # noqa: RUF012  # defined in base class
         "invalid": _("Unparsable General Name: %(error)s"),
     }
 
@@ -255,7 +257,7 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
     fields: Optional[Tuple[forms.Field, ...]] = None  # type: ignore[assignment]
 
     def __init__(self, **kwargs: Any) -> None:
-        fields = self.get_fields() + (forms.BooleanField(required=False, initial=True),)
+        fields = [*self.get_fields(), forms.BooleanField(required=False, initial=True)]
         kwargs.setdefault("label", get_extension_name(self.extension_type.oid))
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
@@ -314,7 +316,7 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
 class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
     """Base class for extensions with DistributionPoints."""
 
-    default_error_messages = {
+    default_error_messages = {  # noqa: RUF012  # defined in base class
         "full-and-relative-name": _("You cannot provide both full_name and relative_name."),
         "no-dp-or-issuer": _("A DistributionPoint needs at least a full or relative name or a crl issuer."),
     }

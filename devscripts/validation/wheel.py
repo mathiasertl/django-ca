@@ -66,7 +66,7 @@ class Command(DevCommand):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.pyproject_toml = read_configuration(config.ROOT_DIR / "pyproject.toml")
-        self.extra_choices = ["none"] + list(self.pyproject_toml["project"]["optional-dependencies"])
+        self.extra_choices = ["none", *list(self.pyproject_toml["project"]["optional-dependencies"])]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(

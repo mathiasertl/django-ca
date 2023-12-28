@@ -89,7 +89,7 @@ class TestConstantsTestCase(TestCase):
 
     def test_status_enum(self) -> None:
         """Test that the Status Enum is equivalent to the main ACME library."""
-        expected = list(acme.messages.Status.POSSIBLE_NAMES) + ["expired"]
+        expected = [*acme.messages.Status.POSSIBLE_NAMES, "expired"]
         self.assertCountEqual(expected, [s.value for s in Status])
 
     def test_identifier_enum(self) -> None:
@@ -127,7 +127,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         if challenge is None:
             challenge = self.chall
 
-        self.assertEqual(logcm.output, [self.get_log_message(challenge)] + list(messages))
+        self.assertEqual(logcm.output, [self.get_log_message(challenge), *messages])
 
     def get_log_message(self, chall: AcmeChallenge) -> str:
         """Get the default log message for DNS-01 validation."""

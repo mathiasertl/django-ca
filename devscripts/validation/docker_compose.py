@@ -55,7 +55,7 @@ def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
 
 
 def _compose_exec(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
-    cmd = ["docker", "compose", "exec"] + kwargs.pop("compose_args", []) + list(args)
+    cmd = ["docker", "compose", "exec", *kwargs.pop("compose_args", []), *args]
     return utils.run(cmd, **kwargs)
 
 
@@ -152,7 +152,7 @@ def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
         x509.AuthorityInformationAccess,
         cert.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value,
     )
-    ocsp_ad = [ad for ad in aia if ad.access_method == AuthorityInformationAccessOID.OCSP][0]
+    ocsp_ad = next(ad for ad in aia if ad.access_method == AuthorityInformationAccessOID.OCSP)
     ocsp_url = ocsp_ad.access_location.value
 
     _openssl_verify(ca_file, cert_file)

@@ -14,8 +14,9 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the view to list certificate authorities."""
+import typing
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from django.db.models import Model
 from django.test.client import Client
@@ -89,4 +90,4 @@ class TestPermissions(APIPermissionTestBase):
     path = path
 
     expected_disabled_status_code = HTTPStatus.OK
-    expected_disabled_response = []
+    expected_disabled_response: typing.ClassVar[List[Any]] = []

@@ -280,6 +280,8 @@ enable = [
 disable = [
     # devscripts have some larger overlapping parts
     "duplicate-code",
+    # pylint is just buggy with TypedDict inheritance.
+    "inherit-non-class",
 
     # These are just annoying
     "too-few-public-methods",
@@ -297,6 +299,7 @@ disable = [
     "typevar-name-incorrect-variance", # ruff: PLC0105
     "typevar-double-variance",  # ruff: PLC0131
     "single-string-used-for-slots", # ruff: PLC0205
+    "subprocess-run-check",  # ruff: PLW1510
     "too-many-arguments",  # ruff: PLR0913
     "too-many-branches",  # ruff: PLR0912
     "too-many-return-statements",  # ruff: PLR0911
@@ -411,7 +414,9 @@ filterwarnings = [
 [tool.ruff]
 select = [
     "B",  # flake8-bugbear
-    "D", "E", "F", "I", "G", "DJ", "PL"
+    "D", "E", "F", "I", "G", "DJ",
+    "PL",  # pylint
+    "RUF",  # ruff specific checks
 ]
 extend-select = ["RUF100"]  # detect unused suppression comments
 extend-exclude = ["migrations", "stubs"]

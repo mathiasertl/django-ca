@@ -86,7 +86,7 @@ class InitCATest(TestCaseMixin, TestCase):
             chain = []
 
         with self.assertCreateCASignals() as (pre, post):
-            out, err = self.cmd_e2e(["init_ca", name] + list(args))
+            out, err = self.cmd_e2e(["init_ca", name, *args])
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
@@ -94,7 +94,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertPostCreateCa(post, ca)
         self.assertPrivateKey(ca)
         ca.full_clean()  # assert e.g. max_length in serials
-        self.assertSignature(chain + [ca], ca)
+        self.assertSignature([*chain, ca], ca)
 
         return ca
 
@@ -585,25 +585,25 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test that ACME/REST API options don't work when feature is disabled."""
         command = ["init_ca", "Test CA", "--subject-format=rfc4514", "CN=example.com"]
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--acme-enable"])
+            self.cmd_e2e([*command, "--acme-enable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--acme-disable"])
+            self.cmd_e2e([*command, "--acme-disable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--acme-disable-account-registration"])
+            self.cmd_e2e([*command, "--acme-disable-account-registration"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--acme-enable-account-registration"])
+            self.cmd_e2e([*command, "--acme-enable-account-registration"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--acme-contact-optional"])
+            self.cmd_e2e([*command, "--acme-contact-optional"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--acme-profile=client"])
+            self.cmd_e2e([*command, "--acme-profile=client"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e(command + ["--api-enable"])
+            self.cmd_e2e([*command, "--api-enable"])
 
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:

@@ -114,7 +114,7 @@ class Command(DevCommand):
             cmd = f"openssl ocsp -CAfile {ca_path} -issuer {ca_path} -cert {cert_path} -url {ocsp_url} -resp_text"  # noqa: E501
             print(f"  * {bold(cmd)}")
 
-    def save_fixture_data(
+    def save_fixture_data(  # pylint: disable=too-many-locals
         self, ca_settings: types.ModuleType, fixture_data: "FixtureData"
     ) -> Dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""

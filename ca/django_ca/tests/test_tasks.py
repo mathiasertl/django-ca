@@ -306,7 +306,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         self.assertEqual(
             logcm.output,
             [
-                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+                f"INFO:django_ca.tasks:{self.chall!s} is invalid",
             ],
         )
 
@@ -323,8 +323,8 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         self.assertEqual(
             logcm.output,
             [
-                f"ERROR:django_ca.tasks:{str(self.chall)}: Challenge type is not supported.",
-                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+                f"ERROR:django_ca.tasks:{self.chall!s}: Challenge type is not supported.",
+                f"INFO:django_ca.tasks:{self.chall!s} is invalid",
             ],
         )
 
@@ -405,7 +405,7 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
         self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
         self.assertEqual(len(logcm.output), 2)
         self.assertIn(val, logcm.output[0])
-        self.assertEqual(logcm.output[1], f"INFO:django_ca.tasks:{str(self.chall)} is invalid")
+        self.assertEqual(logcm.output[1], f"INFO:django_ca.tasks:{self.chall!s} is invalid")
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -470,7 +470,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
             [
                 f"INFO:{logger}:DNS-01 validation of {domain}: Expect {exp} on {acme_domain}",
                 f"DEBUG:{logger}:TXT {acme_domain}: record does not exist.",
-                f"INFO:django_ca.tasks:{str(self.chall)} is invalid",
+                f"INFO:django_ca.tasks:{self.chall!s} is invalid",
             ],
         )
 

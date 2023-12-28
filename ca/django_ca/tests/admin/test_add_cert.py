@@ -1338,8 +1338,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
         # Now select common name, and the subject is also updated
         new_select.select_by_value(NameOID.COMMON_NAME.dotted_string)
-        new_subject = expected_initial_subject + [
-            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}
+        new_subject = [
+            expected_initial_subject,
+            *{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
         ]
         self.assertEqual(self.value, new_subject)
         self.assertEqual(self.displayed_value, new_subject)  # just to be sure

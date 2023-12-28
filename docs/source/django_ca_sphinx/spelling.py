@@ -41,7 +41,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
     in a wordlist but can be dropped here.
     """
 
-    MAGIC_WORDS = {
+    MAGIC_WORDS: typing.ClassVar[typing.Set[str]] = {
         "anyPolicy",
         "GoDaddy",
         "TrustID",
@@ -68,7 +68,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         "SystemD",
     }
 
-    words = (
+    words: typing.ClassVar[typing.Set[str]] = (
         MAGIC_WORDS
         | set(constants.KEY_USAGE_NAMES.values())
         | set(constants.EXTENDED_KEY_USAGE_NAMES.values())
@@ -86,11 +86,11 @@ class TypeHintsFilter(Filter):  # type: ignore[misc]
     doesn't link them properly in HTML. This appears to also make them show up as spelling errors.
     """
 
-    typehint_names = [
+    typehint_names = tuple(
         str(getattr(typehints, tv))
         for tv in dir(typehints)
         if isinstance(getattr(typehints, tv), typing.TypeVar)
-    ]
+    )
 
     def _skip(self, word: str) -> bool:
         return word in self.typehint_names

@@ -882,7 +882,7 @@ class CertificateAuthority(X509CertMixin):
                     san = x509.Extension(
                         oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                         critical=exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].critical,
-                        value=x509.SubjectAlternativeName(list(san.value) + [cn]),
+                        value=x509.SubjectAlternativeName([*san.value, cn]),
                     )
                     exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
                 # else: CommonName already in SubjectAlternativeName
@@ -1417,7 +1417,7 @@ class Certificate(X509CertMixin):
     @property
     def bundle(self) -> List[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
-        return [typing.cast(X509CertMixin, self)] + typing.cast(List[X509CertMixin], self.ca.bundle)
+        return [typing.cast(X509CertMixin, self), *typing.cast(List[X509CertMixin], self.ca.bundle)]
 
     @property
     def root(self) -> CertificateAuthority:

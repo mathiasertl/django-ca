@@ -52,8 +52,8 @@ class AdminActionTestCaseMixin(
 
     action = ""
     data: Dict[str, Any]
-    insufficient_permissions: List[str] = []
-    required_permissions: List[str] = []
+    insufficient_permissions: Tuple[str, ...] = ()
+    required_permissions: Tuple[str, ...] = ()
 
     def assertFailedRequest(  # pylint: disable=invalid-name
         self, response: "HttpResponse", *objects: DjangoCAModelTypeVar
@@ -97,7 +97,7 @@ class AdminActionTestCaseMixin(
         # Test if the view permission is not the only action required anyway. If yes, that would mean the code
         # below would actually succeed.
         view_codename = f"view_{self.model._meta.model_name}"
-        if self.required_permissions == [f"{self.model._meta.app_label}{view_codename}"]:
+        if self.required_permissions == (f"{self.model._meta.app_label}{view_codename}",):
             return
 
         # Add view permission for the model. If we do not have it, Django will just return FORBIDDEN like in
@@ -141,7 +141,7 @@ class AdminChangeActionTestCaseMixin(
         "child",
     )
     load_certs = ("profile-webserver",)
-    data: Dict[str, Any] = {}
+    data: Dict[str, Any]
     tool = ""
     pre_signal: Signal
     post_signal: Signal
@@ -261,7 +261,7 @@ class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], TestCase):
     load_certs = ("root-cert",)
     action = "revoke"
     model = Certificate
-    required_permissions = ["django_ca.change_certificate"]
+    required_permissions = ("django_ca.change_certificate",)
 
     def setUp(self) -> None:
         super().setUp()
@@ -281,10 +281,13 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
     """Test the revoke change action."""
 
     model = Certificate
-    data = {"revoked_reason": ""}  # default post data
     tool = "revoke_change"
     pre_signal = pre_revoke_cert
     post_signal = post_revoke_cert
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.data = {"revoked_reason": ""}  # default post data
 
     def assertFailedRequest(self, response: "HttpResponse", obj: Optional[Certificate] = None) -> None:
         obj = obj or self.cert

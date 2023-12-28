@@ -558,7 +558,7 @@ class Profile:
                 extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
                     oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
                     critical=san_ext.critical,
-                    value=x509.SubjectAlternativeName(list(san_ext.value) + [common_name]),
+                    value=x509.SubjectAlternativeName([*san_ext.value, common_name]),
                 )
         else:
             extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(

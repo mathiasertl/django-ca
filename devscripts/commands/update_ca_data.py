@@ -295,7 +295,7 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
         "aki": [(name_header, "Critical", "Key identifier", "Issuer", "Serial")],
         "basicconstraints": [(name_header, "Critical", "CA", "Path length")],
         "eku": [(name_header, "Critical", "Usages")],
-        "key_usage": [[name_header, "Critical"] + sorted(constants.KEY_USAGE_NAMES.values())],
+        "key_usage": [[name_header, "Critical", *sorted(constants.KEY_USAGE_NAMES.values())]],
         "ian": [(name_header, "Critical", "Names")],
         "ski": [(name_header, "Critical", "Digest")],
         "certificatepolicies": [(name_header, "Critical", "Policies")],
@@ -424,9 +424,7 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
                     except ValueError:
                         key_usages.append("✗")
 
-                this_cert_values["key_usage"] = [
-                    critical,
-                ] + key_usages
+                this_cert_values["key_usage"] = [critical, *key_usages]
             elif isinstance(value, x509.NameConstraints):
                 permitted = (
                     "\n".join([f"* {format_general_name(n)}" for n in value.permitted_subtrees])
@@ -470,7 +468,7 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
                 for mrow in row[1:]:
                     cert_values[key].append(["", ""] + mrow[1:])
             else:
-                cert_values[key].append([cert_name] + row)
+                cert_values[key].append([cert_name, *row])
 
     for name, values in cert_values.items():
         if name in exclude_empty_lines:
@@ -648,7 +646,7 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
                 warn(f"Unknown extension: {ext.oid._name}")  # pylint: disable=protected-access
 
         for crl_key, crl_row in this_crl_values.items():
-            crl_values[crl_key].append([crl_name] + list(crl_row))
+            crl_values[crl_key].append([crl_name, *list(crl_row)])
 
     # Finally, write CRL data to RST table
     for crl_key, crl_extensions in crl_values.items():

@@ -306,8 +306,10 @@ class CertificateMixin(
         fieldsets = copy.deepcopy(fieldsets)
         for ext in obj.sorted_extensions:
             field = self.get_oid_name(ext.oid)
-            # TYPEHINT NOTE: django-stubs typehints as Sequence, which has no appends().
-            fieldsets[self.x509_fieldset_index][1]["fields"].append(field)  # type: ignore[attr-defined]
+            fieldsets[self.x509_fieldset_index][1]["fields"] = (
+                *fieldsets[self.x509_fieldset_index][1]["fields"],
+                field,
+            )
         return fieldsets  # type: ignore[return-value]  # see other return above
 
     def get_readonly_fields(  # type: ignore[override] # pylint: disable=missing-function-docstring
@@ -328,7 +330,7 @@ class CertificateMixin(
         return fields + extension_fields
 
     class Media:  # pylint: disable=missing-class-docstring
-        css = {
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/base.css",),
         }
 
@@ -340,11 +342,11 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
     if django.VERSION >= (5, 0):  # pragma: django>=5.0 branch
         formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
 
-    fieldsets = [
+    fieldsets = (
         (
             None,
             {
-                "fields": [
+                "fields": (
                     "name",
                     "enabled",
                     "subject_field",
@@ -354,31 +356,31 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                     "caa_identity",
                     "website",
                     "terms_of_service",
-                ],
+                ),
             },
         ),
         (
             _("Details"),
             {
                 "description": _("Information to add to newly signed certificates."),
-                "fields": [
+                "fields": (
                     "crl_url",
                     "crl_number",
                     "issuer_url",
                     "ocsp_url",
                     "issuer_alt_name",
                     "sign_certificate_policies",
-                ],
+                ),
             },
         ),
         (
             _("OCSP responder configuration"),
-            {"fields": ["ocsp_responder_key_validity", "ocsp_response_validity"]},
+            {"fields": ("ocsp_responder_key_validity", "ocsp_response_validity")},
         ),
         (
             _("Certificate"),
             {
-                "fields": ["pub_pem", "expires"],
+                "fields": ("pub_pem", "expires"),
                 # The "as-code" class is used so CSS can only match this section (and only in an
                 # existing cert).
                 "classes": ("as-code",),
@@ -387,33 +389,15 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         (
             _("X509 extensions"),
             {
-                "fields": [],  # dynamically added by add_fieldsets
+                "fields": (),  # dynamically added by add_fieldsets
             },
         ),
-    ]
-    form = CertificateAuthorityForm  # type: ignore[assignment]
-    list_display = [
-        "enabled",
-        "name",
-        "serial_field",
-    ]
-    list_display_links = [
-        "enabled",
-        "name",
-    ]
-    search_fields = [
-        "cn",
-        "name",
-        "serial_field",
-    ]
-    readonly_fields = (
-        "issuer_field",
-        "serial_field",
-        "subject_field",
-        "pub_pem",
-        "parent",
-        "expires",
     )
+    form = CertificateAuthorityForm  # type: ignore[assignment]
+    list_display = ("enabled", "name", "serial_field")
+    list_display_links = ("enabled", "name")
+    search_fields = ("cn", "name", "serial_field")
+    readonly_fields = ("issuer_field", "serial_field", "subject_field", "pub_pem", "parent", "expires")
     x509_fieldset_index = 4
 
     def has_add_permission(self, request: HttpRequest) -> bool:
@@ -432,9 +416,10 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         # Mark certificate policies as read-only if the configured extension is to complex for the widget.
         sign_certificate_policies = obj.sign_certificate_policies
         if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
-            detail_fields = fieldsets[1][1]["fields"]
+            detail_fields = list(fieldsets[1][1]["fields"])
             sign_certificate_policies_index = detail_fields.index("sign_certificate_policies")
             detail_fields[sign_certificate_policies_index] = "sign_certificate_policies_readonly"
+            fieldsets[1][1]["fields"] = tuple(detail_fields)
 
         api_index = 1
         if ca_settings.CA_ENABLE_ACME:
@@ -444,12 +429,12 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                 (
                     _("ACME"),
                     {
-                        "fields": [
+                        "fields": (
                             "acme_enabled",
                             "acme_registration",
                             "acme_profile",
                             "acme_requires_contact",
-                        ],
+                        ),
                     },
                 ),
             )
@@ -468,7 +453,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
 
         sign_certificate_policies = obj.sign_certificate_policies
         if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
-            fields = fields + ("sign_certificate_policies_readonly",)
+            fields = (*fields, "sign_certificate_policies_readonly")
         return fields
 
     def sign_certificate_policies_readonly(self, obj: CertificateAuthority) -> str:
@@ -485,7 +470,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         )
 
     class Media:
-        css = {
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
             "all": (
                 "django_ca/admin/css/base.css",
                 "django_ca/admin/css/certificateauthorityadmin.css",
@@ -576,18 +561,13 @@ class AutoGeneratedFilter(DefaultListFilter):
 class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], CertificateAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Certificate`."""
 
-    actions = [
-        "revoke",
-    ]
-    change_actions = (
-        "revoke_change",
-        "resign",
-    )
+    actions = ("revoke",)
+    change_actions = ("revoke_change", "resign")
     add_form_template = "admin/django_ca/certificate/add_form.html"
     change_form_template = "admin/django_ca/certificate/change_form.html"
     list_display = ("primary_name", "profile", "serial_field", "status", "expires_date")
     list_filter = ("profile", AutoGeneratedFilter, StatusListFilter, "ca")
-    readonly_fields = [
+    readonly_fields = (
         "expires",
         "issuer_field",
         "csr_pem",
@@ -600,17 +580,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         "ca",
         "profile",
         "oid_2_5_29_17",  # SubjectAlternativeName
-    ]
-    search_fields = [
-        "cn",
-        "serial",
-    ]
+    )
+    search_fields = ("cn", "serial")
 
-    fieldsets = [
+    fieldsets = (
         (
             None,
             {
-                "fields": [
+                "fields": (
                     "subject_field",
                     "oid_2_5_29_17",  # SubjectAlternativeName
                     "serial_field",
@@ -619,13 +596,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     ("expires", "autogenerated"),
                     "watchers",
                     "profile",
-                ],
+                ),
             },
         ),
         (
             _("X.509 Extensions"),
             {
-                "fields": [],
+                "fields": (),
                 "classes": ("collapse",),
             },
         ),
@@ -634,31 +611,25 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             {
                 "fields": (
                     ("revoked", "revoked_reason"),
-                    (
-                        "revoked_date",
-                        "compromised",
-                    ),
+                    ("revoked_date", "compromised"),
                 ),
             },
         ),
         (
             _("Certificate"),
             {
-                "fields": [
-                    "pub_pem",
-                    "csr_pem",
-                ],
+                "fields": ("pub_pem", "csr_pem"),
                 # The "as-code" class is used so CSS can only match this section (and only in an
                 # existing cert).
                 "classes": ("collapse", "as-code"),
             },
         ),
-    ]
-    add_fieldsets: FieldSets = [
+    )
+    add_fieldsets: FieldSets = (
         (
             None,
             {
-                "fields": [
+                "fields": (
                     "csr",
                     ("ca", "password"),
                     "profile",
@@ -667,7 +638,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     "algorithm",
                     ("expires", "autogenerated"),
                     "watchers",
-                ],
+                ),
             },
         ),
         (
@@ -680,10 +651,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 ),
             },
         ),
-    ]
+    )
 
     # same as add_fieldsets but without the csr
-    resign_fieldsets: FieldSets = [
+    resign_fieldsets: FieldSets = (
         (
             None,
             {
@@ -702,7 +673,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             _("X.509 Extensions"),
             {"fields": CERTIFICATE_EXTENSIONS},
         ),
-    ]
+    )
     x509_fieldset_index = 1
 
     @property
@@ -999,7 +970,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
         san_field_name = "oid_2_5_29_17"
         if san_field_name in fieldsets[self.x509_fieldset_index][1]["fields"]:
-            fieldsets[self.x509_fieldset_index][1]["fields"].remove("oid_2_5_29_17")
+            fieldsets[self.x509_fieldset_index][1]["fields"] = tuple(
+                f for f in fieldsets[self.x509_fieldset_index][1]["fields"] if f != san_field_name
+            )
 
         if hasattr(request, "_resign_obj"):
             fieldsets = copy.deepcopy(self.resign_fieldsets)
@@ -1128,7 +1101,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             obj.save()
 
     class Media:
-        css = {
+        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
             "all": (
                 "django_ca/admin/css/base.css",
                 "django_ca/admin/css/certificateadmin.css",

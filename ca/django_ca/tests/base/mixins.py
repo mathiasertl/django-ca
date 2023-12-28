@@ -84,8 +84,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     load_certs: Union[str, Tuple[str, ...]] = tuple()
     default_ca = "child"
     default_cert = "child-cert"
-    cas: Dict[str, CertificateAuthority] = {}
-    certs: Dict[str, Certificate] = {}
+    cas: Dict[str, CertificateAuthority]
+    certs: Dict[str, Certificate]
 
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^Could not decrypt private key - bad password\?$"
@@ -752,7 +752,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             stderr.buffer = stderr  # type: ignore[attr-defined]
 
         with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
-            util = ManagementUtility(["manage.py"] + list(cmd))
+            util = ManagementUtility(["manage.py", *cmd])
             util.execute()
 
         return stdout.getvalue(), stderr.getvalue()
