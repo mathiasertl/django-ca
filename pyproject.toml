@@ -265,9 +265,6 @@ max-parents = 15
 # Maximum number of public methods for a class (see R0904).
 max-public-methods = 25
 
-# Maximum number of return / yield for function / method body (see R0911).
-max-returns = 8
-
 [tool.pylint.format]
 max-line-length = 110
 
@@ -297,9 +294,11 @@ disable = [
     "unused-variable",
 
     # covered by ruff/pylint:
-    "too-many-arguments",
-    "too-many-branches",
-    "too-many-statements",
+    "too-many-arguments",  # ruff: PLR0913
+    "too-many-branches",  # ruff: PLR0912
+    "too-many-return-statements",  # ruff: PLR0911
+    "too-many-statements",  # PLR0915
+    "useless-import-alias",  # PLC0414
 
     # covered by ruff/pycodestyle:
     "bad-indentation",
@@ -413,6 +412,10 @@ ignore = [
     "D301",  # Use `r"""` if any backslashes in a docstring - incompatible with doctests!
     "D401",  # First line of docstring should be in imperative mood
     "PLR2004",  # Magic value used in comparison - not disabled in default pylint
+    "PLW2901",  # redefined-loop-name - not disabled in default pylint
+]
+unfixable = [
+    "PLW1510",  # `subprocess.run` without explicit `check` argument - not deemed safe
 ]
 
 [tool.ruff.isort]
@@ -456,6 +459,9 @@ max-args = 10
 
 # Maximum number of branch for function / method body (see R0912).
 max-branches = 20
+
+# Maximum number of return / yield for function / method body (see R0911).
+max-returns = 8
 
 # Maximum number of statements in function / method body (see R0915).
 max-statements = 60

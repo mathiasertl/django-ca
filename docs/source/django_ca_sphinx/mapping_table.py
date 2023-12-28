@@ -54,7 +54,43 @@ class MappingDocumentor(DataDocumenter):
         """Determine if this documentor can document the given variable."""
         return super().can_document_member(member, membername, isattr, parent) and isinstance(member, Mapping)
 
-    # pylint: disable-next=too-many-return-statements  # just a lot of cases to cover
+    def serialize_object_identifier(self, value: x509.ObjectIdentifier) -> str:
+        for name in dir(ExtensionOID):
+            if value == getattr(ExtensionOID, name):
+                return f":py:attr:`ExtensionOID.{name} <cg:cryptography.x509.oid.ExtensionOID.{name}>`"
+
+        # Return undocumented OIDs as strings.
+        for oid_name in ("INN", "OGRN", "SNILS"):
+            if value == getattr(NameOID, oid_name):
+                return f"``NameOID.{oid_name}``"
+
+        for name in dir(NameOID):
+            if value == getattr(NameOID, name):
+                return f":py:attr:`NameOID.{name} <cg:cryptography.x509.oid.NameOID.{name}>`"
+
+        for name in dir(AuthorityInformationAccessOID):
+            if value == getattr(AuthorityInformationAccessOID, name):
+                return (
+                    f":py:attr:`AuthorityInformationAccessOID.{name} "
+                    f"<cg:cryptography.x509.oid.AuthorityInformationAccessOID.{name}>`"
+                )
+
+        for name in dir(SubjectInformationAccessOID):
+            if value == getattr(SubjectInformationAccessOID, name):
+                return (
+                    f":py:attr:`SubjectInformationAccessOID.{name} "
+                    f"<cg:cryptography.x509.oid.SubjectInformationAccessOID.{name}>`"
+                )
+
+        for name in dir(ExtendedKeyUsageOID):
+            if value == getattr(ExtendedKeyUsageOID, name):
+                return (
+                    f":py:attr:`ExtendedKeyUsageOID.{name} "
+                    f"<cg:cryptography.x509.oid.ExtendedKeyUsageOID.{name}>`"
+                )
+
+        return f'``"{value.dotted_string}"``'  # return dotted string as default
+
     def serialize_value(self, value: Any) -> str:
         """Serialize a value (or key) into a string as displayed in the table."""
         if isinstance(value, bool):
@@ -66,45 +102,7 @@ class MappingDocumentor(DataDocumenter):
         ):
             return f":py:class:`~cg:{value.__module__}.{value.__name__}`"
         if isinstance(value, x509.ObjectIdentifier):
-            # First, try to find out if the OID is an ExtensionOID member
-            for name in dir(ExtensionOID):
-                if value == getattr(ExtensionOID, name):
-                    return f":py:attr:`ExtensionOID.{name} <cg:cryptography.x509.oid.ExtensionOID.{name}>`"
-
-            # Return undocumented OIDs as strings.
-            for oid_name in ("INN", "OGRN", "SNILS"):
-                if value == getattr(NameOID, oid_name):
-                    return f"``NameOID.{oid_name}``"
-
-            for name in dir(NameOID):
-                if value == getattr(NameOID, name):
-                    return f":py:attr:`NameOID.{name} <cg:cryptography.x509.oid.NameOID.{name}>`"
-
-            for name in dir(AuthorityInformationAccessOID):
-                if value == getattr(AuthorityInformationAccessOID, name):
-                    return (
-                        f":py:attr:`AuthorityInformationAccessOID.{name} "
-                        f"<cg:cryptography.x509.oid.AuthorityInformationAccessOID.{name}>`"
-                    )
-
-            for name in dir(SubjectInformationAccessOID):
-                if value == getattr(SubjectInformationAccessOID, name):
-                    return (
-                        f":py:attr:`SubjectInformationAccessOID.{name} "
-                        f"<cg:cryptography.x509.oid.SubjectInformationAccessOID.{name}>`"
-                    )
-
-            for name in dir(ExtendedKeyUsageOID):
-                if value == getattr(ExtendedKeyUsageOID, name):
-                    return (
-                        f":py:attr:`ExtendedKeyUsageOID.{name} "
-                        f"<cg:cryptography.x509.oid.ExtendedKeyUsageOID.{name}>`"
-                    )
-
-            if isinstance(value, x509.ObjectIdentifier):
-                return f"``{str(value)}``"
-
-            return str(value)
+            return self.serialize_object_identifier(value)
 
         # Unknown types are marked as inline code with the full class path.
         if isinstance(value, type):

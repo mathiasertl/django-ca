@@ -414,8 +414,9 @@ def create_certs(
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
-# pylint: disable-next=too-many-statements
-def create_special_certs(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> None:
+def create_special_certs(  # noqa: PLR0915
+    dest: Path, now: datetime, delay: bool, data: CertFixtureData
+) -> None:
     """Create special-interest certificates (edge cases etc.)."""
     # create a cert with absolutely no extensions
     name = "no-extensions"

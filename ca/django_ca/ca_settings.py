@@ -372,14 +372,13 @@ CA_FILE_STORAGE_URL = "https://django-ca.readthedocs.io/en/latest/update.html#up
 CA_USE_CELERY = getattr(settings, "CA_USE_CELERY", None)
 if CA_USE_CELERY is None:
     try:
-        from celery import shared_task  # pylint: disable=unused-import
+        from celery import shared_task
 
         CA_USE_CELERY = True
     except ImportError:
         CA_USE_CELERY = False
 elif CA_USE_CELERY is True:
     try:
-        from celery import shared_task  # NOQA: F401
-    except ImportError:
-        # pylint: disable=raise-missing-from; not really useful in this context
-        raise ImproperlyConfigured("CA_USE_CELERY set to True, but Celery is not installed")
+        from celery import shared_task  # noqa: F401
+    except ImportError as ex:
+        raise ImproperlyConfigured("CA_USE_CELERY set to True, but Celery is not installed") from ex

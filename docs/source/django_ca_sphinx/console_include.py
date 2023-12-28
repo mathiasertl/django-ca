@@ -56,24 +56,24 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
                     unsplit.append(chunk)
                 else:  # a whitespace not preceeded by an option
                     yield chunk
-            else:  # not an option
-                # The unsplit buffer has two values (short option and space) and this chunk looks like its
-                # value, so yield the buffer and this value as split
-                if len(unsplit) == 2 and re.match("[a-zA-Z0-9`]", chunk):
-                    # unsplit option, whitespace and option value
-                    unsplit.append(chunk)
-                    yield "".join(unsplit)
-                    unsplit = []
 
-                # There is something in the unsplit buffer, but this chunk does not look like a value (maybe
-                # it's a long option?), so we yield tokens from the buffer and then this chunk.
-                elif unsplit:
-                    for unsplit_chunk in unsplit:
-                        yield unsplit_chunk
-                    unsplit = []
-                    yield chunk
-                else:
-                    yield chunk
+            # The unsplit buffer has two values (short option and space) and this chunk looks like its
+            # value, so yield the buffer and this value as split
+            elif len(unsplit) == 2 and re.match("[a-zA-Z0-9`]", chunk):
+                # unsplit option, whitespace and option value
+                unsplit.append(chunk)
+                yield "".join(unsplit)
+                unsplit = []
+
+            # There is something in the unsplit buffer, but this chunk does not look like a value (maybe
+            # it's a long option?), so we yield tokens from the buffer and then this chunk.
+            elif unsplit:
+                for unsplit_chunk in unsplit:
+                    yield unsplit_chunk
+                unsplit = []
+                yield chunk
+            else:
+                yield chunk
 
         # yield any remaining chunks
         for chunk in unsplit:

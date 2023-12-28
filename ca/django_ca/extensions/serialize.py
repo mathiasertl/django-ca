@@ -179,7 +179,7 @@ def _tls_feature_serialized(value: x509.TLSFeature) -> List[str]:
     return sorted(serialized)
 
 
-def _serialize_extension(  # pylint: disable=too-many-return-statements
+def _serialize_extension(  # noqa: PLR0911
     value: x509.ExtensionType,
 ) -> Any:
     if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):

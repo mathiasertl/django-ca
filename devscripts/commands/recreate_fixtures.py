@@ -42,7 +42,7 @@ PWD_PATHLEN = 2
 DSA_PATHLEN = 3
 
 
-def recreate_fixtures(  # pylint: disable=too-many-locals,too-many-statements
+def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
     dest: Path,
     delay: bool,
     only_contrib: bool,

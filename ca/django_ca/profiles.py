@@ -75,7 +75,7 @@ class Profile:
     algorithm: Optional[AllowedHashTypes] = None
     extensions: Dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]]
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         name: str,
         subject: Optional[Union[typing.Literal[False], x509.Name]] = None,
@@ -92,7 +92,6 @@ class Profile:
         add_issuer_url: bool = True,
         add_issuer_alternative_name: bool = True,
     ) -> None:
-        # pylint: disable=too-many-arguments
         self.name = name
 
         if isinstance(expires, int):
@@ -186,7 +185,7 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    def create_cert(  # pylint: disable=too-many-arguments
+    def create_cert(  # noqa: PLR0913
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,

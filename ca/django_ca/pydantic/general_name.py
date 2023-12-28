@@ -243,7 +243,7 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
         return data
 
     @model_validator(mode="after")
-    def validate_value(self) -> "GeneralNameModel":
+    def validate_value(self) -> "GeneralNameModel":  # noqa: PLR0912
         """Validator to make sure that `value` is of the right type."""
         if self.type == "URI":
             if not isinstance(self.value, str):

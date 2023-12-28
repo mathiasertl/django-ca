@@ -246,7 +246,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         self.add_ca_args(parser)
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
         subject: str,

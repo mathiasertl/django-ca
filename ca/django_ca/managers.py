@@ -227,7 +227,7 @@ class CertificateAuthorityManager(
             ),
         )
 
-    def init(  # noqa: PLR0912,PLR0913,PLR0915  # too-many-arguments,branches,statements
+    def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
         subject: x509.Name,
@@ -566,7 +566,7 @@ class CertificateManager(
         def revoked(self) -> "CertificateQuerySet":
             ...
 
-    def create_cert(  # noqa: PLR0913  # too-many-arguments
+    def create_cert(  # noqa: PLR0913
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,

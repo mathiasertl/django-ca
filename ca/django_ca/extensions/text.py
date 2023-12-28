@@ -174,7 +174,7 @@ def _tls_feature_as_text(value: x509.TLSFeature) -> str:
     return "\n".join(sorted(lines))
 
 
-def extension_as_text(value: x509.ExtensionType) -> str:  # pylint: disable=too-many-return-statements
+def extension_as_text(value: x509.ExtensionType) -> str:  # noqa: PLR0911
     """Return the given extension value as human-readable text."""
     if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
         return "Yes"  # no need for extra function

@@ -326,10 +326,11 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         response["replay-nonce"] = self.get_nonce()
         return response
 
-    def post(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> AcmeResponse:
+    def post(  # noqa: PLR0911,PLR0912
+        self, request: HttpRequest, serial: str, slug: Optional[str] = None
+    ) -> AcmeResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=too-many-return-statements; b/c of the many checks
 
         # TODO: RFC 8555, 6.2 has a nice list of things to check here that we don't yet fully cover
         if request.content_type != "application/jose+json":

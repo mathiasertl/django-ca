@@ -813,7 +813,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_intermediate_check(self) -> None:  # pylint: disable=too-many-statements
+    def test_intermediate_check(self) -> None:  # noqa: PLR0915
         """Test intermediate path length checks."""
         with self.assertCreateCASignals() as (pre, post):
             out, err = self.init_ca(name="default")

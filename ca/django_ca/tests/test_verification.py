@@ -131,13 +131,14 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
     def openssl(self, cmd: str, *args: str, code: int = 0, **kwargs: str) -> None:
         """Run openssl."""
-        # pylint: disable=subprocess-run-check; we use an assertion
         exp_stdout = kwargs.pop("stdout", False)
         exp_stderr = kwargs.pop("stderr", False)
         cmd = cmd.format(*args, **kwargs)
         if kwargs.pop("verbose", False):
             print(f"openssl {cmd}")
-        proc = subprocess.run(["openssl"] + shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.run(
+            ["openssl"] + shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
+        )
         stdout = proc.stdout.decode("utf-8")
         stderr = proc.stderr.decode("utf-8")
         self.assertEqual(proc.returncode, code, stderr)

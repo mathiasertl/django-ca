@@ -847,7 +847,7 @@ def format_other_name(other_name: x509.OtherName) -> str:
     return f"{oid};{typ}:{value}"
 
 
-def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
+def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: PLR0911,PLR0912
     """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
@@ -900,8 +900,6 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:
     ValueError: Invalid domain: bar com
 
     """
-    # pylint: disable=too-many-return-statements,too-many-branches
-
     if isinstance(name, x509.GeneralName):
         return name
     if not isinstance(name, str):

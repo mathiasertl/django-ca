@@ -266,9 +266,11 @@ def policy_as_str(policy: Union[str, x509.UserNotice]) -> str:
     return f"User Notice: {ref_as_str(policy.notice_reference)}: {policy.explicit_text}"
 
 
-def update_cert_data(prefix: str, dirname: str, cert_data: Dict[str, CertInfo], name_header: str) -> None:
+def update_cert_data(  # noqa: PLR0912,PLR0915
+    prefix: str, dirname: str, cert_data: Dict[str, CertInfo], name_header: str
+) -> None:
     """Update certificate/ca data."""
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements; there are many extensions
+    # pylint: disable=too-many-locals; there are many extensions
 
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
     from django_ca import constants

@@ -72,7 +72,7 @@ class Command(BaseCommand):
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(  # pylint: disable=too-many-arguments
+    def handle(  # noqa: PLR0913
         self,
         serials: Iterable[str],
         profile: Optional[str],

@@ -218,7 +218,7 @@ def _sign_certificates(csr: str) -> str:
     return cert_subject
 
 
-def test_tutorial(release: str) -> int:  # pylint: disable=too-many-statements,too-many-locals
+def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # noqa: PLR0915
     """Validate the docker compose quickstart tutorial."""
     info("Validating tutorial...")
     errors = 0

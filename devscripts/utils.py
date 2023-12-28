@@ -198,7 +198,7 @@ def run(args: Sequence[str], **kwargs: Any) -> "subprocess.CompletedProcess[Any]
     if not config.SHOW_COMMAND_OUTPUT and not kwargs.get("capture_output"):
         kwargs.setdefault("stdout", subprocess.DEVNULL)
         kwargs.setdefault("stderr", subprocess.DEVNULL)
-    return subprocess.run(args, **kwargs)  # pylint: disable=subprocess-run-check
+    return subprocess.run(args, **kwargs)  # noqa: PLW1510  # check set via kwargs
 
 
 def git_archive(ref: str, destination: str) -> Path:

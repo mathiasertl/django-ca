@@ -63,7 +63,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],

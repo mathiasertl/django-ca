@@ -99,7 +99,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
         self,
         ca: CertificateAuthority,
         subject: Optional[str],

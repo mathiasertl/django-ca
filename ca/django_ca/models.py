@@ -911,7 +911,7 @@ class CertificateAuthority(X509CertMixin):
 
         return signed_cert
 
-    def generate_ocsp_key(  # pylint: disable=too-many-locals,too-many-branches
+    def generate_ocsp_key(  # pylint: disable=too-many-locals  # noqa: PLR0912
         self,
         profile: str = "ocsp",
         expires: Expires = None,

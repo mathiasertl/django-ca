@@ -292,7 +292,7 @@ def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509
     return x509.TLSFeature(features=features)
 
 
-def parse_extension(  # pylint: disable=too-many-branches  # there's just many extensions
+def parse_extension(  # noqa: PLR0912  # there's just many extensions
     key: str, value: Union[x509.Extension[x509.ExtensionType], x509.ExtensionType, ParsableExtension]
 ) -> x509.Extension[x509.ExtensionType]:
     """Parse a serialized extension into a cryptography object.
