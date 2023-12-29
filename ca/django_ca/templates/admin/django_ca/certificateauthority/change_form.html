@@ -1,6 +1,0 @@
-{% extends "admin/change_form.html" %}
-{% load admin_urls %}
-
-{% block extrahead %}{{ block.super }}
-<meta name="get-profiles-url" content="{% url opts|admin_urlname:'profiles' %}">
-{% endblock %}

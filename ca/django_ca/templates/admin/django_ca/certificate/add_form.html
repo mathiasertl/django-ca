@@ -4,7 +4,6 @@
 {% block extrahead %}{{ block.super }}
 <meta name="ca-details-url" content="{{ ca_details_url }}">
 <meta name="csr-details-url" content="{{ csr_details_url }}">
-<meta name="get-profiles-url" content="{{ profiles_url }}">
 {{ profiles|json_script:"profile-data" }}
 {{ oid_names|json_script:"oid-names" }}
 {% endblock %}

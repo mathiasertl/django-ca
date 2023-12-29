@@ -10,19 +10,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.querySelectorAll(".profile-widget-wrapper").forEach((wrapper) => {
+        // safeguard in case profile data wasn't loaded
+        if (! profile_data) {
+            return;
+        }
+
         var select = wrapper.querySelector("select");
         var help = wrapper.querySelector("p.profile-desc");
 
         // Update description text when selection is updated
         select.addEventListener('change', (event) => {
-            var value = select.value;
-
-            // safeguard in case profile data wasn't loaded
-            if (! profile_data) {
-                return;
-            }
-
-            var profile = profile_data[value];
+            // Get selected profile data
+            var profile = profile_data[select.value];
 
             // Update description
             var description = profile.description;
@@ -31,33 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 help.textContent = "";  // profiles don't need to have a description
             }
+
+            // set whether to include the CommonName in the subjectAltName
+            cn_in_san = document.querySelector('.field-subject_alternative_name .labeled-checkbox input');
+            cn_in_san.checked = typeof profile.cn_in_san === 'undefined' || profile.cn_in_san;
+
+            // Finally, update extensions:
+            update_extensions(profile.extensions);
         });
-    });
-});
-
-django.jQuery(document).ready(function() {
-    var ca_profiles;
-    var profile_url = django.jQuery('meta[name="get-profiles-url"]').attr('content');
-
-    django.jQuery.get(profile_url).done(function(data) {
-        ca_profiles = data;
-
-        // set the "fetched" property, this can be used by selenium tests to wait until this API has returned
-        django.jQuery('meta[name="get-profiles-url"]').attr('fetched', "true");
-    });
-
-
-    django.jQuery('.profile-widget-wrapper select').change(function() {
-        var profile = ca_profiles[this.value];
-
-        // set whether to include the CommonName in the subjectAltName
-        cn_in_san = '.field-subject_alternative_name .labeled-checkbox input';
-        if (typeof profile.cn_in_san === 'undefined' || profile.cn_in_san) {
-            django.jQuery(cn_in_san).prop('checked', true);
-        } else {
-            django.jQuery(cn_in_san).prop('checked', false);
-        }
-
-        update_extensions(profile.extensions);
     });
 });

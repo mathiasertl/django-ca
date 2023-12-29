@@ -156,9 +156,6 @@ class CertificateMixin(
                 self.admin_site.admin_view(self.download_bundle_view),
                 name=f"{info}_download_bundle",
             ),
-            path(
-                "ajax/profiles", self.admin_site.admin_view(self.profiles_view), name=self.profiles_view_name
-            ),
         ]
         urls += super().get_urls()
         return urls
@@ -201,20 +198,6 @@ class CertificateMixin(
     def download_bundle_view(self, request: HttpRequest, pk: int) -> HttpResponse:
         """A view that allows the user to download a certificate bundle in PEM format."""
         return self._download_response(request, pk, bundle=True)
-
-    @property
-    def profiles_view_name(self) -> str:
-        """URL for the profiles view."""
-        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_profiles"
-
-    def profiles_view(self, request: HttpRequest) -> JsonResponse:
-        """Returns profiles."""
-        if not self.has_change_permission(request):
-            # NOTE: is_staff/is_active is checked by self.admin_site.admin_view()
-            raise PermissionDenied
-
-        data = {name: profiles[name].serialize() for name in ca_settings.CA_PROFILES}
-        return JsonResponse(data)
 
     def has_delete_permission(self, request: HttpRequest, obj: Optional[models.Model] = None) -> bool:
         # pylint: disable=missing-function-docstring,unused-argument; Django standard
@@ -826,7 +809,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         extra_context: Optional[Dict[str, Any]] = None,
     ) -> HttpResponse:
         extra_context = extra_context or {}
-        extra_context["profiles_url"] = reverse(f"admin:{self.profiles_view_name}")
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
         extra_context["ca_details_url"] = reverse(f"admin:{self.ca_details_view_name}")
         extra_context["profiles"] = {profile.name: profile.serialize() for profile in profiles}

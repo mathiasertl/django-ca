@@ -31,12 +31,11 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import override_tmpcadir
-from django_ca.utils import serialize_name
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
@@ -260,159 +259,6 @@ class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(str(self.ca.pk), response.json())
-
-
-class ProfilesViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
-    """Test fetching profile information."""
-
-    url = reverse("admin:django_ca_certificate_profiles")
-
-    def test_basic(self) -> None:
-        """Test fetching basic profile information."""
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        enduser_desc = "A certificate for an enduser, allows client authentication, code and email signing."
-
-        expected_subject = serialize_name(ca_settings.CA_DEFAULT_SUBJECT)  # type: ignore[arg-type]
-
-        self.assertEqual(
-            response.json(),
-            {
-                "client": {
-                    "cn_in_san": True,
-                    "description": "A certificate for a client.",
-                    "extensions": {
-                        "basic_constraints": {
-                            "critical": True,
-                            "value": {"ca": False},
-                        },
-                        "key_usage": {
-                            "critical": True,
-                            "value": ["digital_signature"],
-                        },
-                        "extended_key_usage": {
-                            "critical": False,
-                            "value": ["clientAuth"],
-                        },
-                    },
-                    "subject": expected_subject,
-                },
-                "enduser": {
-                    "cn_in_san": False,
-                    "description": enduser_desc,
-                    "extensions": {
-                        "basic_constraints": {
-                            "critical": True,
-                            "value": {"ca": False},
-                        },
-                        "key_usage": {
-                            "critical": True,
-                            "value": ["data_encipherment", "digital_signature", "key_encipherment"],
-                        },
-                        "extended_key_usage": {
-                            "critical": False,
-                            "value": ["clientAuth", "codeSigning", "emailProtection"],
-                        },
-                    },
-                    "subject": expected_subject,
-                },
-                "ocsp": {
-                    "cn_in_san": False,
-                    "description": "A certificate for an OCSP responder.",
-                    "extensions": {
-                        "basic_constraints": {"critical": True, "value": {"ca": False}},
-                        "key_usage": {
-                            "critical": True,
-                            "value": ["content_commitment", "digital_signature", "key_encipherment"],
-                        },
-                        "extended_key_usage": {"critical": False, "value": ["OCSPSigning"]},
-                        "ocsp_no_check": {"critical": False, "value": None},
-                    },
-                    "subject": None,
-                },
-                "server": {
-                    "cn_in_san": True,
-                    "description": "A certificate for a server, allows client and server authentication.",
-                    "extensions": {
-                        "basic_constraints": {
-                            "critical": True,
-                            "value": {"ca": False},
-                        },
-                        "key_usage": {
-                            "critical": True,
-                            "value": ["digital_signature", "key_agreement", "key_encipherment"],
-                        },
-                        "extended_key_usage": {
-                            "critical": False,
-                            "value": ["clientAuth", "serverAuth"],
-                        },
-                    },
-                    "subject": expected_subject,
-                },
-                "webserver": {
-                    "cn_in_san": True,
-                    "description": "A certificate for a webserver.",
-                    "extensions": {
-                        "basic_constraints": {
-                            "critical": True,
-                            "value": {"ca": False},
-                        },
-                        "key_usage": {
-                            "critical": True,
-                            "value": ["digital_signature", "key_agreement", "key_encipherment"],
-                        },
-                        "extended_key_usage": {
-                            "critical": False,
-                            "value": ["serverAuth"],
-                        },
-                    },
-                    "subject": expected_subject,
-                },
-            },
-        )
-
-    def test_permission_denied(self) -> None:
-        """Try fetching profiles without permissions."""
-        self.user.is_superuser = False
-        self.user.save()
-        self.assertEqual(self.client.get(self.url).status_code, HTTPStatus.FORBIDDEN)
-
-    # removes all profiles, adds one pretty boring one
-    @override_tmpcadir(
-        CA_PROFILES={
-            "webserver": None,
-            "server": None,
-            "ocsp": None,
-            "enduser": None,
-            "client": None,
-            "test": {
-                "cn_in_san": True,
-            },
-        },
-        CA_DEFAULT_PROFILE="test",
-        CA_DEFAULT_SUBJECT=None,
-    )
-    def test_empty_profile(self) -> None:
-        """Try fetching a simple profile."""
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-
-        self.assertEqual(
-            response.json(),
-            {
-                "test": {
-                    "cn_in_san": True,
-                    "description": "",
-                    "extensions": {
-                        "basic_constraints": {
-                            "critical": True,
-                            "value": {"ca": False},
-                        },
-                    },
-                    "subject": None,
-                },
-            },
-        )
 
 
 class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):
