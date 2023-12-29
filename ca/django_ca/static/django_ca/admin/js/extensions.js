@@ -30,23 +30,28 @@ var update_extensions = function(extensions) {
 		    var cps = [];
 		    var explicit_text = "";
 
-		    for (policy_qualifier of policy_information.policy_qualifiers) {
-		        if (typeof policy_qualifier == "string") {
-		            cps.push(policy_qualifier);
-		        } else {
-                    if (policy_qualifier.notice_reference) {
-                        return;  // We don't support notice references
-                    } else if (explicit_text == "") {
-		                explicit_text = policy_qualifier.explicit_text;
-		            } else {
-		                return;  // extension has more then one explicit text
-		            }
-		        }
-		    }
-
+		    // set policy identifier
 		    field.find('input#id_' + key + '_0').val(policy_information.policy_identifier);
-		    field.find('textarea#id_' + key + '_1').val(cps.join("\n"));
-		    field.find('textarea#id_' + key + '_2').val(explicit_text);
+
+            // compute policy qualifier
+            if (policy_information.policy_qualifiers) {
+                for (policy_qualifier of policy_information.policy_qualifiers) {
+                    if (typeof policy_qualifier == "string") {
+                        cps.push(policy_qualifier);
+                    } else {
+                        if (policy_qualifier.notice_reference) {
+                            return;  // We don't support notice references
+                        } else if (explicit_text == "") {
+                            explicit_text = policy_qualifier.explicit_text;
+                        } else {
+                            return;  // extension has more then one explicit text
+                        }
+                    }
+                }
+
+                field.find('textarea#id_' + key + '_1').val(cps.join("\n"));
+                field.find('textarea#id_' + key + '_2').val(explicit_text);
+            }
         } else if (key === 'crl_distribution_points' || key === 'freshest_crl') {
             var dpoint = ext.value[0];
             var full_name = dpoint.full_name ? dpoint.full_name.join('\n') : "";
