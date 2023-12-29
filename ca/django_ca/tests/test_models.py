@@ -14,6 +14,7 @@
 """Test Django model classes."""
 
 import ipaddress
+import json
 import os
 import re
 import typing
@@ -35,12 +36,13 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.utils import IntegrityError
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
@@ -58,6 +60,7 @@ from django_ca.models import (
     Watcher,
     X509CertMixin,
 )
+from django_ca.pydantic.extensions import CertificatePoliciesModel
 from django_ca.tests.base.constants import CERT_DATA, CERT_PEM_REGEX, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCaseProtocol
 from django_ca.tests.base.utils import (
@@ -694,72 +697,207 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             },
         )
 
-    def test_sign_certificate_policies(self) -> None:
-        """Test setting the ``sign_certificate_policies`` field."""
-        certificate_policies = x509.Extension(
-            critical=True,
-            oid=ExtensionOID.CERTIFICATE_POLICIES,
-            value=x509.CertificatePolicies(
-                [
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
-                        policy_qualifiers=["http://example.com"],
-                    )
-                ]
-            ),
+    # def test_sign_certificate_policies(self) -> None:
+    #     """Test setting the ``sign_certificate_policies`` field."""
+    #     certificate_policies = x509.Extension(
+    #         critical=True,
+    #         oid=ExtensionOID.CERTIFICATE_POLICIES,
+    #         value=x509.CertificatePolicies(
+    #             [
+    #                 x509.PolicyInformation(
+    #                     policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
+    #                     policy_qualifiers=["http://example.com"],
+    #                 )
+    #             ]
+    #         ),
+    #     )
+    #
+    #     self.ca.sign_certificate_policies = certificate_policies
+    #     self.ca.full_clean()
+    #     self.ca.save()
+    #     self.assertEqual(self.ca.sign_certificate_policies, certificate_policies)
+    #
+    #     # Reload from db, we get the original extension back
+    #     print("### (1) reload from db")
+    #     ca = CertificateAuthority.objects.get(pk=self.ca.pk)
+    #     self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+    #
+    #     model = CertificatePoliciesModel.model_validate(certificate_policies)
+    #
+    #     # Try storing a serialized extension
+    #     print("### (2) set model field")
+    #     ca.sign_certificate_policies = model.model_dump(mode="json")
+    #     print("### (3) full clean")
+    #     ca.full_clean()
+    #     self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+    #
+    #     # also works when just saving...
+    #     ca.sign_certificate_policies = model.model_dump(mode="json")
+    #     ca.save()
+    #
+    #     # Reload from db again, we get the original extension back
+    #     ca = CertificateAuthority.objects.get(pk=self.ca.pk)
+    #     self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+    #
+    #     # Setting a None value also works
+    #     ca.sign_certificate_policies = None
+    #     ca.full_clean()
+    #     ca.save()
+    #     ca = CertificateAuthority.objects.get(pk=ca.pk)
+    #     self.assertIsNone(ca.sign_certificate_policies)
+    #
+    #     # Try setting an invalid extension type
+    #     ca.sign_certificate_policies = basic_constraints()
+    #     with self.assertValidationError(
+    #         {"sign_certificate_policies": ["Expected an instance of CertificatePolicies."]}
+    #     ):
+    #         ca.full_clean()
+    #     with self.assertRaisesRegex(
+    #         ValidationError, r"^\['Expected an instance of CertificatePolicies\.'\]$"
+    #     ), transaction.atomic():
+    #         ca.save()
+    #
+    #     # Try setting something unparsable
+    #     ca.sign_certificate_policies = True  # type: ignore[assignment]  # what we're testing
+    #     with self.assertValidationError(
+    #         {"sign_certificate_policies": ["The value cannot be parsed to an extension."]}
+    #     ):
+    #         ca.full_clean()
+    #
+    #     with self.assertRaisesRegex(
+    #         ValidationError, r"^\['True: Not a cryptography\.x509\.Extension class\.'\]$"
+    #     ), transaction.atomic():
+    #         ca.save()
+
+
+@pytest.mark.parametrize("full_clean", (True, False))
+def test_sign_certificate_policies(
+    root: CertificateAuthority,
+    certificate_policies: x509.Extension[x509.CertificatePolicies],
+    full_clean: bool,
+) -> None:
+    """Test setting ``sign_certificate_policies`` the field and saving, parametrized by full_clean()."""
+    assert root.sign_certificate_policies is None
+    root.sign_certificate_policies = certificate_policies
+    assert root.sign_certificate_policies == certificate_policies
+
+    if full_clean is True:
+        root.full_clean()
+        assert root.sign_certificate_policies == certificate_policies
+
+    root.save()
+    assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
+
+
+@pytest.mark.parametrize("full_clean", (True, False))
+def test_sign_certificate_policies_with_model(
+    root: CertificateAuthority,
+    certificate_policies: x509.Extension[x509.CertificatePolicies],
+    full_clean: bool,
+) -> None:
+    """Test setting ``sign_certificate_policies`` the field and saving, parametrized by full_clean()."""
+    assert root.sign_certificate_policies is None
+    model = CertificatePoliciesModel.model_validate(certificate_policies)
+    root.sign_certificate_policies = model
+    assert root.sign_certificate_policies == model  # just setting does nothing
+
+    if full_clean is True:
+        root.full_clean()
+        assert root.sign_certificate_policies == certificate_policies
+
+    root.save()
+    assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
+
+
+@pytest.mark.parametrize("full_clean", (True, False))
+def test_sign_certificate_policies_with_serialized_model(
+    root: CertificateAuthority,
+    certificate_policies: x509.Extension[x509.CertificatePolicies],
+    full_clean: bool,
+) -> None:
+    """Test setting ``sign_certificate_policies`` the field and saving, parametrized by full_clean()."""
+    assert root.sign_certificate_policies is None
+    model = CertificatePoliciesModel.model_validate(certificate_policies)
+    root.sign_certificate_policies = model.model_dump(mode="json")
+
+    if full_clean is True:
+        root.full_clean()
+        assert root.sign_certificate_policies == certificate_policies
+
+    root.save()
+    assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
+
+
+@pytest.mark.parametrize("full_clean", (True, False))
+def test_sign_certificate_policies_with_old_serialized_data(
+    root: CertificateAuthority,
+    certificate_policies: x509.Extension[x509.CertificatePolicies],
+    full_clean: bool,
+) -> None:
+    """Test setting ``sign_certificate_policies`` the field and saving, parametrized by full_clean()."""
+    assert root.sign_certificate_policies is None
+    root.sign_certificate_policies = serialize_extension(certificate_policies)  # type: ignore[assignment]
+
+    if full_clean is True:
+        root.full_clean()
+        assert root.sign_certificate_policies == certificate_policies
+
+    root.save()
+    assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
+
+
+def test_sign_certificate_policies_with_loading_old_serialized_data(
+    root: CertificateAuthority, certificate_policies: x509.Extension[x509.CertificatePolicies]
+) -> None:
+    """Test loading old serialized data from the database."""
+    serialized_data = serialize_extension(certificate_policies)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE django_ca_certificateauthority SET sign_certificate_policies = %s WHERE id = %s",
+            [json.dumps(serialized_data), root.id],
         )
+    assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
 
-        self.ca.sign_certificate_policies = certificate_policies
-        self.ca.full_clean()
-        self.ca.save()
-        self.assertEqual(self.ca.sign_certificate_policies, certificate_policies)
 
-        # Reload from db, we get the original extension back
-        ca = CertificateAuthority.objects.get(pk=self.ca.pk)
-        self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+def test_sign_certificate_policies_with_invalid_types(root: CertificateAuthority) -> None:
+    """Test sign_certificate_policies with invalid types."""
+    root.sign_certificate_policies = True  # type: ignore[assignment]  # what we're testing
+    with pytest.raises(ValidationError, match=r"True: Not a cryptography\.x509\.Extension class\."):
+        root.save()
 
-        # Try storing a serialized extension
-        ca.sign_certificate_policies = serialize_extension(certificate_policies)
-        ca.full_clean()
-        self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+    extension = x509.Extension(critical=True, oid=ExtensionOID.OCSP_NO_CHECK, value=x509.OCSPNoCheck())
+    root.sign_certificate_policies = extension  # type: ignore[assignment]
+    with pytest.raises(ValidationError, match=r"Expected an instance of CertificatePolicies\."):
+        root.save()
 
-        # also works when just saving...
-        ca.sign_certificate_policies = serialize_extension(certificate_policies)
-        ca.save()
 
-        # Reload from db again, we get the original extension back
-        ca = CertificateAuthority.objects.get(pk=self.ca.pk)
-        self.assertEqual(ca.sign_certificate_policies, certificate_policies)
+def test_sign_certificate_policies_with_invalid_pydantic_data(root: CertificateAuthority) -> None:
+    """Test sign_certificate_policies with invalid data that looks like Pydantic data."""
+    root.sign_certificate_policies = {  # type: ignore[assignment]
+        "type": "certificate_policies",
+        "critical": "wrong-type",
+    }
+    with pytest.raises(ValidationError, match=r"The value cannot be parsed to an extension\."):
+        root.save()
 
-        # Setting a None value also works
-        ca.sign_certificate_policies = None
-        ca.full_clean()
-        ca.save()
-        ca = CertificateAuthority.objects.get(pk=ca.pk)
-        self.assertIsNone(ca.sign_certificate_policies)
 
-        # Try setting an invalid extension type
-        ca.sign_certificate_policies = basic_constraints()
-        with self.assertValidationError(
-            {"sign_certificate_policies": ["Expected an instance of CertificatePolicies."]}
-        ):
-            ca.full_clean()
-        with self.assertRaisesRegex(
-            ValidationError, r"^\['Expected an instance of CertificatePolicies\.'\]$"
-        ), transaction.atomic():
-            ca.save()
+def test_sign_certificate_policies_with_invalid_serialized_data(root: CertificateAuthority) -> None:
+    """Test sign_certificate_policies with invalid old serialized data."""
+    root.sign_certificate_policies = True  # type: ignore[assignment]
+    with pytest.raises(ValidationError, match=r"The value cannot be parsed to an extension\."):
+        root.full_clean()
 
-        # Try setting something unparsable
-        ca.sign_certificate_policies = True  # type: ignore[assignment]  # what we're testing
-        with self.assertValidationError(
-            {"sign_certificate_policies": ["The value cannot be parsed to an extension."]}
-        ):
-            ca.full_clean()
+    root.sign_certificate_policies = {"critical": "not-a-bool"}  # type: ignore[assignment]
+    with pytest.raises(ValidationError, match=r"The value cannot be parsed to an extension\."):
+        root.full_clean()
 
-        with self.assertRaisesRegex(
-            ValidationError, r"^\['True: Not a cryptography\.x509\.Extension class\.'\]$"
-        ), transaction.atomic():
-            ca.save()
+    root.sign_certificate_policies = {"critical": True, "value": "not-a-list"}  # type: ignore[assignment]
+    with pytest.raises(ValidationError, match=r"The value cannot be parsed to an extension\."):
+        root.full_clean()
+
+    root.sign_certificate_policies = {"critical": True, "value": [{"foo": "bar"}]}  # type: ignore[assignment]
+    with pytest.raises(ValidationError, match=r"The value cannot be parsed to an extension\."):
+        root.full_clean()
 
 
 class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
