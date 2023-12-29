@@ -20,10 +20,8 @@ from pydantic import ValidationError
 import pytest
 
 from django_ca.pydantic.base import CryptographyModel
-from django_ca.pydantic.extensions import ExtensionModel
 
 CryptographyModelTypeVar = TypeVar("CryptographyModelTypeVar", bound=CryptographyModel[Any])
-ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])
 ExpectedErrors = List[Tuple[str, Tuple[str, ...], Union[str, "re.Pattern[str]"]]]
 
 

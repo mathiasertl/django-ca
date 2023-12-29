@@ -25,6 +25,7 @@ from unittest.mock import patch
 import coverage
 
 from cryptography import x509
+from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
 
 import pytest
 from _pytest.config import Config as PytestConfig
@@ -202,3 +203,112 @@ def precertificate_signed_certificate_timestamps_pub(request: "SubRequest") -> I
     name = request.param.replace("-", "_")
 
     yield request.getfixturevalue(f"{name}_pub")
+
+
+@pytest.fixture(
+    params=(
+        [x509.PolicyInformation(policy_identifier=CertificatePoliciesOID.ANY_POLICY, policy_qualifiers=None)],
+        [
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY, policy_qualifiers=["example"]
+            )
+        ],
+        [
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=None)],
+            )
+        ],
+        [
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text="explicit text")],
+            )
+        ],
+        [
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[
+                    x509.UserNotice(
+                        notice_reference=x509.NoticeReference(organization=None, notice_numbers=[]),
+                        explicit_text="explicit",
+                    )
+                ],
+            )
+        ],
+        [  # notice reference with org, but still empty notice numbers
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[
+                    x509.UserNotice(
+                        notice_reference=x509.NoticeReference(organization="MyOrg", notice_numbers=[]),
+                        explicit_text="explicit",
+                    )
+                ],
+            )
+        ],
+        [
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[
+                    x509.UserNotice(
+                        notice_reference=x509.NoticeReference(organization="MyOrg", notice_numbers=[1, 2, 3]),
+                        explicit_text="explicit",
+                    )
+                ],
+            )
+        ],
+        [  # test multiple qualifiers
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=["simple qualifier 1", "simple_qualifier 2"],
+            )
+        ],
+        [  # test multiple complex qualifiers
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[
+                    "simple qualifier 1",
+                    x509.UserNotice(
+                        notice_reference=x509.NoticeReference(organization="MyOrg 2", notice_numbers=[2, 4]),
+                        explicit_text="explicit 2",
+                    ),
+                    "simple qualifier 3",
+                    x509.UserNotice(
+                        notice_reference=x509.NoticeReference(organization="MyOrg 4", notice_numbers=[]),
+                        explicit_text="explicit 4",
+                    ),
+                ],
+            )
+        ],
+        [  # test multiple policy information
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=["simple qualifier 1", "simple_qualifier 2"],
+            ),
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.ANY_POLICY,
+                policy_qualifiers=[
+                    "simple qualifier 1",
+                    x509.UserNotice(
+                        notice_reference=x509.NoticeReference(organization="MyOrg 2", notice_numbers=[2, 4]),
+                        explicit_text="explicit 2",
+                    ),
+                ],
+            ),
+        ],
+    )
+)
+def certificate_policies_value(request: "SubRequest") -> Iterator[x509.CertificatePolicies]:
+    """Parametrized fixture with many different x509.CertificatePolicies objects."""
+    yield x509.CertificatePolicies(policies=request.param)
+
+
+@pytest.fixture(params=(True, False))
+def certificate_policies(
+    request: "SubRequest", certificate_policies_value: x509.CertificatePolicies
+) -> Iterator[x509.Extension[x509.CertificatePolicies]]:
+    """Parametrized fixture yielding different x509.Extension[x509.CertificatePolicies] objects."""
+    yield x509.Extension(
+        critical=request.param, oid=ExtensionOID.CERTIFICATE_POLICIES, value=certificate_policies_value
+    )
