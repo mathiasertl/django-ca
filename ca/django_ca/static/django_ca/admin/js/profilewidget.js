@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var profile_elem = document.querySelector("#profile-data");
+    var profile_elem = document.querySelector("head script#profile-data");
     var profile_data = null;
 
     if (! profile_elem) {

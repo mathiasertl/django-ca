@@ -1,33 +1,19 @@
-django.jQuery(document).ready(function() {
-    var ca_details;
-    var ca_details_selector = '.field-ca select'
-    var ca_details_url = django.jQuery('meta[name="ca-details-url"]').attr('content');
+document.addEventListener('DOMContentLoaded', function() {
+    var ca_elem = document.querySelector("head script#ca-data");
+    var ca_data = JSON.parse(ca_elem.textContent);
 
-    django.jQuery.get(ca_details_url).done(function(data) {
-        ca_details = data;
+    var select = document.querySelector("body select#id_ca");
+    select.addEventListener('change', (event) => {
+        var ca = ca_data[select.value];
 
-        // set the "fetched" property, this can be used by selenium tests to wait until this API has returned
-        django.jQuery('meta[name="ca-details-url"]').attr('fetched', "true");
-    });
+        // update extensions
+        update_extensions(ca.extensions);
 
-
-    // This should be set in the form via initial
-    //var initial_profile = django.jQuery(profile_selector).val();
-
-    django.jQuery(ca_details_selector).change(function() {
-        ca_config = ca_details[this.value];
-        if (typeof ca_config === 'undefined') {
-            return;
-        }
-        var extensions = ca_config.extensions;
-        update_extensions(extensions);
-
-        // set the signature hash algorithm
-        var hash_algorithm_select = django.jQuery('select#id_algorithm');
-        if (ca_config.signature_hash_algorithm === null) {
-            hash_algorithm_select.val('');
+        var hash_algorithm_select = document.querySelector("select#id_algorithm");
+        if (ca.signature_hash_algorithm === null) {
+            hash_algorithm_select.value = "";
         } else {
-            hash_algorithm_select.val(ca_config.signature_hash_algorithm);
+            hash_algorithm_select.value = ca.signature_hash_algorithm;
         }
     });
 });

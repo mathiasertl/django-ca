@@ -29,13 +29,10 @@ from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from freezegun import freeze_time
-
 from django_ca import constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.constants import CERT_DATA
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
@@ -156,109 +153,6 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.user.save()
         self.user.user_permissions.add(Permission.objects.get(codename="change_certificate"))
         self.assertRequiresLogin(self.client.post(self.url, data={"csr": self.csr_pem}))
-
-
-class CADetailsViewTestCase(CertificateModelAdminTestCaseMixin, TestCase):
-    """Test fetching CA details."""
-
-    load_cas = ("root", "child", "ed448")
-    url = reverse("admin:django_ca_certificate_ca_details")
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_basic(self) -> None:
-        """Test fetching CA with all kinds of URLs."""
-        self.ca.issuer_url = "http://issuer.child.example.com"
-        self.ca.ocsp_url = "http://ocsp.child.example.com"
-        self.ca.crl_url = "http://crl.child.example.com"
-        self.ca.issuer_alt_name = "http://ian.child.example.com"
-        self.ca.save()
-
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.json()[str(self.ca.pk)],
-            {
-                "name": self.ca.name,
-                "signature_hash_algorithm": constants.HASH_ALGORITHM_NAMES[
-                    type(self.ca.algorithm)  # type: ignore[index]
-                ],
-                "extensions": {
-                    "authority_information_access": {
-                        "critical": False,
-                        "value": {
-                            "issuers": [f"URI:{self.ca.issuer_url}"],
-                            "ocsp": [f"URI:{self.ca.ocsp_url}"],
-                        },
-                    },
-                    "crl_distribution_points": {
-                        "critical": False,
-                        "value": [{"full_name": [f"URI:{self.ca.crl_url}"]}],
-                    },
-                    "issuer_alternative_name": {
-                        "critical": False,
-                        "value": [f"URI:{self.ca.issuer_alt_name}"],
-                    },
-                },
-            },
-        )
-
-        ca = self.cas["ed448"]
-        self.assertEqual(
-            response.json()[str(ca.pk)],
-            {
-                "name": ca.name,
-                "signature_hash_algorithm": None,
-                "extensions": {
-                    "authority_information_access": {
-                        "critical": False,
-                        "value": {
-                            "issuers": [f"URI:{ca.issuer_url}"],
-                            "ocsp": [f"URI:{ca.ocsp_url}"],
-                        },
-                    },
-                    "crl_distribution_points": {
-                        "critical": False,
-                        "value": [{"full_name": [f"URI:{ca.crl_url}"]}],
-                    },
-                },
-            },
-        )
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_empty_ca(self) -> None:
-        """Test fetching CA with no URLs."""
-        self.ca.issuer_url = ""
-        self.ca.ocsp_url = ""
-        self.ca.crl_url = ""
-        self.ca.issuer_alt_name = ""
-        self.ca.save()
-
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.json()[str(self.ca.pk)],
-            {
-                "name": self.ca.name,
-                "extensions": {},
-                "signature_hash_algorithm": constants.HASH_ALGORITHM_NAMES[
-                    type(self.ca.algorithm)  # type: ignore[index]
-                ],
-            },
-        )
-
-    def test_unusable_ca(self) -> None:
-        """Test fetching CA with no URLs."""
-        self.ca.issuer_url = ""
-        self.ca.ocsp_url = ""
-        self.ca.crl_url = ""
-        self.ca.issuer_alt_name = ""
-        self.ca.save()
-
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn(str(self.ca.pk), response.json())
 
 
 class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):

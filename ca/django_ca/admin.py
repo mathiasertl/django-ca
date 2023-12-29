@@ -659,13 +659,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     )
     x509_fieldset_index = 1
 
-    @property
-    def ca_details_view_name(self) -> str:
-        """URL for the profiles view."""
-        return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_ca_details"
-
-    def ca_details_view(self, request: HttpRequest) -> JsonResponse:
-        """View for getting the extension values from the certificate authority."""
+    def get_ca_details(self) -> Dict[int, Dict[str, Any]]:
         data: Dict[int, Dict[str, Any]] = {}
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists is False:
@@ -684,8 +678,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "extensions": extensions,
                 "name": ca.name,
             }
-
-        return JsonResponse(data)
+        return data
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one usable CA
@@ -810,8 +803,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     ) -> HttpResponse:
         extra_context = extra_context or {}
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
-        extra_context["ca_details_url"] = reverse(f"admin:{self.ca_details_view_name}")
         extra_context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
+        extra_context["cas"] = self.get_ca_details()
 
         extra_context["oid_names"] = {
             oid.dotted_string: name for oid, name in constants.NAME_OID_DISPLAY_NAMES.items()
@@ -855,14 +848,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "ajax/csr-details",
                 self.admin_site.admin_view(self.csr_details_view),
                 name=self.csr_details_view_name,
-            ),
-        )
-        urls.insert(
-            0,
-            path(
-                "ajax/ca-details/",
-                self.admin_site.admin_view(self.ca_details_view),
-                name=self.ca_details_view_name,
             ),
         )
 
