@@ -66,7 +66,15 @@ import typing
 from types import MappingProxyType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 
-from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 from pydantic.fields import ModelPrivateAttr
 from pydantic_core.core_schema import ValidationInfo
 
@@ -962,7 +970,7 @@ class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):
         return x509.TLSFeature(features=features)
 
 
-EXTENSION_MODEL_OIDS = MappingProxyType(
+EXTENSION_MODEL_OIDS: "MappingProxyType[Type[ExtensionModel[Any]], x509.ObjectIdentifier]" = MappingProxyType(
     {
         AuthorityInformationAccessModel: ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
         AuthorityKeyIdentifierModel: ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -977,7 +985,7 @@ EXTENSION_MODEL_OIDS = MappingProxyType(
         IssuerAlternativeNameModel: ExtensionOID.ISSUER_ALTERNATIVE_NAME,
         IssuingDistributionPointModel: ExtensionOID.ISSUING_DISTRIBUTION_POINT,
         KeyUsageModel: ExtensionOID.KEY_USAGE,
-        MSCertificateTemplateModel: ExtensionOID.MS_CERTIFICATE_TEMPLATE,  # type: ignore[dict-item]
+        MSCertificateTemplateModel: ExtensionOID.MS_CERTIFICATE_TEMPLATE,
         NameConstraintsModel: ExtensionOID.NAME_CONSTRAINTS,
         OCSPNoCheckModel: ExtensionOID.OCSP_NO_CHECK,
         PolicyConstraintsModel: ExtensionOID.POLICY_CONSTRAINTS,
@@ -990,21 +998,36 @@ EXTENSION_MODEL_OIDS = MappingProxyType(
         TLSFeatureModel: ExtensionOID.TLS_FEATURE,
     }
 )
+EXTENSION_MODELS = MappingProxyType({v: k for k, v in EXTENSION_MODEL_OIDS.items()})
+
+
+def validate_cryptograph_extensions(v: Any) -> Any:
+    """Parse a cryptography extension into a Pydantic model."""
+    if isinstance(v, x509.Extension):
+        model_class = EXTENSION_MODELS[v.oid]
+        return model_class.model_validate(v)
+    return v
 
 
 SignCertificateExtension = Annotated[
-    Union[
-        AuthorityInformationAccessModel,
-        CertificatePoliciesModel,
-        CRLDistributionPointsModel,
-        ExtendedKeyUsageModel,
-        FreshestCRLModel,
-        KeyUsageModel,
-        OCSPNoCheckModel,
-        SubjectAlternativeNameModel,
-        TLSFeatureModel,
+    Annotated[
+        Union[
+            AuthorityInformationAccessModel,
+            CertificatePoliciesModel,
+            CRLDistributionPointsModel,
+            ExtendedKeyUsageModel,
+            FreshestCRLModel,
+            IssuerAlternativeNameModel,
+            KeyUsageModel,
+            OCSPNoCheckModel,
+            SubjectAlternativeNameModel,
+            TLSFeatureModel,
+        ],
+        Field(discriminator="type"),
     ],
-    Field(discriminator="type"),
+    BeforeValidator(validate_cryptograph_extensions),
 ]
+
+SignCertificateExtensionList = TypeAdapter(List[SignCertificateExtension])
 
 ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])
