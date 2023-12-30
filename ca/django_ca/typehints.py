@@ -100,15 +100,6 @@ SerializedObjectIdentifier = typing.TypedDict(
     },
 )
 SerializedName = List[SerializedObjectIdentifier]
-SerializedProfile = typing.TypedDict(
-    "SerializedProfile",
-    {
-        "cn_in_san": bool,
-        "description": str,
-        "subject": Optional[SerializedName],
-        "extensions": Dict[str, Any],
-    },
-)
 
 
 # Looser variants of the above for incoming arguments
@@ -295,6 +286,19 @@ SerializedPydanticName = List[SerializedPydanticNameAttribute]
 
 SerializedPydanticExtension = typing.TypedDict(
     "SerializedPydanticExtension", {"type": str, "critical": bool, "value": Any}
+)
+
+SerializedProfile = typing.TypedDict(
+    "SerializedProfile",
+    {
+        "name": str,
+        "description": str,
+        "subject": Optional[SerializedPydanticName],
+        "algorithm": Optional[HashAlgorithms],
+        "cn_in_san": bool,
+        "extensions": List[SerializedPydanticExtension],
+        "clear_extensions": List[str],
+    },
 )
 
 

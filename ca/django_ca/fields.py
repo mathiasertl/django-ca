@@ -40,7 +40,7 @@ if typing.TYPE_CHECKING:
     from django_ca.modelfields import LazyCertificateSigningRequest
 
 _EXTENDED_KEY_USAGE_CHOICES = sorted(
-    [(EXTENDED_KEY_USAGE_NAMES[oid], name) for oid, name in EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES.items()],
+    [(oid.dotted_string, name) for oid, name in EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES.items()],
     key=lambda t: t[1],
 )
 _EXTENDED_KEY_USAGE_MAPPING = {serialized: oid for oid, serialized in EXTENDED_KEY_USAGE_NAMES.items()}
@@ -437,7 +437,7 @@ class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage])
     widget = widgets.ExtendedKeyUsageWidget
 
     def get_values(self, value: List[str]) -> Optional[x509.ExtendedKeyUsage]:
-        return x509.ExtendedKeyUsage(usages=[_EXTENDED_KEY_USAGE_MAPPING[name] for name in value])
+        return x509.ExtendedKeyUsage(usages=[x509.ObjectIdentifier(name) for name in value])
 
 
 class FreshestCRLField(DistributionPointField[x509.FreshestCRL]):

@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var ca_data = JSON.parse(ca_elem.textContent);
 
     var select = document.querySelector("body select#id_ca");
-    select.addEventListener('change', (event) => {
+    select.addEventListener('change', async (event) => {
         var ca = ca_data[select.value];
 
         // update extensions
-        update_extensions(ca.extensions);
+        await update_extensions(ca.extensions);
 
         var hash_algorithm_select = document.querySelector("select#id_algorithm");
         if (ca.signature_hash_algorithm === null) {

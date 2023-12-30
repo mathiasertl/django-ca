@@ -21,7 +21,7 @@ from http import HTTPStatus
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from unittest import mock
 
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -436,7 +436,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
             "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],
             "key_usage_1": True,
-            "extended_key_usage_0": ["serverAuth"],
+            "extended_key_usage_0": [ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],
             "extended_key_usage_1": False,
             "tls_feature_0": [],
             "tls_feature_1": False,

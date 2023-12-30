@@ -285,11 +285,13 @@ class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):
         self.assertFieldOutput(
             fields.ExtendedKeyUsageField,
             {
-                (("serverAuth",), True): extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH, critical=True),
+                ((ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,), True): extended_key_usage(
+                    ExtendedKeyUsageOID.SERVER_AUTH, critical=True
+                ),
                 (
                     (
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ),
                     True,
                 ): extended_key_usage(

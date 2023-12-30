@@ -3,6 +3,7 @@
 
 {% block extrahead %}{{ block.super }}
 <meta name="csr-details-url" content="{{ csr_details_url }}">
+<meta name="name-to-rfc4514-url" content="{{ name_to_rfc4514_url }}">
 {{ profiles|json_script:"profile-data" }}
 {{ cas|json_script:"ca-data" }}
 {{ oid_names|json_script:"oid-names" }}

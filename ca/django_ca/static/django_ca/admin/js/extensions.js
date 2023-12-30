@@ -1,83 +1,124 @@
-var update_extensions = function(extensions) {
-    if (typeof extensions === 'undefined') {
+/**
+ * Functions for handling extensions in the add-certificate admin form.
+ */
+
+/**
+ * Clear extensions with the given extension keys.
+ */
+const clear_extensions = function(extension_keys) {
+    extension_keys.forEach((key) => {
+        let field = document.querySelector(".form-row.field-" + key);
+
+        // Unset critical flag
+		field.querySelector('.labeled-checkbox.critical input').checked = false;
+
+		if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(key)) {
+            set_select_multiple(field.querySelector("select"), []);
+        } else if (['crl_distribution_points', 'freshest_crl'].includes(key)) {
+            field.querySelector('textarea#id_' + key + '_0').value = "";
+            field.querySelector('input#id_' + key + '_1').value = "";
+            field.querySelector('textarea#id_' + key + '_2').value = "";
+
+            set_select_multiple(field.querySelector('select#id_' + key + '_3'), []);
+        } else if (['issuer_alternative_name', 'subject_alternative_name'].includes(key)) {
+            field.querySelector('textarea#id_' + key + '_0').value = "";
+        } else if (key === "authority_information_access") {
+            field.querySelector('textarea#id_' + key + '_0').value = "";
+            field.querySelector('textarea#id_' + key + '_1').value = "";
+        } else if (key === "certificate_policies") {
+            field.querySelector('input#id_' + key + '_0').value = "";
+		    field.querySelector('textarea#id_' + key + '_1').value = "";
+            field.querySelector('textarea#id_' + key + '_2').value = "";
+        } else if (key === "ocsp_no_check") {
+            field.querySelector('.labeled-checkbox.include input').checked = false;
+        } else {
+            console.log("Unknown extension type to clear:", ext);
+        }
+    });
+};
+
+
+/**
+ * Update given extensions.
+ */
+const update_extensions = async function(extensions) {
+    if (typeof extensions === "undefined" || ! Array.isArray(extensions)) {
         return;
     };
-    django.jQuery.each(extensions, function(key, ext) {
-        if (ext === null) {
-            return;
-        };
 
-        // form-row containing the extension
-		var field = django.jQuery('.form-row.field-' + key);
+    extensions.forEach(async (ext) => {
+        let field = document.querySelector(".form-row.field-" + ext.type);
 
-		// profile serialization will make sure that any not-null extension will have a critical value
-		field.find('.labeled-checkbox.critical input').prop('checked', ext.critical === true);
+        // profile serialization will make sure that any not-null extension will have a critical value
+		field.querySelector('.labeled-checkbox.critical input').checked = ext.critical;
 
-		// handle "multiple choice" extensions
-        if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(key)) {
-			if (ext == null) {
-				field.find('select').val([]);
-			} else {
-				field.find('select').val(ext.value);
-			}
-			field.find('select').change();  // so any existing callbacks are called
-		} else if (key === "certificate_policies") {
-		    // We only support one policy information object, return if there are more
+        if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(ext.type)) {
+            set_select_multiple(field.querySelector("select"), ext.value);
+        } else if (['crl_distribution_points', 'freshest_crl'].includes(ext.type)) {
+            let dpoint = ext.value[0];
+            let full_name = dpoint.full_name ? general_names_to_string(dpoint.full_name) : "";
+
+            let relative_name = "";
+            if (dpoint.relative_name) {
+                relative_name = await name_to_rfc4514(dpoint.relative_name);
+            }
+
+            let crl_issuer = dpoint.crl_issuer ? general_names_to_string(dpoint.crl_issuer) : "";
+            let reasons = dpoint.reasons ? dpoint.reasons : [];
+
+            field.querySelector('textarea#id_' + ext.type + '_0').value = full_name;
+            field.querySelector('input#id_' + ext.type + '_1').value = relative_name;
+            field.querySelector('textarea#id_' + ext.type + '_2').value = crl_issuer;
+
+            set_select_multiple(field.querySelector('select#id_' + ext.type + '_3'), reasons);
+        } else if (['issuer_alternative_name', 'subject_alternative_name'].includes(ext.type)) {
+            field.querySelector('textarea#id_' + ext.type + '_0').value = general_names_to_string(ext.value);
+        } else if (ext.type === "authority_information_access") {
+            // group access descriptions by type
+            let ca_issuers_ad = ext.value.filter(gn => gn.access_method === "1.3.6.1.5.5.7.48.2");
+            let ocsp_ad = ext.value.filter(gn => gn.access_method === "1.3.6.1.5.5.7.48.1");
+
+            // get list of general names for each type
+            let ca_issuer_names = ca_issuers_ad.map(ad => ad.access_location);
+            let ocsp_names = ocsp_ad.map(ad => ad.access_location);
+
+            // format to newline-separated string
+            let ca_issuers = general_names_to_string(ca_issuer_names);
+            let ocsp = general_names_to_string(ocsp_names);
+
+            field.querySelector('textarea#id_' + ext.type + '_0').value = ca_issuers;
+            field.querySelector('textarea#id_' + ext.type + '_1').value = ocsp;
+        } else if (ext.type === "certificate_policies") {
+            // We only support one policy information object, return if there are more
 		    if (ext.value.length > 1) {
 		        return;
 		    }
-		    var policy_information = ext.value[0];
-		    var cps = [];
-		    var explicit_text = "";
+		    let policy_information = ext.value[0];
 
 		    // set policy identifier
-		    field.find('input#id_' + key + '_0').val(policy_information.policy_identifier);
+		    field.querySelector('input#id_' + ext.type + '_0').value = policy_information.policy_identifier;
 
-            // compute policy qualifier
-            if (policy_information.policy_qualifiers) {
-                for (policy_qualifier of policy_information.policy_qualifiers) {
-                    if (typeof policy_qualifier == "string") {
-                        cps.push(policy_qualifier);
-                    } else {
-                        if (policy_qualifier.notice_reference) {
-                            return;  // We don't support notice references
-                        } else if (explicit_text == "") {
-                            explicit_text = policy_qualifier.explicit_text;
-                        } else {
-                            return;  // extension has more then one explicit text
-                        }
+		    let cps = [];
+		    let explicit_text = "";
+
+            // support for policy qualifiers is currently extremely limited. We map all str qualifiers into
+            // a newline-separated list, and use the first explicit text defined in any user notice.
+		    if (policy_information.policy_qualifiers) {
+		        policy_information.policy_qualifiers.map(qualifier => {
+		            if (typeof qualifier == "string") {
+                        cps.push(qualifier);
+                    } else if (explicit_text == "" && qualifier.explicit_text) {
+                        explicit_text = qualifier.explicit_text;
                     }
-                }
+		        });
+		    }
 
-                field.find('textarea#id_' + key + '_1').val(cps.join("\n"));
-                field.find('textarea#id_' + key + '_2').val(explicit_text);
-            }
-        } else if (key === 'crl_distribution_points' || key === 'freshest_crl') {
-            var dpoint = ext.value[0];
-            var full_name = dpoint.full_name ? dpoint.full_name.join('\n') : "";
-            var relative_name = dpoint.relative_name ? dpoint.relative_name : "";
-            var crl_issuer = dpoint.crl_issuer ? dpoint.crl_issuer.join('\n') : "";
-            var reasons = dpoint.reasons ? dpoint.reasons : [];
-
-            field.find('textarea#id_' + key + '_0').val(full_name);
-            field.find('input#id_' + key + '_1').val(relative_name);
-            field.find('textarea#id_' + key + '_2').val(crl_issuer);
-            field.find('select#id_' + key + '_3').val(reasons);
-		} else if (key === "authority_information_access") {
-            var issuers = ext.value.issuers ? ext.value.issuers.join("\n") : "";
-            var ocsp = ext.value.ocsp ? ext.value.ocsp.join("\n") : "";
-
-            field.find('textarea.ca-issuers').val(issuers);
-            field.find('textarea.ocsp').val(ocsp);
-        } else if (key === 'ocsp_no_check') {
-			field.find('.labeled-checkbox.include input').prop('checked', ext !== null);
-			field.find('.labeled-checkbox.include input').change();  // so any existing callbacks are called
-        } else if (key === 'issuer_alternative_name') {
-            var names = ext.value ? ext.value.join('\n') : "";
-            field.find('textarea').val(names);
-		} else {
-			console.log("Unhandled extension: " + key);
-		}
-
+		    field.querySelector('textarea#id_' + ext.type + '_1').value = cps.join("\n");
+            field.querySelector('textarea#id_' + ext.type + '_2').value = explicit_text;
+        } else if (ext.type === "ocsp_no_check") {
+            field.querySelector('.labeled-checkbox.include input').checked = true;
+        } else {
+            console.log("Unknown extension type to update:", ext);
+        }
     });
 };

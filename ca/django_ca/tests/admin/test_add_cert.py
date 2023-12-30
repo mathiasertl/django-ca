@@ -114,8 +114,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                     "tls_feature_0": ["status_request", "status_request_v2"],
@@ -286,8 +286,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                     "tls_feature_0": ["status_request", "status_request_v2"],
@@ -380,8 +380,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                     "tls_feature_0": ["status_request", "status_request_v2"],
@@ -568,8 +568,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                 },
@@ -603,8 +603,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                     "password": "wrong",
@@ -639,8 +639,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                     "crl_distribution_points_0": ca.crl_url,
@@ -723,8 +723,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                 },
@@ -771,8 +771,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                 },
@@ -818,8 +818,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                 },
@@ -866,8 +866,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                 },
@@ -913,8 +913,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ],
                     "key_usage_1": True,
                     "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
+                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
                     "tls_feature_0": ["status_request", "status_request_v2"],
@@ -1735,7 +1735,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
             "everything": {
                 "extensions": {
                     "authority_information_access": {
-                        "critical": True,  # NOTE: Yes, this is an RFC 5280 violation
+                        "critical": False,
                         "value": {
                             "ocsp": [
                                 "http://profile.ocsp.example.com",
@@ -1767,7 +1767,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         "value": ["clientAuth", "serverAuth"],
                     },
                     "freshest_crl": {
-                        "critical": True,
+                        "critical": False,
                         "value": [
                             {
                                 "full_name": ["http://freshest-crl.profile.example.com"],
@@ -1817,6 +1817,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
         self.assertEqual(cert.profile, "everything")
+        self.maxDiff = None
         self.assertEqual(
             cert.sorted_extensions,
             [
@@ -1826,7 +1827,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         uri("http://profile.ocsp.example.com"),
                         uri("http://profile.ocsp-backup.example.com"),
                     ],
-                    critical=True,
+                    critical=False,
                 ),
                 cert.ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
@@ -1851,7 +1852,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         full_name=[uri("http://freshest-crl.profile.example.com")],
                         crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
                     ),
-                    critical=True,
+                    critical=False,
                 ),
                 issuer_alternative_name(
                     uri("http://ian1.example.com"), uri("http://ian2.example.com"), critical=True
@@ -1882,7 +1883,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         ],
                     },
                     "freshest_crl": {
-                        "critical": True,
+                        "critical": False,
                         "value": [
                             {
                                 "full_name": ["http://freshest-crl.profile.example.com"],
@@ -1959,7 +1960,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 self.freshest_crl(
                     [uri("http://freshest-crl.profile.example.com")],
                     crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
-                    critical=True,
+                    critical=False,
                 ),
                 subject_alternative_name(dns(cn)),
                 subject_key_identifier(cert),

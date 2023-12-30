@@ -19,9 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var help = wrapper.querySelector("p.profile-desc");
 
         // Update description text when selection is updated
-        select.addEventListener('change', (event) => {
+        select.addEventListener('change', async (event) => {
             // Get selected profile data
             var profile = profile_data[select.value];
+            console.log('profile', select.value, profile);
 
             // Update description
             var description = profile.description;
@@ -36,7 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
             cn_in_san.checked = typeof profile.cn_in_san === 'undefined' || profile.cn_in_san;
 
             // Finally, update extensions:
-            update_extensions(profile.extensions);
+            await update_extensions(profile.extensions);
+            clear_extensions(profile.clear_extensions);
         });
     });
 });

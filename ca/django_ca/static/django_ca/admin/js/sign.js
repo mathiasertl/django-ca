@@ -1,34 +1,3 @@
-// see https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = django.jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-var csrftoken = getCookie('csrftoken');
-
-function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
-django.jQuery.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-        var token = csrftoken ? csrftoken : document.querySelector('[name=csrfmiddlewaretoken]').value;
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain && token) {
-            xhr.setRequestHeader("X-CSRFToken", token);
-        }
-    }
-});
-
 document.addEventListener('DOMContentLoaded', function() {
     var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     var csr_details_url = document.querySelector('meta[name="csr-details-url"]').getAttribute('content');
@@ -42,19 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var profile_select = document.querySelector(".field-profile select");
     var profile_data = JSON.parse(document.getElementById("profile-data").textContent);
     var oid_names = JSON.parse(document.getElementById("oid-names").textContent);
-
-    // Shortcut for a JSON POST request with JSON response. Returns promise for JSON.
-    async function post(url, body) {
-        let response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
-            },
-            body: JSON.stringify(body),
-        });
-        return response;
-    };
 
     /**
      * Set up listeners on key, value and remove that adds the modified flag on any update.
@@ -187,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Retrieve CSR data via API
-            const csr_response = await post(csr_details_url, {csr: value});
+            const csr_response = await async_post(csr_details_url, {csr: value});
             if (csr_response.status !== 200) {
                 csr_subject_input_chapter.querySelector(".no-csr").style.display = "block";
                 csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
@@ -235,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // If you copy the full subject from the profile, it is again "not modified" by definition
     profile_subject_input_chapter.querySelectorAll(".inline-text-button").forEach((button) => {
         button.addEventListener("click", (event) => {
-            console.log('click on profile!');
             subject_field.dataset.modified = "false";
         });
     });
@@ -243,7 +198,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // But if you copy from the CSR, it is modified by definition
     csr_subject_input_chapter.querySelectorAll(".inline-text-button").forEach((button) => {
         button.addEventListener("click", (event) => {
-            console.log('click on csr??');
             subject_field.dataset.modified = "true";
         });
     });

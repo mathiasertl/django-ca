@@ -57,7 +57,7 @@ from django_object_actions import DjangoObjectActions
 
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
-from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name, serialize_extension
+from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name
 from django_ca.extensions.utils import certificate_policies_is_simple, extension_as_admin_html
 from django_ca.forms import (
     CertificateAuthorityForm,
@@ -77,6 +77,8 @@ from django_ca.models import (
     Watcher,
 )
 from django_ca.profiles import profiles
+from django_ca.pydantic.extensions import SignCertificateExtensionList
+from django_ca.pydantic.name import NameModel
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import CRLExtensionType, X509CertMixinTypeVar
@@ -665,17 +667,15 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             if ca.key_exists is False:
                 continue
 
-            extensions = {
-                EXTENSION_KEYS[oid]: serialize_extension(ext)
-                for oid, ext in ca.extensions_for_certificate.items()
-            }
+            extensions = SignCertificateExtensionList.validate_python(ca.extensions_for_certificate.values())
+
             hash_algorithm_name: Optional[str] = None
             if ca.algorithm is not None:
                 hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(ca.algorithm)]
 
             data[ca.pk] = {
                 "signature_hash_algorithm": hash_algorithm_name,
-                "extensions": extensions,
+                "extensions": [ext.model_dump(mode="json") for ext in extensions],
                 "name": ca.name,
             }
         return data
@@ -803,6 +803,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     ) -> HttpResponse:
         extra_context = extra_context or {}
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
+        extra_context["name_to_rfc4514_url"] = reverse(f"admin:{self.name_to_rfc4514_view_name}")
         extra_context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
         extra_context["cas"] = self.get_ca_details()
 
@@ -836,6 +837,20 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         subject = [{"key": s.oid.dotted_string, "value": s.value} for s in csr.subject]
         return JsonResponse({"subject": subject})
 
+    @property
+    def name_to_rfc4514_view_name(self) -> str:
+        """URL for the CSR details view."""
+        return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_name_to_rfc4514"
+
+    def name_to_rfc4514_view(self, request: HttpRequest) -> JsonResponse:
+        """Returns details of a CSR request."""
+        if not request.user.is_staff or not self.has_change_permission(request):
+            # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
+            raise PermissionDenied
+
+        name_model = NameModel.model_validate_json(request.body, strict=True)
+        return JsonResponse({"name": name_model.cryptography.rfc4514_string()})
+
     def get_urls(self) -> List[URLPattern]:
         # Remove the delete action from the URLs
         # Remove the delete action from the URLs
@@ -848,6 +863,14 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "ajax/csr-details",
                 self.admin_site.admin_view(self.csr_details_view),
                 name=self.csr_details_view_name,
+            ),
+        )
+        urls.insert(
+            0,
+            path(
+                "ajax/name-to-rfc4514",
+                self.admin_site.admin_view(self.name_to_rfc4514_view),
+                name=self.name_to_rfc4514_view_name,
             ),
         )
 
@@ -1076,6 +1099,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         }
         js = (
             "admin/js/jquery.init.js",
+            "django_ca/admin/js/utils.js",
             "django_ca/admin/js/sign.js",
         )
 

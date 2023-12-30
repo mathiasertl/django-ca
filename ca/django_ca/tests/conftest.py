@@ -25,7 +25,7 @@ from unittest.mock import patch
 import coverage
 
 from cryptography import x509
-from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
+from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 import pytest
 from _pytest.config import Config as PytestConfig
@@ -118,6 +118,23 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
 
 @pytest.fixture()
+def hostname() -> Iterator[str]:
+    """Fixture yielding a reusable hostname."""
+    yield "example.com"
+
+
+@pytest.fixture()
+def name(hostname: str) -> Iterator[x509.Name]:
+    """Fixture yielding a reusable x509.Name."""
+    yield x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+        ]
+    )
+
+
+@pytest.fixture()
 def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
     """Parametrized fixture for "interesting" certificates.
 
@@ -167,13 +184,13 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
 
 # Dynamically inject repetitive fixtures:
 #   https://github.com/pytest-dev/pytest/issues/2424
-for name in usable_ca_names:
-    globals()[name] = generate_ca_fixture(name)
-    globals()[f"usable_{name}"] = generate_usable_ca_fixture(name)
-for name in usable_ca_names + usable_cert_names + unusable_cert_names:
-    globals()[f"{name.replace('-', '_')}_pub"] = generate_pub_fixture(name)
-for name in usable_cert_names:
-    globals()[name.replace("-", "_")] = generate_cert_fixture(name)
+for ca_name in usable_ca_names:
+    globals()[ca_name] = generate_ca_fixture(ca_name)
+    globals()[f"usable_{ca_name}"] = generate_usable_ca_fixture(ca_name)
+for ca_name in usable_ca_names + usable_cert_names + unusable_cert_names:
+    globals()[f"{ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(ca_name)
+for cert_name in usable_cert_names:
+    globals()[cert_name.replace("-", "_")] = generate_cert_fixture(cert_name)
 
 
 @pytest.fixture(params=signed_certificate_timestamp_cert_names)

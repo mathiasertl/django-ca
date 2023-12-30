@@ -24,12 +24,7 @@ from django.forms import widgets
 from django.utils.translation import gettext as _
 
 from django_ca import ca_settings
-from django_ca.constants import (
-    EXTENDED_KEY_USAGE_NAMES,
-    EXTENSION_DEFAULT_CRITICAL,
-    KEY_USAGE_NAMES,
-    REVOCATION_REASONS,
-)
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.extensions.utils import certificate_policies_is_simple
 from django_ca.typehints import KeyUsages
 from django_ca.utils import format_general_name
@@ -447,7 +442,7 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
     def decompress(self, value: Optional[x509.Extension[x509.ExtendedKeyUsage]]) -> Tuple[List[str], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
-        choices = [EXTENDED_KEY_USAGE_NAMES[usage] for usage in value.value]
+        choices = [oid.dotted_string for oid in value.value]
         return choices, value.critical
 
 

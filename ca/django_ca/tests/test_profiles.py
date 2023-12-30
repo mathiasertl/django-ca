@@ -92,90 +92,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-publ
         cert.update_certificate(prof.create_cert(ca, *args, **kwargs))
         return cert
 
-    def test_eq(self) -> None:
-        """Test profile equality."""
-        prof = None
-        for name in ca_settings.CA_PROFILES:
-            self.assertNotEqual(prof, profiles[name])
-            prof = profiles[name]
-            self.assertEqual(prof, prof)
-            self.assertNotEqual(prof, None)
-            self.assertNotEqual(prof, -1)
-
-        self.assertNotEqual(profile, None)
-
-    def test_init_django_ca_values(self) -> None:
-        """Test passing serialized extensions leads to equal profiles."""
-        prof1 = Profile("test", subject=self.subject, extensions={"ocsp_no_check": {}})
-        prof2 = Profile("test", subject=self.subject, extensions={"ocsp_no_check": ocsp_no_check()})
-        self.assertEqual(prof1, prof2)
-
-    def test_init_none_extension(self) -> None:
-        """Test profiles that explicitly deactivate an extension."""
-        prof = Profile("test", extensions={"ocsp_no_check": None})
-        self.assertEqual(
-            prof.extensions,
-            {ExtensionOID.OCSP_NO_CHECK: None, ExtensionOID.BASIC_CONSTRAINTS: basic_constraints()},
-        )
-        self.assertIsNone(prof.serialize()["extensions"]["ocsp_no_check"])
-
-    def test_init_no_subject(self) -> None:
-        """Test with no default subject."""
-        # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
-        # subject. But it still seems sensible to support this
-        default_subject = (("CN", "testcase"),)
-
-        with override_settings(CA_DEFAULT_SUBJECT=default_subject):
-            prof = Profile("test")
-        self.assertEqual(prof.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")]))
-
-    def test_init_x509_subject(self) -> None:
-        """Test passing a cryptography subject."""
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
-        prof = Profile("test", subject=subject)
-        self.assertEqual(prof.subject, subject)
-
-    def test_init_expires(self) -> None:
-        """Test the expire parameter."""
-        prof = Profile("example", expires=30)
-        self.assertEqual(prof.expires, timedelta(days=30))
-
-        exp = timedelta(hours=3)
-        prof = Profile("example", expires=exp)
-        self.assertEqual(prof.expires, exp)
-
-    def test_serialize(self) -> None:
-        """Test profile serialization."""
-        desc = "foo bar"
-        key_usage = ["digital_signature"]
-        prof = Profile(
-            "test",
-            cn_in_san=True,
-            description=desc,
-            subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)]),
-            extensions={
-                EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
-            },
-        )
-        self.assertEqual(
-            prof.serialize(),
-            {
-                "cn_in_san": True,
-                "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}],
-                "description": desc,
-                "extensions": {
-                    EXTENSION_KEYS[ExtensionOID.BASIC_CONSTRAINTS]: {
-                        "value": {"ca": False},
-                        "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.BASIC_CONSTRAINTS],
-                    },
-                    EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {
-                        "value": key_usage,
-                        "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
-                    },
-                },
-            },
-        )
-
     @override_tmpcadir()
     def test_create_cert_minimal(self) -> None:
         """Create a certificate with minimal parameters."""
@@ -826,3 +742,87 @@ class ProfilesTestCase(TestCase):
 
         self.assertEqual(profile, profile)
         self.assertEqual(profile, profiles[ca_settings.CA_DEFAULT_PROFILE])
+
+
+def test_eq() -> None:
+    """Test profile equality."""
+    prof = None
+    for name in ca_settings.CA_PROFILES:
+        assert prof != profiles[name]
+        prof = profiles[name]
+        assert prof == prof  # noqa: PLR0124  # this is what we're testing
+        assert prof is not None
+        assert prof != -1
+
+
+def test_init_django_ca_values(name: x509.Name) -> None:
+    """Test passing serialized extensions leads to equal profiles."""
+    prof1 = Profile("test", subject=name, extensions={"ocsp_no_check": {}})
+    prof2 = Profile("test", subject=name, extensions={"ocsp_no_check": ocsp_no_check()})
+    assert prof1 == prof2
+
+
+def test_init_none_extension() -> None:
+    """Test profiles that explicitly deactivate an extension."""
+    prof = Profile("test", extensions={"ocsp_no_check": None})
+    assert prof.extensions == {ExtensionOID.OCSP_NO_CHECK: None}
+    assert prof.serialize()["clear_extensions"] == ["ocsp_no_check"]
+
+
+def test_init_no_subject() -> None:
+    """Test with no default subject."""
+    # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
+    # subject. But it still seems sensible to support this
+    default_subject = (("CN", "testcase"),)
+
+    with override_settings(CA_DEFAULT_SUBJECT=default_subject):
+        prof = Profile("test")
+    assert prof.subject == x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
+
+
+def test_init_x509_subject(name: x509.Name) -> None:
+    """Test passing a cryptography subject."""
+    prof = Profile("test", subject=name)
+    assert prof.subject == name
+
+
+def test_init_expires() -> None:
+    """Test the `expire` parameter."""
+    prof = Profile("example", expires=30)
+    assert prof.expires == timedelta(days=30)
+
+    exp = timedelta(hours=3)
+    prof = Profile("example", expires=exp)
+    assert prof.expires == exp
+
+
+def test_serialize() -> None:
+    """Test profile serialization."""
+    desc = "foo bar"
+    key_usage = ["digital_signature"]
+    prof = Profile(
+        "test",
+        cn_in_san=True,
+        algorithm="SHA-512",
+        description=desc,
+        subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
+        extensions={
+            EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
+            EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
+        },
+    )
+    assert prof.serialize() == {
+        "name": "test",
+        "algorithm": "SHA-512",
+        "cn_in_san": True,
+        "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}],
+        "description": desc,
+        "clear_extensions": ["extended_key_usage"],
+        "extensions": [
+            {
+                "type": "key_usage",
+                "value": key_usage,
+                "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
+            },
+        ],
+    }
