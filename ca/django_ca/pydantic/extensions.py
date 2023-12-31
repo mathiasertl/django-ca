@@ -97,6 +97,7 @@ from django_ca.pydantic.extension_attributes import (
     PolicyConstraintsValueModel,
     PolicyInformationModel,
     SignedCertificateTimestampModel,
+    UnrecognizedExtensionValueModel,
 )
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.type_aliases import NonEmptyOrderedSet
@@ -972,6 +973,35 @@ class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):
         return x509.TLSFeature(features=features)
 
 
+class UnrecognizedExtensionModel(ExtensionModel[x509.UnrecognizedExtension]):
+    """Pydantic model for a :py:class:`~cg:cryptography.x509.UnrecognizedExtension` extension.
+
+    The `value` a :py:class:`~django_ca.pydantic.extension_attributes.UnrecognizedExtensionValueModel` value:
+
+    >>> value = UnrecognizedExtensionValueModel(value=b"MTIz", oid="1.2.3")
+    >>> UnrecognizedExtensionModel(critical=True, value=value)  # doctest: +STRIP_WHITESPACE
+    UnrecognizedExtensionModel(
+        critical=True, value=UnrecognizedExtensionValueModel(oid='1.2.3', value=b'123')
+    )
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+    type: Literal["unknown"] = Field(default="unknown", repr=False)
+    critical: bool
+    value: UnrecognizedExtensionValueModel
+
+    @property
+    def cryptography(self) -> x509.Extension[x509.UnrecognizedExtension]:  # type: ignore[override]
+        """Return the respective cryptography instance."""
+        value = self.extension_type
+        return x509.Extension(critical=self.critical, oid=value.oid, value=value)
+
+    @property
+    def extension_type(self) -> x509.UnrecognizedExtension:
+        """The :py:class:`~cg:cryptography.x509.UnrecognizedExtension` instance."""
+        return self.value.cryptography
+
+
 EXTENSION_MODEL_OIDS: "MappingProxyType[Type[ExtensionModel[Any]], x509.ObjectIdentifier]" = MappingProxyType(
     {
         AuthorityInformationAccessModel: ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
@@ -1008,7 +1038,10 @@ EXTENSION_MODELS: "MappingProxyType[x509.ObjectIdentifier, Type[ExtensionModel[A
 def validate_cryptograph_extensions(v: Any, info: ValidationInfo) -> Any:
     """Parse a cryptography extension into a Pydantic model."""
     if isinstance(v, x509.Extension):
-        model_class = EXTENSION_MODELS[v.oid]
+        if isinstance(v.value, x509.UnrecognizedExtension):
+            model_class = UnrecognizedExtensionModel
+        else:
+            model_class = EXTENSION_MODELS[v.oid]
         return model_class.model_validate(v, context=info.context)
     return v
 
@@ -1058,6 +1091,7 @@ CertificateExtensions = Annotated[
             SubjectInformationAccessModel,
             SubjectKeyIdentifierModel,
             TLSFeatureModel,
+            UnrecognizedExtensionModel,
         ],
         Field(discriminator="type"),
     ],

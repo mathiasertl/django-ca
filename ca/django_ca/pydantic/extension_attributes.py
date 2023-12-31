@@ -610,3 +610,29 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
                 else:
                     policy_qualifiers.append(qualifier.cryptography)
         return x509.PolicyInformation(policy_identifier=oid, policy_qualifiers=policy_qualifiers)
+
+
+class UnrecognizedExtensionValueModel(CryptographyModel[x509.UnrecognizedExtension]):
+    """Pydantic model for a :py:class:`~cg:cryptography.x509.UnrecognizedExtension` extension.
+
+    The `value` a base64 encoded bytes value, and the `oid` is any dotted string:
+
+    >>> UnrecognizedExtensionValueModel(value=b"MTIz", oid="1.2.3")
+    UnrecognizedExtensionValueModel(oid='1.2.3', value=b'123')
+    """
+
+    oid: OIDType
+    value: Base64Bytes
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_cryptography(cls, data: Any) -> Any:
+        """Parse cryptography instances."""
+        if isinstance(data, x509.UnrecognizedExtension):
+            return {"oid": data.oid, "value": base64.b64encode(data.value)}
+        return data
+
+    @property
+    def cryptography(self) -> x509.UnrecognizedExtension:
+        """The :py:class:`~cg:cryptography.x509.UnrecognizedExtension` instance."""
+        return x509.UnrecognizedExtension(value=self.value, oid=x509.ObjectIdentifier(self.oid))

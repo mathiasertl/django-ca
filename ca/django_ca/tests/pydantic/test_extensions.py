@@ -65,6 +65,7 @@ from django_ca.pydantic.extensions import (
     SubjectInformationAccessModel,
     SubjectKeyIdentifierModel,
     TLSFeatureModel,
+    UnrecognizedExtensionModel,
 )
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.utils import dns, doctest_module, key_usage
@@ -124,7 +125,7 @@ def assert_extension_model(
     model = assert_cryptography_model(model_class, kwargs, extension)
 
     assert model.critical == expected_critical
-    assert model.type == constants.EXTENSION_KEYS[expected.oid]
+    assert model.type == constants.EXTENSION_KEYS.get(expected.oid, "unknown")
     if hasattr(model, "_extension_type"):
         assert model._extension_type == type(expected)  # pylint: disable=protected-access
 
@@ -1460,6 +1461,25 @@ def test_tls_feature(
 def test_tls_feature_errors(parameters: Dict[str, bool], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the TLSFeatureModel."""
     assert_validation_errors(TLSFeatureModel, parameters, expected_errors)
+
+
+@pytest.mark.parametrize(
+    "parameters,extension_type",
+    (
+        (
+            {"value": b"MTIz", "oid": "1.2.3"},
+            x509.UnrecognizedExtension(value=b"123", oid=x509.ObjectIdentifier("1.2.3")),
+        ),
+    ),
+)
+@pytest.mark.parametrize("critical", (True, False))
+def test_unrecognized_extension(
+    parameters: Dict[str, Any],
+    extension_type: x509.UnrecognizedExtension,
+    critical: Optional[bool],
+) -> None:
+    """Test the TLSFeatureModel."""
+    assert_extension_model(UnrecognizedExtensionModel, parameters, extension_type, critical)
 
 
 def test_extension_model_oids() -> None:
