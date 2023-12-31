@@ -298,7 +298,8 @@ class SignedCertificateTimestampBaseModel(ExtensionModel[SignedCertificateTimest
 
     value: NonEmptyOrderedSet[List[SignedCertificateTimestampModel]]
 
-    def extension_type(self) -> typing.NoReturn:  # type: ignore[override]  # pragma: no cover
+    @property
+    def extension_type(self) -> typing.NoReturn:  # pragma: no cover
         """Convert to the respective cryptography extension instance."""
         raise ValueError(f"{self._extension_type.__name__} cannot be loaded as cryptography instances.")
 
@@ -1039,7 +1040,7 @@ def validate_cryptograph_extensions(v: Any, info: ValidationInfo) -> Any:
     """Parse a cryptography extension into a Pydantic model."""
     if isinstance(v, x509.Extension):
         if isinstance(v.value, x509.UnrecognizedExtension):
-            model_class = UnrecognizedExtensionModel
+            model_class: type[ExtensionModel[Any]] = UnrecognizedExtensionModel
         else:
             model_class = EXTENSION_MODELS[v.oid]
         return model_class.model_validate(v, context=info.context)

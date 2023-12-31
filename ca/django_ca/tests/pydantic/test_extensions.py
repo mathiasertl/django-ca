@@ -1489,14 +1489,14 @@ def test_extension_model_oids() -> None:
     assert actual_oids == expected_oids
 
 
-def test_fixture_certs(any_cert) -> None:
+def test_fixture_certs(any_cert: str) -> None:
     """Test Pydantic models with fixture data."""
     public_key = CERT_DATA[any_cert]["pub"]["parsed"]
-    try:
-        serialized_extensions = CERT_DATA[any_cert][("extensions")]
-    except KeyError:  # can't serialize unrecognized extensions yet, so CAs don't have them :-(
-        return
-    extensions = CertificateExtensionsList.validate_python(
+    serialized_extensions = CERT_DATA[any_cert][("extensions")]
+    expected = CertificateExtensionsList.validate_python(
         serialized_extensions, context={"validate_required_critical": False}
     )
-    assert list(public_key.extensions) == [ext.cryptography for ext in extensions]
+    actual = CertificateExtensionsList.validate_python(
+        list(public_key.extensions), context={"validate_required_critical": False}
+    )
+    assert expected == actual

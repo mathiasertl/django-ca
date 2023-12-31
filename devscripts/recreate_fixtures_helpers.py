@@ -23,7 +23,7 @@ import shutil
 import tempfile
 from datetime import datetime, timezone as tz
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Type, Union
 from unittest.mock import patch
 
 from cryptography import x509
@@ -47,11 +47,10 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from devscripts import config
-from django_ca import ca_settings, constants
-from django_ca.extensions import serialize_extension
+from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
-from django_ca.pydantic.extensions import EXTENSION_MODELS, CertificateExtensionsList
+from django_ca.pydantic.extensions import EXTENSION_MODELS, ExtensionModel, UnrecognizedExtensionModel
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
 from django_ca.utils import bytes_to_hex, ca_storage, parse_serialized_name_attributes, serialize_name
@@ -71,7 +70,11 @@ class CertificateEncoder(json.JSONEncoder):
         if isinstance(o, x509.Extensions):
             return list(o)
         if isinstance(o, x509.Extension):
-            model = EXTENSION_MODELS[o.oid].model_validate(o, context={"validate_required_critical": False})
+            if isinstance(o.value, x509.UnrecognizedExtension):
+                model_class: Type[ExtensionModel[Any]] = UnrecognizedExtensionModel
+            else:
+                model_class = EXTENSION_MODELS[o.oid]
+            model = model_class.model_validate(o, context={"validate_required_critical": False})
             return model.model_dump(mode="json")
         return json.JSONEncoder.default(self, o)
 
@@ -219,8 +222,7 @@ def _update_contrib(
         "name": name,
         "cn": cert.cn,
         "cat": "sphinx-contrib",
-        # Can't handle UnrecognizedExtension yet
-        # "extensions": parsed.extensions,
+        "extensions": parsed.extensions,
         "pub_filename": filename,
         "key_filename": False,
         "csr_filename": False,
@@ -233,14 +235,6 @@ def _update_contrib(
         "sha256": cert.get_fingerprint(hashes.SHA256()),
         "sha512": cert.get_fingerprint(hashes.SHA512()),
     }
-
-    for oid, ext in cert.x509_extensions.items():
-        if isinstance(ext.value, x509.UnrecognizedExtension):
-            # Currently just some old StartSSL extensions for Netscape (!)
-            continue
-
-        ext_key = constants.EXTENSION_KEYS[oid]
-        cert_data[ext_key] = serialize_extension(ext)
 
     data[name] = cert_data
 

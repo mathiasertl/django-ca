@@ -92,20 +92,16 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
         "root": {
             "type": "ca",
             "path_length": ROOT_PATHLEN,
-            "basic_constraints": {"critical": True, "value": {"ca": True}},
-            "key_usage": "critical,cRLSign,keyCertSign",
         },
         "child": {
             "type": "ca",
             "delta": timedelta(days=3),
             "parent": "root",
-            "basic_constraints": {"critical": True, "value": {"ca": True, "path_length": CHILD_PATHLEN}},
             "path_length": CHILD_PATHLEN,
             "max_path_length": 0,
         },
         "ec": {
             "type": "ca",
-            "basic_constraints": {"critical": True, "value": {"ca": True, "path_length": EC_PATHLEN}},
             "path_length": EC_PATHLEN,
             "key_type": "EC",
             "max_path_length": 1,
@@ -113,14 +109,12 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
         "dsa": {
             "type": "ca",
             "key_type": "DSA",
-            "basic_constraints": {"critical": True, "value": {"ca": True, "path_length": DSA_PATHLEN}},
             "path_length": DSA_PATHLEN,
             "max_path_length": 3,
         },
         "pwd": {
             "type": "ca",
             "password": b"testpassword",
-            "basic_constraints": {"critical": True, "value": {"ca": True, "path_length": PWD_PATHLEN}},
             "path_length": PWD_PATHLEN,
             "max_path_length": 2,
         },
