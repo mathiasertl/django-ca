@@ -1003,11 +1003,11 @@ EXTENSION_MODEL_OIDS: "MappingProxyType[Type[ExtensionModel[Any]], x509.ObjectId
 EXTENSION_MODELS = MappingProxyType({v: k for k, v in EXTENSION_MODEL_OIDS.items()})
 
 
-def validate_cryptograph_extensions(v: Any) -> Any:
+def validate_cryptograph_extensions(v: Any, info: ValidationInfo) -> Any:
     """Parse a cryptography extension into a Pydantic model."""
     if isinstance(v, x509.Extension):
         model_class = EXTENSION_MODELS[v.oid]
-        return model_class.model_validate(v)
+        return model_class.model_validate(v, context=info.context)
     return v
 
 
