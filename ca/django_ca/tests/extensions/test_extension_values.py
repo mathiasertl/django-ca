@@ -26,7 +26,6 @@ from django.utils.safestring import mark_safe
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.extensions import extension_as_text, parse_extension, serialize_extension
 from django_ca.extensions.utils import extension_as_admin_html
-from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin, TestCaseProtocol
 from django_ca.tests.base.utils import dns, rdn, uri
 from django_ca.typehints import (
@@ -1168,14 +1167,6 @@ class PrecertificateSignedCertificateTimestampsTestCase(TestCaseMixin, TestCase)
         "letsencrypt_x3-cert",
     )
     oid = ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS
-
-    def test_serialize(self) -> None:
-        """Test serialization."""
-        for key in self.load_certs:
-            self.assertEqual(
-                serialize_extension(self.certs[key].x509_extensions[self.oid])["value"],
-                CERT_DATA[key]["precertificate_signed_certificate_timestamps_serialized"],
-            )
 
     def test_parse(self) -> None:
         """Test parsing."""

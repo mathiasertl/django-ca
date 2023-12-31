@@ -874,15 +874,14 @@ Digest:
         context[
             "id2"
         ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"
-        sct = """* Precertificate Signed Certificate Timestamps{precertificate_signed_certificate_timestamps_critical}:
-  * Precertificate ({precertificate_signed_certificate_timestamps_serialized[0][version]}):
-      Timestamp: {precertificate_signed_certificate_timestamps_serialized[0][timestamp]}
+
+        sct = """* Precertificate Signed Certificate Timestamps:
+  * Precertificate (v1):
+      Timestamp: 2019-06-25 03:40:03.920000
       Log ID: {id1}
-  * Precertificate ({precertificate_signed_certificate_timestamps_serialized[1][version]}):
-      Timestamp: {precertificate_signed_certificate_timestamps_serialized[1][timestamp]}
-      Log ID: {id2}""".format(  # NOQA: E501
-            **context
-        )
+  * Precertificate (v1):
+      Timestamp: 2019-06-25 03:40:03.862000
+      Log ID: {id2}""".format(**context)
 
         self.assertContrib(
             "letsencrypt_x3-cert",

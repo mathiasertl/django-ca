@@ -28,11 +28,11 @@ import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives._serialization import Encoding
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID
 
 import django
 
 from django_ca.constants import EXTENSION_KEYS
-from django_ca.extensions import serialize_extension
 from django_ca.tests.base.typehints import CsrDict, KeyDict, PubDict
 from django_ca.utils import add_colons
 
@@ -148,15 +148,12 @@ CERT_DATA["cloudflare_1"] = {
         {
             "type": "authority_key_identifier",
             "critical": False,
-            "value": {
-                "key_identifier": b"QAlhZ/C8g3FP3hIILG/U1Ct2PZY=",
-            },
+            "value": {"key_identifier": "QAlhZ/C8g3FP3hIILG/U1Ct2PZY="},
         },
         {
             "type": "subject_key_identifier",
             "critical": False,
-            # "value": "05:86:D8:B4:ED:A9:7E:23:EE:2E:E7:75:AA:3B:2C:06:08:2A:93:B2",
-            "value": b"BYbYtO2pfiPuLud1qjssBggqk7I=",
+            "value": "BYbYtO2pfiPuLud1qjssBggqk7I=",
         },
         {
             "type": "key_usage",
@@ -171,7 +168,10 @@ CERT_DATA["cloudflare_1"] = {
         {
             "type": "extended_key_usage",
             "critical": False,
-            "value": ["serverAuth", "clientAuth"],
+            "value": [
+                ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
+                ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+            ],
         },
         {
             "type": "certificate_policies",
@@ -203,14 +203,14 @@ CERT_DATA["cloudflare_1"] = {
             "critical": False,
             "value": [
                 {
-                    "access_method": "ca_issuers",
+                    "access_method": AuthorityInformationAccessOID.CA_ISSUERS.dotted_string,
                     "access_location": {
                         "type": "URI",
                         "value": "http://crt.comodoca4.com/COMODOECCDomainValidationSecureServerCA2.crt",
                     },
                 },
                 {
-                    "access_method": "ocsp",
+                    "access_method": AuthorityInformationAccessOID.OCSP.dotted_string,
                     "access_location": {
                         "type": "URI",
                         "value": "http://ocsp.comodoca4.com",
@@ -406,7 +406,6 @@ for _name, _cert_data in CERT_DATA.items():
         except KeyError:  # unknown extensions from StartSSL CA
             continue
         _cert_data[key] = extension
-        _cert_data[f"{key}_serialized"] = serialize_extension(extension)["value"]
 
 # Calculate some fixed timestamps that we reuse throughout the tests
 TIMESTAMPS = {

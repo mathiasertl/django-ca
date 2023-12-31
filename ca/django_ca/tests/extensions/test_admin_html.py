@@ -12,20 +12,22 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test how extensions look like in the admin interface."""
+import base64
 import typing
-from typing import Dict
+from typing import Any, Dict
 
 from cryptography import x509
-from cryptography.hazmat._oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.test import TestCase
 from django.utils.safestring import mark_safe
 
-from django_ca.constants import KEY_USAGE_NAMES
+from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, KEY_USAGE_NAMES
 from django_ca.extensions.utils import extension_as_admin_html
 from django_ca.models import X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.utils import bytes_to_hex
 
 
 class CertificateExtensionTestCase(TestCaseMixin, TestCase):
@@ -43,7 +45,6 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
         },
         "dsa": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['dsa']['path_length']}",
-            ExtensionOID.SUBJECT_KEY_IDENTIFIER: CERT_DATA["dsa"]["subject_key_identifier_serialized"],
         },
         "pwd": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['pwd']['path_length']}",
@@ -227,9 +228,6 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
         # Generated certificates #
         ##########################
         "all-extensions": {
-            ExtensionOID.FRESHEST_CRL: f"""DistributionPoint:<ul>
-                <li>Full Name: {CERT_DATA['all-extensions']['freshest_crl_serialized'][0]['full_name'][0]}</li>
-            </ul>""",  # NOQA: E501
             ExtensionOID.INHIBIT_ANY_POLICY: "skip certs: 1",
             ExtensionOID.NAME_CONSTRAINTS: """Permitted: <ul><li>DNS:.org</li></ul>
                 Excluded: <ul><li>DNS:.net</li></ul>""",
@@ -607,82 +605,96 @@ DistributionPoint:
         self.admin_html.setdefault(name, {})
 
         config = CERT_DATA[name]
-        if config.get("subject_alternative_name_serialized"):
-            sans = [f"<li>{san}</li>" for san in config["subject_alternative_name_serialized"]]
+        extensions = {ext["type"]: ext for ext in config["extensions"]}
+        if authority_information_access := extensions.get("authority_information_access"):
+            issuers = [
+                aia["access_location"]
+                for aia in authority_information_access["value"]
+                if aia["access_method"] == AuthorityInformationAccessOID.CA_ISSUERS.dotted_string
+            ]
+            ocsp = [
+                aia["access_location"]
+                for aia in authority_information_access["value"]
+                if aia["access_method"] == AuthorityInformationAccessOID.OCSP.dotted_string
+            ]
+
+            lines = []
+            if issuers:
+                issuer_lines = [f"<li>{fn['type']}:{fn['value']}</li>" for fn in issuers]
+                lines.append(f"CA Issuers: <ul>{''.join(issuer_lines)}</ul>")
+            if ocsp:
+                ocsp_lines = [f"<li>{fn['type']}:{fn['value']}</li>" for fn in ocsp]
+                lines.append(f"OCSP: <ul>{''.join(ocsp_lines)}</ul>")
+            self.admin_html[name].setdefault(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, "\n".join(lines))
+
+        if authority_key_identifier := extensions.get("authority_key_identifier"):
+            key_identifier = authority_key_identifier["value"].get("key_identifier")
+            if key_identifier is not None:
+                key_identifier = bytes_to_hex(base64.b64decode(key_identifier.encode()))
+
             self.admin_html[name].setdefault(
-                ExtensionOID.SUBJECT_ALTERNATIVE_NAME, f"<ul>{''.join(sans)}</ul>"
+                ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                f"<ul><li>Key ID: <span class='django-ca-serial'>{key_identifier}</span></li></ul>",
             )
-        if config.get("issuer_alternative_name_serialized"):
-            sans = [f"<li>{san}</li>" for san in config["issuer_alternative_name_serialized"]]
+
+        if crl_distribution_points := extensions.get("crl_distribution_points"):
+            self._set_distribution_point_extension(
+                name, crl_distribution_points, ExtensionOID.CRL_DISTRIBUTION_POINTS
+            )
+
+        # NOTE: Custom extension class sorts values, but we render them in order as they appear in the
+        #       certificate, so we still have to override this in some places.
+        if extended_key_usage := extensions.get("extended_key_usage"):
+            oids = [x509.ObjectIdentifier(oid) for oid in extended_key_usage["value"]]
+            lines = [f"<li>{EXTENDED_KEY_USAGE_NAMES[oid]}</li>" for oid in oids]
+            self.admin_html[name].setdefault(ExtensionOID.EXTENDED_KEY_USAGE, f"<ul>{''.join(lines)}</ul>")
+
+        if alternative_names := extensions.get("issuer_alternative_name"):
+            sans = [f"<li>{san['type']}:{san['value']}</li>" for san in alternative_names["value"]]
             self.admin_html[name].setdefault(
                 ExtensionOID.ISSUER_ALTERNATIVE_NAME, f"<ul>{''.join(sans)}</ul>"
             )
 
-        if config.get("key_usage_serialized"):
-            kus = sorted([f"<li>{KEY_USAGE_NAMES[ku]}</li>" for ku in config["key_usage_serialized"]])
+        if freshest_crl := extensions.get("freshest_crl"):
+            self._set_distribution_point_extension(name, freshest_crl, ExtensionOID.FRESHEST_CRL)
+
+        if key_usage := extensions.get("key_usage"):
+            kus = sorted([f"<li>{KEY_USAGE_NAMES[ku]}</li>" for ku in key_usage["value"]])
             self.admin_html[name].setdefault(ExtensionOID.KEY_USAGE, f"<ul>{''.join(kus)}</ul>")
 
-        # NOTE: Custom extension class sorts values, but we render them in order as they appear in the
-        #       certificate, so we still have to override this in some places.
-        if config.get("extended_key_usage_serialized"):
-            ekus = [f"<li>{eku}</li>" for eku in config["extended_key_usage_serialized"]]
-            self.admin_html[name].setdefault(ExtensionOID.EXTENDED_KEY_USAGE, f"<ul>{''.join(ekus)}</ul>")
+        if alternative_names := extensions.get("subject_alternative_name"):
+            sans = [f"<li>{san['type']}:{san['value']}</li>" for san in alternative_names["value"]]
+            self.admin_html[name].setdefault(
+                ExtensionOID.SUBJECT_ALTERNATIVE_NAME, f"<ul>{''.join(sans)}</ul>"
+            )
 
-        if config.get("crl_distribution_points_serialized"):
-            ext_config = config["crl_distribution_points_serialized"]
-            full_names = []
-
-            for dpoint in ext_config:
-                if list(dpoint.keys()) == ["full_name"]:
-                    full_names.append([f"<li>Full Name: {fn}</li>" for fn in dpoint["full_name"]])
-                else:
-                    full_names = []
-                    break
-
-            if full_names:
-                self.admin_html[name].setdefault(
-                    ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                    "\n".join(
-                        [f"DistributionPoint: <ul>{''.join(full_name)}</ul>" for full_name in full_names]
-                    ),
-                )
-
-        if CERT_DATA[name].get("subject_key_identifier_serialized"):
+        if subject_key_identifier := extensions.get("subject_key_identifier"):
+            value = base64.b64decode(subject_key_identifier["value"].encode())
             self.admin_html[name].setdefault(
                 ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                CERT_DATA[name]["subject_key_identifier_serialized"],
+                bytes_to_hex(value),
             )
 
         if CERT_DATA[name].get("ocsp_no_check"):
             self.admin_html[name].setdefault(ExtensionOID.OCSP_NO_CHECK, "Yes")
 
-        aki = CERT_DATA[name].get("authority_key_identifier_serialized", {})
-        if isinstance(aki, dict) and aki.get("key_identifier"):
+    def _set_distribution_point_extension(
+        self, name: str, value: Dict[str, Any], oid: x509.ObjectIdentifier
+    ) -> None:
+        full_names = []
+        for dpoint in value["value"]:
+            if dpoint["full_name"]:
+                full_names.append(
+                    [f"<li>Full Name: {fn['type']}:{fn['value']}</li>" for fn in dpoint["full_name"]]
+                )
+            else:
+                full_names = []
+                break
+        if full_names:
             self.admin_html[name].setdefault(
-                ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
-                f"<ul><li>Key ID: <span class='django-ca-serial'>{aki['key_identifier']}</span></li></ul>",
+                oid,
+                "\n".join([f"DistributionPoint: <ul>{''.join(full_name)}</ul>" for full_name in full_names]),
             )
-
-        if aia := CERT_DATA[name].get("authority_information_access_serialized", {}):
-            lines = []
-            if "issuers" in aia:
-                issuers = [f"<li>{fn}</li>" for fn in aia["issuers"]]
-                lines.append(f"CA Issuers: <ul>{''.join(issuers)}</ul>")
-            if "ocsp" in aia:
-                ocsp = [f"<li>{fn}</li>" for fn in aia["ocsp"]]
-                lines.append(f"OCSP: <ul>{''.join(ocsp)}</ul>")
-            self.admin_html[name].setdefault(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, "\n".join(lines))
-
-    def setUp(self) -> None:
-        super().setUp()
-
-        for name in self.cas:
-            self.setUpCert(name)
-            self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: True")
-
-        for name in self.certs:
-            self.setUpCert(name)
-            self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: False")
 
     def assertAdminHTML(self, name: str, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
         """Assert that the actual extension HTML is equivalent to the expected HTML."""
@@ -697,9 +709,13 @@ DistributionPoint:
     def test_cas_as_html(self) -> None:
         """Test output of CAs."""
         for name, ca in self.cas.items():
+            self.setUpCert(name)
+            self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: True")
             self.assertAdminHTML(name, ca)
 
     def test_certs_as_html(self) -> None:
         """Test output of CAs."""
         for name, cert in self.certs.items():
+            self.setUpCert(name)
+            self.admin_html[name].setdefault(ExtensionOID.BASIC_CONSTRAINTS, "CA: False")
             self.assertAdminHTML(name, cert)
