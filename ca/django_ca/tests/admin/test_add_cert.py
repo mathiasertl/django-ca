@@ -37,11 +37,11 @@ from selenium.webdriver.support.wait import WebDriverWait
 from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
 from django_ca import ca_settings
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
-from django_ca.extensions import serialize_extension
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, ExtendedKeyUsageOID
 from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
+from django_ca.pydantic.extensions import EXTENSION_MODELS
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
 from django_ca.tests.base.assertions import assert_css
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -65,7 +65,7 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
-from django_ca.typehints import SerializedExtension
+from django_ca.typehints import SerializedPydanticExtension
 from django_ca.utils import ca_storage
 
 
@@ -1132,11 +1132,13 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
 
     def get_expected(
         self, profile: Profile, oid: x509.ObjectIdentifier, default: Any = None
-    ) -> SerializedExtension:
+    ) -> SerializedPydanticExtension:
         """Get expected value for a given extension for the given profile."""
+        model_class = EXTENSION_MODELS[oid]
         if oid in profile.extensions:
-            return serialize_extension(profile.extensions[oid])  # type: ignore[arg-type]
-        return {"value": default, "critical": EXTENSION_DEFAULT_CRITICAL[oid]}
+            model = model_class.model_validate(profile.extensions[oid])
+            return model.model_dump()
+        return {"type": EXTENSION_KEYS[oid], "value": default, "critical": EXTENSION_DEFAULT_CRITICAL[oid]}
 
     def assertProfile(  # pylint: disable=invalid-name
         self,
@@ -1339,8 +1341,8 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         # Now select common name, and the subject is also updated
         new_select.select_by_value(NameOID.COMMON_NAME.dotted_string)
         new_subject = [
-            expected_initial_subject,
-            *{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+            *expected_initial_subject,
+            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
         ]
         self.assertEqual(self.value, new_subject)
         self.assertEqual(self.displayed_value, new_subject)  # just to be sure
