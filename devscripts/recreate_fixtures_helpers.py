@@ -68,6 +68,8 @@ class CertificateEncoder(json.JSONEncoder):
             return o.name
         if isinstance(o, Path):
             return str(o)
+        if isinstance(o, x509.Extensions):
+            return list(o)
         if isinstance(o, x509.Extension):
             model = EXTENSION_MODELS[o.oid].model_validate(o, context={"validate_required_critical": False})
             return model.model_dump(mode="json")
@@ -125,11 +127,7 @@ def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict
     data["sha1"] = cert.get_fingerprint(hashes.SHA1())
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
-
-    extensions = CertificateExtensionsList.validate_python(
-        cert.pub.loaded.extensions, context={"validate_required_critical": False}
-    )
-    data["extensions"] = [ext.model_dump(mode="json") for ext in extensions]
+    data["extensions"] = cert.pub.loaded.extensions
 
 
 def _write_ca(
@@ -221,6 +219,8 @@ def _update_contrib(
         "name": name,
         "cn": cert.cn,
         "cat": "sphinx-contrib",
+        # Can't handle UnrecognizedExtension yet
+        # "extensions": parsed.extensions,
         "pub_filename": filename,
         "key_filename": False,
         "csr_filename": False,

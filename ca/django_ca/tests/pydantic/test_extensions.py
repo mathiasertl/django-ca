@@ -42,6 +42,7 @@ from django_ca.pydantic.extensions import (
     AuthorityInformationAccessModel,
     AuthorityKeyIdentifierModel,
     BasicConstraintsModel,
+    CertificateExtensionsList,
     CertificatePoliciesModel,
     CRLDistributionPointsModel,
     CRLNumberModel,
@@ -65,6 +66,7 @@ from django_ca.pydantic.extensions import (
     SubjectKeyIdentifierModel,
     TLSFeatureModel,
 )
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.utils import dns, doctest_module, key_usage
 from django_ca.tests.pydantic.base import (
     ExpectedErrors,
@@ -1465,3 +1467,16 @@ def test_extension_model_oids() -> None:
     actual_oids = sorted(EXTENSION_MODEL_OIDS.values(), key=lambda oid: oid.dotted_string)
     expected_oids = sorted(KNOWN_EXTENSION_OIDS, key=lambda oid: oid.dotted_string)
     assert actual_oids == expected_oids
+
+
+def test_fixture_certs(any_cert) -> None:
+    """Test Pydantic models with fixture data."""
+    public_key = CERT_DATA[any_cert]["pub"]["parsed"]
+    try:
+        serialized_extensions = CERT_DATA[any_cert][("extensions")]
+    except KeyError:  # can't serialize unrecognized extensions yet, so CAs don't have them :-(
+        return
+    extensions = CertificateExtensionsList.validate_python(
+        serialized_extensions, context={"validate_required_critical": False}
+    )
+    assert list(public_key.extensions) == [ext.cryptography for ext in extensions]

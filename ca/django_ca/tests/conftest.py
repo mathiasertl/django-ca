@@ -39,6 +39,7 @@ from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings
 from django_ca.models import Certificate
 from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
+    all_cert_names,
     generate_ca_fixture,
     generate_cert_fixture,
     generate_pub_fixture,
@@ -141,6 +142,12 @@ def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
     A function using this fixture will be called once for each interesting certificate.
     """
     yield request.getfixturevalue(request.param.replace("-", "_"))
+
+
+@pytest.fixture(params=all_cert_names)
+def any_cert(request: "SubRequest") -> Iterator[Certificate]:
+    """Parametrized fixture for absolutely *any* certificate name."""
+    yield request.param
 
 
 @pytest.fixture()
