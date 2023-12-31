@@ -109,6 +109,7 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     @model_validator(mode="before")
     @classmethod
     def parse_cryptography(cls, data: Any) -> Any:
+        """Parse cryptography instance."""
         if isinstance(data, x509.AuthorityKeyIdentifier):
             key_identifier = None
             if data.key_identifier is not None:

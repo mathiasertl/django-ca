@@ -170,7 +170,7 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    def create_cert(  # noqa: PLR0913
+    def create_cert(  # noqa: PLR0913  # pylint: disable=too-many-locals
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -379,6 +379,7 @@ class Profile:
         return parse_expires(expires)
 
     def serialize(self) -> SerializedProfile:
+        """Serialize the profile."""
         algorithm = subject = None
         if self.subject is not None:
             # TYPEHINT NOTE: mypy thinks that model_dump() returns List[NameAttributeModel]

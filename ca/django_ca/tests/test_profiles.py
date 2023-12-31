@@ -81,7 +81,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         self.assertEqual(failures, 0, f"{failures} doctests failed, see above for output.")
 
 
-class ProfileTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-public-methods
+class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
 
     def create_cert(  # type: ignore[override]

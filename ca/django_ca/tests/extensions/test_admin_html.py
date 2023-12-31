@@ -600,7 +600,7 @@ DistributionPoint:
         },
     }
 
-    def setUpCert(self, name: str) -> None:  # pylint: disable=invalid-name
+    def setUpCert(self, name: str) -> None:  # pylint: disable=invalid-name,too-many-locals
         """Set up default values for certificates."""
         self.admin_html.setdefault(name, {})
 

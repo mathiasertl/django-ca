@@ -306,6 +306,7 @@ disable = [
     "too-many-statements",  # ruff: PLR0915
     "use-sequence-for-iteration",  # ruff: PLC0208
     "useless-import-alias",  # ruff: PLC0414
+    "comparison-with-itself",  # ruff: PLR0124
 
     # covered by ruff/flake8-bugbear
     "pointless-statement",  # ruff: B018

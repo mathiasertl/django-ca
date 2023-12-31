@@ -1819,7 +1819,6 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn="test-only-ca.example.com")
         self.assertEqual(cert.profile, "everything")
-        self.maxDiff = None
         self.assertEqual(
             cert.sorted_extensions,
             [

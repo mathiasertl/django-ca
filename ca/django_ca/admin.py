@@ -662,6 +662,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     x509_fieldset_index = 1
 
     def get_ca_details(self) -> Dict[int, Dict[str, Any]]:
+        """Get CA details for the embedded JSON data."""
         data: Dict[int, Dict[str, Any]] = {}
         for ca in CertificateAuthority.objects.usable():
             if ca.key_exists is False:
