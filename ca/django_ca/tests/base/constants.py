@@ -62,7 +62,7 @@ SPHINX_FIXTURES_DIR = DOC_DIR / "_files"
 GECKODRIVER_PATH = ROOT_DIR / "contrib" / "selenium" / "geckodriver"
 
 if TOX_ENV_DIR := os.environ.get("TOX_ENV_DIR"):  # pragma: no cover
-    GECKODRIVER_LOG_PATH = Path("TOX_ENV_DIR") / "geckodriver.log"
+    GECKODRIVER_LOG_PATH = Path(TOX_ENV_DIR) / "geckodriver.log"
 else:  # pragma: no cover
     GECKODRIVER_LOG_PATH = ROOT_DIR / "geckodriver.log"
 
@@ -81,12 +81,11 @@ ACME_VERSION = packaging.version.parse(version("acme")).release
 NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
 NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
-NEWEST_ACME = ACME_VERSION == NEWEST_ACME_VERSION
+NEWEST_ACME = ACME_VERSION[:2] == NEWEST_ACME_VERSION
 NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NEWEST_ACME
 
 # Only run Selenium tests if we use the newest Python, cryptography and acme.
 RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
-
 
 # Fixture data used by test cases
 with open(FIXTURES_DIR / "cert-data.json", encoding="utf-8") as cert_data_stream:
