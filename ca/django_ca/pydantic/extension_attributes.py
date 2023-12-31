@@ -12,12 +12,12 @@
 # <http://www.gnu.org/licenses/>.
 
 """Some extensions use a more complex datastructure, so attributes are represented as nested models."""
-
+import base64
 import typing
 from datetime import datetime
 from typing import Any, List, Literal, Optional, Set, Union
 
-from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
 
 from cryptography import x509
 from cryptography.x509 import certificate_transparency
@@ -76,9 +76,9 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier`.
 
     In its by far most common form, this model will just set the `key_identifier` attribute, with a value
-    based on the certificate authority:
+    based on the certificate authority. Since this is a ``bytes`` value, the input must be base64 encoded:
 
-    >>> AuthorityKeyIdentifierValueModel(key_identifier=b"123")  # doctest: +STRIP_WHITESPACE
+    >>> AuthorityKeyIdentifierValueModel(key_identifier=b"MTIz")  # doctest: +STRIP_WHITESPACE
     AuthorityKeyIdentifierValueModel(
         key_identifier=b'123', authority_cert_issuer=None, authority_cert_serial_number=None
     )
@@ -102,11 +102,24 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     be given.
     """
 
-    model_config = ConfigDict(from_attributes=True)
-
-    key_identifier: Optional[bytes]
+    key_identifier: Optional[Base64Bytes]
     authority_cert_issuer: Optional[List[GeneralNameModel]] = None
     authority_cert_serial_number: Optional[int] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_cryptography(cls, data: Any) -> Any:
+        if isinstance(data, x509.AuthorityKeyIdentifier):
+            key_identifier = None
+            if data.key_identifier is not None:
+                key_identifier = base64.b64encode(data.key_identifier)
+
+            return {
+                "key_identifier": key_identifier,
+                "authority_cert_issuer": data.authority_cert_issuer,
+                "authority_cert_serial_number": data.authority_cert_serial_number,
+            }
+        return data
 
     @model_validator(mode="after")
     # pylint: disable-next=missing-function-docstring
@@ -351,19 +364,20 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
        Due to library limitations, this model cannot be converted to a cryptography class.
 
     >>> SignedCertificateTimestampModel(
-    ...     log_id=b"1", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
-    ... )  # doctest: +NORMALIZE_WHITESPACE
-    SignedCertificateTimestampModel(version='v1',
-        log_id=b'1',
+    ...     log_id=b"MTIz", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
+    ... )  # doctest: +STRIP_WHITESPACE
+    SignedCertificateTimestampModel(
+        version='v1',
+        log_id=b'123',
         timestamp=datetime.datetime(2023, 12, 10, 0, 0),
-        entry_type='precertificate')
-
+        entry_type='precertificate'
+    )
     """
 
     model_config = ConfigDict(from_attributes=True)
 
     version: Literal["v1"] = "v1"
-    log_id: bytes
+    log_id: Base64Bytes
     timestamp: datetime
     entry_type: LogEntryTypes
 
@@ -373,7 +387,7 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
         if isinstance(data, certificate_transparency.SignedCertificateTimestamp):
             return {
                 "version": data.version.name,
-                "log_id": data.log_id,
+                "log_id": base64.b64encode(data.log_id),
                 "timestamp": data.timestamp,
                 "entry_type": constants.LOG_ENTRY_TYPE_KEYS[data.entry_type],
             }

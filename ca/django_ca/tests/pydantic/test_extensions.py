@@ -454,14 +454,14 @@ def test_authority_information_access_errors(
     "parameters,extension",
     (
         (
-            {"key_identifier": b"123"},
+            {"key_identifier": b"MTIz"},
             x509.AuthorityKeyIdentifier(
                 key_identifier=b"123", authority_cert_issuer=None, authority_cert_serial_number=None
             ),
         ),
         (
             {
-                "key_identifier": b"\0x00",
+                "key_identifier": b"AHgwMA==",
                 "authority_cert_issuer": [GENERAL_NAME],
                 "authority_cert_serial_number": 123,
             },
@@ -512,7 +512,7 @@ def test_authority_key_identifier(
                 )
             ],
         ),
-        ({"value": {"key_identifier": b"123"}, "critical": True}, [MUST_BE_NON_CRITICAL_ERROR]),
+        ({"value": {"key_identifier": b"AHgwMA=="}, "critical": True}, [MUST_BE_NON_CRITICAL_ERROR]),
         (
             {
                 "value": {
@@ -1383,7 +1383,12 @@ def test_subject_information_access_errors(
 
 @pytest.mark.parametrize(
     "digest,extension",
-    ((b"123", x509.SubjectKeyIdentifier(b"123")),),
+    (
+        # (b"123", x509.SubjectKeyIdentifier(b"123")),
+        (b"kA==", x509.SubjectKeyIdentifier(b"\x90")),
+        ("kA==", x509.SubjectKeyIdentifier(b"\x90")),
+        # (b"\x90", x509.SubjectKeyIdentifier(b"\x90")),  # non-utf8 character
+    ),
 )
 @pytest.mark.parametrize("critical", (False, None))
 def test_subject_key_identifier(
@@ -1396,7 +1401,7 @@ def test_subject_key_identifier(
 def test_subject_key_identifier_errors() -> None:
     """Test validation errors for the SubjectKeyIdentifierModel."""
     assert_validation_errors(
-        SubjectKeyIdentifierModel, {"critical": True, "value": b"123"}, [MUST_BE_NON_CRITICAL_ERROR]
+        SubjectKeyIdentifierModel, {"critical": True, "value": b"kA=="}, [MUST_BE_NON_CRITICAL_ERROR]
     )
 
 

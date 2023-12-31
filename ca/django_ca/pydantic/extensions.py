@@ -62,12 +62,14 @@ directly.
 
 
 import abc
+import base64
 import typing
 from types import MappingProxyType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 
 from pydantic import (
     AfterValidator,
+    Base64Bytes,
     BeforeValidator,
     ConfigDict,
     Field,
@@ -351,7 +353,7 @@ class AuthorityKeyIdentifierModel(ExtensionModel[x509.AuthorityKeyIdentifier]):
     The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.AuthorityKeyIdentifierValueModel`
     instance:
 
-    >>> value = AuthorityKeyIdentifierValueModel(key_identifier=b"123")
+    >>> value = AuthorityKeyIdentifierValueModel(key_identifier=b"MTIz")
     >>> AuthorityKeyIdentifierModel(value=value)  # doctest: +STRIP_WHITESPACE
     AuthorityKeyIdentifierModel(
         critical=False,
@@ -817,7 +819,7 @@ class PrecertificateSignedCertificateTimestampsModel(
 
     >>> from datetime import datetime
     >>> sct = SignedCertificateTimestampModel(
-    ...     log_id=b"1", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
+    ...     log_id=b"MTIz", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
     ... )
     >>> PrecertificateSignedCertificateTimestampsModel(
     ...     value=[sct]
@@ -827,7 +829,7 @@ class PrecertificateSignedCertificateTimestampsModel(
         value=[
             SignedCertificateTimestampModel(
                 version='v1',
-                log_id=b'1',
+                log_id=b'123',
                 timestamp=datetime.datetime(2023, 12, 10, 0, 0),
                 entry_type='precertificate'
             )
@@ -912,15 +914,15 @@ class SubjectInformationAccessModel(InformationAccessBaseModel[x509.SubjectInfor
 class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.SubjectKeyIdentifier` extension.
 
-    The `value` is a ``bytes`` instance:
+    The `value` is a base64-encoded ``bytes`` instance:
 
-    >>> SubjectKeyIdentifierModel(value=b"123")
-    SubjectKeyIdentifierModel(critical=False, value=b'123')
+    >>> SubjectKeyIdentifierModel(value=b"kA==")
+    SubjectKeyIdentifierModel(critical=False, value=b'\\x90')
     """
 
     type: Literal["subject_key_identifier"] = Field(default="subject_key_identifier", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_KEY_IDENTIFIER]
-    value: bytes
+    value: Base64Bytes
     requires_critical: typing.ClassVar[bool] = False  # MUST mark this extension as non-critical
 
     @model_validator(mode="before")
@@ -928,7 +930,7 @@ class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
     def parse_cryptography(cls, data: Any) -> Any:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.SubjectKeyIdentifier):
-            return {"critical": data.critical, "value": data.value.digest}
+            return {"critical": data.critical, "value": base64.b64encode(data.value.digest)}
         return data
 
     @property
