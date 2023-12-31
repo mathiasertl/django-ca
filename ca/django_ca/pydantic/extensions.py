@@ -1000,7 +1000,9 @@ EXTENSION_MODEL_OIDS: "MappingProxyType[Type[ExtensionModel[Any]], x509.ObjectId
         TLSFeatureModel: ExtensionOID.TLS_FEATURE,
     }
 )
-EXTENSION_MODELS = MappingProxyType({v: k for k, v in EXTENSION_MODEL_OIDS.items()})
+EXTENSION_MODELS: "MappingProxyType[x509.ObjectIdentifier, Type[ExtensionModel[Any]]]" = MappingProxyType(
+    {v: k for k, v in EXTENSION_MODEL_OIDS.items()}
+)
 
 
 def validate_cryptograph_extensions(v: Any, info: ValidationInfo) -> Any:

@@ -51,6 +51,7 @@ from django_ca import ca_settings, constants
 from django_ca.extensions import serialize_extension
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
+from django_ca.pydantic.extensions import EXTENSION_MODELS, CertificateExtensionsList
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
 from django_ca.utils import bytes_to_hex, ca_storage, parse_serialized_name_attributes, serialize_name
@@ -68,7 +69,8 @@ class CertificateEncoder(json.JSONEncoder):
         if isinstance(o, Path):
             return str(o)
         if isinstance(o, x509.Extension):
-            return serialize_extension(o)
+            model = EXTENSION_MODELS[o.oid].model_validate(o, context={"validate_required_critical": False})
+            return model.model_dump(mode="json")
         return json.JSONEncoder.default(self, o)
 
 
@@ -124,9 +126,10 @@ def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
 
-    for oid, ext in cert.x509_extensions.items():
-        ext_key = constants.EXTENSION_KEYS[oid]
-        data[ext_key] = serialize_extension(ext)
+    extensions = CertificateExtensionsList.validate_python(
+        cert.pub.loaded.extensions, context={"validate_required_critical": False}
+    )
+    data["extensions"] = [ext.model_dump(mode="json") for ext in extensions]
 
 
 def _write_ca(
@@ -478,7 +481,6 @@ def create_special_certs(  # noqa: PLR0915
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
         )
-    data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 
     # Create a certificate with some alternative form of extension that might otherwise be untested:
@@ -502,7 +504,6 @@ def create_special_certs(  # noqa: PLR0915
             password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
         )
-    data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 
     # Create a certificate with no subjects
@@ -534,7 +535,6 @@ def create_special_certs(  # noqa: PLR0915
         cert = Certificate(ca=ca)
         cert.update_certificate(x509_cert)
 
-    data[name].update(data[name].pop("extensions"))  # cert_data expects this to be flat
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
