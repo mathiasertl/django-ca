@@ -1009,7 +1009,8 @@ def validate_cryptograph_extensions(v: Any) -> Any:
     return v
 
 
-SignCertificateExtension = Annotated[
+#: Union type for extensions that may occur as input when signing a certificate.
+SignCertificateExtensions = Annotated[
     Annotated[
         Union[
             AuthorityInformationAccessModel,
@@ -1028,6 +1029,38 @@ SignCertificateExtension = Annotated[
     BeforeValidator(validate_cryptograph_extensions),
 ]
 
-SignCertificateExtensionList = TypeAdapter(List[SignCertificateExtension])
+#: Union type for all known extensions that may occur in any type of certificate.
+CertificateExtensions = Annotated[
+    Annotated[
+        Union[
+            AuthorityInformationAccessModel,
+            AuthorityKeyIdentifierModel,
+            BasicConstraintsModel,
+            CRLDistributionPointsModel,
+            CertificatePoliciesModel,
+            ExtendedKeyUsageModel,
+            FreshestCRLModel,
+            InhibitAnyPolicyModel,
+            IssuerAlternativeNameModel,
+            KeyUsageModel,
+            MSCertificateTemplateModel,
+            NameConstraintsModel,
+            OCSPNoCheckModel,
+            PolicyConstraintsModel,
+            PrecertPoisonModel,
+            PrecertificateSignedCertificateTimestampsModel,
+            SignedCertificateTimestampsModel,
+            SubjectAlternativeNameModel,
+            SubjectInformationAccessModel,
+            SubjectKeyIdentifierModel,
+            TLSFeatureModel,
+        ],
+        Field(discriminator="type"),
+    ],
+    BeforeValidator(validate_cryptograph_extensions),
+]
+
+SignCertificateExtensionsList = TypeAdapter(List[SignCertificateExtensions])
+CertificateExtensionsList = TypeAdapter(List[CertificateExtensions])
 
 ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])

@@ -77,7 +77,7 @@ from django_ca.models import (
     Watcher,
 )
 from django_ca.profiles import profiles
-from django_ca.pydantic.extensions import SignCertificateExtensionList
+from django_ca.pydantic.extensions import SignCertificateExtensionsList
 from django_ca.pydantic.name import NameModel
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
@@ -667,7 +667,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             if ca.key_exists is False:
                 continue
 
-            extensions = SignCertificateExtensionList.validate_python(ca.extensions_for_certificate.values())
+            extensions = SignCertificateExtensionsList.validate_python(ca.extensions_for_certificate.values())
 
             hash_algorithm_name: Optional[str] = None
             if ca.algorithm is not None:

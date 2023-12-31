@@ -29,7 +29,7 @@ from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, HASH_ALGORIT
 from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.extensions import parse_extension
 from django_ca.extensions.utils import format_extensions, get_formatting_context
-from django_ca.pydantic.extensions import SignCertificateExtensionList
+from django_ca.pydantic.extensions import SignCertificateExtensionsList
 from django_ca.pydantic.name import NameModel
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
@@ -390,7 +390,7 @@ class Profile:
 
         profile_extensions = [ext for ext in self.extensions.values() if ext is not None]
         clear_extensions = [EXTENSION_KEYS[oid] for oid, ext in self.extensions.items() if ext is None]
-        extensions = SignCertificateExtensionList.validate_python(profile_extensions)
+        extensions = SignCertificateExtensionsList.validate_python(profile_extensions)
 
         return {
             "name": self.name,

@@ -23,7 +23,7 @@ from cryptography import x509
 from django_ca import ca_settings
 from django_ca.constants import HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
-from django_ca.pydantic.extensions import SignCertificateExtension
+from django_ca.pydantic.extensions import SignCertificateExtensions
 from django_ca.pydantic.name import NameModel
 from django_ca.typehints import AllowedHashTypes, HashAlgorithms
 
@@ -52,7 +52,7 @@ class SignCertificateMessage(BaseModel):
         default_factory=lambda: datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES,
         json_schema_extra={"example": DATETIME_EXAMPLE},
     )
-    extensions: Optional[List[SignCertificateExtension]] = Field(
+    extensions: Optional[List[SignCertificateExtensions]] = Field(
         default_factory=list,
         description="**Optional** additional extensions to add to the certificate.",
     )
