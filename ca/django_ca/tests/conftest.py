@@ -27,6 +27,8 @@ import coverage
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
+from django.test import Client
+
 import pytest
 from _pytest.config import Config as PytestConfig
 from _pytest.config.argparsing import Parser
@@ -152,7 +154,10 @@ def any_cert(request: "SubRequest") -> Iterator[Certificate]:
 
 @pytest.fixture()
 def user(
-    db: None,  # pylint: disable=unused-argument  # required for database access
+    # PYLINT NOTE: usefixtures() does not (yet?) work with fixtures as of pytest==7.4.3
+    #   https://docs.pytest.org/en/7.4.x/how-to/fixtures.html
+    #   https://github.com/pytest-dev/pytest/issues/3664
+    db: None,  # pylint: disable=unused-argument
     django_user_model: Type["User"],
 ) -> "User":
     """Fixture for a basic Django user with no extra permissions."""
@@ -165,14 +170,11 @@ def user(
     return user
 
 
-# Not yet used:
-# @pytest.fixture()
-# def user_client(db: None, user: "User") -> Client:
-#     """A Django test client logged in as a normal user."""
-#
-#     client = Client()
-#     client.force_login(user)
-#     return client
+@pytest.fixture()
+def user_client(user: "User", client: Client) -> Iterator[Client]:
+    """A Django test client logged in as a normal user."""
+    client.force_login(user)
+    yield client
 
 
 @pytest.fixture()

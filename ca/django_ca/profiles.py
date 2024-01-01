@@ -170,7 +170,7 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    def create_cert(  # noqa: PLR0913  # pylint: disable=too-many-locals
+    def create_cert(  # noqa: PLR0913
         self,
         ca: "CertificateAuthority",
         csr: x509.CertificateSigningRequest,
@@ -322,20 +322,12 @@ class Profile:
             ),
         )
 
-        # Add he BasicConstraints extension
-        basic_constraints = typing.cast(
-            x509.Extension[x509.BasicConstraints],
-            cert_extensions.setdefault(
-                ExtensionOID.BASIC_CONSTRAINTS,
-                x509.Extension(
-                    oid=ExtensionOID.BASIC_CONSTRAINTS,
-                    critical=True,
-                    value=x509.BasicConstraints(ca=False, path_length=None),
-                ),
-            ),
+        # Set the BasicConstraints extension (we do not allow the user to pass this extension)
+        cert_extensions[ExtensionOID.BASIC_CONSTRAINTS] = x509.Extension(
+            oid=ExtensionOID.BASIC_CONSTRAINTS,
+            critical=True,
+            value=x509.BasicConstraints(ca=False, path_length=None),
         )
-        if basic_constraints.value.ca is True:
-            raise ValueError("BasicConstraints must have ca=False")
 
         serial = x509.random_serial_number()
         signer_serial = ca.pub.loaded.serial_number

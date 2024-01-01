@@ -29,10 +29,56 @@ from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse
 
+import pytest
+
 from django_ca import constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
 from django_ca.tests.base.constants import CERT_DATA
+from django_ca.typehints import JSON
+
+
+@pytest.mark.parametrize(
+    "data,expected",
+    (
+        ([], ""),
+        ([{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}], "CN=example.com"),
+        (
+            [
+                {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+                {"oid": NameOID.ORGANIZATION_NAME.dotted_string, "value": "MyOrg"},
+                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"},
+            ],
+            "C=AT,O=MyOrg,CN=example.com",
+        ),
+    ),
+)
+def test_name_to_rfc4514_view(admin_client: Client, data: JSON, expected: str) -> None:
+    """Test admin API for converting names to RFC 4514 strings."""
+    url = reverse("admin:django_ca_certificate_name_to_rfc4514")
+    response = admin_client.post(url, data=json.dumps(data), content_type="application/json")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"name": expected}
+
+
+def test_unauthenticated(client: Client, extra_view_url: str) -> None:
+    """Test that extra views cannot be accessed by an unauthenticated user."""
+    response = client.get(extra_view_url)
+    assert response.status_code == HTTPStatus.FOUND
+    assert response["Location"] == f"/admin/login/?next={extra_view_url}"
+
+
+def test_no_permissions(user_client: Client, extra_view_url: str) -> None:
+    """Test that extra views cannot be accessed by a user that is not a staff user."""
+    response = user_client.get(extra_view_url)
+    assert response.status_code == HTTPStatus.FOUND
+    assert response["Location"] == f"/admin/login/?next={extra_view_url}"
+
+
+def test_staff_user_with_no_permissions(staff_client: Client, extra_view_url: str) -> None:
+    """Test that extra views cannot be accessed by a staff user that does not have any permissions."""
+    response = staff_client.get(extra_view_url)
+    assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):

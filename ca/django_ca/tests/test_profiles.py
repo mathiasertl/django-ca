@@ -755,6 +755,13 @@ def test_eq() -> None:
         assert prof != -1
 
 
+def test_eq_default_proxy() -> None:
+    """Test equality for the default proxy."""
+    assert profile == profile  # noqa: PLR0124  # what we're testing
+    assert profile == profiles[ca_settings.CA_DEFAULT_PROFILE]  # proxy is equal to default profile
+    assert profile != ["not-equal"]  # we are not equal to arbitrary stuff
+
+
 def test_init_django_ca_values(name: x509.Name) -> None:
     """Test passing serialized extensions leads to equal profiles."""
     prof1 = Profile("test", subject=name, extensions={"ocsp_no_check": {}})

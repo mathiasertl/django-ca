@@ -32,9 +32,11 @@ import pytest
 from django_ca import constants
 from django_ca.pydantic.extension_attributes import (
     AccessDescriptionModel,
+    BasicConstraintsValueModel,
     DistributionPointModel,
     IssuingDistributionPointValueModel,
     SignedCertificateTimestampModel,
+    UnrecognizedExtensionValueModel,
 )
 from django_ca.pydantic.extensions import (
     EXTENSION_MODEL_OIDS,
@@ -1480,6 +1482,31 @@ def test_unrecognized_extension(
 ) -> None:
     """Test the TLSFeatureModel."""
     assert_extension_model(UnrecognizedExtensionModel, parameters, extension_type, critical)
+
+
+def test_certificate_extension_list_type_adapter() -> None:
+    """Test type adapter for lists of extensions."""
+    assert CertificateExtensionsList.validate_python([]) == []
+    basic_constraints_model = BasicConstraintsModel(value=BasicConstraintsValueModel(ca=True, path_length=0))
+    input_list = [
+        basic_constraints_model.cryptography,
+        basic_constraints_model,
+        basic_constraints_model.model_dump(mode="json"),
+        x509.Extension(
+            oid=x509.ObjectIdentifier("1.2.3"),
+            critical=True,
+            value=x509.UnrecognizedExtension(oid=x509.ObjectIdentifier("1.2.3"), value=b"\x90"),
+        ),
+    ]
+    expected_list = [
+        basic_constraints_model,
+        basic_constraints_model,
+        basic_constraints_model,
+        UnrecognizedExtensionModel(
+            critical=True, value=UnrecognizedExtensionValueModel(oid="1.2.3", value=b"kA==")
+        ),
+    ]
+    assert CertificateExtensionsList.validate_python(input_list) == expected_list
 
 
 def test_extension_model_oids() -> None:

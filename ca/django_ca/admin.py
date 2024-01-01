@@ -82,7 +82,7 @@ from django_ca.pydantic.name import NameModel
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import CRLExtensionType, X509CertMixinTypeVar
-from django_ca.utils import SERIAL_RE, add_colons, name_for_display
+from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for_display
 
 log = logging.getLogger(__name__)
 
@@ -840,17 +840,20 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     @property
     def name_to_rfc4514_view_name(self) -> str:
-        """URL for the CSR details view."""
+        """View name of ``name_to_rfc4514_view``."""
         return f"{self.model._meta.app_label}_{self.model._meta.verbose_name}_name_to_rfc4514"
 
     def name_to_rfc4514_view(self, request: HttpRequest) -> JsonResponse:
-        """Returns details of a CSR request."""
+        """API that accepts a serialized x509.Name and converts it to an RFC 4514 string.
+
+        This endpoint is called when updating the `relative_name` of a CRL Distribution Points extension.
+        """
         if not request.user.is_staff or not self.has_change_permission(request):
             # NOTE: is_staff is already assured by ModelAdmin, but just to be sure
             raise PermissionDenied
 
         name_model = NameModel.model_validate_json(request.body, strict=True)
-        return JsonResponse({"name": name_model.cryptography.rfc4514_string()})
+        return JsonResponse({"name": format_name_rfc4514(name_model.cryptography)})
 
     def get_urls(self) -> List[URLPattern]:
         # Remove the delete action from the URLs
@@ -1065,8 +1068,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 if EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
                 if oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME:  # already handled above
-                    continue
-                if oid == ExtensionOID.BASIC_CONSTRAINTS:  # set by default in profile, so ignore it
                     continue
 
                 # Add any extension from the profile currently not changeable in the web interface
