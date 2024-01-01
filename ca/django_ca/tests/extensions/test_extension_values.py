@@ -24,7 +24,7 @@ from django.test import TestCase
 from django.utils.safestring import mark_safe
 
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
-from django_ca.extensions import extension_as_text, parse_extension, serialize_extension
+from django_ca.extensions import extension_as_text, parse_extension
 from django_ca.extensions.utils import extension_as_admin_html
 from django_ca.tests.base.mixins import TestCaseMixin, TestCaseProtocol
 from django_ca.tests.base.utils import dns, rdn, uri
@@ -61,15 +61,6 @@ class ExtensionTestCaseMixin(TestCaseProtocol):
 
     ext_class_key: str
     test_values: TestValues
-
-    # pylint: disable-next=invalid-name  # unittest standard
-    def assertSerialization(self, extension_type: x509.ExtensionType, serialized: Any, name: str) -> None:
-        """Assert that the given `extension_type` serializes to the given `value`."""
-        ext = x509.Extension(oid=extension_type.oid, critical=True, value=extension_type)
-        self.assertEqual(serialize_extension(ext), {"critical": True, "value": serialized}, name)
-
-        ext = x509.Extension(oid=extension_type.oid, critical=False, value=extension_type)
-        self.assertEqual(serialize_extension(ext), {"critical": False, "value": serialized}, name)
 
     # pylint: disable-next=invalid-name  # unittest standard
     def assertParsed(self, serialized: Any, extension_type: x509.ExtensionType, name: str) -> None:
@@ -110,14 +101,6 @@ class ExtensionTestCaseMixin(TestCaseProtocol):
 
             for extension_type in config.get("extension_type_alternatives", []):
                 self.assertEqual(extension_as_text(extension_type), config["text"], name)
-
-    def test_serialize(self) -> None:
-        """Test serializing the extension."""
-        for name, config in self.test_values.items():
-            self.assertSerialization(config["extension_type"], config["serialized"], name)
-
-            for extension_type in config.get("extension_type_alternatives", []):
-                self.assertSerialization(extension_type, config["serialized"], name)
 
     def test_parse(self) -> None:
         """Test parsing the extension."""

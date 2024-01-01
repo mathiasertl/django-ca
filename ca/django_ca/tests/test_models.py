@@ -20,7 +20,7 @@ import re
 import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Iterable, Iterator, List, Tuple, Type
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest import mock
 
 import josepy as jose
@@ -47,7 +47,6 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
-from django_ca.extensions import serialize_extension
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,
@@ -75,6 +74,7 @@ from django_ca.tests.base.utils import (
     subject_key_identifier,
     uri,
 )
+from django_ca.typehints import PolicyQualifier
 from django_ca.utils import ca_storage, get_crl_cache_key
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
@@ -828,6 +828,47 @@ def test_sign_certificate_policies_with_serialized_model(
     assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
 
 
+def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> Union[str, Dict[str, Any]]:
+    """Duplicate of old CertificatePolicies serialization."""
+    if isinstance(qualifier, str):
+        return qualifier
+
+    value: Dict[str, Any] = {}
+    if qualifier.explicit_text:
+        value["explicit_text"] = qualifier.explicit_text
+
+    if qualifier.notice_reference is not None:
+        value["notice_reference"] = {
+            "notice_numbers": qualifier.notice_reference.notice_numbers,
+        }
+        if qualifier.notice_reference.organization is not None:
+            value["notice_reference"]["organization"] = qualifier.notice_reference.organization
+    return value
+
+
+def _old_serialize_policy_information(
+    policy_information: x509.PolicyInformation,
+) -> Dict[str, Any]:
+    """Duplicate of old CertificatePolicies serialization."""
+    policy_qualifiers: Optional[List[Union[str, Dict[str, Any]]]] = None
+    if policy_information.policy_qualifiers is not None:
+        policy_qualifiers = [_old_serialize_policy_qualifier(q) for q in policy_information.policy_qualifiers]
+
+    serialized = {
+        "policy_identifier": policy_information.policy_identifier.dotted_string,
+        "policy_qualifiers": policy_qualifiers,
+    }
+    return serialized
+
+
+def _old_certificate_policies_serialization(
+    extension: x509.Extension[x509.CertificatePolicies],
+) -> Dict[str, Any]:
+    """Duplicate of old CertificatePolicies serialization."""
+    value = [_old_serialize_policy_information(pi) for pi in extension.value]
+    return {"critical": extension.critical, "value": value}
+
+
 @pytest.mark.parametrize("full_clean", (True, False))
 def test_sign_certificate_policies_with_old_serialized_data(
     root: CertificateAuthority,
@@ -836,7 +877,9 @@ def test_sign_certificate_policies_with_old_serialized_data(
 ) -> None:
     """Test setting ``sign_certificate_policies`` the field and saving, parametrized by full_clean()."""
     assert root.sign_certificate_policies is None
-    root.sign_certificate_policies = serialize_extension(certificate_policies)  # type: ignore[assignment]
+    root.sign_certificate_policies = _old_certificate_policies_serialization(  # type: ignore[assignment]
+        certificate_policies
+    )
 
     if full_clean is True:
         root.full_clean()
@@ -850,7 +893,7 @@ def test_sign_certificate_policies_with_loading_old_serialized_data(
     root: CertificateAuthority, certificate_policies: x509.Extension[x509.CertificatePolicies]
 ) -> None:
     """Test loading old serialized data from the database."""
-    serialized_data = serialize_extension(certificate_policies)
+    serialized_data = _old_certificate_policies_serialization(certificate_policies)
     with connection.cursor() as cursor:
         cursor.execute(
             "UPDATE django_ca_certificateauthority SET sign_certificate_policies = %s WHERE id = %s",

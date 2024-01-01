@@ -17,7 +17,7 @@ from cryptography import x509
 
 from django.test import TestCase
 
-from django_ca.extensions import extension_as_text, parse_extension, serialize_extension
+from django_ca.extensions import extension_as_text, parse_extension
 
 
 class TypeErrorTests(TestCase):
@@ -42,17 +42,6 @@ class TypeErrorTests(TestCase):
         with self.assertRaisesRegex(ValueError, r"^wrong_key: Unknown extension key\.$"):
             parse_extension("wrong_key", {})
 
-    def test_serialize_unknown_extension(self) -> None:
-        """Test serializing an unknown extension."""
-        ext_value = x509.UnrecognizedExtension(oid=self.oid, value=b"foo")
-        ext = x509.Extension(oid=self.oid, critical=True, value=ext_value)
-        self.assertEqual(serialize_extension(ext), {"critical": True, "value": "66:6F:6F"})
-
-    def test_serialize_no_extension(self) -> None:
-        """Test serializing an extension that is not an extension type."""
-        with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
-            serialize_extension(self.ext)  # type: ignore[arg-type]
-
     def test_no_extension_as_text(self) -> None:
         """Test textualizing an extension that is not an extension type."""
         with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
@@ -64,10 +53,3 @@ class TypeErrorTests(TestCase):
             TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
         ):
             extension_as_text(self.ext_type)
-
-    def test_serialize_unknown_extension_type(self) -> None:
-        """Test serializing an extension of unknown type."""
-        with self.assertRaisesRegex(
-            TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
-        ):
-            serialize_extension(x509.Extension(oid=self.oid, critical=True, value=self.ext_type))
