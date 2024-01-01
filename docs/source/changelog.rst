@@ -10,7 +10,15 @@ ChangeLog
 1.28.0 (TBR)
 ************
 
+.. NOTE::
+
+   django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
+   :ref:`update_126_rfc4514_subjects` for migration information.
+
 * Add support for ``Django~=5.0`` and ``acme==2.8.0``.
+* ``pydantic>=2.5`` is now a required dependency.
+* Add :doc:`Pydantic models for cryptography classes <python/pydantic>`. These are required for the REST API,
+  but are also used internally for various places where serialization of objects is required.
 
 REST API changes
 ================
@@ -30,6 +38,8 @@ Backwards incompatible changes
 ==============================
 
 * Drop support for ``Django~=3.2``, ``acme==1.26.0`` and ``Alpine~=3.16``.
+* ``django_ca.extensions.serialize_extension()`` is removed and replaced by :doc:`Pydantic serialization
+  <python/pydantic>`.
 
 Deprecation notices
 ===================
@@ -37,6 +47,8 @@ Deprecation notices
 * This is the last release to support Python 3.8.
 * The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
+* ``django_ca.extensions.parse_extension()`` is deprecated and should not longer be used. Use Pydantic models
+  instead.
 
 .. _changelog-1.27.0:
 
