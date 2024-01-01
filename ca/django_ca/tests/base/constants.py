@@ -16,6 +16,7 @@
 import json
 import os
 import re
+import shutil
 import sys
 from datetime import datetime, timedelta, timezone as tz
 from importlib.metadata import version
@@ -59,7 +60,11 @@ with open(ROOT_DIR / "pyproject.toml", "rb") as pyproject_stream:
 # Paths derived from ROOT_DIR
 DOC_DIR = ROOT_DIR / "docs" / "source"
 SPHINX_FIXTURES_DIR = DOC_DIR / "_files"
-GECKODRIVER_PATH = ROOT_DIR / "contrib" / "selenium" / "geckodriver"
+
+if os.environ.get("GITHUB_ACTION") and (geckodriver := shutil.which("geckodriver")):  # pragma: no cover
+    GECKODRIVER_PATH = Path(geckodriver)
+else:  # pragma: no cover
+    GECKODRIVER_PATH = ROOT_DIR / "contrib" / "selenium" / "geckodriver"
 
 if TOX_ENV_DIR := os.environ.get("TOX_ENV_DIR"):  # pragma: no cover
     GECKODRIVER_LOG_PATH = Path(TOX_ENV_DIR) / "geckodriver.log"
@@ -103,7 +108,6 @@ CERT_DATA["multiple_ous"] = {
         ["OU", "(c) 1998 VeriSign, Inc. - For authorized use only"],
         ["OU", "VeriSign Trust Network"],
     ],
-    # "subject_str": "/C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network",  # noqa: E501
     "cn": "",
     "key_filename": False,
     "csr_filename": False,
@@ -128,7 +132,6 @@ CERT_DATA["cloudflare_1"] = {
         ["OU", "PositiveSSL Multi-Domain"],
         ["CN", "sni24142.cloudflaressl.com"],
     ],
-    # "subject_str": "/OU=Domain Control Validated/OU=PositiveSSL Multi-Domain/CN=sni24142.cloudflaressl.com",
     "cn": "sni24142.cloudflaressl.com",
     "key_filename": False,
     "csr_filename": False,

@@ -92,6 +92,8 @@ def pytest_configure(config: "PytestConfig") -> None:
     for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
     print(f"* Selenium tests: {not skip_selenium}")
+    if not skip_selenium:  # pragma: no cover
+        print(f"    geckodriver at {GECKODRIVER_PATH}")
 
     if not os.path.exists(GECKODRIVER_PATH) and not skip_selenium:  # pragma: no cover
         raise pytest.UsageError(

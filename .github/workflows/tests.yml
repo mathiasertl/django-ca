@@ -23,6 +23,8 @@ jobs:
 
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}
     steps:
+      - name: Install APT dependencies
+        run: sudo apt-get install -y firefox
 
       - name: Acquire sources
         uses: actions/checkout@v4.1.1
