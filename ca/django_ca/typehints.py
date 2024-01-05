@@ -295,7 +295,6 @@ SerializedProfile = typing.TypedDict(
         "description": str,
         "subject": Optional[SerializedPydanticName],
         "algorithm": Optional[HashAlgorithms],
-        "cn_in_san": bool,
         "extensions": List[SerializedPydanticExtension],
         "clear_extensions": List[str],
     },

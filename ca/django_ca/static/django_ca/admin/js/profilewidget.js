@@ -32,10 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 help.textContent = "";  // profiles don't need to have a description
             }
 
-            // set whether to include the CommonName in the subjectAltName
-            cn_in_san = document.querySelector('.field-subject_alternative_name .labeled-checkbox input');
-            cn_in_san.checked = typeof profile.cn_in_san === 'undefined' || profile.cn_in_san;
-
             // Finally, update extensions:
             await update_extensions(profile.extensions);
             clear_extensions(profile.clear_extensions);

@@ -21,6 +21,7 @@ from http import HTTPStatus
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from unittest import mock
 
+from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.contrib.auth.models import Permission
@@ -40,6 +41,7 @@ from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AdminTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.utils import format_general_name
 
 if typing.TYPE_CHECKING:
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
@@ -413,10 +415,13 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertEqual(obj.cn, resigned.cn)
         self.assertEqual(obj.algorithm, resigned.algorithm)
 
-        for oid in [ExtensionOID.EXTENDED_KEY_USAGE, ExtensionOID.TLS_FEATURE]:
-            self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
-
-        for oid in [ExtensionOID.KEY_USAGE, ExtensionOID.SUBJECT_ALTERNATIVE_NAME]:
+        for oid in [
+            ExtensionOID.EXTENDED_KEY_USAGE,
+            ExtensionOID.TLS_FEATURE,
+            ExtensionOID.KEY_USAGE,
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+        ]:
+            print(obj.x509_extensions.get(oid))
             self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
 
         # Some properties are obviously *not* equal
@@ -427,11 +432,16 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     def data(self) -> Dict[str, Any]:  # type: ignore[override]
         """Return default data."""
         # mypy override: https://github.com/python/mypy/issues/4125
+        san = typing.cast(
+            x509.SubjectAlternativeName,
+            self.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].value,
+        )
         return {
             "ca": self.cert.ca.pk,
             "profile": "webserver",
             "subject_0": json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
-            "subject_alternative_name_1": True,
+            "subject_alternative_name_0": "\n".join([format_general_name(name) for name in san]),
+            "subject_alternative_name_1": False,
             "algorithm": "SHA-256",
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
             "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],

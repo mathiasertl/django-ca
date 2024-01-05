@@ -84,9 +84,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
 class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
 
-    def create_cert(  # type: ignore[override]
-        self, prof: Profile, ca: CertificateAuthority, *args: Any, **kwargs: Any
-    ) -> Certificate:
+    def create_cert(self, prof: Profile, ca: CertificateAuthority, *args: Any, **kwargs: Any) -> Certificate:
         """Shortcut to create a cert with the given profile."""
         cert = Certificate(ca=ca)
         cert.update_certificate(prof.create_cert(ca, *args, **kwargs))
@@ -108,10 +106,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 add_issuer_alternative_name=False,
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertExtensions(
-            cert,
-            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
-        )
+        self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
 
     @override_tmpcadir()
     def test_alternative_values(self) -> None:
@@ -175,7 +170,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 subject_key_identifier(cert),
                 ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
-                subject_alternative_name(dns(self.hostname)),
             ],
             expect_defaults=False,
         )
@@ -199,7 +193,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             [
                 ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
-                subject_alternative_name(dns(self.hostname)),
             ],
         )
 
@@ -214,78 +207,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
         self.assertEqual(pre.call_count, 1)
         self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.x509_extensions)
-
-    @override_tmpcadir()
-    def test_cn_in_san(self) -> None:
-        """Test writing the common name into the SAN."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        prof = Profile("example", subject=False, add_issuer_alternative_name=False, cn_in_san=False)
-        with self.mockSignal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject)
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
-
-        # Create the same cert, but pass cn_in_san=True to create_cert
-        with self.mockSignal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject, cn_in_san=True)
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
-        )
-
-        # test that cn_in_san=True with a SAN that already contains the CN does not lead to a duplicate
-        with self.mockSignal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                cn_in_san=True,
-                extensions=[subject_alternative_name(dns(self.hostname))],
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
-        )
-
-        # test that cn_in_san=True with a SAN that does NOT yet contain the CN, so it's added
-        with self.mockSignal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                cn_in_san=True,
-                extensions=[subject_alternative_name(dns(self.hostname + ".added"))],
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                subject_alternative_name(dns(self.hostname + ".added"), dns(self.hostname)),
-            ],
-        )
-
-        # test that the first SAN is added as CN if we don't have A CN
-        with self.mockSignal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof, ca, csr, cn_in_san=True, extensions=[subject_alternative_name(dns(self.hostname))]
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, self.subject)
-        self.assertExtensions(
-            cert,
-            [ca.get_authority_key_identifier_extension(), subject_alternative_name(dns(self.hostname))],
-        )
 
     @override_tmpcadir()
     def test_override_ski(self) -> None:
@@ -314,12 +235,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertExtensions(
             cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                subject_alternative_name(dns(self.hostname)),
-                ski,
-            ],
+            [ca.get_authority_key_identifier_extension(), basic_constraints(), ski],
             expect_defaults=False,
         )
 
@@ -357,7 +273,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                subject_alternative_name(dns(self.hostname)),
                 added_crldp,
             ],
             expect_defaults=False,
@@ -422,7 +337,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                subject_alternative_name(dns(self.hostname)),
                 issuer_alternative_name(added_ian_uri),
             ],
             expect_defaults=False,
@@ -468,7 +382,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
                 x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                subject_alternative_name(dns(self.hostname)),
                 authority_information_access(
                     ca_issuers=[cert_issuers, cert_issuers2],
                     ocsp=[cert_ocsp],
@@ -496,12 +409,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertExtensions(
             cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                ocsp_no_check(),
-                subject_alternative_name(dns(self.hostname)),
-            ],
+            [ca.get_authority_key_identifier_extension(), basic_constraints(), ocsp_no_check()],
         )
 
     @override_tmpcadir()
@@ -643,21 +551,8 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with self.mockSignal(pre_sign_cert) as pre:
-            self.create_cert(prof, ca, csr, cn_in_san=True, extensions=[san])
+            self.create_cert(prof, ca, csr, extensions=[san])
         self.assertEqual(pre.call_count, 1)
-
-    @override_tmpcadir()
-    def test_unparsable_cn(self) -> None:
-        """Try creating a profile with an unparsable Common Name."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        cname = "foo bar"
-
-        prof = Profile("example", subject=x509.Name([x509.NameAttribute(x509.NameOID.COMMON_NAME, cname)]))
-        msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
-        with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr)
-        self.assertEqual(pre.call_count, 0)
 
     def test_unknown_signature_hash_algorithm(self) -> None:
         """Test passing an unknown hash algorithm."""
@@ -809,7 +704,6 @@ def test_serialize() -> None:
     key_usage = ["digital_signature"]
     prof = Profile(
         "test",
-        cn_in_san=True,
         algorithm="SHA-512",
         description=desc,
         subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
@@ -821,7 +715,6 @@ def test_serialize() -> None:
     assert prof.serialize() == {
         "name": "test",
         "algorithm": "SHA-512",
-        "cn_in_san": True,
         "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}],
         "description": desc,
         "clear_extensions": ["extended_key_usage"],

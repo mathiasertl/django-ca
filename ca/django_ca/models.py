@@ -784,7 +784,6 @@ class CertificateAuthority(X509CertMixin):
         algorithm: Optional[AllowedHashTypes] = None,
         expires: Optional[datetime] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
-        cn_in_san: bool = True,
         password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
         """Create a signed certificate.
@@ -793,8 +792,7 @@ class CertificateAuthority(X509CertMixin):
 
         Required extensions are added if not provided. Unless already included in `extensions`, this function
         will add the AuthorityKeyIdentifier, BasicConstraints and SubjectKeyIdentifier extensions with values
-        coming from the certificate authority. The common names in `subject` are added to
-        SubjectAlternativeName if `cn_in_san` is ``True``.
+        coming from the certificate authority.
 
         Parameters
         ----------
@@ -809,9 +807,6 @@ class CertificateAuthority(X509CertMixin):
         extensions : list of :py:class:`~cg:cryptography.x509.Extension`, optional
             List of extensions to add to the certificates. The function will add some extensions unless
             provided here, see above for details.
-        cn_in_san : bool, optional
-            Include common names from the subject in the SubjectAlternativeName extension. ``True`` by
-            default.
         password : str or bytes, optional
             Password for loading the private key of the CA, if any.
         """
@@ -853,39 +848,6 @@ class CertificateAuthority(X509CertMixin):
             )
         if ExtensionOID.AUTHORITY_KEY_IDENTIFIER not in exts:
             exts[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = self.get_authority_key_identifier_extension()
-
-        # Add CommonNames to the SubjectAlternativeName extension if cn_in_san == True
-        common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        san = typing.cast(
-            Optional[x509.Extension[x509.SubjectAlternativeName]],
-            exts.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
-        )
-        if cn_in_san is True:
-            for raw_common_name in common_names:
-                try:
-                    # TYPEHINT NOTE: NameAttribute.value may be bytes but must be str for COMMON_NAME.
-                    #   This is guaranteed by the NameAttribute constructor.
-                    raw_common_name_value = typing.cast(str, raw_common_name.value)
-                    cn = parse_general_name(raw_common_name_value)
-                except ValueError:
-                    continue
-
-                if not san:
-                    san = x509.Extension(
-                        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                        critical=False,
-                        value=x509.SubjectAlternativeName([cn]),
-                    )
-                    exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
-
-                elif cn not in san.value:
-                    san = x509.Extension(
-                        oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                        critical=exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].critical,
-                        value=x509.SubjectAlternativeName([*san.value, cn]),
-                    )
-                    exts[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = san
-                # else: CommonName already in SubjectAlternativeName
 
         extensions = exts.values()
         pre_sign_cert.send(
@@ -1067,7 +1029,6 @@ class CertificateAuthority(X509CertMixin):
             password=password,
             expires=expires,
             add_ocsp_url=False,
-            cn_in_san=False,
         )
 
         cert_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.pem")

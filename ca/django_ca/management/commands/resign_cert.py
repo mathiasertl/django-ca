@@ -192,7 +192,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
                 algorithm=algorithm,
                 extensions=extensions.values(),
                 password=password,
-                cn_in_san=False,  # we already copy the SAN/CN from the original cert
             )
         except Exception as ex:
             raise CommandError(ex) from ex

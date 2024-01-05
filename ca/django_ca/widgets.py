@@ -26,7 +26,7 @@ from django.utils.translation import gettext as _
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.extensions.utils import certificate_policies_is_simple
-from django_ca.typehints import KeyUsages
+from django_ca.typehints import AlternativeNameTypeVar, KeyUsages
 from django_ca.utils import format_general_name
 
 log = logging.getLogger(__name__)
@@ -283,6 +283,19 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
         )
 
 
+class AlternativeNameWidget(ExtensionWidget, typing.Generic[AlternativeNameTypeVar]):
+    """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+
+    extension_widgets = (GeneralNamesWidget(attrs={"rows": 3}),)
+
+    def decompress(
+        self, value: Optional[x509.Extension[AlternativeNameTypeVar]]
+    ) -> Tuple[List[x509.GeneralName], bool]:
+        if value is None:
+            return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
+        return list(value.value), value.critical
+
+
 class DistributionPointWidget(ExtensionWidget):
     """Widgets for extensions that use a DistributionPoint."""
 
@@ -476,18 +489,10 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
         return choices, value.critical
 
 
-class IssuerAlternativeNameWidget(ExtensionWidget):
+class IssuerAlternativeNameWidget(AlternativeNameWidget[x509.IssuerAlternativeName]):
     """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
-    extension_widgets = (GeneralNamesWidget(attrs={"rows": 3}),)
     oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
-
-    def decompress(
-        self, value: Optional[x509.Extension[x509.IssuerAlternativeName]]
-    ) -> Tuple[List[x509.GeneralName], bool]:
-        if value is None:
-            return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
-        return list(value.value), value.critical
 
 
 class OCSPNoCheckWidget(ExtensionWidget):
@@ -502,38 +507,10 @@ class OCSPNoCheckWidget(ExtensionWidget):
         return True, value.critical
 
 
-class SubjectAlternativeNameWidget(ExtensionWidget):
+class SubjectAlternativeNameWidget(AlternativeNameWidget[x509.SubjectAlternativeName]):
     """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
-    extension_widgets = (
-        GeneralNamesWidget(attrs={"rows": 3}),
-        LabeledCheckboxInput(label="Include CommonName"),
-    )
     oid = ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-
-    # COVERAGE NOTE: In Django 4.1, decompress is not called if compress() returns a tuple
-    #       https://github.com/django/django/commit/37602e49484a88867f40e9498f86c49c2d1c5d7c
-    def decompress(
-        self,
-        value: Optional[
-            Union[
-                Tuple[List[x509.GeneralName], bool, bool],
-                Tuple[x509.Extension[x509.SubjectAlternativeName], bool],
-            ]
-        ],
-    ) -> Tuple[List[x509.GeneralName], bool, bool]:  # pragma: no cover
-        if value is None:
-            default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
-            return [], default_cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid]
-
-        if len(value) == 3:
-            return value
-
-        ext, cn_in_san = value
-        if ext is None:
-            return [], cn_in_san, EXTENSION_DEFAULT_CRITICAL[self.oid]
-
-        return list(ext.value), cn_in_san, ext.critical
 
 
 class TLSFeatureWidget(MultipleChoiceExtensionWidget):

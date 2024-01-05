@@ -168,7 +168,7 @@ EXTENSION_CRITICAL_HELP = MappingProxyType(
         ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: _(  # defined in RFC 6962
             "may or may not be critical (recommended: non-critical)"
         ),
-        ExtensionOID.SUBJECT_ALTERNATIVE_NAME: _("SHOULD mark this extension as non-critical"),
+        ExtensionOID.SUBJECT_ALTERNATIVE_NAME: _("SHOULD be non-critical"),
         ExtensionOID.SUBJECT_INFORMATION_ACCESS: _("MUST be non-critical"),
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: _("MUST be non-critical"),
         ExtensionOID.TLS_FEATURE: _("SHOULD NOT be critical"),  # defined in RFC 7633

@@ -24,7 +24,7 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings, constants, utils, widgets
+from django_ca import constants, utils, widgets
 from django_ca.constants import (
     EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES,
     EXTENDED_KEY_USAGE_NAMES,
@@ -32,7 +32,7 @@ from django_ca.constants import (
     REVOCATION_REASONS,
 )
 from django_ca.extensions import get_extension_name
-from django_ca.typehints import CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
+from django_ca.typehints import AlternativeNameTypeVar, CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
 from django_ca.utils import parse_general_name
 from django_ca.widgets import KeyValueWidget, SubjectWidget
 
@@ -290,6 +290,18 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
         """
 
 
+class AlternativeNameField(ExtensionField[AlternativeNameTypeVar]):
+    """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+
+    extension_type: Type[AlternativeNameTypeVar]
+    fields = (GeneralNamesField(required=False),)
+
+    def get_value(self, value: List[x509.GeneralName]) -> Optional[AlternativeNameTypeVar]:
+        if not value:
+            return None
+        return self.extension_type(general_names=value)
+
+
 class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
     """Base class for extensions that are basically a multiple choice field (plus critical)."""
 
@@ -447,17 +459,11 @@ class FreshestCRLField(DistributionPointField[x509.FreshestCRL]):
     widget = widgets.FreshestCRLWidget
 
 
-class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName]):
+class IssuerAlternativeNameField(AlternativeNameField[x509.IssuerAlternativeName]):
     """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
     extension_type = x509.IssuerAlternativeName
-    fields = (GeneralNamesField(required=False),)
     widget = widgets.IssuerAlternativeNameWidget
-
-    def get_value(self, value: List[x509.GeneralName]) -> Optional[x509.IssuerAlternativeName]:
-        if not value:
-            return None
-        return x509.IssuerAlternativeName(general_names=value)
 
 
 class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
@@ -486,37 +492,11 @@ class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
         return None
 
 
-class SubjectAlternativeNameField(ExtensionField[x509.SubjectAlternativeName]):
+class SubjectAlternativeNameField(AlternativeNameField[x509.SubjectAlternativeName]):
     """Form field for a :py:class:`~cg:cryptography.x509.SubjectAlternativeName` extension."""
 
     extension_type = x509.SubjectAlternativeName
-    fields = (
-        GeneralNamesField(required=False),
-        forms.BooleanField(required=False),
-    )
     widget = widgets.SubjectAlternativeNameWidget
-
-    def compress(  # type: ignore[override]  # this is a special case
-        self, data_list: List[Any]
-    ) -> Tuple[Optional[x509.Extension[ExtensionTypeTypeVar]], bool]:
-        default_cn_in_san = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]
-        if not data_list:  # pragma: no cover
-            return None, default_cn_in_san
-
-        *value, critical = data_list
-        ext_value, cn_in_san = self.get_value(*value)
-        if ext_value is None:
-            return None, cn_in_san
-        ext = x509.Extension(critical=critical, oid=self.extension_type.oid, value=ext_value)
-        # TYPE NOTE: mypy complains about the non-generic type being returned
-        return ext, cn_in_san  # type: ignore[return-value]
-
-    def get_value(  # type: ignore[override]
-        self, names: List[x509.GeneralName], cn_in_san: bool
-    ) -> Tuple[Optional[x509.SubjectAlternativeName], bool]:
-        if not names:
-            return None, cn_in_san
-        return x509.SubjectAlternativeName(general_names=names), cn_in_san
 
 
 class TLSFeatureField(MultipleChoiceExtensionField[x509.TLSFeature]):

@@ -30,7 +30,6 @@ from django.utils.translation import gettext_lazy as _
 from django_ca import ca_settings, constants, fields
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.querysets import CertificateAuthorityQuerySet
-from django_ca.utils import parse_general_name
 from django_ca.widgets import ProfileWidget
 
 if typing.TYPE_CHECKING:
@@ -119,7 +118,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     subject = fields.SubjectField(label=_("Subject"), required=False)
     subject_alternative_name = fields.SubjectAlternativeNameField(
         required=False,
-        help_text=_("""Coma-separated list of alternative names for the certificate."""),
+        help_text=_("""Alternative names for the certificate (one per line)."""),
     )
     profile = forms.ChoiceField(
         required=False,
@@ -214,7 +213,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         password = typing.cast(Optional[str], data.get("password"))
         subject = typing.cast(Optional[x509.Name], data.get("subject"))
         algorithm = typing.cast(Optional[hashes.HashAlgorithm], data.get("algorithm"))
-        subject_alternative_name, include_common_name = data.get("subject_alternative_name", (None, False))
+        subject_alternative_name = data.get("subject_alternative_name", (None, False))
 
         subject_alternative_name = typing.cast(
             Optional[x509.Extension[x509.SubjectAlternativeName]], subject_alternative_name
@@ -247,21 +246,6 @@ class CreateCertificateBaseForm(CertificateModelForm):
         common_names: List[x509.NameAttribute] = []
         if subject is not None:
             common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-
-        # If the user decided to include any Common Names in the Subject Alternative Name extension, we check
-        # that they can be parsed as general name.
-        if include_common_name:
-            for common_name in common_names:
-                try:
-                    parse_general_name(common_name.value)  # type: ignore[arg-type]
-                except ValueError:
-                    self.add_error(
-                        "subject_alternative_name",
-                        _(
-                            "The CommonName cannot be parsed as general name. Either change the "
-                            "CommonName or do not include it."
-                        ),
-                    )
 
         # Make sure that we have at least a Common Name *or* a Subject Alternative Name extension.
         if subject is not None and not common_names and not subject_alternative_name:

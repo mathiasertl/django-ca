@@ -16,6 +16,8 @@ ChangeLog
    :ref:`update_126_rfc4514_subjects` for migration information.
 
 * Add support for ``Django~=5.0`` and ``acme==2.8.0``.
+* Remove the unpredictable :command:`manage.py sign_cert` ``--cn-in-san`` option. List all required names for
+  the Subject Alternative Name instead.
 * ``pydantic>=2.5`` is now a required dependency.
 * Add :doc:`Pydantic models for cryptography classes <python/pydantic>`. These are required for the REST API,
   but are also used internally for various places where serialization of objects is required.

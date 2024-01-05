@@ -15,7 +15,6 @@
 
 import io
 import os
-import re
 import stat
 import unittest
 from datetime import timedelta
@@ -94,9 +93,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(
             actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
         )
-        self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
-        )
+        self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, actual)
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
 
@@ -151,9 +148,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.assertEqual(
                 actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
             )
-            self.assertEqual(
-                actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
-            )
             self.assertIssuer(ca, cert)
             self.assertAuthorityKeyIdentifier(ca, cert)
 
@@ -188,9 +182,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(
             actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
         )
-        self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
-        )
+        self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, actual)
 
     @override_tmpcadir()
     def test_to_file(self) -> None:
@@ -314,55 +306,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         )
 
     @override_tmpcadir()
-    def test_no_dns_cn(self) -> None:
-        """Test using a CN that is not a valid DNS name."""
-        # Use a CommonName that is *not* a valid DNSName. By default, this is added as a subjectAltName, which
-        # should fail.
-
-        stdin = self.csr_pem.encode()
-        cname = "foo bar"
-        msg = rf"^{cname}: Could not parse CommonName as subjectAlternativeName\.$"
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]).rfc4514_string()
-
-        with self.assertCommandError(msg), self.assertCreateCertSignals(False, False):
-            self.cmd(
-                "sign_cert",
-                ca=self.ca,
-                subject=subject,
-                subject_format="rfc4514",
-                cn_in_san=True,
-                stdin=stdin,
-            )
-
-    @override_tmpcadir()
-    def test_cn_not_in_san(self) -> None:
-        """Test adding a CN that is not in the SAN."""
-        stdin = self.csr_pem.encode()
-        with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd(
-                "sign_cert",
-                ca=self.ca,
-                subject=self.subject.rfc4514_string(),
-                subject_format="rfc4514",
-                cn_in_san=False,
-                subject_alternative_name=subject_alternative_name(dns("example.com")).value,
-                stdin=stdin,
-            )
-
-        cert = Certificate.objects.get()
-        self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
-        self.assertIssuer(self.ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ca, cert)
-        self.assertEqual(cert.pub.loaded.subject, self.subject)
-        self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
-        self.assertEqual(stderr, "")
-        self.assertEqual(
-            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(dns("example.com")),
-        )
-
-    @override_tmpcadir()
     def test_no_san(self) -> None:
         """Test signing without passing any SANs."""
         stdin = self.csr_pem.encode()
@@ -372,7 +315,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 ca=self.ca,
                 subject=self.subject.rfc4514_string(),
                 subject_format="rfc4514",
-                cn_in_san=False,
                 stdin=stdin,
             )
 
@@ -401,13 +343,10 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         """Test signing with a subject in the profile."""
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
         stdin = self.csr_pem.encode()
+        san = subject_alternative_name(dns(self.hostname))
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd(
-                "sign_cert",
-                ca=self.ca,
-                cn_in_san=False,
-                subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
-                stdin=stdin,
+                "sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=stdin
             )
         self.assertEqual(stderr, "")
 
@@ -418,6 +357,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
+        self.assertEqual(cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
 
         # replace subject fields via command-line argument:
         subject = x509.Name(
@@ -435,8 +375,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.cmd(
                 "sign_cert",
                 ca=self.ca,
-                cn_in_san=False,
-                subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
+                subject_alternative_name=san.value,
                 stdin=stdin,
                 subject=subject.rfc4514_string(),
                 subject_format="rfc4514",
@@ -445,6 +384,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         cert = Certificate.objects.get(cn="CommonName2")
         self.assertPostIssueCert(post, cert)
         self.assertEqual(cert.pub.loaded.subject, subject)
+        self.assertEqual(cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
 
     @override_tmpcadir()
     def test_extensions(self) -> None:
@@ -549,8 +489,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Test Subject Alternative Name extension
         self.assertEqual(
-            extensions[x509.SubjectAlternativeName.oid],
-            subject_alternative_name(uri("https://example.net"), dns(self.hostname)),
+            extensions[x509.SubjectAlternativeName.oid], subject_alternative_name(uri("https://example.net"))
         )
 
         # Test TLSFeature extension
@@ -648,7 +587,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         # Test Subject Alternative Name extension (NOTE: Common Name is automatically appended).
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
-            subject_alternative_name(uri("https://example.net"), dns(self.hostname), critical=True),
+            subject_alternative_name(uri("https://example.net"), critical=True),
         )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -723,7 +662,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
             cert.x509_extensions[x509.SubjectAlternativeName.oid],
-            subject_alternative_name(uri("https://example.net"), dns("example.org"), dns(self.hostname)),
+            subject_alternative_name(uri("https://example.net"), dns("example.org")),
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -827,9 +766,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         )
         self.assertEqual(
             actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
-        )
-        self.assertEqual(
-            actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
@@ -981,27 +917,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.cmd(
                 "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=stdin
             )
-
-    @override_tmpcadir()
-    def test_help_text(self) -> None:
-        """Test the help text."""
-        with self.assertCreateCertSignals(False, False):
-            help_text = self.cmd_help_text("sign_cert")
-
-        # Remove newlines and multiple spaces from text for matching independent of terminal width
-        help_text = re.sub(r"\s+", " ", help_text.replace("\n", ""))
-
-        self.assertIn("Do not add the CommonName as subjectAlternativeName.", help_text)
-        self.assertIn("Add the CommonName as subjectAlternativeName (default).", help_text)
-
-        with self.assertCreateCertSignals(False, False), self.settings(
-            CA_PROFILES={"webserver": {"cn_in_san": False}}
-        ):
-            help_text = self.cmd_help_text("sign_cert")
-        help_text = re.sub(r"\s+", " ", help_text.replace("\n", ""))
-
-        self.assertIn("Do not add the CommonName as subjectAlternativeName (default).", help_text)
-        self.assertIn("Add the CommonName as subjectAlternativeName.", help_text)
 
     @override_tmpcadir()
     def test_add_any_policy(self) -> None:

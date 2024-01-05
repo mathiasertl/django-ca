@@ -47,40 +47,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             --profile. The --subject option allows you to name a CommonName (which is not usually
             in the defaults) and override any default values."""
 
-    def add_cn_in_san(self, parser: CommandParser) -> None:
-        """Add argument group for the CommonName-in-SubjectAlternativeName options."""
-        if ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE]["cn_in_san"]:
-            cn_in_san_default = " (default)"
-            cn_not_in_san_default = ""
-        else:
-            cn_in_san_default = ""
-            cn_not_in_san_default = " (default)"
-
-        group = parser.add_argument_group(
-            "CommonName in subjectAltName",
-            """Whether or not to automatically include the CommonName (given in --subject) in the
-            list of subjectAltNames (given by --alt).""",
-        )
-        group = group.add_mutually_exclusive_group()
-
-        group.add_argument(
-            "--cn-not-in-san",
-            default=None,
-            action="store_false",
-            dest="cn_in_san",
-            help=f"Do not add the CommonName as subjectAlternativeName{cn_not_in_san_default}.",
-        )
-        group.add_argument(
-            "--cn-in-san",
-            default=None,
-            action="store_true",
-            dest="cn_in_san",
-            help=f"Add the CommonName as subjectAlternativeName{cn_in_san_default}.",
-        )
-
     def add_arguments(self, parser: CommandParser) -> None:
         general_group = self.add_base_args(parser)
-        self.add_cn_in_san(parser)
 
         general_group.add_argument(
             "--csr",
@@ -106,7 +74,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         expires: Optional[timedelta],
         watch: List[str],
         password: Optional[bytes],
-        cn_in_san: bool,
         csr_path: str,
         bundle: bool,
         profile: Optional[str],
@@ -228,7 +195,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 ca,
                 csr,
                 profile=profile_obj,
-                cn_in_san=cn_in_san,
                 expires=expires,
                 extensions=extensions.values(),
                 password=password,

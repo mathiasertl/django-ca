@@ -201,7 +201,6 @@ def sign_certificate(
         algorithm=message.get_algorithm(),
         expires=message.expires,
         extensions=parsed_extensions,
-        cn_in_san=False,
     )
 
     # Store certificate in database

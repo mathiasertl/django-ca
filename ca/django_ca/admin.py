@@ -56,7 +56,7 @@ from django.utils.translation import gettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from django_ca import ca_settings, constants
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
+from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
 from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name
 from django_ca.extensions.utils import certificate_policies_is_simple, extension_as_admin_html
 from django_ca.forms import (
@@ -122,6 +122,8 @@ FieldSets = Union[
     Tuple[Tuple[Optional[Union[str, "StrPromise"]], Dict[str, Any]], ...],
 ]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
+
+EXTENSION_FIELDS = tuple((key for key in CERTIFICATE_EXTENSIONS if key != "subject_alternative_name"))
 
 
 @admin.register(Watcher)
@@ -626,16 +628,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 ),
             },
         ),
-        (
-            _("X.509 Extensions"),
-            {
-                "fields": CERTIFICATE_EXTENSIONS,
-                "classes": (
-                    "collapse",
-                    "x509-extensions",
-                ),
-            },
-        ),
+        (_("X.509 Extensions"), {"fields": EXTENSION_FIELDS, "classes": ("collapse", "x509-extensions")}),
     )
 
     # same as add_fieldsets but without the csr
@@ -654,10 +647,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 ],
             },
         ),
-        (
-            _("X.509 Extensions"),
-            {"fields": CERTIFICATE_EXTENSIONS},
-        ),
+        (_("X.509 Extensions"), {"fields": EXTENSION_FIELDS}),
     )
     x509_fieldset_index = 1
 
@@ -726,17 +716,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # resign the cert, so we add initial data from the original cert
 
             resign_obj = request._resign_obj  # pylint: disable=protected-access
-            san = resign_obj.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-            if san is None:
-                san_value = []
-                san_critical = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
-            else:
-                san_value = list(san.value)
-                san_critical = san.critical
-
-            # Since Django 4.1, tuples are no longer passed to a MultiWidgets decompress() method.  We must
-            # thus pass a three-tuple as initial value, each corresponding to the value of one of the widgets.
-            subject_alternative_name = (san_value, False, san_critical)
 
             if resign_obj.algorithm is not None:
                 hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(resign_obj.algorithm)]
@@ -750,7 +729,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 "ca": resign_obj.ca,
                 "profile": profile,
                 "subject": resign_obj.subject,
-                "subject_alternative_name": subject_alternative_name,
                 "watchers": resign_obj.watchers.all(),
             }
 
@@ -1035,9 +1013,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             # Set Subject Alternative Name from form
             extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
-            subject_alternative_name, cn_in_san = data["subject_alternative_name"]
-            if subject_alternative_name:
-                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = subject_alternative_name
 
             # Update extensions handled through the form
             for key in CERTIFICATE_EXTENSIONS:
@@ -1067,8 +1042,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
                 if EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
-                if oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME:  # already handled above
-                    continue
 
                 # Add any extension from the profile currently not changeable in the web interface
                 extensions[oid] = ext  # pragma: no cover  # all extensions should be handled above!
@@ -1083,7 +1056,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     algorithm=data["algorithm"],
                     expires=expires,
                     extensions=extensions.values(),
-                    cn_in_san=cn_in_san,
                     password=data["password"],
                 )
             )

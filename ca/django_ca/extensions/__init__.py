@@ -36,6 +36,7 @@ CERTIFICATE_EXTENSIONS = tuple(
             "issuer_alternative_name",
             "key_usage",
             "ocsp_no_check",
+            "subject_alternative_name",
             "tls_feature",
         ]
     )

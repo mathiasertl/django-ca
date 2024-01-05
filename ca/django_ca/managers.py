@@ -576,7 +576,6 @@ class CertificateManager(
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
-        cn_in_san: Optional[bool] = None,
         add_crl_url: Optional[bool] = None,
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
@@ -606,10 +605,6 @@ class CertificateManager(
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         extensions : list or of :py:class:`~cg:cryptography.x509.Extension`
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
-        cn_in_san : bool, optional
-            Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
-        cn_in_san : bool, optional
-            Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         add_crl_url : bool, optional
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         add_ocsp_url : bool, optional
@@ -634,7 +629,6 @@ class CertificateManager(
             expires=expires,
             algorithm=algorithm,
             extensions=extensions,
-            cn_in_san=cn_in_san,
             add_crl_url=add_crl_url,
             add_ocsp_url=add_ocsp_url,
             add_issuer_url=add_issuer_url,

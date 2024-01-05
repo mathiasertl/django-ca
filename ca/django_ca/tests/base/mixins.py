@@ -757,34 +757,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         return stdout.getvalue(), stderr.getvalue()
 
-    def cmd_help_text(self, cmd: str) -> str:
-        """Get the help message for a given management command.
-
-        Also asserts that stderr is empty and the command exists with status code 0.
-        """
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-        with mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
-            util = ManagementUtility(["manage.py", cmd, "--help"])
-            with self.assertSystemExit(0):
-                util.execute()
-
-        self.assertEqual(stderr.getvalue(), "")
-        return stdout.getvalue()
-
-    @classmethod
-    def create_cert(
-        cls,
-        ca: CertificateAuthority,
-        csr: x509.CertificateSigningRequest,
-        subject: Optional[x509.Name],
-        **kwargs: Any,
-    ) -> Certificate:
-        """Create a certificate with the given data."""
-        cert = Certificate.objects.create_cert(ca, csr, subject=subject, **kwargs)
-        cert.full_clean()
-        return cert
-
     def certificate_policies(
         self, *policies: x509.PolicyInformation, critical: bool = False
     ) -> x509.Extension[x509.CertificatePolicies]:

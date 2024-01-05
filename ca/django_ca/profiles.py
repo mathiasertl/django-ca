@@ -41,7 +41,7 @@ from django_ca.typehints import (
     SerializedProfile,
     SerializedPydanticName,
 )
-from django_ca.utils import get_cert_builder, merge_x509_names, parse_expires, parse_general_name, x509_name
+from django_ca.utils import get_cert_builder, merge_x509_names, parse_expires, x509_name
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -115,7 +115,12 @@ class Profile:
             except KeyError as ex:
                 raise ValueError(f"{algorithm}: Unknown hash algorithm.") from ex
 
-        self.cn_in_san = cn_in_san
+        if cn_in_san is not None:  # pragma: no cover
+            warnings.warn(
+                "cn_in_san: Support for this flag has been removed.",
+                RemovedInDjangoCA128Warning,
+                stacklevel=2,
+            )
         self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
         self.add_crl_url = add_crl_url
         self.add_issuer_url = add_issuer_url
@@ -148,7 +153,6 @@ class Profile:
             and self.subject == value.subject
             and algo
             and self.extensions == value.extensions
-            and self.cn_in_san == value.cn_in_san
             and self.expires == value.expires
             and self.add_crl_url == value.add_crl_url
             and self.add_issuer_url == value.add_issuer_url
@@ -179,7 +183,6 @@ class Profile:
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
-        cn_in_san: Optional[bool] = None,
         add_crl_url: Optional[bool] = None,
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
@@ -229,9 +232,6 @@ class Profile:
             :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension, *add_issuer_alternative_name*
             is ``True`` and the passed CA has an IssuerAlternativeName set, that value will be appended to the
             extension you pass here.
-        cn_in_san : bool, optional
-            Override if the commonName should be added as an SubjectAlternativeName. If not passed, the value
-            set in the profile is used.
         add_crl_url : bool, optional
             Override if any CRL URLs from the CA should be added to the CA. If not passed, the value set in
             the profile is used.
@@ -253,8 +253,6 @@ class Profile:
             The signed certificate.
         """
         # Get overrides values from profile if not passed as parameter
-        if cn_in_san is None:
-            cn_in_san = self.cn_in_san
         if add_crl_url is None:
             add_crl_url = self.add_crl_url
         if add_ocsp_url is None:
@@ -301,9 +299,6 @@ class Profile:
 
         # Make sure that expires is a fixed timestamp
         expires = self.get_expires(expires)
-
-        # Finally, add the commonName as a subjectAlternativeName if not already present.
-        self._update_san_from_cn(cn_in_san, subject=subject, extensions=cert_extensions)
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not cert_extensions.get(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
@@ -387,7 +382,6 @@ class Profile:
 
         return {
             "name": self.name,
-            "cn_in_san": self.cn_in_san,
             "description": self.description,
             "subject": subject,
             "algorithm": algorithm,
@@ -526,40 +520,6 @@ class Profile:
                 return merge_x509_names(subject, common_name_name)
 
         return subject
-
-    def _update_san_from_cn(self, cn_in_san: bool, subject: x509.Name, extensions: ExtensionMapping) -> None:
-        if cn_in_san is False:
-            return
-
-        if not (common_name_attributes := subject.get_attributes_for_oid(NameOID.COMMON_NAME)):
-            return
-
-        common_name_value = typing.cast(str, common_name_attributes[0].value)
-        try:
-            common_name = parse_general_name(common_name_value)
-        except ValueError as ex:
-            raise ValueError(
-                f"{common_name_value}: Could not parse CommonName as subjectAlternativeName."
-            ) from ex
-
-        if ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
-            san_ext = typing.cast(
-                x509.Extension[x509.SubjectAlternativeName],
-                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            )
-
-            if common_name not in san_ext.value:
-                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
-                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                    critical=san_ext.critical,
-                    value=x509.SubjectAlternativeName([*san_ext.value, common_name]),
-                )
-        else:
-            extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] = x509.Extension(
-                oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                critical=False,
-                value=x509.SubjectAlternativeName([common_name]),
-            )
 
 
 def get_profile(name: Optional[str] = None) -> Profile:

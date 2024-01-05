@@ -13,7 +13,6 @@
 
 """Test cases for adding certificates via the admin interface."""
 
-import html
 import json
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
@@ -102,7 +101,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_1": True,
+                    "subject_alternative_name_0": self.hostname,
                     "algorithm": algorithm,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "certificate_policies_0": "1.2.3",
@@ -152,7 +151,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
                 key_usage(digital_signature=True, key_agreement=True),
                 ocsp_no_check(),
-                subject_alternative_name(dns(cname)),
+                subject_alternative_name(dns(self.hostname)),
                 tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
                 certificate_policies(
                     x509.PolicyInformation(
@@ -277,7 +276,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject_0": "",
                     "subject_alternative_name_0": self.hostname,
-                    "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -325,7 +323,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
                         ]
                     ),
-                    "subject_alternative_name_1": True,
+                    "subject_alternative_name_0": self.hostname,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [],
@@ -481,7 +479,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         csr = CERT_DATA["root-cert"]["csr"]["pem"]
         cname = "test-add2.example.com"
-        san = "test-san.example.com"
 
         with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
@@ -496,8 +493,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_0": san,
-                    "subject_alternative_name_1": True,
+                    "subject_alternative_name_0": self.hostname,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [],
@@ -532,7 +528,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.csr.pem, csr)
 
         # Some extensions are not set
-        self.assertExtensions(cert, [subject_alternative_name(dns(san), dns(cname))])
+        self.assertExtensions(cert, [subject_alternative_name(dns(self.hostname))])
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -559,7 +555,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_1": True,
+                    "subject_alternative_name_0": self.hostname,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -594,7 +590,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_1": True,
+                    "subject_alternative_name_0": self.hostname,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -630,7 +626,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_1": True,
+                    "subject_alternative_name_0": self.hostname,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -670,14 +666,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
 
-        self.assertEqual(
-            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(dns(cname)),
-        )
         self.assertExtensions(
             cert,
             [
-                subject_alternative_name(dns(cname)),
+                subject_alternative_name(dns(self.hostname)),
                 key_usage(digital_signature=True, key_agreement=True),
                 extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
             ],
@@ -876,55 +868,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertIn(error, response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(response.context["adminform"].form.errors, {"expires": [error]})
-
-        with self.assertRaises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=cname)
-
-    @override_tmpcadir()
-    def test_invalid_cn_in_san(self) -> None:
-        """Test error with a CommonName that is not parsable as SubjectAlternativeName, but check "CN in SAN".
-
-        .. seealso:: https://github.com/mathiasertl/django-ca/issues/62
-        """
-        cname = "Foo Bar"
-        error = "The CommonName cannot be parsed as general name. Either change the CommonName or do not include it."  # NOQA
-        ca = self.cas["root"]
-        csr = CERT_DATA["root-cert"]["csr"]["pem"]
-
-        with self.assertCreateCertSignals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": ca.pk,
-                    "profile": "webserver",
-                    "subject_0": json.dumps(
-                        [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
-                        ]
-                    ),
-                    "subject_alternative_name_1": True,  # cn_in_san
-                    "algorithm": "SHA-256",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
-                    "key_usage_0": [
-                        "digital_signature",
-                        "key_agreement",
-                    ],
-                    "key_usage_1": True,
-                    "extended_key_usage_0": [
-                        ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
-                        ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
-                    ],
-                    "extended_key_usage_1": False,
-                    "tls_feature_0": ["status_request", "status_request_v2"],
-                    "tls_feature_1": False,
-                },
-            )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertIn(html.escape(error), response.content.decode("utf-8"))
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(response.context["adminform"].form.errors, {"subject_alternative_name": [error]})
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=cname)
@@ -1149,7 +1092,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         eku_critical: WebElement,
         tf_select: Select,
         tf_critical: WebElement,
-        cn_in_san: WebElement,
     ) -> None:
         """Assert that the admin form equals the given profile."""
         profile = profiles[profile_name]
@@ -1169,8 +1111,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         self.assertCountEqual(tf_expected.get("value", []), tf_selected)
         self.assertEqual(tf_expected.get("critical", False), tf_critical.is_selected())
 
-        self.assertEqual(profile.cn_in_san, cn_in_san.is_selected())
-
     def clear_form(
         self,
         ku_select: Select,
@@ -1179,7 +1119,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         eku_critical: WebElement,
         tf_select: Select,
         tf_critical: WebElement,
-        cn_in_san: WebElement,
     ) -> None:
         """Clear the form."""
         try:
@@ -1197,8 +1136,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
             eku_critical.click()
         if tf_critical.is_selected():
             tf_critical.click()
-        if cn_in_san.is_selected():
-            cn_in_san.click()
 
     @override_tmpcadir()
     def test_select_profile(self) -> None:
@@ -1214,8 +1151,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         tf_select = Select(self.find("select#id_tls_feature_0"))
         tf_critical = self.find("input#id_tls_feature_1")
 
-        cn_in_san = self.find("input#id_subject_alternative_name_1")
-
         # test that the default profile is preselected
         self.assertEqual(
             [ca_settings.CA_DEFAULT_PROFILE], [o.get_attribute("value") for o in select.all_selected_options]
@@ -1230,20 +1165,11 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
             eku_critical,
             tf_select,
             tf_critical,
-            cn_in_san,
         )
 
         for option in select.options:
             # first, clear everything to make sure that the profile *sets* everything
-            self.clear_form(
-                ku_select,
-                ku_critical,
-                eku_select,
-                eku_critical,
-                tf_select,
-                tf_critical,
-                cn_in_san,
-            )
+            self.clear_form(ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical)
 
             value = option.get_attribute("value")
             if not value:
@@ -1251,14 +1177,7 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
             option.click()
 
             self.assertProfile(
-                value,
-                ku_select,
-                ku_critical,
-                eku_select,
-                eku_critical,
-                tf_select,
-                tf_critical,
-                cn_in_san,
+                value, ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical
             )
 
             # Set all options to make sure that selected values are *unset* too
@@ -1276,20 +1195,10 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
                 eku_critical.click()
             if not tf_critical.is_selected():
                 tf_critical.click()
-            if not cn_in_san.is_selected():
-                cn_in_san.click()
 
             # select empty element in profile select, then select profile again
             select.select_by_value(ca_settings.CA_DEFAULT_PROFILE)
-            self.clear_form(
-                ku_select,
-                ku_critical,
-                eku_select,
-                eku_critical,
-                tf_select,
-                tf_critical,
-                cn_in_san,
-            )
+            self.clear_form(ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical)
             option.click()
 
             # see that all the right things are selected
@@ -1301,7 +1210,6 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
                 eku_critical,
                 tf_select,
                 tf_critical,
-                cn_in_san,
             )
 
 
@@ -1678,7 +1586,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 cert.ca.get_authority_key_identifier_extension(),
                 basic_constraints(),
                 crl_distribution_points(distribution_point(full_name=[uri(self.ca.crl_url)])),
-                subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name(dns("example.com")),
                 subject_key_identifier(cert),
             ],
         )
@@ -1711,6 +1619,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form = response.forms["certificate_form"]
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject_0"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
+        form["subject_alternative_name_0"] = self.hostname
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 
@@ -1727,7 +1636,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 crl_distribution_points(distribution_point(full_name=[uri(self.ca.crl_url)])),
                 self.ca.sign_certificate_policies,
                 issuer_alternative_name(uri(self.ca.issuer_alt_name)),
-                subject_alternative_name(dns(cn)),
+                subject_alternative_name(dns(self.hostname)),
                 subject_key_identifier(cert),
             ],
         )
@@ -1860,7 +1769,6 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 ),
                 key_usage(key_agreement=True, key_cert_sign=True),
                 ocsp_no_check(critical=True),
-                subject_alternative_name(dns(cn)),
                 subject_key_identifier(cert),
                 tls_feature(x509.TLSFeatureType.status_request, critical=True),
             ],
@@ -1963,7 +1871,6 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                     crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
                     critical=False,
                 ),
-                subject_alternative_name(dns(cn)),
                 subject_key_identifier(cert),
             ],
         )
