@@ -32,9 +32,10 @@ from django_ca.constants import (
     REVOCATION_REASONS,
 )
 from django_ca.extensions import get_extension_name
+from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.typehints import AlternativeNameTypeVar, CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
 from django_ca.utils import parse_general_name
-from django_ca.widgets import KeyValueWidget, SubjectWidget
+from django_ca.widgets import GeneralNameKeyValueWidget, KeyValueWidget, SubjectWidget
 
 if typing.TYPE_CHECKING:
     from django_ca.modelfields import LazyCertificateSigningRequest
@@ -190,6 +191,27 @@ class SubjectField(KeyValueField):
         return name
 
 
+class GeneralNameKeyValueField(KeyValueField):
+    """test."""
+
+    widget_class = GeneralNameKeyValueWidget
+
+    def __init__(self, **kwargs: Any) -> None:
+        choices = [(key, key) for key in constants.GENERAL_NAME_TYPES]
+        super().__init__(key_choices=choices, **kwargs)
+        self.widget = self.widget_class(key_choices=choices, attrs={"class": "key-value-input"})
+
+    def compress(  # type: ignore[override]
+        self, data_list: Tuple[List[Dict[str, str]], str, str]
+    ) -> List[x509.GeneralName]:
+        # Empty list happens when you press submit on a completely empty form
+        if not data_list or not data_list[0]:
+            return []
+
+        names = [GeneralNameModel(type=name["key"], value=name["value"]) for name in data_list[0]]
+        return [name.cryptography for name in names]
+
+
 class GeneralNamesField(forms.CharField):
     """MultipleChoice field for :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`."""
 
@@ -294,7 +316,7 @@ class AlternativeNameField(ExtensionField[AlternativeNameTypeVar]):
     """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
     extension_type: Type[AlternativeNameTypeVar]
-    fields = (GeneralNamesField(required=False),)
+    fields = (GeneralNameKeyValueField(required=False),)
 
     def get_value(self, value: List[x509.GeneralName]) -> Optional[AlternativeNameTypeVar]:
         if not value:

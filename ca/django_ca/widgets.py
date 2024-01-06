@@ -23,7 +23,7 @@ from django import forms
 from django.forms import widgets
 from django.utils.translation import gettext as _
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.extensions.utils import certificate_policies_is_simple
 from django_ca.typehints import AlternativeNameTypeVar, KeyUsages
@@ -147,6 +147,12 @@ class SubjectWidget(KeyValueWidget):
 
     class Media:
         css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/subject.css",)}
+
+
+class GeneralNameKeyValueWidget(KeyValueWidget):
+    """Specialized version of the KeyValueWidget for a list of general names."""
+
+    pass
 
 
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
@@ -286,14 +292,16 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
 class AlternativeNameWidget(ExtensionWidget, typing.Generic[AlternativeNameTypeVar]):
     """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
-    extension_widgets = (GeneralNamesWidget(attrs={"rows": 3}),)
-
     def decompress(
         self, value: Optional[x509.Extension[AlternativeNameTypeVar]]
     ) -> Tuple[List[x509.GeneralName], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         return list(value.value), value.critical
+
+    def get_widgets(self, **kwargs: Any) -> Tuple[widgets.SelectMultiple]:
+        choices = [(key, key) for key in constants.GENERAL_NAME_TYPES]
+        return (KeyValueWidget(key_choices=choices, attrs={"class": "key-value-input"}),)
 
 
 class DistributionPointWidget(ExtensionWidget):

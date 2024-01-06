@@ -8,8 +8,8 @@ function updateJsonValueField(field) {
     // collect current data from input row
     var data = [];
     list.querySelectorAll(".key-value-row").forEach((row) => {
-        var row_key = row.querySelector('select.key-value-input').value;
-        var row_value = row.querySelector('input.key-value-input').value.trim();
+        var row_key = row.querySelector('select').value;
+        var row_value = row.querySelector('input').value.trim();
 
         // Only add value if there is a text value entered
         if (row_key && row_value) {
@@ -34,8 +34,8 @@ function updateJsonValueField(field) {
  * Add the passed event listener to all modifications of the passed row.
  */
 function addRowUpdateEventListeners(row, listener) {
-    row.querySelector("select.key-value-input").addEventListener("change", listener);
-    row.querySelector("input.key-value-input").addEventListener("input", listener);
+    row.querySelector("select").addEventListener("change", listener);
+    row.querySelector("input").addEventListener("input", listener);
     row.querySelector("button.remove-row-btn").addEventListener("click", listener);
 }
 
@@ -48,8 +48,8 @@ function appendKeyValueRow(field, key, value) {
     var row = template.cloneNode(true);
 
     // Set any value if passed (happens during page load)
-    row.querySelector('select.key-value-input').value = key ? key : "";
-    row.querySelector('input.key-value-input').value = value ? value : "";
+    row.querySelector('select').value = key ? key : "";
+    row.querySelector('input').value = value ? value : "";
 
     row.querySelector('button.remove-row-btn').addEventListener("click", (event) => {
         row.remove();
