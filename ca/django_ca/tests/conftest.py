@@ -59,6 +59,8 @@ from django_ca.tests.base.constants import GECKODRIVER_PATH, RUN_SELENIUM_TESTS
 from django_ca.tests.base.typehints import User
 from django_ca.utils import ca_storage
 
+pytest.register_assert_rewrite("django_ca.tests.pydantic.base")
+
 
 def pytest_addoption(parser: Parser) -> None:
     """Add some pytest options."""

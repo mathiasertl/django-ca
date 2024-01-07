@@ -22,10 +22,12 @@ from cryptography import x509
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
+from django_ca import constants
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 from django_ca.pydantic.type_aliases import OIDType
 from django_ca.typehints import Annotated
+from django_ca.utils import MULTIPLE_OIDS
 
 _NAME_ATTRIBUTE_OID_DESCRIPTION = (
     "A dotted string representing the OID or a known alias as described in "
@@ -80,7 +82,7 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
         return data
 
     @model_validator(mode="after")
-    def validate_country_codes(self) -> "NameAttributeModel":
+    def validate_name_attribute(self) -> "NameAttributeModel":
         """Validate that country code OIDs have exactly two characters."""
         country_code_oids = (
             NameOID.COUNTRY_NAME.dotted_string,
@@ -88,6 +90,10 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
         )
         if self.oid in country_code_oids and len(self.value) != 2:
             raise ValueError(f"{self.value}: Must have exactly two characters")
+
+        if self.oid == NameOID.COMMON_NAME.dotted_string and not self.value:
+            name = constants.NAME_OID_NAMES[NameOID.COMMON_NAME]
+            raise ValueError(f"{name} must not be an empty value")
         return self
 
     @property
@@ -141,6 +147,22 @@ class NameModel(CryptographyRootModel[List[NameAttributeModel], x509.Name]):
         if isinstance(data, x509.Name):
             return list(data)
         return data
+
+    @model_validator(mode="after")
+    def validate_duplicates(self) -> "NameModel":
+        """Validator to make sure that OIDs do not occur multiple times."""
+        seen = set()
+
+        # for oid in set(oids):
+        for attr in self.root:
+            oid = x509.ObjectIdentifier(attr.oid)
+
+            # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
+            if oid in seen and oid not in MULTIPLE_OIDS:
+                name = constants.NAME_OID_NAMES.get(oid, oid.dotted_string)
+                raise ValueError(f"{name}: Attribute of this type must not occur more then once in a name.")
+            seen.add(oid)
+        return self
 
     @property
     def cryptography(self) -> x509.Name:

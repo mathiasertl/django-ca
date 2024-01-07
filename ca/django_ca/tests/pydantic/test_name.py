@@ -112,6 +112,16 @@ def test_name_attribute_country_code_errors(oid: str, value: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "oid",
+    (NameOID.COMMON_NAME, NameOID.COMMON_NAME.dotted_string, "CN", "commonName"),
+)
+def test_name_attribute_empty_common_name(oid: Any) -> None:
+    """Test validation for country codes."""
+    errors: ExpectedErrors = [("value_error", (), "Value error, commonName must not be an empty value")]
+    assert_validation_errors(NameAttributeModel, {"oid": oid, "value": ""}, errors)
+
+
+@pytest.mark.parametrize(
     "serialized,expected",
     (
         ([], x509.Name([])),
@@ -136,3 +146,26 @@ def test_name_attribute_country_code_errors(oid: str, value: str) -> None:
 def test_name(serialized: List[Dict[str, Any]], expected: List[x509.NameAttribute]) -> None:
     """Test NameModel."""
     assert_cryptography_model(NameModel, {"root": serialized}, x509.Name(expected))  # type: ignore[type-var]
+
+
+@pytest.mark.parametrize(
+    "value,errors",
+    (
+        (
+            [
+                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"},
+                {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.net"},
+            ],
+            [
+                (
+                    "value_error",
+                    (),
+                    "Value error, commonName: Attribute of this type must not occur more then once in a name.",
+                )
+            ],
+        ),
+    ),
+)
+def test_name_errors(value: List[Dict[str, Any]], errors: ExpectedErrors) -> None:
+    """Test validation errors for NameModel."""
+    assert_validation_errors(NameModel, value, errors)

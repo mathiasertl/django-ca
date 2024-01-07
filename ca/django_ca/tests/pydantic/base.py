@@ -41,19 +41,24 @@ def assert_cryptography_model(
 
 
 def assert_validation_errors(
-    model_class: Type[CryptographyModelTypeVar], parameters: Dict[str, Any], expected_errors: ExpectedErrors
+    model_class: Type[CryptographyModelTypeVar],
+    parameters: Union[List[Dict[str, Any]], Dict[str, Any]],
+    expected_errors: ExpectedErrors,
 ) -> None:
     """Assertion method to test validation errors."""
     with pytest.raises(ValidationError) as ex_info:
-        model_class(**parameters)
+        if isinstance(parameters, list):
+            model_class(parameters)
+        else:
+            model_class(**parameters)
 
     errors = ex_info.value.errors()
-    assert len(expected_errors) == len(errors), errors
+    assert len(expected_errors) == len(errors)
     for expected, actual in zip(expected_errors, errors):
-        assert expected[0] == actual["type"], (actual["type"], actual["msg"])
-        assert expected[1] == actual["loc"], (actual["loc"], actual["msg"])
+        assert expected[0] == actual["type"]
+        assert expected[1] == actual["loc"]
         if isinstance(expected[2], str):
-            assert expected[2] == actual["msg"], actual["msg"]
+            assert expected[2] == actual["msg"]
         else:
             pattern: re.Pattern[str] = expected[2]
-            assert pattern.search(actual["msg"]), actual["msg"]
+            assert pattern.search(actual["msg"])

@@ -81,7 +81,7 @@ class AddCertificateSeleniumTestCase(
         # Top-level element of the SubjectField
         # pylint: disable=attribute-defined-outside-init
         self.key_value_field = self.find(".field-subject .key-value-field")
-        self.hidden_input = self.key_value_field.find_element(By.ID, "id_subject_0")
+        self.hidden_input = self.key_value_field.find_element(By.ID, "id_subject")
         self.key_value_list = self.key_value_field.find_element(By.CSS_SELECTOR, ".key-value-list")
 
     @property
