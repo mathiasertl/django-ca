@@ -161,9 +161,8 @@ class GeneralNameKeyValueField(KeyValueField):
 
     def to_python(self, value: Optional[str]) -> List[x509.GeneralName]:  # type: ignore[override]
         parsed_value = super().to_python(value)
-        converted_value = [{"type": v["key"], "value": v["value"]} for v in parsed_value]
         try:
-            models = GeneralNameModelList.validate_python(converted_value)
+            models = GeneralNameModelList.validate_python(parsed_value)
         except PydanticValidationError as ex:
             self.pydantic_validation_error(ex)
         return [model.cryptography for model in models]

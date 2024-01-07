@@ -175,12 +175,12 @@ class GeneralNameKeyValueWidget(KeyValueWidget):
     """Specialized version of the KeyValueWidget for a list of general names."""
 
     key_choices = tuple((key, key) for key in constants.GENERAL_NAME_TYPES)
+    key_key = "type"
 
     def format_value(self, value: Any) -> str:
         if isinstance(value, (list, tuple)):
             models = GeneralNameModelList.validate_python(value)
-            serialized = [m.model_dump(mode="json") for m in models]
-            value = [{"key": s["type"], "value": s["value"]} for s in serialized]
+            value = [m.model_dump(mode="json") for m in models]
 
         return super().format_value(value)
 

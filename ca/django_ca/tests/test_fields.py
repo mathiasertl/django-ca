@@ -49,12 +49,12 @@ D3 = "example.org"
 DNS1 = x509.DNSName(D1)
 DNS2 = x509.DNSName(D2)
 DNS3 = x509.DNSName(D3)
-SER_D1 = {"key": "DNS", "value": D1}
-SER_D2 = {"key": "DNS", "value": D2}
-SER_D3 = {"key": "DNS", "value": D3}
+SER_D1 = {"type": "DNS", "value": D1}
+SER_D2 = {"type": "DNS", "value": D2}
+SER_D3 = {"type": "DNS", "value": D3}
 
 # common attributes in hidden key-value input field
-HIDDEN_INPUT_ATTRS = 'type="hidden" data-key-key="key" data-value-key="value"'
+HIDDEN_INPUT_ATTRS = 'type="hidden" data-key-key="type" data-value-key="value"'
 
 
 class FieldTestCaseMixin(TestCaseMixin):
@@ -108,14 +108,14 @@ def test_alternative_name_fields(
 @pytest.mark.parametrize(
     "value,dpoint",
     (
-        (([SER_D1], "", "", ()), distribution_point([DNS1])),
-        (([SER_D1, SER_D2], "", "", ()), (distribution_point([DNS1, DNS2]))),
+        (([SER_D1], "", [], ()), distribution_point([DNS1])),
+        (([SER_D1, SER_D2], "", [], ()), (distribution_point([DNS1, DNS2]))),
         (  # With RDN
-            ([], f"CN={D1}", "", ()),
+            ([], f"CN={D1}", [], ()),
             (distribution_point(relative_name=rdn([(NameOID.COMMON_NAME, D1)]))),
         ),
         (  # test RDN order
-            ([], f"C=AT,O=MyOrg,CN={D1}", "", ()),
+            ([], f"C=AT,O=MyOrg,CN={D1}", [], ()),
             (
                 distribution_point(
                     relative_name=rdn(
@@ -134,7 +134,7 @@ def test_alternative_name_fields(
             distribution_point([DNS1], crl_issuer=[DNS2, DNS3]),
         ),  # multiple
         (
-            ([SER_D1], "", "", ("key_compromise", "certificate_hold")),
+            ([SER_D1], "", [], ("key_compromise", "certificate_hold")),
             distribution_point(
                 [DNS1],
                 reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.certificate_hold]),
@@ -169,9 +169,9 @@ def test_distribution_point_fields(
 @pytest.mark.parametrize(
     "invalid,error",
     (
-        (([SER_D1], f"CN={D1}", "", ()), r"You cannot provide both full_name and relative_name\."),
+        (([SER_D1], f"CN={D1}", [], ()), r"You cannot provide both full_name and relative_name\."),
         (
-            ([], "", "", ("key_compromise",)),
+            ([], "", [], ("key_compromise",)),
             r"A DistributionPoint needs at least a full or relative name or a crl issuer\.",
         ),
     ),
@@ -336,8 +336,8 @@ def test_authority_information_access_field_with_empty_value(
 @pytest.mark.parametrize(
     "ser_ca_issuers,ser_ocsp,error",
     (
-        (({"key": "DNS", "value": "http://example.com"},), (), ""),
-        (({"key": "IP", "value": "example.com"},), (), "example.com: Could not parse IP address"),
+        (({"type": "DNS", "value": "http://example.com"},), (), ""),
+        (({"type": "IP", "value": "example.com"},), (), "example.com: Could not parse IP address"),
     ),
 )
 def test_authority_information_access_field_with_errors(

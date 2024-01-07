@@ -95,7 +95,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
+                    "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
                     "algorithm": algorithm,
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "certificate_policies_0": "1.2.3",
@@ -115,13 +115,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "tls_feature_1": False,
                     "ocsp_no_check_0": True,
                     "ocsp_no_check_1": False,
-                    "crl_distribution_points_0": json.dumps([{"key": "URI", "value": ca.crl_url}]),
+                    "crl_distribution_points_0": json.dumps([{"type": "URI", "value": ca.crl_url}]),
                     "crl_distribution_points_1": "",
                     "crl_distribution_points_2": "",
                     "crl_distribution_points_3": [],
                     "crl_distribution_points_4": False,
-                    "authority_information_access_0": json.dumps([{"key": "URI", "value": ca.issuer_url}]),
-                    "authority_information_access_1": json.dumps([{"key": "URI", "value": ca.ocsp_url}]),
+                    "authority_information_access_0": json.dumps([{"type": "URI", "value": ca.issuer_url}]),
+                    "authority_information_access_1": json.dumps([{"type": "URI", "value": ca.ocsp_url}]),
                     "authority_information_access_2": False,
                 },
             )
@@ -269,7 +269,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject": "",
-                    "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
+                    "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -480,20 +480,20 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
+                    "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [],
                     "key_usage_1": False,
                     "extended_key_usage_0": [],
                     "extended_Key_usage_1": False,
-                    "crl_distribution_points_0": json.dumps([{"key": "URI", "value": ca.crl_url}]),
+                    "crl_distribution_points_0": json.dumps([{"type": "URI", "value": ca.crl_url}]),
                     "crl_distribution_points_1": "",
                     "crl_distribution_points_2": "",
                     "crl_distribution_points_3": [],
                     "crl_distribution_points_4": False,
-                    "authority_information_access_0": json.dumps([{"key": "URI", "value": ca.issuer_url}]),
-                    "authority_information_access_1": json.dumps([{"key": "URI", "value": ca.ocsp_url}]),
+                    "authority_information_access_0": json.dumps([{"type": "URI", "value": ca.issuer_url}]),
+                    "authority_information_access_1": json.dumps([{"type": "URI", "value": ca.ocsp_url}]),
                     "authority_information_access_2": False,
                 },
             )
@@ -542,7 +542,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
+                    "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -577,7 +577,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
+                    "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -613,7 +613,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                             {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
-                    "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
+                    "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
                     "key_usage_0": [
@@ -626,13 +626,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
                     ],
                     "extended_key_usage_1": False,
-                    "crl_distribution_points_0": json.dumps([{"key": "URI", "value": ca.crl_url}]),
+                    "crl_distribution_points_0": json.dumps([{"type": "URI", "value": ca.crl_url}]),
                     "crl_distribution_points_1": "",
                     "crl_distribution_points_2": "",
                     "crl_distribution_points_3": [],
                     "crl_distribution_points_4": False,
-                    "authority_information_access_0": json.dumps([{"key": "URI", "value": ca.issuer_url}]),
-                    "authority_information_access_1": json.dumps([{"key": "URI", "value": ca.ocsp_url}]),
+                    "authority_information_access_0": json.dumps([{"type": "URI", "value": ca.issuer_url}]),
+                    "authority_information_access_1": json.dumps([{"type": "URI", "value": ca.ocsp_url}]),
                     "authority_information_access_2": False,
                     "password": CERT_DATA["pwd"]["password"].decode("utf-8"),
                 },
@@ -1612,7 +1612,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form = response.forms["certificate_form"]
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
-        form["subject_alternative_name_0"] = json.dumps([{"key": "DNS", "value": self.hostname}])
+        form["subject_alternative_name_0"] = json.dumps([{"type": "DNS", "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 

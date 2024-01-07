@@ -437,13 +437,12 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         )
         models = GeneralNameModelList.validate_python(list(san))
         serialized = [m.model_dump(mode="json") for m in models]
-        serialized_san = [{"key": s["type"], "value": s["value"]} for s in serialized]
 
         return {
             "ca": self.cert.ca.pk,
             "profile": "webserver",
             "subject": json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
-            "subject_alternative_name_0": json.dumps(serialized_san),
+            "subject_alternative_name_0": json.dumps(serialized),
             "subject_alternative_name_1": False,
             "algorithm": "SHA-256",
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
