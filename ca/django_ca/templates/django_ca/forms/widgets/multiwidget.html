@@ -1,4 +1,4 @@
-{% spaceless %}<p {% include "django/forms/widgets/attrs.html" %}>
+{% spaceless %}<div {% include "django/forms/widgets/attrs.html" %}>
 {% for widget in widget.subwidgets %}
     {% if widget.label and not widget.handles_label %}
     <label for="{{ widget.attrs.id }}">
@@ -9,4 +9,4 @@
         <span class="help">{{ widget.help_text }}</span>
     {% endif %}
 {% endfor %}
-</p>{% endspaceless %}
+</div>{% endspaceless %}

@@ -78,7 +78,7 @@ class AddCertificateSeleniumTestCase(
         """
         self.selenium.get(self.url)
 
-        # Top-level element of the SubjectField
+        # Top-level element of the NameField
         # pylint: disable=attribute-defined-outside-init
         self.key_value_field = self.find(".field-subject .key-value-field")
         self.hidden_input = self.key_value_field.find_element(By.ID, "id_subject")

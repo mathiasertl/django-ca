@@ -2,16 +2,16 @@
 <div class="key-value-field">
   {% block templates %}{% endblock %}
 
-  {% with widget=widget.subwidgets.0 %}
-    {% include widget.template_name %}
-  {% endwith %}
+  {% include "django/forms/widgets/input.html" %}
+
+
   <span class="key-value-template">
     <div class="key-value-row" draggable="true">
       <span class="draggable-handle">&#9776;</span>
-      {% with widget=widget.subwidgets.1 %}
+      {% with widget=widget.select_template %}
         {% include widget.template_name %}
       {% endwith %}
-      {% with widget=widget.subwidgets.2 %}
+      {% with widget=widget.value_template %}
         {% include widget.template_name %}
       {% endwith %}
       <button type="button" class="remove-row-btn button">{% translate "Remove" %}</button>

@@ -14,17 +14,21 @@
 """Django form fields related to django-ca."""
 
 import abc
+import json
 import typing
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+
+from pydantic import ValidationError as PydanticValidationError
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import constants, utils, widgets
+from django_ca import widgets
 from django_ca.constants import (
     EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES,
     EXTENDED_KEY_USAGE_NAMES,
@@ -32,10 +36,10 @@ from django_ca.constants import (
     REVOCATION_REASONS,
 )
 from django_ca.extensions import get_extension_name
-from django_ca.pydantic.general_name import GeneralNameModel
+from django_ca.pydantic.general_name import GeneralNameModelList
+from django_ca.pydantic.name import NameModel
 from django_ca.typehints import AlternativeNameTypeVar, CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
-from django_ca.utils import parse_general_name
-from django_ca.widgets import GeneralNameKeyValueWidget, KeyValueWidget, SubjectWidget
+from django_ca.widgets import GeneralNameKeyValueWidget, KeyValueWidget, NameWidget
 
 if typing.TYPE_CHECKING:
     from django_ca.modelfields import LazyCertificateSigningRequest
@@ -120,128 +124,54 @@ class ObjectIdentifierField(forms.CharField):
             ) from ex
 
 
-class KeyValueField(forms.MultiValueField):
+class KeyValueField(forms.CharField):
     """Dynamic Key/Value field."""
 
-    widget_class = KeyValueWidget
+    widget = KeyValueWidget
 
-    def __init__(self, key_choices: Sequence[Tuple[str, str]], **kwargs: Any) -> None:
-        fields = [
-            forms.JSONField(required=True),
-            # These two just serve as template for key/value rows
-            forms.ChoiceField(choices=key_choices, required=False),
-            forms.CharField(required=False),
-        ]
+    def to_python(self, value: Optional[str]) -> List[Dict[str, Any]]:  # type: ignore[override]
+        value = super().to_python(value)
+        if not value:
+            return []
+        return json.loads(value)  # type: ignore[no-any-return]
 
-        kwargs["require_all_fields"] = False  # ... or we'd require values in the template
+    def pydantic_validation_error(self, ex: PydanticValidationError) -> typing.NoReturn:
+        """Transform Pydantic ValidationError exceptions into Django ValidationError.
 
-        super().__init__(fields, **kwargs)
-        self.widget = self.widget_class(key_choices=key_choices, attrs={"class": "key-value-input"})
-
-    def compress(
-        self, data_list: Tuple[List[Dict[str, str]], str, str]
-    ) -> Optional[List[Dict[str, str]]]:  # pragma: no cover  # This class is never used directly so far
-        if not data_list or not data_list[0]:
-            return None
-        return data_list[0]
+        This method assumes that the error occurs in `value`, as the keys are a select field and should work
+        properly.
+        """
+        raise ValidationError([error["msg"] for error in ex.errors()]) from ex
 
 
-class SubjectField(KeyValueField):
-    """Specialized version of KeyValue field for a certificate subject."""
+class NameField(KeyValueField):
+    """Specialized version of KeyValue field for a x509 name."""
 
-    widget_class = SubjectWidget
+    widget = NameWidget
 
-    def __init__(self, **kwargs: Any) -> None:
-        key_choices = [(oid.dotted_string, name) for oid, name in constants.NAME_OID_DISPLAY_NAMES.items()]
-        super().__init__(key_choices=key_choices, **kwargs)
-
-    def compress(  # type: ignore[override]
-        self, data_list: Tuple[List[Dict[str, str]], str, str]
-    ) -> x509.Name:
-        # Empty list happens when you press submit on a completely empty form
-        if not data_list or not data_list[0]:
-            return x509.Name([])
-
-        values = data_list[0]
-        errors = []
-        attributes: List[x509.NameAttribute] = []
-        found_oids: Set[x509.ObjectIdentifier] = set()
-        for oid_dict in values:
-            try:
-                oid = x509.ObjectIdentifier(oid_dict["key"])
-
-                # Check for duplicate OIDs that should not occur more than once
-                if oid in found_oids and oid not in utils.MULTIPLE_OIDS:
-                    oid_name = constants.NAME_OID_DISPLAY_NAMES[oid]
-                    errors.append(_("%(attr)s: Attribute cannot occur more then once.") % {"attr": oid_name})
-                else:
-                    found_oids.add(oid)
-
-                attr = x509.NameAttribute(oid=oid, value=oid_dict["value"])
-            except Exception as ex:  # pylint: disable=broad-exception-caught  # docs don't specify class
-                # Creating the NameAttribute failed (e.g. a country code that does *not* have two characters)
-                errors.append(str(ex))
-            else:
-                attributes.append(attr)
-
-        if errors:
-            raise forms.ValidationError(errors)
-
-        name = x509.Name(attributes)
-        return name
+    def to_python(self, value: Optional[str]) -> x509.Name:  # type: ignore[override]
+        parsed_value = super().to_python(value)
+        converted_value = [{"oid": v["key"], "value": v["value"]} for v in parsed_value]
+        try:
+            model = NameModel.model_validate(converted_value)
+        except PydanticValidationError as ex:
+            self.pydantic_validation_error(ex)
+        return model.cryptography
 
 
 class GeneralNameKeyValueField(KeyValueField):
-    """test."""
+    """Specialized version of KeyValue field for a list of general names."""
 
-    widget_class = GeneralNameKeyValueWidget
+    widget = GeneralNameKeyValueWidget
 
-    def __init__(self, **kwargs: Any) -> None:
-        choices = [(key, key) for key in constants.GENERAL_NAME_TYPES]
-        super().__init__(key_choices=choices, **kwargs)
-        self.widget = self.widget_class(key_choices=choices, attrs={"class": "key-value-input"})
-
-    def compress(  # type: ignore[override]
-        self, data_list: Tuple[List[Dict[str, str]], str, str]
-    ) -> List[x509.GeneralName]:
-        # Empty list happens when you press submit on a completely empty form
-        if not data_list or not data_list[0]:
-            return []
-
-        names = [GeneralNameModel(type=name["key"], value=name["value"]) for name in data_list[0]]
-        return [name.cryptography for name in names]
-
-
-class GeneralNamesField(forms.CharField):
-    """MultipleChoice field for :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`."""
-
-    widget = widgets.GeneralNamesWidget
-    default_error_messages = {  # noqa: RUF012  # defined in base class
-        "invalid": _("Unparsable General Name: %(error)s"),
-    }
-
-    def to_python(  # type: ignore[override]  # superclass uses Any for str, violates inheritance (in theory)
-        self, value: str
-    ) -> Optional[List[x509.GeneralName]]:
-        if not value:
-            return None
-
-        values = []
-        for line in value.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-
-            try:
-                values.append(parse_general_name(line))
-            except ValueError as ex:
-                raise forms.ValidationError(
-                    self.error_messages["invalid"], params={"error": ex}, code="invalid"
-                ) from ex
-        if not values:
-            return None
-
-        return values
+    def to_python(self, value: Optional[str]) -> List[x509.GeneralName]:  # type: ignore[override]
+        parsed_value = super().to_python(value)
+        converted_value = [{"type": v["key"], "value": v["value"]} for v in parsed_value]
+        try:
+            models = GeneralNameModelList.validate_python(converted_value)
+        except PydanticValidationError as ex:
+            self.pydantic_validation_error(ex)
+        return [model.cryptography for model in models]
 
 
 class RelativeDistinguishedNameField(forms.CharField):
@@ -355,9 +285,9 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
         "no-dp-or-issuer": _("A DistributionPoint needs at least a full or relative name or a crl issuer."),
     }
     fields = (
-        GeneralNamesField(required=False),  # full_name
+        GeneralNameKeyValueField(required=False),  # full_name
         RelativeDistinguishedNameField(required=False),  # relative_name
-        GeneralNamesField(required=False),  # crl_issuer
+        GeneralNameKeyValueField(required=False),  # crl_issuer
         ReasonsField(required=False),  # reasons
     )
 
@@ -405,7 +335,7 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
     """Form field for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
 
     extension_type = x509.AuthorityInformationAccess
-    fields = (GeneralNamesField(required=False), GeneralNamesField(required=False))
+    fields = (GeneralNameKeyValueField(required=False), GeneralNameKeyValueField(required=False))
     widget = widgets.AuthorityInformationAccessWidget
 
     def get_value(

@@ -160,7 +160,7 @@ def test_name(serialized: List[Dict[str, Any]], expected: List[x509.NameAttribut
                 (
                     "value_error",
                     (),
-                    "Value error, commonName: Attribute of this type must not occur more then once in a name.",
+                    "Value error, attribute of type commonName must not occur more then once in a name.",
                 )
             ],
         ),

@@ -2,8 +2,17 @@
     display: none;
 }
 
-.key-value-field .draggable-handle {
-    margin-right: 0.5em;
+.key-value-field .key-value-row {
+    display: flex;
+    align-items: center;
+}
+
+.key-value-field .key-value-row .key-value-input {
+    margin-right: 0.3em;
+}
+
+.key-value-field .key-value-row .draggable-handle {
+    margin-right: 0.6em;
     cursor: grab;
 }
 
@@ -30,7 +39,7 @@
 .key-value-field .key-value-row select,
 .key-value-field .key-value-row input,
 .key-value-field .key-value-row button {
-    margin: 0 0 0.5em 0;
+    margin: 0.2em 0 0.2em 0;
     height: 1.875rem;
     box-sizing: border-box;
 }

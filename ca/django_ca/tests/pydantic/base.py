@@ -13,15 +13,17 @@
 
 """Shared code for Pydantic-related tests."""
 import re
+import typing
 from typing import Any, Dict, List, Tuple, Type, TypeVar, Union
 
 from pydantic import ValidationError
 
 import pytest
 
-from django_ca.pydantic.base import CryptographyModel
+from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 
 CryptographyModelTypeVar = TypeVar("CryptographyModelTypeVar", bound=CryptographyModel[Any])
+CryptographyRootModelTypeVar = TypeVar("CryptographyRootModelTypeVar", bound=CryptographyRootModel[Any, Any])
 ExpectedErrors = List[Tuple[str, Tuple[str, ...], Union[str, "re.Pattern[str]"]]]
 
 
@@ -40,15 +42,33 @@ def assert_cryptography_model(
     return model  # for any further tests on the model
 
 
+@typing.overload
 def assert_validation_errors(
     model_class: Type[CryptographyModelTypeVar],
+    parameters: Dict[str, Any],
+    expected_errors: ExpectedErrors,
+) -> None:
+    ...
+
+
+@typing.overload
+def assert_validation_errors(
+    model_class: Type[CryptographyRootModelTypeVar],
+    parameters: List[Dict[str, Any]],
+    expected_errors: ExpectedErrors,
+) -> None:
+    ...
+
+
+def assert_validation_errors(
+    model_class: Union[Type[CryptographyModelTypeVar], Type[CryptographyRootModelTypeVar]],
     parameters: Union[List[Dict[str, Any]], Dict[str, Any]],
     expected_errors: ExpectedErrors,
 ) -> None:
     """Assertion method to test validation errors."""
     with pytest.raises(ValidationError) as ex_info:
         if isinstance(parameters, list):
-            model_class(parameters)
+            model_class(parameters)  # type: ignore[call-arg]  # ruled out with overload
         else:
             model_class(**parameters)
 

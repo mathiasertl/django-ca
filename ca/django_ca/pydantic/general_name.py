@@ -17,10 +17,10 @@ import ipaddress
 import typing
 from datetime import datetime
 from ipaddress import ip_address, ip_network
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 import idna
-from pydantic import BeforeValidator, Discriminator, Tag, model_validator
+from pydantic import BeforeValidator, Discriminator, Tag, TypeAdapter, model_validator
 
 import asn1crypto.core
 from cryptography import x509
@@ -312,3 +312,6 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
 
         # TYPEHINT NOTE: constant has type GeneralName, abstract constructor does not take arguments
         return constants.GENERAL_NAME_TYPES[self.type](self.value)  # type: ignore[call-arg]
+
+
+GeneralNameModelList = TypeAdapter(List[GeneralNameModel])

@@ -36,12 +36,12 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, X509CertMixin
+from django_ca.pydantic.general_name import GeneralNameModelList
 from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AdminTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 from django_ca.tests.base.utils import override_tmpcadir
-from django_ca.utils import format_general_name
 
 if typing.TYPE_CHECKING:
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
@@ -436,11 +436,15 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             x509.SubjectAlternativeName,
             self.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].value,
         )
+        models = GeneralNameModelList.validate_python(list(san))
+        serialized = [m.model_dump(mode="json") for m in models]
+        serialized_san = [{"key": s["type"], "value": s["value"]} for s in serialized]
+
         return {
             "ca": self.cert.ca.pk,
             "profile": "webserver",
-            "subject_0": json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
-            "subject_alternative_name_0": "\n".join([format_general_name(name) for name in san]),
+            "subject": json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
+            "subject_alternative_name_0": json.dumps(serialized_san),
             "subject_alternative_name_1": False,
             "algorithm": "SHA-256",
             "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),

@@ -14,7 +14,7 @@
 import json
 import logging
 import typing
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -26,8 +26,9 @@ from django.utils.translation import gettext as _
 from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.extensions.utils import certificate_policies_is_simple
+from django_ca.pydantic.general_name import GeneralNameModelList
+from django_ca.pydantic.name import NameModel
 from django_ca.typehints import AlternativeNameTypeVar, KeyUsages
-from django_ca.utils import format_general_name
 
 log = logging.getLogger(__name__)
 
@@ -98,40 +99,48 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
         return ctx
 
 
-class KeyValueWidget(forms.MultiWidget):
+class KeyValueWidget(widgets.TextInput):
     """Dynamic widget for key/value pairs."""
 
     template_name = "django_ca/admin/key_value.html"
+    key_choices: Tuple[Tuple[str, str], ...]
 
-    def __init__(
-        self, key_choices: Sequence[Tuple[str, str]], attrs: Optional[Dict[str, str]] = None
-    ) -> None:
-        field_widgets = [
-            forms.HiddenInput(),
-            forms.Select(choices=key_choices, attrs=attrs),
-            forms.TextInput(attrs=attrs),
-        ]
-        super().__init__(field_widgets, attrs=attrs)
-
-    def decompress(self, value: Optional[x509.Name]) -> Tuple[Optional[str], None, None]:
+    def format_value(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value
         if value is None:
-            return None, None, None
-
-        # TYPEHINT NOTE: attr.value may be a bytes value, but this does not really happen in practice
-        encoded_name: List[Dict[str, str]] = [
-            {"key": attr.oid.dotted_string, "value": attr.value}  # type: ignore[dict-item]
-            for attr in value
-        ]
-        return json.dumps(encoded_name), None, None
+            value = []
+        return json.dumps(value)
 
     def get_context(self, name: str, value: Any, attrs: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         context = super().get_context(name, value, attrs)
 
+        # Set the input type to "hidden" in the context. This must *not* be done via a widgets.HiddenInput
+        # base class, as Django would then hide widgets that are not MultiValueWidgets, as the widget is
+        # marked as hidden via the input_type class variable. (Not true for MultiWidgets because there are
+        # other widgets that are *not* hidden.
+        context["widget"]["type"] = "hidden"
+
+        if context["widget"]["attrs"].get("class"):
+            context["widget"]["attrs"]["class"] += " key-value-data"
+        else:
+            context["widget"]["attrs"]["class"] = "key-value-data"
+
+        template_attrs = {"class": "key-value-input"}
+
+        # Add the select template
+        select_template = forms.Select(choices=self.key_choices, attrs=template_attrs)
+        context["widget"]["select_template"] = select_template.get_context("dummy-name", None, {})["widget"]
+
+        # Add the value template
+        value_template = forms.TextInput(attrs=template_attrs)
+        context["widget"]["value_template"] = value_template.get_context("dummy-name", None, {})["widget"]
+
         # Remove the name as the widgets only serve as template for new key/value rows. If they had a name,
         # the browser would submit values and get them back from Django as values for the template fields in
         # case of a form error.
-        del context["widget"]["subwidgets"][1]["name"]
-        del context["widget"]["subwidgets"][2]["name"]
+        del context["widget"]["value_template"]["name"]
+        del context["widget"]["select_template"]["name"]
 
         return context
 
@@ -140,10 +149,17 @@ class KeyValueWidget(forms.MultiWidget):
         css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/key_value.css",)}
 
 
-class SubjectWidget(KeyValueWidget):
+class NameWidget(KeyValueWidget):
     """Specialized version of the KeyValueWidget for a certificate subject."""
 
     template_name = "django_ca/admin/subject.html"
+    key_choices = tuple((oid.dotted_string, name) for oid, name in constants.NAME_OID_DISPLAY_NAMES.items())
+
+    def format_value(self, value: Any) -> str:
+        if isinstance(value, x509.Name):
+            value = NameModel.model_validate(value).model_dump(mode="json")
+            value = [{"key": e["oid"], "value": e["value"]} for e in value]
+        return super().format_value(value)
 
     class Media:
         css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/subject.css",)}
@@ -152,7 +168,15 @@ class SubjectWidget(KeyValueWidget):
 class GeneralNameKeyValueWidget(KeyValueWidget):
     """Specialized version of the KeyValueWidget for a list of general names."""
 
-    pass
+    key_choices = tuple((key, key) for key in constants.GENERAL_NAME_TYPES)
+
+    def format_value(self, value: Any) -> str:
+        if isinstance(value, (list, tuple)):
+            models = GeneralNameModelList.validate_python(value)
+            serialized = [m.model_dump(mode="json") for m in models]
+            value = [{"key": s["type"], "value": s["value"]} for s in serialized]
+
+        return super().format_value(value)
 
 
 class SelectMultiple(DjangoCaWidgetMixin, widgets.SelectMultiple):
@@ -255,17 +279,6 @@ class ProfileWidget(widgets.Select):
         css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/profile.css",)}
 
 
-class GeneralNamesWidget(Textarea):
-    """Widget for a list of :py:class:`~cg:cryptography.x509.GeneralName` instances."""
-
-    def format_value(self, value: Optional[Union[str, Iterable[x509.GeneralName]]]) -> str:
-        if isinstance(value, str):  # Received during form rendering for a bound form with errors
-            return value
-        if not value:
-            return ""
-        return "\n".join([format_general_name(name) for name in value])
-
-
 class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
     """Base class for widgets that display a :py:class:`~cg:cryptography.Extension`.
 
@@ -292,6 +305,8 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
 class AlternativeNameWidget(ExtensionWidget, typing.Generic[AlternativeNameTypeVar]):
     """Widget for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
+    extension_widgets = (GeneralNameKeyValueWidget(),)
+
     def decompress(
         self, value: Optional[x509.Extension[AlternativeNameTypeVar]]
     ) -> Tuple[List[x509.GeneralName], bool]:
@@ -299,18 +314,14 @@ class AlternativeNameWidget(ExtensionWidget, typing.Generic[AlternativeNameTypeV
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         return list(value.value), value.critical
 
-    def get_widgets(self, **kwargs: Any) -> Tuple[widgets.SelectMultiple]:
-        choices = [(key, key) for key in constants.GENERAL_NAME_TYPES]
-        return (KeyValueWidget(key_choices=choices, attrs={"class": "key-value-input"}),)
-
 
 class DistributionPointWidget(ExtensionWidget):
     """Widgets for extensions that use a DistributionPoint."""
 
     extension_widgets = (
-        GeneralNamesWidget(attrs={"class": "full-name", "rows": 3}),
+        GeneralNameKeyValueWidget(attrs={"class": "full-name"}),
         TextInput(attrs={"class": "relative-name"}),
-        GeneralNamesWidget(attrs={"class": "crl-issuer", "rows": 3}),
+        GeneralNameKeyValueWidget(attrs={"class": "crl-issuer"}),
         SelectMultiple(choices=REVOCATION_REASONS, attrs={"class": "reasons"}),
     )
     labels = (
@@ -357,8 +368,8 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
 
     extension_widgets = (
-        GeneralNamesWidget(attrs={"class": "ca-issuers", "rows": 3}),
-        GeneralNamesWidget(attrs={"class": "ocsp", "rows": 3}),
+        GeneralNameKeyValueWidget(attrs={"class": "ca-issuers"}),
+        GeneralNameKeyValueWidget(attrs={"class": "ocsp"}),
     )
     help_texts = (
         _("Location(s) of the CA certificate."),

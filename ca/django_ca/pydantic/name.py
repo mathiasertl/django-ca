@@ -160,7 +160,7 @@ class NameModel(CryptographyRootModel[List[NameAttributeModel], x509.Name]):
             # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
             if oid in seen and oid not in MULTIPLE_OIDS:
                 name = constants.NAME_OID_NAMES.get(oid, oid.dotted_string)
-                raise ValueError(f"{name}: Attribute of this type must not occur more then once in a name.")
+                raise ValueError(f"attribute of type {name} must not occur more then once in a name.")
             seen.add(oid)
         return self
 

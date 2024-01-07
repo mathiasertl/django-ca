@@ -15,23 +15,28 @@
 # type: ignore
 
 """Test custom Django form fields."""
-
-from typing import Type
+import html
+import json
+from typing import Any, Dict, List, Tuple, Type
 
 from cryptography import x509
-from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+
+import pytest
+from pytest_django.asserts import assertInHTML
 
 from django_ca import ca_settings, fields
 from django_ca.constants import KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
+    crl_distribution_points,
+    distribution_point,
     extended_key_usage,
-    issuer_alternative_name,
     key_usage,
     ocsp_no_check,
     rdn,
@@ -44,6 +49,9 @@ D3 = "example.org"
 DNS1 = x509.DNSName(D1)
 DNS2 = x509.DNSName(D2)
 DNS3 = x509.DNSName(D3)
+SER_D1 = {"key": "DNS", "value": D1}
+SER_D2 = {"key": "DNS", "value": D2}
+SER_D3 = {"key": "DNS", "value": D3}
 
 
 class FieldTestCaseMixin(TestCaseMixin):
@@ -61,220 +69,281 @@ class FieldTestCaseMixin(TestCaseMixin):
         self.assertEqual(context_manager.exception.messages, error_required)
 
 
-class AuthorityInformationAccessField(TestCase, TestCaseMixin):
-    """Tests for the AuthorityInformationAccessField."""
-
-    def test_field_output(self) -> None:
-        """Test field output."""
-        self.assertFieldOutput(
-            fields.AuthorityInformationAccessField,
-            {
-                (D1, "", False): authority_information_access([DNS1], [], critical=False),
-                (D1, "", True): authority_information_access([DNS1], [], critical=True),
-                ("", D1, False): authority_information_access([], [DNS1], critical=False),
-                (D1, D2, True): authority_information_access([DNS1], [DNS2], critical=True),
-                (D1, D2, False): authority_information_access([DNS1], [DNS2], critical=False),
-                (f"{D1}\n{D3}", D2, True): authority_information_access([DNS1, DNS3], [DNS2], critical=True),
-                ("", "", True): None,
-                ("", "", False): None,
-            },
-            {
-                ("DNS:http://example.com", "", False): [
-                    "Unparsable General Name: Could not parse DNS name: http://example.com"
-                ],
-            },
-            empty_value=None,
-        )
+@pytest.mark.parametrize("critical", (True, False))
+@pytest.mark.parametrize("required", (True, False))
+@pytest.mark.parametrize(
+    "field_class,extension_type",
+    (
+        (fields.IssuerAlternativeNameField, x509.IssuerAlternativeName),
+        (fields.SubjectAlternativeNameField, x509.SubjectAlternativeName),
+    ),
+)
+@pytest.mark.parametrize("value,general_names", (([SER_D1], [DNS1]), ([SER_D1, SER_D2], [DNS1, DNS2])))
+def test_alternative_name_fields(
+    critical: bool,
+    required: bool,
+    field_class: Type[fields.AlternativeNameField],
+    extension_type: Type[x509.ExtensionType],
+    value: Any,
+    general_names: List[x509.GeneralName],
+) -> None:
+    """Test output for AlternativeName fields."""
+    field = field_class(required=required)
+    ext = x509.Extension(critical=critical, oid=extension_type.oid, value=extension_type(general_names))
+    assert field.clean((json.dumps(value), critical)) == ext
 
 
-class CRLDistributionPointsTestCase(TestCase, FieldTestCaseMixin):
-    """Tests for the CRLDistributionPointsField."""
-
-    field_class = fields.CRLDistributionPointField
-
-    def test_field_output(self) -> None:
-        """Test field output."""
-        for critical in [True, False]:
-            self.assertFieldOutput(
-                fields.CRLDistributionPointField,
-                {
-                    # fields: full_name, rdn, crl_issuer, reasons
-                    ("", "", "", (), critical): None,  # not an error, this is not covered elsewhere
-                    (D1, "", "", (), critical): self.crl_distribution_points([DNS1], critical=critical),
-                    (D2, "", "", (), critical): self.crl_distribution_points([DNS2], critical=critical),
-                    # multiple full names:
-                    (f"{D1}\n{D2}", "", "", (), critical): self.crl_distribution_points(
-                        [DNS1, DNS2], critical=critical
-                    ),
-                    # relative distinguished name
-                    ("", f"CN={D1}", "", (), critical): self.crl_distribution_points(
-                        relative_name=rdn([(NameOID.COMMON_NAME, D1)]),
-                        critical=critical,
-                    ),
-                    # crl issuer
-                    (D1, "", f"{D2}", (), critical): self.crl_distribution_points(
-                        [DNS1], crl_issuer=[DNS2], critical=critical
-                    ),
-                    (D1, "", f"{D2}\n{D3}", (), critical): self.crl_distribution_points(
-                        [DNS1], crl_issuer=[DNS2, DNS3], critical=critical
-                    ),
-                    # include reasons
-                    (
-                        D1,
-                        "",
-                        "",
-                        ("key_compromise", "certificate_hold"),
-                        critical,
-                    ): self.crl_distribution_points(
-                        [DNS1],
-                        reasons=frozenset(
-                            [x509.ReasonFlags.key_compromise, x509.ReasonFlags.certificate_hold]
-                        ),
-                        critical=critical,
-                    ),
-                },
-                {
-                    (D1, f"CN={D2}", "", (), critical): [
-                        "You cannot provide both full_name and relative_name."
-                    ],
-                    ("", "", "", ("key_compromise",), critical): [
-                        "A DistributionPoint needs at least a full or relative name or a crl issuer."
-                    ],
-                },
-                empty_value=None,
-            )
-
-    def test_rendering_empty_field(self) -> None:
-        """Test rendering an empty field as HTML."""
-        name = "field-name"
-        field = self.field_class()
-        html = field.widget.render(name, None)
-        self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="3" class="django-ca-widget full-name"></textarea>',
-            html,
-        )
-        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', html)
-        self.assertInHTML(
-            f'<textarea name="{name}_2" cols="40" rows="3" class="django-ca-widget crl-issuer"></textarea>',
-            html,
-        )
-        for choice, text in REVOCATION_REASONS:
-            self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
-
-    def test_rendering_full_field(self) -> None:
-        """Test rendering an empty field as HTML."""
-        name = "field-name"
-        field = self.field_class()
-        html = field.widget.render(
-            name,
-            self.crl_distribution_points(
+@pytest.mark.parametrize("critical", (True, False))
+@pytest.mark.parametrize("required", (True, False))
+@pytest.mark.parametrize(
+    "field_class,extension_type",
+    (
+        (fields.CRLDistributionPointField, x509.CRLDistributionPoints),
+        (fields.FreshestCRLField, x509.FreshestCRL),
+    ),
+)
+@pytest.mark.parametrize(
+    "value,dpoint",
+    (
+        (([SER_D1], "", "", ()), distribution_point([DNS1])),
+        (([SER_D1, SER_D2], "", "", ()), (distribution_point([DNS1, DNS2]))),
+        (  # With RDN
+            ([], f"CN={D1}", "", ()),
+            (distribution_point(relative_name=rdn([(NameOID.COMMON_NAME, D1)]))),
+        ),
+        (  # test RDN order
+            ([], f"C=AT,O=MyOrg,CN={D1}", "", ()),
+            (
+                distribution_point(
+                    relative_name=rdn(
+                        [
+                            (NameOID.COUNTRY_NAME, "AT"),
+                            (NameOID.ORGANIZATION_NAME, "MyOrg"),
+                            (NameOID.COMMON_NAME, D1),
+                        ]
+                    )
+                )
+            ),
+        ),
+        (([SER_D1], "", [SER_D2], ()), distribution_point([DNS1], crl_issuer=[DNS2])),  # with CRL issuers
+        (
+            ([SER_D1], "", [SER_D2, SER_D3], ()),
+            distribution_point([DNS1], crl_issuer=[DNS2, DNS3]),
+        ),  # multiple
+        (
+            ([SER_D1], "", "", ("key_compromise", "certificate_hold")),
+            distribution_point(
                 [DNS1],
-                crl_issuer=[DNS2],
                 reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.certificate_hold]),
             ),
-        )
-        self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="3" class="django-ca-widget full-name">'
-            f"DNS:{D1}</textarea>",
-            html,
-        )
-        self.assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', html)
-        self.assertInHTML('<option value="key_compromise" selected>Key compromised</option>', html)
-        self.assertInHTML('<option value="certificate_hold" selected>On Hold</option>', html)
-        self.assertInHTML(
-            f'<textarea name="{name}_2" cols="40" rows="3" class="django-ca-widget crl-issuer">'
-            f"DNS:{D2}</textarea>",
-            html,
-        )
+        ),
+    ),
+)
+def test_distribution_point_fields(
+    critical: bool,
+    required: bool,
+    field_class: Type[fields.DistributionPointField],
+    extension_type: Type[x509.ExtensionType],
+    value: Tuple[List[Dict[str, Any]], str, List[Dict[str, Any]], Tuple[str, ...]],
+    dpoint: x509.DistributionPoint,
+) -> None:
+    """Test fields.CRLDistributionPointField."""
+    field = field_class(required=required)
 
-    def test_rendering_relative_distinguished_name(self) -> None:
-        """Test rendering a RelativeDistinguishedName."""
-        name = "field-name"
-        field = self.field_class()
-        html = field.widget.render(
-            name, self.crl_distribution_points(relative_name=rdn([(NameOID.COMMON_NAME, D1)]))
-        )
-        self.assertInHTML(
-            f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget relative-name">',
-            html,
-        )
+    # Prepare field input
+    full_name, relative_name, crl_issuers, reasons = value
+    full_name = json.dumps(full_name)
+    crl_issuers = json.dumps(crl_issuers)
 
-    def test_rendering_mutltiple_dps(self) -> None:
-        """Test rendering multiple distribution points (It's not supported yet)."""
-        name = "field-name"
-        field = self.field_class()
-        dpoint1 = x509.DistributionPoint(full_name=[DNS1], relative_name=None, reasons=None, crl_issuer=None)
-        dpoint2 = x509.DistributionPoint(full_name=[DNS1], relative_name=None, reasons=None, crl_issuer=None)
-        ext = x509.Extension(
-            oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-            critical=False,
-            value=x509.CRLDistributionPoints([dpoint1, dpoint2]),
-        )
+    # Prepare expected value
+    ext = x509.Extension(critical=critical, oid=extension_type.oid, value=extension_type([dpoint]))
 
-        with self.assertLogs("django_ca") as logcm:
-            html = field.widget.render(name, ext)
-
-        self.assertEqual(
-            logcm.output,
-            [
-                "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
-                "changed in the web interface."
-            ],
-        )
-        self.assertInHTML(
-            f'<textarea name="{name}_0" cols="40" rows="3" class="django-ca-widget full-name">'
-            f"DNS:{D1}</textarea>",
-            html,
-        )
+    assert field.clean((full_name, relative_name, crl_issuers, reasons, critical)) == ext
 
 
-class GeneralNamesFieldTest(TestCase, FieldTestCaseMixin):
-    """Tests for the GeneralNamesField."""
+@pytest.mark.parametrize("critical", (True, False))
+@pytest.mark.parametrize("required", (True, False))
+@pytest.mark.parametrize(
+    "invalid,error",
+    (
+        (([SER_D1], f"CN={D1}", "", ()), r"You cannot provide both full_name and relative_name\."),
+        (
+            ([], "", "", ("key_compromise",)),
+            r"A DistributionPoint needs at least a full or relative name or a crl issuer\.",
+        ),
+    ),
+)
+def test_crl_distribution_points_field_with_invalid_input(
+    critical: bool,
+    required: bool,
+    invalid: Tuple[List[Dict[str, Any]], str, List[Dict[str, Any]], Tuple[str, ...]],
+    error: str,
+):
+    """Test fields.CRLDistributionPointField with invalid input."""
+    field = fields.CRLDistributionPointField(required=required)
 
-    field_class = fields.GeneralNamesField
+    # Prepare field input
+    full_name, relative_name, crl_issuers, reasons = invalid
+    full_name = json.dumps(full_name)
+    crl_issuers = json.dumps(crl_issuers)
 
-    def test_field_output(self) -> None:
-        """Test field output."""
-        self.assertFieldOutput(
-            fields.GeneralNamesField,
-            {
-                D1: [DNS1],
-                D2: [DNS2],
-                f"{D1}\n{D2}": [DNS1, DNS2],
-                f"DNS:{D1}\nDNS:{D2}": [DNS1, DNS2],
-                f"{D2}\n{D1}": [DNS2, DNS1],  # test order
-                f"\n  {D1}  \n  \n  {D2}  \n  ": [DNS1, DNS2],
-            },
-            {
-                "DNS:http://example.com": [
-                    "Unparsable General Name: Could not parse DNS name: http://example.com"
-                ],
-            },
-            empty_value=None,
-        )
+    with pytest.raises(ValidationError, match=error):
+        field.clean((full_name, relative_name, crl_issuers, reasons, critical))
 
-    def test_rendering(self) -> None:
-        """Test rendering the field as HTML."""
-        name = "field-name"
-        field = self.field_class()
-        self.assertInHTML(
-            f'<textarea name="{name}" cols="40" rows="10" class="django-ca-widget"></textarea>',
-            field.widget.render(name, None),
-        )
-        self.assertInHTML(
-            f'<textarea name="{name}" cols="40" rows="10" class="django-ca-widget">DNS:{D1}</textarea>',
-            field.widget.render(name, [DNS1]),
-        )
-        # assertInHTML() treats newline and space the same way, and we want to make sure we have a newline
-        # separating the names.
-        self.assertIn(f">\nDNS:{D1}\nDNS:{D2}</textarea>", field.widget.render(name, [DNS1, DNS2]))
 
-    def test_whitespace(self) -> None:
-        """Test that empty lines are completely ignored and return an empty value."""
-        self.assertRequiredError("  ")
-        self.assertRequiredError("\n")
-        self.assertRequiredError("\n  \n")
-        self.assertRequiredError("  \n")
+@pytest.mark.parametrize("critical", (True, False))
+@pytest.mark.parametrize("required", (True, False))
+@pytest.mark.parametrize("value", (([], "", "", ()),))
+def test_crl_distribution_points_field_with_empty_input(
+    critical: bool,
+    required: bool,
+    value: Tuple[List[Dict[str, Any]], str, List[Dict[str, Any]], Tuple[str, ...]],
+) -> None:
+    """Test fields.CRLDistributionPointField with empty input."""
+    field = fields.CRLDistributionPointField(required=required)
+    assert field.clean((*value, critical)) is None
+
+    # Test how the field is rendered
+    name = "field-name"
+    raw_html = field.widget.render(name, None)
+    assertInHTML(f'<input type="hidden" name="{name}_0" value="" class="full-name key-value-data">', raw_html)
+    assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', raw_html)
+    assertInHTML(
+        f'<input type="hidden" name="{name}_2" value="" class="crl-issuer key-value-data">', raw_html
+    )
+    for choice, text in REVOCATION_REASONS:
+        assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
+
+
+def test_crl_distribution_points_field_rendering() -> None:
+    """Test rendering of fields.CRLDistributionPointField with all values (but RDN)."""
+    name = "field-name"
+    field = fields.CRLDistributionPointField()
+    reasons = frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.certificate_hold])
+    raw_html = field.widget.render(
+        name,
+        crl_distribution_points(distribution_point([DNS1], crl_issuer=[DNS2], reasons=reasons)),
+    )
+
+    full_name_value = html.escape(json.dumps([SER_D1]))
+    assertInHTML(
+        f'<input type="hidden" name="{name}_0" value="{full_name_value}" class="full-name key-value-data">',
+        raw_html,
+    )
+    assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', raw_html)
+    assertInHTML('<option value="key_compromise" selected>Key compromised</option>', raw_html)
+    assertInHTML('<option value="certificate_hold" selected>On Hold</option>', raw_html)
+    crl_issuer_value = html.escape(json.dumps([SER_D2]))
+    assertInHTML(
+        f'<input type="hidden" name="{name}_2" value="{crl_issuer_value}" class="crl-issuer key-value-data">',
+        raw_html,
+    )
+
+
+def test_crl_distribution_points_field_rendering_with_rdn() -> None:
+    """Test rendering of fields.CRLDistributionPointField with a RelativeDistinguishedName."""
+    name = "field-name"
+    field = fields.CRLDistributionPointField()
+    ext = crl_distribution_points(distribution_point(relative_name=rdn([(NameOID.COMMON_NAME, D1)])))
+
+    # Test how the field is rendered
+    name = "field-name"
+    raw_html = field.widget.render(name, ext)
+    assertInHTML(
+        f'<input type="hidden" name="{name}_0" value="[]" class="full-name key-value-data">', raw_html
+    )
+    assertInHTML(
+        f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget relative-name">',
+        raw_html,
+    )
+    assertInHTML(
+        f'<input type="hidden" name="{name}_2" value="[]" class="crl-issuer key-value-data">', raw_html
+    )
+    for choice, text in REVOCATION_REASONS:
+        assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
+
+
+def test_crl_distribution_points_field_rendering_with_multiple_dps() -> None:
+    """Test rendering of fields.CRLDistributionPointField with multiple DistributionPoints."""
+    name = "field-name"
+    field = fields.CRLDistributionPointField()
+    ext = crl_distribution_points(distribution_point([DNS1]), distribution_point([DNS2]))
+
+    # Test how the field is rendered
+    name = "field-name"
+    raw_html = field.widget.render(name, ext)
+    full_name_value = html.escape(json.dumps([SER_D1]))
+    assertInHTML(
+        f'<input type="hidden" name="{name}_0" value="{full_name_value}" class="full-name key-value-data">',
+        raw_html,
+    )
+    assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', raw_html)
+    assertInHTML(
+        f'<input type="hidden" name="{name}_2" value="[]" class="crl-issuer key-value-data">', raw_html
+    )
+    for choice, text in REVOCATION_REASONS:
+        assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
+
+
+@pytest.mark.parametrize("critical", (True, False))
+@pytest.mark.parametrize("required", (True, False))
+@pytest.mark.parametrize(
+    "ser_ca_issuers,ser_ocsp,ca_issuers,ocsp",
+    (
+        ((SER_D1,), (), (DNS1,), ()),
+        ((), (SER_D2,), (), (DNS2,)),
+        ((SER_D1,), (SER_D2,), (DNS1,), (DNS2,)),
+        ((SER_D1, SER_D3), (SER_D2,), (DNS1, DNS3), (DNS2,)),
+        ((SER_D1,), (SER_D2, SER_D3), (DNS1,), (DNS2, DNS3)),
+    ),
+)
+def test_authority_information_access_field(
+    critical: bool,
+    required: bool,
+    ser_ca_issuers: List[Dict[str, Any]],
+    ser_ocsp: List[Dict[str, Any]],
+    ca_issuers: List[x509.GeneralName],
+    ocsp: List[x509.GeneralName],
+) -> None:
+    """Test AuthorityInformationAccessField field."""
+    field = fields.AuthorityInformationAccessField(required=required)
+
+    # Prepare expected value
+    ext = authority_information_access(ca_issuers=ca_issuers, ocsp=ocsp, critical=critical)
+
+    print((json.dumps(ser_ca_issuers), json.dumps(ser_ocsp), critical))
+    assert field.clean((json.dumps(ser_ca_issuers), json.dumps(ser_ocsp), critical)) == ext
+
+
+@pytest.mark.parametrize("critical", (True, False))  # make sure that critical flag has no effect
+@pytest.mark.parametrize("required", (True, False))
+@pytest.mark.parametrize(
+    "ser_ca_issuers,ser_ocsp",
+    (("", ""), ("[]", "[]"), (None, None)),
+)
+def test_authority_information_access_field_with_empty_value(
+    critical: bool, required: bool, ser_ca_issuers: str, ser_ocsp: str
+) -> None:
+    """Test AuthorityInformationAccessField field with an empty value."""
+    field = fields.AuthorityInformationAccessField(required=required)
+    assert field.clean((ser_ca_issuers, ser_ocsp, critical)) is None
+
+
+@pytest.mark.parametrize(
+    "ser_ca_issuers,ser_ocsp,error",
+    (
+        (({"key": "DNS", "value": "http://example.com"},), (), ""),
+        (({"key": "IP", "value": "example.com"},), (), "example.com: Could not parse IP address"),
+    ),
+)
+def test_authority_information_access_field_with_errors(
+    ser_ca_issuers: str, ser_ocsp: str, error: str
+) -> None:
+    """Test AuthorityInformationAccessField field with an empty value."""
+    field = fields.AuthorityInformationAccessField(required=True)
+
+    with pytest.raises(ValidationError, match=error):
+        field.clean((json.dumps(ser_ca_issuers), json.dumps(ser_ocsp), True))
 
 
 class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):
@@ -303,24 +372,6 @@ class ExtendedKeyUsageFieldTestCase(TestCase, TestCaseMixin):
         )
 
 
-class IssuerAlternativeNameFieldTestCase(TestCase, TestCaseMixin):
-    """Tests for the IssuerAlternativeNameField."""
-
-    def test_field_output(self) -> None:
-        """Test field output."""
-        self.assertFieldOutput(
-            fields.IssuerAlternativeNameField,
-            {
-                (D1, True): issuer_alternative_name(DNS1, critical=True),
-                (D1, False): issuer_alternative_name(DNS1, critical=False),
-                ("", False): None,
-                ("", True): None,
-            },
-            {},
-            empty_value=None,
-        )
-
-
 class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
     """Tests for the KeyUsageField."""
 
@@ -340,9 +391,9 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         name = "field-name"
         field = self.field_class()
 
-        html = field.widget.render(name, None)
+        raw_html = field.widget.render(name, None)
         for choice, text in self.field_class.choices:
-            self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
+            self.assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
 
     def test_rendering_profiles(self) -> None:
         """Test rendering for all profiles."""
@@ -355,13 +406,13 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
             choices = [key_usage_choices[choice] for choice in choices]
 
             ext = key_usage(**{choice: True for choice in choices})
-            html = field.widget.render("unused", ext)
+            raw_html = field.widget.render("unused", ext)
 
             for choice, text in self.field_class.choices:
                 if choice in choices:
-                    self.assertInHTML(f'<option value="{choice}" selected>{text}</option>', html)
+                    self.assertInHTML(f'<option value="{choice}" selected>{text}</option>', raw_html)
                 else:
-                    self.assertInHTML(f'<option value="{choice}">{text}</option>', html)
+                    self.assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
 
 
 class OCSPNoCheckFieldTestCase(TestCase, TestCaseMixin):

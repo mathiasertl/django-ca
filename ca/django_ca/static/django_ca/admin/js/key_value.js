@@ -3,7 +3,7 @@
  */
 function updateJsonValueField(field) {
     var list = field.querySelector('.key-value-list');
-    var inputField = field.querySelector("input[type='hidden']");
+    var inputField = field.querySelector("input.key-value-data");
 
     // collect current data from input row
     var data = [];
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // set up each key/value field
     document.querySelectorAll('div.key-value-field').forEach((field) => {
         // populate with any existing value on load
-        var inputField = field.querySelector("input[type='hidden']");
+        var inputField = field.querySelector("input.key-value-data");
         if (inputField && inputField.value) {
             let inputValue = JSON.parse(inputField.value);
             loadKeyValueList(field, inputValue);

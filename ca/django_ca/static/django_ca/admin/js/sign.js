@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // global for the subject field
     var subject_field = document.querySelector('.field-subject .key-value-field');
-    var subject_input = subject_field.querySelector('input#id_subject_0');  // actual hidden input
+    var subject_input = subject_field.querySelector('input#id_subject');  // actual hidden input
     var key_value_list = subject_field.querySelector('.key-value-list');
     var csr_subject_input_chapter = subject_field.querySelector(".subject-input-chapter.csr");
     var profile_subject_input_chapter = subject_field.querySelector(".subject-input-chapter.profile");
