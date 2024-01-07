@@ -77,12 +77,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.default_expires = (datetime.now(tz=tz.utc) + self.expires(3)).strftime("%Y-%m-%d")
-        self.default_subject = json.dumps(
-            [
-                {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
-            ]
-        )
 
     def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
         """Add certificate based on given name with given CA."""
@@ -97,8 +91,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
@@ -317,10 +311,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-1"},
-                            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-2"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-1"},
+                            {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-2"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
                         ]
                     ),
                     "algorithm": "SHA-256",
@@ -363,7 +357,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "csr": csr,
                     "ca": ca.pk,
                     "profile": "webserver",
-                    "subject": json.dumps([{"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"}]),
+                    "subject": json.dumps([{"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"}]),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
                     "expires": ca.expires.strftime("%Y-%m-%d"),
@@ -408,9 +402,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -444,8 +438,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "FOO"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "FOO"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -482,8 +476,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
@@ -544,8 +538,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
@@ -579,8 +573,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
@@ -615,8 +609,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_0": json.dumps([{"key": "DNS", "value": self.hostname}]),
@@ -695,8 +689,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -743,8 +737,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -790,8 +784,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -838,8 +832,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": cname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -877,7 +871,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["ed448"].pk,
                     "profile": "webserver",
                     "subject": json.dumps(
-                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "SHA-256",  # this is what we test
                     "expires": self.default_expires,
@@ -898,7 +892,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["ed25519"].pk,
                     "profile": "webserver",
                     "subject": json.dumps(
-                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "SHA-256",  # this is what we test
                     "expires": self.default_expires,
@@ -919,7 +913,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["dsa"].pk,
                     "profile": "webserver",
                     "subject": json.dumps(
-                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "SHA-512",  # this is what we test
                     "expires": self.default_expires,
@@ -940,7 +934,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": self.cas["root"].pk,
                     "profile": "webserver",
                     "subject": json.dumps(
-                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "",  # this is what we test
                     "expires": self.default_expires,
@@ -968,8 +962,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
-                            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
@@ -1002,7 +996,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject": json.dumps(
-                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
@@ -1042,7 +1036,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject": json.dumps(
-                        [{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
+                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
@@ -1219,8 +1213,8 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
         # Expected initial subject based on the CA_PROFILES setting set in the decorator
         expected_initial_subject = [
-            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
         ]
 
         # Test the initial state
@@ -1245,7 +1239,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         new_select.select_by_value(NameOID.COMMON_NAME.dotted_string)
         new_subject = [
             *expected_initial_subject,
-            {"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
         ]
         self.assertEqual(self.value, new_subject)
         self.assertEqual(self.displayed_value, new_subject)  # just to be sure
@@ -1263,20 +1257,20 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.initialize()
 
         initial_subject = [
-            {"key": "2.5.4.6", "value": "AT"},
-            {"key": "2.5.4.8", "value": "Vienna"},
-            {"key": "2.5.4.7", "value": "Vienna"},
-            {"key": "2.5.4.10", "value": "Django CA"},
-            {"key": "2.5.4.11", "value": "Django CA Testsuite"},
+            {"oid": "2.5.4.6", "value": "AT"},
+            {"oid": "2.5.4.8", "value": "Vienna"},
+            {"oid": "2.5.4.7", "value": "Vienna"},
+            {"oid": "2.5.4.10", "value": "Django CA"},
+            {"oid": "2.5.4.11", "value": "Django CA Testsuite"},
         ]
         csr_subject = [
-            {"key": "2.5.4.6", "value": "AT"},
-            {"key": "2.5.4.8", "value": "csr.Vienna"},
-            {"key": "2.5.4.7", "value": "csr.Vienna"},
-            {"key": "2.5.4.10", "value": "csr.Example"},
-            {"key": "2.5.4.11", "value": "csr.Example OU"},
-            {"key": "2.5.4.3", "value": "csr.all-extensions.example.com"},
-            {"key": "1.2.840.113549.1.9.1", "value": "csr.user@example.com"},
+            {"oid": "2.5.4.6", "value": "AT"},
+            {"oid": "2.5.4.8", "value": "csr.Vienna"},
+            {"oid": "2.5.4.7", "value": "csr.Vienna"},
+            {"oid": "2.5.4.10", "value": "csr.Example"},
+            {"oid": "2.5.4.11", "value": "csr.Example OU"},
+            {"oid": "2.5.4.3", "value": "csr.all-extensions.example.com"},
+            {"oid": "1.2.840.113549.1.9.1", "value": "csr.user@example.com"},
         ]
 
         # Elements of the CSR chapter
@@ -1421,14 +1415,14 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
         # Expected initial subject based on the CA_PROFILES setting set in the decorator
         webserver_subject = [
-            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
-            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "webserver"},
+            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+            {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "webserver"},
         ]
         client_subject = [
-            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
-            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "client"},
+            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "Vienna"},
+            {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "client"},
         ]
 
         # Elements of the profile chapter
@@ -1539,7 +1533,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form = response.forms["certificate_form"]
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
         form["subject"] = json.dumps(
-            [{"key": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
+            [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
         )
         now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         form["expires"] = (now + timedelta(days=10)).strftime("%Y-%m-%d")
@@ -1571,7 +1565,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
-        form["subject"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 
@@ -1617,7 +1611,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
-        form["subject"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         form["subject_alternative_name_0"] = json.dumps([{"key": "DNS", "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
@@ -1720,7 +1714,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # profile field
         form["profile"] = "everything"
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
-        form["subject"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
 
@@ -1832,7 +1826,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # profile field
         form["profile"] = "everything"
         form["csr"] = CERT_DATA["child-cert"]["csr"]["pem"]
-        form["subject"] = json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": cn}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit()
         response = response.follow()
         self.assertEqual(response.status_code, 200)

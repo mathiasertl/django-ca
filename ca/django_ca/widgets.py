@@ -104,6 +104,8 @@ class KeyValueWidget(widgets.TextInput):
 
     template_name = "django_ca/admin/key_value.html"
     key_choices: Tuple[Tuple[str, str], ...]
+    key_key = "key"
+    value_key = "value"
 
     def format_value(self, value: Any) -> str:
         if isinstance(value, str):
@@ -120,6 +122,10 @@ class KeyValueWidget(widgets.TextInput):
         # marked as hidden via the input_type class variable. (Not true for MultiWidgets because there are
         # other widgets that are *not* hidden.
         context["widget"]["type"] = "hidden"
+
+        # Add widget configuration
+        context["widget"]["attrs"]["data-key-key"] = self.key_key
+        context["widget"]["attrs"]["data-value-key"] = self.value_key
 
         if context["widget"]["attrs"].get("class"):
             context["widget"]["attrs"]["class"] += " key-value-data"
@@ -154,11 +160,11 @@ class NameWidget(KeyValueWidget):
 
     template_name = "django_ca/admin/subject.html"
     key_choices = tuple((oid.dotted_string, name) for oid, name in constants.NAME_OID_DISPLAY_NAMES.items())
+    key_key = "oid"
 
     def format_value(self, value: Any) -> str:
         if isinstance(value, x509.Name):
             value = NameModel.model_validate(value).model_dump(mode="json")
-            value = [{"key": e["oid"], "value": e["value"]} for e in value]
         return super().format_value(value)
 
     class Media:

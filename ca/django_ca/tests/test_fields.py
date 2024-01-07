@@ -53,6 +53,9 @@ SER_D1 = {"key": "DNS", "value": D1}
 SER_D2 = {"key": "DNS", "value": D2}
 SER_D3 = {"key": "DNS", "value": D3}
 
+# common attributes in hidden key-value input field
+HIDDEN_INPUT_ATTRS = 'type="hidden" data-key-key="key" data-value-key="value"'
+
 
 class FieldTestCaseMixin(TestCaseMixin):
     """Subclass of TestCaseMixin that adds a few form-field related fields."""
@@ -206,10 +209,12 @@ def test_crl_distribution_points_field_with_empty_input(
     # Test how the field is rendered
     name = "field-name"
     raw_html = field.widget.render(name, None)
-    assertInHTML(f'<input type="hidden" name="{name}_0" value="" class="full-name key-value-data">', raw_html)
+    assertInHTML(
+        f'<input name="{name}_0" value="" class="full-name key-value-data" {HIDDEN_INPUT_ATTRS}>', raw_html
+    )
     assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', raw_html)
     assertInHTML(
-        f'<input type="hidden" name="{name}_2" value="" class="crl-issuer key-value-data">', raw_html
+        f'<input name="{name}_2" value="" class="crl-issuer key-value-data" {HIDDEN_INPUT_ATTRS}>', raw_html
     )
     for choice, text in REVOCATION_REASONS:
         assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
@@ -227,7 +232,8 @@ def test_crl_distribution_points_field_rendering() -> None:
 
     full_name_value = html.escape(json.dumps([SER_D1]))
     assertInHTML(
-        f'<input type="hidden" name="{name}_0" value="{full_name_value}" class="full-name key-value-data">',
+        f'<input name="{name}_0" value="{full_name_value}" class="full-name key-value-data" '
+        f"{HIDDEN_INPUT_ATTRS}>",
         raw_html,
     )
     assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', raw_html)
@@ -235,7 +241,8 @@ def test_crl_distribution_points_field_rendering() -> None:
     assertInHTML('<option value="certificate_hold" selected>On Hold</option>', raw_html)
     crl_issuer_value = html.escape(json.dumps([SER_D2]))
     assertInHTML(
-        f'<input type="hidden" name="{name}_2" value="{crl_issuer_value}" class="crl-issuer key-value-data">',
+        f'<input name="{name}_2" value="{crl_issuer_value}" class="crl-issuer key-value-data" '
+        f"{HIDDEN_INPUT_ATTRS}>",
         raw_html,
     )
 
@@ -250,14 +257,14 @@ def test_crl_distribution_points_field_rendering_with_rdn() -> None:
     name = "field-name"
     raw_html = field.widget.render(name, ext)
     assertInHTML(
-        f'<input type="hidden" name="{name}_0" value="[]" class="full-name key-value-data">', raw_html
+        f'<input name="{name}_0" value="[]" class="full-name key-value-data" {HIDDEN_INPUT_ATTRS}>', raw_html
     )
     assertInHTML(
         f'<input type="text" name="{name}_1" value="CN={D1}" class="django-ca-widget relative-name">',
         raw_html,
     )
     assertInHTML(
-        f'<input type="hidden" name="{name}_2" value="[]" class="crl-issuer key-value-data">', raw_html
+        f'<input name="{name}_2" value="[]" class="crl-issuer key-value-data" {HIDDEN_INPUT_ATTRS}>', raw_html
     )
     for choice, text in REVOCATION_REASONS:
         assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
@@ -274,12 +281,13 @@ def test_crl_distribution_points_field_rendering_with_multiple_dps() -> None:
     raw_html = field.widget.render(name, ext)
     full_name_value = html.escape(json.dumps([SER_D1]))
     assertInHTML(
-        f'<input type="hidden" name="{name}_0" value="{full_name_value}" class="full-name key-value-data">',
+        f'<input name="{name}_0" value="{full_name_value}" class="full-name key-value-data" '
+        f"{HIDDEN_INPUT_ATTRS}>",
         raw_html,
     )
     assertInHTML(f'<input type="text" name="{name}_1" class="django-ca-widget relative-name">', raw_html)
     assertInHTML(
-        f'<input type="hidden" name="{name}_2" value="[]" class="crl-issuer key-value-data">', raw_html
+        f'<input name="{name}_2" value="[]" class="crl-issuer key-value-data" {HIDDEN_INPUT_ATTRS}>', raw_html
     )
     for choice, text in REVOCATION_REASONS:
         assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
@@ -307,11 +315,7 @@ def test_authority_information_access_field(
 ) -> None:
     """Test AuthorityInformationAccessField field."""
     field = fields.AuthorityInformationAccessField(required=required)
-
-    # Prepare expected value
     ext = authority_information_access(ca_issuers=ca_issuers, ocsp=ocsp, critical=critical)
-
-    print((json.dumps(ser_ca_issuers), json.dumps(ser_ocsp), critical))
     assert field.clean((json.dumps(ser_ca_issuers), json.dumps(ser_ocsp), critical)) == ext
 
 

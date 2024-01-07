@@ -1,7 +1,7 @@
 /**
  * Update the hidden input field with the values from the key/value form
  */
-function updateJsonValueField(field) {
+function updateJsonValueField(field, key_key, value_key) {
     var list = field.querySelector('.key-value-list');
     var inputField = field.querySelector("input.key-value-data");
 
@@ -13,10 +13,10 @@ function updateJsonValueField(field) {
 
         // Only add value if there is a text value entered
         if (row_key && row_value) {
-            data.push({
-                key: row_key,
-                value: row_value
-            });
+            row_obj = {};
+            row_obj[key_key] = row_key;
+            row_obj[value_key] = row_value;
+            data.push(row_obj);
         }
     });
 
@@ -42,7 +42,7 @@ function addRowUpdateEventListeners(row, listener) {
 /**
  * Append a new row to the key/value form of the given field.
  */
-function appendKeyValueRow(field, key, value) {
+function appendKeyValueRow(field, key, value, key_key, value_key) {
     var template = field.querySelector('.key-value-row');
     var list = field.querySelector('.key-value-list');
     var row = template.cloneNode(true);
@@ -55,7 +55,7 @@ function appendKeyValueRow(field, key, value) {
         row.remove();
     });
     addRowUpdateEventListeners(row, (event) => {
-        updateJsonValueField(field);
+        updateJsonValueField(field, key_key, value_key);
     });
 
     // Finally, append the row
@@ -66,7 +66,7 @@ function appendKeyValueRow(field, key, value) {
 /**
  * Load the JSON data from the hidden input field into the key/value form of the passed field.
  */
-function loadKeyValueList(field, inputValue) {
+function loadKeyValueList(field, inputValue, key_key, value_key) {
     // Do nothing if we get an empty JSON list
     if (! inputValue) {
         return;
@@ -74,8 +74,8 @@ function loadKeyValueList(field, inputValue) {
     field.querySelector('.key-value-list').innerHTML = "";
 
     // Add a row for each name attribute in the hidden input field
-    inputValue.forEach((name_attr) => {
-        appendKeyValueRow(field, name_attr.key, name_attr.value);
+    inputValue.forEach((elem) => {
+        appendKeyValueRow(field, elem[key_key], elem[value_key], key_key, value_key);
     });
 }
 
@@ -84,9 +84,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('div.key-value-field').forEach((field) => {
         // populate with any existing value on load
         var inputField = field.querySelector("input.key-value-data");
+
+        let key_key = inputField.dataset.keyKey;
+        let value_key = inputField.dataset.valueKey;
+
         if (inputField && inputField.value) {
             let inputValue = JSON.parse(inputField.value);
-            loadKeyValueList(field, inputValue);
+            loadKeyValueList(field, inputValue, key_key, value_key);
         }
 
         // Key/value form
@@ -133,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // update data when re-arranging order
-            updateJsonValueField(field);
+            updateJsonValueField(field, key_key, value_key);
 
             // Fire custom event that the user re-ordered rows
             field.dispatchEvent(new CustomEvent("userReordersKeyValueRow", {detail: field}));
@@ -158,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const addRowButtons = field.querySelectorAll('button.add-row-btn');
         addRowButtons.forEach((handle) => {
             handle.addEventListener('click', (event) => {
-                let row = appendKeyValueRow(field);
+                let row = appendKeyValueRow(field, null, null, key_key, value_key);
 
                 // fire event that the user added a row
                 field.dispatchEvent(new CustomEvent("userAddsKeyValueRow", {detail: row}));

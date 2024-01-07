@@ -421,7 +421,6 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             ExtensionOID.KEY_USAGE,
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
         ]:
-            print(obj.x509_extensions.get(oid))
             self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
 
         # Some properties are obviously *not* equal
@@ -443,7 +442,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         return {
             "ca": self.cert.ca.pk,
             "profile": "webserver",
-            "subject": json.dumps([{"key": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
+            "subject": json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.cert.cn}]),
             "subject_alternative_name_0": json.dumps(serialized_san),
             "subject_alternative_name_1": False,
             "algorithm": "SHA-256",

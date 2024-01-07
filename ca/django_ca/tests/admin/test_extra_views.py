@@ -111,7 +111,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             csr_subject = cert_data["csr"]["parsed"].subject
             self.assertEqual(
                 response.json(),
-                {"subject": [{"key": s.oid.dotted_string, "value": s.value} for s in csr_subject]},
+                {"subject": [{"oid": s.oid.dotted_string, "value": s.value} for s in csr_subject]},
             )
 
     def test_fields(self) -> None:
@@ -121,6 +121,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 oid=oid, value="AT" if name in ("countryName", "jurisdictionCountryName") else f"test-{name}"
             )
             for oid, name in constants.NAME_OID_NAMES.items()
+            if oid != NameOID.X500_UNIQUE_IDENTIFIER
         ]
         csr = self.create_csr(x509.Name(sorted(subject, key=lambda attr: attr.oid.dotted_string)))[1]
         csr_pem = csr.public_bytes(Encoding.PEM).decode("utf-8")
@@ -130,42 +131,41 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
         self.assertEqual(response.status_code, 200, response.json())
         expected = [
-            {"key": NameOID.USER_ID.dotted_string, "value": "test-uid"},
-            {"key": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-domainComponent"},
-            {"key": NameOID.OGRN.dotted_string, "value": "test-ogrn"},
-            {"key": NameOID.SNILS.dotted_string, "value": "test-snils"},
-            {"key": NameOID.INN.dotted_string, "value": "test-inn"},
-            {"key": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
-            {"key": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
+            {"oid": NameOID.USER_ID.dotted_string, "value": "test-uid"},
+            {"oid": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-domainComponent"},
+            {"oid": NameOID.OGRN.dotted_string, "value": "test-ogrn"},
+            {"oid": NameOID.SNILS.dotted_string, "value": "test-snils"},
+            {"oid": NameOID.INN.dotted_string, "value": "test-inn"},
+            {"oid": NameOID.EMAIL_ADDRESS.dotted_string, "value": "test-emailAddress"},
+            {"oid": NameOID.UNSTRUCTURED_NAME.dotted_string, "value": "test-unstructuredName"},
             {
-                "key": NameOID.JURISDICTION_LOCALITY_NAME.dotted_string,
+                "oid": NameOID.JURISDICTION_LOCALITY_NAME.dotted_string,
                 "value": "test-jurisdictionLocalityName",
             },
             {
-                "key": NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME.dotted_string,
+                "oid": NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME.dotted_string,
                 "value": "test-jurisdictionStateOrProvinceName",
             },
-            {"key": NameOID.JURISDICTION_COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.ORGANIZATION_NAME.dotted_string, "value": "test-organizationName"},
-            {"key": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "test-organizationalUnitName"},
-            {"key": NameOID.TITLE.dotted_string, "value": "test-title"},
-            {"key": NameOID.BUSINESS_CATEGORY.dotted_string, "value": "test-businessCategory"},
-            {"key": NameOID.POSTAL_ADDRESS.dotted_string, "value": "test-postalAddress"},
-            {"key": NameOID.POSTAL_CODE.dotted_string, "value": "test-postalCode"},
-            {"key": NameOID.COMMON_NAME.dotted_string, "value": "test-commonName"},
-            {"key": NameOID.SURNAME.dotted_string, "value": "test-surname"},
-            {"key": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
-            {"key": NameOID.INITIALS.dotted_string, "value": "test-initials"},
-            {"key": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
-            {"key": NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, "value": "test-x500UniqueIdentifier"},
-            {"key": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
-            {"key": NameOID.SERIAL_NUMBER.dotted_string, "value": "test-serialNumber"},
+            {"oid": NameOID.JURISDICTION_COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"oid": NameOID.ORGANIZATION_NAME.dotted_string, "value": "test-organizationName"},
+            {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "test-organizationalUnitName"},
+            {"oid": NameOID.TITLE.dotted_string, "value": "test-title"},
+            {"oid": NameOID.BUSINESS_CATEGORY.dotted_string, "value": "test-businessCategory"},
+            {"oid": NameOID.POSTAL_ADDRESS.dotted_string, "value": "test-postalAddress"},
+            {"oid": NameOID.POSTAL_CODE.dotted_string, "value": "test-postalCode"},
+            {"oid": NameOID.COMMON_NAME.dotted_string, "value": "test-commonName"},
+            {"oid": NameOID.SURNAME.dotted_string, "value": "test-surname"},
+            {"oid": NameOID.GIVEN_NAME.dotted_string, "value": "test-givenName"},
+            {"oid": NameOID.INITIALS.dotted_string, "value": "test-initials"},
+            {"oid": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
+            {"oid": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
+            {"oid": NameOID.SERIAL_NUMBER.dotted_string, "value": "test-serialNumber"},
             # tmp
-            {"key": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-            {"key": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
-            {"key": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
-            {"key": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-stateOrProvinceName"},
-            {"key": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
+            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
+            {"oid": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
+            {"oid": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
+            {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-stateOrProvinceName"},
+            {"oid": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
         ]
 
         self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})

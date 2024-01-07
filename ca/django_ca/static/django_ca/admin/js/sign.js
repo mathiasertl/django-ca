@@ -37,8 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
         subject_input_chapter.querySelector(".copy-button").addEventListener("click", (event) => {
             var data = JSON.parse(subject_input_chapter.dataset.value);
 
-            loadKeyValueList(subject_field, data);  // update normal input fields
-            updateJsonValueField(subject_field);  // update hidden input field
+            loadKeyValueList(subject_field, data, "oid", "value");  // update normal input fields
+            updateJsonValueField(subject_field, "oid", "value");  // update hidden input field
             addModifiedEventListenersToAllRows();
         });
 
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Append a row for each key/value pair based on the template
             data.forEach((obj) => {
                 var li_node = li_template.content.cloneNode(true);
-                li_node.querySelector(".oid").textContent = oid_names[obj.key];
+                li_node.querySelector(".oid").textContent = oid_names[obj.oid];
                 li_node.querySelector(".value").textContent = obj.value;
 
                 ul.insertBefore(li_node, null);
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var profile_subject = profile_data[value].subject;
 
         if (profile_subject) {
-            profile_subject = profile_subject.map(({oid: key, value}) => ({value, key}));
+            profile_subject = profile_subject;
         } else {
             profile_subject = []
         }
@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
             subject_input.value = "[]";
 
             if (profile_subject.length > 0) {
-                loadKeyValueList(subject_field, profile_subject);  // update normal input fields
-                updateJsonValueField(subject_field);  // update hidden input field
+                loadKeyValueList(subject_field, profile_subject, "oid", "value");  // update normal input fields
+                updateJsonValueField(subject_field, "oid", "value");  // update hidden input field
                 addModifiedEventListenersToAllRows();
             } else {
                 key_value_list.innerHTML = "";
@@ -181,8 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load the initial data into the profile subject input chapter
     if (profile_data[profile_select.value].subject) {
         loadDataToSubjectInputChapter(
-            profile_subject_input_chapter,
-            profile_data[profile_select.value].subject.map(({oid: key, value}) => ({value, key}))
+            profile_subject_input_chapter, profile_data[profile_select.value].subject
         );
     } else {
         loadDataToSubjectInputChapter(profile_subject_input_chapter, []);

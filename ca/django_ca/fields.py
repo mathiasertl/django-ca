@@ -136,11 +136,7 @@ class KeyValueField(forms.CharField):
         return json.loads(value)  # type: ignore[no-any-return]
 
     def pydantic_validation_error(self, ex: PydanticValidationError) -> typing.NoReturn:
-        """Transform Pydantic ValidationError exceptions into Django ValidationError.
-
-        This method assumes that the error occurs in `value`, as the keys are a select field and should work
-        properly.
-        """
+        """Transform Pydantic ValidationError exceptions into Django ValidationError."""
         raise ValidationError([error["msg"] for error in ex.errors()]) from ex
 
 
@@ -151,9 +147,8 @@ class NameField(KeyValueField):
 
     def to_python(self, value: Optional[str]) -> x509.Name:  # type: ignore[override]
         parsed_value = super().to_python(value)
-        converted_value = [{"oid": v["key"], "value": v["value"]} for v in parsed_value]
         try:
-            model = NameModel.model_validate(converted_value)
+            model = NameModel.model_validate(parsed_value)
         except PydanticValidationError as ex:
             self.pydantic_validation_error(ex)
         return model.cryptography

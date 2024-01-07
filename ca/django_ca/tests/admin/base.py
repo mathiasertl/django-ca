@@ -98,7 +98,7 @@ class AddCertificateSeleniumTestCase(
 
         return [
             {
-                "key": Select(s).first_selected_option.get_attribute("value"),  # type: ignore[dict-item]
+                "oid": Select(s).first_selected_option.get_attribute("value"),  # type: ignore[dict-item]
                 "value": i.get_attribute("value"),  # type: ignore[dict-item]
             }
             for s, i in zip(selects, inputs)

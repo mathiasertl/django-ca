@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
         select.addEventListener('change', async (event) => {
             // Get selected profile data
             var profile = profile_data[select.value];
-            console.log('profile', select.value, profile);
 
             // Update description
             var description = profile.description;

@@ -813,7 +813,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         except Exception:  # pylint: disable=broad-except; docs don't list possible exceptions
             return JsonResponse({"message": "Cannot parse CSR."}, status=HTTPStatus.BAD_REQUEST)
 
-        subject = [{"key": s.oid.dotted_string, "value": s.value} for s in csr.subject]
+        subject = NameModel.model_validate(csr.subject).model_dump(mode="json")
         return JsonResponse({"subject": subject})
 
     @property
