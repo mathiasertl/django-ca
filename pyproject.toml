@@ -129,11 +129,9 @@ mysql = [
     # https://github.com/PyMySQL/mysqlclient/issues/620
     "mysqlclient<2.2"
 ]
-postgres = ["psycopg[c,pool]"]
+postgres = ["psycopg[c,pool]>=3"]
 # remove psycopg3 in django-ca==2.0
-psycopg3 = [
-    "psycopg[c,pool]",
-]
+psycopg3 = ["psycopg[c,pool]>=3"]
 yaml = ["PyYAML>=6.0.0"]
 
 [project.urls]
