@@ -58,32 +58,13 @@ using this profile. A simple profile might look like this:
 
 .. tab:: Python
 
-   .. code-block:: python
-
-      CA_PROFILES = {
-          'example': {  # actually a duplicate of the predefined "client" profile
-              'description': _('An example profile.'),
-              'extensions': {
-                  'key_usage': {'value': ['digitalSignature']},
-                  'extended_key_usage': {'value': ['clientAuth']},
-              },
-          },
-      }
+   .. literalinclude:: /include/config/profiles-example.py
+      :language: python
 
 .. tab:: YAML
 
-   .. code-block:: YAML
-
-      CA_PROFILES:
-        example:
-          description: An example profile
-          extensions:
-            key_usage:
-              value:
-                - digitalSignature
-            extended_key_usage:
-              value:
-                - clientAuth
+   .. literalinclude:: /include/config/profiles-example.yml
+      :language: yaml
 
 After defining a profile, it can be immediately used with the Python API, the Admin web interface (WSGI
 servers typically need to reload the code to see the new profile) or the command line:

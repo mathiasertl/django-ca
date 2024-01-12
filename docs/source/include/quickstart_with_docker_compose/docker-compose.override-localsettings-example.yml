@@ -1,0 +1,9 @@
+services:
+  backend:
+    volumes:
+      - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
+  frontend:
+    volumes:
+      - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
+  webserver:
+  # same as before...

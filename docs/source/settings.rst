@@ -205,22 +205,13 @@ CA_DEFAULT_NAME_ORDER
 
    .. tab:: Python
 
-      .. code-block:: python
-
-         CA_DEFAULT_NAME_ORDER = (
-            "countryName",
-            NameOID.ORGANIZATION_NAME,
-            "2.5.4.3",  # OID for commonName
-         )
+      .. literalinclude:: /include/config/setting_ca_default_name_order.py
+         :language: python
 
    .. tab:: YAML
 
-      .. code-block:: yaml
-
-         CA_DEFAULT_NAME_ORDER:
-           - countryName
-           - organizationName
-           - 2.5.4.3  # OID for commonName
+      .. literalinclude:: /include/config/setting_ca_default_name_order.yaml
+         :language: yaml
 
    The default is based on experience with existing certificates, as there is no known standard for an order.
 
@@ -550,12 +541,9 @@ environment variable to configure the database, all other options use default va
 But any other setup can also make use of this feature. For example, with plain Docker, you could just
 configure PostgreSQL:
 
-.. code-block:: yaml
+.. literalinclude:: /include/config/setting_databases_example.yaml
+   :language: yaml
    :caption: localsettings.yaml
-
-   DATABASES:
-      default:
-         ENGINE: django.db.backends.postgresql
 
 ... and then start your docker containers with (not a full example here):
 
