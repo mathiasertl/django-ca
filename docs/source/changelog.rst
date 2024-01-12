@@ -50,6 +50,8 @@ ChangeLog
   but are also used internally for various places where serialization of objects is required.
 * Support for configuring absolute paths for OCSP responder certificates in manual OCSP views was removed.
   This was a left over, it was deprecated and issued a warning since 2019.
+* Fixed bash shortcut if installing from source to allow spaces (fixes `issue 123
+  <https://github.com/mathiasertl/django-ca/issues/123>`_).
 
 Key backend support
 ===================
