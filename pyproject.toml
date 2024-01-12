@@ -411,13 +411,17 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = [
+extend-select = [
     "B",  # flake8-bugbear
-    "D", "E", "F", "I", "G", "DJ",
+    "D",  # pydocstyle
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "I",  # isort
+    "G",  # flake8-logging-format
+    "DJ",  # flake8-django
     "PL",  # pylint
     "RUF",  # ruff specific checks
 ]
-extend-select = ["RUF100"]  # detect unused suppression comments
 extend-exclude = ["migrations", "stubs"]
 line-length = 110
 ignore = [
