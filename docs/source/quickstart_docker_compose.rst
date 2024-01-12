@@ -153,32 +153,15 @@ setup.
 
 To add a configuration file, first add a volume mapping in your ``docker-compose.override.yml``:
 
-.. code-block:: yaml
+.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-localsettings-example.yml
+   :language: yaml
    :caption: docker-compose.override.yml
-
-   services:
-       backend:
-           volumes:
-               - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
-       frontend:
-           volumes:
-               - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
-       webserver:
-           # same as before...
 
 ... and then simply add a file called ``localsettings.yaml`` in your current directory, for example:
 
-.. code-block:: yaml
+.. literalinclude:: /include/quickstart_with_docker_compose/localsettings.example.yml
+   :language: yaml
    :caption: localsettings.yaml (example)
-
-   # (Example) Configure a custom SMTP server
-   #
-   # See also:
-   #		https://docs.djangoproject.com/en/4.0/topics/email/
-   SMTP_HOST: smtp.example.coma
-
-   # Set a custom default key size for new certificate authorities
-   CA_DEFAULT_KEY_SIZE: 2048
 
 Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
 for more YAML configuration examples.
@@ -190,18 +173,9 @@ If you want to use environment variables for configuration, we recommend you fir
 ``docker-compose.override.yml``, for example to `configure a different SMTP server
 <https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
 
-.. code-block:: yaml
+.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-env-example.yml
+   :language: yaml
    :caption: docker-compose.override.yml
-
-   services:
-       backend:
-           environment:
-               DJANGO_CA_EMAIL_HOST:
-       frontend:
-           environment:
-               DJANGO_CA_EMAIL_HOST:
-       webserver:
-           # same as before...
 
 and in your ``.env`` file, set the variable:
 

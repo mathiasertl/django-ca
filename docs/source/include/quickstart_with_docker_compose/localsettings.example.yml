@@ -1,0 +1,8 @@
+# (Example) Configure a custom SMTP server
+#
+# See also:
+#		https://docs.djangoproject.com/en/4.0/topics/email/
+SMTP_HOST: smtp.example.coma
+
+# Set a custom default key size for new certificate authorities
+CA_DEFAULT_KEY_SIZE: 2048

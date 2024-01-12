@@ -1,0 +1,4 @@
+CA_DEFAULT_NAME_ORDER:
+  - countryName
+  - organizationName
+  - 2.5.4.3  # OID for commonName
