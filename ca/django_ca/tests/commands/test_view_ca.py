@@ -23,7 +23,15 @@ from django.conf import settings
 from django.test import TestCase
 
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    crl_distribution_points,
+    distribution_point,
+    issuer_alternative_name,
+    override_tmpcadir,
+    uri,
+)
+from django_ca.utils import format_general_name
 
 expected = {
     "ec": """* Name: {name}
@@ -61,7 +69,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -103,7 +110,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -145,7 +151,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -191,7 +196,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -234,7 +238,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -267,7 +270,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -299,7 +301,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
 {sha256}
@@ -345,7 +346,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -385,7 +385,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -428,13 +427,14 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): {crl_url}
 * Issuer URL: {issuer_url}
 * OCSP URL: {ocsp_url}
-* Issuer Alternative Name: None
 * Certificate Policies:
   * Policy Identifier: 1.2.3
     Policy Qualifiers:
     * https://cps.example.com
     * User Notice:
       * Explicit Text: explicit-text
+* Issuer Alternative Name:
+  * {sign_issuer_alternative_name}
 
 Digest:
   SHA-256: {sha256}
@@ -479,7 +479,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -526,7 +525,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -573,7 +571,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -616,7 +613,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -663,7 +659,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -720,7 +715,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -771,7 +765,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -814,7 +807,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -869,7 +861,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -924,7 +915,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -965,7 +955,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1017,7 +1006,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1073,7 +1061,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1120,7 +1107,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1173,7 +1159,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1225,7 +1210,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1275,7 +1259,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1328,7 +1311,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1381,7 +1363,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1436,7 +1417,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1490,7 +1470,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1537,7 +1516,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1589,7 +1567,6 @@ Certificate extensions for signed certificates:
 * Certificate Revocation List (CRL): None
 * Issuer URL: None
 * OCSP URL: None
-* Issuer Alternative Name: None
 
 Digest:
   SHA-256: {sha256}
@@ -1696,7 +1673,11 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_sign_options(self) -> None:
         """Test options for signing certificates."""
+        ian_uri = uri("http://ian.example.com")
         ca = self.cas["root"]
+        self.ca.sign_authority_information_access = authority_information_access(
+            ca_issuers=[uri("http://issuer.ca.example.com")], ocsp=[uri("http://ocsp.ca.example.com")]
+        )
         ca.sign_certificate_policies = self.certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=x509.ObjectIdentifier("1.2.3"),
@@ -1706,11 +1687,16 @@ class ViewCATestCase(TestCaseMixin, TestCase):
                 ],
             )
         )
+        self.ca.sign_crl_distribution_points = crl_distribution_points(
+            distribution_point([uri("http://crl.ca.example.com")])
+        )
+        ca.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
         ca.save()
 
         stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
+        data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
         self.assertMultiLineEqual(stdout, expected["root-sign-options"].format(**data))
 
     def test_wrap_digest(self) -> None:

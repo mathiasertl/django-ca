@@ -19,7 +19,7 @@ from django.test import TestCase
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import issuer_alternative_name, override_tmpcadir, uri
 
 
 class EditCATestCase(TestCaseMixin, TestCase):
@@ -78,7 +78,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
 
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         self.assertEqual(ca.issuer_url, self.issuer)
-        self.assertEqual(ca.issuer_alt_name, f"URI:{self.ian}")
+        self.assertEqual(ca.sign_issuer_alternative_name, issuer_alternative_name(uri(self.ian)))
         self.assertEqual(ca.ocsp_url, self.ocsp_url)
         self.assertEqual(ca.crl_url, "\n".join(self.crl))
 
@@ -235,7 +235,8 @@ class EditCATestCase(TestCaseMixin, TestCase):
 
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
         self.assertEqual(ca.issuer_url, self.ca.issuer_url)
-        self.assertEqual(ca.issuer_alt_name, self.ca.issuer_alt_name)
+        self.assertEqual(ca.sign_issuer_alternative_name, self.ca.sign_issuer_alternative_name)
+        self.assertEqual(ca.sign_certificate_policies, self.ca.sign_certificate_policies)
         self.assertEqual(ca.ocsp_url, self.ca.ocsp_url)
         self.assertEqual(ca.crl_url, self.ca.crl_url)
         self.assertTrue(ca.enabled)

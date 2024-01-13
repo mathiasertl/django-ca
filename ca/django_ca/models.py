@@ -104,7 +104,6 @@ from django_ca.utils import (
     parse_expires,
     parse_general_name,
     read_file,
-    split_str,
     validate_private_key_parameters,
     validate_public_key_parameters,
 )
@@ -753,14 +752,8 @@ class CertificateAuthority(X509CertMixin):
 
         if self.sign_certificate_policies is not None:
             extensions[ExtensionOID.CERTIFICATE_POLICIES] = self.sign_certificate_policies
-
-        if self.issuer_alt_name:
-            names = [parse_general_name(name) for name in split_str(self.issuer_alt_name, ",")]
-            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = x509.Extension(
-                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-                value=x509.IssuerAlternativeName(names),
-            )
+        if self.sign_issuer_alternative_name:
+            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = self.sign_issuer_alternative_name
 
         access_descriptions = []
         # TODO: use get_authority_information_access_extension() but it does not yet split lines

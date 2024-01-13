@@ -18,7 +18,7 @@ from http import HTTPStatus
 from typing import Any, Dict, Optional, Tuple, Type
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.db.models import Model
 from django.test import Client
@@ -32,7 +32,15 @@ from django_ca.models import CertificateAuthority
 from django_ca.tests.api.conftest import APIPermissionTestBase
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
-from django_ca.tests.base.utils import certificate_policies, iso_format
+from django_ca.tests.base.utils import (
+    certificate_policies,
+    crl_distribution_points,
+    distribution_point,
+    dns,
+    iso_format,
+    issuer_alternative_name,
+    uri,
+)
 from django_ca.typehints import JSON
 
 path = reverse_lazy(
@@ -61,13 +69,28 @@ def payload() -> Dict[str, Any]:
         "acme_requires_contact": False,
         "caa_identity": "caa-id",
         "crl_url": "http://update.crl.example.com",
-        "issuer_alt_name": "http://update.ian.example.com",
         "issuer_url": "http://update.issuer.example.com",
         "name": "root-update",
         "ocsp_responder_key_validity": 10,
         "ocsp_response_validity": 60000,
         "ocsp_url": "http://update.ocsp.example.com",
+        "sign_authority_information_access": {
+            "value": [
+                {
+                    "access_method": "ocsp",
+                    "access_location": {"type": "URI", "value": "http://ocsp.example.com"},
+                },
+                {
+                    "access_method": "ca_issuers",
+                    "access_location": {"type": "URI", "value": "http://ca-issuers.example.com"},
+                },
+            ]
+        },
         "sign_certificate_policies": {"value": [{"policy_identifier": "1.1.1"}]},
+        "sign_crl_distribution_points": {
+            "value": [{"full_name": [{"type": "URI", "value": "http://crl.example.com"}]}]
+        },
+        "sign_issuer_alternative_name": {"value": [{"type": "DNS", "value": "example.com"}]},
         "terms_of_service": "http://tos.example.com",
         "website": "http://website.example.com",
     }
@@ -87,10 +110,41 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
             "pem": CERT_DATA["root"]["pub"]["pem"],
             "revoked": False,
             "serial": CERT_DATA["root"]["serial"],
+            "sign_authority_information_access": {
+                "critical": False,
+                "type": "authority_information_access",
+                "value": [
+                    {
+                        "access_method": AuthorityInformationAccessOID.OCSP.dotted_string,
+                        "access_location": {"type": "URI", "value": "http://ocsp.example.com"},
+                    },
+                    {
+                        "access_method": AuthorityInformationAccessOID.CA_ISSUERS.dotted_string,
+                        "access_location": {"type": "URI", "value": "http://ca-issuers.example.com"},
+                    },
+                ],
+            },
             "sign_certificate_policies": {
                 "critical": constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES],
                 "type": "certificate_policies",
                 "value": [{"policy_identifier": "1.1.1", "policy_qualifiers": None}],
+            },
+            "sign_crl_distribution_points": {
+                "critical": False,
+                "type": "crl_distribution_points",
+                "value": [
+                    {
+                        "crl_issuer": None,
+                        "full_name": [{"type": "URI", "value": "http://crl.example.com"}],
+                        "reasons": None,
+                        "relative_name": None,
+                    }
+                ],
+            },
+            "sign_issuer_alternative_name": {
+                "critical": False,
+                "type": "issuer_alternative_name",
+                "value": [{"type": "DNS", "value": "example.com"}],
             },
             "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
             "updated": iso_format(TIMESTAMPS["everything_valid"]),
@@ -115,12 +169,33 @@ def test_update(
     root.refresh_from_db()
     for field, expected in payload.items():
         actual = getattr(root, field)
-        if field == "sign_certificate_policies":
+        if field == "sign_authority_information_access":
+            assert actual == x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                value=x509.AuthorityInformationAccess(
+                    [
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.OCSP,
+                            access_location=uri("http://ocsp.example.com"),
+                        ),
+                        x509.AccessDescription(
+                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                            access_location=uri("http://ca-issuers.example.com"),
+                        ),
+                    ]
+                ),
+            )
+        elif field == "sign_certificate_policies":
             assert actual, certificate_policies(
                 x509.PolicyInformation(
                     policy_identifier=x509.ObjectIdentifier("1.1.1"), policy_qualifiers=None
                 )
             )
+        elif field == "sign_crl_distribution_points":
+            assert actual == crl_distribution_points(distribution_point([uri("http://crl.example.com")]))
+        elif field == "sign_issuer_alternative_name":
+            assert actual, issuer_alternative_name(dns("example.com"))
         elif expected is True:
             assert actual is True
         elif expected is False:

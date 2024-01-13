@@ -30,7 +30,7 @@ from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import mock_cadir, override_tmpcadir
+from django_ca.tests.base.utils import issuer_alternative_name, mock_cadir, override_tmpcadir, uri
 
 
 class ImportCATest(TestCaseMixin, TestCase):
@@ -208,7 +208,7 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         self.assertEqual(ca.issuer_url, ca_issuer)
         self.assertEqual(ca.ocsp_url, ocsp_responder)
-        self.assertEqual(ca.issuer_alt_name, f"URI:{ian}")
+        self.assertEqual(ca.sign_issuer_alternative_name, issuer_alternative_name(uri(ian)))
         self.assertEqual(ca.crl_url, f"{crl1}\n{crl2}")
         # Certificate Policies extension
         self.assertEqual(

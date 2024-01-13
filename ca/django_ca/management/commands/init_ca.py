@@ -244,7 +244,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         )
         self.add_tls_feature_group(parser)
 
-        self.add_ca_args(parser)
+        self.add_certificate_authority_sign_extension_groups(parser)
 
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
         self,
@@ -261,7 +261,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         sign_crl_full_name: List[str],
         sign_ocsp_responder: str,
         sign_ca_issuer: str,
-        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
         # Authority Information Access extension
         authority_information_access: x509.AuthorityInformationAccess,
         # Basic Constraints extension
@@ -295,9 +294,11 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         caa: str,
         website: str,
         tos: str,
-        # Certificate Policies extension
+        # Certificate Policies extension  for certificates
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # Issuer Alternative Name extension  for certificates
+        sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
@@ -446,6 +447,11 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 critical=sign_certificate_policies_critical,
                 value=sign_certificate_policies,
             )
+        sign_issuer_alternative_name_ext = None
+        if sign_issuer_alternative_name is not None:
+            sign_issuer_alternative_name_ext = x509.Extension(
+                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False, value=sign_issuer_alternative_name
+            )
 
         kwargs = {}
         for opt in ["path", "default_hostname"]:
@@ -476,7 +482,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 parent=parent,
                 path_length=path_length,
                 issuer_url=sign_ca_issuer,
-                issuer_alt_name=sign_issuer_alternative_name,
                 crl_url=sign_crl_full_name,
                 ocsp_url=sign_ocsp_responder,
                 password=password,
@@ -489,6 +494,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 terms_of_service=tos,
                 extensions=extensions.values(),
                 sign_certificate_policies=sign_certificate_policies_ext,
+                sign_issuer_alternative_name=sign_issuer_alternative_name_ext,
                 ocsp_response_validity=ocsp_response_validity,
                 ocsp_responder_key_validity=ocsp_responder_key_validity,
                 **kwargs,

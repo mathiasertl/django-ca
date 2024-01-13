@@ -209,7 +209,9 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.max_path_length, 0)
         self.assertFalse(ca.allows_intermediate_ca)
         self.assertEqual(ca.issuer_url, "http://issuer.ca.example.com")
-        self.assertEqual(ca.issuer_alt_name, "URI:http://ian.ca.example.com")
+        self.assertEqual(
+            ca.sign_issuer_alternative_name, issuer_alternative_name(uri("http://ian.ca.example.com"))
+        )
         self.assertEqual(ca.crl_url, "http://crl.example.com")
         self.assertEqual(ca.ocsp_url, "http://ocsp.example.com")
         self.assertIssuer(ca, ca)
@@ -548,7 +550,10 @@ class InitCATest(TestCaseMixin, TestCase):
             "--subject-format=rfc4514",
             f"CN={name}",
         )
-        self.assertEqual(ca.issuer_alt_name, "DNS:example.com,URI:https://example.com")
+        self.assertEqual(
+            ca.sign_issuer_alternative_name,
+            issuer_alternative_name(dns("example.com"), uri("https://example.com")),
+        )
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_acme_arguments(self) -> None:

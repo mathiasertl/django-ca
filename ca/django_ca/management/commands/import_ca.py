@@ -34,7 +34,7 @@ from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
-from django_ca.utils import ca_storage, format_general_name
+from django_ca.utils import ca_storage
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -66,7 +66,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         self.add_acme_group(parser)
         self.add_ocsp_group(parser)
         self.add_rest_api_group(parser)
-        self.add_ca_args(parser)
+        self.add_certificate_authority_sign_extension_groups(parser)
 
         parser.add_argument("name", help="Human-readable name of the CA")
         parser.add_argument(
@@ -86,11 +86,12 @@ Note that the private key will be copied to the directory configured by the CA_D
         import_password: Optional[bytes],
         sign_ca_issuer: str,
         sign_crl_full_name: List[str],
-        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
         sign_ocsp_responder: str,
         # Certificate Policies extension
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # Issuer Alternative Name extension  for certificates
+        sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
@@ -114,10 +115,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
-        if sign_issuer_alternative_name is None:
-            issuer_alternative_name = ""
-        else:
-            issuer_alternative_name = format_general_name(sign_issuer_alternative_name.value[0])
+        # Add extensions for signing new certificates
         sign_certificate_policies_ext = None
         if sign_certificate_policies is not None:
             sign_certificate_policies_ext = x509.Extension(
@@ -125,15 +123,20 @@ Note that the private key will be copied to the directory configured by the CA_D
                 critical=sign_certificate_policies_critical,
                 value=sign_certificate_policies,
             )
+        sign_issuer_alternative_name_ext = None
+        if sign_issuer_alternative_name is not None:
+            sign_issuer_alternative_name_ext = x509.Extension(
+                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False, value=sign_issuer_alternative_name
+            )
 
         ca = CertificateAuthority(
             name=name,
             parent=parent,
             issuer_url=sign_ca_issuer,
-            issuer_alt_name=issuer_alternative_name,
             ocsp_url=sign_ocsp_responder,
             crl_url="\n".join(sign_crl_full_name),
             sign_certificate_policies=sign_certificate_policies_ext,
+            sign_issuer_alternative_name=sign_issuer_alternative_name_ext,
         )
 
         # Set OCSP responder options

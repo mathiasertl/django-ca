@@ -928,7 +928,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             parent = CertificateAuthority.objects.get(name=CERT_DATA[name]["parent"])
 
         # set some default values
-        kwargs.setdefault("issuer_alt_name", CERT_DATA[name].get("issuer_alternative_name", ""))
         kwargs.setdefault("crl_url", CERT_DATA[name].get("crl_url", ""))
         kwargs.setdefault("ocsp_url", CERT_DATA[name].get("ocsp_url", ""))
         kwargs.setdefault("issuer_url", CERT_DATA[name].get("issuer_url", ""))

@@ -112,7 +112,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
     def test_alternative_values(self) -> None:
         """Test overriding most values."""
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        ca.issuer_alt_name = "https://example.com"
+        ca.sign_issuer_alternative_name = issuer_alternative_name(uri("https://example.com"))
         ca.save()
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
@@ -137,7 +137,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
-                issuer_alternative_name(uri(ca.issuer_alt_name)),
+                ca.sign_issuer_alternative_name,
                 subject_alternative_name(dns(self.hostname)),
             ],
         )
@@ -311,7 +311,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         # Add CRL url to CA
-        ca.issuer_alt_name = "https://ian.ca.example.com"
+        ca.sign_issuer_alternative_name = issuer_alternative_name(uri("https://ian.ca.example.com"))
         ca.save()
 
         added_ian_uri = uri("https://ian.cert.example.com")

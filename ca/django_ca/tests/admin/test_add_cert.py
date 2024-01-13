@@ -21,7 +21,7 @@ from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.test import TestCase
 
@@ -1596,7 +1596,6 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.ca.crl_url = "http://crl.test-only-ca.example.com"
         self.ca.issuer_url = "http://issuer.test-only-ca.example.com"
         self.ca.ocsp_url = "http://ocsp.test-only-ca.example.com"
-        self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
         self.ca.sign_certificate_policies = self.certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=x509.ObjectIdentifier("1.2.3"),
@@ -1605,6 +1604,9 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                     x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
                 ],
             )
+        )
+        self.ca.sign_issuer_alternative_name = issuer_alternative_name(
+            uri("http://issuer-alt-name.test-only-ca.example.com")
         )
         self.ca.save()
 
@@ -1628,7 +1630,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 basic_constraints(),
                 crl_distribution_points(distribution_point(full_name=[uri(self.ca.crl_url)])),
                 self.ca.sign_certificate_policies,
-                issuer_alternative_name(uri(self.ca.issuer_alt_name)),
+                self.ca.sign_issuer_alternative_name,
                 subject_alternative_name(dns(self.hostname)),
                 subject_key_identifier(cert),
             ],
@@ -1652,7 +1654,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         "critical": True,
                         "value": [
                             {
-                                "policy_identifier": "2.5.29.32.0",
+                                "policy_identifier": CertificatePoliciesOID.CPS_USER_NOTICE.dotted_string,
                                 "policy_qualifiers": ["text1"],
                             },
                         ],
@@ -1705,7 +1707,20 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.ca.crl_url = "http://crl.test-only-ca.example.com"
         self.ca.issuer_url = "http://issuer.test-only-ca.example.com"
         self.ca.ocsp_url = "http://ocsp.test-only-ca.example.com"
-        self.ca.issuer_alt_name = "http://issuer-alt-name.test-only-ca.example.com"
+        self.ca.sign_authority_information_access = authority_information_access(
+            ca_issuers=[uri("http://issuer.ca.example.com")], ocsp=[uri("http://ocsp.ca.example.com")]
+        )
+        self.ca.sign_certificate_policies = certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
+            )
+        )
+        self.ca.sign_crl_distribution_points = crl_distribution_points(
+            distribution_point([uri("http://crl.ca.example.com")])
+        )
+        self.ca.sign_issuer_alternative_name = issuer_alternative_name(
+            uri("http://issuer-alt-name.test-only-ca.example.com")
+        )
         self.ca.save()
 
         response = self.app.get(self.add_url, user=self.user.username)
@@ -1743,7 +1758,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 ),
                 certificate_policies(
                     x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"), policy_qualifiers=["text1"]
+                        policy_identifier=CertificatePoliciesOID.CPS_USER_NOTICE, policy_qualifiers=["text1"]
                     ),
                     critical=True,
                 ),
@@ -1809,7 +1824,6 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         self.ca.crl_url = ""
         self.ca.issuer_url = ""
         self.ca.ocsp_url = ""
-        self.ca.issuer_alt_name = ""
         self.ca.save()
 
         with self.assertLogs("django_ca") as logcm:

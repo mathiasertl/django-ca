@@ -22,7 +22,7 @@ from datetime import timedelta
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import CertificatePoliciesOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.core.files.storage import FileSystemStorage
 from django.test import TestCase, override_settings
@@ -390,7 +390,18 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_extensions(self) -> None:
         """Test setting extensions for the signed certificate."""
         self.ca.crl_url = "http://ca.crl.example.com"
-        self.ca.issuer_alt_name = "http://ian.example.com"
+        self.ca.sign_authority_information_access = authority_information_access(
+            ca_issuers=[uri("http://issuer.ca.example.com")], ocsp=[uri("http://ocsp.ca.example.com")]
+        )
+        self.ca.sign_certificate_policies = certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
+            )
+        )
+        self.ca.sign_crl_distribution_points = crl_distribution_points(
+            distribution_point([uri("http://crl.ca.example.com")])
+        )
+        self.ca.sign_issuer_alternative_name = issuer_alternative_name(uri("http://ian.example.com"))
         self.ca.save()
 
         stdin = self.csr_pem.encode()

@@ -14,7 +14,6 @@
 """Command subclasses and argparse helpers for django-ca."""
 
 import abc
-import argparse
 import io
 import shutil
 import sys
@@ -47,6 +46,9 @@ from django_ca.typehints import (
     SubjectFormats,
 )
 from django_ca.utils import add_colons, format_name_rfc4514, name_for_display, parse_name_rfc4514, x509_name
+
+if typing.TYPE_CHECKING:
+    from django_stubs_ext import StrOrPromise
 
 
 class BinaryOutputWrapper(OutputWrapper):
@@ -124,18 +126,16 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 
     def add_certificate_policies_group(
         self,
-        parser: ActionsContainer,
+        parser: CommandParser,
         description: str,
+        name: str = f"{constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]} extension",
         allow_any_policy: bool = False,
         dest: str = "certificate_policies",
         prefix: str = "",
     ) -> None:
         """Add argument group for the Certificate Policies extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
-        if isinstance(parser, argparse.ArgumentParser):
-            group = parser.add_argument_group(f"{ext_name} extension", description.format(ext_name=ext_name))
-        else:
-            group = parser  # parser is already an argument group
+        group = parser.add_argument_group(name, description.format(ext_name=ext_name))
 
         group.add_argument(
             f"--{prefix}policy-identifier",
@@ -166,6 +166,53 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             help_suffix="It is usually not marked as critical.",
         )
 
+    def add_certificate_authority_sign_extension_groups(self, parser: CommandParser) -> None:
+        """Add CA arguments."""
+        group = parser.add_argument_group(
+            "X509 v3 certificate extensions for signed certificates",
+            "Extensions added when signing certificates.",
+        )
+        group.add_argument(
+            "--sign-ca-issuer",
+            metavar="NAME",
+            action=actions.URLAction,
+            default="",
+            help="URL to the certificate of your CA (in DER format).",
+        )
+        group.add_argument(
+            "--sign-crl-full-name",
+            action=actions.MultipleURLAction,
+            metavar="NAME",
+            help="URL to a certificate revocation list.",
+        )
+        group.add_argument(
+            "--sign-ocsp-responder",
+            metavar="NAME",
+            default="",
+            action=actions.URLAction,
+            help="URL of an OCSP responder.",
+        )
+
+        # Add Certificate Policies extension
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES]
+        self.add_certificate_policies_group(
+            parser,
+            f"{ext_name} extension added to a certificate when signing it.",
+            name=f"{ext_name} extension in certificates",
+            dest="sign_certificate_policies",
+            allow_any_policy=True,
+            prefix="sign-",
+        )
+
+        # Add Issuer Alternative Name extension
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
+        self.add_issuer_alternative_name_group(
+            parser,
+            f"{ext_name} extension added to a certificate when signing it. Rarely used in practice.",
+            name=f"{ext_name} extension in certificates",
+            prefix="sign-",
+        )
+
     def add_critical_option(
         self, parser: ActionsContainer, oid: x509.ObjectIdentifier, help_suffix: str = "", prefix: str = ""
     ) -> None:
@@ -184,6 +231,29 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             help_text = f"Mark the extension as critical. {help_suffix}".strip()
 
         parser.add_argument(option, dest=destination, action=action, default=default, help=help_text)
+
+    def add_issuer_alternative_name_group(
+        self,
+        parser: CommandParser,
+        description: "StrOrPromise" = "",
+        name: str = f"{constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]} extension",
+        dest: Optional[str] = None,
+        prefix: str = "",
+    ) -> None:
+        """Add argument group for the Issuer Alternative Name extension."""
+        if not description:
+            description = constants.EXTENSION_DESCRIPTIONS[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
+
+        group = parser.add_argument_group(name, str(description))
+        group.add_argument(
+            f"--{prefix}issuer-alternative-name",
+            action=actions.AlternativeNameAction,
+            dest=dest,
+            extension_type=x509.IssuerAlternativeName,
+            help="Alternative name for the certificate issuer. May be given multiple times.",
+        )
+        # OpenSSL raises an error if this extension is critical.
+        # self.add_critical_option(group, ExtensionOID.ISSUER_ALTERNATIVE_NAME)
 
     @property
     def valid_subject_keys(self) -> str:
@@ -362,23 +432,6 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             "values.",
         )
         self.add_critical_option(group, ExtensionOID.EXTENDED_KEY_USAGE)
-
-    def add_issuer_alternative_name_group(self, parser: CommandParser) -> None:
-        """Add argument group for the Issuer Alternative Name extension."""
-        ext_name = constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]
-        group = parser.add_argument_group(
-            f"{ext_name} extension",
-            "This extension is used to associate alternative names with the certificate issuer. It is rarely "
-            "used in practice.",
-        )
-        group.add_argument(
-            "--issuer-alternative-name",
-            action=actions.AlternativeNameAction,
-            extension_type=x509.IssuerAlternativeName,
-            help="Alternative name for the certificate issuer. May be given multiple times.",
-        )
-        # OpenSSL raises an error if this extension is critical.
-        # self.add_critical_option(group, ExtensionOID.ISSUER_ALTERNATIVE_NAME)
 
     def add_key_usage_group(self, parser: CommandParser, default: Optional[x509.KeyUsage] = None) -> None:
         """Add argument group for the Key Usage extension."""

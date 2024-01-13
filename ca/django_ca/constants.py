@@ -139,6 +139,14 @@ EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = MappingProxyType(
     }
 )
 
+EXTENSION_DESCRIPTIONS = MappingProxyType(
+    {
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME: _(
+            "This extension is used to associate alternative names with the certificate issuer. Rarely used "
+            "in practice."
+        )
+    }
+)
 
 #: Map of ExtensionOIDs to a human-readable text describing if the extension should/must/... be critical.
 EXTENSION_CRITICAL_HELP = MappingProxyType(

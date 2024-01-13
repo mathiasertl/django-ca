@@ -43,7 +43,6 @@ from django_ca.typehints import (
 )
 from django_ca.utils import (
     ca_storage,
-    format_general_name,
     generate_private_key,
     get_cert_builder,
     parse_expires,
@@ -237,7 +236,6 @@ class CertificateAuthorityManager(
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,
         issuer_url: str = "",
-        issuer_alt_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         crl_url: Optional[Iterable[str]] = None,
         ocsp_url: str = "",
         password: Optional[Union[str, bytes]] = None,
@@ -256,11 +254,16 @@ class CertificateAuthorityManager(
         acme_profile: Optional[str] = None,
         openssh_ca: bool = False,
         sign_certificate_policies: Optional[x509.Extension[x509.CertificatePolicies]] = None,
+        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         ocsp_responder_key_validity: Optional[int] = None,
         ocsp_response_validity: Optional[int] = None,
         api_enabled: Optional[bool] = None,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
+
+        .. versionchanged:: 1.28.0
+
+           The `issuer_alt_name` parameter was renamed to `sign_issuer_alternative_name`.
 
         .. versionchanged:: 1.26.0
 
@@ -292,9 +295,6 @@ class CertificateAuthorityManager(
             Value of the path length attribute for the Basic Constraints extension.
         issuer_url : str
             URL for the DER/ASN1 formatted certificate that is signing certificates.
-        issuer_alt_name : :py:class:`~cg:cryptography.x509.Extension`, optional
-            IssuerAlternativeName used when signing certificates.  The value of the extension must be an
-            :py:class:`~cg:cryptography.x509.IssuerAlternativeName` instance.
         crl_url : list of str, optional
             CRL URLs used for certificates signed by this CA.
         ocsp_url : str, optional
@@ -337,6 +337,9 @@ class CertificateAuthorityManager(
             Set to ``True`` if you want to use this to use this CA for signing OpenSSH certs.
         sign_certificate_policies : :py:class:`~cg:cryptography.x509.Extension`, optional
             Add the given Certificate Policies extension when signing certificates.
+        sign_issuer_alternative_name : :py:class:`~cg:cryptography.x509.Extension`, optional
+            IssuerAlternativeName used when signing certificates.  The value of the extension must be an
+            :py:class:`~cg:cryptography.x509.IssuerAlternativeName` instance.
         ocsp_responder_key_validity : int, optional
             How long (in days) OCSP responder keys should be valid.
         ocsp_response_validity : int, optional
@@ -442,7 +445,6 @@ class CertificateAuthorityManager(
             subject=subject,
             path_length=path_length,
             issuer_url=issuer_url,
-            issuer_alt_name=issuer_alt_name,
             crl_url=crl_url,
             ocsp_url=ocsp_url,
             password=password,
@@ -456,6 +458,7 @@ class CertificateAuthorityManager(
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
             sign_certificate_policies=sign_certificate_policies,
+            sign_issuer_alternative_name=sign_issuer_alternative_name,
             ocsp_responder_key_validity=ocsp_responder_key_validity,
             ocsp_response_validity=ocsp_response_validity,
             api_enabled=api_enabled,
@@ -492,15 +495,9 @@ class CertificateAuthorityManager(
         # Normalize extensions for create()
         crl_url = "\n".join(crl_url)
 
-        # Convert arguments for database storage
-        serialized_ian = ""
-        if issuer_alt_name is not None:
-            serialized_ian = ",".join(format_general_name(name) for name in issuer_alt_name.value)
-
         ca: CertificateAuthority = self.model(
             name=name,
             issuer_url=issuer_url,
-            issuer_alt_name=serialized_ian,
             ocsp_url=ocsp_url,
             crl_url=crl_url,
             parent=parent,
@@ -512,6 +509,7 @@ class CertificateAuthorityManager(
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
             sign_certificate_policies=sign_certificate_policies,
+            sign_issuer_alternative_name=sign_issuer_alternative_name,
         )
 
         # Set fields with a default value

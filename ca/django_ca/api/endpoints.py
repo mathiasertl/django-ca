@@ -98,13 +98,15 @@ def update_certificate_authority(
 
     # sign_certificate_policies is a django_ca.pydantic.extensions.ExtensionModel, so we can generate the
     # cryptography instance directly
-    if "sign_certificate_policies" in data.model_fields_set:
-        if data.sign_certificate_policies is None:
-            ca.sign_certificate_policies = None
+    for field in [f for f in data.model_fields_set if f.startswith("sign_")]:
+        if value := getattr(data, field):
+            setattr(ca, field, value)
         else:
-            ca.sign_certificate_policies = data.sign_certificate_policies.cryptography
+            setattr(ca, field, None)
 
-    for attr, value in data.model_dump(exclude_unset=True, exclude={"sign_certificate_policies"}).items():
+    for attr, value in data.model_dump(exclude_unset=True).items():
+        if attr.startswith("sign_"):  # exclude sign extensions
+            continue
         setattr(ca, attr, value)
 
     try:

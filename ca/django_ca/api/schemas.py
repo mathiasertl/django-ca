@@ -24,7 +24,12 @@ from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder, X509CertMixin
 from django_ca.pydantic.base import DATETIME_EXAMPLE
-from django_ca.pydantic.extensions import CertificatePoliciesModel
+from django_ca.pydantic.extensions import (
+    AuthorityInformationAccessModel,
+    CertificatePoliciesModel,
+    CRLDistributionPointsModel,
+    IssuerAlternativeNameModel,
+)
 from django_ca.pydantic.name import NameModel
 
 
@@ -79,10 +84,28 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
     """
 
     name: str = Field(description="The human-readable name of the certificate authority.")
+    sign_authority_information_access: Optional[AuthorityInformationAccessModel] = Field(
+        default=None,
+        json_schema_extra={
+            "description": "The Authority Information Access extension added to newly signed certificates."
+        },
+    )
     sign_certificate_policies: Optional[CertificatePoliciesModel] = Field(
         default=None,
         json_schema_extra={
-            "description": "The CertificatePolicies extension added to newly signed certificates."
+            "description": "The Certificate Policies extension added to newly signed certificates."
+        },
+    )
+    sign_crl_distribution_points: Optional[CRLDistributionPointsModel] = Field(
+        default=None,
+        json_schema_extra={
+            "description": "The CRL Distribution Points extension added to newly signed certificates."
+        },
+    )
+    sign_issuer_alternative_name: Optional[IssuerAlternativeNameModel] = Field(
+        default=None,
+        json_schema_extra={
+            "description": "The Issuer Alternative Name extension added to newly signed certificates."
         },
     )
 
@@ -96,8 +119,10 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
             "crl_url",
             "issuer_url",
             "ocsp_url",
-            "issuer_alt_name",
+            "sign_authority_information_access",
             "sign_certificate_policies",
+            "sign_crl_distribution_points",
+            "sign_issuer_alternative_name",
             "ocsp_responder_key_validity",
             "ocsp_response_validity",
             "acme_enabled",

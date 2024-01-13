@@ -13,6 +13,8 @@
 
 """Test Django model classes."""
 
+# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
+
 import json
 import os
 import re
@@ -30,7 +32,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding, load_pem_private_key
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -64,6 +66,7 @@ from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin, TestCase
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
+    certificate_policies,
     crl_distribution_points,
     distribution_point,
     issuer_alternative_name,
@@ -664,107 +667,39 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         with self.generate_ocsp_key(self.ca, force=True) as (key_renewed, cert_renewed):
             self.assertNotEqual(cert_renewed.serial, cert.serial)
 
-    def test_empty_extensions_for_certificiate(self) -> None:
-        """Test extensions_for_certificate property when no values are set."""
-        self.ca.issuer_alt_name = ""
-        self.ca.issuer_url = ""
-        self.ca.ocsp_url = ""
-        self.ca.crl_url = ""
-        self.ca.save()
-        self.assertEqual(self.ca.extensions_for_certificate, {})
 
-    def test_extensions_for_certificiate(self) -> None:
-        """Test extensions_for_certificate property."""
-        self.ca.issuer_alt_name = "http://ian.example.com"
-        self.ca.issuer_url = "http://issuer.example.com"
-        self.ca.ocsp_url = "http://ocsp.example.com"
-        self.ca.crl_url = "http://crl.example.com"
-        self.ca.save()
+def test_empty_extensions_for_certificiate(root: CertificateAuthority) -> None:
+    """Test extensions_for_certificate property when no values are set."""
+    root.sign_certificate_policies = None
+    root.sign_issuer_alternative_name = None
+    root.issuer_url = ""
+    root.ocsp_url = ""
+    root.crl_url = ""
+    root.save()
+    assert root.extensions_for_certificate == {}
 
-        self.assertEqual(
-            self.ca.extensions_for_certificate,
-            {
-                ExtensionOID.AUTHORITY_INFORMATION_ACCESS: authority_information_access(
-                    ca_issuers=[uri(self.ca.issuer_url)], ocsp=[uri(self.ca.ocsp_url)]
-                ),
-                ExtensionOID.CRL_DISTRIBUTION_POINTS: crl_distribution_points(
-                    distribution_point([uri(self.ca.crl_url)])
-                ),
-                ExtensionOID.ISSUER_ALTERNATIVE_NAME: issuer_alternative_name(uri(self.ca.issuer_alt_name)),
-            },
-        )
 
-    # def test_sign_certificate_policies(self) -> None:
-    #     """Test setting the ``sign_certificate_policies`` field."""
-    #     certificate_policies = x509.Extension(
-    #         critical=True,
-    #         oid=ExtensionOID.CERTIFICATE_POLICIES,
-    #         value=x509.CertificatePolicies(
-    #             [
-    #                 x509.PolicyInformation(
-    #                     policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"),
-    #                     policy_qualifiers=["http://example.com"],
-    #                 )
-    #             ]
-    #         ),
-    #     )
-    #
-    #     self.ca.sign_certificate_policies = certificate_policies
-    #     self.ca.full_clean()
-    #     self.ca.save()
-    #     self.assertEqual(self.ca.sign_certificate_policies, certificate_policies)
-    #
-    #     # Reload from db, we get the original extension back
-    #     print("### (1) reload from db")
-    #     ca = CertificateAuthority.objects.get(pk=self.ca.pk)
-    #     self.assertEqual(ca.sign_certificate_policies, certificate_policies)
-    #
-    #     model = CertificatePoliciesModel.model_validate(certificate_policies)
-    #
-    #     # Try storing a serialized extension
-    #     print("### (2) set model field")
-    #     ca.sign_certificate_policies = model.model_dump(mode="json")
-    #     print("### (3) full clean")
-    #     ca.full_clean()
-    #     self.assertEqual(ca.sign_certificate_policies, certificate_policies)
-    #
-    #     # also works when just saving...
-    #     ca.sign_certificate_policies = model.model_dump(mode="json")
-    #     ca.save()
-    #
-    #     # Reload from db again, we get the original extension back
-    #     ca = CertificateAuthority.objects.get(pk=self.ca.pk)
-    #     self.assertEqual(ca.sign_certificate_policies, certificate_policies)
-    #
-    #     # Setting a None value also works
-    #     ca.sign_certificate_policies = None
-    #     ca.full_clean()
-    #     ca.save()
-    #     ca = CertificateAuthority.objects.get(pk=ca.pk)
-    #     self.assertIsNone(ca.sign_certificate_policies)
-    #
-    #     # Try setting an invalid extension type
-    #     ca.sign_certificate_policies = basic_constraints()
-    #     with self.assertValidationError(
-    #         {"sign_certificate_policies": ["Expected an instance of CertificatePolicies."]}
-    #     ):
-    #         ca.full_clean()
-    #     with self.assertRaisesRegex(
-    #         ValidationError, r"^\['Expected an instance of CertificatePolicies\.'\]$"
-    #     ), transaction.atomic():
-    #         ca.save()
-    #
-    #     # Try setting something unparsable
-    #     ca.sign_certificate_policies = True  # type: ignore[assignment]  # what we're testing
-    #     with self.assertValidationError(
-    #         {"sign_certificate_policies": ["The value cannot be parsed to an extension."]}
-    #     ):
-    #         ca.full_clean()
-    #
-    #     with self.assertRaisesRegex(
-    #         ValidationError, r"^\['True: Not a cryptography\.x509\.Extension class\.'\]$"
-    #     ), transaction.atomic():
-    #         ca.save()
+def test_extensions_for_certificiate(root: CertificateAuthority) -> None:
+    """Test extensions_for_certificate property."""
+    root.sign_certificate_policies = certificate_policies(
+        x509.PolicyInformation(policy_identifier=CertificatePoliciesOID.ANY_POLICY, policy_qualifiers=None)
+    )
+    root.sign_issuer_alternative_name = issuer_alternative_name(uri("http://ian.example.com"))
+    root.issuer_url = "http://issuer.example.com"
+    root.ocsp_url = "http://ocsp.example.com"
+    root.crl_url = "http://crl.example.com"
+    root.save()
+
+    assert root.extensions_for_certificate == {
+        ExtensionOID.AUTHORITY_INFORMATION_ACCESS: authority_information_access(
+            ca_issuers=[uri(root.issuer_url)], ocsp=[uri(root.ocsp_url)]
+        ),
+        ExtensionOID.CERTIFICATE_POLICIES: root.sign_certificate_policies,
+        ExtensionOID.CRL_DISTRIBUTION_POINTS: crl_distribution_points(
+            distribution_point([uri(root.crl_url)])
+        ),
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME: root.sign_issuer_alternative_name,
+    }
 
 
 @pytest.mark.parametrize("full_clean", (True, False))

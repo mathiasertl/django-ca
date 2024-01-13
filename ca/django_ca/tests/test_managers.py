@@ -75,7 +75,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertEqual(ca.issuer_url, f"{base_url}issuer/{parent_serial}.der")
         self.assertEqual(ca.ocsp_url, f"{base_url}ocsp/{ca.serial}/cert/")
-        self.assertEqual(ca.issuer_alt_name, "")
+        self.assertIsNone(ca.sign_certificate_policies)
+        self.assertIsNone(ca.sign_issuer_alternative_name)
         self.assertAuthorityKeyIdentifier(parent_ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -183,7 +184,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertEqual(ca.issuer_url, "")
         self.assertEqual(ca.ocsp_url, "")
-        self.assertEqual(ca.issuer_alt_name, "")
+        self.assertIsNone(ca.sign_certificate_policies)
+        self.assertIsNone(ca.sign_issuer_alternative_name)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_extra_extensions(self) -> None:

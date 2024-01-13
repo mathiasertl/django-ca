@@ -27,7 +27,6 @@ from django_ca import ca_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
-from django_ca.utils import format_general_name
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -41,7 +40,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         self.add_acme_group(parser)
         self.add_ocsp_group(parser)
         self.add_rest_api_group(parser)
-        self.add_ca_args(parser)
+        self.add_certificate_authority_sign_extension_groups(parser)
 
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
@@ -60,12 +59,13 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         ca: CertificateAuthority,
         sign_ca_issuer: str,
         sign_crl_full_name: List[str],
-        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]],
         sign_ocsp_responder: str,
         enabled: Optional[bool],
         # Certificate Policies extension
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # Issuer Alternative Name extension  for certificates
+        sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
@@ -73,9 +73,9 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     ) -> None:
         if sign_ca_issuer:
             ca.issuer_url = sign_ca_issuer
-        if sign_issuer_alternative_name:
-            ca.issuer_alt_name = ",".join(
-                [format_general_name(name) for name in sign_issuer_alternative_name.value]
+        if sign_issuer_alternative_name is not None:
+            ca.sign_issuer_alternative_name = x509.Extension(
+                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False, value=sign_issuer_alternative_name
             )
         if sign_ocsp_responder:
             ca.ocsp_url = sign_ocsp_responder

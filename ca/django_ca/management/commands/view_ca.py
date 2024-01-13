@@ -101,8 +101,10 @@ class Command(BaseViewCommand):
         self.stdout.write(f"* Certificate Revocation List (CRL): {ca.crl_url or None}")
         self.stdout.write(f"* Issuer URL: {ca.issuer_url or None}")
         self.stdout.write(f"* OCSP URL: {ca.ocsp_url or None}")
-        self.stdout.write(f"* Issuer Alternative Name: {ca.issuer_alt_name or None}")
+
         if ca.sign_certificate_policies:
             self.print_extension(ca.sign_certificate_policies)
+        if ca.sign_issuer_alternative_name:
+            self.print_extension(ca.sign_issuer_alternative_name)
 
         self.output_footer(ca, pem=pem, wrap=wrap)
