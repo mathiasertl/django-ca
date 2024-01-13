@@ -71,9 +71,12 @@ from django_ca.managers import (
     CertificateManager,
 )
 from django_ca.modelfields import (
+    AuthorityInformationAccessField,
     CertificateField,
     CertificatePoliciesField,
     CertificateSigningRequestField,
+    CRLDistributionPointsField,
+    IssuerAlternativeNameField,
     LazyCertificate,
 )
 from django_ca.openssh.extensions import SSH_HOST_CA, SSH_USER_CA
@@ -546,12 +549,33 @@ class CertificateAuthority(X509CertMixin):
         verbose_name=_("issuerAltName"),
         help_text=_("URL for your CA."),
     )
+    sign_authority_information_access = AuthorityInformationAccessField(
+        constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+        null=True,
+        default=None,
+        blank=True,
+        help_text=_("Add a Authority  Information Access extension when signing certificates."),
+    )
     sign_certificate_policies = CertificatePoliciesField(
         constants.EXTENSION_NAMES[ExtensionOID.CERTIFICATE_POLICIES],
         null=True,
         default=None,
         blank=True,
         help_text=_("Add a Certificate Policies extension when signing certificates."),
+    )
+    sign_crl_distribution_points = CRLDistributionPointsField(
+        constants.EXTENSION_NAMES[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+        null=True,
+        default=None,
+        blank=True,
+        help_text=_("Add a CRL Distribution Points extension when signing certificates."),
+    )
+    sign_issuer_alternative_name = IssuerAlternativeNameField(
+        constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+        null=True,
+        default=None,
+        blank=True,
+        help_text=_("Add an Issuer Alternative Name extension when signing certificates."),
     )
 
     caa_identity = models.CharField(
