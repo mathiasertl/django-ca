@@ -20,14 +20,14 @@ from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.test import TestCase
 
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import authority_information_access, override_tmpcadir, uri
+from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import add_colons, ca_storage
 
 
@@ -84,8 +84,16 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             db_cert.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
         )
 
-        ca_issuers = uri(ca.issuer_url)
-        self.assertEqual(aia, authority_information_access(ca_issuers=[ca_issuers]))
+        expected_aia = x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=ca.sign_authority_information_access.critical,  # type: ignore[union-attr]
+            value=x509.AuthorityInformationAccess(
+                ad
+                for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
+                if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+            ),
+        )
+        self.assertEqual(aia, expected_aia)
 
         return priv, cert
 

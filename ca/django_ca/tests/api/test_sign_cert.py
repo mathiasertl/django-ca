@@ -39,7 +39,6 @@ from django_ca.tests.api.conftest import APIPermissionTestBase
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import CaptureOnCommitCallbacks, HttpResponse
 from django_ca.tests.base.utils import (
-    authority_information_access,
     certificate_policies,
     crl_distribution_points,
     distribution_point,
@@ -161,15 +160,11 @@ def test_sign_ca_values(
 
     extensions = cert.x509_extensions
 
-    # Test Authority Information Access extension
-    assert extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == authority_information_access(
-        ca_issuers=[uri(usable_root.issuer_url)], ocsp=[uri(usable_root.ocsp_url)]
+    # Test signed extensions
+    assert (
+        extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == usable_root.sign_authority_information_access
     )
-
-    # Test CRL Distribution Points extension
-    assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
-        distribution_point(full_name=[uri(usable_root.crl_url)])
-    )
+    assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == usable_root.sign_crl_distribution_points
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])

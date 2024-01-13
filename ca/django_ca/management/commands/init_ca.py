@@ -27,6 +27,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 
 from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction, PasswordAction
@@ -219,7 +220,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         self.add_ocsp_group(parser)
         self.add_rest_api_group(parser)
 
-        self.add_authority_information_access_group(parser, ("--ca-ocsp-url",), ("--ca-issuer-url",))
+        self.add_authority_information_access_group(parser)
         self.add_basic_constraints_group(parser)
         self.add_certificate_policies_group(
             parser,
@@ -229,9 +230,10 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         )
         self.add_crl_distribution_points_group(
             parser,
-            "--ca-crl-url is a legacy option name and will be removed in django-ca==1.27.",
-            extra_args=("--ca-crl-url",),  # Legacy option string, remove in django-ca==1.27
-            description_suffix="It cannot be added to root certificate authorities.",
+            description=_(
+                "This extension defines how a Certificate Revocation List (CRL) can be obtained. "
+                "Cannot be used for root certificate authorities."
+            ),
         )
         self.add_extended_key_usage_group(parser)
         self.add_inhibit_any_policy_group(parser)
@@ -258,11 +260,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         algorithm: Optional[AllowedHashTypes],
         password: Optional[bytes],
         parent_password: Optional[bytes],
-        sign_crl_full_name: List[str],
-        sign_ocsp_responder: str,
-        sign_ca_issuer: str,
-        # Authority Information Access extension
-        authority_information_access: x509.AuthorityInformationAccess,
+        # Authority Information Access extension (MUST be non-critical)
+        authority_information_access: Optional[x509.AuthorityInformationAccess],
         # Basic Constraints extension
         path_length: Optional[int],
         # Certificate Policies extension
@@ -294,9 +293,14 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         caa: str,
         website: str,
         tos: str,
+        # Authority Information Access extension  for certificates (MUST be non-critical)
+        sign_authority_information_access: Optional[x509.AuthorityInformationAccess],
         # Certificate Policies extension  for certificates
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # CRL Distribution Points extension for certificates
+        sign_crl_full_names: Optional[List[x509.GeneralName]],
+        sign_crl_distribution_points_critical: bool,
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
@@ -440,12 +444,29 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             )
 
         # Add extensions for signing new certificates
+        sign_authority_information_access_ext = None
+        if sign_authority_information_access is not None:
+            sign_authority_information_access_ext = x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                value=sign_authority_information_access,
+            )
         sign_certificate_policies_ext = None
         if sign_certificate_policies is not None:
             sign_certificate_policies_ext = x509.Extension(
                 oid=ExtensionOID.CERTIFICATE_POLICIES,
                 critical=sign_certificate_policies_critical,
                 value=sign_certificate_policies,
+            )
+        sign_crl_distribution_points_ext = None
+        if sign_crl_full_names:
+            distribution_point = x509.DistributionPoint(
+                full_name=sign_crl_full_names, relative_name=None, crl_issuer=None, reasons=None
+            )
+            sign_crl_distribution_points_ext = x509.Extension(
+                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                critical=sign_crl_distribution_points_critical,
+                value=x509.CRLDistributionPoints([distribution_point]),
             )
         sign_issuer_alternative_name_ext = None
         if sign_issuer_alternative_name is not None:
@@ -481,9 +502,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 algorithm=algorithm,
                 parent=parent,
                 path_length=path_length,
-                issuer_url=sign_ca_issuer,
-                crl_url=sign_crl_full_name,
-                ocsp_url=sign_ocsp_responder,
                 password=password,
                 parent_password=parent_password,
                 elliptic_curve=elliptic_curve,
@@ -493,7 +511,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 website=website,
                 terms_of_service=tos,
                 extensions=extensions.values(),
+                sign_authority_information_access=sign_authority_information_access_ext,
                 sign_certificate_policies=sign_certificate_policies_ext,
+                sign_crl_distribution_points=sign_crl_distribution_points_ext,
                 sign_issuer_alternative_name=sign_issuer_alternative_name_ext,
                 ocsp_response_validity=ocsp_response_validity,
                 ocsp_responder_key_validity=ocsp_responder_key_validity,

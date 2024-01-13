@@ -29,6 +29,7 @@ from freezegun import freeze_time
 
 from django_ca import constants
 from django_ca.models import CertificateAuthority
+from django_ca.pydantic.extensions import EXTENSION_MODELS
 from django_ca.tests.api.conftest import APIPermissionTestBase
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
@@ -68,12 +69,9 @@ def payload() -> Dict[str, Any]:
         "acme_registration": False,
         "acme_requires_contact": False,
         "caa_identity": "caa-id",
-        "crl_url": "http://update.crl.example.com",
-        "issuer_url": "http://update.issuer.example.com",
         "name": "root-update",
         "ocsp_responder_key_validity": 10,
         "ocsp_response_validity": 60000,
-        "ocsp_url": "http://update.ocsp.example.com",
         "sign_authority_information_access": {
             "value": [
                 {
@@ -214,7 +212,13 @@ def test_minimal_update(
         if field == "ocsp_responder_key_validity":
             expected_response[field] = 10
         else:
-            expected_response[field] = getattr(root, field)
+            value = getattr(root, field)
+            if isinstance(value, x509.Extension):
+                model_class = EXTENSION_MODELS[value.oid]
+                model = model_class.model_validate(value)
+                expected_response[field] = model.model_dump(mode="json")
+            else:
+                expected_response[field] = value
 
     response = request(api_client, {"ocsp_responder_key_validity": 10})
     root.refresh_from_db()
@@ -239,7 +243,13 @@ def test_clear_sign_certificate_policies(
         if field == "sign_certificate_policies":
             expected_response[field] = None
         else:
-            expected_response[field] = getattr(root, field)
+            value = getattr(root, field)
+            if isinstance(value, x509.Extension):
+                model_class = EXTENSION_MODELS[value.oid]
+                model = model_class.model_validate(value)
+                expected_response[field] = model.model_dump(mode="json")
+            else:
+                expected_response[field] = value
 
     response = request(api_client, {"sign_certificate_policies": None})
     assert response.status_code == HTTPStatus.OK, response.content
@@ -261,12 +271,11 @@ def test_validation(
         else:
             expected_response[field] = getattr(root, field)
 
-    response = request(api_client, {"ocsp_url": "NOT AN URL", "ocsp_responder_key_validity": 10})
+    response = request(api_client, {"website": "NOT AN URL", "ocsp_responder_key_validity": 10})
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
-    assert response.json() == {"detail": "{'ocsp_url': ['Enter a valid URL.']}"}
+    assert response.json() == {"detail": "{'website': ['Enter a valid URL.']}"}
 
     refetched_root: CertificateAuthority = CertificateAuthority.objects.get(pk=root.pk)
-    assert root.ocsp_url == refetched_root.ocsp_url
     assert root.ocsp_responder_key_validity == refetched_root.ocsp_responder_key_validity
 
 

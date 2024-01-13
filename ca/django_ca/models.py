@@ -41,7 +41,7 @@ from cryptography.hazmat.primitives.serialization import (
     PublicFormat,
     load_pem_private_key,
 )
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -59,7 +59,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, REVOCATION_REASONS, ReasonFlags
+from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.extensions import get_extension_name
 from django_ca.managers import (
     AcmeAccountManager,
@@ -99,10 +99,8 @@ from django_ca.utils import (
     get_cert_builder,
     get_crl_cache_key,
     int_to_hex,
-    multiline_url_validator,
     parse_encoding,
     parse_expires,
-    parse_general_name,
     read_file,
     validate_private_key_parameters,
     validate_public_key_parameters,
@@ -518,35 +516,12 @@ class CertificateAuthority(X509CertMixin):
     private_key_path = models.CharField(max_length=256, help_text=_("Path to the private key."))
 
     # various details used when signing certs
-    crl_url = models.TextField(
-        blank=True,
-        default="",
-        validators=[multiline_url_validator],
-        verbose_name=_("CRL URLs"),
-        help_text=_("URLs, one per line, where you can retrieve the CRL."),
-    )
     crl_number = models.TextField(
         default='{"scope": {}}',
         blank=True,
         verbose_name=_("CRL Number"),
         validators=[json_validator],
         help_text=_("Data structure to store the CRL number (see RFC 5280, 5.2.3) depending on the scope."),
-    )
-    issuer_url = models.URLField(
-        blank=True,
-        verbose_name=_("Issuer URL"),
-        help_text=_("URL to the certificate of this CA (in DER format)."),
-    )
-    ocsp_url = models.URLField(
-        blank=True,
-        verbose_name=_("OCSP responder URL"),
-        help_text=_("URL of a OCSP responser for the CA."),
-    )
-    issuer_alt_name = models.CharField(
-        blank=True,
-        max_length=255,
-        verbose_name=_("issuerAltName"),
-        help_text=_("URL for your CA."),
     )
     sign_authority_information_access = AuthorityInformationAccessField(
         constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
@@ -750,47 +725,14 @@ class CertificateAuthority(X509CertMixin):
         """Get a list of extensions to use for the certificate."""
         extensions: Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
 
+        if self.sign_authority_information_access is not None:
+            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = self.sign_authority_information_access
         if self.sign_certificate_policies is not None:
             extensions[ExtensionOID.CERTIFICATE_POLICIES] = self.sign_certificate_policies
+        if self.sign_crl_distribution_points is not None:
+            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = self.sign_crl_distribution_points
         if self.sign_issuer_alternative_name:
             extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] = self.sign_issuer_alternative_name
-
-        access_descriptions = []
-        # TODO: use get_authority_information_access_extension() but it does not yet split lines
-        # NOTE: OCSP is first because OID is lexicographically smaller
-        if self.ocsp_url:
-            ocsp = [parse_general_name(name) for name in self.ocsp_url.splitlines()]
-            access_descriptions += [
-                x509.AccessDescription(access_method=AuthorityInformationAccessOID.OCSP, access_location=name)
-                for name in ocsp
-            ]
-        if self.issuer_url:
-            ca_issuers = [parse_general_name(name) for name in self.issuer_url.splitlines()]
-            access_descriptions += [
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=name
-                )
-                for name in ca_issuers
-            ]
-        if access_descriptions:
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-                value=x509.AuthorityInformationAccess(descriptions=access_descriptions),
-            )
-        if self.crl_url:
-            full_name = [parse_general_name(name) for name in self.crl_url.splitlines()]
-            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = x509.Extension(
-                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                critical=EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-                value=x509.CRLDistributionPoints(
-                    [
-                        x509.DistributionPoint(
-                            full_name=full_name, relative_name=None, crl_issuer=None, reasons=None
-                        )
-                    ]
-                ),
-            )
 
         return extensions
 
@@ -1058,33 +1000,6 @@ class CertificateAuthority(X509CertMixin):
                 ca_storage.save(path, ContentFile(contents))
         return private_path, cert_path, cert
 
-    def get_authority_information_access_extension(
-        self,
-    ) -> Optional[x509.Extension[x509.AuthorityInformationAccess]]:
-        """Get the AuthorityInformationAccess extension to use in certificates signed by this CA."""
-        # TODO: this function is not used outside of the test suite
-        if not self.issuer_url and not self.ocsp_url:
-            return None
-
-        descriptions = []
-        if self.ocsp_url:
-            descriptions.append(
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.OCSP,
-                    access_location=parse_general_name(self.ocsp_url),
-                )
-            )
-        if self.issuer_url:
-            descriptions.append(
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                    access_location=parse_general_name(self.issuer_url),
-                )
-            )
-
-        value = x509.AuthorityInformationAccess(descriptions=descriptions)
-        return x509.Extension(oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS, critical=False, value=value)
-
     def get_authority_key_identifier(self) -> x509.AuthorityKeyIdentifier:
         """Return the AuthorityKeyIdentifier extension used in certificates signed by this CA."""
         try:
@@ -1160,7 +1075,8 @@ class CertificateAuthority(X509CertMixin):
             to use the scope as the key.
         full_name : list of :py:class:`~cg:cryptography.x509.GeneralName`, optional
             List of general names to use in the Issuing Distribution Point extension. If not passed, use
-            ``crl_url`` if set.
+            the full names of the first distribution point in ``sign_crl_distribution_points`` (if present)
+            that has full names set.
         relative_name : :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`, optional
             Used in Issuing Distribution Point extension, retrieve the CRL relative to the issuer.
         include_issuing_distribution_point: bool, optional
@@ -1208,9 +1124,13 @@ class CertificateAuthority(X509CertMixin):
             parsed_full_name = [
                 x509.UniformResourceIdentifier(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
             ]
-        elif scope in ("user", None) and self.crl_url:
-            crl_url = [url.strip() for url in self.crl_url.split()]
-            parsed_full_name = [x509.UniformResourceIdentifier(c) for c in crl_url]
+        elif scope in ("user", None) and self.sign_crl_distribution_points:
+            full_names = []
+            for dpoint in self.sign_crl_distribution_points.value:
+                if dpoint.full_name:
+                    full_names += dpoint.full_name
+            if full_names:
+                parsed_full_name = full_names
 
         # Keyword arguments for the IssuingDistributionPoint extension
         only_contains_attribute_certs = False

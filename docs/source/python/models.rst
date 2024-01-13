@@ -63,7 +63,6 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    ...   name='full',
    ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
    ...   parent=ca,  # some extensions are only valid for intermediate CAs
-   ...   issuer_url='http://full.example.com/full.der',
    ...
    ...   # Extensions for the certificate authority itself
    ...   extensions=[
@@ -81,11 +80,78 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    ...           value=x509.InhibitAnyPolicy(0)
    ...       )
    ...   ],
-   ...
-   ...   # CRL/OCSP URLs for signed certificates. These can be changed later:
-   ...   crl_url=['http://full.example.com/full.crl'],
-   ...   ocsp_url='http://full.example.com/ocsp',
    ... )
+
+You can also add extensions to be added to certificates when they are signed by this CA. These parameters can
+always be added later (but of course, only new certificates will have the changed values).
+
+.. NOTE::
+
+   The Authority Information Access extension and the CRL Distribution Points extension are added
+   automatically if you have the :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` setting configured.
+   If you still give the parameters to ``init()``, the default values will be overwritten.
+
+.. code-block:: python
+
+   >>> from cryptography import x509
+   >>> from cryptography.x509.oid import AuthorityInformationAccessOID, CertificatePoliciesOID, ExtensionOID
+   >>> authority_information_access = x509.Extension(
+   ...     oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+   ...     critical=False,  # RFC 5280 says it should not be critical
+   ...     value=x509.AuthorityInformationAccess(
+   ...         [
+   ...             x509.AccessDescription(
+   ...                 access_method=AuthorityInformationAccessOID.OCSP,
+   ...                 access_location=x509.UniformResourceIdentifier("http://ca.example.com/ocsp")
+   ...             )
+   ...         ]
+   ...     )
+   ... )
+   >>> certificate_policies = x509.Extension(
+   ...     oid=ExtensionOID.CERTIFICATE_POLICIES,
+   ...     critical=False,  # RFC 5280 says it should not be critical
+   ...     value=x509.CertificatePolicies(
+   ...          [
+   ...              x509.PolicyInformation(
+   ...                  policy_identifier=CertificatePoliciesOID.CPS_USER_NOTICE,
+   ...                  policy_qualifiers=["https://ca.example.com/cps"]
+   ...              )
+   ...          ]
+   ...     )
+   ... )
+   >>> crl_distribution_points = x509.Extension(
+   ...     oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+   ...     critical=False,
+   ...     value=x509.CRLDistributionPoints(
+   ...         [
+   ...             x509.DistributionPoint(
+   ...                 full_name=[x509.UniformResourceIdentifier("http://ca.example.com/crl")],
+   ...                 relative_name=None,
+   ...                 crl_issuer=None,
+   ...                 reasons=None
+   ...             )
+   ...         ]
+   ...     )
+   ... )
+   >>> issuer_alternative_name = x509.Extension(
+   ...     oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+   ...     critical=False,
+   ...     value=x509.IssuerAlternativeName(
+   ...         [
+   ...             x509.UniformResourceIdentifier("https://ca.example.com")
+   ...         ]
+   ...     )
+   ... )
+   >>> CertificateAuthority.objects.init(
+   ...   name='add-extensions',
+   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "add-extensions")]),
+   ...   sign_authority_information_access=authority_information_access,
+   ...   sign_certificate_policies=certificate_policies,
+   ...   sign_crl_distribution_points=crl_distribution_points,
+   ...   sign_issuer_alternative_name=None,
+   ... )
+   <CertificateAuthority: add-extensions>
+
 
 There are some more parameters to configure how the CA will be signed::
 

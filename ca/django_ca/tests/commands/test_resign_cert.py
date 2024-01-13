@@ -20,7 +20,13 @@ from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import (
+    AuthorityInformationAccessOID,
+    CertificatePoliciesOID,
+    ExtendedKeyUsageOID,
+    ExtensionOID,
+    NameOID,
+)
 
 from django.test import TestCase
 from django.utils import timezone
@@ -94,10 +100,9 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         )  # signing CA does not have this set
 
         # Some properties come from the ca
-        if new_ca.crl_url:
+        if new_ca.sign_crl_distribution_points:
             self.assertEqual(
-                new.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-                crl_distribution_points(distribution_point([uri(new_ca.crl_url)])),
+                new.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], new_ca.sign_crl_distribution_points
             )
         else:
             self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, new.x509_extensions)
@@ -148,7 +153,16 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_test_all_extensions_cert_with_overrides(self) -> None:
         """Test resigning a certificate with adding new extensions."""
-        self.ca.crl_url = "http://ca.crl.example.com"
+        self.assertIsNotNone(self.ca.sign_authority_information_access)
+        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        self.ca.sign_certificate_policies = certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
+            )
+        )
+        self.ca.sign_issuer_alternative_name = issuer_alternative_name(
+            uri("http://issuer-alt-name.test-only-ca.example.com")
+        )
         self.ca.save()
 
         orig = self.certs["all-extensions"]
@@ -291,7 +305,16 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides(self) -> None:
         """Test resigning a certificate with adding new extensions."""
-        self.ca.crl_url = "http://ca.crl.example.com"
+        self.assertIsNotNone(self.ca.sign_authority_information_access)
+        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        self.ca.sign_certificate_policies = certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
+            )
+        )
+        self.ca.sign_issuer_alternative_name = issuer_alternative_name(
+            uri("http://issuer-alt-name.test-only-ca.example.com")
+        )
         self.ca.save()
 
         orig = self.certs["no-extensions"]
@@ -391,8 +414,15 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides_with_non_default_critical(self) -> None:
         """Test resigning a certificate with adding new extensions with non-default critical values."""
-        self.ca.crl_url = "http://ca.crl.example.com"
+        self.assertIsNotNone(self.ca.sign_authority_information_access)
+        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        self.ca.sign_certificate_policies = certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
+            )
+        )
         self.ca.save()
+
         orig = self.certs["no-extensions"]
         with self.assertCreateCertSignals():
             stdout, stderr = self.cmd(

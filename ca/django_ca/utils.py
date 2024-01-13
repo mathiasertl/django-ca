@@ -35,7 +35,6 @@ from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import get_storage_class
-from django.core.validators import URLValidator
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
@@ -291,17 +290,6 @@ def is_power2(num: int) -> bool:
     False
     """
     return num != 0 and ((num & (num - 1)) == 0)
-
-
-def multiline_url_validator(value: str) -> None:
-    """Validate that a TextField contains one valid URL per line.
-
-    .. seealso:: https://docs.djangoproject.com/en/1.9/ref/validators/
-    """
-    validator = URLValidator()
-
-    for line in value.splitlines():
-        validator(line)
 
 
 def add_colons(value: str, pad: str = "0") -> str:

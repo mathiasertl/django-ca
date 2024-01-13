@@ -97,14 +97,22 @@ class Command(BaseViewCommand):
             self.stdout.write("\nCertificate extensions:")
             self.print_extensions(ca)
 
-        self.stdout.write("\nCertificate extensions for signed certificates:")
-        self.stdout.write(f"* Certificate Revocation List (CRL): {ca.crl_url or None}")
-        self.stdout.write(f"* Issuer URL: {ca.issuer_url or None}")
-        self.stdout.write(f"* OCSP URL: {ca.ocsp_url or None}")
-
-        if ca.sign_certificate_policies:
-            self.print_extension(ca.sign_certificate_policies)
-        if ca.sign_issuer_alternative_name:
-            self.print_extension(ca.sign_issuer_alternative_name)
+        if (
+            ca.sign_authority_information_access
+            or ca.sign_certificate_policies
+            or ca.sign_crl_distribution_points
+            or ca.sign_issuer_alternative_name
+        ):
+            self.stdout.write("\nCertificate extensions for signed certificates:")
+            if ca.sign_authority_information_access:
+                self.print_extension(ca.sign_authority_information_access)
+            if ca.sign_certificate_policies:
+                self.print_extension(ca.sign_certificate_policies)
+            if ca.sign_crl_distribution_points:
+                self.print_extension(ca.sign_crl_distribution_points)
+            if ca.sign_issuer_alternative_name:
+                self.print_extension(ca.sign_issuer_alternative_name)
+        else:
+            self.stdout.write("\nNo certificate extensions for signed certificates.")
 
         self.output_footer(ca, pem=pem, wrap=wrap)

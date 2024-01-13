@@ -33,6 +33,7 @@ from django.core.management.base import (
     OutputWrapper,
 )
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
@@ -124,6 +125,37 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
 class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
     """Base class for most/all management commands."""
 
+    def add_authority_information_access_group(
+        self,
+        parser: CommandParser,
+        description: "StrOrPromise" = "",
+        name: str = f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
+        prefix: str = "",
+    ) -> None:
+        """Add argument group for the Authority Information Access extension."""
+        dest_prefix = prefix.replace("-", "_")
+        if not description:
+            description = _(
+                "Information about the issuer of the CA. These options only work for intermediate CAs. "
+                "Default values are based on the default hostname (see above) and work out of the box if a "
+                "webserver is configured. Options can be given multiple times to add multiple values."
+            )
+        group = parser.add_argument_group(name, str(description))
+        group.add_argument(
+            f"--{prefix}ocsp-responder",
+            dest=f"{dest_prefix}authority_information_access",
+            action=actions.AuthorityInformationAccessAction,
+            access_method=AuthorityInformationAccessOID.OCSP,
+            help="URL of an OCSP responder.",
+        )
+        group.add_argument(
+            f"--{prefix}ca-issuer",
+            dest=f"{dest_prefix}authority_information_access",
+            action=actions.AuthorityInformationAccessAction,
+            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+            help="URL to the certificate of your CA (in DER format).",
+        )
+
     def add_certificate_policies_group(
         self,
         parser: CommandParser,
@@ -166,31 +198,54 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             help_suffix="It is usually not marked as critical.",
         )
 
+    def add_crl_distribution_points_group(
+        self,
+        parser: CommandParser,
+        description: "StrOrPromise" = "",
+        name: str = f"{constants.EXTENSION_NAMES[ExtensionOID.CRL_DISTRIBUTION_POINTS]} extension",
+        prefix: str = "",
+    ) -> None:
+        """Add argument group for the CRL Distribution Points extension."""
+        help_text = (
+            "Add NAME (usually a URL) to the endpoints where a CRL can be retrieved. This option can be "
+            "given multiple times and replaces the default endpoint."
+        )
+
+        group = parser.add_argument_group(name, str(description))
+
+        group.add_argument(
+            f"--{prefix}crl-full-name",
+            dest=f"{prefix.replace('-', '_')}crl_full_names",
+            type=actions.general_name_type,
+            action="append",
+            metavar="NAME",
+            help=help_text,
+        )
+        self.add_critical_option(group, ExtensionOID.CRL_DISTRIBUTION_POINTS, prefix=prefix)
+
     def add_certificate_authority_sign_extension_groups(self, parser: CommandParser) -> None:
         """Add CA arguments."""
-        group = parser.add_argument_group(
+        # Empty section to add an extra header for this section:
+        parser.add_argument_group(
             "X509 v3 certificate extensions for signed certificates",
             "Extensions added when signing certificates.",
         )
-        group.add_argument(
-            "--sign-ca-issuer",
-            metavar="NAME",
-            action=actions.URLAction,
-            default="",
-            help="URL to the certificate of your CA (in DER format).",
-        )
-        group.add_argument(
-            "--sign-crl-full-name",
-            action=actions.MultipleURLAction,
-            metavar="NAME",
-            help="URL to a certificate revocation list.",
-        )
-        group.add_argument(
-            "--sign-ocsp-responder",
-            metavar="NAME",
-            default="",
-            action=actions.URLAction,
-            help="URL of an OCSP responder.",
+
+        # Common help text for extensions that are usually configured automatically.
+        default_hostname_suffix: "StrOrPromise" = ""
+        if ca_settings.CA_DEFAULT_HOSTNAME:  # pragma: no branch
+            default_hostname_suffix = _(
+                " This extension is configured automatically using the CA_DEFAULT_HOSTNAME if not overridden "
+                "by options in this section."
+            )
+
+        # Add Authority Information Access extension
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
+        self.add_authority_information_access_group(
+            parser,
+            f"{ext_name} extension added to a certificate when signing it.{default_hostname_suffix}",
+            name=f"{ext_name} extension in certificates",
+            prefix="sign-",
         )
 
         # Add Certificate Policies extension
@@ -201,6 +256,17 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
             name=f"{ext_name} extension in certificates",
             dest="sign_certificate_policies",
             allow_any_policy=True,
+            prefix="sign-",
+        )
+
+        # Add CRL Distribution Points extension
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+        self.add_crl_distribution_points_group(
+            parser,
+            description=(
+                f"{ext_name} extension added to a certificate when signing it.{default_hostname_suffix}"
+            ),
+            name=f"{ext_name} extension in certificates",
             prefix="sign-",
         )
 
@@ -355,67 +421,6 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         # COVERAGE NOTE: Already covered by argparse
         raise ValueError(f"{name_format}: Unknown subject format.")  # pragma: no cover
 
-    def add_authority_information_access_group(
-        self,
-        parser: CommandParser,
-        legacy_ocsp_args: Tuple[str, ...] = (),
-        legacy_issuer_args: Tuple[str, ...] = (),
-    ) -> None:
-        """Add argument group for the Authority Information Access extension."""
-        group = parser.add_argument_group(
-            f"{constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]} extension",
-            """Information about the issuer of the CA. These options only work for intermediate CAs. Default
-            values are based on the default hostname (see above) and work out of the box if a webserver is
-            configured. Options can be given multiple times to add multiple values.""",
-        )
-        group.add_argument(
-            "--ocsp-responder",
-            *legacy_ocsp_args,
-            dest="authority_information_access",
-            action=actions.AuthorityInformationAccessAction,
-            access_method=AuthorityInformationAccessOID.OCSP,
-            help="URL of an OCSP responder.",
-        )
-        group.add_argument(
-            "--ca-issuer",
-            *legacy_issuer_args,
-            dest="authority_information_access",
-            action=actions.AuthorityInformationAccessAction,
-            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-            help="URL to the certificate of your CA (in DER format).",
-        )
-
-    def add_crl_distribution_points_group(
-        self,
-        parser: CommandParser,
-        help_suffix: str,
-        extra_args: Tuple[str, ...] = (),
-        description_suffix: str = "",
-    ) -> None:
-        """Add argument group for the CRL Distribution Points extension."""
-        ext_name = constants.EXTENSION_NAMES[ExtensionOID.CRL_DISTRIBUTION_POINTS]
-        description = "This extension defines how a Certificate Revocation List (CRL) can be obtained."
-        help_text = (
-            "Add NAME (usually a URL) to the endpoints where a CRL can be retrieved. This option can be "
-            f"given multiple times and replaces the default endpoint. {help_suffix}"
-        )
-
-        if description_suffix:
-            description += f" {description_suffix}"
-
-        group = parser.add_argument_group(f"{ext_name} extension", description)
-
-        group.add_argument(
-            "--crl-full-name",
-            *extra_args,
-            dest="crl_full_names",
-            type=actions.general_name_type,
-            action="append",
-            metavar="NAME",
-            help=help_text,
-        )
-        self.add_critical_option(group, ExtensionOID.CRL_DISTRIBUTION_POINTS)
-
     def add_extended_key_usage_group(self, parser: CommandParser) -> None:
         """Add argument group for the Extended Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.EXTENDED_KEY_USAGE]
@@ -511,7 +516,11 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             "certificate was issued and the purposes for which it may be used.",
         )
         self.add_crl_distribution_points_group(
-            parser, "This option will override distribution points configured by the CA."
+            parser,
+            _(
+                "This extension defines how a Certificate Revocation List (CRL) can be obtained. This option "
+                "will override distribution points configured by the CA."
+            ),
         )
         self.add_issuer_alternative_name_group(parser)
         self.add_extended_key_usage_group(parser)

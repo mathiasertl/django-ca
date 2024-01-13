@@ -351,11 +351,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             {
                 "description": _("Information to add to newly signed certificates."),
                 "fields": (
-                    "crl_url",
                     "crl_number",
-                    "issuer_url",
-                    "ocsp_url",
-                    "issuer_alt_name",
                     "sign_authority_information_access",
                     "sign_certificate_policies",
                     "sign_crl_distribution_points",

@@ -23,7 +23,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings
+from django_ca import ca_settings, constants
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
@@ -57,13 +57,15 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     def handle(  # noqa: PLR0913
         self,
         ca: CertificateAuthority,
-        sign_ca_issuer: str,
-        sign_crl_full_name: List[str],
-        sign_ocsp_responder: str,
         enabled: Optional[bool],
-        # Certificate Policies extension
+        # Authority Information Access extension  for certificates (MUST be non-critical)
+        sign_authority_information_access: Optional[x509.AuthorityInformationAccess],
+        # Certificate Policies extension for certificates
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
+        # CRL Distribution Points extension for certificates
+        sign_crl_full_names: Optional[List[x509.GeneralName]],
+        sign_crl_distribution_points_critical: bool,
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
@@ -71,21 +73,34 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         ocsp_response_validity: Optional[int],
         **options: Any,
     ) -> None:
-        if sign_ca_issuer:
-            ca.issuer_url = sign_ca_issuer
-        if sign_issuer_alternative_name is not None:
-            ca.sign_issuer_alternative_name = x509.Extension(
-                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False, value=sign_issuer_alternative_name
+        # TODO: it's currently not possible to clear sign_ fields
+        if sign_authority_information_access is not None:
+            ca.sign_authority_information_access = x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                value=sign_authority_information_access,
             )
-        if sign_ocsp_responder:
-            ca.ocsp_url = sign_ocsp_responder
-        if sign_crl_full_name:
-            ca.crl_url = "\n".join(sign_crl_full_name)
         if sign_certificate_policies is not None:
             ca.sign_certificate_policies = x509.Extension(
                 oid=ExtensionOID.CERTIFICATE_POLICIES,
                 critical=sign_certificate_policies_critical,
                 value=sign_certificate_policies,
+            )
+        if sign_crl_full_names is not None:
+            ca.sign_crl_distribution_points = x509.Extension(
+                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                critical=sign_crl_distribution_points_critical,
+                value=x509.CRLDistributionPoints(
+                    [
+                        x509.DistributionPoint(
+                            full_name=sign_crl_full_names, relative_name=None, crl_issuer=None, reasons=None
+                        )
+                    ]
+                ),
+            )
+        if sign_issuer_alternative_name is not None:
+            ca.sign_issuer_alternative_name = x509.Extension(
+                oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False, value=sign_issuer_alternative_name
             )
 
         if enabled is not None:

@@ -19,7 +19,14 @@ from django.test import TestCase
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import issuer_alternative_name, override_tmpcadir, uri
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    crl_distribution_points,
+    distribution_point,
+    issuer_alternative_name,
+    override_tmpcadir,
+    uri,
+)
 
 
 class EditCATestCase(TestCaseMixin, TestCase):
@@ -58,15 +65,14 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_signing_extensions(self) -> None:
         """Test editing extensions used for signing certificates."""
-        crl = "\n".join(self.crl)
         stdout, stderr = self.cmd_e2e(
             [
                 "edit_ca",
                 self.ca.serial,
-                f"--sign-ca-issue={self.issuer}",
+                f"--sign-ca-issuer={self.issuer}",
                 f"--sign-issuer-alternative-name={self.ian}",
                 f"--sign-ocsp-responder={self.ocsp_url}",
-                f"--sign-crl-full-name={crl}",
+                f"--sign-crl-full-name={self.crl[0]}",
                 # Certificate Policies extension
                 "--sign-policy-identifier=1.2.3",
                 "--sign-certification-practice-statement=https://cps.example.com",
@@ -76,11 +82,15 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertEqual(ca.issuer_url, self.issuer)
+        ca: CertificateAuthority = CertificateAuthority.objects.get(serial=self.ca.serial)
+        self.assertEqual(
+            ca.sign_authority_information_access,
+            authority_information_access(ocsp=[uri(self.ocsp_url)], ca_issuers=[uri(self.issuer)]),
+        )
         self.assertEqual(ca.sign_issuer_alternative_name, issuer_alternative_name(uri(self.ian)))
-        self.assertEqual(ca.ocsp_url, self.ocsp_url)
-        self.assertEqual(ca.crl_url, "\n".join(self.crl))
+        self.assertEqual(
+            ca.sign_crl_distribution_points, crl_distribution_points(distribution_point([uri(self.crl[0])]))
+        )
 
         # Certificate Policies extension
         self.assertEqual(
@@ -234,11 +244,10 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertEqual(ca.issuer_url, self.ca.issuer_url)
-        self.assertEqual(ca.sign_issuer_alternative_name, self.ca.sign_issuer_alternative_name)
+        self.assertEqual(ca.sign_authority_information_access, self.ca.sign_authority_information_access)
         self.assertEqual(ca.sign_certificate_policies, self.ca.sign_certificate_policies)
-        self.assertEqual(ca.ocsp_url, self.ca.ocsp_url)
-        self.assertEqual(ca.crl_url, self.ca.crl_url)
+        self.assertEqual(ca.sign_crl_distribution_points, self.ca.sign_crl_distribution_points)
+        self.assertEqual(ca.sign_issuer_alternative_name, self.ca.sign_issuer_alternative_name)
         self.assertTrue(ca.enabled)
 
         # disable it again

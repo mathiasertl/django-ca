@@ -19,9 +19,8 @@ import itertools
 import os
 import typing
 import unittest
-from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Iterable, Iterator, List, Tuple, Type
+from typing import Iterable, List, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -30,8 +29,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID, ObjectIdentifier
 
-import django
-from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
 import pytest
@@ -50,7 +47,6 @@ from django_ca.utils import (
     get_cert_builder,
     is_power2,
     merge_x509_names,
-    multiline_url_validator,
     parse_encoding,
     parse_expires,
     parse_general_name,
@@ -1061,51 +1057,6 @@ class MergeX509NamesTestCase(TestCase):
             merge_x509_names(unsortable, sortable)
         with self.assertRaisesRegex(ValueError, r"Unsortable name"):
             merge_x509_names(sortable, unsortable)
-
-
-class MultilineURLValidatorTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.multiline_url_validator`."""
-
-    @contextmanager
-    def assertValidationError(self, value: str) -> Iterator[None]:  # pylint: disable=invalid-name
-        """Wrapper to assert a validation error.
-
-        Django 3.2 adds the value to ValidationError. This method turns into a useless one-liner as soon as we
-        drop support for Django<3.1.
-        """
-        with self.assertRaises(ValidationError) as e:
-            yield
-
-        if django.VERSION[:2] < (3, 2):
-            params = None
-        else:
-            params = {"value": value}
-
-        self.assertEqual(e.exception.args, ("Enter a valid URL.", "invalid", params))
-
-    def test_basic(self) -> None:
-        """Basic working tests."""
-        multiline_url_validator("")
-        multiline_url_validator("http://example.com")
-        multiline_url_validator("http://example.com\nhttp://www.example.org")
-        multiline_url_validator(
-            """http://example.com\nhttp://www.example.org
-http://www.example.net"""
-        )
-
-    def test_error(self) -> None:
-        """Test various invalid cases."""
-        with self.assertValidationError("foo"):
-            multiline_url_validator("foo")
-
-        with self.assertValidationError("foo"):
-            multiline_url_validator("foo\nhttp://www.example.com")
-
-        with self.assertValidationError("foo"):
-            multiline_url_validator("http://www.example.com\nfoo")
-
-        with self.assertRaises(ValidationError):
-            multiline_url_validator("http://www.example.com\nfoo\nhttp://example.org")
 
 
 class GetCertBuilderTestCase(TestCase):

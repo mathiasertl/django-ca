@@ -389,7 +389,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_extensions(self) -> None:
         """Test setting extensions for the signed certificate."""
-        self.ca.crl_url = "http://ca.crl.example.com"
         self.ca.sign_authority_information_access = authority_information_access(
             ca_issuers=[uri("http://issuer.ca.example.com")], ocsp=[uri("http://ocsp.ca.example.com")]
         )
@@ -511,7 +510,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_extensions_with_non_default_critical(self) -> None:
         """Test setting extensions with non-default critical values."""
-        self.ca.crl_url = "http://ca.crl.example.com"
+        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
         self.ca.save()
 
         stdin = self.csr_pem.encode()

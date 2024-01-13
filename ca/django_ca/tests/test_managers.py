@@ -71,13 +71,23 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.subject, subject)
         self.assertTrue(ca.enabled)
         self.assertEqual(ca.parent, parent)
-        self.assertEqual(ca.crl_url, f"{base_url}crl/{ca.serial}/")
-        self.assertEqual(ca.crl_number, '{"scope": {}}')
-        self.assertEqual(ca.issuer_url, f"{base_url}issuer/{parent_serial}.der")
-        self.assertEqual(ca.ocsp_url, f"{base_url}ocsp/{ca.serial}/cert/")
-        self.assertIsNone(ca.sign_certificate_policies)
-        self.assertIsNone(ca.sign_issuer_alternative_name)
         self.assertAuthorityKeyIdentifier(parent_ca, ca)
+        self.assertEqual(ca.crl_number, '{"scope": {}}')
+
+        # Assert signing extensions
+        self.assertEqual(
+            ca.sign_authority_information_access,
+            authority_information_access(
+                ocsp=[uri(f"{base_url}ocsp/{ca.serial}/cert/")],
+                ca_issuers=[uri(f"{base_url}issuer/{parent_serial}.der")],
+            ),
+        )
+        self.assertIsNone(ca.sign_certificate_policies)
+        self.assertEqual(
+            ca.sign_crl_distribution_points,
+            crl_distribution_points(distribution_point([uri(f"{base_url}crl/{ca.serial}/")])),
+        )
+        self.assertIsNone(ca.sign_issuer_alternative_name)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
@@ -180,11 +190,10 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ndh.example.com")])
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
-        self.assertEqual(ca.crl_url, "")
         self.assertEqual(ca.crl_number, '{"scope": {}}')
-        self.assertEqual(ca.issuer_url, "")
-        self.assertEqual(ca.ocsp_url, "")
+        self.assertIsNone(ca.sign_authority_information_access)
         self.assertIsNone(ca.sign_certificate_policies)
+        self.assertIsNone(ca.sign_crl_distribution_points)
         self.assertIsNone(ca.sign_issuer_alternative_name)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

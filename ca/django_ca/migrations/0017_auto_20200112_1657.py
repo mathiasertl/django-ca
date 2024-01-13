@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='certificateauthority',
             name='crl_url',
-            field=models.TextField(blank=True, default='', help_text='URLs, one per line, where you can retrieve the CRL.', validators=[django_ca.utils.multiline_url_validator], verbose_name='CRL URLs'),
+            field=models.TextField(blank=True, default='', help_text='URLs, one per line, where you can retrieve the CRL.', verbose_name='CRL URLs'),
         ),
         migrations.AlterField(
             model_name='certificateauthority',

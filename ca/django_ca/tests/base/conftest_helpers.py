@@ -24,6 +24,7 @@ import packaging
 
 import cryptography
 from cryptography import x509
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 import django
 from django.conf import settings
@@ -34,8 +35,10 @@ from _pytest.fixtures import SubRequest
 from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
+from django_ca import constants
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
+from django_ca.tests.base.utils import crl_distribution_points, distribution_point, uri
 from django_ca.utils import int_to_hex
 
 
@@ -166,8 +169,29 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
         if parent_name := data.get("parent"):
             parent = request.getfixturevalue(parent_name)
 
+        access_descriptions = [
+            x509.AccessDescription(
+                access_method=AuthorityInformationAccessOID.OCSP, access_location=uri(data["ocsp_url"])
+            ),
+            x509.AccessDescription(
+                access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                access_location=uri(data["issuer_url"]),
+            ),
+        ]
+
+        kwargs = {
+            "sign_crl_distribution_points": crl_distribution_points(
+                distribution_point([uri(data["crl_url"])])
+            ),
+            "sign_authority_information_access": x509.Extension(
+                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                value=x509.AuthorityInformationAccess(access_descriptions),
+            ),
+        }
+
         with freeze_time(TIMESTAMPS["everything_valid"]):
-            ca = load_ca(name, pub, parent)
+            ca = load_ca(name, pub, parent, **kwargs)
 
         yield ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
@@ -231,9 +255,29 @@ def load_ca(
     ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": serial})
     issuer_path = reverse("django_ca:issuer", kwargs={"serial": serial})
 
-    kwargs.setdefault("crl_url", f"http://{hostname}{crl_path}")
-    kwargs.setdefault("issuer_url", f"http://{hostname}{issuer_path}")
-    kwargs.setdefault("ocsp_url", f"http://{hostname}{ocsp_path}")
+    kwargs.setdefault(
+        "sign_crl_distribution_points",
+        crl_distribution_points(distribution_point([uri(f"http://{hostname}{crl_path}")])),
+    )
+    access_descriptions = [
+        x509.AccessDescription(
+            access_method=AuthorityInformationAccessOID.OCSP,
+            access_location=uri(f"http://{hostname}{ocsp_path}"),
+        ),
+        x509.AccessDescription(
+            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+            access_location=uri(f"http://{hostname}{issuer_path}"),
+        ),
+    ]
+
+    kwargs.setdefault(
+        "sign_authority_information_access",
+        x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            value=x509.AuthorityInformationAccess(access_descriptions),
+        ),
+    )
 
     ca = CertificateAuthority(name=name, private_key_path=f"{name}.key", parent=parent, **kwargs)
     ca.update_certificate(pub)  # calculates serial etc

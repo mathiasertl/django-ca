@@ -30,7 +30,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from django.conf import settings
@@ -63,8 +63,14 @@ from django_ca.signals import (
 from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import basic_constraints, certificate_policies, uri
-from django_ca.utils import ca_storage, parse_general_name
+from django_ca.tests.base.utils import (
+    basic_constraints,
+    certificate_policies,
+    crl_distribution_points,
+    distribution_point,
+    uri,
+)
+from django_ca.utils import ca_storage
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -465,17 +471,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     signer.get_authority_key_identifier_extension(),
                 )
 
-                if isinstance(cert, Certificate) and signer.crl_url:
-                    full_name = [parse_general_name(name) for name in signer.crl_url.split()]
+                if isinstance(cert, Certificate) and signer.sign_crl_distribution_points:
                     expected.setdefault(
-                        ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                        self.crl_distribution_points(full_name=full_name),
+                        ExtensionOID.CRL_DISTRIBUTION_POINTS, signer.sign_crl_distribution_points
                     )
 
-                if isinstance(cert, Certificate):
-                    aia = signer.get_authority_information_access_extension()
-                    if aia:  # pragma: no branch
-                        expected.setdefault(aia.oid, aia)
+                if isinstance(cert, Certificate) and signer.sign_authority_information_access:
+                    expected.setdefault(
+                        ExtensionOID.AUTHORITY_INFORMATION_ACCESS, signer.sign_authority_information_access
+                    )
 
             ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
             expected.setdefault(
@@ -846,8 +850,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     def get_idp_full_name(self, ca: CertificateAuthority) -> Optional[List[x509.UniformResourceIdentifier]]:
         """Get the IDP full name for `ca`."""
-        crl_url = [url.strip() for url in ca.crl_url.split()]
-        return [uri(c) for c in crl_url] or None
+        if ca.sign_crl_distribution_points is None:  # pragma: no cover
+            return None
+        full_names = []
+        for dpoint in ca.sign_crl_distribution_points.value:
+            if dpoint.full_name:  # pragma: no branch
+                full_names += dpoint.full_name
+        if full_names:  # pragma: no branch
+            return full_names
+        return None  # pragma: no cover
 
     @property
     def hostname(self) -> str:
@@ -928,9 +939,32 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             parent = CertificateAuthority.objects.get(name=CERT_DATA[name]["parent"])
 
         # set some default values
-        kwargs.setdefault("crl_url", CERT_DATA[name].get("crl_url", ""))
-        kwargs.setdefault("ocsp_url", CERT_DATA[name].get("ocsp_url", ""))
-        kwargs.setdefault("issuer_url", CERT_DATA[name].get("issuer_url", ""))
+        if crl_url := CERT_DATA[name].get("crl_url", ""):
+            kwargs.setdefault(
+                "sign_crl_distribution_points", crl_distribution_points(distribution_point([uri(crl_url)]))
+            )
+        access_descriptions = []
+        if ocsp_url := CERT_DATA[name].get("ocsp_url", ""):
+            access_descriptions.append(
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.OCSP, access_location=uri(ocsp_url)
+                )
+            )
+        if issuer_url := CERT_DATA[name].get("issuer_url", ""):
+            access_descriptions.append(
+                x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri(issuer_url)
+                )
+            )
+        if access_descriptions:
+            kwargs.setdefault(
+                "sign_authority_information_access",
+                x509.Extension(
+                    oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                    value=x509.AuthorityInformationAccess(access_descriptions),
+                ),
+            )
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
         ca.update_certificate(parsed)  # calculates serial etc

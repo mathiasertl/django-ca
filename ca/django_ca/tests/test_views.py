@@ -127,10 +127,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     @override_tmpcadir()
     def test_full_scope(self) -> None:
         """Test getting CRL with full scope."""
-        full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[uri(full_name)])
-
-        self.ca.crl_url = full_name
+        full_name = self.ca.sign_crl_distribution_points.value[0].full_name  # type: ignore[union-attr]
+        idp = self.get_idp(full_name=full_name)
         self.ca.save()
 
         response = self.client.get(reverse("full", kwargs={"serial": self.ca.serial}))

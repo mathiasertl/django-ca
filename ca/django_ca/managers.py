@@ -235,9 +235,6 @@ class CertificateAuthorityManager(
         parent: Optional["CertificateAuthority"] = None,
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,
-        issuer_url: str = "",
-        crl_url: Optional[Iterable[str]] = None,
-        ocsp_url: str = "",
         password: Optional[Union[str, bytes]] = None,
         parent_password: Optional[Union[str, bytes]] = None,
         elliptic_curve: Optional[ec.EllipticCurve] = None,
@@ -253,7 +250,9 @@ class CertificateAuthorityManager(
         acme_requires_contact: bool = True,
         acme_profile: Optional[str] = None,
         openssh_ca: bool = False,
+        sign_authority_information_access: Optional[x509.Extension[x509.AuthorityInformationAccess]] = None,
         sign_certificate_policies: Optional[x509.Extension[x509.CertificatePolicies]] = None,
+        sign_crl_distribution_points: Optional[x509.Extension[x509.CRLDistributionPoints]] = None,
         sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
         ocsp_responder_key_validity: Optional[int] = None,
         ocsp_response_validity: Optional[int] = None,
@@ -263,7 +262,10 @@ class CertificateAuthorityManager(
 
         .. versionchanged:: 1.28.0
 
-           The `issuer_alt_name` parameter was renamed to `sign_issuer_alternative_name`.
+           * The `issuer_alt_name` parameter was renamed to `sign_issuer_alternative_name`.
+           * The `crl_url` option was removed in favor of `sign_crl_distribution_points`.
+           * The `issuer_url` and `ocsp_url` options where removed in favor of
+             `sign_authority_information_access`.
 
         .. versionchanged:: 1.26.0
 
@@ -293,13 +295,6 @@ class CertificateAuthorityManager(
             different hostname. Set to ``False`` to disable the hostname.
         path_length : int, optional
             Value of the path length attribute for the Basic Constraints extension.
-        issuer_url : str
-            URL for the DER/ASN1 formatted certificate that is signing certificates.
-        crl_url : list of str, optional
-            CRL URLs used for certificates signed by this CA.
-        ocsp_url : str, optional
-            OCSP URL used for certificates signed by this CA. The default is no value, unless
-            :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` is set.
         password : bytes or str, optional
             Password to encrypt the private key with.
         parent_password : bytes or str, optional
@@ -335,11 +330,14 @@ class CertificateAuthorityManager(
             Set to ``False`` if you do not want to force clients to register with an email address.
         openssh_ca : bool, optional
             Set to ``True`` if you want to use this to use this CA for signing OpenSSH certs.
+        sign_authority_information_access : :py:class:`~cg:cryptography.x509.Extension`, optional
+            Add the given Authority Information Access extension when signing certificates.
         sign_certificate_policies : :py:class:`~cg:cryptography.x509.Extension`, optional
             Add the given Certificate Policies extension when signing certificates.
+        sign_crl_distribution_points : :py:class:`~cg:cryptography.x509.Extension`, optional
+            Add the given CRL Distribution Points extension when signing certificates.
         sign_issuer_alternative_name : :py:class:`~cg:cryptography.x509.Extension`, optional
-            IssuerAlternativeName used when signing certificates.  The value of the extension must be an
-            :py:class:`~cg:cryptography.x509.IssuerAlternativeName` instance.
+            Add the given Issuer Alternative Name extension when signing certificates.
         ocsp_responder_key_validity : int, optional
             How long (in days) OCSP responder keys should be valid.
         ocsp_response_validity : int, optional
@@ -388,9 +386,6 @@ class CertificateAuthorityManager(
                 value=self.model.DEFAULT_KEY_USAGE,
             )
 
-        if crl_url is None:
-            crl_url = []
-
         serial = x509.random_serial_number()
 
         if default_hostname is None:
@@ -412,15 +407,44 @@ class CertificateAuthorityManager(
         if isinstance(default_hostname, str) and default_hostname:
             default_hostname = validate_hostname(default_hostname, allow_port=True)
 
-            # Set OCSP urls
-            if not ocsp_url:
+            if sign_authority_information_access is None:
+                # Calculate OCSP access description
                 ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": context["SERIAL_HEX"]})
                 ocsp_url = f"http://{default_hostname}{ocsp_path}"
-            if not issuer_url:
+                ocsp_access_description = x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.OCSP,
+                    access_location=x509.UniformResourceIdentifier(ocsp_url),
+                )
+
+                # Calculate CA Issuers access description
                 issuer_url = f"http://{default_hostname}/{context['CA_ISSUER_PATH']}"
-            if not crl_url:
+                ca_issuers_access_description = x509.AccessDescription(
+                    access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                    access_location=x509.UniformResourceIdentifier(issuer_url),
+                )
+
+                # Finally create the Authority Information Access extension
+                sign_authority_information_access = x509.Extension(
+                    oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+                    value=x509.AuthorityInformationAccess(
+                        [ca_issuers_access_description, ocsp_access_description]
+                    ),
+                )
+
+            if sign_crl_distribution_points is None:
                 crl_path = reverse("django_ca:crl", kwargs={"serial": context["SERIAL_HEX"]})
-                crl_url = [f"http://{default_hostname}{crl_path}"]
+                dpoint = x509.DistributionPoint(
+                    full_name=[x509.UniformResourceIdentifier(f"http://{default_hostname}{crl_path}")],
+                    relative_name=None,
+                    crl_issuer=None,
+                    reasons=None,
+                )
+                sign_crl_distribution_points = x509.Extension(
+                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+                    value=x509.CRLDistributionPoints([dpoint]),
+                )
 
             # Add extensions that make sense only for intermediate CAs
             if parent:
@@ -444,9 +468,6 @@ class CertificateAuthorityManager(
             parent=parent,
             subject=subject,
             path_length=path_length,
-            issuer_url=issuer_url,
-            crl_url=crl_url,
-            ocsp_url=ocsp_url,
             password=password,
             parent_password=parent_password,
             extensions=extensions,
@@ -457,7 +478,9 @@ class CertificateAuthorityManager(
             acme_registration=acme_registration,
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
+            sign_authority_information_access=sign_authority_information_access,
             sign_certificate_policies=sign_certificate_policies,
+            sign_crl_distribution_points=sign_crl_distribution_points,
             sign_issuer_alternative_name=sign_issuer_alternative_name,
             ocsp_responder_key_validity=ocsp_responder_key_validity,
             ocsp_response_validity=ocsp_response_validity,
@@ -492,14 +515,8 @@ class CertificateAuthorityManager(
 
         certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm)
 
-        # Normalize extensions for create()
-        crl_url = "\n".join(crl_url)
-
         ca: CertificateAuthority = self.model(
             name=name,
-            issuer_url=issuer_url,
-            ocsp_url=ocsp_url,
-            crl_url=crl_url,
             parent=parent,
             caa_identity=caa,
             website=website,
@@ -508,7 +525,9 @@ class CertificateAuthorityManager(
             acme_registration=acme_registration,
             acme_profile=acme_profile,
             acme_requires_contact=acme_requires_contact,
+            sign_authority_information_access=sign_authority_information_access,
             sign_certificate_policies=sign_certificate_policies,
+            sign_crl_distribution_points=sign_crl_distribution_points,
             sign_issuer_alternative_name=sign_issuer_alternative_name,
         )
 

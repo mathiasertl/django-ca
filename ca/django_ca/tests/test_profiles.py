@@ -19,7 +19,7 @@ from typing import Any, Dict
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.test import TestCase, override_settings
 
@@ -36,6 +36,8 @@ from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
+    crl_distribution_points,
+    distribution_point,
     dns,
     issuer_alternative_name,
     ocsp_no_check,
@@ -246,11 +248,12 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        # Add CRL url to CA
-        ca.crl_url = "https://crl.ca.example.com"
+        # Add CRL Distribution Points extension to CA
+        crl_url = "https://crl.ca.example.com"
+        ca.sign_crl_distribution_points = crl_distribution_points(distribution_point([uri(crl_url)]))
         ca.save()
 
-        added_crldp = self.crl_distribution_points([uri(ca.crl_url)])
+        added_crldp = self.crl_distribution_points([uri(crl_url)])
 
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(
@@ -349,9 +352,10 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        # Add CRL url to CA
-        ca.ocsp_url = "https://ocsp.ca.example.com"
-        ca.issuer_url = "https://issuer.ca.example.com"
+        # Set Authority Information Access extesion
+        ca.sign_authority_information_access = authority_information_access(
+            ca_issuers=[uri("https://issuer.ca.example.com")], ocsp=[uri("https://ocsp.ca.example.com")]
+        )
         ca.save()
 
         cert_issuers = uri("https://issuer.cert.example.com")
@@ -427,8 +431,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         )
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
 
-        ca.ocsp_url = "http://ocsp.example.com/ca"
-        ca.issuer_url = "http://issuer.example.com/issuer"
+        ca.sign_authority_information_access = authority_information_access(
+            ca_issuers=[uri("http://issuer.example.com/issuer")], ocsp=[uri("http://ocsp.example.com/ca")]
+        )
         ca.save()
 
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
@@ -469,9 +474,17 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             },
         )
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-
-        ca.ocsp_url = "http://ocsp.example.com/ca"
-        ca.issuer_url = "http://issuer.example.com/ca"
+        self.assertIsNotNone(ca.sign_authority_information_access)
+        ca_issuers_url = next(
+            ad
+            for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
+            if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+        ).access_location
+        ca_ocsp_url = next(
+            ad
+            for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
+            if ad.access_method == AuthorityInformationAccessOID.OCSP
+        ).access_location
         ca.save()
 
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
@@ -498,8 +511,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(
-                ocsp=[uri("http://ocsp.example.com/expected")],
-                ca_issuers=[uri("http://issuer.example.com/ca")],
+                ocsp=[uri("http://ocsp.example.com/expected")], ca_issuers=[ca_issuers_url]
             ),
         )
 
@@ -525,8 +537,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(
-                ocsp=[uri("http://ocsp.example.com/ca")],
-                ca_issuers=[uri("http://issuer.example.com/expected")],
+                ocsp=[ca_ocsp_url], ca_issuers=[uri("http://issuer.example.com/expected")]
             ),
         )
 

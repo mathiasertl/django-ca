@@ -32,7 +32,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding, load_pem_private_key
-from cryptography.x509.oid import AuthorityInformationAccessOID, CertificatePoliciesOID, ExtensionOID, NameOID
+from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.conf import settings
 from django.core.cache import cache
@@ -250,7 +250,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         crl = ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
 
-        ca.crl_url = full_name
+        ca.sign_crl_distribution_points = crl_distribution_points(distribution_point([uri(full_name)]))
         ca.save()
         crl = ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, crl_number=1, signer=ca, algorithm=ca.algorithm)
@@ -375,7 +375,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_no_idp(self) -> None:
         """Test a CRL with no IDP."""
         # CRLs require a full name (or only_some_reasons) if it's a full CRL
-        self.ca.crl_url = ""
+        self.ca.sign_crl_distribution_points = None
         self.ca.save()
         crl = self.ca.get_crl().public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=None, algorithm=self.ca.algorithm)
@@ -668,36 +668,34 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             self.assertNotEqual(cert_renewed.serial, cert.serial)
 
 
-def test_empty_extensions_for_certificiate(root: CertificateAuthority) -> None:
+def test_empty_extensions_for_certificate(root: CertificateAuthority) -> None:
     """Test extensions_for_certificate property when no values are set."""
     root.sign_certificate_policies = None
     root.sign_issuer_alternative_name = None
-    root.issuer_url = ""
-    root.ocsp_url = ""
-    root.crl_url = ""
+    root.sign_crl_distribution_points = None
+    root.sign_authority_information_access = None
     root.save()
     assert root.extensions_for_certificate == {}
 
 
-def test_extensions_for_certificiate(root: CertificateAuthority) -> None:
+def test_extensions_for_certificate(root: CertificateAuthority) -> None:
     """Test extensions_for_certificate property."""
+    root.sign_authority_information_access = authority_information_access(
+        ca_issuers=[uri("http://issuer.example.com")], ocsp=[uri("http://ocsp.example.com")]
+    )
     root.sign_certificate_policies = certificate_policies(
         x509.PolicyInformation(policy_identifier=CertificatePoliciesOID.ANY_POLICY, policy_qualifiers=None)
     )
+    root.sign_crl_distribution_points = crl_distribution_points(
+        distribution_point([uri("http://crl.example.com")])
+    )
     root.sign_issuer_alternative_name = issuer_alternative_name(uri("http://ian.example.com"))
-    root.issuer_url = "http://issuer.example.com"
-    root.ocsp_url = "http://ocsp.example.com"
-    root.crl_url = "http://crl.example.com"
     root.save()
 
     assert root.extensions_for_certificate == {
-        ExtensionOID.AUTHORITY_INFORMATION_ACCESS: authority_information_access(
-            ca_issuers=[uri(root.issuer_url)], ocsp=[uri(root.ocsp_url)]
-        ),
+        ExtensionOID.AUTHORITY_INFORMATION_ACCESS: root.sign_authority_information_access,
         ExtensionOID.CERTIFICATE_POLICIES: root.sign_certificate_policies,
-        ExtensionOID.CRL_DISTRIBUTION_POINTS: crl_distribution_points(
-            distribution_point([uri(root.crl_url)])
-        ),
+        ExtensionOID.CRL_DISTRIBUTION_POINTS: root.sign_crl_distribution_points,
         ExtensionOID.ISSUER_ALTERNATIVE_NAME: root.sign_issuer_alternative_name,
     }
 
@@ -1145,42 +1143,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
             self.certs["ed25519-cert"].jwk  # noqa: B018
         with self.assertRaisesRegex(ValueError, "Unsupported algorithm"):
             self.certs["dsa-cert"].jwk  # noqa: B018
-
-    def test_get_authority_information_access_extension(self) -> None:
-        """Test getting the AuthorityInformationAccess extension for a CA."""
-        self.assertIsNone(CertificateAuthority().get_authority_information_access_extension())
-
-        ca = CertificateAuthority(issuer_url="https://example.com")
-        actual = ca.get_authority_information_access_extension()
-        expected = x509.Extension(
-            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-            critical=False,
-            value=x509.AuthorityInformationAccess(
-                [
-                    x509.AccessDescription(
-                        access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                        access_location=uri("https://example.com"),
-                    )
-                ]
-            ),
-        )
-        self.assertEqual(actual, expected)
-
-        ca = CertificateAuthority(ocsp_url="https://example.com")
-        actual = ca.get_authority_information_access_extension()
-        expected = x509.Extension(
-            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-            critical=False,
-            value=x509.AuthorityInformationAccess(
-                [
-                    x509.AccessDescription(
-                        access_method=AuthorityInformationAccessOID.OCSP,
-                        access_location=uri("https://example.com"),
-                    )
-                ]
-            ),
-        )
-        self.assertEqual(actual, expected)
 
     def test_get_authority_key_identifier(self) -> None:
         """Test getting the authority key identifier."""

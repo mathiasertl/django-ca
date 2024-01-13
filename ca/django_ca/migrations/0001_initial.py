@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(help_text='A human-readable name', max_length=32, unique=True)),
                 ('enabled', models.BooleanField(default=True)),
                 ('private_key_path', models.CharField(help_text='Path to the private key.', max_length=256)),
-                ('crl_url', models.TextField(blank=True, help_text='URLs, one per line, where you can retrieve the CRL.', null=True, validators=[django_ca.utils.multiline_url_validator], verbose_name='CRL URLs')),
+                ('crl_url', models.TextField(blank=True, help_text='URLs, one per line, where you can retrieve the CRL.', null=True, verbose_name='CRL URLs')),
                 ('issuer_url', models.URLField(blank=True, help_text='URL to the certificate of this CA (in DER format).', null=True, verbose_name='Issuer URL')),
                 ('ocsp_url', models.URLField(blank=True, help_text='URL of a OCSP responser for the CA.', null=True, verbose_name='OCSP responder URL')),
                 ('issuer_alt_name', models.URLField(blank=True, help_text='URL for your CA.', null=True, verbose_name='issuerAltName')),

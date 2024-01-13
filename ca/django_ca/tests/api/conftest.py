@@ -27,6 +27,7 @@ from django.test.client import Client
 import pytest
 
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.pydantic.extensions import AuthorityInformationAccessModel, CRLDistributionPointsModel
 from django_ca.tests.base.typehints import HttpResponse, User
 from django_ca.tests.base.utils import iso_format
 
@@ -62,6 +63,12 @@ def root(root: CertificateAuthority) -> CertificateAuthority:
 @pytest.fixture
 def root_response(root: CertificateAuthority) -> DetailResponse:
     """Fixture for the expected response schema for the root CA."""
+    sign_authority_information_access = AuthorityInformationAccessModel.model_validate(
+        root.sign_authority_information_access
+    ).model_dump(mode="json")
+    sign_crl_distribution_points = CRLDistributionPointsModel.model_validate(
+        root.sign_crl_distribution_points
+    ).model_dump(mode="json")
     return {
         "acme_enabled": False,
         "acme_profile": "webserver",
@@ -70,21 +77,18 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
         "caa_identity": "",
         "can_sign_certificates": False,
         "created": iso_format(root.created),
-        "crl_url": root.crl_url,
         "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
-        "issuer_url": root.issuer_url,
         "not_after": iso_format(root.expires),
         "not_before": iso_format(root.valid_from),
         "ocsp_responder_key_validity": 3,
         "ocsp_response_validity": 86400,
-        "ocsp_url": root.ocsp_url,
         "name": "root",
         "pem": root.pub.pem,
         "revoked": False,
         "serial": root.serial,
-        "sign_authority_information_access": None,
+        "sign_authority_information_access": sign_authority_information_access,
         "sign_certificate_policies": None,
-        "sign_crl_distribution_points": None,
+        "sign_crl_distribution_points": sign_crl_distribution_points,
         "sign_issuer_alternative_name": None,
         "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
         "terms_of_service": "",

@@ -30,7 +30,15 @@ from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import issuer_alternative_name, mock_cadir, override_tmpcadir, uri
+from django_ca.tests.base.utils import (
+    authority_information_access,
+    crl_distribution_points,
+    distribution_point,
+    issuer_alternative_name,
+    mock_cadir,
+    override_tmpcadir,
+    uri,
+)
 
 
 class ImportCATest(TestCaseMixin, TestCase):
@@ -206,10 +214,15 @@ class ImportCATest(TestCaseMixin, TestCase):
             "--sign-user-notice=explicit-text",
         )
 
-        self.assertEqual(ca.issuer_url, ca_issuer)
-        self.assertEqual(ca.ocsp_url, ocsp_responder)
+        self.assertEqual(
+            ca.sign_authority_information_access,
+            authority_information_access(ocsp=[uri(ocsp_responder)], ca_issuers=[uri(ca_issuer)]),
+        )
         self.assertEqual(ca.sign_issuer_alternative_name, issuer_alternative_name(uri(ian)))
-        self.assertEqual(ca.crl_url, f"{crl1}\n{crl2}")
+        self.assertEqual(
+            ca.sign_crl_distribution_points,
+            crl_distribution_points(distribution_point([uri(crl1), uri(crl2)])),
+        )
         # Certificate Policies extension
         self.assertEqual(
             ca.sign_certificate_policies,

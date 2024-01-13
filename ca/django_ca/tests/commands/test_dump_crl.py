@@ -21,7 +21,7 @@ from io import BytesIO
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import CRLEntryExtensionOID
+from cryptography.x509.oid import CRLEntryExtensionOID, NameOID
 
 from django.test import TestCase
 from django.utils import timezone
@@ -32,7 +32,7 @@ from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import crl_distribution_points, distribution_point, override_tmpcadir
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -246,6 +246,31 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             ],
             stdout=BytesIO(),
             stderr=BytesIO(),
+        )
+        self.assertCRL(
+            stdout,
+            encoding=Encoding.PEM,
+            expires=86400,
+            signer=child,
+            idp=None,
+            algorithm=child.algorithm,
+        )
+        self.assertEqual(stderr, b"")
+
+    @override_tmpcadir()
+    def test_no_full_name_in_sign_crl_distribution_point(self) -> None:
+        """Test dumping a CRL where the CRL Distribution Point extension for signing has only an RDN."""
+        child = self.cas["child"]
+        child.sign_crl_distribution_points = crl_distribution_points(
+            distribution_point(
+                relative_name=x509.RelativeDistinguishedName(
+                    [x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com")]
+                )
+            )
+        )
+        child.save()
+        stdout, stderr = self.cmd_e2e(
+            ["dump_crl", f"--ca={child.serial}"], stdout=BytesIO(), stderr=BytesIO()
         )
         self.assertCRL(
             stdout,
