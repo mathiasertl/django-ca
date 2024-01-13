@@ -30,9 +30,14 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import constants
-from django_ca.fields import CertificateSigningRequestField as CertificateSigningRequestFormField
-from django_ca.pydantic.extensions import CertificatePoliciesModel, ExtensionModelTypeVar
+from django_ca import constants, fields
+from django_ca.pydantic.extensions import (
+    AuthorityInformationAccessModel,
+    CertificatePoliciesModel,
+    CRLDistributionPointsModel,
+    ExtensionModelTypeVar,
+    IssuerAlternativeNameModel,
+)
 from django_ca.typehints import (
     JSON,
     ExtensionTypeTypeVar,
@@ -265,7 +270,7 @@ class CertificateSigningRequestField(
 ):
     """Django model field for CSRs."""
 
-    formfield_class = CertificateSigningRequestFormField
+    formfield_class = fields.CertificateSigningRequestField
     wrapper = LazyCertificateSigningRequest
 
 
@@ -274,7 +279,7 @@ class CertificateField(LazyBinaryField[DecodableCertificate, LazyCertificate]):
 
     # NOTE: Since certificates are never submitted in a form, there never is an active form field for this
     #       field, and formfield() is never called for this class. Thus, it's okay to use the wrong class.
-    formfield_class = CertificateSigningRequestFormField
+    formfield_class = fields.CertificateSigningRequestField
     wrapper = LazyCertificate
 
 
@@ -295,6 +300,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
     """
 
     extension_class: Type[ExtensionTypeTypeVar]
+    formfield_class: Type[fields.ExtensionField[ExtensionTypeTypeVar]]
     model_class: Type[ExtensionModelTypeVar]
     default_error_messages = {  # noqa: RUF012  # defined in base class, cannot be overwritten
         "unparsable-extension": _("The value cannot be parsed to an extension."),
@@ -319,6 +325,19 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
             ],
         ) -> None:
             ...
+
+    def formfield(
+        self,
+        form_class: Optional[Type[forms.Field]] = None,
+        choices_form_class: Optional[Type[forms.ChoiceField]] = None,
+        **kwargs: Any,
+    ) -> forms.Field:
+        # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
+        if form_class is None:  # pragma: no branch
+            form_class = self.formfield_class
+        return super(models.JSONField, self).formfield(
+            form_class=form_class, choices_form_class=choices_form_class, **kwargs
+        )
 
     def unparsable(self, value: JSON) -> ValidationError:
         """Raise a ValidationError for an unparsable value."""
@@ -435,11 +454,32 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
             )
 
 
+class AuthorityInformationAccessField(
+    ExtensionField[x509.AuthorityInformationAccess, AuthorityInformationAccessModel]
+):
+    """Field storing a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess`-based extension."""
+
+    description = _("An Authority Information Access extension object.")
+    extension_class = x509.AuthorityInformationAccess
+    formfield_class = fields.AuthorityInformationAccessField
+    model_class = AuthorityInformationAccessModel
+
+
+class CRLDistributionPointsField(ExtensionField[x509.CRLDistributionPoints, CRLDistributionPointsModel]):
+    """Field storing a :py:class:`~cg:cryptography.x509.CRLDistributionPoints`-based extension."""
+
+    description = _("An CRL Distribution Points extension object.")
+    extension_class = x509.CRLDistributionPoints
+    formfield_class = fields.CRLDistributionPointField
+    model_class = CRLDistributionPointsModel
+
+
 class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, CertificatePoliciesModel]):
     """Field storing a :py:class:`~cg:cryptography.x509.CertificatePolicies`-based extension."""
 
     description = _("A Certificate Policies extension object.")
     extension_class = x509.CertificatePolicies
+    formfield_class = fields.CertificatePoliciesField
     model_class = CertificatePoliciesModel
 
     def _parse_notice_reference(
@@ -505,3 +545,12 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
         except Exception as ex:
             raise self.unparsable(value) from ex
         return x509.Extension(oid=oid, critical=critical, value=parsed)
+
+
+class IssuerAlternativeNameField(ExtensionField[x509.IssuerAlternativeName, IssuerAlternativeNameModel]):
+    """Field storing a :py:class:`~cg:cryptography.x509.IssuerAlternativeName`-based extension."""
+
+    description = _("An Issuer Alternative Name extension object.")
+    extension_class = x509.IssuerAlternativeName
+    formfield_class = fields.IssuerAlternativeNameField
+    model_class = IssuerAlternativeNameModel
