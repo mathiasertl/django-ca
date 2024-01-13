@@ -129,7 +129,15 @@ class KeyValueField(forms.CharField):
 
     widget = KeyValueWidget
 
-    def to_python(self, value: Optional[str]) -> List[Dict[str, Any]]:  # type: ignore[override]
+    def to_python(  # type: ignore[override]  # return type is str in CharField.to_python()
+        self,
+        value: Optional[Union[str, List[Dict[str, Any]]]],
+    ) -> List[Dict[str, Any]]:
+        # This method receives a coerced value (= list of key/value pairs) when a form is submitted and then
+        # displayed again (due to an error or the "Save and continue editing" button in the admin interface).
+        if isinstance(value, list):
+            return value
+
         value = super().to_python(value)
         if not value:
             return []
