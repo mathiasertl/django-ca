@@ -30,7 +30,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
+from cryptography.x509.oid import ExtensionOID, NameOID
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from django.conf import settings
@@ -63,13 +63,7 @@ from django_ca.signals import (
 from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import (
-    basic_constraints,
-    certificate_policies,
-    crl_distribution_points,
-    distribution_point,
-    uri,
-)
+from django_ca.tests.base.utils import basic_constraints, certificate_policies
 from django_ca.utils import ca_storage
 
 if typing.TYPE_CHECKING:
@@ -898,7 +892,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         for key, value in sorted(CERT_DATA[name].items()):
             # Handle cryptography extensions
-            if key == "precert_poison":
+            if key == "extensions":
+                ctx["extensions"] = {ext["type"]: ext for ext in CERT_DATA[name].get("extensions", [])}
+            elif key == "precert_poison":
                 ctx["precert_poison"] = "* Precert Poison (critical):\n  Yes"
             elif isinstance(value, x509.Extension):
                 if value.critical:
@@ -938,36 +934,15 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         if parent is None and CERT_DATA[name].get("parent"):
             parent = CertificateAuthority.objects.get(name=CERT_DATA[name]["parent"])
 
-        # set some default values
-        if crl_url := CERT_DATA[name].get("crl_url", ""):
-            kwargs.setdefault(
-                "sign_crl_distribution_points", crl_distribution_points(distribution_point([uri(crl_url)]))
-            )
-        access_descriptions = []
-        if ocsp_url := CERT_DATA[name].get("ocsp_url", ""):
-            access_descriptions.append(
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.OCSP, access_location=uri(ocsp_url)
-                )
-            )
-        if issuer_url := CERT_DATA[name].get("issuer_url", ""):
-            access_descriptions.append(
-                x509.AccessDescription(
-                    access_method=AuthorityInformationAccessOID.CA_ISSUERS, access_location=uri(issuer_url)
-                )
-            )
-        if access_descriptions:
-            kwargs.setdefault(
-                "sign_authority_information_access",
-                x509.Extension(
-                    oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                    critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-                    value=x509.AuthorityInformationAccess(access_descriptions),
-                ),
-            )
+        # set some default values (3rd-party CAs don't set sign_* properties)
+        kwargs.setdefault("sign_crl_distribution_points", CERT_DATA[name].get("sign_crl_distribution_points"))
+        kwargs.setdefault(
+            "sign_authority_information_access", CERT_DATA[name].get("sign_authority_information_access")
+        )
 
         ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
         ca.update_certificate(parsed)  # calculates serial etc
+        ca.full_clean()
         ca.save()
         return ca
 

@@ -524,7 +524,7 @@ Certificate extensions:
 * CRL Distribution Points{crl_distribution_points_critical}:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl}
+      * URI:{extensions[crl_distribution_points][value][0][full_name][0][value]}
 * Extended Key Usage{extended_key_usage_critical}:
 {extended_key_usage_text}
 * Freshest CRL{freshest_crl_critical}:

@@ -61,13 +61,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -108,13 +108,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -155,13 +155,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -206,13 +206,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -254,13 +254,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -292,13 +292,13 @@ ACMEv2 support:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -329,13 +329,13 @@ ACMEv2 support:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
 {sha256}
@@ -380,13 +380,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -425,13 +425,13 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
   SHA-256: {sha256}
@@ -473,9 +473,9 @@ Certificate extensions:
 Certificate extensions for signed certificates:
 * Authority Information Access:
   CA Issuers:
-    * URI:{issuer_url}
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
   OCSP:
-    * URI:{ocsp_url}
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
 * Certificate Policies:
   * Policy Identifier: 1.2.3
     Policy Qualifiers:
@@ -485,7 +485,7 @@ Certificate extensions for signed certificates:
 * CRL Distribution Points:
   * DistributionPoint:
     * Full Name:
-      * URI:{crl_url}
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 * Issuer Alternative Name:
   * {sign_issuer_alternative_name}
 

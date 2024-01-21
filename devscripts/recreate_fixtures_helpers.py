@@ -42,7 +42,6 @@ from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID
 
 from django.test.utils import override_settings
-from django.urls import reverse
 
 from freezegun import freeze_time
 
@@ -50,7 +49,13 @@ from devscripts import config
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
-from django_ca.pydantic.extensions import EXTENSION_MODELS, ExtensionModel, UnrecognizedExtensionModel
+from django_ca.pydantic.extensions import (
+    EXTENSION_MODELS,
+    AuthorityInformationAccessModel,
+    CRLDistributionPointsModel,
+    ExtensionModel,
+    UnrecognizedExtensionModel,
+)
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
 from django_ca.utils import bytes_to_hex, ca_storage, parse_serialized_name_attributes, serialize_name
@@ -126,19 +131,13 @@ def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict
     data["valid_from"] = cert.pub.loaded.not_valid_before.strftime(TIMEFORMAT)
     data["valid_until"] = cert.pub.loaded.not_valid_after.strftime(TIMEFORMAT)
 
-    data["md5"] = cert.get_fingerprint(hashes.MD5())
-    data["sha1"] = cert.get_fingerprint(hashes.SHA1())
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
     data["extensions"] = cert.pub.loaded.extensions
 
 
 def _write_ca(
-    dest: Path,
-    ca: CertificateAuthority,
-    cert_data: CertFixtureData,
-    testserver: str,
-    password: Optional[bytes] = None,
+    dest: Path, ca: CertificateAuthority, cert_data: CertFixtureData, password: Optional[bytes] = None
 ) -> None:
     key_dest = dest / cert_data["key_filename"]
     pub_dest = dest / cert_data["pub_filename"]
@@ -164,12 +163,12 @@ def _write_ca(
         stream.write(ca.pub.der)
 
     # These keys are only present in CAs:
-    ca_crl_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
-    ocsp_cert_post_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": ca.serial})
-    cert_data["issuer_url"] = ca.issuer_url
-    cert_data["crl_url"] = ca.crl_url
-    cert_data["ca_crl_url"] = f"{testserver}{ca_crl_path}"
-    cert_data["ocsp_url"] = f"{testserver}{ocsp_cert_post_path}"
+    cert_data["sign_authority_information_access"] = AuthorityInformationAccessModel.model_validate(
+        ca.sign_authority_information_access
+    ).model_dump(mode="json")
+    cert_data["sign_crl_distribution_points"] = CRLDistributionPointsModel.model_validate(
+        ca.sign_crl_distribution_points
+    ).model_dump(mode="json")
 
     # Update common data for CAs and certs
     _update_cert_data(ca, cert_data)
@@ -204,7 +203,6 @@ def _copy_cert(
     with open(pub_der_dest, "wb") as stream:
         stream.write(cert.pub.der)
 
-    data["crl"] = cert.ca.crl_url
     data["subject"] = serialize_name(cert.subject)
     data["parsed_cert"] = cert
 
@@ -295,7 +293,6 @@ def _generate_contrib_files(data: Dict[str, Dict[str, Any]]) -> None:
 
 def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> List[CertificateAuthority]:
     """Create CAs."""
-    testserver = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}"
     ca_names = [v["name"] for k, v in data.items() if v.get("type") == "ca"]
 
     # sort ca_names so that any children are created last
@@ -308,9 +305,6 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
         parent_name = data[name].get("parent")
         if parent_name:
             parent = CertificateAuthority.objects.get(name=parent_name)
-
-            # also update data
-            data[name]["crl"] = data[parent_name]["ca_crl_url"]
 
         freeze_now = now
         if delay:
@@ -329,13 +323,8 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 parent=parent,
             )
 
-        # Same values can only be added here because they require data from the already created CA
-        crl_path = reverse("django_ca:crl", kwargs={"serial": ca.serial})
-        ca.crl_url = f"{testserver}{crl_path}"
-        ca.save()
-
         ca_instances.append(ca)
-        _write_ca(dest, ca, data[name], testserver, password=data[name].get("password"))
+        _write_ca(dest, ca, data[name], password=data[name].get("password"))
 
     # add parent/child relationships
     data["root"]["children"] = [[data["child"]["name"], data["child"]["serial"]]]
@@ -373,6 +362,7 @@ def create_certs(
                 algorithm=data[name]["algorithm"],
                 password=pwd,
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
+                extensions=data[name].get("extensions", {}).values(),
             )
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
@@ -405,6 +395,7 @@ def create_certs(
                 expires=data[name]["expires"],
                 password=pwd,
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
+                extensions=data[name].get("extensions", {}).values(),
             )
 
         data[name]["profile"] = profile
@@ -481,7 +472,6 @@ def create_special_certs(  # noqa: PLR0915
     # * CRL with relative_name (full_name and relative_name are mutually exclusive!)
     name = "alt-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    ca.crl_url = ""
     key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
     csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))

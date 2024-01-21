@@ -132,17 +132,82 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
             "max_path_length": 1,
             "algorithm": None,
         },
-        "root-cert": {"ca": "root", "delta": timedelta(days=5), "path_length": ROOT_PATHLEN, "csr": True},
-        "child-cert": {"ca": "child", "delta": timedelta(days=5), "csr": True},
-        "ec-cert": {"ca": "ec", "delta": timedelta(days=5), "csr": True, "key_type": "EC"},
-        "pwd-cert": {"ca": "pwd", "delta": timedelta(days=5), "csr": True},
-        "dsa-cert": {"ca": "dsa", "delta": timedelta(days=5), "csr": True, "key_type": "DSA"},
+        "root-cert": {
+            "ca": "root",
+            "delta": timedelta(days=5),
+            "path_length": ROOT_PATHLEN,
+            "csr": True,
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("root-cert.example.com")]),
+                ),
+            },
+        },
+        "child-cert": {
+            "ca": "child",
+            "delta": timedelta(days=5),
+            "csr": True,
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("child-cert.example.com")]),
+                ),
+            },
+        },
+        "ec-cert": {
+            "ca": "ec",
+            "delta": timedelta(days=5),
+            "csr": True,
+            "key_type": "EC",
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("ec-cert.example.com")]),
+                ),
+            },
+        },
+        "pwd-cert": {
+            "ca": "pwd",
+            "delta": timedelta(days=5),
+            "csr": True,
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("pwd-cert.example.com")]),
+                ),
+            },
+        },
+        "dsa-cert": {
+            "ca": "dsa",
+            "delta": timedelta(days=5),
+            "csr": True,
+            "key_type": "DSA",
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("dsa-cert.example.com")]),
+                ),
+            },
+        },
         "ed25519-cert": {
             "ca": "ed25519",
             "delta": timedelta(days=5),
             "csr": True,
             "algorithm": None,
             "key_type": "Ed25519",
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("ed25519-cert.example.com")]),
+                ),
+            },
         },
         "ed448-cert": {
             "ca": "ed448",
@@ -150,10 +215,50 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
             "csr": True,
             "algorithm": None,
             "key_type": "Ed448",
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("ed448-cert.example.com")]),
+                ),
+            },
         },
-        "profile-client": {"ca": "child", "delta": timedelta(days=10), "csr": True},
-        "profile-server": {"ca": "child", "delta": timedelta(days=10), "csr": True},
-        "profile-webserver": {"ca": "child", "delta": timedelta(days=10), "csr": True},
+        "profile-client": {
+            "ca": "child",
+            "delta": timedelta(days=10),
+            "csr": True,
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("profile-client.example.com")]),
+                ),
+            },
+        },
+        "profile-server": {
+            "ca": "child",
+            "delta": timedelta(days=10),
+            "csr": True,
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("profile-server.example.com")]),
+                ),
+            },
+        },
+        "profile-webserver": {
+            "ca": "child",
+            "delta": timedelta(days=10),
+            "csr": True,
+            "extensions": {
+                "subject_alternative_name": x509.Extension(
+                    oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+                    critical=False,
+                    value=x509.SubjectAlternativeName([x509.DNSName("profile-webserver.example.com")]),
+                ),
+            },
+        },
         "profile-enduser": {"ca": "child", "delta": timedelta(days=10), "csr": True},
         "profile-ocsp": {"ca": "child", "delta": timedelta(days=10), "csr": True},
         "no-extensions": {"ca": "child", "delta": timedelta(days=15), "csr": True},
@@ -165,7 +270,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
             "extensions": {
                 "subject_alternative_name": x509.Extension(
                     oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-                    critical=True,
+                    critical=True,  # MUST be critical, as there is no subject
                     value=x509.SubjectAlternativeName([x509.DNSName("empty-subject.example.com")]),
                 ),
             },
@@ -297,11 +402,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
                         authority_cert_issuer=[x509.DNSName("example.com")],
                         authority_cert_serial_number=1,
                     ),
-                ),
-                "basic_constraints": x509.Extension(
-                    oid=ExtensionOID.BASIC_CONSTRAINTS,
-                    critical=False,  # usually critical,
-                    value=x509.BasicConstraints(ca=False, path_length=None),
                 ),
                 "crl_distribution_points": x509.Extension(
                     oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,

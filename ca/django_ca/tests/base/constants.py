@@ -385,8 +385,6 @@ for _name, _cert_data in CERT_DATA.items():
         _cert_data["children"] = [(k, add_colons(v)) for k, v in _cert_data["children"]]
 
     # Load data from files
-    # if key_filename := _cert_data["key_filename"]:
-    #    _cert_data["key"] = _load_key(key_filename, _cert_data)
     if _cert_data.get("key_der_path"):
         _cert_data["key"] = _load_key(_cert_data)
     if _cert_data.get("csr_filename"):
@@ -396,7 +394,6 @@ for _name, _cert_data in CERT_DATA.items():
 
     # Data derived from public key
     _cert_data["issuer"] = _cert.issuer
-    # _cert_data["issuer_str"] = format_name(_cert_data["issuer"])
     _cert_data["serial_colons"] = add_colons(_cert_data["serial"])
     _cert_data["valid_from"] = _cert.not_valid_before  # TODO: make tz-aware
     _cert_data["valid_until"] = _cert.not_valid_after  # TODO: make tz-aware

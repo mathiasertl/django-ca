@@ -1098,8 +1098,6 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_get_fingerprint(self) -> None:
         """Test getting the fingerprint value."""
         algorithms = {
-            "md5": hashes.MD5(),
-            "sha1": hashes.SHA1(),
             "sha256": hashes.SHA256(),
             "sha512": hashes.SHA512(),
         }

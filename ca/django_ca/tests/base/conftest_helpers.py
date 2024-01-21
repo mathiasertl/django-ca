@@ -169,25 +169,9 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
         if parent_name := data.get("parent"):
             parent = request.getfixturevalue(parent_name)
 
-        access_descriptions = [
-            x509.AccessDescription(
-                access_method=AuthorityInformationAccessOID.OCSP, access_location=uri(data["ocsp_url"])
-            ),
-            x509.AccessDescription(
-                access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                access_location=uri(data["issuer_url"]),
-            ),
-        ]
-
         kwargs = {
-            "sign_crl_distribution_points": crl_distribution_points(
-                distribution_point([uri(data["crl_url"])])
-            ),
-            "sign_authority_information_access": x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-                value=x509.AuthorityInformationAccess(access_descriptions),
-            ),
+            "sign_crl_distribution_points": data["sign_crl_distribution_points"],
+            "sign_authority_information_access": data["sign_authority_information_access"],
         }
 
         with freeze_time(TIMESTAMPS["everything_valid"]):
@@ -281,6 +265,7 @@ def load_ca(
 
     ca = CertificateAuthority(name=name, private_key_path=f"{name}.key", parent=parent, **kwargs)
     ca.update_certificate(pub)  # calculates serial etc
+    ca.full_clean()
     ca.save()
     return ca
 

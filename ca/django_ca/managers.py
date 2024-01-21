@@ -428,7 +428,9 @@ class CertificateAuthorityManager(
                     oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
                     critical=constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
                     value=x509.AuthorityInformationAccess(
-                        [ca_issuers_access_description, ocsp_access_description]
+                        # NOTE: OCSP comes first because it has the lexicographically lower dotted string.
+                        #   Parts of the test-suite depend on stable order of access descriptions.
+                        [ocsp_access_description, ca_issuers_access_description]
                     ),
                 )
 
