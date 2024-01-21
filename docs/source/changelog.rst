@@ -18,6 +18,15 @@ ChangeLog
 * Add support for ``Django~=5.0`` and ``acme==2.8.0``.
 * The admin interface now presents lists of general names (e.g. in the Subject Alternative Name extension) as
   a list of order-able key/value pairs when adding certificates.
+* Extensions added by the CA when signing new certificates can now have the same complexity as when giving
+  the extensions directly when signing the certificate.
+
+  * The ``--sign-ca-issuer``, ``--sign-ocsp-responder`` and ``--sign-issuer-alternative-name`` options to
+    :command:`manage.py sign_cert` etc. now support any general name type and giving multiple general names.
+  * The CRL Distribution Points extension added to certificates may now be marked as critical via
+    ``--sign-crl-distribution-points-critical``.
+  * When editing a CA, the admin interface presents these fields in the same way as when signing a certifcate.
+
 * Remove the option to add the Common Name to the Subject Alternative Name extension, as the result is
   unpredictable:
 
