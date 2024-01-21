@@ -25,7 +25,8 @@ ChangeLog
     :command:`manage.py sign_cert` etc. now support any general name type and giving multiple general names.
   * The CRL Distribution Points extension added to certificates may now be marked as critical via
     ``--sign-crl-distribution-points-critical``.
-  * When editing a CA, the admin interface presents these fields in the same way as when signing a certifcate.
+  * When editing a CA, the admin interface presents these fields in the same way as when signing a
+    certificate.
 
 * Remove the option to add the Common Name to the Subject Alternative Name extension, as the result is
   unpredictable:
