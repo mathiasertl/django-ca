@@ -21,7 +21,16 @@ from typing import Any, Type
 
 from django.core.signals import setting_changed
 
+import pytest
+
 from django_ca import ca_settings, profiles
+
+# Register assertion helpers for better output in our helpers. See also:
+#   https://docs.pytest.org/en/latest/how-to/writing_plugins.html#assertion-rewriting
+pytest.register_assert_rewrite(
+    "django_ca.tests.base.assertions",
+    "django_ca.tests.pydantic.base",
+)
 
 
 def reload_ca_settings(  # pylint: disable=unused-argument

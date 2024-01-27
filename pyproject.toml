@@ -55,7 +55,7 @@ actions."github/codeql-action/analyze" = "v3"
 # list glob-style patterns to exclude from any check (currently only license headers)
 excludes = [
     "ca/django_ca/migrations/*.py",
-    "docs/source/include/config/*.py",
+    "docs/source/include/**/*.py",
 ]
 # Files known to be stand-alone scripts (-> they include a shebang line)
 standalone-scripts = [

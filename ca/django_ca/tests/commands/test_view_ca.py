@@ -14,12 +14,12 @@
 """Test the view_ca management command."""
 import os
 import textwrap
-from typing import Any
 from unittest import mock
 
 from cryptography import x509
 
 from django.conf import settings
+from django.core.files.storage import Storage
 from django.test import TestCase
 
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -1676,20 +1676,18 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertMultiLineEqual(stdout, expected["root-no-extensions"].format(**data))
 
     @override_tmpcadir()
-    def test_no_no_private_key(self) -> None:
-        """Test viewing when we have no private key."""
+    def test_storage_backend_with_no_path(self) -> None:
+        """Test viewing when the storage backend does not support the path() function."""
+        storage_mock = mock.create_autospec(Storage)
+        storage_mock.exists.return_value = True
+        storage_mock.path.side_effect = NotImplementedError
 
-        def side_effect(cls: Any) -> None:
-            raise NotImplementedError
-
-        ca_storage = "django_ca.management.commands.view_ca.ca_storage.%s"
-        with self.patch(ca_storage % "path", side_effect=side_effect) as path_mock, self.patch(
-            ca_storage % "exists", return_value=True
-        ) as exists_mock:
+        get_storage_path = "django_ca.management.commands.view_ca.get_storage"
+        with self.patch(get_storage_path, return_value=storage_mock, autospec=True):
             stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, wrap=False)
 
-        path_mock.assert_called_once_with(self.cas["root"].private_key_path)
-        exists_mock.assert_called_once_with(self.cas["root"].private_key_path)
+        storage_mock.path.assert_called_once_with(self.cas["root"].private_key_path)
+        storage_mock.exists.assert_called_once_with(self.cas["root"].private_key_path)
         data = self.get_cert_context("root")
         data["key_path"] = self.cas["root"].private_key_path
         self.assertMultiLineEqual(stdout, expected["root"].format(**data))

@@ -94,12 +94,25 @@ STATICFILES_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+# Default file storage configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# Configure storage for certificate authorities
+CA_STORAGE = None
+CA_DIR = None
+
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -234,6 +247,29 @@ if ENABLE_ADMIN is not True and "django.contrib.admin" in INSTALLED_APPS:
 INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
     INSTALLED_APPS.append("ninja")
+
+if STORAGES is None:
+    # Set the default storages argument
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+
+if "django-ca" not in STORAGES:
+    if CA_STORAGE is not None:
+        STORAGES["django-ca"] = CA_STORAGE
+    else:
+        if CA_DIR is None:
+            CA_DIR = os.path.join(BASE_DIR, "files")
+
+        STORAGES["django-ca"] = {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {  # type: ignore[dict-item]  # django-stubs seems to have an issue here
+                "location": CA_DIR,
+                "file_permissions_mode": 0o600,
+                "directory_permissions_mode": 0o700,
+            },
+        }
 
 if LOGGING is None:
     LOGGING = {

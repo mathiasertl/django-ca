@@ -94,10 +94,11 @@ from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert,
 from django_ca.typehints import AllowedHashTypes, Expires, ParsableKeyType
 from django_ca.utils import (
     bytes_to_hex,
-    ca_storage,
+    file_exists,
     generate_private_key,
     get_cert_builder,
     get_crl_cache_key,
+    get_storage,
     int_to_hex,
     parse_encoding,
     parse_expires,
@@ -644,10 +645,10 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def key_exists(self) -> bool:
-        """``True`` if the private key is locally accessible."""
+        """``True`` if the private key is accessible to the current process."""
         if self._key is not None:
             return True
-        return ca_storage.exists(self.private_key_path)
+        return file_exists(self.private_key_path)
 
     @property
     def key_type(self) -> ParsableKeyType:
@@ -953,7 +954,8 @@ class CertificateAuthority(X509CertMixin):
             format=PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
-        private_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.key")
+        storage = get_storage()
+        private_path = storage.generate_filename(f"ocsp/{safe_serial}.key")
 
         if isinstance(private_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):
             csr_sign_algorithm = None
@@ -990,14 +992,14 @@ class CertificateAuthority(X509CertMixin):
             add_ocsp_url=False,
         )
 
-        cert_path = ca_storage.generate_filename(f"ocsp/{safe_serial}.pem")
+        cert_path = storage.generate_filename(f"ocsp/{safe_serial}.pem")
 
         for path, contents in [(private_path, private_pem), (cert_path, cert.pub.pem.encode())]:
-            if ca_storage.exists(path):
-                with ca_storage.open(path, "wb") as stream:
+            if storage.exists(path):
+                with storage.open(path, "wb") as stream:
                     stream.write(contents)
             else:
-                ca_storage.save(path, ContentFile(contents))
+                storage.save(path, ContentFile(contents))
         return private_path, cert_path, cert
 
     def get_authority_key_identifier(self) -> x509.AuthorityKeyIdentifier:

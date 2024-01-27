@@ -23,6 +23,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509.oid import AuthorityInformationAccessOID, CertificatePoliciesOID, ExtensionOID, NameOID
 
+from django.core.files.storage import storages
 from django.test import TestCase
 
 import pytest
@@ -69,7 +70,6 @@ from django_ca.tests.base.utils import (
     uri,
 )
 from django_ca.typehints import SerializedPydanticExtension
-from django_ca.utils import ca_storage
 
 
 @freeze_time(TIMESTAMPS["after_child"])
@@ -234,7 +234,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_default_ca_key_does_not_exist(self) -> None:
         """Do a basic get request (to test CSS etc)."""
-        ca_storage.delete(self.ca.private_key_path)
+        storages["django-ca"].delete(self.ca.private_key_path)
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -533,13 +533,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "-----BEGIN CERTIFICATE REQUEST-----\nwrong-----END CERTIFICATE REQUEST-----", ca
                 ),
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
         self.assertFalse(response.context["adminform"].form.is_valid())
 
         # Not testing exact error message here, as it the one from cryptography. Instead, just check that
         # there is exactly one message for the "csr" field.
-        self.assertEqual(len(response.context["adminform"].form.errors), 1)
-        self.assertEqual(len(response.context["adminform"].form.errors["csr"]), 1)
+        form = response.context["adminform"].form
+        self.assertEqual(len(form.errors), 1, form.errors)
+        self.assertEqual(len(form.errors["csr"]), 1, form.errors["csr"])
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=self.hostname)

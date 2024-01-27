@@ -42,9 +42,9 @@ from django_ca.typehints import (
     X509CertMixinTypeVar,
 )
 from django_ca.utils import (
-    ca_storage,
     generate_private_key,
     get_cert_builder,
+    get_storage,
     parse_expires,
     validate_hostname,
     validate_private_key_parameters,
@@ -557,7 +557,8 @@ class CertificateAuthorityManager(
         # write private key to file
         safe_serial = ca.serial.replace(":", "")
         path = path / pathlib.PurePath(f"{safe_serial}.key")
-        ca.private_key_path = ca_storage.save(str(path), ContentFile(pem))
+        storage = get_storage()
+        ca.private_key_path = storage.save(str(path), ContentFile(pem))
         ca.save()
 
         post_create_ca.send(sender=self.model, ca=ca)

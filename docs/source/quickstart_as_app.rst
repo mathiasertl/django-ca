@@ -72,30 +72,17 @@ Initial configuration
 *********************
 
 Simply add ``django_ca`` to your ``INSTALLED_APPS`` (and if you don't use it already,
-``django_object_actions``), as well as a few other required settings::
+``django_object_actions``), as well as a few other required settings:
 
-   INSTALLED_APPS = [
-      # ... your other apps...
-
-      'django_object_actions',
-      'django_ca',
-   ]
-
-   # The hostname used by default for URLs in certificates. Your Django project should be available under this
-   # URL using HTTP (see below). If you use ACMEv2, you will also need HTTPS.
-   CA_DEFAULT_HOSTNAME = "ca.example.com"
-
-   # RECOMMENDED: Use Celery as an asynchronous task worker if configured
-   CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+.. literalinclude:: /include/quickstart_as_app/settings.py
+   :language: python
 
 Please check out :doc:`/settings` for settings specific to django-ca.
 
-You also need to include the URLs in your main file:`urls.py`::
+You also need to include the URLs in your main :file:`urls.py`:
 
-   urlpatterns = [
-      path("ca/", include("django_ca.urls")),
-      ...
-   ]
+.. literalinclude:: /include/quickstart_as_app/urls.py
+   :language: python
 
 Finally, invoke the regular :command:`manage.py` commands when you add new apps:
 

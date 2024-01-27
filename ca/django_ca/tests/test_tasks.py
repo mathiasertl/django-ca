@@ -52,7 +52,7 @@ from django_ca.models import (
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
-from django_ca.utils import ca_storage, get_crl_cache_key
+from django_ca.utils import get_crl_cache_key, get_storage
 
 
 class TestBasic(TestCaseMixin, TestCase):
@@ -162,19 +162,21 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_single(self) -> None:
         """Test creating a single key."""
+        storage = get_storage()
         for ca in self.cas.values():
             tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+            self.assertTrue(storage.exists(f"ocsp/{ca.serial}.key"))
+            self.assertTrue(storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
     def test_all(self) -> None:
         """Test creating all keys."""
         tasks.generate_ocsp_keys()
+        storage = get_storage()
 
         for ca in self.cas.values():
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.key"))
-            self.assertTrue(ca_storage.exists(f"ocsp/{ca.serial}.pem"))
+            self.assertTrue(storage.exists(f"ocsp/{ca.serial}.key"))
+            self.assertTrue(storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_valid"])

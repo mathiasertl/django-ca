@@ -23,7 +23,7 @@ from django.core.management.base import CommandParser
 from django_ca import ca_settings
 from django_ca.management.base import BaseViewCommand
 from django_ca.models import CertificateAuthority
-from django_ca.utils import add_colons, ca_storage
+from django_ca.utils import add_colons, get_storage
 
 
 class Command(BaseViewCommand):
@@ -35,7 +35,7 @@ class Command(BaseViewCommand):
         self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
         super().add_arguments(parser)
 
-    def output_ca_information(self, ca: CertificateAuthority, path: str) -> None:
+    def output_ca_information(self, ca: CertificateAuthority) -> None:
         """Output information specific to a CA."""
         self.stdout.write("\nCertificate Authority information:")
         if ca.parent:
@@ -58,7 +58,16 @@ class Command(BaseViewCommand):
 
         self.stdout.write(f"* Maximum levels of sub-CAs (path length): {path_length}")
 
-        if ca_storage.exists(ca.private_key_path):
+        storage = get_storage()
+        if storage.exists(ca.private_key_path):
+            try:
+                path = storage.path(ca.private_key_path)
+            except NotImplementedError:
+                # Will raise NotImplementedError if storage backend does not support path(), in which case we
+                # use the relative path from the database.
+                # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
+                path = ca.private_key_path
+
             self.stdout.write(f"* Path to private key:\n  {path}")
         else:
             self.stdout.write("* Private key not available locally.")
@@ -73,18 +82,10 @@ class Command(BaseViewCommand):
     def handle(
         self, ca: CertificateAuthority, pem: bool, extensions: bool, wrap: bool = True, **options: Any
     ) -> None:
-        try:
-            path = ca_storage.path(ca.private_key_path)
-        except NotImplementedError:
-            # Will raise NotImplementedError if storage backend does not support path(), in which case we use
-            # the relative path from the database.
-            # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
-            path = ca.private_key_path
-
         self.stdout.write(f"* Name: {ca.name}")
         self.stdout.write(f"* Enabled: {'Yes' if ca.enabled else 'No'}")
         self.output_header(ca)
-        self.output_ca_information(ca, path)
+        self.output_ca_information(ca)
 
         if ca_settings.CA_ENABLE_ACME:
             self.stdout.write("")

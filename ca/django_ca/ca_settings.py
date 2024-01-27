@@ -113,11 +113,6 @@ def _get_hash_algorithm(setting: str, default: "HashAlgorithms") -> "AllowedHash
         raise ImproperlyConfigured(f"{setting}: {raw_value}: Unknown hash algorithm.") from ex2
 
 
-if "CA_DIR" in os.environ:  # pragma: no cover
-    CA_DIR = os.path.join(os.environ["CA_DIR"], "files")
-else:
-    CA_DIR = getattr(settings, "CA_DIR", os.path.join(settings.BASE_DIR, "files"))
-
 CA_DEFAULT_KEY_SIZE: int = getattr(settings, "CA_DEFAULT_KEY_SIZE", 4096)
 
 CA_PROFILES: Dict[str, Dict[str, Any]] = {
@@ -341,6 +336,9 @@ try:
 except KeyError as ex:
     raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
 
+# Old file storage settings
+# pragma: only django-ca<2.0: CA_DIR and CA_FILE_* settings can be removed in django-ca==2.0
+CA_DIR = getattr(settings, "CA_DIR", os.path.join(settings.BASE_DIR, "files"))
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(
     settings,

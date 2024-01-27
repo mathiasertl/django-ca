@@ -282,14 +282,6 @@ CA_DEFAULT_SUBJECT
    .. literalinclude:: /include/config/setting_default_subject_cryptography.py
       :language: python
 
-.. _settings-ca-dir:
-
-CA_DIR
-   Default: ``"files/"``
-
-   Where the root certificate is stored. The default is a ``files`` directory in the same location as your
-   ``manage.py`` file.
-
 .. _settings-ca-enable-rest-api:
 
 CA_ENABLE_REST_API
@@ -302,6 +294,10 @@ CA_ENABLE_REST_API
 CA_FILE_STORAGE
    Default: ``'django.core.files.storage.FileSystemStorage'``
 
+   .. deprecated:: 1.28.0
+
+      Use :ref:`settings-ca-storage` instead. Support for this setting will be removed in ``django-ca==2.0``.
+
    Default storage backend for files created by django-ca. The default is the same as *the default* for
    ``DEFAULT_FILE_STORAGE``, so django-ca will still use local file system storage even if you configure a
    different storage backend in ``DEFAULT_FILE_STORAGE``. The default uses :ref:`CA_FILE_STORAGE_KWARGS
@@ -313,6 +309,10 @@ CA_FILE_STORAGE
 
 CA_FILE_STORAGE_KWARGS
    Default: ``{'location': 'files/', 'file_permissions_mode': 0o600, 'directory_permissions_mode': 0o700}``
+
+   .. deprecated:: 1.28.0
+
+      Use :ref:`settings-ca-storage` instead. Support for this setting will be removed in ``django-ca==2.0``.
 
    Add any arguments to the storage backend configured in :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
 
@@ -418,7 +418,7 @@ Project settings
 ****************
 
 Project settings are available if you use the full **django-ca** project (including if you use the Docker
-container or via docker-compose). Most settings are _not_ prefixed with ``CA_``, because they configure how
+container or via docker-compose). Many settings are _not_ prefixed with ``CA_``, because they configure how
 Django itself works.
 
 As any other setting, they can be set by using environment variables prefixed with ``DJANGO_CA_`` (Example: To
@@ -432,6 +432,18 @@ CA_CUSTOM_APPS
    The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
    override that setting instead.
 
+.. _settings-ca-dir:
+
+CA_DIR
+   Default: ``"files/"``
+
+   Where the root certificate is stored. The default is a ``files`` directory in the same location as your
+   ``manage.py`` file.
+
+   This setting has no effect if you define a ``"django-ca"`` alias in `STORAGES
+   <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ (see also: :ref:`CA_STORAGE
+   <settings-ca-storage>`).
+
 
 CA_ENABLE_CLICKJACKING_PROTECTION
    Default: ``True``
@@ -440,6 +452,21 @@ CA_ENABLE_CLICKJACKING_PROTECTION
    <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
    ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
    already set by the web server.
+
+.. _settings-ca-storage:
+
+CA_STORAGE
+   Default:
+
+   .. literalinclude:: include/config/setting_ca_storage_default.py
+      :language: python
+
+   The storage configuration used for storing certificates. The default location is based on the
+   :ref:`CA_DIR <settings-ca-dir>` setting.
+
+   This setting has **no effect** if you define a ``"django-ca"`` alias in `STORAGES
+   <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_.
+
 
 .. _settings-ca-url-path:
 

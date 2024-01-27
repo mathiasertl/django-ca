@@ -34,7 +34,7 @@ from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
-from django_ca.utils import ca_storage
+from django_ca.utils import get_storage
 
 
 class Command(CertificateAuthorityDetailMixin, BaseCommand):
@@ -190,7 +190,6 @@ Note that the private key will be copied to the directory configured by the CA_D
                 raise CommandError("Unable to load public key.") from ex
         ca.update_certificate(pem_loaded)
         serial = ca.serial.replace(":", "")
-        ca.private_key_path = ca_storage.generate_filename(f"{serial}.key")
 
         # load private key
         try:
@@ -211,8 +210,10 @@ Note that the private key will be copied to the directory configured by the CA_D
             encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
         )
 
+        storage = get_storage()
+        ca.private_key_path = storage.generate_filename(f"{serial}.key")
         try:
-            ca_storage.save(ca.private_key_path, ContentFile(pem_as_bytes))
+            storage.save(ca.private_key_path, ContentFile(pem_as_bytes))
         except PermissionError as ex:
             raise CommandError(
                 f"{ca.private_key_path}: Permission denied: Could not open file for writing"

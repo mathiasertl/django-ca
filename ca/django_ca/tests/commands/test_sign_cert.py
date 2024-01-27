@@ -15,8 +15,6 @@
 
 import io
 import os
-import stat
-import unittest
 from datetime import timedelta
 
 from cryptography import x509
@@ -24,7 +22,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import CertificatePoliciesOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
 
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import storages
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -50,7 +48,6 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
-from django_ca.utils import ca_storage
 
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
@@ -727,21 +724,15 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin, password=b"wrong")
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    @unittest.skipUnless(
-        isinstance(ca_storage, FileSystemStorage), "Test only makes sense with local filesystem storage."
-    )
-    def test_unparsable(self) -> None:
+    def test_unparsable_private_key(self) -> None:
         """Test creating a cert where the CA private key contains bogus data."""
-        # NOTE: we assert ca_storage class in skipUnless() above
-        key_path = os.path.join(ca_storage.location, self.ca.private_key_path)  # type: ignore[attr-defined]
+        # NOTE: we assert storage class in skipUnless() above
 
-        os.chmod(key_path, stat.S_IWUSR | stat.S_IRUSR)
-        with open(key_path, "w", encoding="ascii") as stream:
-            stream.write("bogus")
-        os.chmod(key_path, stat.S_IRUSR)
+        path = storages["django-ca"].path(self.ca.private_key_path)
+        with open(path, "wb") as stream:
+            stream.write(b"bogus")
 
-        # Giving no password raises a CommandError
-        stdin = io.StringIO(self.csr_pem)
+        stdin = self.csr_pem.encode()
         san = subject_alternative_name(dns("example.com"))
         with self.assertCommandError(self.re_false_password), self.assertCreateCertSignals(False, False):
             self.cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=stdin)
@@ -902,7 +893,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_unusable_ca(self) -> None:
         """Test signing with an unusable CA."""
-        path = ca_storage.path(self.ca.private_key_path)
+        path = storages["django-ca"].path(self.ca.private_key_path)
         os.remove(path)
         msg = rf"^\[Errno 2\] No such file or directory: '{path}'"
         stdin = io.StringIO(self.csr_pem)

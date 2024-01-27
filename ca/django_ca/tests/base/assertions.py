@@ -12,15 +12,18 @@
 # <http://www.gnu.org/licenses/>.
 
 """Various assertions used in pytest."""
-
+import re
+from contextlib import contextmanager
 from http import HTTPStatus
-from typing import Any, Tuple
+from typing import Any, Iterator, Optional, Tuple, Union
 
 from django.db import models
 from django.templatetags.static import static
 
+import pytest
 from pytest_django.asserts import assertInHTML
 
+from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.tests.base.typehints import HttpResponse
 
 
@@ -54,3 +57,10 @@ def assert_css(response: "HttpResponse", path: str, media: str = "all") -> None:
     """Assert that the HTML from the given response includes the mentioned CSS."""
     css = f'<link href="{static(path)}" media="{media}" rel="stylesheet" />'
     assertInHTML(css, response.content.decode("utf-8"), 1)
+
+
+@contextmanager
+def assert_removed_in_200(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
+    """Assert that a RemovedInDjangoCA200Warning is emitted."""
+    with pytest.warns(RemovedInDjangoCA200Warning, match=match):
+        yield

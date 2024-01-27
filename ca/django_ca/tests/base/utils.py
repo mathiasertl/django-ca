@@ -30,6 +30,7 @@ from unittest.mock import patch
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
+from django.conf import settings
 from django.test import override_settings
 from django.utils.crypto import get_random_string
 
@@ -316,32 +317,23 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
         return super().__call__(test_func)  # type: ignore[return-value]  # cannot figure out what's here
 
     def enable(self) -> None:
-        self.options["CA_DIR"] = tempfile.mkdtemp()
+        tmpdir = tempfile.mkdtemp()
+        self.options["CA_DIR"] = tmpdir
+        self.options["STORAGES"] = settings.STORAGES
+        self.options["STORAGES"]["django-ca"]["OPTIONS"]["location"] = tmpdir
 
         # copy CAs
         for filename in [v["key_filename"] for v in CERT_DATA.values() if v["key_filename"] is not False]:
-            shutil.copy(os.path.join(FIXTURES_DIR, filename), self.options["CA_DIR"])
+            shutil.copy(os.path.join(FIXTURES_DIR, filename), tmpdir)
 
         # Copy OCSP public key (required for OCSP tests)
-        shutil.copy(
-            os.path.join(FIXTURES_DIR, CERT_DATA["profile-ocsp"]["pub_filename"]), self.options["CA_DIR"]
-        )
-
-        # pylint: disable=attribute-defined-outside-init
-        self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
-        self.mock_ = patch.object(ca_storage, "_location", self.options["CA_DIR"])
-        # pylint: enable=attribute-defined-outside-init
+        shutil.copy(os.path.join(FIXTURES_DIR, CERT_DATA["profile-ocsp"]["pub_filename"]), tmpdir)
 
         # Reset profiles, so that they are loaded again on first access
         profiles._reset()  # pylint: disable=protected-access
-
-        self.mock.start()
-        self.mock_.start()
 
         super().enable()
 
     def disable(self) -> None:
         super().disable()
-        self.mock.stop()
-        self.mock_.stop()
         shutil.rmtree(self.options["CA_DIR"])

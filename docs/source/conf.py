@@ -462,6 +462,7 @@ jinja_filters = {
 qualname_overrides = {
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
+    "django.core.files.storage.base.Storage": "django.core.files.storage.FileSystemStorage",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
     # x509.GeneralName fixes a build error with the typehints in constants.GENERAL_NAME_TYPES. The error seems

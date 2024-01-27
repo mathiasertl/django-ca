@@ -13,7 +13,6 @@
 
 """Test utility functions."""
 
-import doctest
 import ipaddress
 import itertools
 import os
@@ -33,11 +32,13 @@ from django.test import TestCase, override_settings
 
 import pytest
 from freezegun import freeze_time
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings, constants, utils
 from django_ca.deprecation import RemovedInDjangoCA129Warning
+from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
-from django_ca.tests.base.utils import dns, uri
+from django_ca.tests.base.utils import dns, doctest_module, uri
 from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
@@ -45,6 +46,7 @@ from django_ca.utils import (
     format_name,
     generate_private_key,
     get_cert_builder,
+    get_storage,
     is_power2,
     merge_x509_names,
     parse_encoding,
@@ -69,7 +71,7 @@ SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
 
 def test_doctests() -> None:
     """Load doctests."""
-    failures, _tests = doctest.testmod(utils)
+    failures, _tests = doctest_module("django_ca.utils")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
@@ -84,6 +86,18 @@ def test_read_file() -> None:
 
     assert read_file(name) == data
     assert read_file(path) == data
+
+
+def test_deprecated_storage_configuration(settings: SettingsWrapper) -> None:
+    """Test that using a deprecated storage configuration emits a warning."""
+    settings.STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+    with assert_removed_in_200(
+        r"^Support for CA_FILE_STORAGE is deprecated and will be removed in django-ca==2\.0\.$"
+    ):
+        get_storage()
 
 
 @pytest.mark.parametrize(

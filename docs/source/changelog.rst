@@ -16,6 +16,10 @@ ChangeLog
    :ref:`update_126_rfc4514_subjects` for migration information.
 
 * Add support for ``Django~=5.0`` and ``acme==2.8.0``.
+* ``pydantic>=2.5`` is now a required dependency.
+* The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
+  :ref:`settings-ca-storage`. Installations :doc:`as app <quickstart_as_app>` must add a
+  ``"django-ca"`` storage alias in their configuration.
 * The admin interface now presents lists of general names (e.g. in the Subject Alternative Name extension) as
   a list of order-able key/value pairs when adding certificates.
 * Extensions added by the CA when signing new certificates can now have the same complexity as when giving
@@ -35,7 +39,6 @@ ChangeLog
   * The checkbox in the admin interface was removed.
   * The profile option no longer has any effect and issues a warning.
 
-* ``pydantic>=2.5`` is now a required dependency.
 * Add :doc:`Pydantic models for cryptography classes <python/pydantic>`. These are required for the REST API,
   but are also used internally for various places where serialization of objects is required.
 

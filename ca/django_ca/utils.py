@@ -34,12 +34,12 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import InvalidStorageError, Storage, get_storage_class, storages
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.constants import NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA129Warning
+from django_ca.deprecation import RemovedInDjangoCA129Warning, RemovedInDjangoCA200Warning
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -1159,27 +1159,34 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
     return builder
 
 
-def read_file(path: str) -> bytes:
-    """Read the file from the given path.
+def get_storage() -> Storage:
+    """Get the django-ca storage class."""
+    try:
+        return storages["django-ca"]
+    except InvalidStorageError:
+        warnings.warn(
+            "Support for CA_FILE_STORAGE is deprecated and will be removed in django-ca==2.0.",
+            RemovedInDjangoCA200Warning,
+            stacklevel=2,
+        )
+        return ca_storage
 
-    If ``path`` is an absolute path, reads a file from the local file system. For relative paths, read the
-    file using the storage backend configured using :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
-    """
-    stream = ca_storage.open(path)
+
+def file_exists(path: str) -> bool:
+    """Test if a file with the given path exists."""
+    return get_storage().exists(path)
+
+
+def read_file(path: str) -> bytes:
+    """Read the file from the given path."""
+    storage = get_storage()
+    stream = storage.open(path)
 
     try:
         data: bytes = stream.read()  # pragma: no branch
         return data
     finally:
         stream.close()
-
-
-# Note used currently, but left here for future reference
-# def write_private_file(path, data):
-#    """Function to write binary data to a file that will only be readable to the user."""
-#
-#    with os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o400), 'wb') as fh:
-#        fh.write(data)
 
 
 def split_str(val: str, sep: str) -> Iterator[str]:

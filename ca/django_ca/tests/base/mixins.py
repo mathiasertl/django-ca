@@ -38,6 +38,7 @@ from django.contrib.auth.models import User  # pylint: disable=imported-auth-use
 from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.files.storage import storages
 from django.core.management import ManagementUtility, call_command
 from django.core.management.base import CommandError
 from django.db import models
@@ -64,7 +65,6 @@ from django_ca.tests.base.assertions import assert_change_response, assert_chang
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 from django_ca.tests.base.utils import basic_constraints, certificate_policies
-from django_ca.utils import ca_storage
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -915,7 +915,8 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             ctx["parent_serial_colons"] = CERT_DATA[parent]["serial_colons"]
 
         if CERT_DATA[name]["key_filename"] is not False:
-            ctx["key_path"] = ca_storage.path(CERT_DATA[name]["key_filename"])
+            storage = storages["django-ca"]
+            ctx["key_path"] = storage.path(CERT_DATA[name]["key_filename"])
         return ctx
 
     @classmethod

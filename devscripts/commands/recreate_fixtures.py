@@ -28,6 +28,8 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
+import django
+from django.conf import settings
 from django.urls import reverse
 
 from devscripts import config
@@ -644,8 +646,24 @@ class Command(DevCommand):
             # insert ca/ into path, otherwise it won't find test_settings in django project
             sys.path.insert(0, str(config.SRC_DIR))
 
-        os.environ["DJANGO_SETTINGS_MODULE"] = "ca.test_settings"
-        self.setup_django()
+        settings.configure(
+            BASE_DIR=Path(__file__).resolve().parent.parent.parent / "ca",
+            CA_DEFAULT_HOSTNAME="localhost:8000",
+            DATABASES={
+                "default": {
+                    "ENGINE": "django.db.backends.sqlite3",
+                    "NAME": ":memory:",
+                }
+            },
+            INSTALLED_APPS=(
+                "django.contrib.auth",
+                "django.contrib.contenttypes",
+                "django.contrib.admin",
+                "django_ca",
+            ),
+            ROOT_URLCONF="ca.urls",
+        )
+        django.setup()
         recreate_fixtures(
             dest=Path(args.dest),
             delay=args.delay,

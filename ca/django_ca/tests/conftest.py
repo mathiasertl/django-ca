@@ -14,19 +14,19 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """pytest configuration."""
-
+import copy
 import importlib.metadata
 import os
 import sys
 from pathlib import Path
 from typing import Any, Iterator, List, Type
-from unittest.mock import patch
 
 import coverage
 
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
+from django.core.files.storage import storages
 from django.test import Client
 
 import pytest
@@ -57,9 +57,8 @@ from django_ca.tests.base.conftest_helpers import (
 )
 from django_ca.tests.base.constants import GECKODRIVER_PATH, RUN_SELENIUM_TESTS
 from django_ca.tests.base.typehints import User
-from django_ca.utils import ca_storage
 
-pytest.register_assert_rewrite("django_ca.tests.pydantic.base")
+# NOTE: Assertion rewrites are in __init__.py
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -186,11 +185,24 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
     """Fixture to create a temporary CA dir."""
     settings.CA_DIR = str(tmp_path)
 
+    # Set the full setting and do **not** update the setting in place. This *somehow* makes a difference.
+    orig_storages = copy.deepcopy(settings.STORAGES)
+    updated_storages = copy.deepcopy(settings.STORAGES)
+    updated_storages["django-ca"]["OPTIONS"]["location"] = str(tmp_path)
+    settings.STORAGES = updated_storages
+
     # Reset profiles, so that they are loaded again on first access
     profiles._reset()  # pylint: disable=protected-access
 
-    with patch.object(ca_storage, "location", tmp_path), patch.object(ca_storage, "_location", tmp_path):
+    try:
         yield settings
+    finally:
+        profiles._reset()  # pylint: disable=protected-access
+
+        # Reset storages, otherwise the path lives into the next test in some cases
+        # pylint: disable-next=protected-access  # only way to reset this
+        storages._storages = {}  # type: ignore[attr-defined]  # not defined in django-stubs
+        settings.STORAGES = orig_storages
 
 
 # CAs that can be used for signing certificates

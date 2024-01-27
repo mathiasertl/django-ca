@@ -31,6 +31,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import OCSPExtensionOID, SignatureAlgorithmOID
 
+from django.core.files.storage import storages
 from django.test import TestCase, override_settings
 from django.urls import path, re_path, reverse
 
@@ -44,7 +45,7 @@ from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DI
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import override_tmpcadir
-from django_ca.utils import ca_storage, hex_to_bytes
+from django_ca.utils import hex_to_bytes
 from django_ca.views import OCSPView
 
 
@@ -302,7 +303,7 @@ class OCSPViewTestMixin(TestCaseMixin):
     ) -> Tuple[CertificateIssuerPrivateKeyTypes, Certificate]:
         """Generate an OCSP key for the given CA and return private kay and public key model instance."""
         priv_path, _cert_path, ocsp_cert = ca.generate_ocsp_key()  # type: ignore[misc]
-        with ca_storage.open(priv_path, "rb") as stream:
+        with storages["django-ca"].open(priv_path, "rb") as stream:
             private_key = typing.cast(
                 CertificateIssuerPrivateKeyTypes, load_pem_private_key(stream.read(), None)
             )
