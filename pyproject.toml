@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["4.2", "5.0"]
-cryptography = ["41.0"]
+cryptography = ["41.0", "42.0"]
 acme = ["2.7", "2.8"]
 
 # https://alpinelinux.org/releases/

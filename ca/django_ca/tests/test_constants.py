@@ -135,6 +135,9 @@ class CompletenessTestCase(TestCase):
     def test_nameoid(self) -> None:
         """Test that we support all NameOID instances."""
         known_oids = [v for v in vars(x509.NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
+        organization_id = x509.ObjectIdentifier("2.5.4.97")
+        if organization_id not in known_oids:  # pragma: only cryptography<42.0
+            known_oids.append(organization_id)
         self.assertCountEqual(known_oids, list(constants.NAME_OID_NAMES.keys()))
 
     def test_oid_to_extension_names(self) -> None:

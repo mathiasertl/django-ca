@@ -60,6 +60,7 @@ from django.utils.translation import gettext_lazy as _
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
+from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.extensions import get_extension_name
 from django_ca.managers import (
     AcmeAccountManager,
@@ -424,12 +425,12 @@ class X509CertMixin(DjangoCAModel):
     @property
     def not_before(self) -> datetime:
         """A timezone-aware datetime representing the beginning of the validity period."""
-        return self.pub.loaded.not_valid_before.replace(tzinfo=tz.utc)
+        return not_valid_before(self.pub.loaded)
 
     @property
     def not_after(self) -> datetime:
         """A timezone-aware datetime representing the end of the validity period."""
-        return self.pub.loaded.not_valid_after.replace(tzinfo=tz.utc)
+        return not_valid_after(self.pub.loaded)
 
     def revoke(
         self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
@@ -910,7 +911,7 @@ class CertificateAuthority(X509CertMixin):
             except Exception:  # pragma: no cover  # pylint: disable=broad-exception-caught
                 log.exception("Unknown error when reading existing OCSP responder certificate.")
             else:
-                responder_certificate_expires = responder_certificate.not_valid_after.replace(tzinfo=tz.utc)
+                responder_certificate_expires = not_valid_after(responder_certificate)
                 if responder_certificate_expires > now + ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL:
                     log.info("%s: OCSP responder certificate is not yet scheduled for renewal.")
                     return None

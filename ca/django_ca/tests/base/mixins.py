@@ -51,6 +51,7 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from django_ca import ca_settings, constants
 from django_ca.constants import ReasonFlags
+from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import (
@@ -227,7 +228,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         expected = expected or []
         signer = signer or self.cas["child"]
         extensions = extensions or []
-        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        now = datetime.now(tz=tz.utc)
         expires_timestamp = now + timedelta(seconds=expires)
 
         if idp is not None:  # pragma: no branch
@@ -251,14 +252,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
         self.assertTrue(parsed_crl.is_signature_valid(public_key))
         self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
-        self.assertEqual(parsed_crl.last_update, now)
-        self.assertEqual(parsed_crl.next_update, expires_timestamp)
+        self.assertEqual(crl_last_update(parsed_crl), now)
+        self.assertEqual(crl_next_update(parsed_crl), expires_timestamp)
         self.assertCountEqual(list(parsed_crl.extensions), extensions)
 
         entries = {e.serial_number: e for e in parsed_crl}
         self.assertCountEqual(entries, {c.pub.loaded.serial_number: c for c in expected})
         for entry in entries.values():
-            self.assertEqual(entry.revocation_date, now)
+            self.assertEqual(revoked_certificate_revocation_date(entry), now)
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager

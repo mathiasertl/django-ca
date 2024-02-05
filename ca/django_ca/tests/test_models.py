@@ -48,6 +48,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
+from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,
@@ -882,9 +883,9 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
 
     def assertBasicCert(self, cert: x509.Certificate) -> None:  # pylint: disable=invalid-name
         """Basic assertions about the certificate."""
-        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        now = datetime.now(tz=tz.utc)
         self.assertEqual(cert.issuer, self.ca.subject)
-        self.assertEqual(cert.not_valid_before, now)
+        self.assertEqual(not_valid_before(cert), now)
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
 
@@ -900,7 +901,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_simple(self) -> None:
         """Test the simplest invocation of the function."""
-        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        now = datetime.now(tz=tz.utc)
         cn = "example.com"
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
@@ -908,7 +909,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             cert = self.ca.sign(csr, subject=subject)
 
         self.assertBasicCert(cert)
-        self.assertEqual(cert.not_valid_after, now + ca_settings.CA_DEFAULT_EXPIRES)
+        self.assertEqual(not_valid_after(cert), now + ca_settings.CA_DEFAULT_EXPIRES)
         self.assertEqual(cert.subject, subject)
         self.assertIsInstance(cert.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertExtensionDict(
@@ -933,7 +934,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             cert = self.ca.sign(csr, subject=subject, algorithm=algorithm, expires=expires)
 
         self.assertBasicCert(cert)
-        self.assertEqual(cert.not_valid_after, expires.replace(tzinfo=None))
+        self.assertEqual(not_valid_after(cert), expires)
         self.assertIsInstance(cert.signature_hash_algorithm, hashes.SHA256)
 
     @override_tmpcadir()
@@ -993,23 +994,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     def test_dates(self) -> None:
         """Test valid_from/valid_until dates."""
         for name, ca in self.cas.items():
-            self.assertEqual(ca.valid_from, timezone.make_aware(CERT_DATA[name]["valid_from"], tz.utc))
-            self.assertEqual(ca.expires, timezone.make_aware(CERT_DATA[name]["valid_until"], tz.utc))
-
-        for name, cert in self.certs.items():
-            self.assertEqual(cert.valid_from, timezone.make_aware(CERT_DATA[name]["valid_from"], tz.utc))
-            self.assertEqual(cert.expires, timezone.make_aware(CERT_DATA[name]["valid_until"], tz.utc))
-
-    @override_settings(USE_TZ=False)
-    def test_dates_without_timezone_support(self) -> None:
-        """Test valid_from/valid_until dates without timezone support."""
-        for name, ca in self.cas.items():
-            ca.refresh_from_db()  # obj is loaded in setUp(), before decorator is active
             self.assertEqual(ca.valid_from, CERT_DATA[name]["valid_from"])
             self.assertEqual(ca.expires, CERT_DATA[name]["valid_until"])
 
         for name, cert in self.certs.items():
-            cert.refresh_from_db()  # obj is loaded in setUp(), before decorator is active
             self.assertEqual(cert.valid_from, CERT_DATA[name]["valid_from"])
             self.assertEqual(cert.expires, CERT_DATA[name]["valid_until"])
 

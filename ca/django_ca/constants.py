@@ -384,6 +384,8 @@ NAME_OID_NAMES = MappingProxyType(
         NameOID.OGRN: "ogrn",  # undocumented
         NameOID.ORGANIZATIONAL_UNIT_NAME: "organizationalUnitName",
         NameOID.ORGANIZATION_NAME: "organizationName",
+        # pragma: only cg<42: Replace "2.5.4.97" with NameOID.ORGANIZATION_IDENTIIFER
+        x509.ObjectIdentifier("2.5.4.97"): "organizationIdentifier",
         NameOID.POSTAL_ADDRESS: "postalAddress",
         NameOID.POSTAL_CODE: "postalCode",
         NameOID.PSEUDONYM: "pseudonym",  # not specified in RFC 4519

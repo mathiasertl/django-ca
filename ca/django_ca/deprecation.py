@@ -16,8 +16,11 @@
 import functools
 import typing
 import warnings
+from datetime import datetime, timezone as tz
 from inspect import signature
-from typing import Any, Tuple, Type, Union
+from typing import Any, Optional, Tuple, Type, Union
+
+from cryptography import x509
 
 # IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
 
@@ -103,3 +106,38 @@ def deprecate_type(
         return typing.cast(F, wrapper)
 
     return decorator_deprecate
+
+
+# pylint: disable=missing-function-docstring
+
+
+def not_valid_before(certificate: x509.Certificate) -> datetime:  # noqa: D103
+    if hasattr(certificate, "not_valid_before_utc"):  # pragma: only cryptography>=42.0
+        return certificate.not_valid_before_utc
+    return certificate.not_valid_before.replace(tzinfo=tz.utc)  # pragma: only cryptography<42.0
+
+
+def not_valid_after(certificate: x509.Certificate) -> datetime:  # noqa: D103
+    if hasattr(certificate, "not_valid_after_utc"):  # pragma: only cryptography>=42.0
+        return certificate.not_valid_after_utc
+    return certificate.not_valid_after.replace(tzinfo=tz.utc)  # pragma: only cryptography<42.0
+
+
+def crl_next_update(crl: x509.CertificateRevocationList) -> Optional[datetime]:  # noqa: D103
+    if hasattr(crl, "next_update_utc"):  # pragma: only cryptography>=42.0
+        return crl.next_update_utc
+    if crl.next_update is not None:  # pragma: cryptography<42.0 branch
+        return crl.next_update.replace(tzinfo=tz.utc)
+    return None  # pragma: no cover
+
+
+def crl_last_update(crl: x509.CertificateRevocationList) -> datetime:  # noqa: D103
+    if hasattr(crl, "last_update_utc"):  # pragma: only cryptography>=42.0
+        return crl.last_update_utc
+    return crl.last_update.replace(tzinfo=tz.utc)  # pragma: only cryptography<42.0
+
+
+def revoked_certificate_revocation_date(certificate: x509.RevokedCertificate) -> datetime:  # noqa: D103
+    if hasattr(certificate, "revocation_date_utc"):  # pragma: only cryptography>=42.0
+        return certificate.revocation_date_utc
+    return certificate.revocation_date.replace(tzinfo=tz.utc)  # pragma: only cryptography<42.0
