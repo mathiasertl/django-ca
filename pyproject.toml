@@ -45,7 +45,7 @@ ubuntu-releases = [
 #   https://github.com/marketplace/actions/checkout
 actions."actions/checkout" = "v4.1.1"
 actions."actions/setup-python" = "v5.0.0"
-actions."actions/cache" = "v3.3.2"
+actions."actions/cache" = "v4.0.0"
 # CodeQL actions are actually all in the same repository:
 #   https://github.com/github/codeql-action
 actions."github/codeql-action/init" = "v3"
@@ -411,6 +411,10 @@ filterwarnings = [
 ]
 
 [tool.ruff]
+extend-exclude = ["migrations", "stubs"]
+line-length = 110
+
+[tool.ruff.lint]
 extend-select = [
     "B",  # flake8-bugbear
     "D",  # pydocstyle
@@ -422,8 +426,7 @@ extend-select = [
     "PL",  # pylint
     "RUF",  # ruff specific checks
 ]
-extend-exclude = ["migrations", "stubs"]
-line-length = 110
+
 ignore = [
     "D102",  # Missing docstring in public method - includes inherited methods
     "D104",  # Missing docstring in public package - includes even empty __init__.py files
@@ -438,7 +441,7 @@ unfixable = [
     "PLW1510",  # `subprocess.run` without explicit `check` argument - not deemed safe
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 section-order = [
     "future",
     "standard-library",
@@ -453,7 +456,7 @@ section-order = [
 known-first-party = ["django_ca", "ca"]
 combine-as-imports = true
 
-[tool.ruff.isort.sections]
+[tool.ruff.lint.isort.sections]
 django = ["django"]
 django-addon = ["django_object_actions"]
 crypto = ["cryptography", "ocspbuilder", "asn1crypto", "oscrypto", "OpenSSL"]
@@ -470,10 +473,10 @@ test = [
     "webtest",
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 # Maximum number of arguments allowed for a function or method definition (see: PLR0913).
 max-args = 10
 
