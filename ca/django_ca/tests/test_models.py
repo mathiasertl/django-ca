@@ -1186,7 +1186,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
     def test_create_pem_bytes(self) -> None:
         """Test creating with bytes-encoded PEM."""
         pub = self.pub["pem"].encode()
-        csr = self.csr["pem"].encode()
+        csr = self.csr["parsed"].public_bytes(Encoding.PEM)
         cert = Certificate.objects.create(
             pub=pub,
             csr=csr,
@@ -1266,7 +1266,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         """Test ``repr()`` for custom modelfields."""
         cert = Certificate.objects.create(
             pub=self.pub["pem"],
-            csr=self.csr["pem"],
+            csr=self.csr["parsed"].public_bytes(Encoding.PEM).decode("utf-8"),
             ca=self.ca,
             expires=timezone.now(),
             valid_from=timezone.now(),
@@ -1752,5 +1752,7 @@ class AcmeCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_parse_csr(self) -> None:
         """Test the parse_csr property."""
-        self.acme_cert.csr = CERT_DATA["root-cert"]["csr"]["pem"]
+        self.acme_cert.csr = (
+            CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
+        )
         self.assertIsInstance(self.acme_cert.parse_csr(), x509.CertificateSigningRequest)

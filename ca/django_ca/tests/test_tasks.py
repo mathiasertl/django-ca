@@ -497,9 +497,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
-        self.acme_cert = AcmeCertificate.objects.create(
-            order=self.order, csr=CERT_DATA["root-cert"]["csr"]["pem"]
-        )
+        csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
+        self.acme_cert = AcmeCertificate.objects.create(order=self.order, csr=csr)
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
@@ -653,9 +652,8 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
-        self.acme_cert = AcmeCertificate.objects.create(
-            order=self.order, csr=CERT_DATA["root-cert"]["csr"]["pem"]
-        )
+        csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
+        self.acme_cert = AcmeCertificate.objects.create(order=self.order, csr=csr)
 
     def test_basic(self) -> None:
         """Basic test."""

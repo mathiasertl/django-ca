@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from typing import Any, Iterable, Iterator, List, Optional, Tuple
 
 from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase
@@ -36,10 +37,6 @@ from django_ca.tests.base.utils import override_tmpcadir, uri
 
 class CRLValidationTestCase(TestCaseMixin, TestCase):
     """CRL validation tests."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.csr_pem = CERT_DATA["root-cert"]["csr"]["pem"]  # just some CSR
 
     def assertFullName(  # pylint: disable=invalid-name
         self,
@@ -111,7 +108,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         self, ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any
     ) -> Iterator[str]:
         """Create a signed certificate in a temporary directory."""
-        stdin = self.csr_pem.encode()
+        stdin = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
         # subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
         subject = f"CN={hostname}"
 

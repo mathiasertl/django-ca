@@ -22,6 +22,7 @@ from typing import Any, Dict, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from django.contrib.auth.models import AbstractUser
@@ -57,6 +58,7 @@ from django_ca.tests.base.utils import (
 
 path = reverse_lazy("django_ca:api:sign_certificate", kwargs={"serial": CERT_DATA["root"]["serial"]})
 default_subject = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "api.example.com"}]
+csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -92,8 +94,7 @@ def sign_certificate(
     expected_algorithm: Optional[hashes.HashAlgorithm] = None,
 ) -> Certificate:
     """Common function to issue a certificate signing request."""
-    # Add CSR to data
-    data["csr"] = CERT_DATA["root-cert"]["csr"]["pem"]
+    data["csr"] = csr
 
     # Issue a signing request
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
@@ -177,9 +178,7 @@ def test_private_key_unavailable(
 ) -> None:
     """Test the error when no private key is available."""
     with django_capture_on_commit_callbacks() as callbacks:
-        response = request(
-            api_client, {"csr": CERT_DATA["root-cert"]["csr"]["pem"], "subject": default_subject}
-        )
+        response = request(api_client, {"csr": csr, "subject": default_subject})
 
         # Get order before on_commit callbacks are called to test pending state
         order: CertificateOrder = CertificateOrder.objects.get(certificate_authority=root)
@@ -430,7 +429,7 @@ def test_crldp_with_full_name_and_relative_name(api_client: Client) -> None:
     response = request(
         api_client,
         {
-            "csr": CERT_DATA["root-cert"]["csr"]["pem"],
+            "csr": csr,
             "subject": default_subject,
             "extensions": [
                 {
@@ -467,7 +466,7 @@ def test_crldp_with_no_full_name_or_relative_name(api_client: Client) -> None:
     response = request(
         api_client,
         {
-            "csr": CERT_DATA["root-cert"]["csr"]["pem"],
+            "csr": csr,
             "subject": default_subject,
             "extensions": [{"type": "crl_distribution_points", "value": [{}]}],
         },
@@ -489,14 +488,7 @@ def test_crldp_with_no_full_name_or_relative_name(api_client: Client) -> None:
 @freeze_time(TIMESTAMPS["everything_valid"])
 def test_with_invalid_algorithm(api_client: Client) -> None:
     """Test sending an invalid key usage."""
-    response = request(
-        api_client,
-        {
-            "csr": CERT_DATA["root-cert"]["csr"]["pem"],
-            "subject": default_subject,
-            "algorithm": "foo",
-        },
-    )
+    response = request(api_client, {"csr": csr, "subject": default_subject, "algorithm": "foo"})
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
 
     literal = "'SHA-224', 'SHA-256', 'SHA-384', 'SHA-512', 'SHA3/224', 'SHA3/256', 'SHA3/384' or 'SHA3/512'"
@@ -518,11 +510,7 @@ def test_with_invalid_key_usage(api_client: Client) -> None:
     """Test sending an invalid key usage."""
     response = request(
         api_client,
-        {
-            "csr": CERT_DATA["root-cert"]["csr"]["pem"],
-            "subject": default_subject,
-            "extensions": [{"type": "key_usage", "value": ["unknown"]}],
-        },
+        {"csr": csr, "subject": default_subject, "extensions": [{"type": "key_usage", "value": ["unknown"]}]},
     )
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
 
@@ -546,7 +534,7 @@ def test_with_invalid_key_usage(api_client: Client) -> None:
 @freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_ca(api_client: Client) -> None:
     """Test that you can *not* sign a certificate for an expired CA."""
-    response = request(api_client, {"csr": CERT_DATA["root-cert"]["csr"]["pem"], "subject": default_subject})
+    response = request(api_client, {"csr": csr, "subject": default_subject})
     assert response.status_code == HTTPStatus.NOT_FOUND, response.content
     assert response.json() == {"detail": "Not Found"}, response.json()
 
@@ -558,4 +546,4 @@ class TestPermissions(APIPermissionTestBase):
 
     def request(self, client: Client) -> HttpResponse:
         """Standard request for testing permissions."""
-        return request(client, {"csr": CERT_DATA["root-cert"]["csr"]["pem"], "subject": default_subject})
+        return request(client, {"csr": csr, "subject": default_subject})

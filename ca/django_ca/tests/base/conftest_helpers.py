@@ -24,6 +24,7 @@ import packaging
 
 import cryptography
 from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 import django
@@ -209,7 +210,7 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
         pub = request.getfixturevalue(f"{sanitized_name}_pub")
 
         with freeze_time(TIMESTAMPS["everything_valid"]):
-            cert = load_cert(ca, data["csr"]["pem"], pub, data.get("profile", ""))
+            cert = load_cert(ca, None, pub, data.get("profile", ""))
 
         yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
@@ -271,7 +272,10 @@ def load_ca(
 
 
 def load_cert(
-    ca: CertificateAuthority, csr: x509.CertificateSigningRequest, pub: x509.Certificate, profile: str = ""
+    ca: CertificateAuthority,
+    csr: Optional[x509.CertificateSigningRequest],
+    pub: x509.Certificate,
+    profile: str = "",
 ) -> Certificate:
     """Load a certificate from with the given CA/CSR and public key."""
     cert = Certificate(ca=ca, csr=csr, profile=profile)

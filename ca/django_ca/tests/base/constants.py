@@ -28,7 +28,7 @@ import packaging.version
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives._serialization import Encoding
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID
 
 import django
@@ -340,11 +340,8 @@ def _load_csr(data: Dict[Any, Any]) -> CsrDict:
     with open(FIXTURES_DIR / data["csr_filename"], "rb") as stream:
         raw = stream.read()
 
-    parsed = x509.load_pem_x509_csr(raw)
-    return {
-        "pem": raw.decode("utf-8"),
-        "parsed": parsed,
-    }
+    parsed = x509.load_der_x509_csr(raw)
+    return {"parsed": parsed}
 
 
 def _load_pub(data: Dict[str, Any]) -> PubDict:

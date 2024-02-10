@@ -85,7 +85,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     """Test the CSR detail view."""
 
     url = reverse("admin:django_ca_certificate_csr_details")
-    csr_pem = CERT_DATA["root-cert"]["csr"]["pem"]
+    csr_pem = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
 
     @classmethod
     def create_csr(
@@ -104,8 +104,9 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test a basic CSR info retrieval."""
         for cert_data in [v for v in CERT_DATA.values() if v["type"] == "cert" and v["cat"] == "generated"]:
+            csr = cert_data["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
             response = self.client.post(
-                self.url, data=json.dumps({"csr": cert_data["csr"]["pem"]}), content_type="application/json"
+                self.url, data=json.dumps({"csr": csr}), content_type="application/json"
             )
             self.assertEqual(response.status_code, 200, response.json())
             csr_subject = cert_data["csr"]["parsed"].subject

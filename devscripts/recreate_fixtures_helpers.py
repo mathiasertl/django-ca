@@ -117,7 +117,7 @@ def _create_csr(
         csr = csr_builder.sign(key, algorithm=hashes.SHA256())
 
     with open(path, "wb") as stream:
-        stream.write(csr.public_bytes(serialization.Encoding.PEM))
+        stream.write(csr.public_bytes(serialization.Encoding.DER))
     return csr
 
 

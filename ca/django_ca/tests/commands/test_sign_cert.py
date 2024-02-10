@@ -49,6 +49,8 @@ from django_ca.tests.base.utils import (
     uri,
 )
 
+csr: bytes = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
+
 
 @override_settings(CA_MIN_KEY_SIZE=1024, CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -58,21 +60,16 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     default_ca = "root"
     load_cas = "__usable__"
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.csr_pem = CERT_DATA["root-cert"]["csr"]["pem"]
-
     @override_tmpcadir()
     def test_from_stdin(self) -> None:
         """Test reading CSR from stdin."""
-        stdin = self.csr_pem.encode()
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
                 subject=self.subject.rfc4514_string(),
                 subject_format="rfc4514",
-                stdin=stdin,
+                stdin=csr,
             )
         self.assertEqual(stderr, "")
 
@@ -97,14 +94,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_with_bundle(self) -> None:
         """Test outputting the whole certificate bundle."""
-        stdin = self.csr_pem.encode()
         stdout, stderr = self.cmd(
             "sign_cert",
             bundle=True,
             ca=self.ca,
             subject=self.subject.rfc4514_string(),
             subject_format="rfc4514",
-            stdin=stdin,
+            stdin=csr,
         )
         cert = Certificate.objects.get()
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.bundle_as_pem}")
@@ -114,8 +110,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_usable_cas(self) -> None:
         """Test signing with all usable CAs."""
         for name, ca in self.cas.items():
-            stdin = CERT_DATA[f"{name}-cert"]["csr"]["pem"].encode()
-
+            stdin = CERT_DATA[f"{name}-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
             password = CERT_DATA[name].get("password")
 
             with self.assertCreateCertSignals() as (pre, post):
@@ -152,8 +147,8 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_from_file(self) -> None:
         """Test reading CSR from file."""
         csr_path = os.path.join(ca_settings.CA_DIR, f"{self.hostname}.csr")
-        with open(csr_path, "w", encoding="ascii") as csr_stream:
-            csr_stream.write(self.csr_pem)
+        with open(csr_path, "wb") as csr_stream:
+            csr_stream.write(csr)
 
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd(
@@ -185,7 +180,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_to_file(self) -> None:
         """Test writing PEM to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
-        stdin = self.csr_pem.encode()
 
         try:
             with self.assertCreateCertSignals() as (pre, post):
@@ -195,7 +189,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                     subject=self.subject.rfc4514_string(),
                     subject_format="rfc4514",
                     out=out_path,
-                    stdin=stdin,
+                    stdin=csr,
                 )
 
             cert = Certificate.objects.get()
@@ -218,13 +212,12 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_with_rsa_with_algorithm(self) -> None:
         """Test creating a CA with a custom algorithm."""
-        stdin = self.csr_pem.encode()
         self.cmd(
             "sign_cert",
             ca=self.ca,
             subject=self.subject.rfc4514_string(),
             subject_format="rfc4514",
-            stdin=stdin,
+            stdin=csr,
             algorithm=hashes.SHA256(),
         )
         cert = Certificate.objects.get()
@@ -239,7 +232,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         """
         cname = "subject-sort.example.com"
         subject = f"CN={cname},C=AT"  # not the default order
-        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject={subject}",
@@ -248,7 +240,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=csr)
 
         self.assertEqual(stderr, "")
 
@@ -274,7 +266,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         the position of the CommonName would otherwise not be clear.
         """
         subject = "emailAddress=user@example.com,C=AT"  # not the default order
-        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject={subject}",
@@ -284,7 +275,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=csr)
 
         self.assertEqual(stderr, "")
 
@@ -305,14 +296,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_no_san(self) -> None:
         """Test signing without passing any SANs."""
-        stdin = self.csr_pem.encode()
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
                 subject=self.subject.rfc4514_string(),
                 subject_format="rfc4514",
-                stdin=stdin,
+                stdin=csr,
             )
 
         cert = Certificate.objects.get()
@@ -339,12 +329,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_profile_subject(self) -> None:
         """Test signing with a subject in the profile."""
         # first, we only pass an subjectAltName, meaning that even the CommonName is used.
-        stdin = self.csr_pem.encode()
         san = subject_alternative_name(dns(self.hostname))
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd(
-                "sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=stdin
-            )
+            stdout, stderr = self.cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=csr)
         self.assertEqual(stderr, "")
 
         cert = Certificate.objects.get()
@@ -373,7 +360,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 "sign_cert",
                 ca=self.ca,
                 subject_alternative_name=san.value,
-                stdin=stdin,
+                stdin=csr,
                 subject=subject.rfc4514_string(),
                 subject_format="rfc4514",
             )
@@ -400,7 +387,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.ca.sign_issuer_alternative_name = issuer_alternative_name(uri("http://ian.example.com"))
         self.ca.save()
 
-        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject=CN={self.hostname}",
@@ -436,7 +422,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=csr)
         self.assertEqual(stderr, "")
 
         cert = Certificate.objects.get()
@@ -510,7 +496,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertIsNotNone(self.ca.sign_crl_distribution_points)
         self.ca.save()
 
-        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject=CN={self.hostname}",
@@ -545,7 +530,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=csr)
         self.assertEqual(stderr, "")
 
         cert = Certificate.objects.get()
@@ -600,7 +585,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_add_extensions_with_formatting(self) -> None:
         """Test adding various extensions."""
-        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject=CN={self.hostname}",
@@ -613,7 +597,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         ]
 
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=csr)
         self.assertEqual(stderr, "")
 
         cert = Certificate.objects.get()
@@ -649,7 +633,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir()
     def test_multiple_sans(self) -> None:
         """Test passing multiple SubjectAlternativeName instances."""
-        stdin = self.csr_pem.encode()
         cmdline = [
             "sign_cert",
             f"--subject=CN={self.hostname}",
@@ -659,7 +642,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             "--subject-alternative-name=DNS:example.org",
         ]
         with self.assertCreateCertSignals() as (pre, post):
-            stdout, stderr = self.cmd_e2e(cmdline, stdin=stdin)
+            stdout, stderr = self.cmd_e2e(cmdline, stdin=csr)
         self.assertEqual(stderr, "")
 
         cert = Certificate.objects.get()
@@ -675,13 +658,12 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_no_subject(self) -> None:
         """Test signing without a subject (but SANs)."""
-        stdin = self.csr_pem.encode()
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
                 subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
-                stdin=stdin,
+                stdin=csr,
             )
 
         cert = Certificate.objects.get()
@@ -706,22 +688,21 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         ca = CertificateAuthority.objects.get(pk=ca.pk)
 
         # Giving no password raises a CommandError
-        stdin = self.csr_pem.encode()
         san = subject_alternative_name(dns("example.com"))
         with self.assertCommandError(
             "^Password was not given but private key is encrypted$"
         ), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin)
+            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=csr)
 
         # Pass a password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCreateCertSignals():
-            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin, password=password)
+            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=csr, password=password)
 
         # Pass the wrong password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCommandError(self.re_false_password), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=stdin, password=b"wrong")
+            self.cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=csr, password=b"wrong")
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_unparsable_private_key(self) -> None:
@@ -732,10 +713,9 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         with open(path, "wb") as stream:
             stream.write(b"bogus")
 
-        stdin = self.csr_pem.encode()
         san = subject_alternative_name(dns("example.com"))
         with self.assertCommandError(self.re_false_password), self.assertCreateCertSignals(False, False):
-            self.cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=csr)
 
     @override_tmpcadir()
     def test_der_csr(self) -> None:
@@ -778,14 +758,13 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         merged) and the passed subject already contains a CommonName (as it would have to be added in the
         "correct" location from the SubjectAlternativeName extension).
         """
-        stdin = self.csr_pem.encode()
         with self.assertCreateCertSignals() as (pre, post):
             stdout, stderr = self.cmd(
                 "sign_cert",
                 ca=self.ca,
                 subject_format="rfc4514",
                 subject=f"inn=weird,CN={self.hostname}",
-                stdin=stdin,
+                stdin=csr,
             )
         self.assertEqual(stderr, "")
 
@@ -810,12 +789,11 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         The given subject and subject in the profile cannot be merged in any predictable order, so this is an
         error.
         """
-        stdin = self.csr_pem.encode()
         subject = f"inn=weird,CN={self.hostname}"
         with self.assertCommandError(rf"^{subject}: Unsortable name$"), self.assertCreateCertSignals(
             False, False
         ):
-            self.cmd("sign_cert", ca=self.ca, subject_format="rfc4514", subject=subject, stdin=stdin)
+            self.cmd("sign_cert", ca=self.ca, subject_format="rfc4514", subject=subject, stdin=csr)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
     def test_unsortable_subject_with_no_common_name(self) -> None:
@@ -823,7 +801,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         The position of the CommonName added via the SubjectAlternativeName extension cannot be determined.
         """
-        stdin = self.csr_pem.encode()
         subject = "inn=weird"
         with self.assertCommandError(rf"^{subject}: Unsortable name$"), self.assertCreateCertSignals(
             False, False
@@ -834,7 +811,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 subject_format="rfc4514",
                 subject=subject,
                 subject_alternative_name=subject_alternative_name(dns(self.hostname)).value,
-                stdin=stdin,
+                stdin=csr,
             )
 
     @override_tmpcadir()
@@ -842,7 +819,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         """Test signing with an expiry after the CA expires."""
         time_left = (self.ca.expires - timezone.now()).days
         expires = timedelta(days=time_left + 3)
-        stdin = io.StringIO(self.csr_pem)
 
         with self.assertCommandError(
             rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
@@ -853,20 +829,19 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 subject_format="rfc4514",
                 subject=f"CN={self.hostname}",
                 expires=expires,
-                stdin=stdin,
+                stdin=csr,
             )
 
     @override_tmpcadir()
     def test_revoked_ca(self) -> None:
         """Test signing with a revoked CA."""
         self.ca.revoke()
-        stdin = io.StringIO(self.csr_pem)
 
         with self.assertCommandError(r"^Certificate Authority is revoked\.$"), self.assertCreateCertSignals(
             False, False
         ):
             self.cmd(
-                "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=stdin
+                "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=csr
             )
 
     def test_invalid_algorithm(self) -> None:
@@ -896,7 +871,6 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         path = storages["django-ca"].path(self.ca.private_key_path)
         os.remove(path)
         msg = rf"^\[Errno 2\] No such file or directory: '{path}'"
-        stdin = io.StringIO(self.csr_pem)
 
         with self.assertCommandError(msg), self.assertCreateCertSignals(False, False):
             self.cmd(
@@ -904,19 +878,17 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 ca=self.ca,
                 subject=self.subject.rfc4514_string(),
                 subject_format="rfc4514",
-                stdin=stdin,
+                stdin=csr,
             )
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_expired"])
     def test_expired_ca(self) -> None:
         """Test signing with an expired CA."""
-        stdin = io.StringIO(self.csr_pem)
-
         msg = r"^Certificate Authority has expired\.$"
         with self.assertCommandError(msg), self.assertCreateCertSignals(False, False):
             self.cmd(
-                "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=stdin
+                "sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=csr
             )
 
     @override_tmpcadir()
