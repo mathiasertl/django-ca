@@ -53,7 +53,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
         # This test is only meaningful if the CA does **not** have the Certificate Policies extension in its
         # own extensions. We (can) only test for the used template after viewing, and the template would be
         # used for that extension.
-        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.extensions)
 
         ca.sign_certificate_policies = self.certificate_policies(
             x509.PolicyInformation(

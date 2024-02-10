@@ -141,8 +141,8 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         with self.assertCreateCASignals():
             ca = CertificateAuthority.objects.init(name, subject, path_length=2)
         self.assertProperties(ca, name, subject)
-        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.extensions)
 
         name = "child"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")])
@@ -154,11 +154,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         expected_ocsp = [uri(f"http://{host}{self.reverse('ocsp-ca-post', serial=ca.serial)}")]
 
         self.assertEqual(
-            child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            child.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
         )
         self.assertEqual(
-            child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            child.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             crl_distribution_points(
                 distribution_point([uri(f"http://{host}{self.reverse('ca-crl', serial=ca.serial)}")])
             ),
@@ -173,11 +173,11 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         expected_ocsp = [uri(f"http://{host}{self.reverse('ocsp-ca-post', serial=child.serial)}")]
         expected_issuers = [uri(f"http://{host}{self.reverse('issuer', serial=child.serial)}")]
         self.assertEqual(
-            grandchild.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            grandchild.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(ca_issuers=expected_issuers, ocsp=expected_ocsp),
         )
         self.assertEqual(
-            grandchild.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            grandchild.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             crl_distribution_points(
                 distribution_point([uri(f"http://{host}{self.reverse('ca-crl', serial=child.serial)}")])
             ),
@@ -240,7 +240,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 "auto-ocsp", subject, parent=parent, extensions=passed_extensions
             )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
 
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
@@ -262,7 +262,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 "auto-ca-issuers", subject, parent=parent, extensions=passed_extensions
             )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
 
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
@@ -290,7 +290,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 "formatting", subject, parent=parent, extensions=passed_extensions
             )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
         ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": parent.serial})
         ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": parent.serial})
         crl_path = reverse("django_ca:ca-crl", kwargs={"serial": parent.serial})
@@ -323,7 +323,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 "formatting", subject, parent=parent, extensions=passed_extensions
             )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
         self.assertEqual(extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], aia)
         self.assertEqual(extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], crldp)
 
@@ -345,7 +345,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
                 "formatting-rdn", subject, parent=parent, extensions=passed_extensions
             )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
         self.assertEqual(extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], crldp)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)

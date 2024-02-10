@@ -210,7 +210,7 @@ class CertificateMixin(
     @admin.display(description=_("Primary name"))
     def primary_name(self, obj: X509CertMixinTypeVar) -> "StrOrPromise":
         """Display the first Subject Alternative Name or the Common Name."""
-        extensions = obj.x509_extensions
+        extensions = obj.extensions
         if san := extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME):
             # NOTE: Do not format the general name here, as this should be obvious from the list display.
             return san.value[0].value  # type: ignore[no-any-return,index]
@@ -258,7 +258,7 @@ class CertificateMixin(
 
     def output_template(self, obj: X509CertMixinTypeVar, oid: x509.ObjectIdentifier) -> str:
         """Render extension for the given object."""
-        ext = obj.x509_extensions.get(oid)
+        ext = obj.extensions.get(oid)
 
         if ext is None:
             # SubjectAlternativeName is displayed unconditionally in the main section, so a certificate
@@ -313,7 +313,7 @@ class CertificateMixin(
             # We can only change the date when the certificate was compromised if it's actually revoked.
             fields.append("compromised")
 
-        extension_fields = [self.get_oid_name(oid) for oid in obj.x509_extensions]
+        extension_fields = [self.get_oid_name(oid) for oid in obj.extensions]
         return fields + extension_fields
 
     class Media:  # pylint: disable=missing-class-docstring
@@ -714,7 +714,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         if hasattr(request, "_resign_obj"):
             # resign the cert, so we add initial data from the original cert
 
-            resign_obj = request._resign_obj  # pylint: disable=protected-access
+            resign_obj: Certificate = request._resign_obj  # pylint: disable=protected-access
 
             if resign_obj.algorithm is not None:
                 hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(resign_obj.algorithm)]
@@ -732,7 +732,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             }
 
             # Add values from editable extensions
-            extensions = resign_obj.x509_extensions
+            extensions = resign_obj.extensions
             for key in CERTIFICATE_EXTENSIONS:
                 data[key] = extensions.get(EXTENSION_KEY_OIDS[key])
         else:

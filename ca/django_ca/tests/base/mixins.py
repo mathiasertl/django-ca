@@ -181,10 +181,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> None:
         """Test the key identifier of the AuthorityKeyIdentifier extension of `cert`."""
         actual = typing.cast(
-            x509.AuthorityKeyIdentifier, cert.x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
+            x509.AuthorityKeyIdentifier, cert.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
         )
         expected = typing.cast(
-            x509.SubjectKeyIdentifier, issuer.x509_extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
+            x509.SubjectKeyIdentifier, issuer.extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
         )
         self.assertEqual(actual.key_identifier, expected.key_identifier)
 
@@ -441,11 +441,11 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         if isinstance(cert, Certificate):
             pubkey = cert.pub.loaded.public_key()
-            actual = cert.x509_extensions
+            actual = cert.extensions
             signer = cert.ca
         elif isinstance(cert, CertificateAuthority):
             pubkey = cert.pub.loaded.public_key()
-            actual = cert.x509_extensions
+            actual = cert.extensions
 
             if cert.parent is None:  # root CA
                 signer = cert

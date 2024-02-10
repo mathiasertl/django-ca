@@ -80,7 +80,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
 
         aia = typing.cast(
             x509.Extension[x509.AuthorityInformationAccess],
-            db_cert.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            db_cert.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
         )
 
         expected_aia = x509.Extension(

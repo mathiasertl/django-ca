@@ -101,18 +101,16 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
 
         # verify X509 properties
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
+            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
         )
-        self.assertEqual(
-            ca.x509_extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True)
-        )
+        self.assertEqual(ca.extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True))
         for oid in [
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
             ExtensionOID.EXTENDED_KEY_USAGE,
             ExtensionOID.TLS_FEATURE,
             ExtensionOID.ISSUER_ALTERNATIVE_NAME,
         ]:
-            self.assertNotIn(oid, ca.x509_extensions)
+            self.assertNotIn(oid, ca.extensions)
         self.assertFalse(ca.is_openssh_ca)
 
     @override_tmpcadir()
@@ -122,20 +120,20 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.init(
             name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
         )
-        self.assertEqual(ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True))
+        self.assertEqual(ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True))
 
         ca = CertificateAuthority.objects.init(
             path_length=0, name="2", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
         )
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
+            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
         )
 
         ca = CertificateAuthority.objects.init(
             path_length=2, name="3", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
         )
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=2)
+            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=2)
         )
 
     @override_tmpcadir()
@@ -191,9 +189,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.subject, subject)
 
         # verify X509 properties
-        self.assertEqual(
-            ca.x509_extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True)
-        )
+        self.assertEqual(ca.extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True))
 
         for oid in [
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
@@ -201,7 +197,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             ExtensionOID.TLS_FEATURE,
             ExtensionOID.ISSUER_ALTERNATIVE_NAME,
         ]:
-            self.assertNotIn(oid, ca.x509_extensions)
+            self.assertNotIn(oid, ca.extensions)
 
         self.assertTrue(ca.is_openssh_ca)
 

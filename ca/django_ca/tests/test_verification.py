@@ -221,7 +221,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         """Test that CA_DEFAULT_HOSTNAME does not lead to problems."""
         ca = self.init_ca("root")
         # Root CAs have no CRLDistributionPoints
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.extensions)
 
         with self.dumped(ca) as paths, self.sign_cert(ca) as cert:
             with self.crl(ca) as (crl_path, crl):  # test global CRL
@@ -250,9 +250,9 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         grandchild = self.init_ca("Grandchild", parent=child)
 
         #  Verify the state of the CAs themselves.
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.x509_extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, child.x509_extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, grandchild.x509_extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, child.extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, grandchild.extensions)
 
         with self.dumped(root, child, grandchild) as paths:
             untrusted = paths[1:]
@@ -299,13 +299,13 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         grandchild_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": child.serial})
 
         #  Verify the state of the CAs themselves.
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.x509_extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.extensions)
         self.assertEqual(
-            child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            child.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             self.crl_distribution_points([uri(f"http://example.com{child_ca_crl}")]),
         )
         self.assertEqual(
-            grandchild.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            grandchild.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             self.crl_distribution_points([uri(f"http://example.com{grandchild_ca_crl}")]),
         )
 

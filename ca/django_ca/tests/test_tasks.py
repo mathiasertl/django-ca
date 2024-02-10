@@ -543,7 +543,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
@@ -569,7 +569,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
@@ -593,7 +593,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, not_after)
@@ -622,7 +622,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
         self.assertEqual(
-            self.acme_cert.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)

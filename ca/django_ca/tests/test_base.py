@@ -62,8 +62,8 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         ca = self.cas[cert_key]
 
         root_extensions = [
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
-            ca.x509_extensions[ExtensionOID.KEY_USAGE],
+            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS],
+            ca.extensions[ExtensionOID.KEY_USAGE],
         ]
         self.assertExtensions(ca, root_extensions)
 
@@ -71,10 +71,10 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         ca = self.cas[cert_key]
 
         root_extensions = [
-            ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            ca.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS],
-            ca.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            ca.x509_extensions[ExtensionOID.KEY_USAGE],
+            ca.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS],
+            ca.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            ca.extensions[ExtensionOID.KEY_USAGE],
         ]
         self.assertExtensions(ca, root_extensions)
 

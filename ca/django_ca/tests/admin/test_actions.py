@@ -421,7 +421,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             ExtensionOID.KEY_USAGE,
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
         ]:
-            self.assertEqual(obj.x509_extensions.get(oid), resigned.x509_extensions.get(oid))
+            self.assertEqual(obj.extensions.get(oid), resigned.extensions.get(oid))
 
         # Some properties are obviously *not* equal
         self.assertNotEqual(obj.pub, resigned.pub)
@@ -433,7 +433,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         # mypy override: https://github.com/python/mypy/issues/4125
         san = typing.cast(
             x509.SubjectAlternativeName,
-            self.cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].value,
+            self.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME].value,
         )
         models = GeneralNameModelList.validate_python(list(san))
         serialized = [m.model_dump(mode="json") for m in models]

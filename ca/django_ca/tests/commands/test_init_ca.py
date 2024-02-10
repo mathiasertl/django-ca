@@ -138,8 +138,8 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.serial, int_to_hex(ca.pub.loaded.serial_number))
 
         # Test that extensions that do not work for root CAs are NOT present
-        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.extensions)
 
         # Test extensions for signing
         self.assertIsNotNone(ca.sign_authority_information_access)
@@ -216,7 +216,7 @@ class InitCATest(TestCaseMixin, TestCase):
             f"--tos={tos}",
         )
 
-        actual = ca.x509_extensions
+        actual = ca.extensions
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, actual)
 
         # test the private key
@@ -300,7 +300,7 @@ class InitCATest(TestCaseMixin, TestCase):
             "URI:https://san.example.net",
         )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
 
         # Test BasicConstraints extension
         self.assertEqual(extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(True, 3))
@@ -405,7 +405,7 @@ class InitCATest(TestCaseMixin, TestCase):
             "--subject-alternative-name-critical",
         )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
 
         # Test Certificate Policies extension
         self.assertEqual(
@@ -455,7 +455,7 @@ class InitCATest(TestCaseMixin, TestCase):
             chain=[root],
         )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
         ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": root.serial})
         ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": root.serial})
         crl_path = reverse("django_ca:ca-crl", kwargs={"serial": root.serial})
@@ -496,7 +496,7 @@ class InitCATest(TestCaseMixin, TestCase):
             chain=[root],
         )
 
-        extensions = ca.x509_extensions
+        extensions = ca.extensions
 
         # Test AuthorityInformationAccess extension
         self.assertEqual(
@@ -546,7 +546,7 @@ class InitCATest(TestCaseMixin, TestCase):
         )
 
         # Test Certificate Policies extension
-        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.extensions)
         self.assertEqual(
             ca.sign_certificate_policies,
             self.certificate_policies(
@@ -707,7 +707,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_permitted"
         ca = self.init_ca_e2e(name, "--subject-format=rfc4514", "--permit-name", "DNS:.com", f"CN={name}")
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
+            ca.extensions[ExtensionOID.NAME_CONSTRAINTS],
             name_constraints(permitted=[dns(".com")], critical=True),
         )
 
@@ -717,7 +717,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_excluded"
         ca = self.init_ca_e2e(name, "--subject-format=rfc4514", "--exclude-name", "DNS:.com", f"CN={name}")
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.NAME_CONSTRAINTS],
+            ca.extensions[ExtensionOID.NAME_CONSTRAINTS],
             name_constraints(excluded=[dns(".com")], critical=True),
         )
 
@@ -833,12 +833,12 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIssuer(parent, child)
         self.assertAuthorityKeyIdentifier(parent, child)
         self.assertEqual(
-            child.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            child.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             self.crl_distribution_points([crl_full_name]),
         )
         ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": parent.serial})
         self.assertEqual(
-            child.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            child.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(
                 ca_issuers=[uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{ca_issuer_path}")],
                 ocsp=[uri("http://passed.ca.ocsp.example.com")],
@@ -1091,11 +1091,11 @@ class InitCATest(TestCaseMixin, TestCase):
 
         ca_crl_urlpath = self.reverse("ca-crl", serial=root.serial)
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
+            ca.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             crl_distribution_points(distribution_point([uri(f"http://{hostname}{ca_crl_urlpath}")])),
         )
         self.assertEqual(
-            ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            ca.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(
                 ca_issuers=[uri(f"http://{hostname}/django_ca/issuer/{root.serial}.der")],
                 ocsp=[uri(f"http://{hostname}/django_ca/ocsp/{root.serial}/ca/")],
@@ -1113,8 +1113,8 @@ class InitCATest(TestCaseMixin, TestCase):
         ca = CertificateAuthority.objects.get(name=name)
         self.assertPostCreateCa(post, ca)
 
-        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.x509_extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.x509_extensions)
+        self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.extensions)
+        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.extensions)
         self.assertIsNone(ca.sign_authority_information_access)
         self.assertIsNone(ca.sign_crl_distribution_points)
         self.assertIsNone(ca.sign_issuer_alternative_name)
@@ -1143,7 +1143,7 @@ class InitCATest(TestCaseMixin, TestCase):
             chain=[root],
         )
 
-        actual = ca.x509_extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
+        actual = ca.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
         expected = authority_information_access(
             [uri(issuer_uri_one), uri(issuer_uri_two)], [uri(ocsp_uri_one), uri(ocsp_uri_two)]
         )

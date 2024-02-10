@@ -84,28 +84,28 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         # assert extensions that should be equal
         aki = new_ca.get_authority_key_identifier_extension()
-        self.assertEqual(aki, new.x509_extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER])
+        self.assertEqual(aki, new.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER])
         for oid in [
             ExtensionOID.EXTENDED_KEY_USAGE,
             ExtensionOID.KEY_USAGE,
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
             ExtensionOID.TLS_FEATURE,
         ]:
-            self.assertEqual(old.x509_extensions.get(oid), new.x509_extensions.get(oid))
+            self.assertEqual(old.extensions.get(oid), new.extensions.get(oid))
 
         # Test extensions that don't come from the old cert but from the signing CA
-        self.assertEqual(new.x509_extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints())
+        self.assertEqual(new.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints())
         self.assertNotIn(
-            ExtensionOID.ISSUER_ALTERNATIVE_NAME, new.x509_extensions
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME, new.extensions
         )  # signing CA does not have this set
 
         # Some properties come from the ca
         if new_ca.sign_crl_distribution_points:
             self.assertEqual(
-                new.x509_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], new_ca.sign_crl_distribution_points
+                new.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], new_ca.sign_crl_distribution_points
             )
         else:
-            self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, new.x509_extensions)
+            self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, new.extensions)
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -143,8 +143,8 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
-        expected = orig.x509_extensions
-        actual = new.x509_extensions
+        expected = orig.extensions
+        actual = new.extensions
         self.assertEqual(
             sorted(expected.values(), key=lambda e: e.oid.dotted_string),
             sorted(actual.values(), key=lambda e: e.oid.dotted_string),
@@ -211,7 +211,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
-        extensions = new.x509_extensions
+        extensions = new.extensions
 
         # Test Authority Information Access extension
         self.assertEqual(
@@ -356,7 +356,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
-        extensions = new.x509_extensions
+        extensions = new.extensions
 
         # Test Certificate Policies extension
         self.assertEqual(
@@ -464,7 +464,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertResigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
-        extensions = new.x509_extensions
+        extensions = new.extensions
 
         # Test Certificate Policies extension
         self.assertEqual(
@@ -587,7 +587,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
         # assert overwritten extensions
-        extensions = new.x509_extensions
+        extensions = new.extensions
 
         # Test Extended Key Usage extension
         self.assertEqual(

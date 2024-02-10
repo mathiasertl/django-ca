@@ -197,7 +197,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.profile, "webserver")
 
         # Some extensions are NOT set
-        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.extensions)
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -303,7 +303,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertPostIssueCert(post, cert)
         self.assertEqual(cert.subject, x509.Name([]))
         self.assertEqual(
-            cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(dns(self.hostname)),
         )
 
@@ -438,7 +438,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=self.hostname)
-        self.assertNotIn(ExtensionOID.KEY_USAGE, cert.x509_extensions)  # KeyUsage is not set!
+        self.assertNotIn(ExtensionOID.KEY_USAGE, cert.extensions)  # KeyUsage is not set!
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -493,8 +493,8 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertEqual(cert.csr.pem, csr)
 
         # Some extensions are not set
-        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.x509_extensions)
-        self.assertNotIn(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.extensions)
+        self.assertNotIn(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS, cert.extensions)
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)

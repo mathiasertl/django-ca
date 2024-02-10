@@ -158,7 +158,7 @@ def test_sign_ca_values(
         expected_response=expected_response,
     )
 
-    extensions = cert.x509_extensions
+    extensions = cert.extensions
 
     # Test signed extensions
     assert (
@@ -314,7 +314,7 @@ def test_sign_certificate_with_extensions(
     )
 
     # Test extensions
-    exts = cert.x509_extensions
+    exts = cert.extensions
 
     # Test Authority Information Access extension
     assert exts[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == x509.Extension(
@@ -415,7 +415,7 @@ def test_sign_certificate_with_subject_alternative_name(
     )
 
     # Test SubjectAlternativeName extension
-    extensions = cert.x509_extensions
+    extensions = cert.extensions
 
     # Test Subject Alternative Name extension
     assert extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(

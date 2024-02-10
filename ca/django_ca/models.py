@@ -466,7 +466,7 @@ class X509CertMixin(DjangoCAModel):
     ###################
 
     @cached_property
-    def x509_extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
+    def extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
         """All extensions of this certificate in a `dict`.
 
         The key is the OID for the respective extension, allowing easy to look up a particular extension.
@@ -481,7 +481,7 @@ class X509CertMixin(DjangoCAModel):
         """
         # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
         #       show up as "Unknown OID" and have to be sorted by oid
-        return list(sorted(self.x509_extensions.values(), key=lambda e: get_extension_name(e.oid)))
+        return list(sorted(self.extensions.values(), key=lambda e: get_extension_name(e.oid)))
 
 
 class CertificateAuthority(X509CertMixin):
@@ -1276,10 +1276,10 @@ class CertificateAuthority(X509CertMixin):
     @property
     def is_openssh_ca(self) -> bool:
         """True if this CA is an OpenSSH CA."""
-        if SSH_HOST_CA in self.x509_extensions:
+        if SSH_HOST_CA in self.extensions:
             return True
         # COVERAGE NOTE: currently both extensions are always present
-        return SSH_USER_CA in self.x509_extensions  # pragma: no cover
+        return SSH_USER_CA in self.extensions  # pragma: no cover
 
 
 class Certificate(X509CertMixin):

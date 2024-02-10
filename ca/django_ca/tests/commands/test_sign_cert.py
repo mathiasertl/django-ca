@@ -82,7 +82,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-        actual = cert.x509_extensions
+        actual = cert.extensions
         self.assertEqual(
             actual[ExtensionOID.KEY_USAGE],
             key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
@@ -136,7 +136,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.assertEqual(cert.pub.loaded.subject, self.subject)
             self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-            actual = cert.x509_extensions
+            actual = cert.extensions
 
             self.assertEqual(
                 actual[ExtensionOID.KEY_USAGE],
@@ -171,7 +171,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, cert.pub.pem)
-        actual = cert.x509_extensions
+        actual = cert.extensions
         self.assertEqual(
             actual[ExtensionOID.KEY_USAGE],
             key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),
@@ -323,7 +323,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
-        self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, cert.extensions)
 
     @override_tmpcadir(
         CA_DEFAULT_SUBJECT=(
@@ -354,7 +354,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertIssuer(self.ca, cert)
         self.assertAuthorityKeyIdentifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
-        self.assertEqual(cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
+        self.assertEqual(cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
 
         # replace subject fields via command-line argument:
         subject = x509.Name(
@@ -381,7 +381,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         cert = Certificate.objects.get(cn="CommonName2")
         self.assertPostIssueCert(post, cert)
         self.assertEqual(cert.pub.loaded.subject, subject)
-        self.assertEqual(cert.x509_extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
+        self.assertEqual(cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
 
     @override_tmpcadir()
     def test_extensions(self) -> None:
@@ -445,7 +445,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-        extensions = cert.x509_extensions
+        extensions = cert.extensions
 
         # Test Authority Information Access extension
         self.assertEqual(
@@ -554,7 +554,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-        extensions = cert.x509_extensions
+        extensions = cert.extensions
 
         # Test Certificate Policies extension
         self.assertEqual(
@@ -593,7 +593,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Test Subject Alternative Name extension (NOTE: Common Name is automatically appended).
         self.assertEqual(
-            cert.x509_extensions[x509.SubjectAlternativeName.oid],
+            cert.extensions[x509.SubjectAlternativeName.oid],
             subject_alternative_name(uri("https://example.net"), critical=True),
         )
 
@@ -622,7 +622,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
-        extensions = cert.x509_extensions
+        extensions = cert.extensions
         ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": self.ca.serial})
         ocsp_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": self.ca.serial})
         crl_path = reverse("django_ca:crl", kwargs={"serial": self.ca.serial})
@@ -668,7 +668,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
-            cert.x509_extensions[x509.SubjectAlternativeName.oid],
+            cert.extensions[x509.SubjectAlternativeName.oid],
             subject_alternative_name(uri("https://example.net"), dns("example.org")),
         )
 
@@ -691,7 +691,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
-        actual = cert.x509_extensions
+        actual = cert.extensions
         self.assertEqual(
             actual[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], subject_alternative_name(dns(self.hostname))
         )
@@ -760,7 +760,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, cert.pub.pem)
-        actual = cert.x509_extensions
+        actual = cert.extensions
         self.assertEqual(
             actual[ExtensionOID.KEY_USAGE],
             key_usage(digital_signature=True, key_agreement=True, key_encipherment=True),

@@ -208,7 +208,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         with self.mockSignal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
         self.assertEqual(pre.call_count, 1)
-        self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.x509_extensions)
+        self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.extensions)
 
     @override_tmpcadir()
     def test_override_ski(self) -> None:
@@ -456,7 +456,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             )
         self.assertEqual(pre.call_count, 1)
 
-        extensions = cert.x509_extensions
+        extensions = cert.extensions
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], expected_authority_information_access
         )
@@ -507,7 +507,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             )
         self.assertEqual(pre.call_count, 1)
 
-        extensions = cert.x509_extensions
+        extensions = cert.extensions
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(
@@ -533,7 +533,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             )
         self.assertEqual(pre.call_count, 1)
 
-        extensions = cert.x509_extensions
+        extensions = cert.extensions
         self.assertEqual(
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             authority_information_access(

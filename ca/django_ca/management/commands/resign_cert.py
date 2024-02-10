@@ -158,7 +158,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             self._add_extension(extensions, tls_feature, tls_feature_critical)
 
         # Copy over extensions from the original certificate (if not passed via the command-line)
-        for oid, extension in cert.x509_extensions.items():
+        for oid, extension in cert.extensions.items():
             # These extensions are handled by the manager itself based on the CA:
             if oid in (
                 ExtensionOID.AUTHORITY_INFORMATION_ACCESS,

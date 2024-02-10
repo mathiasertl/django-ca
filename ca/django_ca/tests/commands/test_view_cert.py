@@ -616,7 +616,7 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
             stdout, stderr = self.cmd("view_cert", cert.serial, wrap=False)
             san = typing.cast(
                 Optional[x509.Extension[x509.SubjectAlternativeName]],
-                cert.x509_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
+                cert.extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
             )
             if san is None:
                 self.assertEqual(
