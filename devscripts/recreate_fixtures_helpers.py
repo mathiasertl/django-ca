@@ -128,9 +128,6 @@ def _create_csr(
 
 def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict[str, Any]) -> None:
     data["serial"] = cert.serial
-    data["valid_from"] = cert.pub.loaded.not_valid_before.strftime(TIMEFORMAT)
-    data["valid_until"] = cert.pub.loaded.not_valid_after.strftime(TIMEFORMAT)
-
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
     data["extensions"] = cert.pub.loaded.extensions
@@ -224,8 +221,6 @@ def _update_contrib(
         "pub_filename": filename,
         "key_filename": False,
         "csr_filename": False,
-        "valid_from": parsed.not_valid_before.strftime(TIMEFORMAT),
-        "valid_until": parsed.not_valid_after.strftime(TIMEFORMAT),
         "serial": cert.serial,
         "subject": serialize_name(cert.subject),
         "md5": cert.get_fingerprint(hashes.MD5()),
