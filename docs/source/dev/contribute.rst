@@ -35,7 +35,7 @@ To create and activate a virtual environment:
 Local configuration
 ===================
 
-To run the Djangos integrated development webserver, create some minimal local configuration as YAML file:
+To run the Djangos integrated development web server, create some minimal local configuration as YAML file:
 
 .. code-block:: YAML
 
@@ -62,10 +62,10 @@ certificates:
 
    $ ./dev.py init-demo
 
-Run local webserver
-===================
+Run local web server
+====================
 
-If you need to run the local webserver (to test the API, OCSP or CRL URLs or the admin interface):
+If you need to run the local web server (to test the API, OCSP or CRL URLs or the admin interface):
 
 .. code-block:: console
 

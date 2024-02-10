@@ -24,7 +24,6 @@ import packaging
 
 import cryptography
 from cryptography import x509
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 import django

@@ -55,7 +55,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property, classproperty
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
@@ -400,22 +399,6 @@ class X509CertMixin(DjangoCAModel):
     def get_fingerprint(self, algorithm: hashes.HashAlgorithm) -> str:
         """Get the digest for a certificate as string, including colons."""
         return bytes_to_hex(self.pub.loaded.fingerprint(algorithm))
-
-    def get_filename(self, ext: str, bundle: bool = False) -> str:
-        """Get a filename safe for any file system and OS for this certificate based on the common name.
-
-        Parameters
-        ----------
-        ext : str
-            The filename extension to use (e.g. ``"pem"``).
-        bundle : bool, optional
-            Adds "_bundle" as suffix.
-        """
-        slug = slugify(self.cn.replace(".", "_"))
-
-        if bundle is True:
-            return f"{slug}_bundle.{ext.lower()}"
-        return f"{slug}.{ext.lower()}"
 
     def get_revocation(self) -> x509.RevokedCertificate:
         """Get the `RevokedCertificate` instance for this certificate for CRLs.

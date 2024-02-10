@@ -176,21 +176,26 @@ class CertificateMixin(
             raise Http404 from ex
 
         # get filetype
-        filetype = request.GET.get("format", "PEM").upper().strip()
+        filetype = request.GET.get("format", "PEM").lower().strip()
 
-        if filetype == "PEM":
+        if filetype == "pem":
             if bundle is True:
                 data = obj.bundle_as_pem.encode("ascii")
             else:
                 data = obj.pub.pem.encode("ascii")
-        elif filetype == "DER":
+        elif filetype == "der":
             if bundle is True:
                 return HttpResponseBadRequest(_("DER/ASN.1 certificates cannot be downloaded as a bundle."))
             data = obj.pub.der
         else:
             return HttpResponseBadRequest()
 
-        filename = obj.get_filename(ext=filetype, bundle=bundle)
+        # get filename (NOTE: do not use the Common Name for the filename, some certs don't have one!)
+        if bundle is True:
+            filename = f"{obj.serial}_bundle.{filetype}"
+        else:
+            filename = f"{obj.serial}.{filetype}"
+
         response = HttpResponse(data, content_type="application/pkix-cert")
         response["Content-Disposition"] = f"attachment; filename={filename}"
         return response
@@ -720,13 +725,13 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(resign_obj.algorithm)]
 
             if resign_obj.profile:
-                profile = resign_obj.profile
+                profile_name = resign_obj.profile
             else:
-                profile = ca_settings.CA_DEFAULT_PROFILE
+                profile_name = ca_settings.CA_DEFAULT_PROFILE
 
             data = {
                 "ca": resign_obj.ca,
-                "profile": profile,
+                "profile": profile_name,
                 "subject": resign_obj.subject,
                 "watchers": resign_obj.watchers.all(),
             }

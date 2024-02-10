@@ -213,11 +213,11 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Test direct certificate download."""
-        self.assertBundle(self.cert, [self.cert], "root-cert_example_com.pem")
+        self.assertBundle(self.cert, [self.cert], f"{self.cert.serial}.pem")
 
     def test_der(self) -> None:
         """Download a certificate in DER format."""
-        filename = "root-cert_example_com.der"
+        filename = f"{self.cert.serial}.der"
         response = self.client.get(self.get_url(self.cert), {"format": "DER"})
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["Content-Type"], "application/pkix-cert")
@@ -274,12 +274,12 @@ class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_root_cert(self) -> None:
         """Try downloading a certificate bundle."""
         cert = self.certs["root-cert"]
-        self.assertBundle(cert, [cert, cert.ca], "root-cert_example_com_bundle.pem")
+        self.assertBundle(cert, [cert, cert.ca], f"{cert.serial}_bundle.pem")
 
     def test_child_cert(self) -> None:
         """Download bundle for certificate signed by intermediate ca."""
         parent = typing.cast(CertificateAuthority, self.cert.ca.parent)
-        self.assertBundle(self.cert, [self.cert, self.cert.ca, parent], "child-cert_example_com_bundle.pem")
+        self.assertBundle(self.cert, [self.cert, self.cert.ca, parent], f"{self.cert.serial}_bundle.pem")
 
     def test_invalid_format(self) -> None:
         """Try downloading an invalid format."""

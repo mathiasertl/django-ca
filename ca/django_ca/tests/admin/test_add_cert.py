@@ -72,7 +72,7 @@ from django_ca.tests.base.utils import (
 )
 from django_ca.typehints import SerializedPydanticExtension
 
-csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
+CSR = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
 
 
 @freeze_time(TIMESTAMPS["after_child"])
@@ -149,7 +149,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    **self.form_data(csr, ca),
+                    **self.form_data(CSR, ca),
                     "algorithm": algorithm,
                     "subject": json.dumps(
                         [
@@ -194,7 +194,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             ],
         )
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem, csr)
+        self.assertEqual(cert.csr.pem, CSR)
         self.assertEqual(cert.profile, "webserver")
 
         # Some extensions are NOT set
@@ -295,7 +295,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test passing an empty subject with a subject alternative name."""
         ca = self.cas["root"]
         with self.assertCreateCertSignals() as (pre, post):
-            response = self.client.post(self.add_url, data={**self.form_data(csr, ca), "subject": ""})
+            response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "subject": ""})
         self.assertRedirects(response, self.changelist_url)
 
         cert: Certificate = Certificate.objects.get(cn="")
@@ -314,7 +314,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    **self.form_data(csr, ca),
+                    **self.form_data(CSR, ca),
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
@@ -351,7 +351,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    **self.form_data(csr, ca),
+                    **self.form_data(CSR, ca),
                     "subject": json.dumps([{"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"}]),
                     "subject_alternative_name_0": [],
                     "subject_alternative_name_1": True,
@@ -378,7 +378,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    **self.form_data(csr, ca),
+                    **self.form_data(CSR, ca),
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
@@ -402,7 +402,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    **self.form_data(csr, ca),
+                    **self.form_data(CSR, ca),
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "FOO"},
@@ -426,7 +426,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
                 self.add_url,
-                data={**self.form_data(csr, ca), "key_usage_0": []},
+                data={**self.form_data(CSR, ca), "key_usage_0": []},
             )
         self.assertRedirects(response, self.changelist_url)
 
@@ -444,7 +444,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # first post without password
         with self.assertCreateCertSignals(False, False):
-            response = self.client.post(self.add_url, data=self.form_data(csr, ca))
+            response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
             response.context["adminform"].form.errors,
@@ -453,7 +453,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # now post with a false password
         with self.assertCreateCertSignals(False, False):
-            response = self.client.post(self.add_url, data={**self.form_data(csr, ca), "password": "wrong"})
+            response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "password": "wrong"})
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
             response.context["adminform"].form.errors,
@@ -464,7 +464,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         with self.assertCreateCertSignals() as (pre, post):
             response = self.client.post(
                 self.add_url,
-                data={**self.form_data(csr, ca), "password": CERT_DATA["pwd"]["password"].decode("utf-8")},
+                data={**self.form_data(CSR, ca), "password": CERT_DATA["pwd"]["password"].decode("utf-8")},
             )
         self.assertRedirects(response, self.changelist_url)
 
@@ -482,7 +482,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertIssuer(ca, cert)
         self.assertAuthorityKeyIdentifier(ca, cert)
         self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem, csr)
+        self.assertEqual(cert.csr.pem, CSR)
 
         # Some extensions are not set
         self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.extensions)
@@ -545,7 +545,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         with self.assertCreateCertSignals(False, False):
             response = self.client.post(
-                self.add_url, data={**self.form_data(csr, ca), "expires": expires.strftime("%Y-%m-%d")}
+                self.add_url, data={**self.form_data(CSR, ca), "expires": expires.strftime("%Y-%m-%d")}
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("Certificate cannot expire in the past.", response.content.decode("utf-8"))
@@ -567,7 +567,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         with self.assertCreateCertSignals(False, False):
             response = self.client.post(
-                self.add_url, data={**self.form_data(csr, ca), "expires": expires.strftime("%Y-%m-%d")}
+                self.add_url, data={**self.form_data(CSR, ca), "expires": expires.strftime("%Y-%m-%d")}
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(error, response.content.decode("utf-8"))
@@ -677,7 +677,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": csr,
+                    "csr": CSR,
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject": json.dumps(
@@ -711,7 +711,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": csr,
+                    "csr": CSR,
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject": json.dumps(
@@ -750,7 +750,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url,
                 data={
-                    "csr": csr,
+                    "csr": CSR,
                     "ca": ca.pk,
                     "profile": "webserver",
                     "subject": json.dumps(
@@ -1249,7 +1249,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Fill in the bare minimum fields
         form = response.forms["certificate_form"]
-        form["csr"] = csr
+        form["csr"] = CSR
         form["subject"] = json.dumps(
             [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
         )
@@ -1282,7 +1282,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         """Test how saving the model behaves when profile has None-extension or SubjectAlternativeName."""
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
-        form["csr"] = csr
+        form["csr"] = CSR
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
@@ -1327,7 +1327,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         response = self.app.get(self.add_url, user=self.user.username)
         form = response.forms["certificate_form"]
-        form["csr"] = csr
+        form["csr"] = CSR
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         form["subject_alternative_name_0"] = json.dumps([{"type": "DNS", "value": self.hostname}])
         response = form.submit().follow()
@@ -1433,7 +1433,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # default value for form field is on import time, so override settings does not change
         # profile field
         form["profile"] = "everything"
-        form["csr"] = csr
+        form["csr"] = CSR
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
         self.assertEqual(response.status_code, 200)
@@ -1543,7 +1543,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         # default value for form field is on import time, so override settings does not change
         # profile field
         form["profile"] = "everything"
-        form["csr"] = csr
+        form["csr"] = CSR
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit()
         response = response.follow()
