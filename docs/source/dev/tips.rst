@@ -1,21 +1,10 @@
-###########
-Development
-###########
+#############
+Tips & Tricks
+#############
 
-**********
-Setup demo
-**********
-
-You can set up a demo using ``dev.py init-demo``. First create a minimal
-``localsettings.py`` file (in ``ca/ca/localsettings.py``)::
-
-   DEBUG = True
-   SECRET_KEY = "whatever"
-
-And then simply run ``python dev.py init-demo`` from the root directory of your project.
-
-Development web server via SSL
-==============================
+******************************
+Development web server via TLS
+******************************
 
 .. highlight:: console
 
@@ -36,25 +25,9 @@ error::
 
 You can now start your development web server normally::
 
-   $ DJANGO_SETTINGS_MODULE=ca.demosettings python manage.py runserver
+   $ python ca/manage.py runserver
 
 ... and visit https://localhost:8443.
-
-**************
-Run test-suite
-**************
-
-To run the test-suite, simply execute::
-
-   $ python dev.py test
-
-... or just run some of the tests::
-
-   $ python dev.py test --suite=tests_command_dump_crl
-
-To generate a coverage report::
-
-   $ python dev.py coverage
 
 ***********************
 Useful OpenSSL commands

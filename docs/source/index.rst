@@ -61,11 +61,12 @@ Welcome to django-ca's documentation!
    :maxdepth: 1
    :caption: Development
 
-   development
-   dev/acme
-   contribute
-   standards
-   release
+   /dev/contribute
+   /dev/testing
+   /dev/standards
+   /dev/tips
+   /dev/acme
+   /dev/release
    ca_examples
    extensions
 
