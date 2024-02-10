@@ -20,6 +20,7 @@ import ipaddress
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
 from typing import Any, Dict
@@ -28,8 +29,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
-import django
-from django.conf import settings
+from django.test import override_settings
 from django.urls import reverse
 
 from devscripts import config
@@ -63,7 +63,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
         create_cas,
         create_certs,
         create_special_certs,
-        override_tmpcadir,
         regenerate_ocsp_files,
     )
 
@@ -550,7 +549,20 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
 
     ocsp_data = {}
     if not only_contrib:
-        with override_tmpcadir():
+        # poor-mans version of override_tmpcadir, as we cannot import it here. Doing so would import
+        # CERT_DATA, from the test-suite, which loads the files which we want to generate here in the first
+        # place.
+        with tempfile.TemporaryDirectory() as tmpdir, override_settings(
+            CA_DIR=tmpdir,
+            STORAGES={
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+                "django-ca": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                    "OPTIONS": {"location": tmpdir},
+                },
+            },
+        ):
             ca_instances = create_cas(dest, now, delay, data)
             create_certs(dest, ca_instances, now, delay, data)
             create_special_certs(dest, now, delay, data)
@@ -646,24 +658,8 @@ class Command(DevCommand):
             # insert ca/ into path, otherwise it won't find test_settings in django project
             sys.path.insert(0, str(config.SRC_DIR))
 
-        settings.configure(
-            BASE_DIR=Path(__file__).resolve().parent.parent.parent / "ca",
-            CA_DEFAULT_HOSTNAME="localhost:8000",
-            DATABASES={
-                "default": {
-                    "ENGINE": "django.db.backends.sqlite3",
-                    "NAME": ":memory:",
-                }
-            },
-            INSTALLED_APPS=(
-                "django.contrib.auth",
-                "django.contrib.contenttypes",
-                "django.contrib.admin",
-                "django_ca",
-            ),
-            ROOT_URLCONF="ca.urls",
-        )
-        django.setup()
+        os.environ["DJANGO_SETTINGS_MODULE"] = "ca.test_settings"
+        self.setup_django()
         recreate_fixtures(
             dest=Path(args.dest),
             delay=args.delay,

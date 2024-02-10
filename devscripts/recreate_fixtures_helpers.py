@@ -16,15 +16,12 @@
 The test suite should be sufficiently modular to still run without errors after running this command.
 """
 
-import importlib
 import json
 import os
 import shutil
-import tempfile
 from datetime import datetime, timezone as tz
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Type, Union
-from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -41,8 +38,6 @@ from cryptography.hazmat.primitives.serialization import (
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID
 
-from django.test.utils import override_settings
-
 from freezegun import freeze_time
 
 from devscripts import config
@@ -58,7 +53,7 @@ from django_ca.pydantic.extensions import (
 )
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import bytes_to_hex, ca_storage, parse_serialized_name_attributes, serialize_name
+from django_ca.utils import bytes_to_hex, get_storage, parse_serialized_name_attributes, serialize_name
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
@@ -142,7 +137,8 @@ def _write_ca(
     pub_der_dest = dest / cert_data["pub_der_filename"]
 
     # write files to dest
-    shutil.copy(ca_storage.path(ca.private_key_path), key_dest)
+    storage = get_storage()
+    shutil.copy(storage.path(ca.private_key_path), key_dest)
     with open(pub_dest, "w", encoding="utf-8") as stream:
         stream.write(ca.pub.pem)
 
@@ -544,28 +540,3 @@ def regenerate_ocsp_files(dest: Path, data: CertFixtureData) -> Dict[str, OcspFi
     with open(ocsp_base / ocsp_data["nonce"]["filename"], "wb") as stream:
         stream.write(nonce_req)
     return ocsp_data
-
-
-class override_tmpcadir(override_settings):  # pylint: disable=invalid-name
-    """Simplified copy of the same decorator in tests.base."""
-
-    def enable(self) -> None:
-        # pylint: disable=attribute-defined-outside-init
-        self.options["CA_DIR"] = tempfile.mkdtemp()
-        self.mock = patch.object(ca_storage, "location", self.options["CA_DIR"])
-        self.mock_ = patch.object(ca_storage, "_location", self.options["CA_DIR"])
-        self.mock.start()
-        self.mock_.start()
-
-        super().enable()
-
-        self.mockc = patch.object(ca_settings, "CA_DIR", self.options["CA_DIR"])
-        self.mockc.start()
-
-    def disable(self) -> None:
-        super().disable()
-        self.mock.stop()
-        self.mock_.stop()
-        self.mockc.stop()
-        shutil.rmtree(self.options["CA_DIR"])
-        importlib.reload(ca_settings)
