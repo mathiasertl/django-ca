@@ -27,7 +27,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.serialization import load_der_private_key
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import OCSPExtensionOID, SignatureAlgorithmOID
 
@@ -305,7 +305,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         priv_path, _cert_path, ocsp_cert = ca.generate_ocsp_key()  # type: ignore[misc]
         with storages["django-ca"].open(priv_path, "rb") as stream:
             private_key = typing.cast(
-                CertificateIssuerPrivateKeyTypes, load_pem_private_key(stream.read(), None)
+                CertificateIssuerPrivateKeyTypes, load_der_private_key(stream.read(), None)
             )
         return private_key, ocsp_cert
 

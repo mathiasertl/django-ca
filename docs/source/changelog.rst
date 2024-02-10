@@ -20,6 +20,7 @@ ChangeLog
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
   :ref:`settings-ca-storage`. Installations :doc:`as app <quickstart_as_app>` must add a
   ``"django-ca"`` storage alias in their configuration.
+* Private keys (for CAs and OCSP responder certificates) are now stored as DER keys to improve loading speed.
 * The admin interface now presents lists of general names (e.g. in the Subject Alternative Name extension) as
   a list of order-able key/value pairs when adding certificates.
 * Extensions added by the CA when signing new certificates can now have the same complexity as when giving

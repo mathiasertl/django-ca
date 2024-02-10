@@ -953,7 +953,7 @@ class CertificateAuthority(X509CertMixin):
         # generate the private key
         private_key = generate_private_key(key_size, key_type, elliptic_curve)
         private_pem = private_key.private_bytes(
-            encoding=Encoding.PEM,
+            encoding=Encoding.DER,
             format=PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )

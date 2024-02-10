@@ -19,7 +19,7 @@ from typing import Iterable, Optional, Tuple, Type
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.serialization import load_der_private_key
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.core.files.storage import storages
@@ -60,7 +60,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             key_type = type(ca.key())
 
         priv = typing.cast(
-            CertificateIssuerPrivateKeyTypes, load_pem_private_key(read_file(priv_path), password)
+            CertificateIssuerPrivateKeyTypes, load_der_private_key(read_file(priv_path), password)
         )
         self.assertIsInstance(priv, key_type)
         if isinstance(priv, (dsa.DSAPrivateKey, rsa.RSAPrivateKey)):

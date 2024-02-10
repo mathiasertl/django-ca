@@ -550,15 +550,15 @@ class CertificateAuthorityManager(
                 password = password.encode("utf-8")
             encryption = serialization.BestAvailableEncryption(password)
 
-        pem = private_key.private_bytes(
-            encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
+        der = private_key.private_bytes(
+            encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
         )
 
         # write private key to file
         safe_serial = ca.serial.replace(":", "")
         path = path / pathlib.PurePath(f"{safe_serial}.key")
         storage = get_storage()
-        ca.private_key_path = storage.save(str(path), ContentFile(pem))
+        ca.private_key_path = storage.save(str(path), ContentFile(der))
         ca.save()
 
         post_create_ca.send(sender=self.model, ca=ca)

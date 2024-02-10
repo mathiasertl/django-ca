@@ -31,7 +31,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
-from cryptography.hazmat.primitives.serialization import Encoding, load_pem_private_key
+from cryptography.hazmat.primitives.serialization import Encoding, load_der_private_key
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.conf import settings
@@ -177,7 +177,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         storage = get_storage()
         with storage.open(private_path) as priv_key_stream:
             key = typing.cast(
-                CertificateIssuerPrivateKeyTypes, load_pem_private_key(priv_key_stream.read(), password=None)
+                CertificateIssuerPrivateKeyTypes, load_der_private_key(priv_key_stream.read(), password=None)
             )
 
         yield key, cert
