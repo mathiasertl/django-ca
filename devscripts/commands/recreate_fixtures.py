@@ -44,7 +44,7 @@ PWD_PATHLEN = 2
 DSA_PATHLEN = 3
 
 
-def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
+def recreate_fixtures(  # pylint: disable=too-many-locals
     dest: Path,
     delay: bool,
     only_contrib: bool,
@@ -521,7 +521,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
         ]
         cert_values["key_filename"] = f"{cert_name}.key"
         cert_values["pub_filename"] = f"{cert_name}.pub"
-        cert_values["key_der_filename"] = f"{cert_name}.key.der"
         cert_values["pub_der_filename"] = f"{cert_name}.pub.der"
         cert_values.setdefault("key_type", "RSA")
         if cert_values["key_type"] in ("RSA", "DSA"):

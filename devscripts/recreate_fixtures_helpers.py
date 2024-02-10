@@ -33,7 +33,6 @@ from cryptography.hazmat.primitives.serialization import (
     KeySerializationEncryption,
     NoEncryption,
     PrivateFormat,
-    load_pem_private_key,
 )
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID
@@ -53,7 +52,7 @@ from django_ca.pydantic.extensions import (
 )
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import bytes_to_hex, get_storage, parse_serialized_name_attributes, serialize_name
+from django_ca.utils import bytes_to_hex, parse_serialized_name_attributes, serialize_name
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
@@ -96,7 +95,7 @@ def _create_key(path: Path, key_type: ParsableKeyType) -> CertificateIssuerPriva
         raise ValueError(f"Unknown key type: {key_type}")
 
     encoded = key.private_bytes(
-        encoding=serialization.Encoding.PEM,
+        encoding=serialization.Encoding.DER,
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     )
@@ -131,27 +130,23 @@ def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict
 def _write_ca(
     dest: Path, ca: CertificateAuthority, cert_data: CertFixtureData, password: Optional[bytes] = None
 ) -> None:
-    key_dest = dest / cert_data["key_filename"]
     pub_dest = dest / cert_data["pub_filename"]
-    key_der_dest = dest / cert_data["key_der_filename"]
     pub_der_dest = dest / cert_data["pub_der_filename"]
 
-    # write files to dest
-    storage = get_storage()
-    shutil.copy(storage.path(ca.private_key_path), key_dest)
-    with open(pub_dest, "w", encoding="utf-8") as stream:
-        stream.write(ca.pub.pem)
-
+    # Encode private key
     if password is None:
         encryption: KeySerializationEncryption = NoEncryption()
     else:
         encryption = BestAvailableEncryption(password)
-
     key_der = ca.key(password=password).private_bytes(
         encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
     )
-    with open(key_der_dest, "wb") as stream:
+
+    # write files to dest
+    with open(dest / cert_data["key_filename"], "wb") as stream:
         stream.write(key_der)
+    with open(pub_dest, "w", encoding="utf-8") as stream:
+        stream.write(ca.pub.pem)
     with open(pub_der_dest, "wb") as stream:
         stream.write(ca.pub.der)
 
@@ -174,25 +169,14 @@ def _copy_cert(
     key_path: Path,
     csr_path: Path,
 ) -> None:
-    key_dest = dest / data["key_filename"]
     csr_dest = dest / data["csr_filename"]
     pub_dest = dest / data["pub_filename"]
-    key_der_dest = dest / data["key_der_filename"]
     pub_der_dest = dest / data["pub_der_filename"]
 
-    shutil.copy(key_path, key_dest)
+    shutil.copy(key_path, dest / data["key_filename"])
     shutil.copy(csr_path, csr_dest)
     with open(pub_dest, "w", encoding="utf-8") as stream:
         stream.write(cert.pub.pem)
-
-    with open(key_dest, "rb") as stream:
-        priv_key = stream.read()
-    loaded_priv_key = load_pem_private_key(priv_key, None)
-    key_der = loaded_priv_key.private_bytes(
-        encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
-    )
-    with open(key_der_dest, "wb") as stream:
-        stream.write(key_der)
     with open(pub_der_dest, "wb") as stream:
         stream.write(cert.pub.der)
 

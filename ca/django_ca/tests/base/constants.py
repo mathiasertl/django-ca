@@ -318,7 +318,7 @@ CERT_DATA["cloudflare_1"] = {
 
 
 def _load_key(data: Dict[Any, Any]) -> KeyDict:
-    with open(data["key_der_path"], "rb") as stream:
+    with open(data["key_path"], "rb") as stream:
         raw = stream.read()
 
     parsed = serialization.load_der_private_key(
@@ -370,8 +370,6 @@ for _name, _cert_data in CERT_DATA.items():
 
     if _key_filename := _cert_data.get("key_filename"):
         _cert_data["key_path"] = basedir / _cert_data["key_filename"]
-    if _key_der_filename := _cert_data.get("key_der_filename"):
-        _cert_data["key_der_path"] = basedir / _cert_data["key_der_filename"]
     if _pub_der_filename := _cert_data.get("pub_der_filename"):
         _cert_data["pub_der_path"] = basedir / _cert_data["pub_der_filename"]
     if _password := _cert_data.get("password"):
@@ -383,7 +381,7 @@ for _name, _cert_data in CERT_DATA.items():
         _cert_data["children"] = [(k, add_colons(v)) for k, v in _cert_data["children"]]
 
     # Load data from files
-    if _cert_data.get("key_der_path"):
+    if _cert_data.get("key_path"):
         _cert_data["key"] = _load_key(_cert_data)
     if _cert_data.get("csr_filename"):
         _cert_data["csr"] = _load_csr(_cert_data)

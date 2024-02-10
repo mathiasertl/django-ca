@@ -39,6 +39,7 @@ from cryptography.hazmat.primitives.serialization import (
     Encoding,
     PrivateFormat,
     PublicFormat,
+    load_der_private_key,
     load_pem_private_key,
 )
 from cryptography.x509.oid import ExtensionOID, NameOID
@@ -632,10 +633,13 @@ class CertificateAuthority(X509CertMixin):
             key_data = read_file(self.private_key_path)
 
             try:
-                self._key = load_pem_private_key(key_data, password)
-            except ValueError as ex:
-                # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
-                raise ValueError("Could not decrypt private key - bad password?") from ex
+                self._key = load_der_private_key(key_data, password)
+            except ValueError:
+                try:
+                    self._key = load_pem_private_key(key_data, password)
+                except ValueError as ex2:
+                    # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
+                    raise ValueError("Could not decrypt private key - bad password?") from ex2
 
         if not isinstance(self._key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
             raise ValueError("Private key of this type is not supported.")

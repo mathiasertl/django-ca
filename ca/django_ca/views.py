@@ -182,7 +182,14 @@ class OCSPView(View):
     def get_responder_key(self) -> CertificateIssuerPrivateKeyTypes:
         """Get the private key used to sign OCSP responses."""
         key = self.get_responder_key_data()
-        loaded_key = serialization.load_pem_private_key(key, None)
+
+        try:
+            loaded_key = serialization.load_der_private_key(key, None)
+        except ValueError:
+            try:
+                loaded_key = serialization.load_pem_private_key(key, None)
+            except ValueError as ex2:
+                raise ValueError("Could not decrypt private key - bad password?") from ex2
 
         # Check that the private key is of a supported type
         if not isinstance(loaded_key, constants.PRIVATE_KEY_TYPES):

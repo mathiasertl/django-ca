@@ -541,7 +541,7 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         data = base64.b64encode(req1).decode("utf-8")
 
         with self.assertLogs() as logcm, self.patch(
-            "cryptography.hazmat.primitives.serialization.load_pem_private_key",
+            "cryptography.hazmat.primitives.serialization.load_der_private_key",
             spec_set=True,
             return_value="wrong",  # usually would be an unsupported key type
         ):
@@ -656,12 +656,6 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
 @freeze_time(TIMESTAMPS["everything_valid"])
 class OCSPTestView(OCSPManualViewTestCaseMixin, TestCase):
     """Test manually configured OCSPView."""
-
-
-@override_settings(ROOT_URLCONF=__name__, USE_TZ=False)
-@freeze_time(TIMESTAMPS["everything_valid"])
-class OCSPWithoutTimezoneSupportTestView(OCSPManualViewTestCaseMixin, TestCase):
-    """Test manually configured OCSPView but with timezone support."""
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])

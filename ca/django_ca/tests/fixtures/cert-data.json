@@ -206,7 +206,6 @@
                     }
                 }
             ],
-            "key_der_filename": "all-extensions.key.der",
             "key_filename": "all-extensions.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -457,7 +456,6 @@
                     }
                 }
             ],
-            "key_der_filename": "alt-extensions.key.der",
             "key_filename": "alt-extensions.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -578,7 +576,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "child.key.der",
             "key_filename": "child.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -736,7 +733,6 @@
                     }
                 }
             ],
-            "key_der_filename": "child-cert.key.der",
             "key_filename": "child-cert.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -2383,7 +2379,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "dsa.key.der",
             "key_filename": "dsa.key",
             "key_size": 2048,
             "key_type": "DSA",
@@ -2540,7 +2535,6 @@
                     }
                 }
             ],
-            "key_der_filename": "dsa-cert.key.der",
             "key_filename": "dsa-cert.key",
             "key_size": 2048,
             "key_type": "DSA",
@@ -2669,7 +2663,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "ec.key.der",
             "key_filename": "ec.key",
             "key_type": "EC",
             "max_path_length": 1,
@@ -2825,7 +2818,6 @@
                     }
                 }
             ],
-            "key_der_filename": "ec-cert.key.der",
             "key_filename": "ec-cert.key",
             "key_type": "EC",
             "name": "ec-cert",
@@ -2904,7 +2896,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "ed25519.key.der",
             "key_filename": "ed25519.key",
             "key_type": "Ed25519",
             "max_path_length": 1,
@@ -3060,7 +3051,6 @@
                     }
                 }
             ],
-            "key_der_filename": "ed25519-cert.key.der",
             "key_filename": "ed25519-cert.key",
             "key_type": "Ed25519",
             "name": "ed25519-cert",
@@ -3139,7 +3129,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "ed448.key.der",
             "key_filename": "ed448.key",
             "key_type": "Ed448",
             "max_path_length": 1,
@@ -3295,7 +3284,6 @@
                     }
                 }
             ],
-            "key_der_filename": "ed448-cert.key.der",
             "key_filename": "ed448-cert.key",
             "key_type": "Ed448",
             "name": "ed448-cert",
@@ -3350,7 +3338,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "empty-subject.key.der",
             "key_filename": "empty-subject.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5147,7 +5134,6 @@
                 }
             ],
             "extensions": [],
-            "key_der_filename": "no-extensions.key.der",
             "key_filename": "no-extensions.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5262,7 +5248,6 @@
                     }
                 }
             ],
-            "key_der_filename": "profile-client.key.der",
             "key_filename": "profile-client.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5392,7 +5377,6 @@
                     }
                 }
             ],
-            "key_der_filename": "profile-enduser.key.der",
             "key_filename": "profile-enduser.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5518,7 +5502,6 @@
                     }
                 }
             ],
-            "key_der_filename": "profile-ocsp.key.der",
             "key_filename": "profile-ocsp.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5637,7 +5620,6 @@
                     }
                 }
             ],
-            "key_der_filename": "profile-server.key.der",
             "key_filename": "profile-server.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5775,7 +5757,6 @@
                     }
                 }
             ],
-            "key_der_filename": "profile-webserver.key.der",
             "key_filename": "profile-webserver.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -5856,7 +5837,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "pwd.key.der",
             "key_filename": "pwd.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -6014,7 +5994,6 @@
                     }
                 }
             ],
-            "key_der_filename": "pwd-cert.key.der",
             "key_filename": "pwd-cert.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -6336,7 +6315,6 @@
                     ]
                 }
             ],
-            "key_der_filename": "root.key.der",
             "key_filename": "root.key",
             "key_size": 2048,
             "key_type": "RSA",
@@ -6492,7 +6470,6 @@
                     }
                 }
             ],
-            "key_der_filename": "root-cert.key.der",
             "key_filename": "root-cert.key",
             "key_size": 2048,
             "key_type": "RSA",
