@@ -32,7 +32,13 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509 import ExtensionNotFound, OCSPNonce, load_pem_x509_certificate, ocsp
+from cryptography.x509 import (
+    ExtensionNotFound,
+    OCSPNonce,
+    load_der_x509_certificate,
+    load_pem_x509_certificate,
+    ocsp,
+)
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
@@ -188,8 +194,8 @@ class OCSPView(View):
         except ValueError:
             try:
                 loaded_key = serialization.load_pem_private_key(key, None)
-            except ValueError as ex2:
-                raise ValueError("Could not decrypt private key - bad password?") from ex2
+            except ValueError as ex:
+                raise ValueError("Could not decrypt private key.") from ex
 
         # Check that the private key is of a supported type
         if not isinstance(loaded_key, constants.PRIVATE_KEY_TYPES):
@@ -222,7 +228,10 @@ class OCSPView(View):
                 )
             responder_cert = read_file(self.responder_cert)
 
-        return load_pem_x509_certificate(responder_cert)
+        try:
+            return load_der_x509_certificate(responder_cert)
+        except ValueError:
+            return load_pem_x509_certificate(responder_cert)
 
     def get_ca(self) -> CertificateAuthority:
         """Get the certificate authority for the request."""

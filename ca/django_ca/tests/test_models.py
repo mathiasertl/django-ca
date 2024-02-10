@@ -1036,6 +1036,10 @@ class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
         self.cert.revoked_date = timezone.now()
         self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
 
+        with self.settings(USE_TZ=False):
+            self.cert.refresh_from_db()
+            self.assertEqual(self.cert.get_revocation_time(), datetime(2019, 2, 3, 15, 43, 12))
+
     @freeze_time("2019-02-03 15:43:12")
     def test_get_compromised_time(self) -> None:
         """Test getting the time when the certificate was compromised."""

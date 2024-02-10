@@ -521,7 +521,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
         ]
         cert_values["key_filename"] = f"{cert_name}.key"
         cert_values["pub_filename"] = f"{cert_name}.pub"
-        cert_values["pub_der_filename"] = f"{cert_name}.pub.der"
         cert_values.setdefault("key_type", "RSA")
         if cert_values["key_type"] in ("RSA", "DSA"):
             cert_values.setdefault("key_size", DEFAULT_KEY_SIZE)

@@ -224,7 +224,7 @@ def load_pub(name: str) -> x509.Certificate:
         with open(conf["pub_path"], "rb") as stream:
             return x509.load_pem_x509_certificate(stream.read())
     else:
-        with open(os.path.join(FIXTURES_DIR, f"{name}.pub.der"), "rb") as stream:
+        with open(os.path.join(FIXTURES_DIR, f"{name}.pub"), "rb") as stream:
             return x509.load_der_x509_certificate(stream.read())
 
 

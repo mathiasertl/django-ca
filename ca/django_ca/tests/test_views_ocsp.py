@@ -27,7 +27,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
-from cryptography.hazmat.primitives.serialization import load_der_private_key
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, load_der_private_key
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import OCSPExtensionOID, SignatureAlgorithmOID
 
@@ -45,7 +45,7 @@ from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DI
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import override_tmpcadir
-from django_ca.utils import hex_to_bytes
+from django_ca.utils import get_storage, hex_to_bytes
 from django_ca.views import OCSPView
 
 
@@ -328,7 +328,7 @@ class OCSPViewTestMixin(TestCaseMixin):
             "django_ca:ocsp-cert-get",
             kwargs={
                 "serial": certificate.ca.serial,
-                "data": base64.b64encode(request.public_bytes(serialization.Encoding.DER)).decode("utf-8"),
+                "data": base64.b64encode(request.public_bytes(Encoding.DER)).decode("utf-8"),
             },
         )
         response = self.client.get(url)
@@ -719,6 +719,33 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         )
 
     @override_tmpcadir()
+    def test_pem_responder_key(self) -> None:
+        """Test the OCSP responder with PEM-encoded private key."""
+        private_key, ocsp_cert = self.generate_ocsp_key(self.ca)
+
+        # Overwrite key with PEM format
+        storage = get_storage()
+        private_path = storage.generate_filename(f"ocsp/{self.ca.serial.replace(':', '')}.key")
+        print(private_path)
+        pem_private_key = private_key.private_bytes(
+            Encoding.PEM,
+            format=PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        with storage.open(private_path, "wb") as stream:
+            stream.write(pem_private_key)
+
+        response = self.ocsp_get(self.cert, hash_algorithm=hashes.SHA512)
+
+        self.assertOCSPResponse(
+            response,
+            requested_certificate=self.cert,
+            responder_certificate=ocsp_cert,
+            signature_algorithm_oid=SignatureAlgorithmOID.RSA_WITH_SHA256,
+            single_response_hash_algorithm=hashes.SHA512,
+        )
+
+    @override_tmpcadir()
     def test_dsa_certificate_authority(self) -> None:
         """Test the OCSP responder with an EC-based certificate authority."""
         ca = self.load_ca("dsa")
@@ -766,6 +793,24 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
             signature_hash_algorithm=None,
             signature_algorithm_oid=SignatureAlgorithmOID.ED448,
         )
+
+    @override_tmpcadir()
+    def test_invalid_responder_key(self) -> None:
+        """Test the OCSP responder error when there is an invalid responder."""
+        private_key, ocsp_cert = self.generate_ocsp_key(self.ca)
+
+        # Overwrite key with PEM format
+        storage = get_storage()
+        private_path = storage.generate_filename(f"ocsp/{self.ca.serial.replace(':', '')}.key")
+        with storage.open(private_path, "wb") as stream:
+            stream.write(b"bogus")
+
+        with self.assertLogs() as logcm:
+            response = self.ocsp_get(self.cert, hash_algorithm=hashes.SHA512)
+        self.assertEqual(logcm.output, ["ERROR:django_ca.views:Could not read responder key/cert."])
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        ocsp_response = ocsp.load_der_ocsp_response(response.content)
+        self.assertEqual(ocsp_response.response_status, ocsp.OCSPResponseStatus.INTERNAL_ERROR)
 
     @override_tmpcadir()
     def test_ed25519_certificate_authority(self) -> None:

@@ -130,9 +130,6 @@ def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict
 def _write_ca(
     dest: Path, ca: CertificateAuthority, cert_data: CertFixtureData, password: Optional[bytes] = None
 ) -> None:
-    pub_dest = dest / cert_data["pub_filename"]
-    pub_der_dest = dest / cert_data["pub_der_filename"]
-
     # Encode private key
     if password is None:
         encryption: KeySerializationEncryption = NoEncryption()
@@ -145,9 +142,7 @@ def _write_ca(
     # write files to dest
     with open(dest / cert_data["key_filename"], "wb") as stream:
         stream.write(key_der)
-    with open(pub_dest, "w", encoding="utf-8") as stream:
-        stream.write(ca.pub.pem)
-    with open(pub_der_dest, "wb") as stream:
+    with open(dest / cert_data["pub_filename"], "wb") as stream:
         stream.write(ca.pub.der)
 
     # These keys are only present in CAs:
@@ -162,22 +157,12 @@ def _write_ca(
     _update_cert_data(ca, cert_data)
 
 
-def _copy_cert(
-    dest: Path,
-    cert: Certificate,
-    data: CertFixtureData,
-    key_path: Path,
-    csr_path: Path,
-) -> None:
+def _copy_cert(dest: Path, cert: Certificate, data: CertFixtureData, key_path: Path, csr_path: Path) -> None:
     csr_dest = dest / data["csr_filename"]
-    pub_dest = dest / data["pub_filename"]
-    pub_der_dest = dest / data["pub_der_filename"]
 
     shutil.copy(key_path, dest / data["key_filename"])
     shutil.copy(csr_path, csr_dest)
-    with open(pub_dest, "w", encoding="utf-8") as stream:
-        stream.write(cert.pub.pem)
-    with open(pub_der_dest, "wb") as stream:
+    with open(dest / data["pub_filename"], "wb") as stream:
         stream.write(cert.pub.der)
 
     data["subject"] = serialize_name(cert.subject)

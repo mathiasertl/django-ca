@@ -62,7 +62,7 @@ class FixtureData(typing.TypedDict):
     certs: Dict[str, CertFixtureData]
 
 
-KeyDict = typing.TypedDict("KeyDict", {"pem": str, "parsed": CertificateIssuerPrivateKeyTypes, "der": bytes})
+KeyDict = typing.TypedDict("KeyDict", {"parsed": CertificateIssuerPrivateKeyTypes})
 PubDict = typing.TypedDict("PubDict", {"pem": str, "parsed": x509.Certificate, "der": bytes})
 CsrDict = typing.TypedDict("CsrDict", {"parsed": x509.CertificateSigningRequest})
 

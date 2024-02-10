@@ -18,6 +18,7 @@ import os
 import re
 import shutil
 import sys
+import typing
 from datetime import datetime, timedelta, timezone as tz
 from importlib.metadata import version
 from pathlib import Path
@@ -28,6 +29,7 @@ import packaging.version
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID
 
@@ -112,7 +114,7 @@ CERT_DATA["multiple_ous"] = {
     "cn": "",
     "key_filename": False,
     "csr_filename": False,
-    "pub_filename": os.path.join("contrib", "multiple_ous_and_no_ext.pem"),
+    "pub_filename": os.path.join("contrib", "multiple_ous_and_no_ext.pub"),
     "key_type": "RSA",
     "cat": "contrib",
     "type": "cert",
@@ -136,7 +138,7 @@ CERT_DATA["cloudflare_1"] = {
     "cn": "sni24142.cloudflaressl.com",
     "key_filename": False,
     "csr_filename": False,
-    "pub_filename": os.path.join("contrib", "cloudflare_1.pem"),
+    "pub_filename": os.path.join("contrib", "cloudflare_1.pub"),
     "cat": "contrib",
     "type": "cert",
     "key_type": "EC",
@@ -325,15 +327,7 @@ def _load_key(data: Dict[Any, Any]) -> KeyDict:
         raw, password=data.get("password"), unsafe_skip_rsa_key_validation=True
     )
 
-    return {
-        "der": raw,
-        "pem": parsed.private_bytes(
-            Encoding.PEM,
-            serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        ).decode(),
-        "parsed": parsed,  # type: ignore[typeddict-item]  # we do not support all key types
-    }
+    return {"parsed": typing.cast(CertificateIssuerPrivateKeyTypes, parsed)}
 
 
 def _load_csr(data: Dict[Any, Any]) -> CsrDict:
@@ -345,18 +339,18 @@ def _load_csr(data: Dict[Any, Any]) -> CsrDict:
 
 
 def _load_pub(data: Dict[str, Any]) -> PubDict:
-    if pub_der_path := data.get("pub_der_path"):
-        with open(pub_der_path, "rb") as stream:
-            der = stream.read()
-        parsed = x509.load_der_x509_certificate(der)
-        pem = parsed.public_bytes(Encoding.PEM).decode("utf-8")
-    else:
-        pub_path = data["pub_path"]
-        with open(pub_path, "rb") as stream:
-            pub_pem_bytes = stream.read()
-        parsed = x509.load_pem_x509_certificate(pub_pem_bytes)
-        pem = pub_pem_bytes.decode("utf-8")
+    print(data["pub_path"], data["cat"])
+    with open(data["pub_path"], "rb") as stream:
+        key_data = stream.read()
+
+    if _cert_data["cat"] == "sphinx-contrib":
+        parsed = x509.load_pem_x509_certificate(key_data)
+        pem = key_data.decode("utf-8")
         der = parsed.public_bytes(Encoding.DER)
+    else:
+        der = key_data
+        parsed = x509.load_der_x509_certificate(key_data)
+        pem = parsed.public_bytes(Encoding.PEM).decode("utf-8")
 
     return {"pem": pem, "parsed": parsed, "der": der}
 
@@ -370,8 +364,6 @@ for _name, _cert_data in CERT_DATA.items():
 
     if _key_filename := _cert_data.get("key_filename"):
         _cert_data["key_path"] = basedir / _cert_data["key_filename"]
-    if _pub_der_filename := _cert_data.get("pub_der_filename"):
-        _cert_data["pub_der_path"] = basedir / _cert_data["pub_der_filename"]
     if _password := _cert_data.get("password"):
         _cert_data["password"] = _cert_data["password"].encode("utf-8")
     _cert_data["pub_path"] = basedir / _cert_data["pub_filename"]

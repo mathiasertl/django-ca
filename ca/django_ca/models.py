@@ -374,7 +374,7 @@ class X509CertMixin(DjangoCAModel):
 
         if timezone.is_aware(revoked_date):
             # convert datetime object to UTC and make it naive
-            return timezone.make_naive(revoked_date, tz.utc)
+            revoked_date = timezone.make_naive(revoked_date, tz.utc)
 
         return revoked_date.replace(microsecond=0)
 
