@@ -261,12 +261,84 @@ class X509CertMixin(DjangoCAModel):
     class Meta:
         abstract = True
 
+    ##########################
+    # Certificate properties #
+    ##########################
+    # Properties here are shortcuts to properties of the loaded certificate.
+
+    @property
+    def algorithm(self) -> Optional[AllowedHashTypes]:
+        """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
+        return typing.cast(AllowedHashTypes, self.pub.loaded.signature_hash_algorithm)
+
+    @cached_property
+    def extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
+        """All extensions of this certificate in a `dict`.
+
+        The key is the OID for the respective extension, allowing easy to look up a particular extension.
+        """
+        return {e.oid: e for e in self.pub.loaded.extensions}
+
+    @cached_property
+    def sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
+        """List of extensions sorted by their human-readable name.
+
+        This property is used for display purposes, where a reproducible output is desired.
+        """
+        return list(sorted(self.pub.loaded.extensions, key=lambda e: get_extension_name(e.oid)))
+
+    @property
+    def issuer(self) -> x509.Name:
+        """The certificate issuer field as :py:class:`~cg:cryptography.x509.Name`."""
+        return self.pub.loaded.issuer
+
+    @property
+    def not_before(self) -> datetime:
+        """A timezone-aware datetime representing the beginning of the validity period."""
+        return not_valid_before(self.pub.loaded)
+
+    @property
+    def not_after(self) -> datetime:
+        """A timezone-aware datetime representing the end of the validity period."""
+        return not_valid_after(self.pub.loaded)
+
+    @property
+    def subject(self) -> x509.Name:
+        """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`."""
+        return self.pub.loaded.subject
+
+    ####################
+    # Other properties #
+    ####################
     @property
     def bundle_as_pem(self) -> str:
         """Get the bundle as PEM."""
         # TYPE NOTE: bundle is defined in base class but returns a list (considered invariant by mypy). This
         #            means that an abstract "bundle" property here could not be correctly typed.
         return "".join(c.pub.pem for c in self.bundle)  # type:  ignore[attr-defined]
+
+    @property
+    def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
+        """Get a JOSE JWK public key for this certificate.
+
+        .. NOTE::
+
+           josepy (the underlying library) does not currently support loading Ed448 or Ed25519 public keys.
+           This property will raise `ValueError` if called for a public key based on those algorithms. The
+           issue is addressed in `this pull request <https://github.com/certbot/josepy/pull/98>`_.
+        """
+        public_key = self.pub.loaded.public_key()
+
+        try:
+            jwk = jose.jwk.JWK.load(public_key.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
+        except jose.errors.Error as ex:
+            raise ValueError(*ex.args) from ex
+
+        # JWK.load() may return a private key instead, so we rule this out here for type safety. This branch
+        # should normally not happen.
+        if not isinstance(jwk, (jose.jwk.JWKRSA, jose.jwk.JWKEC)):  # pragma: no cover
+            raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
+        return jwk
 
     def get_revocation_reason(self) -> Optional[x509.ReasonFlags]:
         """Get the revocation reason of this certificate."""
@@ -323,15 +395,6 @@ class X509CertMixin(DjangoCAModel):
             self.valid_from = timezone.make_naive(self.valid_from, timezone=tz.utc)
 
         self.serial = int_to_hex(value.serial_number)  # upper-cased by int_to_hex()
-
-    ##########################
-    # Certificate properties #
-    ##########################
-
-    @property
-    def algorithm(self) -> Optional[AllowedHashTypes]:
-        """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
-        return typing.cast(AllowedHashTypes, self.pub.loaded.signature_hash_algorithm)
 
     def get_fingerprint(self, algorithm: hashes.HashAlgorithm) -> str:
         """Get the digest for a certificate as string, including colons."""
@@ -394,44 +457,6 @@ class X509CertMixin(DjangoCAModel):
 
         return revoked_cert.build()
 
-    @property
-    def issuer(self) -> x509.Name:
-        """The certificate issuer field as :py:class:`~cg:cryptography.x509.Name`."""
-        return self.pub.loaded.issuer
-
-    @property
-    def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
-        """Get a JOSE JWK public key for this certificate.
-
-        .. NOTE::
-
-           josepy (the underlying library) does not currently support loading Ed448 or Ed25519 public keys.
-           This property will raise `ValueError` if called for a public key based on those algorithms. The
-           issue is addressed in `this pull request <https://github.com/certbot/josepy/pull/98>`_.
-        """
-        public_key = self.pub.loaded.public_key()
-
-        try:
-            jwk = jose.jwk.JWK.load(public_key.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo))
-        except jose.errors.Error as ex:
-            raise ValueError(*ex.args) from ex
-
-        # JWK.load() may return a private key instead, so we rule this out here for type safety. This branch
-        # should normally not happen.
-        if not isinstance(jwk, (jose.jwk.JWKRSA, jose.jwk.JWKEC)):  # pragma: no cover
-            raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
-        return jwk
-
-    @property
-    def not_before(self) -> datetime:
-        """A timezone-aware datetime representing the beginning of the validity period."""
-        return not_valid_before(self.pub.loaded)
-
-    @property
-    def not_after(self) -> datetime:
-        """A timezone-aware datetime representing the end of the validity period."""
-        return not_valid_after(self.pub.loaded)
-
     def revoke(
         self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
     ) -> None:
@@ -455,33 +480,6 @@ class X509CertMixin(DjangoCAModel):
         self.save()
 
         post_revoke_cert.send(sender=self.__class__, cert=self)
-
-    @property
-    def subject(self) -> x509.Name:
-        """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`."""
-        return self.pub.loaded.subject
-
-    ###################
-    # X509 extensions #
-    ###################
-
-    @cached_property
-    def extensions(self) -> Dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
-        """All extensions of this certificate in a `dict`.
-
-        The key is the OID for the respective extension, allowing easy to look up a particular extension.
-        """
-        return {e.oid: e for e in self.pub.loaded.extensions}
-
-    @cached_property
-    def sorted_extensions(self) -> List["x509.Extension[x509.ExtensionType]"]:
-        """List of extensions sorted by their human-readable name.
-
-        This property is used for display purposes, where a reproducible output is desired.
-        """
-        # NOTE: We need the dotted_string in the sort key if we have multiple unknown extensions, which then
-        #       show up as "Unknown OID" and have to be sorted by oid
-        return list(sorted(self.extensions.values(), key=lambda e: get_extension_name(e.oid)))
 
 
 class CertificateAuthority(X509CertMixin):
