@@ -3,6 +3,7 @@ extend = "../../../pyproject.toml"
 
 line-length = 78
 
+[tool.ruff.lint]
 extend-ignore = [
     "D100",  # Missing docstring in public module - examples don't need docs
 ]
