@@ -15,7 +15,7 @@ ChangeLog
    django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
    :ref:`update_126_rfc4514_subjects` for migration information.
 
-* Add support for ``Django~=5.0``, ``cryptography~=42``, ``acme==2.8.0`` and ``acme==2.8.0``.
+* Add support for ``Django~=5.0``, ``cryptography~=42``, ``acme==2.8.0`` and ``acme==2.9.0``.
 * ``pydantic>=2.5`` is now a required dependency.
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
   :ref:`settings-ca-storage`. Installations :doc:`as app <quickstart_as_app>` must add a
