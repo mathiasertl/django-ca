@@ -13,13 +13,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
-        django-version: [ "4.2", "5.0", ]
+        django-version: [ "4.2.0", "5.0.0", ]
         cryptography-version: [ "41.0", "42.0" ]
         exclude:
           - python-version: 3.8
-            django-version: 5.0
+            django-version: 5.0.0
           - python-version: 3.9
-            django-version: 5.0
+            django-version: 5.0.0
 
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}
     steps:

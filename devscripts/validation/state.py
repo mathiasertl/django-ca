@@ -137,9 +137,11 @@ def check_github_actions_tests() -> int:
                 errors += simple_diff(
                     "Python versions", tuple(matrix["python-version"]), config.PYTHON_RELEASES
                 )
-                errors += simple_diff("Django versions", tuple(matrix["django-version"]), config.DJANGO)
+                django_versions = tuple(f"{version}.0" for version in config.DJANGO)
+                cg_versions = tuple(f"{version}.0" for version in config.CRYPTOGRAPHY)
+                errors += simple_diff("Django versions", tuple(matrix["django-version"]), django_versions)
                 errors += simple_diff(
-                    "cryptography versions", tuple(matrix["cryptography-version"]), config.CRYPTOGRAPHY
+                    "cryptography versions", tuple(matrix["cryptography-version"]), cg_versions
                 )
 
     return errors
@@ -189,7 +191,7 @@ def check_tox() -> int:
                 errors += err(f"{name}: Conditional dependency not found.")
                 continue
 
-            expected = f"{CANONICAL_PYPI_NAMES[component]}~={major}"
+            expected = f"{CANONICAL_PYPI_NAMES[component]}~={major}.0"
             if name not in tox_env_reqs:
                 continue  # handled in simple-diff above
 

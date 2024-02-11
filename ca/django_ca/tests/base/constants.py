@@ -339,7 +339,6 @@ def _load_csr(data: Dict[Any, Any]) -> CsrDict:
 
 
 def _load_pub(data: Dict[str, Any]) -> PubDict:
-    print(data["pub_path"], data["cat"])
     with open(data["pub_path"], "rb") as stream:
         key_data = stream.read()
 
