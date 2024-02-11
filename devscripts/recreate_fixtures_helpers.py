@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Type, Union
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import (
@@ -95,9 +95,9 @@ def _create_key(path: Path, key_type: ParsableKeyType) -> CertificateIssuerPriva
         raise ValueError(f"Unknown key type: {key_type}")
 
     encoded = key.private_bytes(
-        encoding=serialization.Encoding.DER,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
+        encoding=Encoding.DER,
+        format=PrivateFormat.PKCS8,
+        encryption_algorithm=NoEncryption(),
     )
     with open(path, "wb") as f:
         f.write(encoded)
@@ -116,7 +116,7 @@ def _create_csr(
         csr = csr_builder.sign(key, algorithm=hashes.SHA256())
 
     with open(path, "wb") as stream:
-        stream.write(csr.public_bytes(serialization.Encoding.DER))
+        stream.write(csr.public_bytes(Encoding.DER))
     return csr
 
 

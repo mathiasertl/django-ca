@@ -726,7 +726,6 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         # Overwrite key with PEM format
         storage = get_storage()
         private_path = storage.generate_filename(f"ocsp/{self.ca.serial.replace(':', '')}.key")
-        print(private_path)
         pem_private_key = private_key.private_bytes(
             Encoding.PEM,
             format=PrivateFormat.PKCS8,

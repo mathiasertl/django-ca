@@ -1006,9 +1006,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.assertIs(has_content.is_displayed(), False)
         self.assertIs(no_content.is_displayed(), False)
 
-        cert = CERT_DATA["all-extensions"]
-        csr = self.find("textarea#id_csr")
-        csr.send_keys(cert["csr"]["pem"])
+        csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
+        csr_field = self.find("textarea#id_csr")
+        csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii"))
 
         # Make sure that the displayed subject has not changed
         self.assertNotModified()
@@ -1078,8 +1078,8 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         """Test that pasting a CSR shows text next to subject input fields."""
         self.initialize()
 
-        cert = CERT_DATA["all-extensions"]
-        csr = self.find("textarea#id_csr")
+        csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
+        csr_field = self.find("textarea#id_csr")
 
         # Elements of the CSR chapter
         chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
@@ -1088,7 +1088,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         no_content = chapter.find_element(By.CSS_SELECTOR, ".no-content")
 
         # send all but the first character to the CSR input field
-        csr.send_keys(cert["csr"]["pem"][1:])
+        csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii")[1:])
 
         # Check that the right parts of the CSR chapter is displayed
         self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
