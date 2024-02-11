@@ -15,13 +15,14 @@ jobs:
         python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
         django-version: [ "4.2.0", "5.0.0", ]
         cryptography-version: [ "41.0", "42.0" ]
+        pydantic-version: [ "2.5.0", "2.6.0" ]
         exclude:
           - python-version: 3.8
             django-version: 5.0.0
           - python-version: 3.9
             django-version: 5.0.0
 
-    name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}
+    name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, pydantic ${{ matrix.pydantic-version }}
     steps:
       - name: Install APT dependencies
         run: sudo apt-get install -y firefox
@@ -44,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip setuptools wheel
-          pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }}
+          pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }} pydantic~=${{ matrix.pydantic-version }}
 
       - name: Initialize demo
         run: python dev.py init-demo

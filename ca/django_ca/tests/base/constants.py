@@ -80,20 +80,23 @@ NEWEST_PYTHON_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["releas
 NEWEST_CRYPTOGRAPHY_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["cryptography"])
 NEWEST_DJANGO_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["django"])
 NEWEST_ACME_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["acme"])
+NEWEST_PYDANTIC_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["pydantic"])
 
 # Determine if we're running on the respective newest versions
 _parsed_cg_version = packaging.version.parse(cryptography.__version__).release
-CRYPTOGRAPHY_VERSION = _parsed_cg_version[:2]
+CRYPTOGRAPHY_VERSION = _parsed_cg_version[:1]
 ACME_VERSION = packaging.version.parse(version("acme")).release
+PYDANTIC_VERSION = packaging.version.parse(version("pydantic")).release
 
 NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
 NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
 NEWEST_ACME = ACME_VERSION[:2] == NEWEST_ACME_VERSION
-NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NEWEST_ACME
+NEWEST_PYDANTIC = PYDANTIC_VERSION[:2] == NEWEST_PYDANTIC_VERSION
+NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NEWEST_ACME and NEWEST_PYDANTIC
 
 # Only run Selenium tests if we use the newest Python, cryptography and acme.
-RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME
+RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME and NEWEST_PYDANTIC
 
 # Fixture data used by test cases
 with open(FIXTURES_DIR / "cert-data.json", encoding="utf-8") as cert_data_stream:

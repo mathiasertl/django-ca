@@ -40,6 +40,7 @@ CANONICAL_PYPI_NAMES = {
     "acme": "acme",
     "cryptography": "cryptography",
     "django": "Django",
+    "pydantic": "pydantic",
 }
 
 TOX_ENV_SHORT_NAMES = {
@@ -139,9 +140,13 @@ def check_github_actions_tests() -> int:
                 )
                 django_versions = tuple(f"{version}.0" for version in config.DJANGO)
                 cg_versions = tuple(f"{version}.0" for version in config.CRYPTOGRAPHY)
+                pydantic_versions = tuple(f"{version}.0" for version in config.PYDANTIC)
                 errors += simple_diff("Django versions", tuple(matrix["django-version"]), django_versions)
                 errors += simple_diff(
                     "cryptography versions", tuple(matrix["cryptography-version"]), cg_versions
+                )
+                errors += simple_diff(
+                    "Pydantic versions", tuple(matrix["pydantic-version"]), pydantic_versions
                 )
 
     return errors
@@ -174,7 +179,7 @@ def check_tox() -> int:
         info(f"(disabled) Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
-    for component in ["django", "cryptography", "acme"]:
+    for component in ["django", "cryptography", "acme", "pydantic"]:
         # First, check if there are any leftover conditional settings for this component
         short_name = TOX_ENV_SHORT_NAMES.get(component, component)
         errors += simple_diff(

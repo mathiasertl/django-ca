@@ -56,6 +56,7 @@ PYTHON_RELEASES = tuple(typing.cast(List[str], _release_config["python"]))
 DJANGO = tuple(typing.cast(List[str], _release_config["django"]))
 CRYPTOGRAPHY = tuple(typing.cast(List[str], _release_config["cryptography"]))
 ACME = tuple(typing.cast(List[str], _release_config["acme"]))
+PYDANTIC = tuple(typing.cast(List[str], _release_config["pydantic"]))
 
 ALPINE_RELEASES = tuple(typing.cast(List[str], _release_config["alpine"]))
 DEBIAN_RELEASES = tuple(typing.cast(List[str], _release_config["debian-releases"]))
