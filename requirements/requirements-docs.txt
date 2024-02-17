@@ -4,5 +4,5 @@ numpydoc==1.6.0
 sphinx-inline-tabs==2023.4.21
 sphinx-jinja==2.0.2
 sphinx-rtd-theme==2.0.0
-sphinxcontrib-openapi==0.8.3
+sphinxcontrib-openapi==0.8.4
 sphinxcontrib-spelling==8.0.0

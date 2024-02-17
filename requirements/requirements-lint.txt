@@ -1,6 +1,6 @@
 -r requirements-dev-common.txt
-pre-commit==3.6.0
+pre-commit==3.6.1
 pylint-django==2.5.5
 pylint==3.0.3
-ruff==0.1.11
-setuptools>=61
+ruff==0.2.1
+setuptools>=65
