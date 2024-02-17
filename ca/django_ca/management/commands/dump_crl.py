@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca.management.base import BinaryCommand
+from django_ca.management.base import BinaryCommand, add_password
 from django_ca.models import CertificateAuthority
 from django_ca.typehints import AllowedHashTypes
 
@@ -68,7 +68,7 @@ class Command(BinaryCommand):
         self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
-        self.add_password(parser)
+        add_password(parser)
         super().add_arguments(parser)
 
     def handle(

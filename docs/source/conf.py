@@ -57,6 +57,16 @@ settings.configure(
         "django_ca",
     ],
     FIXTURES_DIR=_FIXTURES,
+    STORAGES={
+        "django-ca": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": "/does/not/exist/",
+                "file_permissions_mode": 0o600,
+                "directory_permissions_mode": 0o700,
+            },
+        },
+    },
 )
 django.setup()
 
@@ -487,6 +497,12 @@ nitpick_ignore = [
     ("py:class", "OtherNames"),
     ("py:class", "KeyUsages"),
     ("py:class", "GeneralNames"),
+    # Just no need to document these
+    ("py:class", "django_ca.backends.base.Self"),  # pragma: only py<3.11  # replace with typing.Self
+    # Undocumented in Python:
+    ("py:class", "argparse._ArgumentGroup"),
+    # undocumented Django:
+    ("py:class", "django.core.management.base.CommandParser"),
     # asn1crypto is really used only for OtherNames, so we do not link it
     ("py:class", "asn1crypto.core.Primitive"),
     # Pydantic root model signature does not currently work

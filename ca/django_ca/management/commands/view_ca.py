@@ -32,7 +32,7 @@ class Command(BaseViewCommand):
     help = "View details of a certificate authority."
 
     def add_arguments(self, parser: CommandParser) -> None:
-        self.add_ca(parser, arg="ca", allow_disabled=True, allow_unusable=True)
+        self.add_ca(parser, arg="ca", allow_disabled=True)
         super().add_arguments(parser)
 
     def output_ca_information(self, ca: CertificateAuthority) -> None:

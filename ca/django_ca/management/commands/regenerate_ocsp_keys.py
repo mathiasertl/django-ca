@@ -25,7 +25,7 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
 from django_ca.management.actions import ExpiresAction
-from django_ca.management.base import BaseCommand
+from django_ca.management.base import BaseCommand, add_elliptic_curve, add_key_size, add_password
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_key, run_task
 from django_ca.typehints import AllowedHashTypes, ParsableKeyType
@@ -64,9 +64,9 @@ class Command(BaseCommand):
         self.add_key_type(
             private_key_group, default=None, default_text="key type of the certificate authority"
         )
-        self.add_key_size(private_key_group)
-        self.add_elliptic_curve(private_key_group)
-        self.add_password(parser)
+        add_key_size(private_key_group)
+        add_elliptic_curve(private_key_group)
+        add_password(parser)
 
         self.add_profile(
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'

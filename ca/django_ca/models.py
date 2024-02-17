@@ -26,7 +26,7 @@ import typing
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import josepy as jose
 from acme import challenges, messages
@@ -34,14 +34,8 @@ from acme import challenges, messages
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
-from cryptography.hazmat.primitives.serialization import (
-    Encoding,
-    PrivateFormat,
-    PublicFormat,
-    load_der_private_key,
-    load_pem_private_key,
-)
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.conf import settings
@@ -59,6 +53,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
+from django_ca.backends.base import KeyBackend, get_key_backend_class
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.extensions import get_extension_name
@@ -95,9 +90,7 @@ from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert,
 from django_ca.typehints import AllowedHashTypes, Expires, ParsableKeyType
 from django_ca.utils import (
     bytes_to_hex,
-    file_exists,
     generate_private_key,
-    get_cert_builder,
     get_crl_cache_key,
     get_storage,
     int_to_hex,
@@ -497,7 +490,8 @@ class CertificateAuthority(X509CertMixin):
     parent = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
     )
-    private_key_path = models.CharField(max_length=256, help_text=_("Path to the private key."))
+    key_backend_path = models.CharField(max_length=256, help_text=_("Backend to handle private keys."))
+    key_backend_options = models.JSONField(default=dict, help_text=_("Key backend options"))
 
     # various details used when signing certs
     crl_number = models.TextField(
@@ -595,7 +589,7 @@ class CertificateAuthority(X509CertMixin):
         help_text=_("Whether it is possible to use the API for this CA."),
     )
 
-    _key = None
+    _key_backend = None
 
     class Meta:
         verbose_name = _("Certificate Authority")
@@ -604,37 +598,20 @@ class CertificateAuthority(X509CertMixin):
     def __str__(self) -> str:
         return self.name
 
-    def key(self, password: Optional[Union[str, bytes]] = None) -> CertificateIssuerPrivateKeyTypes:
-        """The CAs private key as private key.
+    def get_key_backend(self, **kwargs: Any) -> KeyBackend:
+        """Get the key backend for this CA.
 
-        .. seealso:: :py:func:`~cg:cryptography.hazmat.primitives.serialization.load_pem_private_key`.
+        Any `kwargs` are passed to the backend in addition to the values from `key_backend_options`. This can
+        be used to set ephemeral options that should not be stored in the database (e.g. the password for
+        encrypted keys in the file storage backend).
+
+        The value returned by this instance is cached for this model instance, so multiple invocations of this
+        method will return the same backend instance, `kwargs` is ignored in this case.
         """
-        if isinstance(password, str):
-            password = password.encode("utf-8")
-
-        if self._key is None:
-            key_data = read_file(self.private_key_path)
-
-            try:
-                self._key = load_der_private_key(key_data, password)
-            except ValueError:
-                try:
-                    self._key = load_pem_private_key(key_data, password)
-                except ValueError as ex2:
-                    # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
-                    raise ValueError("Could not decrypt private key - bad password?") from ex2
-
-        if not isinstance(self._key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
-            raise ValueError("Private key of this type is not supported.")
-
-        return self._key
-
-    @property
-    def key_exists(self) -> bool:
-        """``True`` if the private key is accessible to the current process."""
-        if self._key is not None:
-            return True
-        return file_exists(self.private_key_path)
+        if self._key_backend is None:
+            cls = get_key_backend_class(self.key_backend_path)
+            self._key_backend = cls(ca=self, **{**self.key_backend_options, **kwargs})
+        return self._key_backend
 
     @property
     def key_type(self) -> ParsableKeyType:
@@ -768,7 +745,11 @@ class CertificateAuthority(X509CertMixin):
         if extensions is None:
             extensions = []
 
-        public_key = csr.public_key()
+        # Load (and check) the public key
+        public_key = typing.cast(CertificateIssuerPublicKeyTypes, csr.public_key())
+        if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):
+            raise ValueError(f"{public_key}: Unsupported public key type.")
+
         exts = OrderedDict([(ext.oid, ext) for ext in extensions])
 
         # Add BasicConstraints extension if not already set.
@@ -795,7 +776,7 @@ class CertificateAuthority(X509CertMixin):
         if ExtensionOID.AUTHORITY_KEY_IDENTIFIER not in exts:
             exts[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = self.get_authority_key_identifier_extension()
 
-        extensions = exts.values()
+        extensions = list(exts.values())
         pre_sign_cert.send(
             sender=self.__class__,
             ca=self,
@@ -806,15 +787,18 @@ class CertificateAuthority(X509CertMixin):
             extensions=extensions,
             password=password,
         )
-        builder = get_cert_builder(expires)
-        builder = builder.public_key(public_key)
-        builder = builder.issuer_name(self.subject)
-        builder = builder.subject_name(subject)
 
-        for ext in extensions:
-            builder = builder.add_extension(extval=ext.value, critical=ext.critical)
+        key_backend = self.get_key_backend(password=password)
+        signed_cert = key_backend.sign_certificate(
+            public_key,
+            serial=x509.random_serial_number(),
+            algorithm=algorithm,
+            issuer=self.subject,
+            subject=subject,
+            expires=expires,
+            extensions=extensions,
+        )
 
-        signed_cert = builder.sign(private_key=self.key(password), algorithm=algorithm)
         post_sign_cert.send(sender=self.__class__, ca=self, cert=signed_cert)
 
         return signed_cert
@@ -913,7 +897,7 @@ class CertificateAuthority(X509CertMixin):
         if algorithm is None:
             algorithm = self.algorithm
 
-        ca_key = self.key(password)
+        key_backend = self.get_key_backend(password=password)
 
         if key_type is None:
             key_type = self.key_type
@@ -921,10 +905,10 @@ class CertificateAuthority(X509CertMixin):
         # If the requested private key type and the private key type of the CA is identical, use properties
         # from the CA private key as default
         if key_type == self.key_type:
-            if isinstance(ca_key, (dsa.DSAPrivateKey, rsa.RSAPrivateKey)) and key_size is None:
-                key_size = ca_key.key_size
-            elif isinstance(ca_key, ec.EllipticCurvePrivateKey) and elliptic_curve is None:
-                elliptic_curve = ca_key.curve
+            if self.key_type in ("RSA", "DSA") and key_size is None:
+                key_size = key_backend.get_ocsp_key_size()
+            elif self.key_type == "EC" and elliptic_curve is None:
+                elliptic_curve = key_backend.get_ocsp_key_elliptic_curve()
 
         # Ensure that parameters used to generate the private key are valid.
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
@@ -993,7 +977,7 @@ class CertificateAuthority(X509CertMixin):
         try:
             ski = self.pub.loaded.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
         except x509.ExtensionNotFound as ex:
-            public_key = self.pub.loaded.public_key()
+            public_key = typing.cast(CertificateIssuerPublicKeyTypes, self.pub.loaded.public_key())
             if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
                 # COVERAGE NOTE: This does not happen in reality, we never generate keys of this type
                 raise TypeError("Cannot get AuthorityKeyIdentifier from this private key type.") from ex
@@ -1180,15 +1164,17 @@ class CertificateAuthority(X509CertMixin):
         crl_number = int(crl_number_data["scope"].get(counter, 0))
         builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
 
-        # Load private key (before any permanent changes to the model are made).
-        ca_key = self.key(password)
+        # Get the backend.
+        key_backend = self.get_key_backend(password=password)
+        if key_backend.usable is False:
+            raise ValueError("Backend cannot be used for signing by this process.")
 
         # increase crl_number for the given scope and save
         crl_number_data["scope"][counter] = crl_number + 1
         self.crl_number = json.dumps(crl_number_data)
         self.save()
 
-        return builder.sign(private_key=ca_key, algorithm=algorithm)
+        return key_backend.sign_certificate_revocation_list(builder=builder, algorithm=algorithm)
 
     def get_password(self) -> Optional[str]:
         """Get password for the private key from the ``CA_PASSWORDS`` setting."""

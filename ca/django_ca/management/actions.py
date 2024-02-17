@@ -120,10 +120,9 @@ class CertificateAction(SingleValueAction[str, Certificate]):
 class CertificateAuthorityAction(SingleValueAction[str, CertificateAuthority]):
     """Action for naming a certificate authority."""
 
-    def __init__(self, allow_disabled: bool = False, allow_unusable: bool = False, **kwargs: Any) -> None:
+    def __init__(self, allow_disabled: bool = False, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.allow_disabled = allow_disabled
-        self.allow_unusable = allow_unusable
 
     def parse_value(self, value: str) -> CertificateAuthority:
         """Parse the value for this action."""
@@ -137,10 +136,6 @@ class CertificateAuthorityAction(SingleValueAction[str, CertificateAuthority]):
             raise argparse.ArgumentError(self, f"{value}: Certificate authority not found.") from ex
         except CertificateAuthority.MultipleObjectsReturned as ex:
             raise argparse.ArgumentError(self, f"{value}: Multiple Certificate authorities match.") from ex
-
-        # verify that the private key exists
-        if not self.allow_unusable and not ca.key_exists:
-            raise argparse.ArgumentError(self, f"{ca}: {ca.private_key_path}: Private key does not exist.")
 
         return ca
 

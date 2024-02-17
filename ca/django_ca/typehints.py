@@ -243,6 +243,7 @@ ExtensionMapping = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType
 
 # Type aliases for protected subclass returned by add_argument_group().
 ArgumentGroup = argparse._ArgumentGroup  # pylint: disable=protected-access
+
 # An CommandParser (subclass of argparse.ArgumentParser) or an argument group added by add_argument_group().
 ActionsContainer = Union[CommandParser, ArgumentGroup]
 

@@ -20,11 +20,13 @@ from threading import local
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.urls import reverse
 
 from django_ca import ca_settings, constants, typehints
+from django_ca.backends.base import KeyBackend
 from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, HASH_ALGORITHM_NAMES
 from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.extensions import parse_extension
@@ -41,7 +43,7 @@ from django_ca.typehints import (
     SerializedProfile,
     SerializedPydanticName,
 )
-from django_ca.utils import get_cert_builder, merge_x509_names, parse_expires, x509_name
+from django_ca.utils import merge_x509_names, parse_expires, x509_name
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -305,7 +307,9 @@ class Profile:
         ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
-        public_key = csr.public_key()
+        public_key = typing.cast(CertificateIssuerPublicKeyTypes, csr.public_key())
+        if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):
+            raise ValueError(f"{public_key}: Unsupported public key type.")
 
         # Add the SubjectKeyIdentifier extension
         cert_extensions.setdefault(
@@ -342,15 +346,16 @@ class Profile:
             password=password,
         )
 
-        builder = get_cert_builder(expires, serial=serial)
-        builder = builder.public_key(public_key)
-        builder = builder.issuer_name(ca.subject)
-        builder = builder.subject_name(subject)
-
-        for extension in extensions:
-            builder = builder.add_extension(extension.value, critical=extension.critical)
-
-        return builder.sign(private_key=ca.key(password), algorithm=algorithm)
+        backend: KeyBackend = ca.get_key_backend(password=password)
+        return backend.sign_certificate(
+            public_key=public_key,
+            serial=serial,
+            algorithm=algorithm,
+            issuer=ca.issuer,
+            subject=subject,
+            expires=expires,
+            extensions=extensions,
+        )
 
     def _get_formatting_context(self, serial: int, signer_serial: int) -> Dict[str, Union[str, int]]:
         context = get_formatting_context(serial, signer_serial)
