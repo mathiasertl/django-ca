@@ -17,12 +17,16 @@ import enum
 import typing
 from collections import defaultdict
 from types import MappingProxyType
-from typing import Type
+from typing import Tuple, Type
 
 import asn1crypto.core
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.types import (
+    CertificateIssuerPrivateKeyTypes,
+    CertificateIssuerPublicKeyTypes,
+)
 from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import (
     AuthorityInformationAccessOID,
@@ -43,6 +47,7 @@ if typing.TYPE_CHECKING:
         HashAlgorithms,
         KeyUsages,
         OtherNames,
+        ParsableKeyType,
     )
 
 ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = MappingProxyType(
@@ -52,6 +57,8 @@ ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = 
         "ca_repository": SubjectInformationAccessOID.CA_REPOSITORY,
     }
 )
+
+DEFAULT_STORAGE_BACKEND = "django_ca.backends.storages.StoragesBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
@@ -494,7 +501,7 @@ OTHER_NAME_ALIASES: "MappingProxyType[str, OtherNames]" = MappingProxyType(
 )
 
 #: Tuple of supported public key types.
-PUBLIC_KEY_TYPES = (
+PUBLIC_KEY_TYPES: Tuple[Type[CertificateIssuerPublicKeyTypes], ...] = (
     dsa.DSAPublicKey,
     ec.EllipticCurvePublicKey,
     ed25519.Ed25519PublicKey,
@@ -503,14 +510,14 @@ PUBLIC_KEY_TYPES = (
 )
 
 #: Tuple of supported private key types.
-PRIVATE_KEY_TYPES = (
+PRIVATE_KEY_TYPES: Tuple[Type[CertificateIssuerPrivateKeyTypes], ...] = (
     dsa.DSAPrivateKey,
     ec.EllipticCurvePrivateKey,
     ed25519.Ed25519PrivateKey,
     ed448.Ed448PrivateKey,
     rsa.RSAPrivateKey,
 )
-PARSABLE_KEY_TYPES = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
+PARSABLE_KEY_TYPES: Tuple["ParsableKeyType", ...] = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
 
 TLS_FEATURE_KEYS = MappingProxyType(
     {

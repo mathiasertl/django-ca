@@ -52,6 +52,32 @@ if typing.TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
 
 
+def add_elliptic_curve(parser: ActionsContainer) -> None:
+    """Add --elliptic-curve option."""
+    default = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
+    parser.add_argument(
+        "--elliptic-curve",
+        action=actions.EllipticCurveAction,
+        help=f"Elliptic Curve used for EC keys (default: {default}).",
+    )
+
+
+def add_password(parser: ActionsContainer, help_text: str = "") -> None:
+    """Add a password option."""
+    if not help_text:
+        help_text = "Password used for accessing the private key of the CA."
+    parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
+
+
+def add_key_size(parser: ActionsContainer) -> None:
+    """Add --key-size option (2048, 4096, ...)."""
+    parser.add_argument(
+        "--key-size",
+        action=actions.KeySizeAction,
+        help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
+    )
+
+
 class BinaryOutputWrapper(OutputWrapper):
     """An output wrapper that allows you to write binary data."""
 
@@ -337,23 +363,6 @@ class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
         """Add subject option."""
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
 
-    def add_elliptic_curve(self, parser: ActionsContainer) -> None:
-        """Add --elliptic-curve option."""
-        default = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
-        parser.add_argument(
-            "--elliptic-curve",
-            action=actions.EllipticCurveAction,
-            help=f"Elliptic Curve used for EC keys (default: {default}).",
-        )
-
-    def add_key_size(self, parser: ActionsContainer) -> None:
-        """Add --key-size option (2048, 4096, ...)."""
-        parser.add_argument(
-            "--key-size",
-            action=actions.KeySizeAction,
-            help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
-        )
-
     def add_key_type(
         self, parser: ActionsContainer, default: Optional[str] = "RSA", default_text: str = "%(default)s"
     ) -> None:
@@ -591,9 +600,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
             raise CommandError(
                 f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."
             )
-
-        # See if we can work with the private key
-        self.test_private_key(ca, password)
 
 
 class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class

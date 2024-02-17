@@ -14,21 +14,17 @@
 """Django model managers."""
 
 
-import pathlib
 import typing
 from typing import Any, Dict, Generic, Iterable, List, Optional, TypeVar, Union
 
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings, constants
+from django_ca.backends.base import KeyBackend
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
@@ -41,15 +37,7 @@ from django_ca.typehints import (
     ParsableKeyType,
     X509CertMixinTypeVar,
 )
-from django_ca.utils import (
-    generate_private_key,
-    get_cert_builder,
-    get_storage,
-    parse_expires,
-    validate_hostname,
-    validate_private_key_parameters,
-    validate_public_key_parameters,
-)
+from django_ca.utils import int_to_hex, parse_expires, validate_hostname, validate_public_key_parameters
 
 # https://mypy.readthedocs.io/en/latest/runtime_troubles.html
 if typing.TYPE_CHECKING:
@@ -229,19 +217,15 @@ class CertificateAuthorityManager(
     def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
+        key_backend: KeyBackend,
         subject: x509.Name,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
         parent: Optional["CertificateAuthority"] = None,
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,
-        password: Optional[Union[str, bytes]] = None,
-        parent_password: Optional[Union[str, bytes]] = None,
-        elliptic_curve: Optional[ec.EllipticCurve] = None,
         key_type: ParsableKeyType = "RSA",
-        key_size: Optional[int] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
-        path: Union[pathlib.PurePath, str] = "ca",
         caa: str = "",
         website: str = "",
         terms_of_service: str = "",
@@ -295,8 +279,6 @@ class CertificateAuthorityManager(
             different hostname. Set to ``False`` to disable the hostname.
         path_length : int, optional
             Value of the path length attribute for the Basic Constraints extension.
-        password : bytes or str, optional
-            Password to encrypt the private key with.
         parent_password : bytes or str, optional
             Password that the private key of the parent CA is encrypted with.
         elliptic_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
@@ -363,9 +345,7 @@ class CertificateAuthorityManager(
                 if isinstance(extension, x509.Extension) is False:
                     raise ValueError(f"Cannot add extension of type {type(extension).__name__}")
 
-        # NOTE: Already verified by KeySizeAction, so these checks are only for when the Python API is used
-        #       directly. generate_private_key() invokes this again, but we here to avoid sending a signal.
-        key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
+        # NOTE: Already verified by the caller, so this is only for when the Python API is used directly.
         algorithm = validate_public_key_parameters(key_type, algorithm)
 
         expires = parse_expires(expires)
@@ -460,18 +440,43 @@ class CertificateAuthorityManager(
         # itself. This has the added bonus of signal handlers being able to influence the extension order.
         extensions = list(extensions_dict.values())
 
+        # Initialize the CA model, so that we can get the backend (needed early to give the backend an
+        # opportunity to validate the private key parameters.
+        ca: CertificateAuthority = self.model(
+            name=name,
+            parent=parent,
+            serial=int_to_hex(serial),
+            caa_identity=caa,
+            website=website,
+            terms_of_service=terms_of_service,
+            acme_enabled=acme_enabled,
+            acme_registration=acme_registration,
+            acme_profile=acme_profile,
+            acme_requires_contact=acme_requires_contact,
+            sign_authority_information_access=sign_authority_information_access,
+            sign_certificate_policies=sign_certificate_policies,
+            sign_crl_distribution_points=sign_crl_distribution_points,
+            sign_issuer_alternative_name=sign_issuer_alternative_name,
+            key_backend_path=key_backend.class_path,
+        )
+
+        # Set fields with a default value
+        if ocsp_responder_key_validity is not None:
+            ca.ocsp_responder_key_validity = ocsp_responder_key_validity
+        if ocsp_response_validity is not None:
+            ca.ocsp_response_validity = ocsp_response_validity
+        if api_enabled is not None:
+            ca.api_enabled = api_enabled
+
         pre_create_ca.send(
             sender=self.model,
             name=name,
-            key_size=key_size,
             key_type=key_type,
             algorithm=algorithm,
             expires=expires,
             parent=parent,
             subject=subject,
             path_length=path_length,
-            password=password,
-            parent_password=parent_password,
             extensions=extensions,
             caa=caa,
             website=website,
@@ -489,76 +494,47 @@ class CertificateAuthorityManager(
             api_enabled=api_enabled,
         )
 
-        private_key = generate_private_key(key_size, key_type, elliptic_curve)
-        public_key = private_key.public_key()
+        # Actually generate the private key and set key_backend_options
+        key_backend.ca = ca  # used to generate the private key and sign the public key
+        public_key = key_backend.initialize()
 
-        builder = get_cert_builder(expires, serial=serial)
-        builder = builder.public_key(public_key)
-        builder = builder.subject_name(subject)
-        builder = builder.add_extension(
-            x509.BasicConstraints(ca=True, path_length=path_length), critical=True
+        # Add Basic Constraints extension
+        extensions.append(
+            x509.Extension(
+                oid=ExtensionOID.BASIC_CONSTRAINTS,
+                critical=True,
+                value=x509.BasicConstraints(ca=True, path_length=path_length),
+            )
         )
 
-        subject_key_id = x509.SubjectKeyIdentifier.from_public_key(public_key)
-        builder = builder.add_extension(subject_key_id, critical=False)
+        # Add Subject Key Identifier extension
+        extensions.append(
+            x509.Extension(
+                oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                critical=False,
+                value=x509.SubjectKeyIdentifier.from_public_key(public_key),
+            )
+        )
 
+        # Add Authority Key Identifier extension (and design on backend for signing)
         if parent is None:
-            builder = builder.issuer_name(subject)
-            private_sign_key = private_key
+            signer_backend = key_backend
             aki = x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
+            issuer = subject
         else:
-            builder = builder.issuer_name(parent.pub.loaded.subject)
-            private_sign_key = parent.key(parent_password)
             aki = parent.get_authority_key_identifier()
-        builder = builder.add_extension(aki, critical=False)
-
-        for extra_extension in extensions:
-            builder = builder.add_extension(extra_extension.value, critical=extra_extension.critical)
-
-        certificate = builder.sign(private_key=private_sign_key, algorithm=algorithm)
-
-        ca: CertificateAuthority = self.model(
-            name=name,
-            parent=parent,
-            caa_identity=caa,
-            website=website,
-            terms_of_service=terms_of_service,
-            acme_enabled=acme_enabled,
-            acme_registration=acme_registration,
-            acme_profile=acme_profile,
-            acme_requires_contact=acme_requires_contact,
-            sign_authority_information_access=sign_authority_information_access,
-            sign_certificate_policies=sign_certificate_policies,
-            sign_crl_distribution_points=sign_crl_distribution_points,
-            sign_issuer_alternative_name=sign_issuer_alternative_name,
+            signer_backend = parent.get_key_backend()
+            issuer = parent.subject
+        extensions.append(
+            x509.Extension(oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER, critical=False, value=aki)
         )
 
-        # Set fields with a default value
-        if ocsp_responder_key_validity is not None:
-            ca.ocsp_responder_key_validity = ocsp_responder_key_validity
-        if ocsp_response_validity is not None:
-            ca.ocsp_response_validity = ocsp_response_validity
-        if api_enabled is not None:
-            ca.api_enabled = api_enabled
+        # Sign the certificate
+        certificate = signer_backend.sign_certificate(
+            public_key, serial, algorithm, issuer, subject, expires, extensions=extensions
+        )
 
         ca.update_certificate(certificate)
-
-        if password is None:
-            encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
-        else:
-            if isinstance(password, str):
-                password = password.encode("utf-8")
-            encryption = serialization.BestAvailableEncryption(password)
-
-        der = private_key.private_bytes(
-            encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
-        )
-
-        # write private key to file
-        safe_serial = ca.serial.replace(":", "")
-        path = path / pathlib.PurePath(f"{safe_serial}.key")
-        storage = get_storage()
-        ca.private_key_path = storage.save(str(path), ContentFile(der))
         ca.save()
 
         post_create_ca.send(sender=self.model, ca=ca)

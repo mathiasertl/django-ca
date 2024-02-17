@@ -62,7 +62,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         help_text: str = "Certificate authority to use (default: %(default)s).",
         allow_disabled: bool = False,
         no_default: bool = False,
-        allow_unusable: bool = False,
     ) -> None:
         """Add the ``--ca`` action.
 
@@ -73,7 +72,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         help_text : str, optional
         allow_disabled : bool, optional
         no_default : bool, optional
-        allow_unusable : bool, optional
         """
         if no_default is True:
             default = None
@@ -90,7 +88,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             help=help_text,
             default=default,
             allow_disabled=allow_disabled,
-            allow_unusable=allow_unusable,
             action=actions.CertificateAuthorityAction,
         )
 
@@ -105,12 +102,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             dest="encoding",
             help=f'The format to use ("ASN1" is an alias for "DER", default: {Encoding.PEM.name}).',
         )
-
-    def add_password(self, parser: ActionsContainer, help_text: str = "") -> None:
-        """Add password option."""
-        if not help_text:
-            help_text = "Password used for accessing the private key of the CA."
-        parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
 
     def get_hash_algorithm(
         self,
@@ -142,15 +133,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         """Print all extensions for the given certificate."""
         for ext in cert.sorted_extensions:
             self.print_extension(ext)
-
-    def test_private_key(
-        self, ca: CertificateAuthority, password: Optional[bytes]
-    ) -> CertificateIssuerPrivateKeyTypes:
-        """Test that we can load the private key of a CA."""
-        try:
-            return ca.key(password)
-        except Exception as ex:
-            raise CommandError(str(ex)) from ex
 
 
 class CertCommandMixin(_Base, metaclass=abc.ABCMeta):

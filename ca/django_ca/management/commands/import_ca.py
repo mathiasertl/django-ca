@@ -31,7 +31,7 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
 from django_ca.management.actions import PasswordAction
-from django_ca.management.base import BaseCommand
+from django_ca.management.base import BaseCommand, add_password
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
 from django_ca.utils import get_storage
@@ -51,7 +51,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             help_text="Make the CA an intermediate CA of the named CA. By default, this is a new root CA.",
             no_default=True,
         )
-        self.add_password(
+        add_password(
             parser, help_text="Password used to encrypt the private key. Pass no argument to be prompted."
         )
         parser.add_argument(

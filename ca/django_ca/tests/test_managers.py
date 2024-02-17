@@ -18,6 +18,7 @@ from typing import List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase, override_settings
@@ -98,7 +99,24 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertProperties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
         self.assertIsInstance(ca.algorithm, hashes.SHA512)
-        ca.key().public_key()  # just access private key to make sure we can load it
+
+        ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
+        backend = ca.get_key_backend()
+        self.assertIsInstance(backend.key(), RSAPrivateKey)
+
+    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
+    def test_basic_with_hsm(self) -> None:
+        """Test creating the most basic possible CA."""
+        name = "basic"
+        with self.assertCreateCASignals():
+            ca = CertificateAuthority.objects.init(name, self.subject, key_backend="...", key_options={})
+        self.assertProperties(ca, name, self.subject)
+        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertIsInstance(ca.algorithm, hashes.SHA512)
+
+        ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
+        backend = ca.get_key_backend()
+        self.assertIsInstance(backend.key(), RSAPrivateKey)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_dsa_key(self) -> None:

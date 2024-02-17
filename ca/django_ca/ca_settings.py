@@ -329,12 +329,16 @@ if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
     raise ImproperlyConfigured(f"CA_DEFAULT_KEY_SIZE cannot be lower then {CA_MIN_KEY_SIZE}")
 
 
-# CA_DEFAULT_ECC_CURVE can be removed in django-ca==1.25.0
 _CA_DEFAULT_ELLIPTIC_CURVE = getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", ec.SECP256R1.name)
 try:
     CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]
 except KeyError as ex:
     raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
+
+CA_KEY_BACKENDS: Tuple[str] = tuple(
+    getattr(settings, "CA_KEY_BACKENDS", (constants.DEFAULT_STORAGE_BACKEND,))
+)
+CA_DEFAULT_STORAGE_ALIAS: str = getattr(settings, "CA_DEFAULT_STORAGE_ALIAS", "django-ca")
 
 # Old file storage settings
 # pragma: only django-ca<2.0: CA_DIR and CA_FILE_* settings can be removed in django-ca==2.0
@@ -363,6 +367,7 @@ elif not isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta):
 
 CA_FILE_STORAGE_URL = "https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later"
 
+
 # Decide if we should use Celery or not
 CA_USE_CELERY = getattr(settings, "CA_USE_CELERY", None)
 if CA_USE_CELERY is None:
@@ -377,3 +382,7 @@ elif CA_USE_CELERY is True:
         from celery import shared_task  # noqa: F401
     except ImportError as ex:
         raise ImproperlyConfigured("CA_USE_CELERY set to True, but Celery is not installed") from ex
+
+# Make sure that the default storage alias is also configured in STORAGES
+if CA_DEFAULT_STORAGE_ALIAS not in settings.STORAGES:
+    raise ImproperlyConfigured(f"{CA_DEFAULT_STORAGE_ALIAS}: Storage alias not configured.")
