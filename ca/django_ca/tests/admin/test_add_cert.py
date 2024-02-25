@@ -49,7 +49,11 @@ from django_ca.pydantic.extensions import (
 )
 from django_ca.tests.admin.assertions import assert_css
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
-from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_extensions
+from django_ca.tests.base.assertions import (
+    assert_authority_key_identifier,
+    assert_create_cert_signals,
+    assert_extensions,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.tests.base.typehints import HttpResponse
@@ -146,7 +150,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
         """Add certificate based on given name with given CA."""
-        with self.assertCreateCertSignals() as (pre, post):
+        with assert_create_cert_signals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -295,7 +299,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_empty_subject(self) -> None:
         """Test passing an empty subject with a subject alternative name."""
         ca = self.cas["root"]
-        with self.assertCreateCertSignals() as (pre, post):
+        with assert_create_cert_signals() as (pre, post):
             response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "subject": ""})
         self.assertRedirects(response, self.changelist_url)
 
@@ -311,7 +315,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_subject_with_multiple_org_units(self) -> None:
         """Test creating a certificate with multiple Org Units (which is allowed)."""
         ca = self.cas["root"]
-        with self.assertCreateCertSignals() as (pre, post):
+        with assert_create_cert_signals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -348,7 +352,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -375,7 +379,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test creating a certificate with multiple country codes (which is not allowed)."""
         ca = self.cas["root"]
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -399,7 +403,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test creating a certificate with an invalid country code."""
         ca = self.cas["root"]
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -424,7 +428,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test adding a cert with no (extended) key usage."""
         ca = self.cas["root"]
 
-        with self.assertCreateCertSignals() as (pre, post):
+        with assert_create_cert_signals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={**self.form_data(CSR, ca), "key_usage_0": []},
@@ -444,7 +448,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["pwd"]
 
         # first post without password
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
@@ -453,7 +457,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # now post with a false password
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "password": "wrong"})
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
@@ -462,7 +466,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # post with correct password!
-        with self.assertCreateCertSignals() as (pre, post):
+        with assert_create_cert_signals() as (pre, post):
             response = self.client.post(
                 self.add_url,
                 data={**self.form_data(CSR, ca), "password": CERT_DATA["pwd"]["password"].decode("utf-8")},
@@ -498,7 +502,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Test passing an unparsable CSR."""
         ca = self.cas["root"]
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(self.add_url, data=self.form_data("whatever", ca))
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(response.context["adminform"].form.is_valid())
@@ -519,7 +523,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """
         ca = self.cas["root"]
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data=self.form_data(
@@ -544,7 +548,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         expires = datetime.now() - timedelta(days=3)
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url, data={**self.form_data(CSR, ca), "expires": expires.strftime("%Y-%m-%d")}
             )
@@ -566,7 +570,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         correct_expires = ca.expires.strftime("%Y-%m-%d")
         error = f"CA expires on {correct_expires}, certificate must not expire after that."
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url, data={**self.form_data(CSR, ca), "expires": expires.strftime("%Y-%m-%d")}
             )
@@ -582,7 +586,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     def test_invalid_signature_hash_algorithm(self) -> None:
         """Test adding a certificate with an invalid signature hash algorithm."""
         # Test with Ed448 CA
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             csr = CERT_DATA["ed448-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
             response = self.client.post(
                 self.add_url,
@@ -605,7 +609,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # Test with Ed25519 CA
         csr = CERT_DATA["ed25519-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -627,7 +631,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # Test with DSA CA
         csr = CERT_DATA["dsa-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -648,7 +652,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         )
 
         # Test with RSA CA
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -674,7 +678,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         cert_count = Certificate.objects.all().count()
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -708,7 +712,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={
@@ -743,11 +747,11 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # check that we have some enabled CAs, just to make sure this test is really useful
         self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.get(self.add_url)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        with self.assertCreateCertSignals(False, False):
+        with assert_create_cert_signals(False, False):
             response = self.client.post(
                 self.add_url,
                 data={

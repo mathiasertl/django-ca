@@ -32,7 +32,7 @@ import pytest
 from django_ca import ca_settings
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
-from django_ca.signals import post_create_ca, pre_create_ca
+from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca, pre_sign_cert
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -111,8 +111,19 @@ def assert_ca_properties(
 
 @contextmanager
 def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[Tuple[Mock, Mock]]:
-    """Context manager asserting that the `pre_create_ca` and `post_create_ca` signals are (not) called."""
+    """Context manager asserting that the `pre_create_ca`/`post_create_ca` signals are (not) called."""
     with mock_signal(pre_create_ca) as pre_sig, mock_signal(post_create_ca) as post_sig:
+        try:
+            yield pre_sig, post_sig
+        finally:
+            assert pre_sig.called is pre
+            assert post_sig.called is post
+
+
+@contextmanager
+def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[Tuple[Mock, Mock]]:
+    """Context manager asserting that the `pre_create_cert`/`post_create_cert` signals are (not) called."""
+    with mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_issue_cert) as post_sig:
         try:
             yield pre_sig, post_sig
         finally:

@@ -57,7 +57,7 @@ from django_ca.tests.admin.assertions import assert_change_response, assert_chan
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import basic_constraints, certificate_policies
+from django_ca.tests.base.utils import certificate_policies
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -336,18 +336,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> None:
         """Type equality function for x509.TLSFeature."""
         self.assertEqual(set(first), set(second), msg=msg)
-
-    @contextmanager
-    def assertCreateCertSignals(  # pylint: disable=invalid-name
-        self, pre: bool = True, post: bool = True
-    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
-        """Context manager mocking both pre and post_create_ca signals."""
-        with self.mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_issue_cert) as post_sig:
-            try:
-                yield pre_sig, post_sig
-            finally:
-                self.assertTrue(pre_sig.called is pre)
-                self.assertTrue(post_sig.called is post)
 
     def assertE2ECommandError(  # pylint: disable=invalid-name
         self,

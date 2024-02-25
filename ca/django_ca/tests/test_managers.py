@@ -37,6 +37,7 @@ from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySe
 from django_ca.tests.base.assertions import (
     assert_ca_properties,
     assert_create_ca_signals,
+    assert_create_cert_signals,
     assert_extensions,
     assert_improperly_configured,
 )
@@ -436,7 +437,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_basic(self) -> None:
         """Test creating the most basic cert possible."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             cert = Certificate.objects.create_cert(self.ca, self.csr, subject=self.subject)
         self.assertEqual(cert.subject, self.subject)
         assert_extensions(cert, [])
@@ -444,7 +445,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
     def test_explicit_profile(self) -> None:
         """Test creating a cert with a profile."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             cert = Certificate.objects.create_cert(
                 self.ca, self.csr, subject=self.subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
             )
@@ -455,7 +456,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
     def test_cryptography_extensions(self) -> None:
         """Test passing readable extensions."""
         expected_key_usage = key_usage(key_cert_sign=True, key_encipherment=True)
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             cert = Certificate.objects.create_cert(
                 self.ca, self.csr, subject=self.subject, extensions=[expected_key_usage]
             )
@@ -474,7 +475,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")])
 
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with self.assertRaisesRegex(ValueError, msg), self.assertCreateCertSignals(False, False):
+        with self.assertRaisesRegex(ValueError, msg), assert_create_cert_signals(False, False):
             Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
 
     @override_tmpcadir()
@@ -482,7 +483,7 @@ class CreateCertTestCase(TestCaseMixin, TestCase):
         """Test passing a profile with an unsupported type."""
         common_name = "csr-profile-bad-type.example.com"
         msg = r"^profile must be of type django_ca\.profiles\.Profile\.$"
-        with self.assertCreateCertSignals(False, False), self.assertRaisesRegex(TypeError, msg):
+        with assert_create_cert_signals(False, False), self.assertRaisesRegex(TypeError, msg):
             Certificate.objects.create_cert(
                 self.ca,
                 csr=CERT_DATA["root-cert"]["csr"]["parsed"],
