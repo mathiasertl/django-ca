@@ -24,6 +24,7 @@ from freezegun import freeze_time
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import cmd
 
 EXPECTED = """{dsa[serial_colons]} - {dsa[name]}{dsa_state}
 {ec[serial_colons]} - {ec[name]}{ec_state}
@@ -54,7 +55,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         for name in [k for k, v in CERT_DATA.items() if v.get("type") == "ca" and k not in self.cas]:
             self.load_ca(name)
 
-        stdout, stderr = self.cmd("list_cas")
+        stdout, stderr = cmd("list_cas")
         self.assertEqual(
             stdout,
             f"""{CERT_DATA['letsencrypt_x1']['serial_colons']} - {CERT_DATA['letsencrypt_x1']['name']}
@@ -94,13 +95,13 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
     def test_no_cas(self) -> None:
         """Test the command if no CAs are defined."""
         CertificateAuthority.objects.all().delete()
-        stdout, stderr = self.cmd("list_cas")
+        stdout, stderr = cmd("list_cas")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
     def test_basic(self) -> None:
         """Basic test of the command."""
-        stdout, stderr = self.cmd("list_cas")
+        stdout, stderr = cmd("list_cas")
         self.assertOutput(stdout, EXPECTED)
         self.assertEqual(stderr, "")
 
@@ -109,7 +110,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         self.ca.enabled = False
         self.ca.save()
 
-        stdout, stderr = self.cmd("list_cas")
+        stdout, stderr = cmd("list_cas")
         self.assertOutput(stdout, EXPECTED, child_state=" (disabled)")
         self.assertEqual(stderr, "")
 
@@ -119,7 +120,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 
         NOTE: freeze_time b/c we create some fake CA objects and order in the tree depends on validity.
         """
-        stdout, stderr = self.cmd("list_cas", tree=True)
+        stdout, stderr = cmd("list_cas", tree=True)
         self.assertEqual(
             stdout,
             f"""{CERT_DATA['dsa']['serial_colons']} - {CERT_DATA['dsa']['name']}
@@ -148,7 +149,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             name="child3.1", serial="child3.1", parent=child3, expires=expires, valid_from=valid_from, pub=pub
         )
 
-        stdout, stderr = self.cmd("list_cas", tree=True)
+        stdout, stderr = cmd("list_cas", tree=True)
         self.assertEqual(
             stdout,
             f"""{CERT_DATA['dsa']['serial_colons']} - {CERT_DATA['dsa']['name']}

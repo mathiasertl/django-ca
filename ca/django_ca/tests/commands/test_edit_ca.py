@@ -21,6 +21,8 @@ from django_ca.models import CertificateAuthority
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
+    cmd,
+    cmd_e2e,
     crl_distribution_points,
     distribution_point,
     issuer_alternative_name,
@@ -43,7 +45,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
 
     def edit_ca(self, *args: str) -> None:
         """Shortcut for calling the edit_ca management command."""
-        stdout, stderr = self.cmd_e2e(["edit_ca", self.ca.serial, *args])
+        stdout, stderr = cmd_e2e(["edit_ca", self.ca.serial, *args])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.ca.refresh_from_db()
@@ -51,7 +53,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test command with e2e cli argument parsing."""
-        stdout, stderr = self.cmd_e2e(
+        stdout, stderr = cmd_e2e(
             ["edit_ca", self.ca.serial, f"--caa={self.caa}", f"--website={self.website}", f"--tos={self.tos}"]
         )
         self.assertEqual(stdout, "")
@@ -65,7 +67,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_signing_extensions(self) -> None:
         """Test editing extensions used for signing certificates."""
-        stdout, stderr = self.cmd_e2e(
+        stdout, stderr = cmd_e2e(
             [
                 "edit_ca",
                 self.ca.serial,
@@ -211,7 +213,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
 
         with self.assertCommandError(r"^unknown-profile: Profile is not defined\.$"):
-            self.cmd("edit_ca", self.ca.serial, acme_profile="unknown-profile")
+            cmd("edit_ca", self.ca.serial, acme_profile="unknown-profile")
 
         self.ca.refresh_from_db()
         self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
@@ -239,7 +241,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
         ca.save()
 
         # we can also change nothing at all
-        stdout, stderr = self.cmd("edit_ca", self.ca.serial, enabled=True)
+        stdout, stderr = cmd("edit_ca", self.ca.serial, enabled=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
@@ -251,7 +253,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
         self.assertTrue(ca.enabled)
 
         # disable it again
-        stdout, stderr = self.cmd("edit_ca", self.ca.serial, enabled=False)
+        stdout, stderr = cmd("edit_ca", self.ca.serial, enabled=False)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         ca = CertificateAuthority.objects.get(serial=self.ca.serial)

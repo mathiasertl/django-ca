@@ -26,7 +26,7 @@ from freezegun import freeze_time
 from django_ca.models import Watcher
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, override_tmpcadir
 
 expected = {
     "root-cert": """* Subject:
@@ -613,7 +613,7 @@ class ViewCertTestCase(TestCaseMixin, TestCase):
         """Test basic properties of output."""
         # pylint: disable=consider-using-f-string
         for key, cert in self.ca_certs:
-            stdout, stderr = self.cmd("view_cert", cert.serial, wrap=False)
+            stdout, stderr = cmd("view_cert", cert.serial, wrap=False)
             san = typing.cast(
                 Optional[x509.Extension[x509.SubjectAlternativeName]],
                 cert.extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
@@ -680,7 +680,7 @@ Digest:
 
         # test with no pem and no extensions
         for key, cert in self.ca_certs:
-            stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
+            stdout, stderr = cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
             self.assertEqual(
                 stdout,
                 """* Subject:
@@ -719,7 +719,7 @@ Digest:
     def test_certs(self) -> None:
         """Test main certs."""
         for name, cert in self.usable_certs:
-            stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=True, wrap=False)
+            stdout, stderr = cmd("view_cert", cert.serial, pem=False, extensions=True, wrap=False)
             self.assertEqual(stderr, "")
 
             context = self.get_cert_context(name)
@@ -730,7 +730,7 @@ Digest:
         # pylint: disable=consider-using-f-string
         self.cert.revoked = True
         self.cert.save()
-        stdout, stderr = self.cmd("view_cert", self.cert.serial, pem=False, wrap=False, extensions=False)
+        stdout, stderr = cmd("view_cert", self.cert.serial, pem=False, wrap=False, extensions=False)
         self.assertEqual(
             stdout,
             """* Subject:
@@ -763,7 +763,7 @@ Digest:
         watcher = Watcher.from_addr("user@example.com")
         cert.watchers.add(watcher)
 
-        stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
+        stdout, stderr = cmd("view_cert", cert.serial, pem=False, extensions=False, wrap=False)
         self.assertEqual(
             stdout,
             # pylint: disable-next=consider-using-f-string
@@ -788,7 +788,7 @@ Digest:
     def assertContrib(self, name: str, exp: str, **context: str) -> None:  # pylint: disable=invalid-name
         """Assert basic contrib output."""
         cert = self.certs[name]
-        stdout, stderr = self.cmd("view_cert", cert.serial, pem=False, extensions=True, wrap=False)
+        stdout, stderr = cmd("view_cert", cert.serial, pem=False, extensions=True, wrap=False)
         context.update(self.get_cert_context(name))
         self.assertEqual(stderr, "")
         self.assertEqual(stdout, exp.format(**context))
@@ -1006,4 +1006,4 @@ Digest:
         """Test viewing an unknown certificate."""
         name = "foobar"
         with self.assertCommandError(rf"^Error: argument cert: {name}: Certificate not found\.$"):
-            self.cmd("view_cert", name)
+            cmd("view_cert", name)

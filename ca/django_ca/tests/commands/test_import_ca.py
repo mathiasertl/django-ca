@@ -32,6 +32,8 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
+    cmd,
+    cmd_e2e,
     crl_distribution_points,
     distribution_point,
     issuer_alternative_name,
@@ -49,7 +51,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         key_path = str(CERT_DATA["root"]["key_path"])
         pem_path = str(CERT_DATA["root"]["pub_path"])
 
-        out, err = self.cmd_e2e(["import_ca", self.hostname, *args, key_path, pem_path])
+        out, err = cmd_e2e(["import_ca", self.hostname, *args, key_path, pem_path])
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
@@ -69,7 +71,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         for name, data in cas.items():
             key_path = CERT_DATA[name]["key_path"]
             pem_path = CERT_DATA[name]["pub_path"]
-            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
+            out, err = cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
             self.assertEqual(out, "")
             self.assertEqual(err, "")
@@ -127,7 +129,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         for name, data in cas.items():
             key_path = data["key_der_path"]
             pem_path = data["pub_der_path"]
-            out, err = self.cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
+            out, err = cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
             self.assertEqual(out, "")
             self.assertEqual(err, "")
@@ -174,7 +176,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         password = b"testpassword"
         key_path = CERT_DATA["root"]["key_path"]
         pem_path = CERT_DATA["root"]["pub_path"]
-        out, err = self.cmd("import_ca", name, key_path, pem_path, password=password)
+        out, err = cmd("import_ca", name, key_path, pem_path, password=password)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -279,7 +281,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             serial = CERT_DATA["root"]["serial"].replace(":", "")
             error = rf"^{serial}\.key: Permission denied: Could not open file for writing$"
             with self.assertCommandError(error):
-                self.cmd("import_ca", name, key_path, pem_path)
+                cmd("import_ca", name, key_path, pem_path)
         finally:
             # otherwise we might not be able to remove temporary CA_DIR
             os.chmod(settings.CA_DIR, 0o755)
@@ -293,7 +295,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             ca_dir = os.path.join(tempdir, "foo", "bar")
             with mock_cadir(ca_dir):
-                self.cmd("import_ca", name, key_path, pem_path)
+                cmd("import_ca", name, key_path, pem_path)
 
     def test_create_cadir_permission_denied(self) -> None:
         """Test importing a CA when the directory does not yet exist and we cannot create it."""
@@ -306,7 +308,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             ca_dir = os.path.join(tempdir, "foo", "bar")
             msg = rf"^{ca_dir}: Could not create CA_DIR: Permission denied.$"
             with mock_cadir(ca_dir), self.assertCommandError(msg):
-                self.cmd("import_ca", name, key_path, pem_path)
+                cmd("import_ca", name, key_path, pem_path)
 
     @override_tmpcadir()
     def test_bogus_pub(self) -> None:
@@ -314,7 +316,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         name = "testname"
         key_path = CERT_DATA["root"]["key_path"]
         with self.assertCommandError(r"^Unable to load public key\.$"):
-            self.cmd("import_ca", name, key_path, Path(__file__).resolve())
+            cmd("import_ca", name, key_path, Path(__file__).resolve())
         self.assertEqual(CertificateAuthority.objects.count(), 0)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -323,5 +325,5 @@ class ImportCATest(TestCaseMixin, TestCase):
         name = "testname"
         pem_path = CERT_DATA["root"]["pub_path"]
         with self.assertCommandError(r"^Unable to load private key\.$"):
-            self.cmd("import_ca", name, Path(__file__).resolve(), pem_path)
+            cmd("import_ca", name, Path(__file__).resolve(), pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)

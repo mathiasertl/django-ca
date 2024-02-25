@@ -24,6 +24,7 @@ from django_ca.models import Certificate
 from django_ca.signals import post_revoke_cert, pre_revoke_cert
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.mocks import mock_signal
+from django_ca.tests.base.utils import cmd, cmd_e2e
 
 
 class RevokeCertTestCase(TestCaseMixin, TestCase):
@@ -43,7 +44,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
             arguments = []
 
         with mock_signal(pre_revoke_cert) as pre, mock_signal(post_revoke_cert) as post:
-            stdout, stderr = self.cmd_e2e(["revoke_cert", cert.serial, *arguments])
+            stdout, stderr = cmd_e2e(["revoke_cert", cert.serial, *arguments])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
@@ -90,7 +91,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         self.assertFalse(self.cert.revoked)
 
         with mock_signal(pre_revoke_cert) as pre, mock_signal(post_revoke_cert) as post:
-            self.cmd("revoke_cert", self.cert.serial)
+            cmd("revoke_cert", self.cert.serial)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
         self.assertEqual(pre.call_count, 1)
@@ -100,7 +101,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         with self.assertCommandError(rf"^{self.cert.serial}: Certificate is already revoked\.$"), mock_signal(
             pre_revoke_cert
         ) as pre, mock_signal(post_revoke_cert) as post:
-            self.cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
+            cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
 
@@ -113,7 +114,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         """Test passing a naive datetime (which is an error)."""
         now = datetime.now()
         with self.assertCommandError(rf"{now.isoformat()}: Timestamp requires a timezone\."):
-            self.cmd("revoke_cert", self.cert.serial, compromised=now)
+            cmd("revoke_cert", self.cert.serial, compromised=now)
         self.assertNotRevoked(self.cert)
 
     def test_compromised_with_future_datetime(self) -> None:
@@ -121,5 +122,5 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         now = datetime.now(tz=tz.utc).replace(microsecond=0) + timedelta(days=1)
         iso_format = re.escape(now.isoformat())  # tz-aware iso 8601 timestamp has regex special characters
         with self.assertCommandError(rf"{iso_format}: Timestamp must be in the past\."):
-            self.cmd("revoke_cert", self.cert.serial, compromised=now)
+            cmd("revoke_cert", self.cert.serial, compromised=now)
         self.assertNotRevoked(self.cert)

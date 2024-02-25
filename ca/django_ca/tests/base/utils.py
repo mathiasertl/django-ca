@@ -23,6 +23,7 @@ import tempfile
 import typing
 from contextlib import contextmanager
 from datetime import datetime
+from io import BytesIO, StringIO
 from typing import Any, Dict, Iterable, Iterator, Optional, Tuple, Union
 from unittest import mock
 from unittest.mock import patch
@@ -31,6 +32,7 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.conf import settings
+from django.core.management import ManagementUtility, call_command
 from django.test import override_settings
 from django.utils.crypto import get_random_string
 
@@ -85,6 +87,140 @@ def certificate_policies(
     return x509.Extension(
         oid=ExtensionOID.CERTIFICATE_POLICIES, critical=critical, value=x509.CertificatePolicies(policies)
     )
+
+
+@typing.overload
+def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]:
+    ...
+
+
+@typing.overload
+def cmd(*args: Any, stdout: BytesIO, stderr: Optional[StringIO] = None, **kwargs: Any) -> Tuple[bytes, str]:
+    ...
+
+
+@typing.overload
+def cmd(*args: Any, stdout: Optional[StringIO] = None, stderr: BytesIO, **kwargs: Any) -> Tuple[str, bytes]:
+    ...
+
+
+@typing.overload
+def cmd(
+    *args: Any, stdout: Optional[StringIO] = None, stderr: Optional[StringIO] = None, **kwargs: Any
+) -> Tuple[str, str]:
+    ...
+
+
+def cmd(
+    *args: Any,
+    stdout: Optional[Union[StringIO, BytesIO]] = None,
+    stderr: Optional[Union[StringIO, BytesIO]] = None,
+    **kwargs: Any,
+) -> Tuple[Union[str, bytes], Union[str, bytes]]:
+    """Call to a manage.py command using call_command."""
+    if stdout is None:
+        stdout = StringIO()
+    if stderr is None:
+        stderr = StringIO()
+    stdin = kwargs.pop("stdin", StringIO())
+
+    if isinstance(stdin, StringIO):
+        with mock.patch("sys.stdin", stdin):
+            call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
+    else:
+        # mock https://docs.python.org/3/library/io.html#io.BufferedReader.read
+        def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
+            return stdin
+
+        with mock.patch("sys.stdin.buffer.read", side_effect=_read_mock):
+            call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
+
+    return stdout.getvalue(), stderr.getvalue()
+
+
+@typing.overload
+def cmd_e2e(
+    cmd: typing.Sequence[str],
+    *,
+    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdout: Optional[StringIO] = None,
+    stderr: Optional[StringIO] = None,
+) -> Tuple[str, str]:
+    ...
+
+
+@typing.overload
+def cmd_e2e(
+    cmd: typing.Sequence[str],
+    *,
+    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdout: BytesIO,
+    stderr: Optional[StringIO] = None,
+) -> Tuple[bytes, str]:
+    ...
+
+
+@typing.overload
+def cmd_e2e(
+    cmd: typing.Sequence[str],
+    *,
+    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdout: Optional[StringIO] = None,
+    stderr: BytesIO,
+) -> Tuple[str, bytes]:
+    ...
+
+
+@typing.overload
+def cmd_e2e(
+    cmd: typing.Sequence[str],
+    *,
+    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdout: BytesIO,
+    stderr: BytesIO,
+) -> Tuple[bytes, bytes]:
+    ...
+
+
+def cmd_e2e(
+    cmd: typing.Sequence[str],
+    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdout: Optional[Union[BytesIO, StringIO]] = None,
+    stderr: Optional[Union[BytesIO, StringIO]] = None,
+) -> Tuple[Union[str, bytes], Union[str, bytes]]:
+    """Call a management command the way manage.py does.
+
+    Unlike call_command, this method also tests the argparse configuration of the called command.
+    """
+    stdout = stdout or StringIO()
+    stderr = stderr or StringIO()
+    if stdin is None:
+        stdin = StringIO()
+
+    if isinstance(stdin, StringIO):
+        stdin_mock = mock.patch("sys.stdin", stdin)
+    else:
+
+        def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
+            return stdin
+
+        # TYPE NOTE: mypy detects a different type, but important thing is it's a context manager
+        stdin_mock = mock.patch(  # type: ignore[assignment]
+            "sys.stdin.buffer.read", side_effect=_read_mock
+        )
+
+    # BinaryCommand commands (such as dump_crl) write to sys.stdout.buffer, but BytesIO does not have a
+    # buffer attribute, so we manually add the attribute.
+    if isinstance(stdout, BytesIO):
+        stdout.buffer = stdout  # type: ignore[attr-defined]
+    if isinstance(stderr, BytesIO):
+        stderr.buffer = stderr  # type: ignore[attr-defined]
+
+    with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
+        util = ManagementUtility(["manage.py", *cmd])
+        util.execute()
+
+    return stdout.getvalue(), stderr.getvalue()
 
 
 def crl_distribution_points(

@@ -39,7 +39,6 @@ from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.storage import storages
-from django.core.management import ManagementUtility, call_command
 from django.core.management.base import CommandError
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
@@ -57,7 +56,7 @@ from django_ca.tests.admin.assertions import assert_change_response, assert_chan
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import certificate_policies
+from django_ca.tests.base.utils import certificate_policies, cmd_e2e
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -369,7 +368,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             actual_stderr = io.BytesIO()  # type: ignore[assignment]
 
         with self.assertSystemExit(code):
-            self.cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
+            cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
 
         if isinstance(stdout, (str, bytes)):
             self.assertEqual(stdout, actual_stdout.getvalue())
@@ -503,152 +502,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 "ed25519-cert",
             ]:
                 yield name, cert
-
-    @typing.overload
-    def cmd(self, *args: Any, stdout: io.BytesIO, stderr: io.BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]:
-        ...
-
-    @typing.overload
-    def cmd(
-        self,
-        *args: Any,
-        stdout: io.BytesIO,
-        stderr: Optional[io.StringIO] = None,
-        **kwargs: Any,
-    ) -> Tuple[bytes, str]:
-        ...
-
-    @typing.overload
-    def cmd(
-        self,
-        *args: Any,
-        stdout: Optional[io.StringIO] = None,
-        stderr: io.BytesIO,
-        **kwargs: Any,
-    ) -> Tuple[str, bytes]:
-        ...
-
-    @typing.overload
-    def cmd(
-        self,
-        *args: Any,
-        stdout: Optional[io.StringIO] = None,
-        stderr: Optional[io.StringIO] = None,
-        **kwargs: Any,
-    ) -> Tuple[str, str]:
-        ...
-
-    def cmd(
-        self,
-        *args: Any,
-        stdout: Optional[Union[io.StringIO, io.BytesIO]] = None,
-        stderr: Optional[Union[io.StringIO, io.BytesIO]] = None,
-        **kwargs: Any,
-    ) -> Tuple[Union[str, bytes], Union[str, bytes]]:
-        """Call to a manage.py command using call_command."""
-        if stdout is None:
-            stdout = io.StringIO()
-        if stderr is None:
-            stderr = io.StringIO()
-        stdin = kwargs.pop("stdin", io.StringIO())
-
-        if isinstance(stdin, io.StringIO):
-            with mock.patch("sys.stdin", stdin):
-                call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
-        else:
-            # mock https://docs.python.org/3/library/io.html#io.BufferedReader.read
-            def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
-                return stdin
-
-            with mock.patch("sys.stdin.buffer.read", side_effect=_read_mock):
-                call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
-
-        return stdout.getvalue(), stderr.getvalue()
-
-    @typing.overload
-    def cmd_e2e(
-        self,
-        cmd: typing.Sequence[str],
-        *,
-        stdin: Optional[Union[io.StringIO, bytes]] = None,
-        stdout: Optional[io.StringIO] = None,
-        stderr: Optional[io.StringIO] = None,
-    ) -> Tuple[str, str]:
-        ...
-
-    @typing.overload
-    def cmd_e2e(
-        self,
-        cmd: typing.Sequence[str],
-        *,
-        stdin: Optional[Union[io.StringIO, bytes]] = None,
-        stdout: io.BytesIO,
-        stderr: Optional[io.StringIO] = None,
-    ) -> Tuple[bytes, str]:
-        ...
-
-    @typing.overload
-    def cmd_e2e(
-        self,
-        cmd: typing.Sequence[str],
-        *,
-        stdin: Optional[Union[io.StringIO, bytes]] = None,
-        stdout: Optional[io.StringIO] = None,
-        stderr: io.BytesIO,
-    ) -> Tuple[str, bytes]:
-        ...
-
-    @typing.overload
-    def cmd_e2e(
-        self,
-        cmd: typing.Sequence[str],
-        *,
-        stdin: Optional[Union[io.StringIO, bytes]] = None,
-        stdout: io.BytesIO,
-        stderr: io.BytesIO,
-    ) -> Tuple[bytes, bytes]:
-        ...
-
-    def cmd_e2e(
-        self,
-        cmd: typing.Sequence[str],
-        stdin: Optional[Union[io.StringIO, bytes]] = None,
-        stdout: Optional[Union[io.BytesIO, io.StringIO]] = None,
-        stderr: Optional[Union[io.BytesIO, io.StringIO]] = None,
-    ) -> Tuple[Union[str, bytes], Union[str, bytes]]:
-        """Call a management command the way manage.py does.
-
-        Unlike call_command, this method also tests the argparse configuration of the called command.
-        """
-        stdout = stdout or io.StringIO()
-        stderr = stderr or io.StringIO()
-        if stdin is None:
-            stdin = io.StringIO()
-
-        if isinstance(stdin, io.StringIO):
-            stdin_mock = mock.patch("sys.stdin", stdin)
-        else:
-
-            def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
-                return stdin
-
-            # TYPE NOTE: mypy detects a different type, but important thing is it's a context manager
-            stdin_mock = mock.patch(  # type: ignore[assignment]
-                "sys.stdin.buffer.read", side_effect=_read_mock
-            )
-
-        # BinaryCommand commands (such as dump_crl) write to sys.stdout.buffer, but BytesIO does not have a
-        # buffer attribute, so we manually add the attribute.
-        if isinstance(stdout, io.BytesIO):
-            stdout.buffer = stdout  # type: ignore[attr-defined]
-        if isinstance(stderr, io.BytesIO):
-            stderr.buffer = stderr  # type: ignore[attr-defined]
-
-        with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
-            util = ManagementUtility(["manage.py", *cmd])
-            util.execute()
-
-        return stdout.getvalue(), stderr.getvalue()
 
     def certificate_policies(
         self, *policies: x509.PolicyInformation, critical: bool = False

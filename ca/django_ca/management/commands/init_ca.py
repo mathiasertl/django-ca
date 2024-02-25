@@ -526,8 +526,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         try:
             ca = CertificateAuthority.objects.init(
+                backend=key_backend,
                 name=name,
-                key_backend=key_backend,
                 subject=parsed_subject,
                 expires=expires_datetime,
                 algorithm=algorithm,
