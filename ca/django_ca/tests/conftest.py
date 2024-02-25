@@ -143,17 +143,6 @@ def hostname(request: "SubRequest", ca_name: str) -> Iterator[str]:
 
 
 @pytest.fixture()
-def name(hostname: str) -> Iterator[x509.Name]:
-    """Fixture for a :py:class:`~cg:cryptography.x509.Name`.
-
-    The subjects common name is based on :py:func:`~django_ca.tests.conftest.hostname`.
-    """
-    yield x509.Name(
-        [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, hostname)]
-    )
-
-
-@pytest.fixture()
 def storages_backend(tmpcadir: SettingsWrapper) -> StoragesBackend:
     """Return a :py:class:`~django_ca.backends.storages.StoragesBackend` suitable for creating a new CA."""
     yield StoragesBackend(

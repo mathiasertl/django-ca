@@ -670,10 +670,10 @@ def test_eq_default_proxy() -> None:
     assert profile != ["not-equal"]  # we are not equal to arbitrary stuff
 
 
-def test_init_django_ca_values(name: x509.Name) -> None:
+def test_init_django_ca_values(subject: x509.Name) -> None:
     """Test passing serialized extensions leads to equal profiles."""
-    prof1 = Profile("test", subject=name, extensions={"ocsp_no_check": {}})
-    prof2 = Profile("test", subject=name, extensions={"ocsp_no_check": ocsp_no_check()})
+    prof1 = Profile("test", subject=subject, extensions={"ocsp_no_check": {}})
+    prof2 = Profile("test", subject=subject, extensions={"ocsp_no_check": ocsp_no_check()})
     assert prof1 == prof2
 
 
@@ -695,10 +695,10 @@ def test_init_no_subject() -> None:
     assert prof.subject == x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
 
 
-def test_init_x509_subject(name: x509.Name) -> None:
+def test_init_x509_subject(subject: x509.Name) -> None:
     """Test passing a cryptography subject."""
-    prof = Profile("test", subject=name)
-    assert prof.subject == name
+    prof = Profile("test", subject=subject)
+    assert prof.subject == subject
 
 
 def test_init_expires() -> None:
