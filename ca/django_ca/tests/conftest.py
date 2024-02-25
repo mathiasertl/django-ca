@@ -164,6 +164,10 @@ def subject(hostname: str) -> Iterator[x509.Name]:
     yield x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Django CA"),
+            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Django CA Testsuite"),
             x509.NameAttribute(NameOID.COMMON_NAME, f"subject.{hostname}"),
         ]
     )

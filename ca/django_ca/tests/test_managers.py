@@ -21,11 +21,10 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.x509.oid import ExtensionOID, NameOID
 
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from django.urls import reverse
 
 import pytest
-from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
@@ -42,7 +41,6 @@ from django_ca.tests.base.assertions import (
     assert_improperly_configured,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
@@ -53,7 +51,6 @@ from django_ca.tests.base.utils import (
     key_usage,
     name_constraints,
     ocsp_no_check,
-    override_tmpcadir,
     precert_poison,
     rdn,
     tls_feature,
@@ -361,7 +358,7 @@ def test_init_with_unknown_extension_type(subject: x509.Name, storages_backend: 
     assert CertificateAuthority.objects.count() == 0
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_default(root: CertificateAuthority, child: CertificateAuthority, settings: SettingsWrapper) -> None:
     """Test the correct CA is returned if CA_DEFAULT_CA is set."""
     settings.CA_DEFAULT_CA = CERT_DATA["child"]["serial"]
@@ -381,7 +378,7 @@ def test_default_with_disabled(root: CertificateAuthority, settings: SettingsWra
         CertificateAuthority.objects.default()
 
 
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 @pytest.mark.usefixtures("child")
 def test_default_with_expired(root: CertificateAuthority, settings: SettingsWrapper) -> None:
     """Test that an exception is raised if CA is expired."""
@@ -390,7 +387,7 @@ def test_default_with_expired(root: CertificateAuthority, settings: SettingsWrap
         CertificateAuthority.objects.default()
 
 
-@freeze_time(TIMESTAMPS["before_everything"])
+@pytest.mark.freeze_time(TIMESTAMPS["before_everything"])
 @pytest.mark.usefixtures("child")
 def test_default_with_not_yet_valid(root: CertificateAuthority, settings: SettingsWrapper) -> None:
     """Test that an exception is raised if CA is not yet valid."""
@@ -410,7 +407,7 @@ def test_default_with_no_default_ca() -> None:
     assert CertificateAuthority.objects.default() == ca
 
 
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 @pytest.mark.usefixtures("root")
 @pytest.mark.usefixtures("child")
 def test_default_with_expired_cas() -> None:
@@ -427,73 +424,57 @@ def test_default_with_unknown_ca_configured(settings: SettingsWrapper) -> None:
         CertificateAuthority.objects.default()
 
 
-@override_settings(CA_DEFAULT_SUBJECT=tuple())
-class CreateCertTestCase(TestCaseMixin, TestCase):
-    """Test :py:class:`django_ca.managers.CertificateManager.create_cert` (create a new cert)."""
-
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_create_cert(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test creating the most basic cert possible."""
     csr = CERT_DATA["root-cert"]["csr"]["parsed"]
-    load_cas = ("root",)
+    profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
+    with assert_create_cert_signals():
+        cert = Certificate.objects.create_cert(usable_root, csr, subject=subject)
+    assert cert.subject == subject
+    assert_extensions(cert, list(profile.extensions.values()))
 
-    @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
-    def test_basic(self) -> None:
-        """Test creating the most basic cert possible."""
-        with assert_create_cert_signals():
-            cert = Certificate.objects.create_cert(self.ca, self.csr, subject=self.subject)
-        self.assertEqual(cert.subject, self.subject)
-        assert_extensions(cert, [])
 
-    @override_tmpcadir(CA_PROFILES={ca_settings.CA_DEFAULT_PROFILE: {"extensions": {}}})
-    def test_explicit_profile(self) -> None:
-        """Test creating a cert with a profile."""
-        with assert_create_cert_signals():
-            cert = Certificate.objects.create_cert(
-                self.ca, self.csr, subject=self.subject, profile=profiles[ca_settings.CA_DEFAULT_PROFILE]
-            )
-        self.assertEqual(cert.subject, self.subject)
-        assert_extensions(cert, [])
-
-    @override_tmpcadir()
-    def test_cryptography_extensions(self) -> None:
-        """Test passing readable extensions."""
-        expected_key_usage = key_usage(key_cert_sign=True, key_encipherment=True)
-        with assert_create_cert_signals():
-            cert = Certificate.objects.create_cert(
-                self.ca, self.csr, subject=self.subject, extensions=[expected_key_usage]
-            )
-        self.assertEqual(cert.subject, self.subject)
-        assert_extensions(
-            cert,
-            [
-                expected_key_usage,
-                extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH),
-            ],
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_create_cert_cryptography_extensions(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test passing readable extensions."""
+    csr = CERT_DATA["root-cert"]["csr"]["parsed"]
+    expected_key_usage = key_usage(key_cert_sign=True, key_encipherment=True)
+    with assert_create_cert_signals():
+        cert = Certificate.objects.create_cert(
+            usable_root, csr, subject=subject, extensions=[expected_key_usage]
         )
+    assert cert.subject == subject
+    assert_extensions(cert, [expected_key_usage, extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)])
 
-    @override_tmpcadir()
-    def test_no_cn_or_san(self) -> None:
-        """Test that creating a cert with no CommonName or SubjectAlternativeName is an error."""
-        subject = x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")])
 
-        msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with self.assertRaisesRegex(ValueError, msg), assert_create_cert_signals(False, False):
-            Certificate.objects.create_cert(self.ca, self.csr, subject=subject)
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_create_cert_no_cn_or_san(root: CertificateAuthority) -> None:
+    """Test that creating a cert with no CommonName or SubjectAlternativeName is an error."""
+    csr = CERT_DATA["root-cert"]["csr"]["parsed"]
+    subject = x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")])
 
-    @override_tmpcadir()
-    def test_profile_unsupported_type(self) -> None:
-        """Test passing a profile with an unsupported type."""
-        common_name = "csr-profile-bad-type.example.com"
-        msg = r"^profile must be of type django_ca\.profiles\.Profile\.$"
-        with assert_create_cert_signals(False, False), self.assertRaisesRegex(TypeError, msg):
-            Certificate.objects.create_cert(
-                self.ca,
-                csr=CERT_DATA["root-cert"]["csr"]["parsed"],
-                profile=False,  # type: ignore[arg-type] # what we're testing
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-            )
-        self.assertFalse(Certificate.objects.filter(cn=common_name).exists())
+    msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
+    with pytest.raises(ValueError, match=msg), assert_create_cert_signals(False, False):
+        Certificate.objects.create_cert(root, csr, subject=subject)
+    assert Certificate.objects.exists() is False
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_create_cert_with_wrong_profile_type(root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test passing a profile with an unsupported type."""
+    msg = r"^profile must be of type django_ca\.profiles\.Profile\.$"
+    with assert_create_cert_signals(False, False), pytest.raises(TypeError, match=msg):
+        Certificate.objects.create_cert(
+            root,
+            csr=CERT_DATA["root-cert"]["csr"]["parsed"],
+            profile=False,  # type: ignore[arg-type] # what we're testing
+            subject=subject,
+            add_crl_url=False,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+        )
+    assert Certificate.objects.exists() is False
 
 
 @unittest.skip("Only for type checkers.")
