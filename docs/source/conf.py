@@ -507,6 +507,8 @@ nitpick_ignore = [
     ("py:class", "django.core.management.base.CommandParser"),
     # asn1crypto is really used only for OtherNames, so we do not link it
     ("py:class", "asn1crypto.core.Primitive"),
+    # pytest is not linked, since it's obviously only in the test suite:
+    ("py:class", "_pytest.fixtures.SubRequest"),
     # Pydantic root model signature does not currently work
     ("py:class", "RootModelRootType"),
 ]

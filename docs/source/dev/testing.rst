@@ -46,6 +46,15 @@ are deprecated.
 pytest
 ******
 
+Fixtures
+========
+
+.. autofunction:: django_ca.tests.conftest.hostname
+
+.. autofunction:: django_ca.tests.conftest.name
+
+.. autofunction:: django_ca.tests.conftest.subject
+
 Mocks
 =====
 

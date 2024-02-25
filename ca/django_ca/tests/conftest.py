@@ -17,6 +17,8 @@
 import copy
 import importlib.metadata
 import os
+import secrets
+import string
 import sys
 from pathlib import Path
 from typing import Any, Iterator, List, Type
@@ -28,6 +30,7 @@ from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.core.files.storage import storages
 from django.test import Client
+from django.utils.crypto import get_random_string
 
 import pytest
 from _pytest.config import Config as PytestConfig
@@ -124,18 +127,36 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
 
 @pytest.fixture()
-def hostname() -> Iterator[str]:
-    """Fixture yielding a reusable hostname."""
-    yield "example.com"
+def hostname(request: "SubRequest") -> Iterator[str]:
+    """Fixture for a hostname.
+
+    The value is unique for each test, is based on the test name and includes a random component.
+    """
+    nonce = "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
+    yield f"{request.node.name}.{nonce}.example.com"
 
 
 @pytest.fixture()
 def name(hostname: str) -> Iterator[x509.Name]:
-    """Fixture yielding a reusable x509.Name."""
+    """Fixture for a :py:class:`~cg:cryptography.x509.Name`.
+
+    The subjects common name is based on :py:func:`~django_ca.tests.conftest.hostname`.
+    """
+    yield x509.Name(
+        [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, hostname)]
+    )
+
+
+@pytest.fixture()
+def subject(hostname: str) -> Iterator[x509.Name]:
+    """Fixture for a :py:class:`~cg:cryptography.x509.Name` to use for a subject.
+
+    The common name is based on :py:func:`~django_ca.tests.conftest.hostname`.
+    """
     yield x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+            x509.NameAttribute(NameOID.COMMON_NAME, f"subject.{hostname}"),
         ]
     )
 
