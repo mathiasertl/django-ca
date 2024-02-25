@@ -18,11 +18,25 @@ from contextlib import contextmanager
 from typing import Iterator, Optional, Tuple, Union
 from unittest.mock import Mock
 
+from cryptography.x509.oid import ExtensionOID
+
 import pytest
 
 from django_ca.deprecation import RemovedInDjangoCA200Warning
+from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, pre_create_ca
 from django_ca.tests.base.mocks import mock_signal
+
+
+def assert_authority_key_identifier(self, issuer: CertificateAuthority, cert: X509CertMixin) -> None:
+    """Assert the AuthorityKeyIdentifier extension of `issuer`.
+
+    This assertion tests that :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier` extension of `cert`
+    matches the :py:class:`~cg:cryptography.x509.SubjectKeyIdentifier` extension of `issuer`.
+    """
+    actual = cert.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
+    expected = issuer.extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
+    assert actual.key_identifier == expected.key_identifier
 
 
 @contextmanager

@@ -31,7 +31,7 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tests.base.assertions import assert_create_ca_signals
+from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_create_ca_signals
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -73,7 +73,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         self.assertEqual(ca.subject, subject)
         self.assertTrue(ca.enabled)
         self.assertEqual(ca.parent, parent)
-        self.assertAuthorityKeyIdentifier(parent_ca, ca)
+        assert_authority_key_identifier(parent_ca, ca)
         self.assertEqual(ca.crl_number, '{"scope": {}}')
 
         # Assert signing extensions
