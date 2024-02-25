@@ -51,3 +51,9 @@ Mocks
 
 .. automodule:: django_ca.tests.base.mocks
    :members:
+
+Assertions
+==========
+
+.. automodule:: django_ca.tests.base.assertions
+   :members:
