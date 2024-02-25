@@ -15,8 +15,6 @@
 
 
 import typing
-import warnings
-from pathlib import Path
 from typing import Any, Dict, Generic, Iterable, List, Optional, TypeVar, Union
 
 from cryptography import x509
@@ -26,8 +24,7 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings, constants
-from django_ca.backends.base import KeyBackend, get_key_backend_class
-from django_ca.deprecation import RemovedInDjangoCA200Warning
+from django_ca.backends.base import KeyBackend
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
@@ -219,6 +216,7 @@ class CertificateAuthorityManager(
 
     def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
+        backend: KeyBackend,
         name: str,
         subject: x509.Name,
         expires: Expires = None,
@@ -243,13 +241,12 @@ class CertificateAuthorityManager(
         ocsp_responder_key_validity: Optional[int] = None,
         ocsp_response_validity: Optional[int] = None,
         api_enabled: Optional[bool] = None,
-        key_backend: KeyBackend = None,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
         .. versionchanged:: 1.28.0
 
-           * The `key_backend` parameter was added.
+           * The `backend` parameter was added.
            * The `path`, `password`, `key_size` and `elliptic_curve` parameters where removed, they are now
              part of `key_backend`.
            * The `parent_password` parameter was removed, it is now part of the backend loaded for the parent.
@@ -288,22 +285,11 @@ class CertificateAuthorityManager(
             different hostname. Set to ``False`` to disable the hostname.
         path_length : int, optional
             Value of the path length attribute for the Basic Constraints extension.
-        parent_password : bytes or str, optional
-            Password that the private key of the parent CA is encrypted with.
-        elliptic_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
-            An elliptic curve to use for EC keys. This parameter is ignored if ``key_type`` is not ``"EC"``.
-            Defaults to the :ref:`CA_DEFAULT_ELLIPTIC_CURVE <settings-ca-default-elliptic-curve>`.
         key_type: str, optional
             The type of private key to generate, must be one of ``"RSA"``, ``"DSA"``, ``"EC"``, or
             ``"Ed25519"`` , with ``"RSA"`` being the default.
-        key_size : int, optional
-            Integer specifying the key size, must be a power of two (e.g. 2048, 4096, ...). Defaults to
-            the :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>`, unused if
-            ``key_type="EC"`` or ``key_type="Ed25519"``.
         extensions : list of :py:class:`cg:cryptography.x509.Extension`
             An optional list of additional extensions to add to the certificate.
-        path : str or pathlib.PurePath, optional
-            Where to store the CA private key (default ``ca``).
         caa : str, optional
             CAA identity. Note that this field is not yet currently used.
         website : str, optional
@@ -353,22 +339,6 @@ class CertificateAuthorityManager(
             for extension in extensions:
                 if isinstance(extension, x509.Extension) is False:
                     raise ValueError(f"Cannot add extension of type {type(extension).__name__}")
-
-        if key_backend is None:
-            warnings.warn(
-                "key_backend will become a mandatory parameter in django_ca 2.0.0.",
-                RemovedInDjangoCA200Warning,
-                stacklevel=2,
-            )
-            key_backend_class = get_key_backend_class("django_ca.backends.storages.StoragesBackend")
-            key_backend = key_backend_class(
-                alias=ca_settings.CA_DEFAULT_STORAGE_ALIAS,
-                password=None,
-                _base_path=Path("ca"),
-                _key_type="RSA",
-                _key_size=ca_settings.CA_DEFAULT_KEY_SIZE,
-                _elliptic_curve=None,
-            )
 
         # NOTE: Already verified by the caller, so this is only for when the Python API is used directly.
         algorithm = validate_public_key_parameters(key_type, algorithm)
@@ -482,7 +452,7 @@ class CertificateAuthorityManager(
             sign_certificate_policies=sign_certificate_policies,
             sign_crl_distribution_points=sign_crl_distribution_points,
             sign_issuer_alternative_name=sign_issuer_alternative_name,
-            key_backend_path=key_backend.class_path,
+            key_backend_path=backend.class_path,
         )
 
         # Set fields with a default value
@@ -520,9 +490,9 @@ class CertificateAuthorityManager(
         )
 
         # Actually generate the private key and set key_backend_options
-        key_backend.ca = ca  # used to generate the private key and sign the public key
-        public_key = key_backend.initialize(key_type)
-        ca._key_backend = key_backend  # cache key_backend
+        backend.ca = ca  # used to generate the private key and sign the public key
+        public_key = backend.initialize(key_type)
+        ca._key_backend = backend  # cache key_backend
 
         # Add Basic Constraints extension
         extensions.append(
@@ -544,7 +514,7 @@ class CertificateAuthorityManager(
 
         # Add Authority Key Identifier extension (and design on backend for signing)
         if parent is None:
-            signer_backend = key_backend
+            signer_backend = backend
             aki = x509.AuthorityKeyIdentifier.from_issuer_public_key(public_key)
             issuer = subject
         else:
