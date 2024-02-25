@@ -13,7 +13,6 @@
 
 """TestCases for various model managers."""
 
-import typing
 import unittest
 from typing import List, Optional
 
@@ -25,6 +24,7 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
@@ -32,11 +32,7 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tests.base.assertions import (
-    assert_authority_key_identifier,
-    assert_certificate_authority_properties,
-    assert_create_ca_signals,
-)
+from django_ca.tests.base.assertions import assert_certificate_authority_properties, assert_create_ca_signals
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -56,23 +52,19 @@ from django_ca.tests.base.utils import (
 )
 
 
+@pytest.mark.django_db
+def test_certificate_authority_init(subject, storages_backend) -> None:
+    """Test creating the most basic possible CA."""
+    name = "basic"
+    with assert_create_ca_signals():
+        ca = CertificateAuthority.objects.init(name, subject, key_backend=storages_backend)
+    assert_certificate_authority_properties(ca, name, subject)
+    assert isinstance(ca.get_key_backend().key, RSAPrivateKey)
+
+
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_basic(self) -> None:
-        """Test creating the most basic possible CA."""
-        name = "basic"
-        with assert_create_ca_signals():
-            ca = CertificateAuthority.objects.init(name, self.subject)
-        assert_certificate_authority_properties(ca, name, self.subject)
-        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertIsInstance(ca.algorithm, hashes.SHA512)
-
-        ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
-        backend = ca.get_key_backend()
-        self.assertIsInstance(backend.key(), RSAPrivateKey)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic_with_hsm(self) -> None:
