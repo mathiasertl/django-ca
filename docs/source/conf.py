@@ -509,6 +509,7 @@ nitpick_ignore = [
     ("py:class", "asn1crypto.core.Primitive"),
     # pytest is not linked, since it's obviously only in the test suite:
     ("py:class", "_pytest.fixtures.SubRequest"),
+    ("py:class", "pytest_django.fixtures.SettingsWrapper"),
     # Pydantic root model signature does not currently work
     ("py:class", "RootModelRootType"),
 ]

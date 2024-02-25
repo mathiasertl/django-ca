@@ -50,6 +50,9 @@ class KeyBackend(abc.ABC):
     #: The certificate authority handled by this backend.
     ca: Optional["CertificateAuthority"]
 
+    #: The certificate authority handled by this backend.
+    ca: Optional["CertificateAuthority"]
+
     def __init__(self, ca: Optional["CertificateAuthority"] = None, **kwargs: Any) -> None:
         self.ca = ca
         for key, value in kwargs.items():
@@ -123,7 +126,7 @@ class KeyBackend(abc.ABC):
         """Boolean whether the current process can use this backend to sign a certificate."""
 
     @abc.abstractmethod
-    def initialize(self) -> CertificateIssuerPublicKeyTypes:
+    def initialize(self, key_type: Optional[ParsableKeyType]) -> CertificateIssuerPublicKeyTypes:
         """Initialize the CA."""
 
     @abc.abstractmethod
