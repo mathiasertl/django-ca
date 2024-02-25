@@ -13,7 +13,6 @@
 
 """TestCases for various model managers."""
 
-import unittest
 from typing import List, Optional
 
 from cryptography import x509
@@ -444,8 +443,7 @@ def test_create_cert_with_wrong_profile_type(root: CertificateAuthority, subject
     assert Certificate.objects.exists() is False
 
 
-@unittest.skip("Only for type checkers.")
-class TypingTestCase(unittest.TestCase):
+class TypingExamples:
     """Test case to create some code that would show an error in type checkers if type hinting is wrong.
 
     Note that none of these tests are designed to ever be executed.
