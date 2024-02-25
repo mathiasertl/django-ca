@@ -57,7 +57,7 @@ from django_ca.tests.base.utils import (
 )
 
 
-def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: CertificateAuthority):
+def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: CertificateAuthority) -> None:
     """Test values extensions based on a parent CA."""
     host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
     url_kwargs = {"serial": parent.serial}
@@ -101,9 +101,10 @@ def test_init_with_password(ca_name: str, subject: x509.Name, storages_backend: 
     assert_ca_properties(ca, ca_name, subject)
 
     # Test that we can re-load the private key with the password
-    ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
-    key_backend = ca.get_key_backend(password=storages_backend.password)
-    assert isinstance(key_backend.key, rsa.RSAPrivateKey)
+    reloaded_ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
+    key_backend = reloaded_ca.get_key_backend(password=storages_backend.password)
+    # TYPEHINT NOTE: We explicitly pass a StoragesBackend above, which has a key prop
+    assert isinstance(key_backend.key, rsa.RSAPrivateKey)  # type: ignore[attr-defined]
 
 
 def test_init_intermediate(
@@ -398,7 +399,8 @@ def test_create_cert(usable_root: CertificateAuthority, subject: x509.Name) -> N
     with assert_create_cert_signals():
         cert = Certificate.objects.create_cert(usable_root, csr, subject=subject)
     assert cert.subject == subject
-    assert_extensions(cert, list(profile.extensions.values()))
+    # TYPEHINT NOTE: default profile always has extensions, so override here
+    assert_extensions(cert, list(profile.extensions.values()))  # type: ignore[arg-type]
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])

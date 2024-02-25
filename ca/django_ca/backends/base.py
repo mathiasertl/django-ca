@@ -50,9 +50,6 @@ class KeyBackend(abc.ABC):
     #: The certificate authority handled by this backend.
     ca: Optional["CertificateAuthority"]
 
-    #: The certificate authority handled by this backend.
-    ca: Optional["CertificateAuthority"]
-
     def __init__(self, ca: Optional["CertificateAuthority"] = None, **kwargs: Any) -> None:
         self.ca = ca
         for key, value in kwargs.items():
@@ -64,7 +61,7 @@ class KeyBackend(abc.ABC):
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
 
     @classmethod
-    def add_private_key_arguments(cls, group: ArgumentGroup) -> None:
+    def add_private_key_arguments(cls, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
         """Add arguments for private key generation with this backend.
 
         Add arguments that can be used for generating private keys with your backend to `group`. The arguments
@@ -73,7 +70,7 @@ class KeyBackend(abc.ABC):
         """
         return None
 
-    @classmethod
+    @classmethod  # pylint: disable-next=unused-argument
     def add_parent_private_key_arguments(cls, group: ArgumentGroup) -> None:
         """Add arguments for loading the private key of any signing certificate authority.
 
@@ -116,8 +113,9 @@ class KeyBackend(abc.ABC):
                     return cls(example=example)
         """
 
-    @classmethod
+    @classmethod  # pylint: disable-next=unused-argument
     def get_parent_backend_options(cls, options: Dict[str, Any]) -> Dict[str, Any]:
+        """Get options for loading a backend based on the parent options."""
         return {}
 
     @property
@@ -126,7 +124,7 @@ class KeyBackend(abc.ABC):
         """Boolean whether the current process can use this backend to sign a certificate."""
 
     @abc.abstractmethod
-    def initialize(self, key_type: Optional[ParsableKeyType]) -> CertificateIssuerPublicKeyTypes:
+    def initialize(self, key_type: ParsableKeyType) -> CertificateIssuerPublicKeyTypes:
         """Initialize the CA."""
 
     @abc.abstractmethod
