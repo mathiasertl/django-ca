@@ -13,6 +13,7 @@
 
 """TestCases for various model managers."""
 
+import typing
 import unittest
 from typing import List, Optional
 
@@ -31,7 +32,11 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_create_ca_signals
+from django_ca.tests.base.assertions import (
+    assert_authority_key_identifier,
+    assert_certificate_authority_properties,
+    assert_create_ca_signals,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -55,49 +60,13 @@ from django_ca.tests.base.utils import (
 class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
 
-    def assertProperties(  # pylint: disable=invalid-name
-        self,
-        ca: CertificateAuthority,
-        name: str,
-        subject: x509.Name,
-        parent: Optional[CertificateAuthority] = None,
-    ) -> None:
-        """Assert some basic properties of a CA."""
-        parent_ca = parent or ca
-        parent_serial = parent_ca.serial
-        issuer = parent_ca.subject
-
-        base_url = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
-        self.assertEqual(ca.name, name)
-        self.assertEqual(ca.issuer, issuer)
-        self.assertEqual(ca.subject, subject)
-        self.assertTrue(ca.enabled)
-        self.assertEqual(ca.parent, parent)
-        assert_authority_key_identifier(parent_ca, ca)
-        self.assertEqual(ca.crl_number, '{"scope": {}}')
-
-        # Assert signing extensions
-        self.assertEqual(
-            ca.sign_authority_information_access,
-            authority_information_access(
-                ocsp=[uri(f"{base_url}ocsp/{ca.serial}/cert/")],
-                ca_issuers=[uri(f"{base_url}issuer/{parent_serial}.der")],
-            ),
-        )
-        self.assertIsNone(ca.sign_certificate_policies)
-        self.assertEqual(
-            ca.sign_crl_distribution_points,
-            crl_distribution_points(distribution_point([uri(f"{base_url}crl/{ca.serial}/")])),
-        )
-        self.assertIsNone(ca.sign_issuer_alternative_name)
-
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
         """Test creating the most basic possible CA."""
         name = "basic"
         with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject)
-        self.assertProperties(ca, name, self.subject)
+        assert_certificate_authority_properties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
         self.assertIsInstance(ca.algorithm, hashes.SHA512)
 
@@ -111,7 +80,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "basic"
         with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject, key_backend="...", key_options={})
-        self.assertProperties(ca, name, self.subject)
+        assert_certificate_authority_properties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
         self.assertIsInstance(ca.algorithm, hashes.SHA512)
 
@@ -125,7 +94,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "dsa-ca"
         with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject, key_type="DSA")
-        self.assertProperties(ca, name, self.subject)
+        assert_certificate_authority_properties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
         self.assertIsInstance(ca.algorithm, hashes.SHA256)
         ca.key().public_key()  # just access private key to make sure we can load it
@@ -159,7 +128,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "root.example.com")])
         with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, subject, path_length=2)
-        self.assertProperties(ca, name, subject)
+        assert_certificate_authority_properties(ca, name, subject)
         self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.extensions)
         self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.extensions)
 
@@ -167,7 +136,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")])
         with assert_create_ca_signals():
             child = CertificateAuthority.objects.init(name, subject, parent=ca)
-        self.assertProperties(child, name, subject, parent=ca)
+        assert_certificate_authority_properties(child, name, subject, parent=ca)
 
         expected_issuers = [uri(f"http://{host}{self.reverse('issuer', serial=ca.serial)}")]
         expected_ocsp = [uri(f"http://{host}{self.reverse('ocsp-ca-post', serial=ca.serial)}")]
@@ -187,7 +156,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "grandchild.example.com")])
         with assert_create_ca_signals():
             grandchild = CertificateAuthority.objects.init(name, subject, parent=child)
-        self.assertProperties(grandchild, name, subject, parent=child)
+        assert_certificate_authority_properties(grandchild, name, subject, parent=child)
 
         expected_ocsp = [uri(f"http://{host}{self.reverse('ocsp-ca-post', serial=child.serial)}")]
         expected_issuers = [uri(f"http://{host}{self.reverse('issuer', serial=child.serial)}")]
@@ -384,7 +353,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             ca = CertificateAuthority.objects.init(
                 name, self.subject, acme_enabled=True, acme_profile="client", acme_requires_contact=False
             )
-        self.assertProperties(ca, name, self.subject)
+        assert_certificate_authority_properties(ca, name, self.subject)
         self.assertTrue(ca.acme_enabled)
         self.assertEqual(ca.acme_profile, "client")
         self.assertFalse(ca.acme_requires_contact)
@@ -395,7 +364,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         name = "api"
         with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject, api_enabled=True)
-        self.assertProperties(ca, name, self.subject)
+        assert_certificate_authority_properties(ca, name, self.subject)
         self.assertTrue(ca.api_enabled)
 
     def test_unknown_profile(self) -> None:
