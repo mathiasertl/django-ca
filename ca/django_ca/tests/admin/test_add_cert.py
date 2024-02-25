@@ -49,7 +49,7 @@ from django_ca.pydantic.extensions import (
 )
 from django_ca.tests.admin.assertions import assert_css
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
-from django_ca.tests.base.assertions import assert_authority_key_identifier
+from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_extensions
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.tests.base.typehints import HttpResponse
@@ -175,7 +175,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             ),
         )
         self.assertIssuer(ca, cert)
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),

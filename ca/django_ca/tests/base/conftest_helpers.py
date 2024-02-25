@@ -35,7 +35,7 @@ from _pytest.fixtures import SubRequest
 from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import constants
+from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.base.utils import crl_distribution_points, distribution_point, uri
@@ -263,7 +263,14 @@ def load_ca(
         ),
     )
 
-    ca = CertificateAuthority(name=name, private_key_path=f"{name}.key", parent=parent, **kwargs)
+    key_backend_options = {"alias": ca_settings.CA_DEFAULT_STORAGE_ALIAS, "path": f"{name}.key"}
+    ca = CertificateAuthority(
+        name=name,
+        key_backend_path="django_ca.backends.storages.StoragesBackend",
+        key_backend_options=key_backend_options,
+        parent=parent,
+        **kwargs,
+    )
     ca.update_certificate(pub)  # calculates serial etc
     ca.full_clean()
     ca.save()
