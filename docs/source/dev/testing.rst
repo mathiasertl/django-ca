@@ -41,3 +41,13 @@ of Python, Django, cryptography.
 Please check :file:`ca/django_ca/tests/base/pragmas.py` for a tested file that includes all supported pragmas.
 Correctly using the pragmas is mandatory, as they are also used for finding outdated code when older versions
 are deprecated.
+
+******
+pytest
+******
+
+Mocks
+=====
+
+.. automodule:: django_ca.tests.base.mocks
+   :members:

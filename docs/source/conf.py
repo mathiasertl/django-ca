@@ -472,6 +472,7 @@ jinja_filters = {
 qualname_overrides = {
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
+    "django.dispatch.dispatcher.Signal": "django.dispatch.Signal",
     "django.core.files.storage.base.Storage": "django.core.files.storage.FileSystemStorage",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
