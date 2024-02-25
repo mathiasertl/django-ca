@@ -35,6 +35,7 @@ from ca.settings_utils import (
     update_database_setting_from_environment,
 )
 from django_ca import ca_settings
+from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.mixins import TestCaseMixin
 
@@ -384,25 +385,25 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
 
     def test_default_profile(self) -> None:
         """Test the check if the default profile is defined."""
-        with self.assertImproperlyConfigured(r"^foo: CA_DEFAULT_PROFILE is not defined as a profile\.$"):
+        with assert_improperly_configured(r"^foo: CA_DEFAULT_PROFILE is not defined as a profile\.$"):
             with self.settings(CA_DEFAULT_PROFILE="foo"):
                 pass
 
     def test_default_elliptic_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ELLIPTIC_CURVE``."""
-        with self.assertImproperlyConfigured(r"^foo: Unknown CA_DEFAULT_ELLIPTIC_CURVE.$"):
+        with assert_improperly_configured(r"^foo: Unknown CA_DEFAULT_ELLIPTIC_CURVE.$"):
             with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 
     def test_default_name_order(self) -> None:
         """Test invalid values for a default name order."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_NAME_ORDER: setting must be a tuple\.$"):
+        with assert_improperly_configured(r"^CA_DEFAULT_NAME_ORDER: setting must be a tuple\.$"):
             with self.settings(CA_DEFAULT_NAME_ORDER=True):
                 pass
 
     def test_min_default_key_size(self) -> None:
         """Test ``A_DEFAULT_KEY_SIZE``."""
-        with self.assertImproperlyConfigured("^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$"):
+        with assert_improperly_configured("^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$"):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass
 
@@ -412,24 +413,24 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA224)
 
         msg = r"^CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: foo: Unknown hash algorithm\.$"
-        with self.assertImproperlyConfigured(msg):
+        with assert_improperly_configured(msg):
             with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
     def test_default_dsa_signature_hash_algorithm(self) -> None:
         """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
         msg = r"^CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: foo: Unknown hash algorithm\.$"
-        with self.assertImproperlyConfigured(msg):
+        with assert_improperly_configured(msg):
             with self.settings(CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
     def test_default_expires(self) -> None:
         """Test invalid ``CA_DEFAULT_EXPIRES``."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$"):
+        with assert_improperly_configured(r"^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$"):
             with self.settings(CA_DEFAULT_EXPIRES="foo"):
                 pass
 
-        with self.assertImproperlyConfigured(
+        with assert_improperly_configured(
             r"^CA_DEFAULT_EXPIRES: -3 days, 0:00:00: Must have positive value$"
         ):
             with self.settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
@@ -443,28 +444,24 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         #   https://docs.python.org/3.8/reference/import.html#the-module-cache
         with mock.patch.dict("sys.modules", celery=None):
             msg = r"^CA_USE_CELERY set to True, but Celery is not installed$"
-            with self.assertImproperlyConfigured(msg), self.settings(CA_USE_CELERY=True):
+            with assert_improperly_configured(msg), self.settings(CA_USE_CELERY=True):
                 pass
 
     def test_invalid_setting(self) -> None:
         """Test setting an invalid CA."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$"):
+        with assert_improperly_configured(r"^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$"):
             with self.settings(CA_DEFAULT_CA="0a:bc:x"):
                 pass
 
     def test_default_subject_with_duplicate_country(self) -> None:
         """Test the check for OIDs that must not occur multiple times."""
-        with self.assertImproperlyConfigured(
-            r'^CA_DEFAULT_SUBJECT contains multiple "countryName" fields\.$'
-        ):
+        with assert_improperly_configured(r'^CA_DEFAULT_SUBJECT contains multiple "countryName" fields\.$'):
             with self.settings(CA_DEFAULT_SUBJECT=(("C", "AT"), ("C", "DE"))):
                 pass
 
     def test_default_subject_with_empty_common_name(self) -> None:
         """Test the check for empty common names."""
-        with self.assertImproperlyConfigured(
-            r"^CA_DEFAULT_SUBJECT: CommonName must not be an empty value\.$"
-        ):
+        with assert_improperly_configured(r"^CA_DEFAULT_SUBJECT: CommonName must not be an empty value\.$"):
             with self.settings(CA_DEFAULT_SUBJECT=(("CN", ""),)):
                 pass
 
@@ -491,25 +488,25 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
     def test_invalid_subjects(self) -> None:
         """Test checks for invalid subjects."""
         msg = r"^CA_DEFAULT_SUBJECT: True: Value must be an x509.Name, list or tuple\."
-        with self.assertImproperlyConfigured(msg):
+        with assert_improperly_configured(msg):
             with self.settings(CA_DEFAULT_SUBJECT=True):
                 pass
 
         msg = r"^CA_DEFAULT_SUBJECT: foo: Items must be a x509.NameAttribute, list or tuple\."
-        with self.assertImproperlyConfigured(msg):
+        with assert_improperly_configured(msg):
             with self.settings(CA_DEFAULT_SUBJECT=["foo"]):
                 pass
 
         msg = r"^CA_DEFAULT_SUBJECT: \['foo'\]: Must be lists/tuples with two items, got 1\."
-        with self.assertImproperlyConfigured(msg):
+        with assert_improperly_configured(msg):
             with self.settings(CA_DEFAULT_SUBJECT=[["foo"]]):
                 pass
 
-        with self.assertImproperlyConfigured(r"^True: Must be a x509.ObjectIdentifier or str\."):
+        with assert_improperly_configured(r"^True: Must be a x509.ObjectIdentifier or str\."):
             with self.settings(CA_DEFAULT_SUBJECT=[[True, "foo"]]):
                 pass
 
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_SUBJECT: True: Item values must be strings\."):
+        with assert_improperly_configured(r"^CA_DEFAULT_SUBJECT: True: Item values must be strings\."):
             with self.settings(CA_DEFAULT_SUBJECT=[["foo", True]]):
                 pass
 
@@ -547,13 +544,13 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
 
     def test_invalid_key(self) -> None:
         """Test using an invalid subject key."""
-        with self.assertImproperlyConfigured(r"^invalid: Unknown attribute type\.$"):
+        with assert_improperly_configured(r"^invalid: Unknown attribute type\.$"):
             with self.settings(CA_DEFAULT_SUBJECT=[("invalid", "wrong")]):
                 pass
 
     def test_invalid_ocsp_responder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
-        with self.assertImproperlyConfigured(
+        with assert_improperly_configured(
             r"^CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int\.$"
         ):
             with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL="600"):

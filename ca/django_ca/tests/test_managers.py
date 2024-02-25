@@ -26,6 +26,7 @@ from django.urls import reverse
 
 import pytest
 from freezegun import freeze_time
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
 from django_ca.backends.storages import StoragesBackend
@@ -33,7 +34,12 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tests.base.assertions import assert_ca_properties, assert_create_ca_signals, assert_extensions
+from django_ca.tests.base.assertions import (
+    assert_ca_properties,
+    assert_create_ca_signals,
+    assert_extensions,
+    assert_improperly_configured,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -354,59 +360,70 @@ def test_init_with_unknown_extension_type(subject: x509.Name, storages_backend: 
     assert CertificateAuthority.objects.count() == 0
 
 
-@override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple(), CA_DEFAULT_CA=CERT_DATA["child"]["serial"])
 @freeze_time(TIMESTAMPS["everything_valid"])
-class CertificateAuthorityManagerDefaultTestCase(TestCaseMixin, TestCase):
-    """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.default`."""
+def test_default(root: CertificateAuthority, child: CertificateAuthority, settings: SettingsWrapper) -> None:
+    """Test the correct CA is returned if CA_DEFAULT_CA is set."""
+    settings.CA_DEFAULT_CA = CERT_DATA["child"]["serial"]
+    assert CertificateAuthority.objects.default() == child
+    settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
+    assert CertificateAuthority.objects.default() == root
 
-    load_cas = (
-        "root",
-        "child",
-    )
 
-    def test_default(self) -> None:
-        """Test the correct CA is returned if CA_DEFAULT_CA is set."""
-        self.assertEqual(CertificateAuthority.objects.default(), self.ca)
+@pytest.mark.usefixtures("child")
+def test_default_with_disabled(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+    """Test that an exception is raised if the CA is disabled."""
+    settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
+    root.enabled = False
+    root.save()
 
-    def test_disabled(self) -> None:
-        """Test that an exception is raised if the CA is disabled."""
-        self.ca.enabled = False
-        self.ca.save()
+    with assert_improperly_configured(rf"^CA_DEFAULT_CA: {root.serial} is disabled\.$"):
+        CertificateAuthority.objects.default()
 
-        with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is disabled\.$"):
-            CertificateAuthority.objects.default()
 
-    @freeze_time(TIMESTAMPS["everything_expired"])
-    def test_expired(self) -> None:
-        """Test that an exception is raised if CA is expired."""
-        with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is expired\.$"):
-            CertificateAuthority.objects.default()
+@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.usefixtures("child")
+def test_default_with_expired(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+    """Test that an exception is raised if CA is expired."""
+    settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
+    with assert_improperly_configured(rf"^CA_DEFAULT_CA: {root.serial} is expired\.$"):
+        CertificateAuthority.objects.default()
 
-    @freeze_time(TIMESTAMPS["before_everything"])
-    def test_not_yet_valid(self) -> None:
-        """Test that an exception is raised if CA is not yet valid."""
-        with self.assertImproperlyConfigured(rf"^CA_DEFAULT_CA: {self.ca.serial} is not yet valid\.$"):
-            CertificateAuthority.objects.default()
 
-    @override_settings(CA_DEFAULT_CA="")
-    def test_default_ca(self) -> None:
-        """Test what is returned when **no** CA is configured as default."""
-        self.load_named_cas("__all__")
-        ca = sorted(self.cas.values(), key=lambda ca: (ca.expires, ca.serial))[-1]
-        self.assertEqual(CertificateAuthority.objects.default(), ca)
+@freeze_time(TIMESTAMPS["before_everything"])
+@pytest.mark.usefixtures("child")
+def test_default_with_not_yet_valid(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+    """Test that an exception is raised if CA is not yet valid."""
+    settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
+    with assert_improperly_configured(rf"^CA_DEFAULT_CA: {root.serial} is not yet valid\.$"):
+        CertificateAuthority.objects.default()
 
-    @override_settings(CA_DEFAULT_CA="")
-    @freeze_time(TIMESTAMPS["everything_expired"])
-    def test_default_ca_expired(self) -> None:
-        """Test that exception is raised if no CA is currently valid."""
-        with self.assertImproperlyConfigured(r"^No CA is currently usable\.$"):
-            CertificateAuthority.objects.default()
 
-    @override_settings(CA_DEFAULT_CA="ABC")
-    def test_unknown_ca_configured(self) -> None:
-        """Test behavior when an unknown CA is manually configured."""
-        with self.assertImproperlyConfigured(r"^CA_DEFAULT_CA: ABC: CA not found\.$"):
-            CertificateAuthority.objects.default()
+@override_settings(CA_DEFAULT_CA="")
+@pytest.mark.usefixtures("root")
+@pytest.mark.usefixtures("child")
+@pytest.mark.usefixtures("ed448")
+@pytest.mark.usefixtures("ed25519")
+def test_default_with_no_default_ca() -> None:
+    """Test what is returned when **no** CA is configured as default."""
+    ca = sorted(CertificateAuthority.objects.all(), key=lambda ca: (ca.expires, ca.serial))[-1]
+    assert CertificateAuthority.objects.default() == ca
+
+
+@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.usefixtures("root")
+@pytest.mark.usefixtures("child")
+def test_default_with_expired_cas() -> None:
+    """Test that exception is raised if no CA is currently valid."""
+    with assert_improperly_configured(r"^No CA is currently usable\.$"):
+        CertificateAuthority.objects.default()
+
+
+@pytest.mark.django_db
+def test_default_with_unknown_ca_configured(settings: SettingsWrapper) -> None:
+    """Test behavior when an unknown CA is manually configured."""
+    settings.CA_DEFAULT_CA = "ABC"
+    with assert_improperly_configured(r"^CA_DEFAULT_CA: ABC: CA not found\.$"):
+        CertificateAuthority.objects.default()
 
 
 @override_settings(CA_DEFAULT_SUBJECT=tuple())
