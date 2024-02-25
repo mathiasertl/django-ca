@@ -16,6 +16,7 @@
 from django.test import TestCase
 
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import cmd
 
 
 class CertWatchersTestCase(TestCaseMixin, TestCase):
@@ -26,19 +27,19 @@ class CertWatchersTestCase(TestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Just some basic tests here."""
-        stdout, stderr = self.cmd("cert_watchers", self.cert.serial, add=["user-added@example.com"])
+        stdout, stderr = cmd("cert_watchers", self.cert.serial, add=["user-added@example.com"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertTrue(self.cert.watchers.filter(mail="user-added@example.com").exists())
 
         # remove user again
-        stdout, stderr = self.cmd("cert_watchers", self.cert.serial, rm=["user-added@example.com"])
+        stdout, stderr = cmd("cert_watchers", self.cert.serial, rm=["user-added@example.com"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertFalse(self.cert.watchers.filter(mail="user-added@example.com").exists())
 
         # removing again does nothing, but doesn't throw an error either
-        stdout, stderr = self.cmd("cert_watchers", self.cert.serial, rm=["user-added@example.com"])
+        stdout, stderr = cmd("cert_watchers", self.cert.serial, rm=["user-added@example.com"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertFalse(self.cert.watchers.filter(mail="user-added@example.com").exists())

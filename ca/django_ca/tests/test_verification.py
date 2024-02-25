@@ -32,7 +32,7 @@ from freezegun import freeze_time
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir, uri
+from django_ca.tests.base.utils import cmd, override_tmpcadir, uri
 
 
 class CRLValidationTestCase(TestCaseMixin, TestCase):
@@ -83,7 +83,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         kwargs["ca"] = ca
         with tempfile.TemporaryDirectory() as tempdir:
             path = os.path.join(tempdir, f"{ca.name}.{kwargs.get('scope')}.crl")
-            self.cmd("dump_crl", path, **kwargs)
+            cmd("dump_crl", path, **kwargs)
 
             with open(path, "rb") as stream:
                 crl = x509.load_pem_x509_crl(stream.read())
@@ -115,14 +115,14 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             out_path = os.path.join(tempdir, f"{hostname}.pem")
             with freeze_time(TIMESTAMPS["everything_valid"]):
-                self.cmd(
+                cmd(
                     "sign_cert",
                     ca=ca,
                     subject_format="rfc4514",
                     subject=subject,
                     out=out_path,
                     stdin=stdin,
-                    **kwargs,
+                    **kwargs
                 )
             yield out_path
 

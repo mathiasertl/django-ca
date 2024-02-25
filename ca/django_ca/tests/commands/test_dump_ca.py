@@ -23,7 +23,7 @@ from django.test import TestCase
 
 from django_ca import ca_settings
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, override_tmpcadir
 
 
 class DumpCATestCase(TestCaseMixin, TestCase):
@@ -34,7 +34,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Basic test of this command."""
-        stdout, stderr = self.cmd("dump_ca", self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_ca", self.ca.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), self.ca.pub.pem)
 
@@ -42,7 +42,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     def test_format(self) -> None:
         """Test various formats."""
         for encoding in [Encoding.PEM, Encoding.DER]:
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "dump_ca", self.ca.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
             )
             self.assertEqual(stderr, b"")
@@ -51,23 +51,19 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_explicit_stdout(self) -> None:
         """Test piping to stdout."""
-        stdout, stderr = self.cmd("dump_ca", self.ca.serial, "-", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_ca", self.ca.serial, "-", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), self.ca.pub.pem)
 
     @override_tmpcadir()
     def test_bundle(self) -> None:
         """Test getting the bundle."""
-        stdout, stderr = self.cmd(
-            "dump_ca", self.ca.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = cmd("dump_ca", self.ca.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), self.ca.pub.pem)
 
         child = self.load_ca("child")
-        stdout, stderr = self.cmd(
-            "dump_ca", child.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = cmd("dump_ca", child.serial, "-", bundle=True, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), child.pub.pem + self.ca.pub.pem)
 
@@ -75,7 +71,7 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     def test_file_output(self) -> None:
         """Test writing to file."""
         path = os.path.join(ca_settings.CA_DIR, "test_ca.pem")
-        stdout, stderr = self.cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, b"")
 
@@ -86,17 +82,17 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     def test_color_output_error(self) -> None:
         """Test that requesting color output throws an error."""
         with self.assertCommandError("This command does not support color output."):
-            self.cmd("dump_ca", self.ca.serial, "/does/not/exist", force_color=True)
+            cmd("dump_ca", self.ca.serial, "/does/not/exist", force_color=True)
 
     @override_tmpcadir()
     def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_ca.pem")
         with self.assertCommandError(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
-            self.cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
+            cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
         with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
-            self.cmd(
+            cmd(
                 "dump_ca",
                 self.ca.serial,
                 format=Encoding.DER,

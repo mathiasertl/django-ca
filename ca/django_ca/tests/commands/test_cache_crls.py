@@ -39,7 +39,7 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
 
         Note: Without an explicit serial expired CAs are excluded, that's why we need @freeze_time().
         """
-        stdout, stderr = self.cmd("cache_crls")
+        stdout, stderr = cmd("cache_crls")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
@@ -55,7 +55,7 @@ class CacheCRLsTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_serial(self) -> None:
         """Test passing an explicit serial."""
-        stdout, stderr = self.cmd("cache_crls", self.ca.serial)
+        stdout, stderr = cmd("cache_crls", self.ca.serial)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 

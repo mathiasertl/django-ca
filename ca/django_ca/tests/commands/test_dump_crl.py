@@ -32,7 +32,13 @@ from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import crl_distribution_points, distribution_point, override_tmpcadir
+from django_ca.tests.base.utils import (
+    cmd,
+    cmd_e2e,
+    crl_distribution_points,
+    distribution_point,
+    override_tmpcadir,
+)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -55,7 +61,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_rsa_ca(self) -> None:
         """Test creating a CRL from an RSA key."""
-        stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
@@ -63,7 +69,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_rsa_ca_with_sha512(self) -> None:
         """Test creating a CRL from an RSA key with a custom algorithm."""
-        stdout, stderr = self.cmd(
+        stdout, stderr = cmd(
             "dump_crl",
             ca=self.ca,
             scope="user",
@@ -79,7 +85,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_dsa_ca(self) -> None:
         """Test creating a CRL from a DSA key."""
         ca = self.cas["dsa"]
-        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -90,7 +96,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_ec_ca(self) -> None:
         """Test creating a CRL from an EC key."""
         ca = self.cas["ec"]
-        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -101,7 +107,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_ed448_ca(self) -> None:
         """Test creating a CRL from a DSA key."""
         ca = self.cas["ed448"]
-        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -112,7 +118,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_ed25519_ca(self) -> None:
         """Test creating a CRL from a DSA key."""
         ca = self.cas["ed25519"]
-        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -123,9 +129,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_file(self) -> None:
         """Test dumping to a file."""
         path = os.path.join(ca_settings.CA_DIR, "crl-test.crl")
-        stdout, stderr = self.cmd(
-            "dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout, b"")
         self.assertEqual(stderr, b"")
 
@@ -138,7 +142,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         path = os.path.join(ca_settings.CA_DIR, "test", "crl-test.crl")
 
         with self.assertCommandError(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
-            self.cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+            cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()
     def test_password(self) -> None:
@@ -147,14 +151,14 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         # Giving no password raises a CommandError
         with self.assertCommandError("^Password was not given but private key is encrypted$"):
-            self.cmd("dump_crl", ca=ca, scope="user")
+            cmd("dump_crl", ca=ca, scope="user")
 
         # False password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
         with self.assertCommandError(self.re_false_password):
-            self.cmd("dump_crl", ca=ca, scope="user", password=b"wrong")
+            cmd("dump_crl", ca=ca, scope="user", password=b"wrong")
 
-        stdout, stderr = self.cmd(
+        stdout, stderr = cmd(
             "dump_crl",
             ca=ca,
             scope="user",
@@ -172,7 +176,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         """Test behavior of CRLs when they have no scope."""
         # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
         root = self.cas["root"]
-        stdout, stderr = self.cmd("dump_crl", ca=root, scope=None, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=root, scope=None, stdout=BytesIO(), stderr=BytesIO())
         self.assertCRL(
             stdout,
             encoding=Encoding.PEM,
@@ -186,7 +190,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         # ... but the child CA should have one
         child = self.cas["child"]
         idp = self.get_idp(full_name=self.get_idp_full_name(child))
-        stdout, stderr = self.cmd("dump_crl", ca=child, scope=None, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=child, scope=None, stdout=BytesIO(), stderr=BytesIO())
         self.assertCRL(
             stdout,
             encoding=Encoding.PEM,
@@ -218,7 +222,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         # For Root CAs, there should not be an IssuingDistributionPoint extension, test that forced exclusion
         # does not break this.
         root = self.cas["root"]
-        stdout, stderr = self.cmd_e2e(
+        stdout, stderr = cmd_e2e(
             [
                 "dump_crl",
                 f"--ca={root.serial}",
@@ -238,7 +242,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, b"")
 
         child = self.cas["child"]  # CRL for child CA would normally include extension
-        stdout, stderr = self.cmd_e2e(
+        stdout, stderr = cmd_e2e(
             [
                 "dump_crl",
                 f"--ca={child.serial}",
@@ -269,9 +273,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             )
         )
         child.save()
-        stdout, stderr = self.cmd_e2e(
-            ["dump_crl", f"--ca={child.serial}"], stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = cmd_e2e(["dump_crl", f"--ca={child.serial}"], stdout=BytesIO(), stderr=BytesIO())
         self.assertCRL(
             stdout,
             encoding=Encoding.PEM,
@@ -290,7 +292,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         ca.enabled = False
         ca.save()
 
-        stdout, stderr = self.cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
@@ -302,7 +304,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         NOTE: freeze time because expired certs are not in a CRL.
         """
         self.cert.revoke()
-        stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -316,9 +318,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             self.cert.revoked_reason = reason
             self.cert.save()
 
-            stdout, stderr = self.cmd(
-                "dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO()
-            )
+            stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
             crl = x509.load_pem_x509_crl(stdout)
             self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
             self.assertEqual(len(list(crl)), 1)
@@ -334,7 +334,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         stamp = timezone.now().replace(microsecond=0) - timedelta(10)
         self.cert.revoke(compromised=stamp)
 
-        stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -355,7 +355,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertIsNotNone(child.key(password=None))
         self.assertNotRevoked(child)
 
-        stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         expected_idp = self.get_idp(only_contains_ca_certs=True)
         self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
@@ -363,7 +363,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         # revoke the CA and see if it's there
         child.revoke()
         self.assertRevoked(child)
-        stdout, stderr = self.cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
 
         crl = x509.load_pem_x509_crl(stdout)
@@ -375,14 +375,14 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_invalid_hash_algorithm(self) -> None:
         """Try creating a CRL with an invalid hash algorithm."""
         with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
-            self.cmd("dump_crl", ca=self.cas["ed448"], algorithm=hashes.SHA512())
+            cmd("dump_crl", ca=self.cas["ed448"], algorithm=hashes.SHA512())
 
         with self.assertCommandError(r"^Ed25519 keys do not allow an algorithm for signing\.$"):
-            self.cmd("dump_crl", ca=self.cas["ed25519"], algorithm=hashes.SHA512())
+            cmd("dump_crl", ca=self.cas["ed25519"], algorithm=hashes.SHA512())
 
     @override_tmpcadir()
     def test_error(self) -> None:
         """Test that creating a CRL fails for an unknown reason."""
         method = "django_ca.models.CertificateAuthority.get_crl"
         with self.patch(method, side_effect=Exception("foo")), self.assertCommandError("foo"):
-            self.cmd("dump_crl", ca=self.ca, stdout=BytesIO(), stderr=BytesIO())
+            cmd("dump_crl", ca=self.ca, stdout=BytesIO(), stderr=BytesIO())

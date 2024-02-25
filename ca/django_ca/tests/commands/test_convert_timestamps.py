@@ -21,6 +21,7 @@ from django_ca import ca_settings
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import cmd
 
 INPUT_PATH = "django_ca.management.commands.convert_timestamps.input"
 
@@ -49,7 +50,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertIsNone(acme_challenge.validated)
 
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="YES"):
-            self.cmd("convert_timestamps")
+            cmd("convert_timestamps")
 
             self.ca.refresh_from_db()
             self.cert.refresh_from_db()
@@ -101,7 +102,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(acme_challenge.validated, now)
 
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="YES"):
-            self.cmd("convert_timestamps")
+            cmd("convert_timestamps")
 
             self.ca.refresh_from_db()
             self.cert.refresh_from_db()
@@ -127,7 +128,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         """Test that nothing happens if the user doesn't give confirmation."""
         self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="no"):
-            out, err = self.cmd("convert_timestamps")
+            out, err = cmd("convert_timestamps")
         self.assertIn("Aborting.", out)
         self.ca.refresh_from_db()
         self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
@@ -135,4 +136,4 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
     def test_use_tz_is_false(self) -> None:
         """Test error when USE_TZ=False."""
         with self.assertCommandError("This command requires that you have configured USE_TZ=True."):
-            self.cmd("convert_timestamps")
+            cmd("convert_timestamps")

@@ -23,7 +23,7 @@ from django.core.files.storage import Storage
 from django.test import TestCase
 
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import issuer_alternative_name, override_tmpcadir, uri
+from django_ca.tests.base.utils import cmd, issuer_alternative_name, override_tmpcadir, uri
 from django_ca.utils import format_general_name
 
 expected = {
@@ -1617,7 +1617,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
-            stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
+            stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data), name)
             self.assertEqual(stderr, "")
@@ -1627,7 +1627,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         """Test viewing certificate with USE_TZ=True."""
         self.assertTrue(settings.USE_TZ)
 
-        stdout, stderr = self.cmd("view_ca", self.ca.serial, wrap=False)
+        stdout, stderr = cmd("view_ca", self.ca.serial, wrap=False)
         data = self.get_cert_context(self.ca.name)
         self.assertMultiLineEqual(stdout, expected[self.ca.name].format(**data), self.ca.name)
         self.assertEqual(stderr, "")
@@ -1637,7 +1637,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         """Test viewing certificate without timezone support."""
         self.assertFalse(settings.USE_TZ)
 
-        stdout, stderr = self.cmd("view_ca", self.ca.serial, wrap=False)
+        stdout, stderr = cmd("view_ca", self.ca.serial, wrap=False)
         data = self.get_cert_context(self.ca.name)
         self.assertMultiLineEqual(stdout, expected[self.ca.name].format(**data), self.ca.name)
         self.assertEqual(stderr, "")
@@ -1654,7 +1654,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         ca.acme_requires_contact = False
         ca.save()
 
-        stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
+        stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         self.assertMultiLineEqual(stdout, expected["root-properties"].format(ca=ca, **data))
@@ -1662,7 +1662,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_ENABLE_ACME=False)
     def test_acme_disabled(self) -> None:
         """Test viewing when ACME is disabled."""
-        stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, wrap=False)
+        stdout, stderr = cmd("view_ca", self.cas["root"].serial, wrap=False)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         self.assertMultiLineEqual(stdout, expected["root-acme-disabled"].format(**data))
@@ -1670,7 +1670,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_no_extensions(self) -> None:
         """Test viewing a CA without extensions."""
-        stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, extensions=False, wrap=False)
+        stdout, stderr = cmd("view_ca", self.cas["root"].serial, extensions=False, wrap=False)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         self.assertMultiLineEqual(stdout, expected["root-no-extensions"].format(**data))
@@ -1684,7 +1684,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
 
         get_storage_path = "django_ca.management.commands.view_ca.get_storage"
         with self.patch(get_storage_path, return_value=storage_mock, autospec=True):
-            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, wrap=False)
+            stdout, stderr = cmd("view_ca", self.cas["root"].serial, wrap=False)
 
         storage_mock.path.assert_called_once_with(self.cas["root"].private_key_path)
         storage_mock.exists.assert_called_once_with(self.cas["root"].private_key_path)
@@ -1712,7 +1712,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         ca.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
         ca.save()
 
-        stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
+        stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
@@ -1733,7 +1733,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         ca.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
         ca.save()
 
-        stdout, stderr = self.cmd("view_ca", ca.serial, wrap=False)
+        stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
@@ -1748,7 +1748,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         sha512 = data["sha512"]
 
         with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((64, 0))) as shutil_mock:
-            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
+            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
 
         # Django calls get_terminal_size as well, so the number of calls is unpredictable
         shutil_mock.assert_called_with(fallback=(107, 100))
@@ -1760,16 +1760,16 @@ class ViewCATestCase(TestCaseMixin, TestCase):
 
         # try with decreasing terminal size
         with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((63, 0))) as shutil_mock:
-            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
+            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
         self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))
 
         with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((62, 0))) as shutil_mock:
-            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
+            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
         self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))
 
         # Get smaller, so we wrap another element in the colon'd hash
         with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((61, 0))) as shutil_mock:
-            stdout, stderr = self.cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
+            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
         data["sha256"] = self._wrap_hash(f"  SHA-256: {sha256}", 59)
         data["sha512"] = self._wrap_hash(f"  SHA-512: {sha512}", 59)
         self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))

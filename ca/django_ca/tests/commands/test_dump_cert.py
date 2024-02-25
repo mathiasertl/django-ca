@@ -34,14 +34,14 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Basic test of this command."""
-        stdout, stderr = self.cmd("dump_cert", self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_cert", self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), self.cert.pub.pem)
 
     def test_format(self) -> None:
         """Test various formats."""
         for encoding in [Encoding.PEM, Encoding.DER]:
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "dump_cert", self.cert.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
             )
             self.assertEqual(stderr, b"")
@@ -49,13 +49,13 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
 
     def test_explicit_stdout(self) -> None:
         """Test writing to stdout."""
-        stdout, stderr = self.cmd("dump_cert", self.cert.serial, "-", stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_cert", self.cert.serial, "-", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), self.cert.pub.pem)
 
     def test_bundle(self) -> None:
         """Test getting the bundle."""
-        stdout, stderr = self.cmd(
+        stdout, stderr = cmd(
             "dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO()
         )
         self.assertEqual(stderr, b"")
@@ -65,7 +65,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
     def test_file_output(self) -> None:
         """Test writing to a file."""
         path = os.path.join(ca_settings.CA_DIR, "test_cert.pem")
-        stdout, stderr = self.cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
+        stdout, stderr = cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, b"")
 
@@ -77,10 +77,10 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_cert.pem")
         msg = rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"
         with self.assertCommandError(msg):
-            self.cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
+            cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
         with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
-            self.cmd(
+            cmd(
                 "dump_cert",
                 self.cert.serial,
                 format=Encoding.DER,

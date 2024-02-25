@@ -47,6 +47,8 @@ from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
     certificate_policies,
+    cmd,
+    cmd_e2e,
     crl_distribution_points,
     distribution_point,
     dns,
@@ -73,7 +75,7 @@ class InitCATest(TestCaseMixin, TestCase):
         if kwargs.get("key_type", "RSA") in ("RSA", "DSA"):
             kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
 
-        return self.cmd(
+        return cmd(
             "init_ca",
             name,
             f"C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN={name}",
@@ -90,8 +92,8 @@ class InitCATest(TestCaseMixin, TestCase):
         if chain is None:
             chain = []
 
-        with assert_create_ca_signals() as (pre, post):
-            out, err = self.cmd_e2e(["init_ca", name, *args])
+        with assert_create_ca_signals() as (_pre, post):
+            out, err = cmd_e2e(["init_ca", name, *args])
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
@@ -623,25 +625,25 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test that ACME/REST API options don't work when feature is disabled."""
         command = ["init_ca", "Test CA", "--subject-format=rfc4514", "CN=example.com"]
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--acme-enable"])
+            cmd_e2e([*command, "--acme-enable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--acme-disable"])
+            cmd_e2e([*command, "--acme-disable"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--acme-disable-account-registration"])
+            cmd_e2e([*command, "--acme-disable-account-registration"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--acme-enable-account-registration"])
+            cmd_e2e([*command, "--acme-enable-account-registration"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--acme-contact-optional"])
+            cmd_e2e([*command, "--acme-contact-optional"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--acme-profile=client"])
+            cmd_e2e([*command, "--acme-profile=client"])
 
         with self.assertSystemExit(2):
-            self.cmd_e2e([*command, "--api-enable"])
+            cmd_e2e([*command, "--api-enable"])
 
     @override_tmpcadir()
     def test_unknown_acme_profile(self) -> None:
@@ -755,7 +757,7 @@ class InitCATest(TestCaseMixin, TestCase):
         """Test creating a CA with empty subject fields."""
         name = "test_empty_subject_fields"
         with assert_create_ca_signals() as (pre, post):
-            out, err = self.cmd("init_ca", name, f"L=,CN={self.hostname}", subject_format="rfc4514")
+            out, err = cmd("init_ca", name, f"L=,CN={self.hostname}", subject_format="rfc4514")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         ca = CertificateAuthority.objects.get(name=name)
@@ -781,12 +783,12 @@ class InitCATest(TestCaseMixin, TestCase):
         subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit"
         error = r"^Subject must contain a common name \(CN=\.\.\.\)\.$"
         with assert_create_ca_signals(False, False), self.assertCommandError(error):
-            self.cmd("init_ca", name, subject, subject_format="rfc4514")
+            cmd("init_ca", name, subject, subject_format="rfc4514")
 
         error = r"CommonName must not be an empty value"
         subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN="
         with assert_create_ca_signals(False, False), self.assertCommandError(error):
-            self.cmd("init_ca", name, subject, subject_format="rfc4514")
+            cmd("init_ca", name, subject, subject_format="rfc4514")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self) -> None:
@@ -1211,7 +1213,7 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "Test CA"
 
         with assert_create_ca_signals() as (pre, post):
-            out, err = self.cmd("init_ca", name, f"/CN={name}", stdout=stdout, stderr=stderr)
+            out, err = cmd("init_ca", name, f"/CN={name}", stdout=stdout, stderr=stderr)
         self.assertEqual(out, "")
         # message is too long, just make sure it's there:
         self.assertIn(f"WARNING: /CN={name}: openssl-style format is deprecated", err)

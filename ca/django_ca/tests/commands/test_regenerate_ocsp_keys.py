@@ -28,7 +28,7 @@ from django.test import TestCase
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
 from django_ca.utils import add_colons, file_exists, read_file
 
 
@@ -107,7 +107,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Basic test."""
         with self.mute_celery():
-            stdout, stderr = self.cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
+            stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
 
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -117,7 +117,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_rsa_with_key_size(self) -> None:
         """Test creating an RSA key with explicit key size."""
         with self.mute_celery():
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "regenerate_ocsp_keys", CERT_DATA["root"]["serial"], key_type="RSA", key_size=4096
             )
 
@@ -129,7 +129,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_ec_with_curve(self) -> None:
         """Test creating an EC key with explicit elliptic curve."""
         with self.mute_celery():
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "regenerate_ocsp_keys", CERT_DATA["ec"]["serial"], elliptic_curve=ec.SECP384R1()
             )
 
@@ -141,7 +141,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_hash_algorithm(self) -> None:
         """Test the hash algorithm option."""
         with self.mute_celery():
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--algorithm", "SHA-256"
             )
 
@@ -170,7 +170,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 {},
             ),
         ):
-            stdout, stderr = self.cmd_e2e(
+            stdout, stderr = cmd_e2e(
                 ["regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--algorithm", "SHA-256"]
             )
         self.assertEqual(stdout, "")
@@ -179,9 +179,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_with_ed448_with_explicit_key_type(self) -> None:
         """Test creating an Ed448-based OCSP key for an RSA-based CA."""
-        stdout, stderr = self.cmd_e2e(
-            ["regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--key-type", "Ed448"]
-        )
+        stdout, stderr = cmd_e2e(["regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--key-type", "Ed448"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
@@ -194,7 +192,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.cas["pwd"].delete()
         del self.cas["pwd"]
 
-        stdout, stderr = self.cmd("regenerate_ocsp_keys")
+        stdout, stderr = cmd("regenerate_ocsp_keys")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         for ca in self.cas.values():
@@ -203,7 +201,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_overwrite(self) -> None:
         """Test overwriting pre-generated OCSP keys."""
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
+        stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         priv, cert = self.assertKey(self.cas["root"])
@@ -212,7 +210,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         excludes = list(Certificate.objects.all().values_list("pk", flat=True))
 
         # write again
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"], force=True)
+        stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"], force=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)
@@ -225,7 +223,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_wrong_serial(self) -> None:
         """Try passing an unknown CA."""
         serial = "ZZZZZ"
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", serial, no_color=True)
+        stdout, stderr = cmd("regenerate_ocsp_keys", serial, no_color=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "0Z:ZZ:ZZ: Unknown CA.\n")
         self.assertHasNoKey(serial)
@@ -234,7 +232,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_no_ocsp_profile(self) -> None:
         """Try when there is no OCSP profile."""
         with self.assertCommandError(r"^ocsp: Undefined profile\.$"):
-            self.cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
+            cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
         self.assertHasNoKey(CERT_DATA["root"]["serial"])
 
     @override_tmpcadir()
@@ -242,13 +240,13 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         """Try when there is no private key."""
         ca = self.cas["root"]
         storages["django-ca"].delete(ca.private_key_path)
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", ca.serial, no_color=True)
+        stdout, stderr = cmd("regenerate_ocsp_keys", ca.serial, no_color=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, f"{add_colons(ca.serial)}: CA has no private key.\n")
         self.assertHasNoKey(ca.serial)
 
         # and in quiet mode
-        stdout, stderr = self.cmd("regenerate_ocsp_keys", ca.serial, quiet=True, no_color=True)
+        stdout, stderr = cmd("regenerate_ocsp_keys", ca.serial, quiet=True, no_color=True)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertHasNoKey(ca.serial)

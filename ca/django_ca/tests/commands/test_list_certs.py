@@ -23,6 +23,7 @@ from freezegun import freeze_time
 from django_ca.models import Certificate
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import cmd
 from django_ca.utils import add_colons
 
 
@@ -46,7 +47,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
 
     def assertCerts(self, *certs: Certificate, **kwargs: Any) -> None:  # pylint: disable=invalid-name
         """Assert that command outputs the given certs."""
-        stdout, stderr = self.cmd("list_certs", **kwargs)
+        stdout, stderr = cmd("list_certs", **kwargs)
         sorted_certs = sorted(certs, key=lambda c: (c.expires, c.cn, c.serial))
         self.assertEqual(stdout, "".join([f"{self._line(c)}\n" for c in sorted_certs]))
         self.assertEqual(stderr, "")

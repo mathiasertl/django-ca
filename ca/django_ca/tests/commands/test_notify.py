@@ -23,6 +23,7 @@ from freezegun import freeze_time
 from django_ca.models import Watcher
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.utils import cmd
 
 
 @override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
@@ -35,7 +36,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_no_certs(self) -> None:
         """Try notify command when all certs are still valid."""
-        stdout, stderr = self.cmd("notify_expiring_certs")
+        stdout, stderr = cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 0)
@@ -44,7 +45,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
     def test_no_watchers(self) -> None:
         """Try expiring certs, but with no watchers."""
         # certs have no watchers by default, so we get no mails
-        stdout, stderr = self.cmd("notify_expiring_certs")
+        stdout, stderr = cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 0)
@@ -57,7 +58,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         self.cert.watchers.add(watcher)
         timestamp = self.cert.expires.strftime("%Y-%m-%d")
 
-        stdout, stderr = self.cmd("notify_expiring_certs")
+        stdout, stderr = cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(len(mail.outbox), 1)
@@ -72,7 +73,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
 
         with freeze_time(self.cert.expires - timedelta(days=20)) as frozen_time:
             for _i in reversed(range(0, 20)):
-                stdout, stderr = self.cmd("notify_expiring_certs", days=14)
+                stdout, stderr = cmd("notify_expiring_certs", days=14)
                 self.assertEqual(stdout, "")
                 self.assertEqual(stderr, "")
                 frozen_time.tick(timedelta(days=1))

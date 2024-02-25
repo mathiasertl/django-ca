@@ -41,6 +41,8 @@ from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     basic_constraints,
     certificate_policies,
+    cmd,
+    cmd_e2e,
     crl_distribution_points,
     distribution_point,
     dns,
@@ -112,7 +114,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Simplest test while resigning a cert."""
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd("resign_cert", self.cert.serial)
+            stdout, stderr = cmd("resign_cert", self.cert.serial)
         self.assertEqual(stderr, "")
 
         new = Certificate.objects.get(pub=stdout)
@@ -124,7 +126,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_dsa_ca_resign(self) -> None:
         """Resign a certificate from a DSA CA."""
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd("resign_cert", self.certs["dsa-cert"].serial)
+            stdout, stderr = cmd("resign_cert", self.certs["dsa-cert"].serial)
         self.assertEqual(stderr, "")
 
         new = Certificate.objects.get(pub=stdout)
@@ -137,7 +139,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test resigning the all-extensions certificate."""
         orig = self.certs["all-extensions"]
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd("resign_cert", orig.serial)
+            stdout, stderr = cmd("resign_cert", orig.serial)
         self.assertEqual(stderr, "")
 
         new = Certificate.objects.get(pub=stdout)
@@ -168,7 +170,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         orig = self.certs["all-extensions"]
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "resign_cert",
                 orig.serial,
                 # Authority Information Access extension
@@ -320,7 +322,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         orig = self.certs["no-extensions"]
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "resign_cert",
                 orig.serial,
                 # Certificate Policies extension
@@ -426,7 +428,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         orig = self.certs["no-extensions"]
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd(
+            stdout, stderr = cmd(
                 "resign_cert",
                 orig.serial,
                 # Certificate Policies extension
@@ -530,7 +532,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_custom_algorithm(self) -> None:
         """Test resigning a cert with a new algorithm."""
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
+            stdout, stderr = cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
         self.assertEqual(stderr, "")
 
         new = Certificate.objects.get(pub=stdout)
@@ -542,7 +544,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_different_ca(self) -> None:
         """Test writing with a different CA."""
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
+            stdout, stderr = cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
 
         self.assertEqual(stderr, "")
 
@@ -559,7 +561,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         # resign a cert, but overwrite all options
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd_e2e(
+            stdout, stderr = cmd_e2e(
                 [
                     "resign_cert",
                     self.cert.serial,
@@ -618,7 +620,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_set_profile(self) -> None:
         """Test getting the certificate from the profile."""
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial, "--server"])
+            stdout, stderr = cmd_e2e(["resign_cert", self.cert.serial, "--server"])
         self.assertEqual(stderr, "")
 
         new = Certificate.objects.get(pub=stdout)
@@ -636,7 +638,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.cert.save()
 
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial])
+            stdout, stderr = cmd_e2e(["resign_cert", self.cert.serial])
         self.assertEqual(stderr, "")
 
         new = Certificate.objects.get(pub=stdout)
@@ -650,7 +652,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
 
         with assert_create_cert_signals():
-            stdout, stderr = self.cmd("resign_cert", self.cert.serial, out=out_path)
+            stdout, stderr = cmd("resign_cert", self.cert.serial, out=out_path)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
@@ -672,7 +674,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             r"--subject-alternative-name/--name arguments\.$"
         )
         with assert_create_cert_signals(False, False), self.assertCommandError(msg):
-            self.cmd("resign_cert", cert, subject_format="rfc4514", subject=subject.rfc4514_string())
+            cmd("resign_cert", cert, subject_format="rfc4514", subject=subject.rfc4514_string())
 
     @override_tmpcadir()
     def test_error(self) -> None:
@@ -682,14 +684,14 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         with assert_create_cert_signals(False, False), patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
         ), self.assertCommandError(msg_re):
-            self.cmd("resign_cert", self.cert.serial)
+            cmd("resign_cert", self.cert.serial)
 
     @override_tmpcadir()
     def test_invalid_algorithm(self) -> None:
         """Test manually specifying an invalid algorithm."""
         ed448_ca = self.load_ca("ed448")
         with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
-            self.cmd("resign_cert", self.cert.serial, ca=ed448_ca, algorithm=hashes.SHA512())
+            cmd("resign_cert", self.cert.serial, ca=ed448_ca, algorithm=hashes.SHA512())
 
     @override_tmpcadir(
         CA_PROFILES={"server": {"expires": 200}, "webserver": {}},
@@ -702,4 +704,4 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         msg_re = rf'^Profile "{self.cert.profile}" for original certificate is no longer defined, please set one via the command line\.$'  # NOQA: E501
         with self.assertCommandError(msg_re):
-            self.cmd("resign_cert", self.cert.serial)
+            cmd("resign_cert", self.cert.serial)

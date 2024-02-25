@@ -25,7 +25,7 @@ from django.test import TestCase, override_settings
 from django_ca import ca_settings
 from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
 from django_ca.utils import add_colons
 
 
@@ -153,7 +153,7 @@ class CommandTestCase(TestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Trivial basic test."""
-        stdout, stderr = self.cmd_e2e(["list_cas"])
+        stdout, stderr = cmd_e2e(["list_cas"])
         serial = add_colons(self.ca.serial)
         self.assertEqual(stdout, f"{serial} - {self.ca.name}\n")
         self.assertEqual(stderr, "")
@@ -168,21 +168,21 @@ class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a su
     # pylint: disable=missing-function-docstring
 
     def cmd_basic(self) -> Tuple[str, str]:
-        stdout, stderr = self.cmd("example")
+        stdout, stderr = cmd("example")
         return stdout, stderr
 
     def cmd_explicit(self) -> Tuple[str, str]:
-        stdout, stderr = self.cmd("example", stdout=io.StringIO(), stderr=io.StringIO())
+        stdout, stderr = cmd("example", stdout=io.StringIO(), stderr=io.StringIO())
         return stdout, stderr
 
     def cmd_stdout_bytes(self) -> Tuple[bytes, str]:
-        stdout, stderr = self.cmd("example", stdout=io.BytesIO())
+        stdout, stderr = cmd("example", stdout=io.BytesIO())
         return stdout, stderr
 
     def cmd_stderr_bytes(self) -> Tuple[str, bytes]:
-        stdout, stderr = self.cmd("example", stderr=io.BytesIO())
+        stdout, stderr = cmd("example", stderr=io.BytesIO())
         return stdout, stderr
 
     def cmd_bytes(self) -> Tuple[bytes, bytes]:
-        stdout, stderr = self.cmd("example", stdout=io.BytesIO(), stderr=io.BytesIO())
+        stdout, stderr = cmd("example", stdout=io.BytesIO(), stderr=io.BytesIO())
         return stdout, stderr

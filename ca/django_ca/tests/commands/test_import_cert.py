@@ -34,7 +34,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_basic(self) -> None:
         """Import a standard certificate."""
-        out, err = self.cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
+        out, err = cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -48,7 +48,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_der(self) -> None:
         """Import a DER certificate."""
-        out, err = self.cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
+        out, err = cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
 
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -63,5 +63,5 @@ class ImportCertTest(TestCaseMixin, TestCase):
     def test_bogus(self) -> None:
         """Try to import bogus data."""
         with self.assertCommandError(r"^Unable to load public key\.$"):
-            self.cmd("import_cert", __file__, ca=self.ca)
+            cmd("import_cert", __file__, ca=self.ca)
         self.assertEqual(Certificate.objects.count(), 0)
