@@ -25,6 +25,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.x509.oid import ExtensionOID
 
+from django.core.exceptions import ImproperlyConfigured
+
 import pytest
 
 from django_ca import ca_settings
@@ -176,6 +178,13 @@ def assert_extensions(
     actual_tuple = sorted(actual.items(), key=lambda t: t[0].dotted_string)
     expected_tuple = sorted(expected.items(), key=lambda t: t[0].dotted_string)
     assert actual_tuple == expected_tuple
+
+
+@contextmanager
+def assert_improperly_configured(msg: str) -> Iterator[None]:
+    """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
+    with pytest.raises(ImproperlyConfigured, match=msg):
+        yield
 
 
 @contextmanager
