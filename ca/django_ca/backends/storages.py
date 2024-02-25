@@ -67,7 +67,6 @@ class StoragesBackend(KeyBackend):
 
     # Initialization options
     _base_path: Optional[Path]
-    _key_type: Optional[ParsableKeyType]
     _key_size: Optional[int]
     _elliptic_curve: Optional[ec.EllipticCurve]
 
@@ -118,7 +117,6 @@ class StoragesBackend(KeyBackend):
             alias=options["storage_alias"],
             password=options["password"],
             _base_path=options["path"],
-            _key_type=key_type,
             _key_size=key_size,
             _elliptic_curve=elliptic_curve,
         )
@@ -135,8 +133,8 @@ class StoragesBackend(KeyBackend):
             return False
         return file_exists(self.path)
 
-    def initialize(self) -> CertificateIssuerPublicKeyTypes:
-        if self._key_type is None or self.ca is None or self._base_path is None:
+    def initialize(self, key_type: Optional[ParsableKeyType]) -> CertificateIssuerPublicKeyTypes:
+        if self.ca is None or self._base_path is None:
             raise ValueError("Backend is not initialized.")
         storage = storages[self.alias]
 
@@ -145,7 +143,7 @@ class StoragesBackend(KeyBackend):
         else:
             encryption = serialization.BestAvailableEncryption(self.password)
 
-        self._key = generate_private_key(self._key_size, self._key_type, self._elliptic_curve)
+        self._key = generate_private_key(self._key_size, key_type, self._elliptic_curve)
 
         der = self._key.private_bytes(
             encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption

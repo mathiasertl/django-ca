@@ -16,11 +16,13 @@
 import re
 import typing
 from contextlib import contextmanager
-from typing import Iterator, Optional, Tuple, Union
+from typing import Iterator, Optional, Tuple, Type, Union
 from unittest.mock import Mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.x509.oid import ExtensionOID
 
 import pytest
@@ -50,7 +52,12 @@ def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509Cert
 
 
 def assert_certificate_authority_properties(
-    ca: CertificateAuthority, name: str, subject: x509.Name, parent: Optional[CertificateAuthority] = None
+    ca: CertificateAuthority,
+    name: str,
+    subject: x509.Name,
+    parent: Optional[CertificateAuthority] = None,
+    private_key_type: Type[CertificateIssuerPrivateKeyTypes] = rsa.RSAPrivateKey,
+    algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
 ) -> None:
     """Assert some basic properties of a CA."""
     parent_ca = parent or ca
@@ -67,7 +74,8 @@ def assert_certificate_authority_properties(
     # Test certificate properties
     assert ca.issuer == issuer
     assert ca.subject == subject
-    assert isinstance(ca.algorithm, hashes.SHA512)
+    assert isinstance(ca.get_key_backend().key, private_key_type)
+    assert isinstance(ca.algorithm, algorithm)
 
     # Test AuthorityKeyIdentifier extension
     assert_authority_key_identifier(parent_ca, ca)

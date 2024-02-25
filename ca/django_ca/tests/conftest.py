@@ -128,13 +128,18 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
 
 @pytest.fixture()
-def hostname(request: "SubRequest") -> Iterator[str]:
+def ca_name() -> Iterator[str]:
+    """Fixture for a random string for a name of a certificate authority."""
+    yield "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
+
+
+@pytest.fixture()
+def hostname(request: "SubRequest", ca_name: str) -> Iterator[str]:
     """Fixture for a hostname.
 
-    The value is unique for each test, and it includes the test name and a random component.
+    The value is unique for each test, and it includes the test name and the (random) CA name.
     """
-    nonce = "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
-    yield f"{request.node.name}.{nonce}.example.com"
+    yield f"{request.node.name}.{ca_name}.example.com"
 
 
 @pytest.fixture()
@@ -217,7 +222,7 @@ def user_client(user: "User", client: Client) -> Iterator[Client]:
 
 @pytest.fixture()
 def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrapper]:
-    """Fixture to create a temporary CA dir."""
+    """Fixture to create a temporary directory for storing files using the storages backend."""
     settings.CA_DIR = str(tmp_path)
 
     # Set the full setting and do **not** update the setting in place. This *somehow* makes a difference.
@@ -244,11 +249,11 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
 
 # Dynamically inject repetitive fixtures:
 #   https://github.com/pytest-dev/pytest/issues/2424
-for ca_name in usable_ca_names:
-    globals()[ca_name] = generate_ca_fixture(ca_name)
-    globals()[f"usable_{ca_name}"] = generate_usable_ca_fixture(ca_name)
-for ca_name in usable_ca_names + usable_cert_names + unusable_cert_names:
-    globals()[f"{ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(ca_name)
+for _ca_name in usable_ca_names:
+    globals()[_ca_name] = generate_ca_fixture(_ca_name)
+    globals()[f"usable_{ca_name}"] = generate_usable_ca_fixture(_ca_name)
+for _ca_name in usable_ca_names + usable_cert_names + unusable_cert_names:
+    globals()[f"{_ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(_ca_name)
 for cert_name in usable_cert_names:
     globals()[cert_name.replace("-", "_")] = generate_cert_fixture(cert_name)
 

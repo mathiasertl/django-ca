@@ -49,11 +49,17 @@ pytest
 Fixtures
 ========
 
+.. autofunction:: django_ca.tests.conftest.ca_name
+
 .. autofunction:: django_ca.tests.conftest.hostname
 
 .. autofunction:: django_ca.tests.conftest.name
 
+.. autofunction:: django_ca.tests.conftest.storages_backend
+
 .. autofunction:: django_ca.tests.conftest.subject
+
+.. autofunction:: django_ca.tests.conftest.tmpcadir
 
 Mocks
 =====

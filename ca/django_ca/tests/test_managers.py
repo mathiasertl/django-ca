@@ -18,7 +18,7 @@ from typing import List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import TestCase, override_settings
@@ -28,6 +28,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
+from django_ca.backends.storages import StoragesBackend
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
@@ -53,43 +54,26 @@ from django_ca.tests.base.utils import (
 
 
 @pytest.mark.django_db
-def test_certificate_authority_init(subject, storages_backend) -> None:
+def test_init(ca_name: str, subject: x509.Name, storages_backend: StoragesBackend) -> None:
     """Test creating the most basic possible CA."""
-    name = "basic"
     with assert_create_ca_signals():
-        ca = CertificateAuthority.objects.init(name, subject, key_backend=storages_backend)
-    assert_certificate_authority_properties(ca, name, subject)
-    assert isinstance(ca.get_key_backend().key, RSAPrivateKey)
+        ca = CertificateAuthority.objects.init(ca_name, subject, key_backend=storages_backend)
+    assert_certificate_authority_properties(ca, ca_name, subject)
+
+
+@pytest.mark.django_db
+def test_init_with_dsa(ca_name: str, subject: x509.Name, storages_backend: StoragesBackend) -> None:
+    """Test creating a DSA-based CA."""
+    with assert_create_ca_signals():
+        ca = CertificateAuthority.objects.init(ca_name, subject, key_type="DSA", key_backend=storages_backend)
+    assert_certificate_authority_properties(
+        ca, ca_name, subject, private_key_type=dsa.DSAPrivateKey, algorithm=hashes.SHA256
+    )
 
 
 @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     """Tests for :py:func:`django_ca.managers.CertificateAuthorityManager.init` (create a new CA)."""
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_basic_with_hsm(self) -> None:
-        """Test creating the most basic possible CA."""
-        name = "basic"
-        with assert_create_ca_signals():
-            ca = CertificateAuthority.objects.init(name, self.subject, key_backend="...", key_options={})
-        assert_certificate_authority_properties(ca, name, self.subject)
-        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertIsInstance(ca.algorithm, hashes.SHA512)
-
-        ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
-        backend = ca.get_key_backend()
-        self.assertIsInstance(backend.key(), RSAPrivateKey)
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_dsa_key(self) -> None:
-        """Test creating the most basic possible CA."""
-        name = "dsa-ca"
-        with assert_create_ca_signals():
-            ca = CertificateAuthority.objects.init(name, self.subject, key_type="DSA")
-        assert_certificate_authority_properties(ca, name, self.subject)
-        self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertIsInstance(ca.algorithm, hashes.SHA256)
-        ca.key().public_key()  # just access private key to make sure we can load it
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_password_bytes(self) -> None:
