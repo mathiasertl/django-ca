@@ -36,6 +36,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base.assertions import assert_create_ca_signals
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -85,7 +86,7 @@ class InitCATest(TestCaseMixin, TestCase):
         if chain is None:
             chain = []
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.cmd_e2e(["init_ca", name, *args])
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -103,7 +104,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Basic tests for the command."""
         name = "test_basic"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name=name)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -675,7 +676,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_ec(self) -> None:
         """Test creating an ECC CA."""
         name = "test_ec"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(
                 name=name, algorithm=hashes.SHA256(), key_type="EC", expires=self.expires(720)
             )
@@ -689,7 +690,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_dsa_private_key(self) -> None:
         """Test creating a certificate authority with a DSA private key."""
         name = "test_dsa"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(
                 name=name, algorithm=hashes.SHA256(), key_type="DSA", expires=self.expires(720), path_length=3
             )
@@ -730,7 +731,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_no_path_length(self) -> None:
         """Test creating a CA with no path length."""
         name = "test_no_path_length"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name=name, path_length=None)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -749,7 +750,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_empty_subject_fields(self) -> None:
         """Test creating a CA with empty subject fields."""
         name = "test_empty_subject_fields"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.cmd("init_ca", name, f"L=,CN={self.hostname}", subject_format="rfc4514")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -775,18 +776,18 @@ class InitCATest(TestCaseMixin, TestCase):
         name = "test_no_cn"
         subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit"
         error = r"^Subject must contain a common name \(CN=\.\.\.\)\.$"
-        with self.assertCreateCASignals(False, False), self.assertCommandError(error):
+        with assert_create_ca_signals(False, False), self.assertCommandError(error):
             self.cmd("init_ca", name, subject, subject_format="rfc4514")
 
         error = r"CommonName must not be an empty value"
         subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN="
-        with self.assertCreateCASignals(False, False), self.assertCommandError(error):
+        with assert_create_ca_signals(False, False), self.assertCommandError(error):
             self.cmd("init_ca", name, subject, subject_format="rfc4514")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_parent(self) -> None:
         """Test creating a CA and an intermediate CA."""
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="Parent", path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -797,7 +798,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="Second")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -809,7 +810,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsNone(second.parent)
 
         crl_full_name = uri("http://ca.crl.example.com")
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(
                 name="Child",
                 parent=parent,
@@ -848,7 +849,7 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_intermediate_check(self) -> None:  # noqa: PLR0915
         """Test intermediate path length checks."""
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="default")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -860,7 +861,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(parent.max_path_length, 0)
         self.assertFalse(parent.allows_intermediate_ca)
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="path-length-1", path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -872,7 +873,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(path_length_1.max_path_length, 1)
         self.assertTrue(path_length_1.allows_intermediate_ca)
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="path-length-1-none", path_length=None, parent=path_length_1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -887,12 +888,12 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertFalse(path_length_1_none.allows_intermediate_ca)
         with self.assertCommandError(
             r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
-        ), self.assertCreateCASignals(False, False):
+        ), assert_create_ca_signals(False, False):
             out, err = self.init_ca(name="wrong", parent=path_length_1_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="path-length-1-three", path_length=3, parent=path_length_1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -907,11 +908,11 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertFalse(path_length_1_three.allows_intermediate_ca)
         with self.assertCommandError(
             r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
-        ), self.assertCreateCASignals(False, False):
+        ), assert_create_ca_signals(False, False):
             out, _err = self.init_ca(name="wrong", parent=path_length_1_none)
         self.assertEqual(out, "")
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="path-length-none", path_length=None)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -923,7 +924,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsNone(path_length_none.max_path_length, None)
         self.assertTrue(path_length_none.allows_intermediate_ca)
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="path-length-none-none", path_length=None, parent=path_length_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -933,7 +934,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertIsNone(path_length_none_none.path_length)
         self.assertIsNone(path_length_none_none.max_path_length)
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="path-length-none-1", path_length=1, parent=path_length_none)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -946,7 +947,7 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_expires_override(self) -> None:
         """Test that if we request an expiry after that of the parent, we override to that of the parent."""
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="Parent", path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -957,7 +958,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertSignature([parent], parent)
 
         # test that the default is not a child-relationship
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="Second")
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -968,7 +969,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertSignature([second], second)
 
         expires = parent.expires - timezone.now() + timedelta(days=10)
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="Child", parent=parent, expires=expires)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -1000,7 +1001,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_password(self) -> None:
         """Test creating a CA with a password."""
         password = b"testpassword"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name="Parent", password=password, path_length=1)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -1033,14 +1034,14 @@ class InitCATest(TestCaseMixin, TestCase):
 
         with self.assertCommandError(
             r"^Password was not given but private key is encrypted$"
-        ), self.assertCreateCASignals(False, False):
+        ), assert_create_ca_signals(False, False):
             out, err = self.init_ca(name="Child", parent=parent, password=child_password)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
         self.assertIsNone(CertificateAuthority.objects.filter(name="Child").first())
 
         # Create again with parent ca
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(
                 name="Child", parent=parent, password=child_password, parent_password=password
             )
@@ -1068,7 +1069,7 @@ class InitCATest(TestCaseMixin, TestCase):
 
         name = "ca"
         hostname = "test-default-hostname.com"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name=name, parent=root, default_hostname=hostname)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -1106,7 +1107,7 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_no_default_hostname(self) -> None:
         """Disable default hostname via the command line."""
         name = "ca"
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.init_ca(name=name, default_hostname=False)
         self.assertEqual(out, "")
         self.assertEqual(err, "")
@@ -1153,15 +1154,15 @@ class InitCATest(TestCaseMixin, TestCase):
     def test_invalid_public_key_parameters(self) -> None:
         """Test passing invalid public key parameters."""
         msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
-        with self.assertCommandError(msg), self.assertCreateCASignals(False, False):
+        with self.assertCommandError(msg), assert_create_ca_signals(False, False):
             self.init_ca(name="invalid-public-key-parameters", key_type="Ed25519", algorithm=hashes.SHA256())
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_root_ca_crl_url(self) -> None:
         """Test that you cannot create a CA with a CRL URL."""
-        with self.assertCommandError(
-            r"^CRLs cannot be used to revoke root CAs\.$"
-        ), self.assertCreateCASignals(False, False):
+        with self.assertCommandError(r"^CRLs cannot be used to revoke root CAs\.$"), assert_create_ca_signals(
+            False, False
+        ):
             self.init_ca(name="foobar", crl_full_name="https://example.com")
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -1170,7 +1171,7 @@ class InitCATest(TestCaseMixin, TestCase):
         aia = authority_information_access(ocsp=[uri("http://example.com")])
         with self.assertCommandError(
             r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"
-        ), self.assertCreateCASignals(False, False):
+        ), assert_create_ca_signals(False, False):
             self.init_ca(name="foobar", authority_information_access=aia.value)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
@@ -1179,13 +1180,13 @@ class InitCATest(TestCaseMixin, TestCase):
         aia = authority_information_access(ca_issuers=[uri("http://example.com")])
         with self.assertCommandError(
             r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"
-        ), self.assertCreateCASignals(False, False):
+        ), assert_create_ca_signals(False, False):
             self.init_ca(name="foobar", authority_information_access=aia.value)
 
     @override_tmpcadir()
     def test_small_key_size(self) -> None:
         """Test creating a key with a key size that is too small."""
-        with self.assertCommandError(r"^256: Key size must be least 1024 bits$"), self.assertCreateCASignals(
+        with self.assertCommandError(r"^256: Key size must be least 1024 bits$"), assert_create_ca_signals(
             False, False
         ):
             self.init_ca(key_size=256)
@@ -1193,7 +1194,7 @@ class InitCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_key_not_power_of_two(self) -> None:
         """Test creating a key with invalid key size."""
-        with self.assertCommandError(r"^2049: Key size must be a power of two$"), self.assertCreateCASignals(
+        with self.assertCommandError(r"^2049: Key size must be a power of two$"), assert_create_ca_signals(
             False, False
         ):
             self.init_ca(key_size=2049)
@@ -1205,7 +1206,7 @@ class InitCATest(TestCaseMixin, TestCase):
         stderr = io.StringIO()
         name = "Test CA"
 
-        with self.assertCreateCASignals() as (pre, post):
+        with assert_create_ca_signals() as (pre, post):
             out, err = self.cmd("init_ca", name, f"/CN={name}", stdout=stdout, stderr=stderr)
         self.assertEqual(out, "")
         # message is too long, just make sure it's there:

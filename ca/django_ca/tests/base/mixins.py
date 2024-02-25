@@ -274,18 +274,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
 
     @contextmanager
-    def assertCreateCASignals(  # pylint: disable=invalid-name
-        self, pre: bool = True, post: bool = True
-    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
-        """Context manager mocking both pre and post_create_ca signals."""
-        with mock_signal(pre_create_ca) as pre_sig, mock_signal(post_create_ca) as post_sig:
-            try:
-                yield pre_sig, post_sig
-            finally:
-                self.assertTrue(pre_sig.called is pre)
-                self.assertTrue(post_sig.called is post)
-
-    @contextmanager
     def assertSignCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:

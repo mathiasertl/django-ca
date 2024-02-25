@@ -11,11 +11,13 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Various assertions used in pytest."""
+""":py:mod:`django_ca.tests.base.assertions` collects assertions used throughout the entire test suite."""
+
 import re
 from contextlib import contextmanager
 from http import HTTPStatus
 from typing import Any, Iterator, Optional, Tuple, Union
+from unittest.mock import Mock
 
 from django.db import models
 from django.templatetags.static import static
@@ -24,6 +26,8 @@ import pytest
 from pytest_django.asserts import assertInHTML
 
 from django_ca.deprecation import RemovedInDjangoCA200Warning
+from django_ca.signals import post_create_ca, pre_create_ca
+from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import HttpResponse
 
 
@@ -51,6 +55,17 @@ def assert_changelist_response(response: "HttpResponse", *objects: models.Model)
     templates = [t.name for t in response.templates]
     assert "admin/base.html" in templates
     assert "admin/change_list.html" in templates
+
+
+@contextmanager
+def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[Tuple[Mock, Mock]]:
+    """Context manager mocking both pre and post_create_ca signals."""
+    with mock_signal(pre_create_ca) as pre_sig, mock_signal(post_create_ca) as post_sig:
+        try:
+            yield pre_sig, post_sig
+        finally:
+            assert pre_sig.called is pre
+            assert post_sig.called is post
 
 
 def assert_css(response: "HttpResponse", path: str, media: str = "all") -> None:

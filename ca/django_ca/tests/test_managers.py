@@ -31,6 +31,7 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
+from django_ca.tests.base.assertions import assert_create_ca_signals
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -94,7 +95,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test creating the most basic possible CA."""
         name = "basic"
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject)
         self.assertProperties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
@@ -108,7 +109,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_basic_with_hsm(self) -> None:
         """Test creating the most basic possible CA."""
         name = "basic"
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject, key_backend="...", key_options={})
         self.assertProperties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
@@ -122,7 +123,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_dsa_key(self) -> None:
         """Test creating the most basic possible CA."""
         name = "dsa-ca"
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject, key_type="DSA")
         self.assertProperties(ca, name, self.subject)
         self.assertEqual(ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
@@ -134,7 +135,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Create a CA with bytes as password."""
         name = "password_bytes"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, subject, password=b"foobar")
         ca.key("foobar").public_key()
         ca.key(b"foobar").public_key()
@@ -144,7 +145,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Create a CA with a str as password."""
         name = "password_bytes"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, subject, password="foobar")
         ca.key("foobar").public_key()
         ca.key(b"foobar").public_key()
@@ -156,7 +157,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
         name = "root"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "root.example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, subject, path_length=2)
         self.assertProperties(ca, name, subject)
         self.assertNotIn(ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ca.extensions)
@@ -164,7 +165,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         name = "child"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             child = CertificateAuthority.objects.init(name, subject, parent=ca)
         self.assertProperties(child, name, subject, parent=ca)
 
@@ -184,7 +185,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
 
         name = "grandchild"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "grandchild.example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             grandchild = CertificateAuthority.objects.init(name, subject, parent=child)
         self.assertProperties(grandchild, name, subject, parent=child)
 
@@ -206,7 +207,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         """Test creating a CA with no default hostname."""
         name = "ndh"
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ndh.example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, subject, default_hostname=False)
         self.assertEqual(ca.crl_number, '{"scope": {}}')
         self.assertIsNone(ca.sign_authority_information_access)
@@ -226,7 +227,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             self.ext(x509.InhibitAnyPolicy(3)),
         ]
 
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init("with-extra", subject, extensions=extensions)
 
         self.assertEqual(ca.subject, subject)
@@ -253,7 +254,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             authority_information_access(ca_issuers=[uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")]),
         ]
 
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(
                 "auto-ocsp", subject, parent=parent, extensions=passed_extensions
             )
@@ -275,7 +276,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             ),
         ]
 
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(
                 "auto-ca-issuers", subject, parent=parent, extensions=passed_extensions
             )
@@ -303,7 +304,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
             crl_distribution_points(distribution_point([uri("http://example.com/crl/{CRL_PATH}")])),
         ]
 
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(
                 "formatting", subject, parent=parent, extensions=passed_extensions
             )
@@ -336,7 +337,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         passed_extensions: List[x509.Extension[x509.ExtensionType]] = [aia, crldp]
 
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(
                 "formatting", subject, parent=parent, extensions=passed_extensions
             )
@@ -358,7 +359,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
         passed_extensions: List[x509.Extension[x509.ExtensionType]] = [crldp]
 
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(
                 "formatting-rdn", subject, parent=parent, extensions=passed_extensions
             )
@@ -370,7 +371,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_no_extensions(self) -> None:
         """Test passing no extensions."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init("with-extra", subject, extensions=None)
         self.assertEqual(ca.subject, subject)
         self.assertExtensions(ca, [basic_constraints(ca=True), key_usage(crl_sign=True, key_cert_sign=True)])
@@ -379,7 +380,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_acme_parameters(self) -> None:
         """Test parameters for ACMEv2."""
         name = "acme"
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(
                 name, self.subject, acme_enabled=True, acme_profile="client", acme_requires_contact=False
             )
@@ -392,7 +393,7 @@ class CertificateAuthorityManagerInitTestCase(TestCaseMixin, TestCase):
     def test_api_parameters(self) -> None:
         """Test parameters for the REST API."""
         name = "api"
-        with self.assertCreateCASignals():
+        with assert_create_ca_signals():
             ca = CertificateAuthority.objects.init(name, self.subject, api_enabled=True)
         self.assertProperties(ca, name, self.subject)
         self.assertTrue(ca.api_enabled)
