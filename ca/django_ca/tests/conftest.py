@@ -17,8 +17,6 @@
 import copy
 import importlib.metadata
 import os
-import secrets
-import string
 import sys
 from pathlib import Path
 from typing import Any, Iterator, List, Type
@@ -128,18 +126,18 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
 
 @pytest.fixture()
-def ca_name() -> Iterator[str]:
-    """Fixture for a random string for a name of a certificate authority."""
-    yield "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
+def ca_name(request: "SubRequest") -> Iterator[str]:
+    """Fixture for a name suitable for a CA."""
+    yield request.node.name
 
 
 @pytest.fixture()
-def hostname(request: "SubRequest", ca_name: str) -> Iterator[str]:
+def hostname(ca_name: str) -> Iterator[str]:
     """Fixture for a hostname.
 
-    The value is unique for each test, and it includes the test name and the (random) CA name.
+    The value is unique for each test, and it includes the CA name, which includes the test name.
     """
-    yield f"{request.node.name}.{ca_name}.example.com"
+    yield f"{ca_name}.example.com"
 
 
 @pytest.fixture()
