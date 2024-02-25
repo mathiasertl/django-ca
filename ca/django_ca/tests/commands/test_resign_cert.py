@@ -35,6 +35,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority, Watcher
+from django_ca.tests.base.assertions import assert_create_cert_signals
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -110,7 +111,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Simplest test while resigning a cert."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial)
         self.assertEqual(stderr, "")
 
@@ -122,7 +123,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_dsa_ca_resign(self) -> None:
         """Resign a certificate from a DSA CA."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd("resign_cert", self.certs["dsa-cert"].serial)
         self.assertEqual(stderr, "")
 
@@ -135,7 +136,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     def test_all_extensions_certificate(self) -> None:
         """Test resigning the all-extensions certificate."""
         orig = self.certs["all-extensions"]
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd("resign_cert", orig.serial)
         self.assertEqual(stderr, "")
 
@@ -166,7 +167,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.ca.save()
 
         orig = self.certs["all-extensions"]
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
@@ -318,7 +319,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.ca.save()
 
         orig = self.certs["no-extensions"]
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
@@ -424,7 +425,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.ca.save()
 
         orig = self.certs["no-extensions"]
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd(
                 "resign_cert",
                 orig.serial,
@@ -528,7 +529,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_custom_algorithm(self) -> None:
         """Test resigning a cert with a new algorithm."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
         self.assertEqual(stderr, "")
 
@@ -540,7 +541,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_different_ca(self) -> None:
         """Test writing with a different CA."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
 
         self.assertEqual(stderr, "")
@@ -557,7 +558,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         watcher = "new@example.com"
 
         # resign a cert, but overwrite all options
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd_e2e(
                 [
                     "resign_cert",
@@ -616,7 +617,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     )
     def test_set_profile(self) -> None:
         """Test getting the certificate from the profile."""
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial, "--server"])
         self.assertEqual(stderr, "")
 
@@ -634,7 +635,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.cert.profile = "server"
         self.cert.save()
 
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd_e2e(["resign_cert", self.cert.serial])
         self.assertEqual(stderr, "")
 
@@ -648,7 +649,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test writing output to file."""
         out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
 
-        with self.assertCreateCertSignals():
+        with assert_create_cert_signals():
             stdout, stderr = self.cmd("resign_cert", self.cert.serial, out=out_path)
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -670,7 +671,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             r"^Must give at least a Common Name in --subject or one or more "
             r"--subject-alternative-name/--name arguments\.$"
         )
-        with self.assertCreateCertSignals(False, False), self.assertCommandError(msg):
+        with assert_create_cert_signals(False, False), self.assertCommandError(msg):
             self.cmd("resign_cert", cert, subject_format="rfc4514", subject=subject.rfc4514_string())
 
     @override_tmpcadir()
@@ -678,7 +679,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test resign function throwing a random exception."""
         msg = "foobar"
         msg_re = rf"^{msg}$"
-        with self.assertCreateCertSignals(False, False), patch(
+        with assert_create_cert_signals(False, False), patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
         ), self.assertCommandError(msg_re):
             self.cmd("resign_cert", self.cert.serial)
