@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Helpers for pytest conftest."""
-
+import datetime
 import os
 import shutil
 import sys
@@ -32,12 +32,11 @@ from django.urls import reverse
 
 import pytest
 from _pytest.fixtures import SubRequest
-from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
+from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
 from django_ca.tests.base.utils import crl_distribution_points, distribution_point, uri
 from django_ca.utils import int_to_hex
 
@@ -163,6 +162,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
     ) -> Iterator[CertificateAuthority]:
         data = CERT_DATA[name]
         pub = request.getfixturevalue(f"{name}_pub")
+        print("now?", datetime.datetime.now())
 
         # Load any parent
         parent = None
@@ -174,8 +174,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
             "sign_authority_information_access": data["sign_authority_information_access"],
         }
 
-        with freeze_time(TIMESTAMPS["everything_valid"]):
-            ca = load_ca(name, pub, parent, **kwargs)
+        ca = load_ca(name, pub, parent, **kwargs)
 
         yield ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
@@ -207,9 +206,7 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
         data = CERT_DATA[name]
         ca = request.getfixturevalue(data["ca"])
         pub = request.getfixturevalue(f"{sanitized_name}_pub")
-
-        with freeze_time(TIMESTAMPS["everything_valid"]):
-            cert = load_cert(ca, None, pub, data.get("profile", ""))
+        cert = load_cert(ca, None, pub, data.get("profile", ""))
 
         yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
