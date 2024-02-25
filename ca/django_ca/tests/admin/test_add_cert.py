@@ -47,8 +47,8 @@ from django_ca.pydantic.extensions import (
     AuthorityInformationAccessModel,
     CRLDistributionPointsModel,
 )
+from django_ca.tests.admin.assertions import assert_css
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
-from django_ca.tests.base.assertions import assert_css
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.testcases import SeleniumTestCase
 from django_ca.tests.base.typehints import HttpResponse

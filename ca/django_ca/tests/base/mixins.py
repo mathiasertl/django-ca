@@ -52,15 +52,8 @@ from django_ca.constants import ReasonFlags
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
-from django_ca.signals import (
-    post_create_ca,
-    post_issue_cert,
-    post_revoke_cert,
-    post_sign_cert,
-    pre_create_ca,
-    pre_sign_cert,
-)
-from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
+from django_ca.signals import post_create_ca, post_issue_cert, post_revoke_cert, post_sign_cert, pre_sign_cert
+from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar

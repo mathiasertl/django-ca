@@ -57,3 +57,9 @@ Assertions
 
 .. automodule:: django_ca.tests.base.assertions
    :members:
+
+Admin interface
+---------------
+
+.. automodule:: django_ca.tests.admin.assertions
+   :members:

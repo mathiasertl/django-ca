@@ -21,7 +21,7 @@ from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
 from django.test import Client, TestCase, override_settings
 
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base.assertions import assert_change_response
+from django_ca.tests.admin.assertions import assert_change_response
 from django_ca.tests.base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
 
 
