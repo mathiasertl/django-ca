@@ -76,3 +76,11 @@ Admin interface
 
 .. automodule:: django_ca.tests.admin.assertions
    :members:
+
+
+Utility functions
+=================
+
+.. automodule:: django_ca.tests.base.utils
+   :members:
+   :exclude-members: OutputChecker

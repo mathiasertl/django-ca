@@ -503,6 +503,7 @@ nitpick_ignore = [
     ("py:class", "django_ca.backends.base.Self"),  # pragma: only py<3.11  # replace with typing.Self
     # Undocumented in Python:
     ("py:class", "argparse._ArgumentGroup"),
+    ("py:class", "doctest.TestResults"),
     # undocumented Django:
     ("py:class", "django.core.management.base.CommandParser"),
     # asn1crypto is really used only for OtherNames, so we do not link it
