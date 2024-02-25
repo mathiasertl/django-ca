@@ -41,8 +41,6 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.storage import storages
 from django.core.management import ManagementUtility, call_command
 from django.core.management.base import CommandError
-from django.db import models
-from django.dispatch.dispatcher import Signal
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
@@ -64,6 +62,7 @@ from django_ca.signals import (
 )
 from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 from django_ca.tests.base.utils import basic_constraints, certificate_policies
 
@@ -279,7 +278,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, pre: bool = True, post: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
-        with self.mockSignal(pre_create_ca) as pre_sig, self.mockSignal(post_create_ca) as post_sig:
+        with mock_signal(pre_create_ca) as pre_sig, mock_signal(post_create_ca) as post_sig:
             try:
                 yield pre_sig, post_sig
             finally:
@@ -291,7 +290,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, pre: bool = True, post: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
-        with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_sign_cert) as post_sig:
+        with mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_sign_cert) as post_sig:
             try:
                 yield pre_sig, post_sig
             finally:
@@ -374,7 +373,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, pre: bool = True, post: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
-        with self.mockSignal(pre_sign_cert) as pre_sig, self.mockSignal(post_issue_cert) as post_sig:
+        with self.mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_issue_cert) as post_sig:
             try:
                 yield pre_sig, post_sig
             finally:
@@ -961,27 +960,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cert.save()
         cert.refresh_from_db()  # make sure we have lazy fields set
         return cert
-
-    @contextmanager
-    def mockSignal(self, signal: Signal) -> Iterator[mock.Mock]:  # pylint: disable=invalid-name
-        """Context manager to attach a mock to the given signal."""
-
-        # This function is only here to create an autospec. From the documentation:
-        #
-        #   Notice that the function takes a sender argument, along with wildcard keyword arguments
-        #   (**kwargs); all signal handlers must take these arguments.
-        #
-        # https://docs.djangoproject.com/en/dev/topics/signals/#connecting-to-specific-signals
-        def callback(sender: models.Model, **kwargs: Any) -> None:  # pragma: no cover
-            # pylint: disable=unused-argument
-            pass
-
-        signal_mock = mock.create_autospec(callback, spec_set=True)
-        signal.connect(signal_mock)
-        try:
-            yield signal_mock
-        finally:
-            signal.disconnect(signal_mock)
 
     @contextmanager
     def mute_celery(self, *calls: Any) -> Iterator[mock.MagicMock]:

@@ -33,6 +33,7 @@ from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
@@ -99,7 +100,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example")
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -122,7 +123,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         prof = Profile("example", subject=False)
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -160,7 +161,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             add_issuer_url=False,
             add_issuer_alternative_name=False,
         )
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, expected_subject)
@@ -176,7 +177,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             expect_defaults=False,
         )
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -205,7 +206,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         prof = Profile("example", extensions={"ocsp_no_check": None})
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
         self.assertEqual(pre.call_count, 1)
         self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.extensions)
@@ -222,7 +223,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         )
 
         prof = Profile("example")
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -255,7 +256,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         added_crldp = self.crl_distribution_points([uri(crl_url)])
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -292,7 +293,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         # Make sure that algorithm does not match what is the default profile above, so that we can test it
         self.assertIsInstance(root.algorithm, hashes.SHA256)
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 root,
@@ -319,7 +320,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         added_ian_uri = uri("https://ian.cert.example.com")
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -364,7 +365,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         added_aia = authority_information_access(ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp])
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -401,7 +402,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         prof = Profile("example", extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -443,7 +444,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             ca_issuers=[uri("http://issuer.example.com/expected")],
         )
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -490,7 +491,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
         # Only pass an OCSP responder
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -516,7 +517,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         )
 
         # Only pass an CA issuer
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
                 ca,
@@ -549,7 +550,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         prof = Profile("example")
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with self.mockSignal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
+        with mock_signal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
             self.create_cert(prof, ca, csr, subject=None)
         self.assertEqual(pre.call_count, 0)
 
@@ -561,7 +562,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile("example", extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
-        with self.mockSignal(pre_sign_cert) as pre:
+        with mock_signal(pre_sign_cert) as pre:
             self.create_cert(prof, ca, csr, extensions=[san])
         self.assertEqual(pre.call_count, 1)
 

@@ -190,7 +190,7 @@ class AdminChangeActionTestCaseMixin(
         self, pre_called: bool = True, post_called: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Assert that the signals were (not) called."""
-        with self.mockSignal(self.pre_signal) as pre, self.mockSignal(self.post_signal) as post:
+        with self.mock_signal(self.pre_signal) as pre, self.mock_signal(self.post_signal) as post:
             try:
                 yield pre, post
             finally:

@@ -23,6 +23,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate
 from django_ca.signals import post_revoke_cert, pre_revoke_cert
 from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.mocks import mock_signal
 
 
 class RevokeCertTestCase(TestCaseMixin, TestCase):
@@ -41,7 +42,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         if arguments is None:
             arguments = []
 
-        with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
+        with mock_signal(pre_revoke_cert) as pre, mock_signal(post_revoke_cert) as post:
             stdout, stderr = self.cmd_e2e(["revoke_cert", cert.serial, *arguments])
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -88,7 +89,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         """Test revoking a cert that is already revoked."""
         self.assertFalse(self.cert.revoked)
 
-        with self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
+        with mock_signal(pre_revoke_cert) as pre, mock_signal(post_revoke_cert) as post:
             self.cmd("revoke_cert", self.cert.serial)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
@@ -96,9 +97,9 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         self.assertPostRevoke(post, cert)
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
-        with self.assertCommandError(
-            rf"^{self.cert.serial}: Certificate is already revoked\.$"
-        ), self.mockSignal(pre_revoke_cert) as pre, self.mockSignal(post_revoke_cert) as post:
+        with self.assertCommandError(rf"^{self.cert.serial}: Certificate is already revoked\.$"), mock_signal(
+            pre_revoke_cert
+        ) as pre, mock_signal(post_revoke_cert) as post:
             self.cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)
