@@ -23,7 +23,7 @@ from pytest_django.asserts import assertContains, assertInHTML, assertRedirects
 
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, Watcher
-from django_ca.tests.base.assertions import assert_change_response, assert_changelist_response
+from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
 

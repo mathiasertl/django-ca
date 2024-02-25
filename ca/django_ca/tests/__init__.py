@@ -29,6 +29,7 @@ from django_ca import ca_settings, profiles
 #   https://docs.pytest.org/en/latest/how-to/writing_plugins.html#assertion-rewriting
 pytest.register_assert_rewrite(
     "django_ca.tests.base.assertions",
+    "django_ca.tests.admin.assertions",
     "django_ca.tests.pydantic.base",
 )
 
