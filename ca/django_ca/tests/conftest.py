@@ -30,7 +30,6 @@ from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.core.files.storage import storages
 from django.test import Client
-from django.utils.crypto import get_random_string
 
 import pytest
 from _pytest.config import Config as PytestConfig
@@ -41,6 +40,8 @@ from pytest_cov.plugin import CovPlugin
 from pytest_django.fixtures import SettingsWrapper
 
 from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings
+from django_ca import ca_settings
+from django_ca.backends.storages import StoragesBackend
 from django_ca.models import Certificate
 from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
@@ -130,7 +131,7 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 def hostname(request: "SubRequest") -> Iterator[str]:
     """Fixture for a hostname.
 
-    The value is unique for each test, is based on the test name and includes a random component.
+    The value is unique for each test, and it includes the test name and a random component.
     """
     nonce = "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
     yield f"{request.node.name}.{nonce}.example.com"
@@ -144,6 +145,19 @@ def name(hostname: str) -> Iterator[x509.Name]:
     """
     yield x509.Name(
         [x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"), x509.NameAttribute(NameOID.COMMON_NAME, hostname)]
+    )
+
+
+@pytest.fixture()
+def storages_backend(tmpcadir: SettingsWrapper) -> StoragesBackend:
+    """Return a :py:class:`~django_ca.backends.storages.StoragesBackend` suitable for creating a new CA."""
+    yield StoragesBackend(
+        alias=ca_settings.CA_DEFAULT_STORAGE_ALIAS,
+        password=None,
+        _base_path=Path("ca"),
+        _key_type="RSA",
+        _key_size=ca_settings.CA_DEFAULT_KEY_SIZE,
+        _elliptic_curve=None,
     )
 
 

@@ -20,6 +20,7 @@ from typing import Iterator, Optional, Tuple, Union
 from unittest.mock import Mock
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import ExtensionOID
 
 import pytest
@@ -37,7 +38,7 @@ from django_ca.tests.base.utils import (
 )
 
 
-def assert_authority_key_identifier(self, issuer: CertificateAuthority, cert: X509CertMixin) -> None:
+def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509CertMixin) -> None:
     """Assert the AuthorityKeyIdentifier extension of `issuer`.
 
     This assertion tests that :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier` extension of `cert`
@@ -58,21 +59,25 @@ def assert_certificate_authority_properties(
 
     base_url = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
     assert ca.name == name
-    assert ca.issuer == issuer
-    assert ca.subject == subject
     assert ca.enabled is True
     assert ca.parent == parent
     assert ca.crl_number == '{"scope": {}}'
+    assert ca.acme_profile == ca_settings.CA_DEFAULT_PROFILE
+
+    # Test certificate properties
+    assert ca.issuer == issuer
+    assert ca.subject == subject
+    assert isinstance(ca.algorithm, hashes.SHA512)
 
     # Test AuthorityKeyIdentifier extension
     assert_authority_key_identifier(parent_ca, ca)
 
     # Test the BasicConstraints extension
     basic_constraints_ext = typing.cast(
-        x509.Extension[x509.BasicConstraints], ca.extensions[ExtensionOID.BASIC_CONSTRAINTS].value
+        x509.Extension[x509.BasicConstraints], ca.extensions[ExtensionOID.BASIC_CONSTRAINTS]
     )
     assert basic_constraints_ext.critical is True
-    assert basic_constraints_ext.value.ca is False
+    assert basic_constraints_ext.value.ca is True
 
     # Test default signing extensions
     assert ca.sign_authority_information_access == authority_information_access(
