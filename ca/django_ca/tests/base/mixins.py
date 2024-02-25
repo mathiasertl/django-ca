@@ -168,18 +168,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             name = f"django_ca{name}"
         return f"http://{hostname}{reverse(name, kwargs=kwargs)}"
 
-    def assertAuthorityKeyIdentifier(  # pylint: disable=invalid-name
-        self, issuer: CertificateAuthority, cert: X509CertMixin
-    ) -> None:
-        """Test the key identifier of the AuthorityKeyIdentifier extension of `cert`."""
-        actual = typing.cast(
-            x509.AuthorityKeyIdentifier, cert.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
-        )
-        expected = typing.cast(
-            x509.SubjectKeyIdentifier, issuer.extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
-        )
-        self.assertEqual(actual.key_identifier, expected.key_identifier)
-
     def assertBasic(  # pylint: disable=invalid-name
         self, cert: x509.Certificate, algo: Type[hashes.HashAlgorithm] = hashes.SHA256
     ) -> None:

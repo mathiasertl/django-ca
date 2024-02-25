@@ -36,7 +36,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_create_ca_signals
+from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_create_ca_signals
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -135,7 +135,7 @@ class InitCATest(TestCaseMixin, TestCase):
             ),
         )
         self.assertIssuer(ca, ca)
-        self.assertAuthorityKeyIdentifier(ca, ca)
+        assert_authority_key_identifier(ca, ca)
         self.assertEqual(ca.serial, int_to_hex(ca.pub.loaded.serial_number))
 
         # Test that extensions that do not work for root CAs are NOT present
@@ -244,7 +244,7 @@ class InitCATest(TestCaseMixin, TestCase):
             crl_distribution_points(distribution_point([uri("http://crl.example.com")])),
         )
         self.assertIssuer(ca, ca)
-        self.assertAuthorityKeyIdentifier(ca, ca)
+        assert_authority_key_identifier(ca, ca)
 
         # test non-extension properties
         self.assertEqual(ca.caa_identity, caa)
@@ -744,7 +744,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.path_length, None)
         self.assertTrue(ca.allows_intermediate_ca)
         self.assertIssuer(ca, ca)
-        self.assertAuthorityKeyIdentifier(ca, ca)
+        assert_authority_key_identifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_empty_subject_fields(self) -> None:
@@ -768,7 +768,7 @@ class InitCATest(TestCaseMixin, TestCase):
             ),
         )
         self.assertIssuer(ca, ca)
-        self.assertAuthorityKeyIdentifier(ca, ca)
+        assert_authority_key_identifier(ca, ca)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_no_cn(self) -> None:
@@ -832,7 +832,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(list(child.children.all()), [])
         self.assertEqual(list(parent.children.all()), [child])
         self.assertIssuer(parent, child)
-        self.assertAuthorityKeyIdentifier(parent, child)
+        assert_authority_key_identifier(parent, child)
         self.assertEqual(
             child.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             self.crl_distribution_points([crl_full_name]),
@@ -984,7 +984,7 @@ class InitCATest(TestCaseMixin, TestCase):
         self.assertEqual(list(child.children.all()), [])
         self.assertEqual(list(parent.children.all()), [child])
         self.assertIssuer(parent, child)
-        self.assertAuthorityKeyIdentifier(parent, child)
+        assert_authority_key_identifier(parent, child)
 
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024, USE_TZ=False)
     def test_expires_override_with_use_tz_false(self) -> None:

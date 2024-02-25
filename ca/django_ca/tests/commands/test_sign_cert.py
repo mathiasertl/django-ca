@@ -31,6 +31,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base.assertions import assert_authority_key_identifier
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -89,7 +90,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         )
         self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, actual)
         self.assertIssuer(self.ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ca, cert)
+        assert_authority_key_identifier(self.ca, cert)
 
     @override_tmpcadir()
     def test_with_bundle(self) -> None:
@@ -141,7 +142,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
                 actual[ExtensionOID.EXTENDED_KEY_USAGE], extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
             )
             self.assertIssuer(ca, cert)
-            self.assertAuthorityKeyIdentifier(ca, cert)
+            assert_authority_key_identifier(ca, cert)
 
     @override_tmpcadir()
     def test_from_file(self) -> None:
@@ -199,7 +200,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             self.assertEqual(stderr, "")
 
             self.assertIssuer(self.ca, cert)
-            self.assertAuthorityKeyIdentifier(self.ca, cert)
+            assert_authority_key_identifier(self.ca, cert)
 
             with open(out_path, encoding="ascii") as out_stream:
                 from_file = out_stream.read()
@@ -310,7 +311,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertSignature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertIssuer(self.ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ca, cert)
+        assert_authority_key_identifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
         self.assertNotIn(ExtensionOID.SUBJECT_ALTERNATIVE_NAME, cert.extensions)
@@ -339,7 +340,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         self.assertSignature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
-        self.assertAuthorityKeyIdentifier(self.ca, cert)
+        assert_authority_key_identifier(self.ca, cert)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME], san)
 

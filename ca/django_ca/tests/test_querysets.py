@@ -38,6 +38,7 @@ from django_ca.models import (
     Certificate,
     CertificateAuthority,
 )
+from django_ca.tests.base.assertions import assert_authority_key_identifier
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import basic_constraints, key_usage, override_tmpcadir
@@ -156,7 +157,7 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
             subject=x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="child.ca.example.com")]),
         )
 
-        self.assertAuthorityKeyIdentifier(parent, child)
+        assert_authority_key_identifier(parent, child)
 
     @override_tmpcadir()
     def test_openssh_ca(self) -> None:
