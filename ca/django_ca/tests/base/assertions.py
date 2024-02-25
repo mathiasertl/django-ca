@@ -51,7 +51,7 @@ def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509Cert
     """
     actual = cert.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
     expected = issuer.extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
-    assert actual.key_identifier == expected.key_identifier
+    assert actual.key_identifier == expected.key_identifier  # type: ignore[attr-defined]
 
 
 def assert_ca_properties(
@@ -84,7 +84,8 @@ def assert_ca_properties(
     # Test certificate properties
     assert ca.issuer == issuer
     assert ca.subject == subject
-    assert isinstance(ca.get_key_backend().key, private_key_type)
+    # TYPEHINT NOTE: We assume a StoragesBackend here
+    assert isinstance(ca.get_key_backend().key, private_key_type)  # type: ignore[attr-defined]
     assert isinstance(ca.algorithm, algorithm)
 
     # Test AuthorityKeyIdentifier extension

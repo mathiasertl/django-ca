@@ -133,7 +133,7 @@ class StoragesBackend(KeyBackend):
             return False
         return file_exists(self.path)
 
-    def initialize(self, key_type: Optional[ParsableKeyType]) -> CertificateIssuerPublicKeyTypes:
+    def initialize(self, key_type: ParsableKeyType) -> CertificateIssuerPublicKeyTypes:
         if self.ca is None or self._base_path is None:
             raise ValueError("Backend is not initialized.")
         storage = storages[self.alias]

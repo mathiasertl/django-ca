@@ -141,8 +141,9 @@ def hostname(ca_name: str) -> Iterator[str]:
 
 
 @pytest.fixture()
-def storages_backend(tmpcadir: SettingsWrapper) -> StoragesBackend:
+def storages_backend(request: "SubRequest") -> StoragesBackend:
     """Return a :py:class:`~django_ca.backends.storages.StoragesBackend` suitable for creating a new CA."""
+    request.getfixturevalue("tmpcadir")
     yield StoragesBackend(
         alias=ca_settings.CA_DEFAULT_STORAGE_ALIAS,
         password=None,

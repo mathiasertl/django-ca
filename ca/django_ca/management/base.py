@@ -517,7 +517,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_subject_group(parser)
         self.add_algorithm(general_group)
         self.add_ca(general_group, no_default=no_default_ca)
-        self.add_password(general_group)
+        add_password(general_group)
         self.add_authority_information_access_group(parser)
         self.add_certificate_policies_group(
             parser,

@@ -492,7 +492,7 @@ class CertificateAuthorityManager(
         # Actually generate the private key and set key_backend_options
         backend.ca = ca  # used to generate the private key and sign the public key
         public_key = backend.initialize(key_type)
-        ca._key_backend = backend  # cache key_backend
+        ca._key_backend = backend  # pylint: disable=protected-access  # cache key_backend
 
         # Add Basic Constraints extension
         extensions.append(
