@@ -251,7 +251,7 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
 #   https://github.com/pytest-dev/pytest/issues/2424
 for _ca_name in usable_ca_names:
     globals()[_ca_name] = generate_ca_fixture(_ca_name)
-    globals()[f"usable_{ca_name}"] = generate_usable_ca_fixture(_ca_name)
+    globals()[f"usable_{_ca_name}"] = generate_usable_ca_fixture(_ca_name)
 for _ca_name in usable_ca_names + usable_cert_names + unusable_cert_names:
     globals()[f"{_ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(_ca_name)
 for cert_name in usable_cert_names:

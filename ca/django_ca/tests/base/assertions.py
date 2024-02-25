@@ -16,7 +16,7 @@
 import re
 import typing
 from contextlib import contextmanager
-from typing import Iterator, Optional, Tuple, Type, Union
+from typing import Iterable, Iterator, Optional, Tuple, Type, Union
 from unittest.mock import Mock
 
 from cryptography import x509
@@ -29,11 +29,12 @@ import pytest
 
 from django_ca import ca_settings
 from django_ca.deprecation import RemovedInDjangoCA200Warning
-from django_ca.models import CertificateAuthority, X509CertMixin
+from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, pre_create_ca
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
+    basic_constraints,
     crl_distribution_points,
     distribution_point,
     uri,
@@ -51,13 +52,16 @@ def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509Cert
     assert actual.key_identifier == expected.key_identifier
 
 
-def assert_certificate_authority_properties(
+def assert_ca_properties(
     ca: CertificateAuthority,
     name: str,
     subject: x509.Name,
     parent: Optional[CertificateAuthority] = None,
     private_key_type: Type[CertificateIssuerPrivateKeyTypes] = rsa.RSAPrivateKey,
     algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+    acme_enabled: bool = False,
+    acme_profile: Optional[str] = None,
+    acme_requires_contact: bool = True,
 ) -> None:
     """Assert some basic properties of a CA."""
     parent_ca = parent or ca
@@ -69,7 +73,11 @@ def assert_certificate_authority_properties(
     assert ca.enabled is True
     assert ca.parent == parent
     assert ca.crl_number == '{"scope": {}}'
-    assert ca.acme_profile == ca_settings.CA_DEFAULT_PROFILE
+
+    # Test ACME properties
+    assert ca.acme_enabled is acme_enabled
+    assert ca.acme_profile == acme_profile or ca_settings.CA_DEFAULT_PROFILE
+    assert ca.acme_requires_contact is acme_requires_contact
 
     # Test certificate properties
     assert ca.issuer == issuer
@@ -108,6 +116,66 @@ def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[Tu
         finally:
             assert pre_sig.called is pre
             assert post_sig.called is post
+
+
+def assert_extensions(
+    cert: Union[X509CertMixin, x509.Certificate],
+    extensions: Iterable[x509.Extension[x509.ExtensionType]],
+    signer: Optional[CertificateAuthority] = None,
+    expect_defaults: bool = True,
+) -> None:
+    """Assert that `cert` has the given extensions."""
+    # temporary fast check
+    for ext in extensions:
+        assert isinstance(ext, x509.Extension)
+
+    expected = {e.oid: e for e in extensions}
+
+    if isinstance(cert, Certificate):
+        pubkey = cert.pub.loaded.public_key()
+        actual = cert.extensions
+        signer = cert.ca
+    elif isinstance(cert, CertificateAuthority):
+        pubkey = cert.pub.loaded.public_key()
+        actual = cert.extensions
+
+        if cert.parent is None:  # root CA
+            signer = cert
+        else:  # intermediate CA
+            signer = cert.parent
+    elif isinstance(cert, x509.Certificate):  # cg cert
+        pubkey = cert.public_key()
+        actual = {e.oid: e for e in cert.extensions}
+    else:  # pragma: no cover
+        raise ValueError("cert must be Certificate(Authority) or x509.Certificate)")
+
+    if expect_defaults is True:
+        if isinstance(cert, Certificate):
+            expected.setdefault(ExtensionOID.BASIC_CONSTRAINTS, basic_constraints(ca=False))
+        if signer is not None:  # pragma: no branch
+            expected.setdefault(
+                ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                signer.get_authority_key_identifier_extension(),
+            )
+
+            if isinstance(cert, Certificate) and signer.sign_crl_distribution_points:
+                expected.setdefault(ExtensionOID.CRL_DISTRIBUTION_POINTS, signer.sign_crl_distribution_points)
+
+            if isinstance(cert, Certificate) and signer.sign_authority_information_access:
+                expected.setdefault(
+                    ExtensionOID.AUTHORITY_INFORMATION_ACCESS, signer.sign_authority_information_access
+                )
+
+        ski = x509.SubjectKeyIdentifier.from_public_key(pubkey)
+        expected.setdefault(
+            ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+            x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+        )
+
+    # Diff output is bad for dicts, so we sort this based on dotted string to get better output
+    actual_tuple = sorted(actual.items(), key=lambda t: t[0].dotted_string)
+    expected_tuple = sorted(expected.items(), key=lambda t: t[0].dotted_string)
+    assert actual_tuple == expected_tuple
 
 
 @contextmanager

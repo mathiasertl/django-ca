@@ -31,6 +31,7 @@ from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
+from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.mocks import mock_signal
@@ -109,7 +110,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 add_issuer_alternative_name=False,
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertExtensions(cert, [ca.get_authority_key_identifier_extension()])
+        assert_extensions(cert, [ca.get_authority_key_identifier_extension()])
 
     @override_tmpcadir()
     def test_alternative_values(self) -> None:
@@ -136,7 +137,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.cn, self.hostname)
         self.assertEqual(cert.subject, subject)
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
@@ -167,7 +168,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(cert.subject, expected_subject)
         self.assertEqual(cert.ca, ca)
 
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 subject_key_identifier(cert),
@@ -191,7 +192,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, expected_subject)
         self.assertEqual(cert.ca, ca)
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
@@ -236,7 +237,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions=[ski],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [ca.get_authority_key_identifier_extension(), basic_constraints(), ski],
             expect_defaults=False,
@@ -271,7 +272,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
 
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
@@ -335,7 +336,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertEqual(pre.call_count, 1)
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
 
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
@@ -381,7 +382,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
         ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
 
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 ca.get_authority_key_identifier_extension(),
@@ -412,7 +413,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
                 extensions=[ocsp_no_check()],
             )
         self.assertEqual(pre.call_count, 1)
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [ca.get_authority_key_identifier_extension(), basic_constraints(), ocsp_no_check()],
         )

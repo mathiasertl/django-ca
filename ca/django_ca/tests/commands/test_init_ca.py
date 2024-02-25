@@ -36,7 +36,11 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_create_ca_signals
+from django_ca.tests.base.assertions import (
+    assert_authority_key_identifier,
+    assert_create_ca_signals,
+    assert_extensions,
+)
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -165,7 +169,7 @@ class InitCATest(TestCaseMixin, TestCase):
                 ]
             ),
         )
-        self.assertExtensions(
+        assert_extensions(
             cert,
             [
                 ocsp_no_check(),

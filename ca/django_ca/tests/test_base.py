@@ -23,6 +23,7 @@ from cryptography.x509.oid import ExtensionOID
 from django.test import TestCase, override_settings
 
 from django_ca import ca_settings
+from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir
 from django_ca.utils import add_colons
@@ -47,15 +48,15 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
         self.load_named_cas("__usable__")
         self.load_named_certs("__usable__")
 
-        self.assertExtensions(self.certs["no-extensions"], [], expect_defaults=False)
-        self.assertExtensions(self.certs["no-extensions"].pub.loaded, [], expect_defaults=False)
+        assert_extensions(self.certs["no-extensions"], [], expect_defaults=False)
+        assert_extensions(self.certs["no-extensions"].pub.loaded, [], expect_defaults=False)
 
         cert_key = "all-extensions"
         cert = self.certs[cert_key]
-        self.assertExtensions(cert, cert.pub.loaded.extensions)
+        assert_extensions(cert, cert.pub.loaded.extensions)
 
         # when we pass an x509 with a signer, we still have a default AuthorityKeyIdentifier extension
-        self.assertExtensions(cert, cert.pub.loaded.extensions, signer=cert.ca)
+        assert_extensions(cert, cert.pub.loaded.extensions, signer=cert.ca)
 
         # now test root and child ca
         cert_key = "root"
@@ -65,7 +66,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
             ca.extensions[ExtensionOID.BASIC_CONSTRAINTS],
             ca.extensions[ExtensionOID.KEY_USAGE],
         ]
-        self.assertExtensions(ca, root_extensions)
+        assert_extensions(ca, root_extensions)
 
         cert_key = "child"
         ca = self.cas[cert_key]
@@ -76,7 +77,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
             ca.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
             ca.extensions[ExtensionOID.KEY_USAGE],
         ]
-        self.assertExtensions(ca, root_extensions)
+        assert_extensions(ca, root_extensions)
 
 
 class OverrideSettingsFuncTestCase(TestCase):
