@@ -78,7 +78,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get(cn=self.hostname)
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
@@ -130,7 +130,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
             cert = Certificate.objects.get(ca=ca, cn=self.hostname)
             self.assertPostIssueCert(post, cert)
-            self.assertSignature(tuple(reversed(ca.bundle)), cert)
+            self.assert_signature(tuple(reversed(ca.bundle)), cert)
             self.assertEqual(cert.pub.loaded.subject, self.subject)
             self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
@@ -165,7 +165,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
 
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, cert.pub.pem)
@@ -197,7 +197,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
             cert = Certificate.objects.get()
             self.assertPostIssueCert(post, cert)
-            self.assertSignature([self.ca], cert)
+            self.assert_signature([self.ca], cert)
             self.assertEqual(stdout, "Please paste the CSR:\n")
             self.assertEqual(stderr, "")
 
@@ -249,7 +249,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(
             cert.pub.loaded.subject,
             x509.Name(
@@ -284,7 +284,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(
             cert.pub.loaded.subject,
             x509.Name(
@@ -310,7 +310,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertIssuer(self.ca, cert)
         assert_authority_key_identifier(self.ca, cert)
@@ -339,7 +339,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, ca_settings.CA_DEFAULT_SUBJECT)
         self.assertIssuer(self.ca, cert)
         assert_authority_key_identifier(self.ca, cert)
@@ -430,7 +430,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
@@ -538,7 +538,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
@@ -605,7 +605,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
 
@@ -650,7 +650,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(
@@ -672,7 +672,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         cert = Certificate.objects.get()
 
         self.assertEqual(pre.call_count, 1)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, f"Please paste the CSR:\n{cert.pub.pem}")
         self.assertEqual(stderr, "")
@@ -739,7 +739,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get()
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
 
         self.assertEqual(cert.pub.loaded.subject, self.subject)
         self.assertEqual(stdout, cert.pub.pem)
@@ -773,7 +773,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         cert = Certificate.objects.get(cn=self.hostname)
         self.assertPostIssueCert(post, cert)
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(
             cert.pub.loaded.subject,
             x509.Name(

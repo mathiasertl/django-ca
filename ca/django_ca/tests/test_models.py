@@ -70,6 +70,8 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     crl_distribution_points,
     distribution_point,
+    get_idp,
+    idp_full_name,
     issuer_alternative_name,
     override_tmpcadir,
     subject_key_identifier,
@@ -247,7 +249,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         child = self.cas["child"]
         cert = self.certs["root-cert"]
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[uri(full_name)])
+        idp = get_idp(full_name=[uri(full_name)])
 
         crl = ca.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
@@ -283,7 +285,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         child = self.cas["child"]
         cert = self.certs["child-cert"]
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[uri(full_name)])
+        idp = get_idp(full_name=[uri(full_name)])
 
         crl = child.get_crl(full_name=[uri(full_name)]).public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=child, algorithm=child.algorithm)
@@ -312,7 +314,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_ca_crl(self) -> None:
         """Test getting a CA CRL."""
         ca = self.cas["root"]
-        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
+        idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
 
         crl = ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
@@ -332,7 +334,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test getting the CRL for an intermediate CA."""
         # Intermediate CAs have a DP in the CRL that has the CA url
         full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{self.ca.serial}/")]
-        idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
+        idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
 
         crl = self.ca.get_crl(scope="ca").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=self.ca, algorithm=self.ca.algorithm)
@@ -342,7 +344,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_user_crl(self) -> None:
         """Test getting a user CRL."""
         ca = self.cas["root"]
-        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+        idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
 
         crl = ca.get_crl(scope="user").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
@@ -360,7 +362,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_attr_crl(self) -> None:
         """Test getting an Attribute CRL (always an empty list)."""
         ca = self.cas["root"]
-        idp = self.get_idp(only_contains_attribute_certs=True)
+        idp = get_idp(only_contains_attribute_certs=True)
 
         crl = ca.get_crl(scope="attribute").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, signer=ca, algorithm=ca.algorithm)
@@ -386,7 +388,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_counter(self) -> None:
         """Test the counter for CRLs."""
-        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca))
+        idp = get_idp(full_name=idp_full_name(self.ca))
         crl = self.ca.get_crl(counter="test").public_bytes(Encoding.PEM)
         self.assertCRL(crl, idp=idp, crl_number=0, algorithm=self.ca.algorithm)
         crl = self.ca.get_crl(counter="test").public_bytes(Encoding.PEM)
@@ -405,7 +407,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
         full_name = "http://localhost/crl"
-        idp = self.get_idp(full_name=[uri(full_name)])
+        idp = get_idp(full_name=[uri(full_name)])
 
         with mock.patch(
             "cryptography.x509.extensions.Extensions.get_extension_for_oid", side_effect=side_effect
@@ -457,13 +459,13 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
             der_ca_key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
             pem_ca_key = get_crl_cache_key(ca.serial, Encoding.PEM, "ca")
-            user_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+            user_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
             if ca.parent is None:
-                ca_idp = self.get_idp(full_name=None, only_contains_ca_certs=True)
+                ca_idp = get_idp(full_name=None, only_contains_ca_certs=True)
             else:
                 crl_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
                 full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")]
-                ca_idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
+                ca_idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
 
             self.assertIsNone(cache.get(der_ca_key))
             self.assertIsNone(cache.get(pem_ca_key))

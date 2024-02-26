@@ -80,7 +80,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             ca.full_clean()  # assert e.g. max_length in serials
 
             if not data.get("parent"):
-                self.assertSignature([ca], ca)
+                self.assert_signature([ca], ca)
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
             # test the private key
@@ -138,7 +138,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             ca.full_clean()  # assert e.g. max_length in serials
 
             if not data.get("parent"):
-                self.assertSignature(reversed(ca.bundle), ca)
+                self.assert_signature(reversed(ca.bundle), ca)
 
             self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
@@ -182,7 +182,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         self.assertEqual(err, "")
 
         ca = CertificateAuthority.objects.get(name=name)
-        self.assertSignature([ca], ca)
+        self.assert_signature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 

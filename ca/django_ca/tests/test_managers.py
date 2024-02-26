@@ -34,6 +34,7 @@ from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tests.base.assertions import (
     assert_ca_properties,
+    assert_certificate,
     assert_create_ca_signals,
     assert_create_cert_signals,
     assert_extensions,
@@ -77,7 +78,8 @@ def test_init(ca_name: str, subject: x509.Name, storages_backend: StoragesBacken
     """Create the most basic possible CA."""
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject)
-    assert_ca_properties(ca, ca_name, subject)
+    assert_ca_properties(ca, ca_name)
+    assert_certificate(ca, subject)
 
     # Make sure that extensions related to revocation are **not** present, they make no sense for root CAs.
     assert ExtensionOID.AUTHORITY_INFORMATION_ACCESS not in ca.extensions
@@ -89,7 +91,8 @@ def test_init_with_dsa(ca_name: str, subject: x509.Name, storages_backend: Stora
     """Create a DSA-based CA."""
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject, key_type="DSA")
-    assert_ca_properties(ca, ca_name, subject, private_key_type=dsa.DSAPrivateKey, algorithm=hashes.SHA256)
+    assert_ca_properties(ca, ca_name, private_key_type=dsa.DSAPrivateKey)
+    assert_certificate(ca, subject, algorithm=hashes.SHA256)
 
 
 @pytest.mark.django_db
@@ -98,7 +101,8 @@ def test_init_with_password(ca_name: str, subject: x509.Name, storages_backend: 
     storages_backend.password = b"password"
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject)
-    assert_ca_properties(ca, ca_name, subject)
+    assert_ca_properties(ca, ca_name)
+    assert_certificate(ca, subject)
 
     # Test that we can re-load the private key with the password
     reloaded_ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
@@ -114,7 +118,8 @@ def test_init_intermediate(
     usable_root.get_key_backend(password=None)  # load key backend (requirement for signing child-CAs)
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject, parent=usable_root)
-    assert_ca_properties(ca, ca_name, subject, parent=usable_root)
+    assert_ca_properties(ca, ca_name, parent=usable_root)
+    assert_certificate(ca, subject, parent=usable_root)
     assert_intermediate_extensions(usable_root, ca)
 
 
@@ -125,7 +130,8 @@ def test_init_grandchild(
     usable_child.get_key_backend(password=None)  # load key backend (requirement for signing child-CAs)
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject, parent=usable_child)
-    assert_ca_properties(ca, ca_name, subject, parent=usable_child)
+    assert_ca_properties(ca, ca_name, parent=usable_child)
+    assert_certificate(ca, subject, parent=usable_child)
     assert_intermediate_extensions(usable_child, ca)
 
 
@@ -162,7 +168,8 @@ def test_init_with_extra_extensions(
 
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject, extensions=extensions)
-    assert_ca_properties(ca, ca_name, subject)
+    assert_ca_properties(ca, ca_name)
+    assert_certificate(ca, subject)
 
     expected = [*extensions, basic_constraints(ca=True), key_usage(crl_sign=True, key_cert_sign=True)]
     assert_extensions(ca, expected)
@@ -268,7 +275,8 @@ def test_init_with_formatting_with_rdn_in_crldp(
         ca = CertificateAuthority.objects.init(
             storages_backend, ca_name, subject, parent=usable_root, extensions=passed_extensions
         )
-    assert_ca_properties(ca, ca_name, subject, parent=usable_root)
+    assert_ca_properties(ca, ca_name, parent=usable_root)
+    assert_certificate(ca, subject, parent=usable_root)
     assert ca.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crldp
 
 
@@ -277,7 +285,8 @@ def test_init_with_no_extensions(ca_name: str, subject: x509.Name, storages_back
     """Test passing no extensions."""
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject, extensions=None)
-    assert_ca_properties(ca, ca_name, subject)
+    assert_ca_properties(ca, ca_name)
+    assert_certificate(ca, subject)
     assert_extensions(ca, [basic_constraints(ca=True), key_usage(crl_sign=True, key_cert_sign=True)])
 
 
@@ -295,9 +304,8 @@ def test_init_with_acme_parameters(
             acme_profile="client",
             acme_requires_contact=False,
         )
-    assert_ca_properties(
-        ca, ca_name, subject, acme_enabled=True, acme_profile="client", acme_requires_contact=False
-    )
+    assert_ca_properties(ca, ca_name, acme_enabled=True, acme_profile="client", acme_requires_contact=False)
+    assert_certificate(ca, subject)
 
 
 @pytest.mark.django_db
@@ -307,8 +315,8 @@ def test_init_with_api_parameters(
     """Test parameters for the REST API."""
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(storages_backend, ca_name, subject, api_enabled=True)
-    assert_ca_properties(ca, ca_name, subject)
-    assert ca.api_enabled is True
+    assert_ca_properties(ca, ca_name)
+    assert_certificate(ca, subject)
 
 
 def test_init_with_unknown_profile(subject: x509.Name, storages_backend: StoragesBackend) -> None:

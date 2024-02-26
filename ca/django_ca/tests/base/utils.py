@@ -24,7 +24,7 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO, StringIO
-from typing import Any, Dict, Iterable, Iterator, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 from unittest import mock
 from unittest.mock import patch
 
@@ -36,7 +36,7 @@ from django.core.management import ManagementUtility, call_command
 from django.test import override_settings
 from django.utils.crypto import get_random_string
 
-from django_ca.models import X509CertMixin
+from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
 from django_ca.utils import ca_storage
@@ -259,6 +259,44 @@ def freshest_crl(
     return x509.Extension(
         oid=ExtensionOID.FRESHEST_CRL, critical=critical, value=x509.FreshestCRL(distribution_points)
     )
+
+
+def get_idp(
+    full_name: Optional[Iterable[x509.GeneralName]] = None,
+    indirect_crl: bool = False,
+    only_contains_attribute_certs: bool = False,
+    only_contains_ca_certs: bool = False,
+    only_contains_user_certs: bool = False,
+    only_some_reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+    relative_name: Optional[x509.RelativeDistinguishedName] = None,
+) -> "x509.Extension[x509.IssuingDistributionPoint]":
+    """Get an IssuingDistributionPoint extension."""
+    return x509.Extension(
+        oid=x509.oid.ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+        value=x509.IssuingDistributionPoint(
+            full_name=full_name,
+            indirect_crl=indirect_crl,
+            only_contains_attribute_certs=only_contains_attribute_certs,
+            only_contains_ca_certs=only_contains_ca_certs,
+            only_contains_user_certs=only_contains_user_certs,
+            only_some_reasons=only_some_reasons,
+            relative_name=relative_name,
+        ),
+        critical=True,
+    )
+
+
+def idp_full_name(ca: CertificateAuthority) -> Optional[List[x509.UniformResourceIdentifier]]:
+    """Get the IDP full name for `ca`."""
+    if ca.sign_crl_distribution_points is None:  # pragma: no cover
+        return None
+    full_names = []
+    for dpoint in ca.sign_crl_distribution_points.value:
+        if dpoint.full_name:  # pragma: no branch
+            full_names += dpoint.full_name
+    if full_names:  # pragma: no branch
+        return full_names
+    return None  # pragma: no cover
 
 
 def iso_format(value: datetime, timespec: str = "seconds") -> str:

@@ -155,10 +155,21 @@ def storages_backend(request: "SubRequest") -> StoragesBackend:
 
 
 @pytest.fixture()
+def rfc4514_subject(subject: x509.Name) -> Iterator[str]:
+    """Fixture for an RFC 4514 formatted name to use for a subject.
+
+    The common name is based on :py:func:`~django_ca.tests.conftest.hostname` and identical to
+    :py:func:`~django_ca.tests.conftest.subject`.
+    """
+    return x509.Name(reversed(list(subject))).rfc4514_string()
+
+
+@pytest.fixture()
 def subject(hostname: str) -> Iterator[x509.Name]:
     """Fixture for a :py:class:`~cg:cryptography.x509.Name` to use for a subject.
 
-    The common name is based on :py:func:`~django_ca.tests.conftest.hostname`.
+    The common name is based on :py:func:`~django_ca.tests.conftest.hostname` and identical to
+    :py:func:`~django_ca.tests.conftest.rfc4514_subject`.
     """
     yield x509.Name(
         [

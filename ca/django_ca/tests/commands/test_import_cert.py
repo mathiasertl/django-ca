@@ -22,7 +22,7 @@ from freezegun import freeze_time
 from django_ca.models import Certificate
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, override_tmpcadir
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -40,7 +40,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
         self.assertEqual(err, "")
 
         cert = Certificate.objects.get(serial=CERT_DATA["root-cert"]["serial"])
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.ca, self.ca)
         cert.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(cert.pub.loaded.version, x509.Version.v3)
@@ -54,7 +54,7 @@ class ImportCertTest(TestCaseMixin, TestCase):
         self.assertEqual(err, "")
 
         cert = Certificate.objects.get(serial=CERT_DATA["root-cert"]["serial"])
-        self.assertSignature([self.ca], cert)
+        self.assert_signature([self.ca], cert)
         self.assertEqual(cert.ca, self.ca)
         cert.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(cert.pub.loaded.version, x509.Version.v3)
