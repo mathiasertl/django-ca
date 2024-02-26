@@ -31,7 +31,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
-from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
@@ -51,7 +50,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
-from django_ca.signals import post_create_ca, post_issue_cert, post_revoke_cert, post_sign_cert, pre_sign_cert
+from django_ca.signals import post_issue_cert, post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
@@ -405,12 +404,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertFalse(cert.revoked)
         self.assertEqual(cert.revoked_reason, "")
 
-    def assertPostCreateCa(  # pylint: disable=invalid-name
-        self, post: mock.Mock, ca: CertificateAuthority
-    ) -> None:
-        """Assert that the post_create_ca signal was called."""
-        post.assert_called_once_with(ca=ca, signal=post_create_ca, sender=CertificateAuthority)
-
     def assertPostIssueCert(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_issue_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
@@ -446,31 +439,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
         else:
             self.assertEqual(cert.revoked_reason, reason)
-
-    def assertSignature(  # pylint: disable=invalid-name
-        self, chain: Iterable[CertificateAuthority], cert: Union[Certificate, CertificateAuthority]
-    ) -> None:
-        """Assert that `cert` is properly signed by `chain`.
-
-        .. seealso:: http://stackoverflow.com/questions/30700348
-        """
-        store = X509Store()
-
-        # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
-        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
-        store.set_time(now)
-
-        for elem in chain:
-            ca = load_certificate(FILETYPE_PEM, elem.pub.pem.encode())
-            store.add_cert(ca)
-
-            # Verify that the CA itself is valid
-            store_ctx = X509StoreContext(store, ca)
-            self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
-
-        loaded_cert = load_certificate(FILETYPE_PEM, cert.pub.pem.encode())
-        store_ctx = X509StoreContext(store, loaded_cert)
-        self.assertIsNone(store_ctx.verify_certificate())  # type: ignore[func-returns-value]
 
     @contextmanager
     def assertSystemExit(self, code: int) -> Iterator[None]:  # pylint: disable=invalid-name
@@ -564,43 +532,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         return x509.Extension(
             oid=ExtensionOID.FRESHEST_CRL, critical=critical, value=x509.FreshestCRL([dpoint])
         )
-
-    def get_idp(
-        self,
-        full_name: Optional[Iterable[x509.GeneralName]] = None,
-        indirect_crl: bool = False,
-        only_contains_attribute_certs: bool = False,
-        only_contains_ca_certs: bool = False,
-        only_contains_user_certs: bool = False,
-        only_some_reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
-        relative_name: Optional[x509.RelativeDistinguishedName] = None,
-    ) -> "x509.Extension[x509.IssuingDistributionPoint]":
-        """Get an IssuingDistributionPoint extension."""
-        return x509.Extension(
-            oid=x509.oid.ExtensionOID.ISSUING_DISTRIBUTION_POINT,
-            value=x509.IssuingDistributionPoint(
-                full_name=full_name,
-                indirect_crl=indirect_crl,
-                only_contains_attribute_certs=only_contains_attribute_certs,
-                only_contains_ca_certs=only_contains_ca_certs,
-                only_contains_user_certs=only_contains_user_certs,
-                only_some_reasons=only_some_reasons,
-                relative_name=relative_name,
-            ),
-            critical=True,
-        )
-
-    def get_idp_full_name(self, ca: CertificateAuthority) -> Optional[List[x509.UniformResourceIdentifier]]:
-        """Get the IDP full name for `ca`."""
-        if ca.sign_crl_distribution_points is None:  # pragma: no cover
-            return None
-        full_names = []
-        for dpoint in ca.sign_crl_distribution_points.value:
-            if dpoint.full_name:  # pragma: no branch
-                full_names += dpoint.full_name
-        if full_names:  # pragma: no branch
-            return full_names
-        return None  # pragma: no cover
 
     @property
     def hostname(self) -> str:

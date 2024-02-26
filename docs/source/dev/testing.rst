@@ -55,6 +55,8 @@ Fixtures
 
 .. autofunction:: django_ca.tests.conftest.storages_backend
 
+.. autofunction:: django_ca.tests.conftest.rfc4514_subject
+
 .. autofunction:: django_ca.tests.conftest.subject
 
 .. autofunction:: django_ca.tests.conftest.tmpcadir

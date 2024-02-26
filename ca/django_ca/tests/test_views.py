@@ -28,7 +28,7 @@ from freezegun import freeze_time
 from django_ca import ca_settings
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir, uri
+from django_ca.tests.base.utils import get_idp, idp_full_name, override_tmpcadir, uri
 from django_ca.views import CertificateRevocationListView
 
 app_name = "django_ca"
@@ -82,7 +82,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_basic(self) -> None:
         """Basic test."""
         # test the default view
-        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pkix-crl")
@@ -128,7 +128,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_full_scope(self) -> None:
         """Test getting CRL with full scope."""
         full_name = self.ca.sign_crl_distribution_points.value[0].full_name  # type: ignore[union-attr]
-        idp = self.get_idp(full_name=full_name)
+        idp = get_idp(full_name=full_name)
         self.ca.save()
 
         response = self.client.get(reverse("full", kwargs={"serial": self.ca.serial}))
@@ -160,7 +160,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         """Test getting a CA CRL."""
         root = self.cas["root"]
         child = self.cas["child"]
-        idp = self.get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
+        idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
         self.assertIsNotNone(root.key(password=None))
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
@@ -197,7 +197,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         """Test getting CRL for an intermediate CA."""
         child = self.cas["child"]
         full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/")]
-        idp = self.get_idp(full_name=full_name, only_contains_ca_certs=True)
+        idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
         self.assertIsNotNone(child.key(password=None))
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
@@ -223,7 +223,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         with override_settings(CA_CRL_PROFILES=profiles):
             ca.cache_crls()  # cache CRLs for this CA
 
-        idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+        idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pkix-crl")
@@ -238,7 +238,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     @override_tmpcadir()
     def test_overwrite(self) -> None:
         """Test overwriting a CRL."""
-        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse("advanced", kwargs={"serial": self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain")
@@ -248,7 +248,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_force_idp_inclusion(self) -> None:
         """Test that forcing inclusion of CRLs works."""
         # View still works with self.ca, because it's the child CA
-        idp = self.get_idp(full_name=self.get_idp_full_name(self.ca))
+        idp = get_idp(full_name=idp_full_name(self.ca))
         response = self.client.get(reverse("include_idp", kwargs={"serial": self.ca.serial}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pkix-crl")

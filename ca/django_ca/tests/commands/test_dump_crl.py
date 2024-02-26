@@ -37,6 +37,8 @@ from django_ca.tests.base.utils import (
     cmd_e2e,
     crl_distribution_points,
     distribution_point,
+    get_idp,
+    idp_full_name,
     override_tmpcadir,
 )
 
@@ -63,7 +65,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         """Test creating a CRL from an RSA key."""
         stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
     @override_tmpcadir()
@@ -78,7 +80,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             algorithm=hashes.SHA512(),
         )
         self.assertEqual(stderr, b"")
-        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=self.ca, algorithm=hashes.SHA512(), idp=expected_idp)
 
     @override_tmpcadir()
@@ -135,7 +137,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         with open(path, "rb") as stream:
             crl = stream.read()
-        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(crl, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
         # test an output path that doesn't exist
@@ -168,7 +170,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         )
         self.assertEqual(stderr, b"")
 
-        expected_idp = self.get_idp(full_name=self.get_idp_full_name(ca), only_contains_user_certs=True)
+        expected_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
 
     @override_tmpcadir()
@@ -189,7 +191,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         # ... but the child CA should have one
         child = self.cas["child"]
-        idp = self.get_idp(full_name=self.get_idp_full_name(child))
+        idp = get_idp(full_name=idp_full_name(child))
         stdout, stderr = cmd("dump_crl", ca=child, scope=None, stdout=BytesIO(), stderr=BytesIO())
         self.assertCRL(
             stdout,
@@ -294,7 +296,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        expected_idp = self.get_idp(full_name=self.get_idp_full_name(self.ca), only_contains_user_certs=True)
+        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
 
     @override_tmpcadir()
@@ -357,7 +359,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
         stdout, stderr = cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
-        expected_idp = self.get_idp(only_contains_ca_certs=True)
+        expected_idp = get_idp(only_contains_ca_certs=True)
         self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
         # revoke the CA and see if it's there

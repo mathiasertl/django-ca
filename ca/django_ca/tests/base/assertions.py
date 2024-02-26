@@ -16,21 +16,29 @@
 import re
 import typing
 from contextlib import contextmanager
-from typing import Iterable, Iterator, Optional, Tuple, Type, Union
+from datetime import datetime, timedelta, timezone as tz
+from typing import Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest.mock import Mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, x448, x25519
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
+from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from django.core.exceptions import ImproperlyConfigured
 
 import pytest
 
 from django_ca import ca_settings
-from django_ca.deprecation import RemovedInDjangoCA200Warning
+from django_ca.deprecation import (
+    RemovedInDjangoCA200Warning,
+    crl_last_update,
+    crl_next_update,
+    revoked_certificate_revocation_date,
+)
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca, pre_sign_cert
 from django_ca.tests.base.mocks import mock_signal
@@ -57,13 +65,12 @@ def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509Cert
 def assert_ca_properties(
     ca: CertificateAuthority,
     name: str,
-    subject: x509.Name,
     parent: Optional[CertificateAuthority] = None,
     private_key_type: Type[CertificateIssuerPrivateKeyTypes] = rsa.RSAPrivateKey,
-    algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
     acme_enabled: bool = False,
     acme_profile: Optional[str] = None,
     acme_requires_contact: bool = True,
+    crl_number: str = '{"scope": {}}',
 ) -> None:
     """Assert some basic properties of a CA."""
     parent_ca = parent or ca
@@ -74,7 +81,7 @@ def assert_ca_properties(
     assert ca.name == name
     assert ca.enabled is True
     assert ca.parent == parent
-    assert ca.crl_number == '{"scope": {}}'
+    assert ca.crl_number == crl_number
 
     # Test ACME properties
     assert ca.acme_enabled is acme_enabled
@@ -83,10 +90,8 @@ def assert_ca_properties(
 
     # Test certificate properties
     assert ca.issuer == issuer
-    assert ca.subject == subject
     # TYPEHINT NOTE: We assume a StoragesBackend here
     assert isinstance(ca.get_key_backend().key, private_key_type)  # type: ignore[attr-defined]
-    assert isinstance(ca.algorithm, algorithm)
 
     # Test AuthorityKeyIdentifier extension
     assert_authority_key_identifier(parent_ca, ca)
@@ -110,6 +115,25 @@ def assert_ca_properties(
     assert ca.sign_issuer_alternative_name is None
 
 
+def assert_certificate(
+    cert: X509CertMixin,
+    subject: x509.Name,
+    algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+    parent: Optional[CertificateAuthority] = None,
+) -> None:
+    """Assert certificate properties."""
+    if isinstance(cert, Certificate):
+        parent = cert.ca
+    elif parent is None:
+        parent = cert
+    else:
+        parent = cert.parent
+    assert cert.pub.loaded.version == x509.Version.v3
+    assert cert.issuer == parent.subject
+    assert cert.subject == subject
+    assert isinstance(cert.algorithm, algorithm)
+
+
 @contextmanager
 def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[Tuple[Mock, Mock]]:
     """Context manager asserting that the `pre_create_ca`/`post_create_ca` signals are (not) called."""
@@ -130,6 +154,71 @@ def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[
         finally:
             assert pre_sig.called is pre
             assert post_sig.called is post
+
+
+def assert_crl(
+    crl: bytes,
+    expected: Optional[typing.Sequence[X509CertMixin]] = None,
+    signer: Optional[CertificateAuthority] = None,
+    expires: int = 86400,
+    algorithm: Optional[hashes.HashAlgorithm] = None,
+    encoding: Encoding = Encoding.PEM,
+    idp: Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
+    extensions: Optional[List["x509.Extension[x509.ExtensionType]"]] = None,
+    crl_number: int = 0,
+) -> None:
+    """Test the given CRL.
+
+    Parameters
+    ----------
+    crl : bytes
+        The raw CRL
+    expected : list
+        CAs/certs to be expected in this CRL.
+    signer
+    expires
+    algorithm
+    encoding
+    idp
+    extensions
+    crl_number
+    """
+    expected = expected or []
+    signer = signer or CertificateAuthority.objects.get(name="child")
+    extensions = extensions or []
+    now = datetime.now(tz=tz.utc)
+    expires_timestamp = now + timedelta(seconds=expires)
+
+    if idp is not None:  # pragma: no branch
+        extensions.append(idp)
+    extensions.append(signer.get_authority_key_identifier_extension())
+    extensions.append(
+        x509.Extension(
+            value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=ExtensionOID.CRL_NUMBER
+        )
+    )
+
+    if encoding == Encoding.PEM:
+        parsed_crl = x509.load_pem_x509_crl(crl)
+    else:
+        parsed_crl = x509.load_der_x509_crl(crl)
+
+    public_key = signer.pub.loaded.public_key()
+    if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
+        raise TypeError()  # just to make mypy happy
+
+    assert isinstance(parsed_crl.signature_hash_algorithm, type(algorithm))
+    assert parsed_crl.is_signature_valid(public_key) is True
+    assert parsed_crl.issuer == signer.pub.loaded.subject
+    assert crl_last_update(parsed_crl) == now.replace(microsecond=0)
+    assert crl_next_update(parsed_crl) == expires_timestamp.replace(microsecond=0)
+    assert list(parsed_crl.extensions) == extensions
+
+    entries = {e.serial_number: e for e in parsed_crl}
+    assert entries == {c.pub.loaded.serial_number: c for c in expected}
+    for entry in entries.values():
+        assert revoked_certificate_revocation_date(entry) == now
+        assert list(entry.extensions) == []
 
 
 def assert_extensions(
@@ -197,6 +286,32 @@ def assert_improperly_configured(msg: str) -> Iterator[None]:
     """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
     with pytest.raises(ImproperlyConfigured, match=msg):
         yield
+
+
+def assert_signature(
+    chain: Iterable[CertificateAuthority], cert: Union[Certificate, CertificateAuthority]
+) -> None:
+    """Assert that `cert` is properly signed by `chain`.
+
+    .. seealso:: http://stackoverflow.com/questions/30700348
+    """
+    store = X509Store()
+
+    # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
+    now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+    store.set_time(now)
+
+    for elem in chain:
+        ca = load_certificate(FILETYPE_PEM, elem.pub.pem.encode())
+        store.add_cert(ca)
+
+        # Verify that the CA itself is valid
+        store_ctx = X509StoreContext(store, ca)
+        assert store_ctx.verify_certificate() is None  # type: ignore[func-returns-value]
+
+    loaded_cert = load_certificate(FILETYPE_PEM, cert.pub.pem.encode())
+    store_ctx = X509StoreContext(store, loaded_cert)
+    assert store_ctx.verify_certificate() is None  # type: ignore[func-returns-value]
 
 
 @contextmanager
