@@ -387,7 +387,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
     form = CertificateAuthorityForm  # type: ignore[assignment]
     list_display = ("enabled", "name", "serial_field")
     list_display_links = ("enabled", "name")
-    search_fields = ("cn", "name", "serial_field")
+    search_fields = ("cn", "name", "serial")
     readonly_fields = ("issuer_field", "serial_field", "subject_field", "pub_pem", "parent", "expires")
     x509_fieldset_index = 4
 
