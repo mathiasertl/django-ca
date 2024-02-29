@@ -6,14 +6,14 @@ from django.db import migrations
 def migrate_path(apps, schema_editor):
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.all():
-        ca.key_backend_options = {"alias": "django-ca", "path": ca.private_key_path}
+        ca.key_backend_options = {"path": ca.private_key_path}
         ca.save()
 
 
 def reverse_path(apps, schema_editor):
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.all():
-        if ca.key_backend_path == "django_ca.backends.storages.StoragesBackend":
+        if ca.key_backend_path == "default" and "path" in ca.key_backend_options:
             ca.private_key_path = ca.key_backend_options["path"]
         else:
             raise ValueError(f"{ca.name}: CA does not use StoragesBackend, cannot revert this migration.")

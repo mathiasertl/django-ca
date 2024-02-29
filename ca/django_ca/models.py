@@ -26,10 +26,11 @@ import typing
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import josepy as jose
 from acme import challenges, messages
+from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -53,7 +54,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from django_ca.backends.base import KeyBackend, get_key_backend_class
+from django_ca.backends import KeyBackend, key_backends
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.extensions import get_extension_name
@@ -490,7 +491,7 @@ class CertificateAuthority(X509CertMixin):
     parent = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
     )
-    key_backend_path = models.CharField(max_length=256, help_text=_("Backend to handle private keys."))
+    key_backend_alias = models.CharField(max_length=256, help_text=_("Backend to handle private keys."))
     key_backend_options = models.JSONField(default=dict, help_text=_("Key backend options"))
 
     # various details used when signing certs
@@ -598,19 +599,10 @@ class CertificateAuthority(X509CertMixin):
     def __str__(self) -> str:
         return self.name
 
-    def get_key_backend(self, **kwargs: Any) -> KeyBackend:
-        """Get the key backend for this CA.
-
-        Any `kwargs` are passed to the backend in addition to the values from `key_backend_options`. This can
-        be used to set ephemeral options that should not be stored in the database (e.g. the password for
-        encrypted keys in the file storage backend).
-
-        The value returned by this instance is cached for this model instance, so multiple invocations of this
-        method will return the same backend instance, `kwargs` is ignored in this case.
-        """
+    @property
+    def key_backend(self) -> KeyBackend:
         if self._key_backend is None:
-            cls = get_key_backend_class(self.key_backend_path)
-            self._key_backend = cls(ca=self, **{**self.key_backend_options, **kwargs})
+            self._key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
         return self._key_backend
 
     @property
@@ -638,15 +630,13 @@ class CertificateAuthority(X509CertMixin):
         data = read_file(f"ocsp/{self.serial}.pem")
         return x509.load_pem_x509_certificate(data)
 
-    def cache_crls(self, password: Optional[Union[str, bytes]] = None) -> None:
+    def cache_crls(self, key_backend_options: BaseModel) -> None:
         """Function to cache all CRLs for this CA.
 
         .. versionchanged:: 1.25.0
 
            Support for passing a custom hash algorithm to this function was removed.
         """
-        password = password or self.get_password()
-
         for config in deepcopy(ca_settings.CA_CRL_PROFILES).values():
             # create a copy of the overrides with the serials sanitized so that the user can use a
             # case-insensitive string and can have colons (":").
@@ -662,9 +652,9 @@ class CertificateAuthority(X509CertMixin):
             relative_name = ca_override.get("relative_name", config.get("relative_name"))
             encodings = ca_override.get("encodings", config.get("encodings", ["DER"]))
             crl = self.get_crl(
+                key_backend_options=key_backend_options,
                 expires=expires,
                 algorithm=self.algorithm,
-                password=password,
                 scope=scope,
                 full_name=full_name,
                 relative_name=relative_name,
@@ -805,10 +795,10 @@ class CertificateAuthority(X509CertMixin):
 
     def generate_ocsp_key(  # pylint: disable=too-many-locals  # noqa: PLR0912
         self,
+        key_backend_options: BaseModel,
         profile: str = "ocsp",
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
-        password: Optional[Union[str, bytes]] = None,
         key_size: Optional[int] = None,
         key_type: Optional[ParsableKeyType] = None,
         elliptic_curve: Optional[ec.EllipticCurve] = None,
@@ -892,12 +882,8 @@ class CertificateAuthority(X509CertMixin):
 
         safe_serial = self.serial.replace(":", "")
 
-        if password is None:
-            password = self.get_password()
         if algorithm is None:
             algorithm = self.algorithm
-
-        key_backend = self.get_key_backend(password=password)
 
         if key_type is None:
             key_type = self.key_type
@@ -906,9 +892,9 @@ class CertificateAuthority(X509CertMixin):
         # from the CA private key as default
         if key_type == self.key_type:
             if self.key_type in ("RSA", "DSA") and key_size is None:
-                key_size = key_backend.get_ocsp_key_size()
+                key_size = self.key_backend.get_ocsp_key_size()
             elif self.key_type == "EC" and elliptic_curve is None:
-                elliptic_curve = key_backend.get_ocsp_key_elliptic_curve()
+                elliptic_curve = self.key_backend.get_ocsp_key_elliptic_curve()
 
         # Ensure that parameters used to generate the private key are valid.
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
@@ -952,12 +938,12 @@ class CertificateAuthority(X509CertMixin):
 
         cert = Certificate.objects.create_cert(
             ca=self,
+            key_backend_options=key_backend_options,
             csr=csr,
             profile=profiles[profile],
             subject=subject,
             algorithm=algorithm,
             autogenerated=autogenerated,
-            password=password,
             expires=expires,
             add_ocsp_url=False,
         )
@@ -1011,9 +997,9 @@ class CertificateAuthority(X509CertMixin):
 
     def get_crl(
         self,
+        key_backend_options: BaseModel,
         expires: int = 86400,
         algorithm: Optional[AllowedHashTypes] = None,
-        password: Optional[Union[str, bytes]] = None,
         scope: Optional[typing.Literal["ca", "user", "attribute"]] = None,
         counter: Optional[str] = None,
         full_name: Optional[Iterable[x509.GeneralName]] = None,
@@ -1165,8 +1151,7 @@ class CertificateAuthority(X509CertMixin):
         builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
 
         # Get the backend.
-        key_backend = self.get_key_backend(password=password)
-        if key_backend.usable is False:
+        if self.key_backend.is_usable(ca=self, options=key_backend_options) is False:
             raise ValueError("Backend cannot be used for signing by this process.")
 
         # increase crl_number for the given scope and save
@@ -1174,10 +1159,13 @@ class CertificateAuthority(X509CertMixin):
         self.crl_number = json.dumps(crl_number_data)
         self.save()
 
-        return key_backend.sign_certificate_revocation_list(builder=builder, algorithm=algorithm)
+        return self.key_backend.sign_certificate_revocation_list(
+            ca=self, load_options=key_backend_options, builder=builder, algorithm=algorithm
+        )
 
     def get_password(self) -> Optional[str]:
         """Get password for the private key from the ``CA_PASSWORDS`` setting."""
+        # TODO: method should be removed
         return ca_settings.CA_PASSWORDS.get(self.serial)
 
     @property

@@ -19,7 +19,7 @@ import logging
 import typing
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import requests
 
@@ -45,6 +45,7 @@ from django_ca.models import (
 from django_ca.profiles import profiles
 from django_ca.pydantic.messages import SignCertificateMessage
 from django_ca.typehints import (
+    JSON,
     AllowedHashTypes,
     HashAlgorithms,
     ParsableKeyType,
@@ -82,10 +83,11 @@ def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
 
 
 @shared_task
-def cache_crl(serial: str, **kwargs: Any) -> None:
+def cache_crl(serial: str, key_backend_options: Dict[str, JSON]) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
-    ca.cache_crls(**kwargs)
+    key_backend_options_model = ca.key_backend.load_model.model_validate(key_backend_options, strict=True)
+    ca.cache_crls(key_backend_options_model)
 
 
 @shared_task
@@ -106,10 +108,10 @@ def cache_crls(serials: Optional[Iterable[str]] = None) -> None:
 @shared_task
 def generate_ocsp_key(
     serial: str,
+    key_backend_options: Dict[str, JSON],
     profile: str = "ocsp",
     expires: Optional[int] = None,
     algorithm: Optional[HashAlgorithms] = None,
-    password: Optional[str] = None,
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = None,
     elliptic_curve: Optional[str] = None,
@@ -125,6 +127,7 @@ def generate_ocsp_key(
     a new certificate was generated, otherwise it returns ``None``.
     """
     ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
+    key_backend_options_model = ca.key_backend.load_model.model_validate(key_backend_options, strict=True)
 
     parsed_expires: Optional[timedelta] = None
     parsed_algorithm: Optional[AllowedHashTypes] = None
@@ -137,10 +140,10 @@ def generate_ocsp_key(
         parsed_curve = constants.ELLIPTIC_CURVE_TYPES[elliptic_curve]()
 
     value = ca.generate_ocsp_key(
+        key_backend_options=key_backend_options_model,
         profile=profile,
         expires=parsed_expires,
         algorithm=parsed_algorithm,
-        password=password,
         key_size=key_size,
         key_type=key_type,
         elliptic_curve=parsed_curve,

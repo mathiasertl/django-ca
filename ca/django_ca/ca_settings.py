@@ -335,10 +335,19 @@ try:
 except KeyError as ex:
     raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
 
-CA_KEY_BACKENDS: Tuple[str] = tuple(
-    getattr(settings, "CA_KEY_BACKENDS", (constants.DEFAULT_STORAGE_BACKEND,))
-)
+CA_DEFAULT_KEY_BACKEND: str = getattr(settings, "CA_DEFAULT_KEY_BACKEND", "default")
 CA_DEFAULT_STORAGE_ALIAS: str = getattr(settings, "CA_DEFAULT_STORAGE_ALIAS", "django-ca")
+CA_KEY_BACKENDS: Dict[str, Dict[str, Any]] = getattr(
+    settings,
+    "CA_KEY_BACKENDS",
+    {
+        CA_DEFAULT_KEY_BACKEND: {
+            "BACKEND": constants.DEFAULT_STORAGE_BACKEND,
+            "OPTIONS": {"storage_alias": CA_DEFAULT_STORAGE_ALIAS},
+        }
+    },
+)
+
 
 # Old file storage settings
 # pragma: only django-ca<2.0: CA_DIR and CA_FILE_* settings can be removed in django-ca==2.0

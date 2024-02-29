@@ -19,6 +19,8 @@ from datetime import datetime, timedelta
 from threading import local
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
+from pydantic import BaseModel
+
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -179,6 +181,7 @@ class Profile:
     def create_cert(  # noqa: PLR0913
         self,
         ca: "CertificateAuthority",
+        key_backend_options: BaseModel,
         csr: x509.CertificateSigningRequest,
         *,
         subject: Optional[x509.Name] = None,
@@ -189,7 +192,6 @@ class Profile:
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
         add_issuer_alternative_name: Optional[bool] = None,
-        password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
@@ -343,11 +345,12 @@ class Profile:
             algorithm=algorithm,
             subject=subject,
             extensions=extensions,
-            password=password,
+            password=key_backend_options,
         )
 
-        backend: KeyBackend = ca.get_key_backend(password=password)
-        return backend.sign_certificate(
+        return ca.key_backend.sign_certificate(
+            ca=ca,
+            load_options=key_backend_options,
             public_key=public_key,
             serial=serial,
             algorithm=algorithm,
