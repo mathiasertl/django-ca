@@ -13,16 +13,22 @@
 
 """Base classes for CA backends."""
 import abc
-import importlib
 import typing
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Type
+from threading import local
+from typing import Any, Dict, Iterator, List, Optional, Type
+
+from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
 
-from django_ca import ca_settings, constants
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management import CommandParser
+from django.utils.module_loading import import_string
+
+from django_ca import ca_settings
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 
 if typing.TYPE_CHECKING:
@@ -30,16 +36,18 @@ if typing.TYPE_CHECKING:
 
 
 Self = typing.TypeVar("Self", bound="KeyBackend")  # pragma: only py<3.11  # replace with typing.Self
+CreatePrivateKeyOptions = typing.TypeVar("CreatePrivateKeyOptions", bound=BaseModel)
+LoadPrivateKeyOptions = typing.TypeVar("LoadPrivateKeyOptions", bound=BaseModel)
 
 
-class KeyBackend(abc.ABC):
+class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions], metaclass=abc.ABCMeta):
     """Base class for all key storage backends.
 
     All implementations of a key storage backend must implement this abstract base class.
     """
 
-    #: Name (alias) for this backend used for the ``--key-backend`` option.
-    name: typing.ClassVar[str]
+    #: Alias under which this backend is configured under settings.KEY_BACKENDS.
+    alias: str
 
     #: Title used for the ArgumentGroup in :command:`manage.py init_ca`.
     title: typing.ClassVar[str]
@@ -47,11 +55,10 @@ class KeyBackend(abc.ABC):
     #: Description used for the ArgumentGroup in :command:`manage.py init_ca`.
     description: typing.ClassVar[str]
 
-    #: The certificate authority handled by this backend.
-    ca: Optional["CertificateAuthority"]
+    load_model: Type[LoadPrivateKeyOptions]
 
-    def __init__(self, ca: Optional["CertificateAuthority"] = None, **kwargs: Any) -> None:
-        self.ca = ca
+    def __init__(self, alias: str, **kwargs: Any) -> None:
+        self.alias = alias
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -60,8 +67,13 @@ class KeyBackend(abc.ABC):
         """Shortcut returning the full Python class path of this instance."""
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
 
-    @classmethod
-    def add_private_key_arguments(cls, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
+    def add_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+        return parser.add_argument_group(
+            f"{self.alias}: {self.title}",
+            f"The backend used with --key-backend={self.alias}. {self.description}",
+        )
+
+    def add_private_key_arguments(self, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
         """Add arguments for private key generation with this backend.
 
         Add arguments that can be used for generating private keys with your backend to `group`. The arguments
@@ -70,8 +82,8 @@ class KeyBackend(abc.ABC):
         """
         return None
 
-    @classmethod  # pylint: disable-next=unused-argument
-    def add_parent_private_key_arguments(cls, group: ArgumentGroup) -> None:
+    # pylint: disable-next=unused-argument
+    def add_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for loading the private key of any signing certificate authority.
 
         Only add arguments here if you do not want to store options in the database. For example, the
@@ -80,9 +92,10 @@ class KeyBackend(abc.ABC):
         """
         return None
 
-    @classmethod
     @abc.abstractmethod
-    def load_from_options(cls: Type[Self], key_type: ParsableKeyType, options: Dict[str, Any]) -> Self:
+    def get_private_key_options(
+        self, key_type: ParsableKeyType, options: Dict[str, Any]
+    ) -> CreatePrivateKeyOptions:
         """Create a backend instance from command line options.
 
         After calling this function, the instance is expected to be able to create and store the private key
@@ -113,23 +126,29 @@ class KeyBackend(abc.ABC):
                     return cls(example=example)
         """
 
-    @classmethod  # pylint: disable-next=unused-argument
-    def get_parent_backend_options(cls, options: Dict[str, Any]) -> Dict[str, Any]:
-        """Get options for loading a backend based on the parent options."""
-        return {}
-
-    @property
     @abc.abstractmethod
-    def usable(self) -> bool:
-        """Boolean whether the current process can use this backend to sign a certificate."""
+    def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+        ...
 
     @abc.abstractmethod
-    def initialize(self, key_type: ParsableKeyType) -> CertificateIssuerPublicKeyTypes:
+    def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+        ...
+
+    @abc.abstractmethod
+    def is_usable(self, ca: "CertificateAuthority", options: LoadPrivateKeyOptions) -> bool:
+        ...
+
+    @abc.abstractmethod
+    def create_private_key(
+        self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
+    ) -> CertificateIssuerPublicKeyTypes:
         """Initialize the CA."""
 
     @abc.abstractmethod
     def sign_certificate(
         self,
+        ca: "CertificateAuthority",
+        load_options: LoadPrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
@@ -142,7 +161,11 @@ class KeyBackend(abc.ABC):
 
     @abc.abstractmethod
     def sign_certificate_revocation_list(
-        self, builder: x509.CertificateRevocationListBuilder, algorithm: Optional[AllowedHashTypes]
+        self,
+        ca: "CertificateAuthority",
+        load_options: LoadPrivateKeyOptions,
+        builder: x509.CertificateRevocationListBuilder,
+        algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
         """Sign a certificate revocation list request."""
 
@@ -155,36 +178,47 @@ class KeyBackend(abc.ABC):
         return ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
 
 
-def get_key_backend_class(path: str) -> Type["KeyBackend"]:
-    """Get a backend class by the given class path.
+class KeyBackends:
+    """A key backend handler similar to Django's storages or caches handler."""
 
-    Raises ValueError if the class cannot be imported or is not a subclass of KeyBackend.
-    """
-    try:
-        module_path, class_name = path.rsplit(".", 1)
-    except ValueError as ex:
-        raise ValueError(
-            f'{path}: Must be a full class path (e.g. "{constants.DEFAULT_STORAGE_BACKEND}".'
-        ) from ex
+    def __init__(self) -> None:
+        self._backends = local()
 
-    # Import the module
-    try:
-        module = importlib.import_module(module_path)
-    except ModuleNotFoundError as ex:
-        raise ValueError(f"{module_path}: Module not found.") from ex
+    def __getitem__(self, name: Optional[str]) -> KeyBackend:
+        if name is None:
+            name = ca_settings.CA_DEFAULT_KEY_BACKEND
 
-    # Get the class
-    try:
-        cls = getattr(module, class_name)
-    except AttributeError as ex:
-        raise ValueError(f"{class_name}: Not found in {module_path}.") from ex
+        try:
+            return typing.cast(KeyBackend, self._backends.backends[name])
+        except AttributeError:
+            self._backends.backends = {}
+        except KeyError:
+            pass
 
-    # Make sure it's a subclass of KeyBackend.
-    if not issubclass(cls, KeyBackend):
-        raise ValueError(f"{path}: Not a subclass of {KeyBackend.__module__}.{KeyBackend.__name__}.")
-    return typing.cast(Type[KeyBackend], cls)  # validated in check just above
+        self._backends.backends[name] = self.get_key_backend(name)
+        return self._backends.backends[name]
+
+    def __iter__(self) -> Iterator[KeyBackend]:
+        for name in ca_settings.CA_KEY_BACKENDS:
+            yield self[name]
+
+    def _reset(self) -> None:
+        self._backends = local()
+
+    def get_key_backend(self, alias: str) -> KeyBackend:
+        try:
+            params = ca_settings.CA_KEY_BACKENDS[alias].copy()
+        except KeyError as ex:
+            raise ImproperlyConfigured(
+                f"Could not find config for '{alias}' in settings.CA_KEY_BACKENDS"
+            ) from ex
+        backend = params.pop("BACKEND")
+        options = params.pop("OPTIONS", {})
+        try:
+            backend_cls = import_string(backend)
+        except ImportError as ex:
+            raise ImproperlyConfigured(f"Could not find backend {backend!r}: {ex}") from ex
+        return backend_cls(alias, **options)
 
 
-def get_key_backend_classes() -> Dict[str, Type["KeyBackend"]]:
-    """Get all key backend classes defined by the ``CA_KEY_BACKENDS`` setting."""
-    return {path: get_key_backend_class(path) for path in ca_settings.CA_KEY_BACKENDS}
+key_backends = KeyBackends()

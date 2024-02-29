@@ -18,6 +18,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import pydantic
+from pydantic import ConfigDict
+
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -35,22 +38,35 @@ from cryptography.hazmat.primitives.serialization import (
 from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 
-from ca import settings
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
-from django_ca.utils import (
-    file_exists,
-    generate_private_key,
-    get_cert_builder,
-    read_file,
-    validate_private_key_parameters,
-)
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, EllipticCurves, ParsableKeyType
+from django_ca.utils import generate_private_key, get_cert_builder, read_file, validate_private_key_parameters
+
+if typing.TYPE_CHECKING:
+    from django_ca.models import CertificateAuthority
 
 
-class StoragesBackend(KeyBackend):
+class CreatePrivateKeyOptions(pydantic.BaseModel):
+    """Options for initializing private keys."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    password: Optional[bytes]
+    path: Path
+    key_size: Optional[int]
+    elliptic_curve: Optional[EllipticCurves]
+
+
+class LoadPrivateKeyOptions(pydantic.BaseModel):
+    """Options for loading a private key."""
+
+    password: Optional[bytes]
+
+
+class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]):
     """A simple storage backend that does not yet do much."""
 
     name = "storages"
@@ -59,30 +75,15 @@ class StoragesBackend(KeyBackend):
         "It is most commonly used to store private keys on the filesystem. Custom file storage backends can "
         "be used to store keys on other systems (e.g. a cloud storage system)."
     )
+    load_model = LoadPrivateKeyOptions
 
-    # Common options
-    alias: str
-    path: Optional[str] = None  # not set when not yet initialized
-    password: Optional[bytes]
-
-    # Initialization options
-    _base_path: Optional[Path]
-    _key_size: Optional[int]
-    _elliptic_curve: Optional[ec.EllipticCurve]
+    # Backend options
+    storage_alias: str
 
     # cached variables
     _key: Optional[CertificateIssuerPrivateKeyTypes] = None
 
-    @classmethod
     def add_private_key_arguments(cls, group: ArgumentGroup) -> None:
-        storage_aliases = tuple(key for key in settings.STORAGES if key not in ("default", "staticfiles"))
-        group.add_argument(
-            "--storage-alias",
-            choices=storage_aliases,
-            default=ca_settings.CA_DEFAULT_STORAGE_ALIAS,
-            help="Storage alias identifying the storage configured in the STORAGES setting "
-            "(default: %(default)s).",
-        )
         group.add_argument(
             "--path",
             type=Path,
@@ -97,7 +98,6 @@ class StoragesBackend(KeyBackend):
             "prompted. By default, the private key is not encrypted.",
         )
 
-    @classmethod
     def add_parent_private_key_arguments(cls, group: ArgumentGroup) -> None:
         group.add_argument(
             "--parent-password",
@@ -108,74 +108,71 @@ class StoragesBackend(KeyBackend):
             help="Password for the private key of the parent CA, if stored using the Django storage system.",
         )
 
-    @classmethod
-    def load_from_options(cls, key_type: ParsableKeyType, options: Dict[str, Any]) -> "StoragesBackend":
+    def get_private_key_options(
+        self, key_type: ParsableKeyType, options: Dict[str, Any]
+    ) -> CreatePrivateKeyOptions:
         key_size, elliptic_curve = validate_private_key_parameters(
             key_type, options["key_size"], options["elliptic_curve"]
         )
-        return cls(
-            alias=options["storage_alias"],
+        return CreatePrivateKeyOptions(
             password=options["password"],
-            _base_path=options["path"],
-            _key_size=key_size,
-            _elliptic_curve=elliptic_curve,
+            path=options["path"],
+            key_size=key_size,
+            elliptic_curve=options["elliptic_curve"],
         )
 
-    @classmethod
-    def get_parent_backend_options(cls, options: Dict[str, Any]) -> Dict[str, Any]:
-        return {"password": options["parent_password"]}
+    def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+        return LoadPrivateKeyOptions(password=options["password"])
 
-    @property
-    def usable(self) -> bool:
-        if self._key is not None:
-            return True
-        if not self.path:
-            return False
-        return file_exists(self.path)
+    def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+        return LoadPrivateKeyOptions(password=options["parent_password"])
 
-    def initialize(self, key_type: ParsableKeyType) -> CertificateIssuerPublicKeyTypes:
-        if self.ca is None or self._base_path is None:
-            raise ValueError("Backend is not initialized.")
-        storage = storages[self.alias]
+    def create_private_key(
+        self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
+    ) -> CertificateIssuerPublicKeyTypes:
+        storage = storages[self.storage_alias]
 
-        if self.password is None:
+        if options.password is None:
             encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestAvailableEncryption(self.password)
+            encryption = serialization.BestAvailableEncryption(options.password)
 
-        self._key = generate_private_key(self._key_size, key_type, self._elliptic_curve)
+        elliptic_curve = None
+        if options.elliptic_curve is not None:
+            elliptic_curve = constants.ELLIPTIC_CURVE_TYPES[options.elliptic_curve]()
+
+        self._key = generate_private_key(options.key_size, key_type, elliptic_curve)
 
         der = self._key.private_bytes(
             encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
         )
 
         # write private key to file and update ourselves so that we are able to sign certificates
-        safe_serial = self.ca.serial.replace(":", "")
-        path = storage.save(str(self._base_path / f"{safe_serial}.key"), ContentFile(der))
-        self.path = path
+        safe_serial = ca.serial.replace(":", "")
+        path = storage.save(str(options.path / f"{safe_serial}.key"), ContentFile(der))
 
         # Update model instance
-        self.ca.key_backend_options = {"alias": self.alias, "path": path}
+        ca.key_backend_options = {"path": path}
 
         return self._key.public_key()
 
-    @property
-    def key(self) -> CertificateIssuerPrivateKeyTypes:
+    def get_key(
+        self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions
+    ) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key."""
-        if self.path is None:
-            raise ValueError("Backend not initialized.")
-
         if self._key is None:
-            key_data = read_file(self.path)
+            path = ca.key_backend_options["path"]
+            key_data = read_file(path)
+            password = load_options.password
 
             try:
                 self._key = typing.cast(  # type validated below
-                    CertificateIssuerPrivateKeyTypes, load_der_private_key(key_data, self.password)
+                    CertificateIssuerPrivateKeyTypes, load_der_private_key(key_data, password)
                 )
             except ValueError:
                 try:
                     self._key = typing.cast(  # type validated below
-                        CertificateIssuerPrivateKeyTypes, load_pem_private_key(key_data, self.password)
+                        CertificateIssuerPrivateKeyTypes, load_pem_private_key(key_data, password)
                     )
                 except ValueError as ex2:
                     # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
@@ -186,8 +183,17 @@ class StoragesBackend(KeyBackend):
 
         return self._key
 
+    def is_usable(self, ca: "CertificateAuthority", options: LoadPrivateKeyOptions) -> bool:
+        try:
+            self.get_key(ca, options)
+            return True
+        except Exception:
+            return False
+
     def sign_certificate(
         self,
+        ca: "CertificateAuthority",
+        load_options: LoadPrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
@@ -202,9 +208,13 @@ class StoragesBackend(KeyBackend):
         builder = builder.subject_name(subject)
         for extension in extensions:
             builder = builder.add_extension(extension.value, critical=extension.critical)
-        return builder.sign(private_key=self.key, algorithm=algorithm)
+        return builder.sign(private_key=self.get_key(ca, load_options), algorithm=algorithm)
 
     def sign_certificate_revocation_list(
-        self, builder: x509.CertificateRevocationListBuilder, algorithm: Optional[AllowedHashTypes]
+        self,
+        ca: "CertificateAuthority",
+        load_options: LoadPrivateKeyOptions,
+        builder: x509.CertificateRevocationListBuilder,
+        algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
-        return builder.sign(private_key=self.key, algorithm=algorithm)
+        return builder.sign(private_key=self.get_key(ca, load_options), algorithm=algorithm)

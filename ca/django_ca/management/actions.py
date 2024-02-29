@@ -21,13 +21,13 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Type
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
+from django_ca.backends import KeyBackend, key_backends
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
@@ -183,7 +183,7 @@ class FormatAction(SingleValueAction[str, Encoding]):
             raise argparse.ArgumentError(self, str(ex)) from ex
 
 
-class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
+class EllipticCurveAction(argparse.Action):
     """Action to parse an elliptic curve value.
 
     >>> parser = argparse.ArgumentParser()
@@ -197,11 +197,6 @@ class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
         kwargs.setdefault("choices", sorted(tuple(constants.ELLIPTIC_CURVE_TYPES)))
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         super().__init__(**kwargs)
-
-    def parse_value(self, value: str) -> ec.EllipticCurve:
-        """Parse the value for this action."""
-        # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
-        return constants.ELLIPTIC_CURVE_TYPES[value]()
 
 
 class IntegerRangeAction(SingleValueAction[int, int]):
@@ -234,6 +229,17 @@ class IntegerRangeAction(SingleValueAction[int, int]):
         if self.max is not None and self.max < value:
             raise argparse.ArgumentError(self, f"{self.metavar} must be equal or smaller then {self.max}.")
         return value
+
+
+class KeyBackendAction(SingleValueAction[str, KeyBackend]):
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("choices", list(ca_settings.CA_KEY_BACKENDS))
+        kwargs.setdefault("default", key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND])
+        super().__init__(**kwargs)
+
+    def parse_value(self, value: str) -> KeyBackend:
+        print("parse_value", value, key_backends[value])
+        return key_backends[value]
 
 
 class KeySizeAction(SingleValueAction[str, int]):

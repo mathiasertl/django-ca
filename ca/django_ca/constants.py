@@ -43,6 +43,7 @@ if typing.TYPE_CHECKING:
     from django_ca.typehints import (
         AccessMethods,
         AllowedHashTypes,
+        EllipticCurves,
         GeneralNames,
         HashAlgorithms,
         KeyUsages,
@@ -61,7 +62,7 @@ ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = 
 DEFAULT_STORAGE_BACKEND = "django_ca.backends.storages.StoragesBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
-ELLIPTIC_CURVE_TYPES: "MappingProxyType[str, Type[ec.EllipticCurve]]" = MappingProxyType(
+ELLIPTIC_CURVE_TYPES: "MappingProxyType[EllipticCurves, Type[ec.EllipticCurve]]" = MappingProxyType(
     {
         ec.SECT571R1.name: ec.SECT571R1,
         ec.SECT409R1.name: ec.SECT409R1,

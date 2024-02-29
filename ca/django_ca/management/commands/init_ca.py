@@ -18,7 +18,7 @@
 
 import os
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Dict, Iterable, List, Optional, Type
+from typing import Any, Iterable, List, Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -28,8 +28,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
-from django_ca.backends.base import KeyBackend, get_key_backend_class, get_key_backend_classes
-from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
+from django_ca.backends import KeyBackend, key_backends
+from django_ca.management.actions import ExpiresAction, IntegerRangeAction, KeyBackendAction, NameAction
 from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
@@ -135,48 +135,32 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             "is required.",
         )
 
-    def add_key_backend_option(
-        self, parser: CommandParser, key_backend_classes: Dict[str, Type[KeyBackend]]
-    ) -> None:
+    def add_key_backend_option(self, parser: CommandParser) -> None:
         """Add argument group for the --key-backend option."""
-        # If StorageBackend is enabled, we use it as default, otherwise there is no default.
-        default = None
-        if constants.DEFAULT_STORAGE_BACKEND in key_backend_classes:
-            default = key_backend_classes[constants.DEFAULT_STORAGE_BACKEND].name
-
         group = parser.add_argument_group("Private key options")
         self.add_key_type(group)
         group.add_argument(
             "--key-backend",
-            dest="key_backend_name",
-            choices=tuple(cls.name for cls in key_backend_classes.values()),
-            default=default,
+            action=KeyBackendAction,
             help="The key can be stored using different backends. Depending on the backend, you have to "
-            "choose different options below for private keys. (default: %(default)s).",
+            "choose different options below for private keys. (default: "
+            f"{ca_settings.CA_DEFAULT_KEY_BACKEND}).",
         )
 
-    def add_private_key_storage_arguments(
-        self, parser: CommandParser, key_backend_classes: Dict[str, Type[KeyBackend]]
-    ) -> None:
+    def add_private_key_storage_arguments(self, parser: CommandParser) -> None:
         """Add general arguments for private keys."""
-        for cls in key_backend_classes.values():
-            group = parser.add_argument_group(
-                f"{cls.name}: {cls.title}",
-                f"The backend used with --key-backend={cls.name}. {cls.description}",
-            )
-            cls.add_private_key_arguments(group)
+        for backend in key_backends:
+            group = backend.add_private_key_group(parser)
+            if group is not None:
+                backend.add_private_key_arguments(group)
 
-    def add_parent_private_key_storage_arguments(
-        self, group: ArgumentGroup, key_backend_classes: Dict[str, Type[KeyBackend]]
-    ) -> None:
+    def add_parent_private_key_storage_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for loading a parent CA via its key backend."""
-        for cls in key_backend_classes.values():
-            cls.add_parent_private_key_arguments(group)
+        for backend in key_backends:
+            backend.add_parent_private_key_arguments(group)
 
     def add_arguments(self, parser: CommandParser) -> None:
         # Load all supported key backend classes so that they can add command-line arguments.
-        key_backend_classes = get_key_backend_classes()
-
         default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
         dsa_default = constants.HASH_ALGORITHM_NAMES[
             type(ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
@@ -195,8 +179,8 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
 
-        self.add_key_backend_option(parser, key_backend_classes)
-        self.add_private_key_storage_arguments(parser, key_backend_classes)
+        self.add_key_backend_option(parser)
+        self.add_private_key_storage_arguments(parser)
 
         intermediate_group = parser.add_argument_group(
             "Intermediate certificate authority", "Options to create an intermediate certificate authority."
@@ -207,7 +191,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             no_default=True,
             help_text="Make the CA an intermediate CA of the named CA. By default, this is a new root CA.",
         )
-        self.add_parent_private_key_storage_arguments(intermediate_group, key_backend_classes)
+        self.add_parent_private_key_storage_arguments(intermediate_group)
 
         parser.add_argument("name", help="Human-readable name of the CA")
         parser.add_argument(
@@ -276,7 +260,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         parent: Optional[CertificateAuthority],
         expires: timedelta,
         # private key storage options
-        key_backend_name: str,
+        key_backend: KeyBackend,
         key_type: ParsableKeyType,
         algorithm: Optional[AllowedHashTypes],
         # Authority Information Access extension (MUST be non-critical)
@@ -333,26 +317,17 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
 
-        key_backend_classes = get_key_backend_classes()
-        key_backend_classes_by_name = {cls.name: cls for cls in key_backend_classes.values()}
-        key_backend_class = key_backend_classes_by_name[key_backend_name]
-
-        try:
-            key_backend = key_backend_class.load_from_options(key_type, options)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
+        key_backend_options = key_backend.get_private_key_options(key_type, options)
 
         # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
         # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
         # worker and the current process is on the webserver side.
-        if parent is not None:
-            parent_key_backend_class = get_key_backend_class(parent.key_backend_path)
-            parent_options = parent_key_backend_class.get_parent_backend_options(options)
-
-            # Load the backend via the parents get_key_backend() method. Since it's cached there, it's
-            # available in the manager later (without being explicitly passed).
-            parent_key_backend = parent.get_key_backend(**parent_options)
-            if parent_key_backend.usable is False:
+        if parent is None:
+            signer_key_backend_options = key_backend.get_load_private_key_options(options)
+        else:
+            parent_key_backend = parent.key_backend
+            signer_key_backend_options = parent_key_backend.get_load_parent_private_key_options(options)
+            if parent_key_backend.is_usable(parent, signer_key_backend_options) is False:
                 raise CommandError("Parent CA is not usable.")
 
         # Get/validate signature hash algorithm
@@ -526,8 +501,10 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
 
         try:
             ca = CertificateAuthority.objects.init(
-                backend=key_backend,
                 name=name,
+                key_backend=key_backend,
+                key_backend_options=key_backend_options,
+                signer_key_backend_options=signer_key_backend_options,
                 subject=parsed_subject,
                 expires=expires_datetime,
                 algorithm=algorithm,
@@ -549,5 +526,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs
-        run_task(generate_ocsp_key, serial=ca.serial, password=options.get("password"))
-        run_task(cache_crl, serial=ca.serial, password=options.get("password"))
+        serialized_key_backend_options = signer_key_backend_options.model_dump(mode="json")
+        run_task(generate_ocsp_key, serial=ca.serial, key_backend_options=serialized_key_backend_options)
+        run_task(cache_crl, serial=ca.serial, key_backend_options=serialized_key_backend_options)

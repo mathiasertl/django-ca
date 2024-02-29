@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("django_ca", "0041_remove_certificateauthority_crl_url_and_more"),
     ]
@@ -17,9 +16,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="certificateauthority",
-            name="key_backend_path",
+            name="key_backend_alias",
             field=models.CharField(
-                default="django_ca.backends.storages.StoragesBackend",
+                default="default",
                 help_text="Backend to handle private keys.",
                 max_length=256,
             ),
