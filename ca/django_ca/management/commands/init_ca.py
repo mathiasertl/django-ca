@@ -313,22 +313,22 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
         subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
-        if not os.path.exists(ca_settings.CA_DIR):  # pragma: no cover
-            # TODO: set permissions
-            os.makedirs(ca_settings.CA_DIR)
+        try:
+            key_backend_options = key_backend.get_create_private_key_options(key_type, options)
+            load_key_backend_options = key_backend.get_load_private_key_options(options)
 
-        key_backend_options = key_backend.get_create_private_key_options(key_type, options)
-
-        # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
-        # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
-        # worker and the current process is on the webserver side.
-        if parent is None:
-            signer_key_backend_options = key_backend.get_load_private_key_options(options)
-        else:
-            parent_key_backend = parent.key_backend
-            signer_key_backend_options = parent_key_backend.get_load_parent_private_key_options(options)
-            if parent_key_backend.is_usable(parent, signer_key_backend_options) is False:
-                raise CommandError("Parent CA is not usable.")
+            # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
+            # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
+            # worker and the current process is on the webserver side.
+            if parent is None:
+                signer_key_backend_options = load_key_backend_options
+            else:
+                parent_key_backend = parent.key_backend
+                signer_key_backend_options = parent_key_backend.get_load_parent_private_key_options(options)
+                if parent_key_backend.is_usable(parent, signer_key_backend_options) is False:
+                    raise CommandError("Parent CA is not usable.")
+        except Exception as ex:
+            raise CommandError(*ex.args) from ex
 
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(key_type, algorithm)
@@ -504,16 +504,17 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
                 name=name,
                 key_backend=key_backend,
                 key_backend_options=key_backend_options,
-                signer_key_backend_options=signer_key_backend_options,
                 subject=parsed_subject,
                 expires=expires_datetime,
                 algorithm=algorithm,
                 parent=parent,
+                parent_key_backend_options=signer_key_backend_options,
                 path_length=path_length,
+                key_type=key_type,
+                extensions=extensions.values(),
                 caa=caa,
                 website=website,
                 terms_of_service=tos,
-                extensions=extensions.values(),
                 sign_authority_information_access=sign_authority_information_access_ext,
                 sign_certificate_policies=sign_certificate_policies_ext,
                 sign_crl_distribution_points=sign_crl_distribution_points_ext,
@@ -526,6 +527,6 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs
-        serialized_key_backend_options = signer_key_backend_options.model_dump(mode="json")
+        serialized_key_backend_options = load_key_backend_options.model_dump(mode="json")
         run_task(generate_ocsp_key, serial=ca.serial, key_backend_options=serialized_key_backend_options)
         run_task(cache_crl, serial=ca.serial, key_backend_options=serialized_key_backend_options)

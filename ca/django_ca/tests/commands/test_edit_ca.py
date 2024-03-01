@@ -18,6 +18,7 @@ from django.test import TestCase
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -212,7 +213,7 @@ class EditCATestCase(TestCaseMixin, TestCase):
         """Test setting an invalid ACME profile."""
         self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
 
-        with self.assertCommandError(r"^unknown-profile: Profile is not defined\.$"):
+        with assert_command_error(r"^unknown-profile: Profile is not defined\.$"):
             cmd("edit_ca", self.ca.serial, acme_profile="unknown-profile")
 
         self.ca.refresh_from_db()

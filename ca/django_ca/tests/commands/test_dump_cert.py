@@ -22,8 +22,9 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.test import TestCase
 
 from django_ca import ca_settings
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, override_tmpcadir
 
 
 class DumpCertTestCase(TestCaseMixin, TestCase):
@@ -55,9 +56,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
 
     def test_bundle(self) -> None:
         """Test getting the bundle."""
-        stdout, stderr = cmd(
-            "dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO()
-        )
+        stdout, stderr = cmd("dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout.decode(), self.cert.pub.pem + self.ca.pub.pem)
 
@@ -76,10 +75,10 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_cert.pem")
         msg = rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"
-        with self.assertCommandError(msg):
+        with assert_command_error(msg):
             cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
-        with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
+        with assert_command_error(r"^Cannot dump bundle when using DER format\.$"):
             cmd(
                 "dump_cert",
                 self.cert.serial,

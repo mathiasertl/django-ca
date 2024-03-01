@@ -12,12 +12,12 @@
 # <http://www.gnu.org/licenses/>.
 
 """:py:mod:`django_ca.tests.base.assertions` collects assertions used throughout the entire test suite."""
-
+import io
 import re
 import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Iterable, Iterator, List, Optional, Tuple, Type, Union
+from typing import AnyStr, Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest.mock import Mock
 
 from cryptography import x509
@@ -29,10 +29,12 @@ from cryptography.x509.oid import ExtensionOID
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.management import CommandError
 
 import pytest
 
 from django_ca import ca_settings
+from django_ca.backends.storages import LoadPrivateKeyOptions
 from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
     crl_last_update,
@@ -45,6 +47,7 @@ from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
+    cmd_e2e,
     crl_distribution_points,
     distribution_point,
     uri,
@@ -71,6 +74,7 @@ def assert_ca_properties(
     acme_profile: Optional[str] = None,
     acme_requires_contact: bool = True,
     crl_number: str = '{"scope": {}}',
+    password: Optional[bytes] = None,
 ) -> None:
     """Assert some basic properties of a CA."""
     parent_ca = parent or ca
@@ -91,7 +95,12 @@ def assert_ca_properties(
     # Test certificate properties
     assert ca.issuer == issuer
     # TYPEHINT NOTE: We assume a StoragesBackend here
-    assert isinstance(ca.get_key_backend().key, private_key_type)  # type: ignore[attr-defined]
+
+    ca.key_backend._key = None  # make sure that the key is not cached
+    assert isinstance(
+        ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=password)),  # type: ignore[attr-defined]
+        private_key_type,
+    )
 
     # Test AuthorityKeyIdentifier extension
     assert_authority_key_identifier(parent_ca, ca)
@@ -132,6 +141,19 @@ def assert_certificate(
     assert cert.issuer == parent.subject
     assert cert.subject == subject
     assert isinstance(cert.algorithm, algorithm)
+
+
+@contextmanager
+def assert_command_error(msg: str) -> Iterator[None]:
+    """Context manager asserting that CommandError is raised.
+
+    Parameters
+    ----------
+    msg : str
+        The regex matching the exception message.
+    """
+    with pytest.raises(CommandError, match=msg):
+        yield
 
 
 @contextmanager
@@ -219,6 +241,50 @@ def assert_crl(
     for entry in entries.values():
         assert revoked_certificate_revocation_date(entry) == now
         assert list(entry.extensions) == []
+
+
+def assert_e2e_command_error(
+    cmd: typing.Sequence[str],
+    stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+    stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+) -> None:
+    """Assert that the passed command raises a CommandError with the given message."""
+    if isinstance(stdout, str):  # pragma: no cover
+        stdout = "CommandError: " + stdout + "\n"
+    elif isinstance(stdout, bytes):  # pragma: no cover
+        stdout = b"CommandError: " + stdout + b"\n"
+    assert_e2e_error(cmd, stdout=stdout, stderr=stderr, code=1)
+
+
+def assert_e2e_error(
+    cmd: typing.Sequence[str],
+    stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+    stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+    code: int = 2,
+) -> None:
+    """Assert an error was through in an e2e command."""
+    if isinstance(stdout, str) or (isinstance(stdout, re.Pattern) and isinstance(stdout.pattern, str)):
+        actual_stdout = io.StringIO()
+    else:
+        actual_stdout = io.BytesIO()  # type: ignore[assignment]
+
+    if isinstance(stderr, str) or (isinstance(stderr, re.Pattern) and isinstance(stderr.pattern, str)):
+        actual_stderr = io.StringIO()
+    else:
+        actual_stderr = io.BytesIO()  # type: ignore[assignment]
+
+    with assert_system_exit(code):
+        cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
+
+    if isinstance(stdout, (str, bytes)):
+        assert stdout == actual_stdout.getvalue()
+    else:
+        assert stdout.search(actual_stdout.getvalue())  # pragma: no cover
+
+    if isinstance(stderr, (str, bytes)):
+        assert stderr == actual_stderr.getvalue()
+    else:
+        assert stderr.search(actual_stderr.getvalue())
 
 
 def assert_extensions(
@@ -312,6 +378,14 @@ def assert_signature(
     loaded_cert = load_certificate(FILETYPE_PEM, cert.pub.pem.encode())
     store_ctx = X509StoreContext(store, loaded_cert)
     assert store_ctx.verify_certificate() is None  # type: ignore[func-returns-value]
+
+
+@contextmanager
+def assert_system_exit(code: int) -> Iterator[None]:
+    """Assert that SystemExit is raised."""
+    with pytest.raises(SystemExit, match=rf"^{code}$") as excm:
+        yield
+    assert excm.value.args == (code,)
 
 
 @contextmanager

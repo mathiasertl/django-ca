@@ -35,7 +35,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority, Watcher
-from django_ca.tests.base.assertions import assert_create_cert_signals
+from django_ca.tests.base.assertions import assert_command_error, assert_create_cert_signals
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -673,7 +673,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             r"^Must give at least a Common Name in --subject or one or more "
             r"--subject-alternative-name/--name arguments\.$"
         )
-        with assert_create_cert_signals(False, False), self.assertCommandError(msg):
+        with assert_create_cert_signals(False, False), assert_command_error(msg):
             cmd("resign_cert", cert, subject_format="rfc4514", subject=subject.rfc4514_string())
 
     @override_tmpcadir()
@@ -683,14 +683,14 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         msg_re = rf"^{msg}$"
         with assert_create_cert_signals(False, False), patch(
             "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
-        ), self.assertCommandError(msg_re):
+        ), assert_command_error(msg_re):
             cmd("resign_cert", self.cert.serial)
 
     @override_tmpcadir()
     def test_invalid_algorithm(self) -> None:
         """Test manually specifying an invalid algorithm."""
         ed448_ca = self.load_ca("ed448")
-        with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
+        with assert_command_error(r"^Ed448 keys do not allow an algorithm for signing\.$"):
             cmd("resign_cert", self.cert.serial, ca=ed448_ca, algorithm=hashes.SHA512())
 
     @override_tmpcadir(
@@ -703,5 +703,5 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         self.cert.save()
 
         msg_re = rf'^Profile "{self.cert.profile}" for original certificate is no longer defined, please set one via the command line\.$'  # NOQA: E501
-        with self.assertCommandError(msg_re):
+        with assert_command_error(msg_re):
             cmd("resign_cert", self.cert.serial)

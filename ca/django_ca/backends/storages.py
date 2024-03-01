@@ -42,7 +42,7 @@ from django_ca import constants
 from django_ca.backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, EllipticCurves, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import generate_private_key, get_cert_builder, read_file, validate_private_key_parameters
 
 if typing.TYPE_CHECKING:
@@ -52,16 +52,20 @@ if typing.TYPE_CHECKING:
 class CreatePrivateKeyOptions(pydantic.BaseModel):
     """Options for initializing private keys."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
+    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
     password: Optional[bytes]
     path: Path
-    key_size: Optional[int]
-    elliptic_curve: Optional[ec.EllipticCurve]
+    key_size: Optional[int] = None
+    elliptic_curve: Optional[ec.EllipticCurve] = None
 
 
 class LoadPrivateKeyOptions(pydantic.BaseModel):
     """Options for loading a private key."""
+
+    # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
+    model_config = ConfigDict(frozen=True)
 
     password: Optional[bytes]
 
@@ -118,7 +122,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
             password=options["password"],
             path=options["path"],
             key_size=key_size,
-            elliptic_curve=options["elliptic_curve"],
+            elliptic_curve=elliptic_curve,
         )
 
     def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
@@ -156,28 +160,27 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
         self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions
     ) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key."""
-        if self._key is None:
-            path = ca.key_backend_options["path"]
-            key_data = read_file(path)
-            password = load_options.password
+        path = ca.key_backend_options["path"]
+        key_data = read_file(path)
+        password = load_options.password
 
+        try:
+            key = typing.cast(  # type validated below
+                CertificateIssuerPrivateKeyTypes, load_der_private_key(key_data, password)
+            )
+        except ValueError:
             try:
-                self._key = typing.cast(  # type validated below
-                    CertificateIssuerPrivateKeyTypes, load_der_private_key(key_data, password)
+                key = typing.cast(  # type validated below
+                    CertificateIssuerPrivateKeyTypes, load_pem_private_key(key_data, password)
                 )
-            except ValueError:
-                try:
-                    self._key = typing.cast(  # type validated below
-                        CertificateIssuerPrivateKeyTypes, load_pem_private_key(key_data, password)
-                    )
-                except ValueError as ex2:
-                    # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
-                    raise ValueError("Could not decrypt private key - bad password?") from ex2
+            except ValueError as ex2:
+                # cryptography passes the OpenSSL error directly here and it is notoriously unstable.
+                raise ValueError("Could not decrypt private key - bad password?") from ex2
 
-        if not isinstance(self._key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
+        if not isinstance(key, constants.PRIVATE_KEY_TYPES):  # pragma: no cover
             raise ValueError("Private key of this type is not supported.")
 
-        return self._key
+        return key
 
     def is_usable(self, ca: "CertificateAuthority", options: LoadPrivateKeyOptions) -> bool:
         try:

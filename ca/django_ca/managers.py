@@ -225,7 +225,7 @@ class CertificateAuthorityManager(
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
         parent: Optional["CertificateAuthority"] = None,
-        signer_key_backend_options: Any = None,
+        parent_key_backend_options: Any = None,
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,
         key_type: ParsableKeyType = "RSA",
@@ -250,7 +250,7 @@ class CertificateAuthorityManager(
 
         .. versionchanged:: 1.28.0
 
-           * The `backend` parameter was added.
+           * The `key_backend` and `key_backend_options` parameters where added.
            * The `path`, `password`, `key_size` and `elliptic_curve` parameters where removed, they are now
              part of `key_backend`.
            * The `parent_password` parameter was removed, it is now part of the backend loaded for the parent.
@@ -271,6 +271,8 @@ class CertificateAuthorityManager(
             The name of the CA. This is a human-readable string and is used for administrative purposes only.
         key_backend : :py:class:`~django_ca.backends.base.KeyBackend`
             A subclass of :py:class:`~django_ca.backends.base.KeyBackend` to use for storing the private key.
+        key_backend_options : BaseModel
+            Parameters required for creating the private key using `key_backend`.
         subject : :py:class:`cg:cryptography.x509.Name`
            The desired subject for the certificate.
         expires : int or datetime or timedelta, optional
@@ -284,6 +286,8 @@ class CertificateAuthorityManager(
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority. Let unset if this CA will be used for OpenSSH.
+        parent_key_backend_options : BaseModel
+            Transient parameters required for signing certificates with `parent` (e.g. a password).
         default_hostname : str, optional
             Override the URL configured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
@@ -439,8 +443,7 @@ class CertificateAuthorityManager(
         # itself. This has the added bonus of signal handlers being able to influence the extension order.
         extensions = list(extensions_dict.values())
 
-        # Initialize the CA model, so that we can get the backend (needed early to give the backend an
-        # opportunity to validate the private key parameters.
+        # Initialize the CA model (has to be passed to key_backend.create_private_key()).
         ca: CertificateAuthority = self.model(
             name=name,
             parent=parent,
@@ -493,7 +496,7 @@ class CertificateAuthorityManager(
             api_enabled=api_enabled,
         )
 
-        # Actually generate the private key and set key_backend_options
+        # Actually generate the private key and set ca.key_backend_options.
         public_key = key_backend.create_private_key(ca, key_type, key_backend_options)
 
         # Add Basic Constraints extension
@@ -533,7 +536,7 @@ class CertificateAuthorityManager(
         # Sign the certificate
         certificate = signer_backend.sign_certificate(
             signer_ca,
-            signer_key_backend_options,
+            parent_key_backend_options,
             public_key,
             serial,
             algorithm,
@@ -593,6 +596,8 @@ class CertificateManager(
         ----------
         ca : :py:class:`~django_ca.models.CertificateAuthority`
             The certificate authority to sign the certificate with.
+        key_backend_options : BaseModel
+            Transient parameters required for signing certificates with `ca` (e.g. a password).
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The certificate signing request to use when signing a certificate. Passing a ``str`` or ``bytes``
             is deprecated and will be removed in django-ca 1.20.0.
@@ -617,8 +622,6 @@ class CertificateManager(
         add_issuer_url : bool, optional
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         add_issuer_alternative_name : bool, optional
-            Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
-        password : bool, optional
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         """
         # Get the profile object if none was passed

@@ -30,6 +30,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -143,7 +144,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         # test an output path that doesn't exist
         path = os.path.join(ca_settings.CA_DIR, "test", "crl-test.crl")
 
-        with self.assertCommandError(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
+        with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
             cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
 
     @override_tmpcadir()
@@ -152,12 +153,12 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         ca = self.cas["pwd"]
 
         # Giving no password raises a CommandError
-        with self.assertCommandError("^Password was not given but private key is encrypted$"):
+        with assert_command_error("^Password was not given but private key is encrypted$"):
             cmd("dump_crl", ca=ca, scope="user")
 
         # False password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with self.assertCommandError(self.re_false_password):
+        with assert_command_error(self.re_false_password):
             cmd("dump_crl", ca=ca, scope="user", password=b"wrong")
 
         stdout, stderr = cmd(
@@ -376,15 +377,15 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
     def test_invalid_hash_algorithm(self) -> None:
         """Try creating a CRL with an invalid hash algorithm."""
-        with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
+        with assert_command_error(r"^Ed448 keys do not allow an algorithm for signing\.$"):
             cmd("dump_crl", ca=self.cas["ed448"], algorithm=hashes.SHA512())
 
-        with self.assertCommandError(r"^Ed25519 keys do not allow an algorithm for signing\.$"):
+        with assert_command_error(r"^Ed25519 keys do not allow an algorithm for signing\.$"):
             cmd("dump_crl", ca=self.cas["ed25519"], algorithm=hashes.SHA512())
 
     @override_tmpcadir()
     def test_error(self) -> None:
         """Test that creating a CRL fails for an unknown reason."""
         method = "django_ca.models.CertificateAuthority.get_crl"
-        with self.patch(method, side_effect=Exception("foo")), self.assertCommandError("foo"):
+        with self.patch(method, side_effect=Exception("foo")), assert_command_error("foo"):
             cmd("dump_crl", ca=self.ca, stdout=BytesIO(), stderr=BytesIO())

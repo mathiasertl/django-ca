@@ -260,11 +260,10 @@ def load_ca(
         ),
     )
 
-    key_backend_options = {"alias": ca_settings.CA_DEFAULT_STORAGE_ALIAS, "path": f"{name}.key"}
     ca = CertificateAuthority(
         name=name,
-        key_backend_path="django_ca.backends.storages.StoragesBackend",
-        key_backend_options=key_backend_options,
+        key_backend_alias=ca_settings.CA_DEFAULT_KEY_BACKEND,
+        key_backend_options={"path": f"{name}.key"},
         parent=parent,
         **kwargs,
     )
