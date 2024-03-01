@@ -45,7 +45,6 @@ from django_ca.models import (
 from django_ca.profiles import profiles
 from django_ca.pydantic.messages import SignCertificateMessage
 from django_ca.typehints import (
-    JSON,
     AllowedHashTypes,
     HashAlgorithms,
     ParsableKeyType,
@@ -83,7 +82,7 @@ def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
 
 
 @shared_task
-def cache_crl(serial: str, key_backend_options: Dict[str, JSON]) -> None:
+def cache_crl(serial: str, key_backend_options: Dict[str, Any]) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
     key_backend_options_model = ca.key_backend.load_model.model_validate(key_backend_options, strict=True)
@@ -108,7 +107,7 @@ def cache_crls(serials: Optional[Iterable[str]] = None) -> None:
 @shared_task
 def generate_ocsp_key(
     serial: str,
-    key_backend_options: Dict[str, JSON],
+    key_backend_options: Dict[str, Any],
     profile: str = "ocsp",
     expires: Optional[int] = None,
     algorithm: Optional[HashAlgorithms] = None,

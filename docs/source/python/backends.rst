@@ -8,9 +8,9 @@ Supported backends
 
 .. autoclass:: django_ca.backends.storages.StoragesBackend
 
-***************
-Custom backends
-***************
+***********************
+Writing custom backends
+***********************
 
 ************************
 Base class documentation

@@ -470,6 +470,8 @@ jinja_filters = {
 }
 
 qualname_overrides = {
+    "_io.BytesIO": "python:io.BytesIO",
+    "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
     "MappingProxyType": "python:types.MappingProxyType",
     "django.db.models.base.Model": "django.db.models.Model",
@@ -499,6 +501,9 @@ nitpick_ignore = [
     ("py:class", "OtherNames"),
     ("py:class", "KeyUsages"),
     ("py:class", "GeneralNames"),
+    # TypeVars for classes that make no sense in documenting.
+    ("py:class", "django_ca.backends.base.CreatePrivateKeyOptions"),
+    ("py:class", "django_ca.backends.base.LoadPrivateKeyOptions"),
     # Just no need to document these
     ("py:class", "django_ca.backends.base.Self"),  # pragma: only py<3.11  # replace with typing.Self
     # Undocumented in Python:

@@ -55,6 +55,7 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
     #: Description used for the ArgumentGroup in :command:`manage.py init_ca`.
     description: typing.ClassVar[str]
 
+    #: The Pydantic model representing the options used for loading a private key.
     load_model: Type[LoadPrivateKeyOptions]
 
     def __init__(self, alias: str, **kwargs: Any) -> None:
@@ -68,6 +69,15 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
 
     def add_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+        """Add an argument group for arguments for private key generation with this backend.
+
+        By default, the title and description of the argument group is based on
+        :py:attr:`~django_ca.backends.base.KeyBackend.alias`,
+        :py:attr:`~django_ca.backends.base.KeyBackend.title` and
+        :py:attr:`~django_ca.backends.base.KeyBackend.description`.
+
+        Return ``None`` if you don't need to create such a group.
+        """
         return parser.add_argument_group(
             f"{self.alias}: {self.title}",
             f"The backend used with --key-backend={self.alias}. {self.description}",
@@ -78,61 +88,44 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
 
         Add arguments that can be used for generating private keys with your backend to `group`. The arguments
         you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.backends.base.KeyBackend.load_from_options`.
+        :py:func:`~django_ca.backends.base.KeyBackend.get_create_private_key_options`.
         """
         return None
 
     # pylint: disable-next=unused-argument
     def add_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
-        """Add arguments for loading the private key of any signing certificate authority.
+        """Add arguments for loading the private key of a parent certificate authority.
 
-        Only add arguments here if you do not want to store options in the database. For example, the
-        Storages backend adds the password to load the parents private key here (which is **not** stored in
-        the database).
+        The arguments you add here are expected to be loaded (and validated) using
+        :py:func:`~django_ca.backends.base.KeyBackend.get_load_parent_private_key_options`.
         """
         return None
 
     @abc.abstractmethod
-    def get_private_key_options(
+    def get_create_private_key_options(
         self, key_type: ParsableKeyType, options: Dict[str, Any]
     ) -> CreatePrivateKeyOptions:
-        """Create a backend instance from command line options.
+        """Load options to create private keys into a Pydantic model.
 
-        After calling this function, the instance is expected to be able to create and store the private key
-        for this certificate authority and subsequently use it for signing new certificates (such as the
-        certificate authority itself).
-
-        The `options` dict represents the options added via the ``init_ca`` argument parser, minus values
-        that are explicitly named in its ``handle()`` function. It will thus contain all options you added in
-        :py:func:`~django_ca.backends.base.KeyBackend.add_private_key_arguments`.
-
-        This method should raise ValueError if any of the arguments are not valid.
-
-        Example::
-
-            class CustomKeyBackend(KeyBackend):
-                @classmethod
-                def add_private_key_arguments(cls, group: ArgumentGroup) -> None:
-                    group.add_argument("--example")
-
-                @classmethod
-                def load_from_options(
-                    cls, key_type: ParsableKeyType, options: Dict[str, Any]
-                ) -> CustomKeyBackend:
-                    if options["example"] == "wrong value":  # a contrived example
-                        raise ValueError("example must not be 'wrong value'")
-
-                    # the returned instance is ready to call initialize()
-                    return cls(example=example)
+        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The
+        returned model will be passed to :py:func:`~django_ca.backends.base.KeyBackend.create_private_key`.
         """
 
     @abc.abstractmethod
     def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
-        ...
+        """Load options to create private keys into a Pydantic model.
+
+        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
+        backend is expected to be able to sign certificates and CRLs using the options provided here.
+        """
 
     @abc.abstractmethod
     def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
-        ...
+        """Load options to create private keys into a Pydantic model.
+
+        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
+        backend is expected to be able to sign certificate authorities using the options provided here.
+        """
 
     @abc.abstractmethod
     def is_usable(self, ca: "CertificateAuthority", options: LoadPrivateKeyOptions) -> bool:
@@ -142,7 +135,15 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
     ) -> CertificateIssuerPublicKeyTypes:
-        """Initialize the CA."""
+        """Create a private key for the certificate authority.
+
+        The method is expected to set `key_backend_options` on `ca` with a set of options that can later be
+        used to load the private key. Since this value will be stored in the database, you should not add
+        secrets to `key_backend_options`.
+
+        Note that `ca` is not yet a *saved* database entity, so it does not have a private key and fields
+        populated will be incomplete.
+        """
 
     @abc.abstractmethod
     def sign_certificate(

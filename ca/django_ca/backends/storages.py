@@ -57,7 +57,7 @@ class CreatePrivateKeyOptions(pydantic.BaseModel):
     password: Optional[bytes]
     path: Path
     key_size: Optional[int]
-    elliptic_curve: Optional[EllipticCurves]
+    elliptic_curve: Optional[ec.EllipticCurve]
 
 
 class LoadPrivateKeyOptions(pydantic.BaseModel):
@@ -108,7 +108,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
             help="Password for the private key of the parent CA, if stored using the Django storage system.",
         )
 
-    def get_private_key_options(
+    def get_create_private_key_options(
         self, key_type: ParsableKeyType, options: Dict[str, Any]
     ) -> CreatePrivateKeyOptions:
         key_size, elliptic_curve = validate_private_key_parameters(
@@ -137,11 +137,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
         else:
             encryption = serialization.BestAvailableEncryption(options.password)
 
-        elliptic_curve = None
-        if options.elliptic_curve is not None:
-            elliptic_curve = constants.ELLIPTIC_CURVE_TYPES[options.elliptic_curve]()
-
-        self._key = generate_private_key(options.key_size, key_type, elliptic_curve)
+        self._key = generate_private_key(options.key_size, key_type, options.elliptic_curve)
 
         der = self._key.private_bytes(
             encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
