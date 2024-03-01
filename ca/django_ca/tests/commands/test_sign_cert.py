@@ -31,7 +31,12 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_authority_key_identifier, assert_create_cert_signals
+from django_ca.tests.base.assertions import (
+    assert_authority_key_identifier,
+    assert_command_error,
+    assert_create_cert_signals,
+    assert_system_exit,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -692,7 +697,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Giving no password raises a CommandError
         san = subject_alternative_name(dns("example.com"))
-        with self.assertCommandError(
+        with assert_command_error(
             "^Password was not given but private key is encrypted$"
         ), assert_create_cert_signals(False, False):
             cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=csr)
@@ -704,7 +709,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         # Pass the wrong password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with self.assertCommandError(self.re_false_password), assert_create_cert_signals(False, False):
+        with assert_command_error(self.re_false_password), assert_create_cert_signals(False, False):
             cmd("sign_cert", ca=ca, subject_alternative_name=san.value, stdin=csr, password=b"wrong")
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -717,7 +722,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
             stream.write(b"bogus")
 
         san = subject_alternative_name(dns("example.com"))
-        with self.assertCommandError(self.re_false_password), assert_create_cert_signals(False, False):
+        with assert_command_error(self.re_false_password), assert_create_cert_signals(False, False):
             cmd("sign_cert", ca=self.ca, subject_alternative_name=san.value, stdin=csr)
 
     @override_tmpcadir()
@@ -793,7 +798,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         error.
         """
         subject = f"inn=weird,CN={self.hostname}"
-        with self.assertCommandError(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(
+        with assert_command_error(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(
             False, False
         ):
             cmd("sign_cert", ca=self.ca, subject_format="rfc4514", subject=subject, stdin=csr)
@@ -805,7 +810,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         The position of the CommonName added via the SubjectAlternativeName extension cannot be determined.
         """
         subject = "inn=weird"
-        with self.assertCommandError(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(
+        with assert_command_error(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(
             False, False
         ):
             cmd(
@@ -823,7 +828,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         time_left = (self.ca.expires - timezone.now()).days
         expires = timedelta(days=time_left + 3)
 
-        with self.assertCommandError(
+        with assert_command_error(
             rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
         ), assert_create_cert_signals(False, False):
             cmd(
@@ -840,14 +845,14 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         """Test signing with a revoked CA."""
         self.ca.revoke()
 
-        with self.assertCommandError(r"^Certificate Authority is revoked\.$"), assert_create_cert_signals(
+        with assert_command_error(r"^Certificate Authority is revoked\.$"), assert_create_cert_signals(
             False, False
         ):
             cmd("sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=csr)
 
     def test_invalid_algorithm(self) -> None:
         """Test passing an invalid algorithm."""
-        with self.assertCommandError(r"^Ed448 keys do not allow an algorithm for signing\.$"):
+        with assert_command_error(r"^Ed448 keys do not allow an algorithm for signing\.$"):
             cmd(
                 "sign_cert",
                 ca=self.cas["ed448"],
@@ -860,7 +865,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_no_cn_or_san(self) -> None:
         """Test signing a cert that has neither CN nor SAN."""
         subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, self.hostname)])
-        with self.assertCommandError(
+        with assert_command_error(
             r"^Must give at least a Common Name in --subject or one or more "
             r"--subject-alternative-name/--name arguments\.$"
         ), assert_create_cert_signals(False, False):
@@ -873,7 +878,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
         os.remove(path)
         msg = rf"^\[Errno 2\] No such file or directory: '{path}'"
 
-        with self.assertCommandError(msg), assert_create_cert_signals(False, False):
+        with assert_command_error(msg), assert_create_cert_signals(False, False):
             cmd(
                 "sign_cert",
                 ca=self.ca,
@@ -887,7 +892,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
     def test_expired_ca(self) -> None:
         """Test signing with an expired CA."""
         msg = r"^Certificate Authority has expired\.$"
-        with self.assertCommandError(msg), assert_create_cert_signals(False, False):
+        with assert_command_error(msg), assert_create_cert_signals(False, False):
             cmd("sign_cert", ca=self.ca, subject_format="rfc4514", subject=f"CN={self.hostname}", stdin=csr)
 
     @override_tmpcadir()
@@ -902,7 +907,7 @@ class SignCertTestCase(TestCaseMixin, TestCase):  # pylint: disable=too-many-pub
 
         actual_stdout = io.StringIO()
         actual_stderr = io.StringIO()
-        with self.assertSystemExit(2):
+        with assert_system_exit(2):
             cmd_e2e(cmdline, stdout=actual_stdout, stderr=actual_stderr)
 
         self.assertEqual("", actual_stdout.getvalue())

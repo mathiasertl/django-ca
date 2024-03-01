@@ -24,6 +24,7 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from django_ca.models import Watcher
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, override_tmpcadir
@@ -1005,5 +1006,5 @@ Digest:
     def test_unknown_cert(self) -> None:
         """Test viewing an unknown certificate."""
         name = "foobar"
-        with self.assertCommandError(rf"^Error: argument cert: {name}: Certificate not found\.$"):
+        with assert_command_error(rf"^Error: argument cert: {name}: Certificate not found\.$"):
             cmd("view_cert", name)

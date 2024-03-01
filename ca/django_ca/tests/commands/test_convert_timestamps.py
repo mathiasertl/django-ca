@@ -19,6 +19,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd
@@ -135,5 +136,5 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
 
     def test_use_tz_is_false(self) -> None:
         """Test error when USE_TZ=False."""
-        with self.assertCommandError("This command requires that you have configured USE_TZ=True."):
+        with assert_command_error("This command requires that you have configured USE_TZ=True."):
             cmd("convert_timestamps")

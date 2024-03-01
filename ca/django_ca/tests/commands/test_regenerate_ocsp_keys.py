@@ -26,6 +26,7 @@ from django.core.files.storage import storages
 from django.test import TestCase
 
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
@@ -231,7 +232,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_PROFILES={"ocsp": None})
     def test_no_ocsp_profile(self) -> None:
         """Try when there is no OCSP profile."""
-        with self.assertCommandError(r"^ocsp: Undefined profile\.$"):
+        with assert_command_error(r"^ocsp: Undefined profile\.$"):
             cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
         self.assertHasNoKey(CERT_DATA["root"]["serial"])
 

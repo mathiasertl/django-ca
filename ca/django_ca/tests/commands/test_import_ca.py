@@ -28,6 +28,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -280,7 +281,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         try:
             serial = CERT_DATA["root"]["serial"].replace(":", "")
             error = rf"^{serial}\.key: Permission denied: Could not open file for writing$"
-            with self.assertCommandError(error):
+            with assert_command_error(error):
                 cmd("import_ca", name, key_path, pem_path)
         finally:
             # otherwise we might not be able to remove temporary CA_DIR
@@ -307,7 +308,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             os.chmod(tempdir, 0o000)
             ca_dir = os.path.join(tempdir, "foo", "bar")
             msg = rf"^{ca_dir}: Could not create CA_DIR: Permission denied.$"
-            with mock_cadir(ca_dir), self.assertCommandError(msg):
+            with mock_cadir(ca_dir), assert_command_error(msg):
                 cmd("import_ca", name, key_path, pem_path)
 
     @override_tmpcadir()
@@ -315,7 +316,7 @@ class ImportCATest(TestCaseMixin, TestCase):
         """Test importing a CA with a bogus public key."""
         name = "testname"
         key_path = CERT_DATA["root"]["key_path"]
-        with self.assertCommandError(r"^Unable to load public key\.$"):
+        with assert_command_error(r"^Unable to load public key\.$"):
             cmd("import_ca", name, key_path, Path(__file__).resolve())
         self.assertEqual(CertificateAuthority.objects.count(), 0)
 
@@ -324,6 +325,6 @@ class ImportCATest(TestCaseMixin, TestCase):
         """Test importing a CA with a bogus private key."""
         name = "testname"
         pem_path = CERT_DATA["root"]["pub_path"]
-        with self.assertCommandError(r"^Unable to load private key\.$"):
+        with assert_command_error(r"^Unable to load private key\.$"):
             cmd("import_ca", name, Path(__file__).resolve(), pem_path)
         self.assertEqual(CertificateAuthority.objects.count(), 0)

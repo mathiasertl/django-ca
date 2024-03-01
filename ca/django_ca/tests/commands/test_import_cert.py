@@ -20,6 +20,7 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from django_ca.models import Certificate
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, override_tmpcadir
@@ -62,6 +63,6 @@ class ImportCertTest(TestCaseMixin, TestCase):
     @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
     def test_bogus(self) -> None:
         """Try to import bogus data."""
-        with self.assertCommandError(r"^Unable to load public key\.$"):
+        with assert_command_error(r"^Unable to load public key\.$"):
             cmd("import_cert", __file__, ca=self.ca)
         self.assertEqual(Certificate.objects.count(), 0)

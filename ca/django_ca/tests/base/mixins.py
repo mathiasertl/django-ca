@@ -52,6 +52,7 @@ from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import post_issue_cert, post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
+from django_ca.tests.base.assertions import assert_system_exit
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
@@ -241,18 +242,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
-    def assertCommandError(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
-        """Context manager asserting that CommandError is raised.
-
-        Parameters
-        ----------
-        msg : str
-            The regex matching the exception message.
-        """
-        with self.assertRaisesRegex(CommandError, msg):
-            yield
-
-    @contextmanager
     def assertSignCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
@@ -366,7 +355,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         else:
             actual_stderr = io.BytesIO()  # type: ignore[assignment]
 
-        with self.assertSystemExit(code):
+        with assert_system_exit(code):
             cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
 
         if isinstance(stdout, (str, bytes)):
@@ -439,13 +428,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
         else:
             self.assertEqual(cert.revoked_reason, reason)
-
-    @contextmanager
-    def assertSystemExit(self, code: int) -> Iterator[None]:  # pylint: disable=invalid-name
-        """Assert that SystemExit is raised."""
-        with self.assertRaisesRegex(SystemExit, rf"^{code}$") as excm:
-            yield
-        self.assertEqual(excm.exception.args, (code,))
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard

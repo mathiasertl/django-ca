@@ -53,7 +53,7 @@ Fixtures
 
 .. autofunction:: django_ca.tests.conftest.hostname
 
-.. autofunction:: django_ca.tests.conftest.storages_backend
+.. autofunction:: django_ca.tests.conftest.key_backend
 
 .. autofunction:: django_ca.tests.conftest.rfc4514_subject
 

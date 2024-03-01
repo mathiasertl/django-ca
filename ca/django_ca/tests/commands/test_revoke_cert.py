@@ -22,6 +22,7 @@ from django.utils import timezone
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate
 from django_ca.signals import post_revoke_cert, pre_revoke_cert
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import cmd, cmd_e2e
@@ -98,7 +99,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         self.assertPostRevoke(post, cert)
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
-        with self.assertCommandError(rf"^{self.cert.serial}: Certificate is already revoked\.$"), mock_signal(
+        with assert_command_error(rf"^{self.cert.serial}: Certificate is already revoked\.$"), mock_signal(
             pre_revoke_cert
         ) as pre, mock_signal(post_revoke_cert) as post:
             cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
@@ -113,7 +114,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
     def test_compromised_with_naive_datetime(self) -> None:
         """Test passing a naive datetime (which is an error)."""
         now = datetime.now()
-        with self.assertCommandError(rf"{now.isoformat()}: Timestamp requires a timezone\."):
+        with assert_command_error(rf"{now.isoformat()}: Timestamp requires a timezone\."):
             cmd("revoke_cert", self.cert.serial, compromised=now)
         self.assertNotRevoked(self.cert)
 
@@ -121,6 +122,6 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         """Test passing a datetime in the future (which is an error)."""
         now = datetime.now(tz=tz.utc).replace(microsecond=0) + timedelta(days=1)
         iso_format = re.escape(now.isoformat())  # tz-aware iso 8601 timestamp has regex special characters
-        with self.assertCommandError(rf"{iso_format}: Timestamp must be in the past\."):
+        with assert_command_error(rf"{iso_format}: Timestamp must be in the past\."):
             cmd("revoke_cert", self.cert.serial, compromised=now)
         self.assertNotRevoked(self.cert)

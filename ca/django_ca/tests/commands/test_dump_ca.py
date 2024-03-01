@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.test import TestCase
 
 from django_ca import ca_settings
+from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, override_tmpcadir
 
@@ -81,17 +82,17 @@ class DumpCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_color_output_error(self) -> None:
         """Test that requesting color output throws an error."""
-        with self.assertCommandError("This command does not support color output."):
+        with assert_command_error("This command does not support color output."):
             cmd("dump_ca", self.ca.serial, "/does/not/exist", force_color=True)
 
     @override_tmpcadir()
     def test_errors(self) -> None:
         """Test some error conditions."""
         path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_ca.pem")
-        with self.assertCommandError(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
+        with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
             cmd("dump_ca", self.ca.serial, path, stdout=BytesIO(), stderr=BytesIO())
 
-        with self.assertCommandError(r"^Cannot dump bundle when using DER format\.$"):
+        with assert_command_error(r"^Cannot dump bundle when using DER format\.$"):
             cmd(
                 "dump_ca",
                 self.ca.serial,
