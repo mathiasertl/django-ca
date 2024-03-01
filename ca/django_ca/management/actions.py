@@ -21,6 +21,7 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Type
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ValidationError
@@ -183,7 +184,7 @@ class FormatAction(SingleValueAction[str, Encoding]):
             raise argparse.ArgumentError(self, str(ex)) from ex
 
 
-class EllipticCurveAction(argparse.Action):
+class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
     """Action to parse an elliptic curve value.
 
     >>> parser = argparse.ArgumentParser()
@@ -197,6 +198,11 @@ class EllipticCurveAction(argparse.Action):
         kwargs.setdefault("choices", sorted(tuple(constants.ELLIPTIC_CURVE_TYPES)))
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         super().__init__(**kwargs)
+
+    def parse_value(self, value: str) -> ec.EllipticCurve:
+        """Parse the value for this action."""
+        # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
+        return constants.ELLIPTIC_CURVE_TYPES[value]()
 
 
 class IntegerRangeAction(SingleValueAction[int, int]):

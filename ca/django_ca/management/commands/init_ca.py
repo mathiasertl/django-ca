@@ -317,7 +317,7 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             # TODO: set permissions
             os.makedirs(ca_settings.CA_DIR)
 
-        key_backend_options = key_backend.get_private_key_options(key_type, options)
+        key_backend_options = key_backend.get_create_private_key_options(key_type, options)
 
         # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
         # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
