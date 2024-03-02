@@ -28,7 +28,6 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.urls import reverse
 
 from django_ca import ca_settings, constants, typehints
-from django_ca.backends.base import KeyBackend
 from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, HASH_ALGORITHM_NAMES
 from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.extensions import parse_extension
@@ -354,7 +353,7 @@ class Profile:
             public_key=public_key,
             serial=serial,
             algorithm=algorithm,
-            issuer=ca.issuer,
+            issuer=ca.subject,
             subject=subject,
             expires=expires,
             extensions=extensions,

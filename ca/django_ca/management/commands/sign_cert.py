@@ -73,7 +73,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         subject: Optional[str],
         expires: Optional[timedelta],
         watch: List[str],
-        password: Optional[bytes],
         csr_path: str,
         bundle: bool,
         profile: Optional[str],
@@ -114,11 +113,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         if ca.revoked:
             raise CommandError("Certificate Authority is revoked.")
 
+        # Get key backend options
+        key_backend_options = ca.key_backend.get_load_private_key_options(options)
+
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
 
         profile_obj = profiles[profile]
-        self.test_options(ca=ca, expires=expires, password=password, profile=profile_obj, **options)
+        self.test_options(ca=ca, expires=expires, profile=profile_obj, **options)
 
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]
@@ -193,11 +195,11 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         try:
             cert = Certificate.objects.create_cert(
                 ca,
+                key_backend_options,
                 csr,
                 profile=profile_obj,
                 expires=expires,
                 extensions=extensions.values(),
-                password=password,
                 subject=parsed_subject,
                 algorithm=algorithm,
             )

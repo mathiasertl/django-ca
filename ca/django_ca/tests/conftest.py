@@ -178,21 +178,6 @@ def subject(hostname: str) -> Iterator[x509.Name]:
 
 
 @pytest.fixture()
-def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
-    """Parametrized fixture for "interesting" certificates.
-
-    A function using this fixture will be called once for each interesting certificate.
-    """
-    yield request.getfixturevalue(request.param.replace("-", "_"))
-
-
-@pytest.fixture(params=all_cert_names)
-def any_cert(request: "SubRequest") -> Iterator[Certificate]:
-    """Parametrized fixture for absolutely *any* certificate name."""
-    yield request.param
-
-
-@pytest.fixture()
 def user(
     # PYLINT NOTE: usefixtures() does not (yet?) work with fixtures as of pytest==7.4.3
     #   https://docs.pytest.org/en/7.4.x/how-to/fixtures.html
@@ -253,6 +238,27 @@ for _ca_name in usable_ca_names + usable_cert_names + unusable_cert_names:
     globals()[f"{_ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(_ca_name)
 for cert_name in usable_cert_names:
     globals()[cert_name.replace("-", "_")] = generate_cert_fixture(cert_name)
+
+
+@pytest.fixture(params=usable_ca_names)
+def usable_ca(request: "SubRequest") -> Iterator[Certificate]:
+    """Parametrized fixture for every usable CA (with usable private key)."""
+    yield request.getfixturevalue(f"usable_{request.param}")
+
+
+@pytest.fixture()
+def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
+    """Parametrized fixture for "interesting" certificates.
+
+    A function using this fixture will be called once for each interesting certificate.
+    """
+    yield request.getfixturevalue(request.param.replace("-", "_"))
+
+
+@pytest.fixture(params=all_cert_names)
+def any_cert(request: "SubRequest") -> Iterator[Certificate]:
+    """Parametrized fixture for absolutely *any* certificate name."""
+    yield request.param
 
 
 @pytest.fixture(params=signed_certificate_timestamp_cert_names)

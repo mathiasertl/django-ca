@@ -377,7 +377,6 @@ addopts = [
     "--cov-report=html:docs/build/coverage/",
     "--cov-fail-under=100",
     "--random-order",
-
 ]
 pythonpath = [
     "ca",
@@ -401,6 +400,9 @@ filterwarnings = [
     "error:datetime.datetime.utcnow\\(\\) is deprecated::django_ca",
 
     "ignore:django.core.files.storage.get_storage_class is deprecated::django",  # pragma: only django<4.2
+
+    # pytest-freezegun==0.4.2 issues this (harmless for now) warning:
+    "ignore:distutils Version classes are deprecated. Use packaging.version instead.::pytest_freezegun",
 
     # pyOpenSSL>=23.3.0 raises this warning, acme==2.7.3 still uses the deprecated APIs.
     # acme uses X509Extension in acme.crypto_util.gen_ss_cert(). See also:

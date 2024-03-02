@@ -53,6 +53,7 @@ from django_ca.tests.base.assertions import (
     assert_authority_key_identifier,
     assert_create_cert_signals,
     assert_extensions,
+    assert_post_issue_cert,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.testcases import SeleniumTestCase
@@ -168,7 +169,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=cname)
-        self.assertPostIssueCert(post, cert)
+        assert_post_issue_cert(post, cert)
         self.assertEqual(
             cert.pub.loaded.subject,
             x509.Name(
@@ -304,7 +305,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert: Certificate = Certificate.objects.get(cn="")
-        self.assertPostIssueCert(post, cert)
+        assert_post_issue_cert(post, cert)
         self.assertEqual(cert.subject, x509.Name([]))
         self.assertEqual(
             cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
@@ -333,7 +334,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert: Certificate = Certificate.objects.get(cn=self.hostname)
-        self.assertPostIssueCert(post, cert)
+        assert_post_issue_cert(post, cert)
         self.assertEqual(
             cert.subject,
             x509.Name(
@@ -474,7 +475,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=self.hostname)
-        self.assertPostIssueCert(post, cert)
+        assert_post_issue_cert(post, cert)
         self.assertEqual(
             cert.pub.loaded.subject,
             x509.Name(

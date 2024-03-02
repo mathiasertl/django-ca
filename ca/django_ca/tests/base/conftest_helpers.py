@@ -12,7 +12,6 @@
 # <http://www.gnu.org/licenses/>.
 
 """Helpers for pytest conftest."""
-import datetime
 import os
 import shutil
 import sys
@@ -162,7 +161,6 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
     ) -> Iterator[CertificateAuthority]:
         data = CERT_DATA[name]
         pub = request.getfixturevalue(f"{name}_pub")
-        print("now?", datetime.datetime.now())
 
         # Load any parent
         parent = None
