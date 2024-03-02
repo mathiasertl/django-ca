@@ -61,6 +61,31 @@ Fixtures
 
 .. autofunction:: django_ca.tests.conftest.tmpcadir
 
+.. autofunction:: django_ca.tests.conftest.usable_ca
+
+Generated fixtures
+------------------
+
+{name}_pub - :py:class:`~cryptography.x509.Certificate`
+    Certificate loaded from test fixture data.
+
+    Available for every CA generated in the test fixtures and every certificate (including unusable
+    certificates). Examples: ``root_pub``, ``root_cert``, ``profile_server_pub`` and
+    ``globalsign_dv-cert_pub``.
+
+{ca_name} - :py:class:`~django_ca.models.CertificateAuthority`
+    Certificate authority model **without** usable private key files.
+
+    Available for every CA generated in the test fixtures. Using this fixture enables database access.
+
+usable_{ca_name} - :py:class:`~django_ca.models.CertificateAuthority`
+    Certificate authority model with usable private key files.
+
+    Available for every CA generated in the test fixtures.
+
+{cert} - :py:class:`~django_ca.models.Certificate`
+    Certificate model for certificates generated in test fixture data.
+
 Mocks
 =====
 

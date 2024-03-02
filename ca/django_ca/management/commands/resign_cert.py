@@ -106,7 +106,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             ca = cert.ca
 
         profile_obj = self.get_profile(profile, cert)
-        self.test_options(ca=ca, password=password, expires=expires, profile=profile_obj, **options)
+        self.test_options(ca=ca, expires=expires, profile=profile_obj, **options)
 
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)

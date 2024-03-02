@@ -588,7 +588,6 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self,
         ca: CertificateAuthority,
         expires: Optional[timedelta],
-        password: Optional[bytes],
         profile: Profile,
         **options: Any,
     ) -> None:

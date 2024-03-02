@@ -354,6 +354,11 @@ def assert_improperly_configured(msg: str) -> Iterator[None]:
         yield
 
 
+def assert_post_issue_cert(post: Mock, cert: Certificate) -> None:
+    """Assert that the post_issue_cert signal was called with the expected certificate."""
+    post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
+
 def assert_signature(
     chain: Iterable[CertificateAuthority], cert: Union[Certificate, CertificateAuthority]
 ) -> None:

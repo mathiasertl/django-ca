@@ -38,7 +38,6 @@ from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.storage import storages
-from django.core.management.base import CommandError
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
@@ -50,7 +49,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
-from django_ca.signals import post_issue_cert, post_revoke_cert, post_sign_cert, pre_sign_cert
+from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.assertions import assert_system_exit
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -392,10 +391,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         cert.refresh_from_db()
         self.assertFalse(cert.revoked)
         self.assertEqual(cert.revoked_reason, "")
-
-    def assertPostIssueCert(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
-        """Assert that the post_issue_cert signal was called."""
-        post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
 
     def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
