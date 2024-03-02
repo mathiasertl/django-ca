@@ -492,7 +492,7 @@ class CertificateAuthority(X509CertMixin):
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
     )
     key_backend_alias = models.CharField(max_length=256, help_text=_("Backend to handle private keys."))
-    key_backend_options = models.JSONField(default=dict, help_text=_("Key backend options"))
+    key_backend_options = models.JSONField(default=dict, blank=True, help_text=_("Key backend options"))
 
     # various details used when signing certs
     crl_number = models.TextField(
@@ -692,6 +692,7 @@ class CertificateAuthority(X509CertMixin):
 
     def sign(
         self,
+        key_backend_options: BaseModel,
         csr: x509.CertificateSigningRequest,
         subject: x509.Name,
         algorithm: Optional[AllowedHashTypes] = None,
@@ -709,6 +710,8 @@ class CertificateAuthority(X509CertMixin):
 
         Parameters
         ----------
+        key_backend_options : BaseModel
+            Options required for using the private key of the certificate authority.
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The certificate signing request to sign.
         subject : :class:`~cg:cryptography.x509.Name`
@@ -778,8 +781,9 @@ class CertificateAuthority(X509CertMixin):
             password=password,
         )
 
-        key_backend = self.get_key_backend(password=password)
-        signed_cert = key_backend.sign_certificate(
+        signed_cert = self.key_backend.sign_certificate(
+            self,
+            key_backend_options,
             public_key,
             serial=x509.random_serial_number(),
             algorithm=algorithm,
@@ -834,6 +838,8 @@ class CertificateAuthority(X509CertMixin):
 
         Parameters
         ----------
+        key_backend_options : BaseModel
+            Options required for using the private key of the certificate authority.
         profile : str, optional
             The profile to use for generating the certificate. The default is ``"ocsp"``.
         expires : int or datetime, optional
@@ -892,9 +898,9 @@ class CertificateAuthority(X509CertMixin):
         # from the CA private key as default
         if key_type == self.key_type:
             if self.key_type in ("RSA", "DSA") and key_size is None:
-                key_size = self.key_backend.get_ocsp_key_size()
+                key_size = self.key_backend.get_ocsp_key_size(self, key_backend_options)
             elif self.key_type == "EC" and elliptic_curve is None:
-                elliptic_curve = self.key_backend.get_ocsp_key_elliptic_curve()
+                elliptic_curve = self.key_backend.get_ocsp_key_elliptic_curve(self, key_backend_options)
 
         # Ensure that parameters used to generate the private key are valid.
         key_size, elliptic_curve = validate_private_key_parameters(key_type, key_size, elliptic_curve)
@@ -1015,14 +1021,13 @@ class CertificateAuthority(X509CertMixin):
 
         Parameters
         ----------
+        key_backend_options : BaseModel
+            Options required for using the private key of the certificate authority.
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
         algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             The hash algorithm used to generate the signature of the CRL. By default, the algorithm used for
             signing the CA is used. If a value is passed for an Ed25519/Ed448 CA, `ValueError` is raised.
-        password : bytes, optional
-            Password used to load the private key of the certificate authority. If not passed, the private key
-            is assumed to be unencrypted.
         scope : {None, 'ca', 'user', 'attribute'}, optional
             What to include in the CRL: Use ``"ca"`` to include only revoked certificate authorities and
             ``"user"`` to include only certificates or ``None`` (the default) to include both.

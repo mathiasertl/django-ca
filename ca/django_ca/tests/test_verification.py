@@ -29,6 +29,8 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
+from django_ca.backends import key_backends
+from django_ca.backends.storages import CreatePrivateKeyOptions
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -73,7 +75,17 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     def init_ca(self, name: str, **kwargs: Any) -> CertificateAuthority:
         """Create a CA."""
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
-        return CertificateAuthority.objects.init(name, subject, **kwargs)
+        key_backend = key_backends["default"]
+        key_backend_options = CreatePrivateKeyOptions(password=None, path="ca", key_size=1024)
+        parent_key_backend_options = key_backend.load_model(password=None)
+        return CertificateAuthority.objects.init(
+            name,
+            key_backend,
+            key_backend_options,
+            subject,
+            parent_key_backend_options=parent_key_backend_options,
+            **kwargs,
+        )
 
     @contextmanager
     def crl(
@@ -122,7 +134,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                     subject=subject,
                     out=out_path,
                     stdin=stdin,
-                    **kwargs
+                    **kwargs,
                 )
             yield out_path
 

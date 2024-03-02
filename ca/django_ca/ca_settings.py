@@ -391,7 +391,3 @@ elif CA_USE_CELERY is True:
         from celery import shared_task  # noqa: F401
     except ImportError as ex:
         raise ImproperlyConfigured("CA_USE_CELERY set to True, but Celery is not installed") from ex
-
-# Make sure that the default storage alias is also configured in STORAGES
-if CA_DEFAULT_STORAGE_ALIAS not in settings.STORAGES:
-    raise ImproperlyConfigured(f"{CA_DEFAULT_STORAGE_ALIAS}: Storage alias not configured.")

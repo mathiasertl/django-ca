@@ -19,7 +19,6 @@ from unittest import mock
 from cryptography import x509
 
 from django.conf import settings
-from django.core.files.storage import Storage
 from django.test import TestCase
 
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -42,8 +41,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -89,8 +90,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -136,8 +139,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -183,8 +188,10 @@ Certificate Authority information:
 * Parent: {parent_name} ({parent_serial_colons})
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -235,8 +242,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -283,8 +292,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -321,7 +332,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -357,8 +371,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 * Website: {ca.website}
 * Terms of service: {ca.terms_of_service}
 * CAA identity: {ca.caa_identity}
@@ -409,8 +425,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -454,8 +472,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -510,8 +530,10 @@ Certificate Authority information:
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Path to private key:
-  {key_path}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
 
 ACMEv2 support:
 * Enabled: False
@@ -556,7 +578,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -597,7 +622,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -642,7 +670,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -681,7 +712,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -720,7 +754,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -767,7 +804,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): 0
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -816,7 +856,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -863,7 +906,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -906,7 +952,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): 0
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -955,7 +1004,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): 0
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1002,7 +1054,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1036,13 +1091,16 @@ Digest:
   * commonName (CN): GlobalSign Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
-* Status: Valid
+* Status: Expired
 
 Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1094,7 +1152,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1145,7 +1206,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1184,7 +1248,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1232,7 +1299,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1280,7 +1350,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1329,7 +1402,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1378,7 +1454,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1427,7 +1506,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1477,7 +1559,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1528,7 +1613,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): unlimited
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1570,7 +1658,10 @@ Certificate Authority information:
 * Certificate authority is a root CA.
 * Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): 0
-* Private key not available locally.
+
+Key storage options:
+* backend: default
+* No information available.
 
 ACMEv2 support:
 * Enabled: False
@@ -1620,7 +1711,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
             stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
             data = self.get_cert_context(name)
             self.assertMultiLineEqual(stdout, expected[name].format(**data), name)
-            self.assertEqual(stderr, "")
+            assert stderr == ""
 
     @override_tmpcadir(USE_TZ=True)
     def test_with_timezone_support(self) -> None:
@@ -1674,24 +1765,6 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
         data = self.get_cert_context("root")
         self.assertMultiLineEqual(stdout, expected["root-no-extensions"].format(**data))
-
-    @override_tmpcadir()
-    def test_storage_backend_with_no_path(self) -> None:
-        """Test viewing when the storage backend does not support the path() function."""
-        storage_mock = mock.create_autospec(Storage)
-        storage_mock.exists.return_value = True
-        storage_mock.path.side_effect = NotImplementedError
-
-        get_storage_path = "django_ca.management.commands.view_ca.get_storage"
-        with self.patch(get_storage_path, return_value=storage_mock, autospec=True):
-            stdout, stderr = cmd("view_ca", self.cas["root"].serial, wrap=False)
-
-        storage_mock.path.assert_called_once_with(self.cas["root"].private_key_path)
-        storage_mock.exists.assert_called_once_with(self.cas["root"].private_key_path)
-        data = self.get_cert_context("root")
-        data["key_path"] = self.cas["root"].private_key_path
-        self.assertMultiLineEqual(stdout, expected["root"].format(**data))
-        self.assertEqual(stderr, "")
 
     @override_tmpcadir()
     def test_sign_options(self) -> None:

@@ -19,18 +19,18 @@ from textwrap import indent
 from typing import Optional
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from django_ca import ca_settings
+from django_ca.backends import key_backends
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.management import actions
-from django_ca.management.actions import IntegerRangeAction
+from django_ca.management.actions import IntegerRangeAction, KeyBackendAction
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.typehints import ActionsContainer, AllowedHashTypes, ParsableKeyType
+from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import add_colons, validate_public_key_parameters
 
 if typing.TYPE_CHECKING:
@@ -278,3 +278,26 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         enable_group.add_argument(
             "--api-disable", dest="api_enabled", action="store_false", help="Disable API support."
         )
+
+
+class StorePrivateKeyMixin:
+    def add_key_backend_option(self, parser: CommandParser) -> ArgumentGroup:
+        """Add argument group for the --key-backend option."""
+        group = parser.add_argument_group("Private key options")
+        group.add_argument(
+            "--key-backend",
+            action=KeyBackendAction,
+            help="The key can be stored using different backends. Depending on the backend, you have to "
+            "choose different options below for private keys. (default: "
+            f"{ca_settings.CA_DEFAULT_KEY_BACKEND}).",
+        )
+        return group
+
+
+class UsePrivateKeyMixin:
+    def add_use_private_key_arguments(self, parser: CommandParser) -> None:
+        """Add arguments for loading a parent CA via its key backend."""
+        for backend in key_backends:
+            group = backend.add_use_private_key_group(parser)
+            if group is not None:
+                backend.add_use_private_key_arguments(group)

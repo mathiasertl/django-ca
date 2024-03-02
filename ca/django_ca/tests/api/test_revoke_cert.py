@@ -23,7 +23,6 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 
 import pytest
-from freezegun import freeze_time
 
 from django_ca.models import Certificate
 from django_ca.tests.api.conftest import APIPermissionTestBase, DetailResponse
@@ -50,7 +49,7 @@ def expected_response(root_cert_response: Dict[str, Any]) -> DetailResponse:
     return root_cert_response
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_revoke_view(root_cert: Certificate, api_client: Client, expected_response: DetailResponse) -> None:
     """Test an ordinary certificate revocation."""
     response = api_client.post(path, {}, content_type="application/json")
@@ -63,7 +62,7 @@ def test_revoke_view(root_cert: Certificate, api_client: Client, expected_respon
     assert root_cert.compromised is None
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_revoke_with_parameters(
     root_cert: Certificate, api_client: Client, expected_response: DetailResponse
 ) -> None:
@@ -86,7 +85,7 @@ def test_revoke_with_parameters(
     assert root_cert.compromised == now
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_revoked_certificate_fails(root_cert: Certificate, api_client: Client) -> None:
     """Test that revoking a revoked certificate fails."""
     root_cert.revoke()
@@ -96,7 +95,7 @@ def test_revoked_certificate_fails(root_cert: Certificate, api_client: Client) -
     assert response.json() == {"detail": "The certificate is already revoked."}, response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_cannot_revoke_expired_certificate(root_cert: Certificate, api_client: Client) -> None:
     """Test that we cannot revoke a certificate if it is expired."""
     response = api_client.post(path, {}, content_type="application/json")
@@ -107,7 +106,7 @@ def test_cannot_revoke_expired_certificate(root_cert: Certificate, api_client: C
     assert root_cert.revoked is False  # cert is still not revoked (just expired)
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("root")  # CA should exist, but certificate does not
 def test_certificate_not_found(api_client: Client) -> None:
     """Test response when a certificate was not found."""
@@ -116,7 +115,7 @@ def test_certificate_not_found(api_client: Client) -> None:
     assert response.json() == {"detail": "Not Found"}, response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_disabled_ca(root_cert: Certificate, api_client: Client) -> None:
     """Test that certificates for a disabled can *not* be viewed."""
     root_cert.ca.enabled = False

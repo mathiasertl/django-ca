@@ -24,11 +24,13 @@ from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, r
 from django.conf import settings
 from django.test import TestCase
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
+from django_ca.backends.storages import LoadPrivateKeyOptions
 from django_ca.models import CertificateAuthority
-from django_ca.tests.base.assertions import assert_command_error
+from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -74,32 +76,33 @@ class ImportCATest(TestCaseMixin, TestCase):
             pem_path = CERT_DATA[name]["pub_path"]
             out, err = cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
 
-            self.assertEqual(out, "")
-            self.assertEqual(err, "")
+            assert out == ""
+            assert err == ""
 
-            ca = CertificateAuthority.objects.get(name=name)
+            ca: CertificateAuthority = CertificateAuthority.objects.get(name=name)
             ca.full_clean()  # assert e.g. max_length in serials
 
             if not data.get("parent"):
-                self.assert_signature([ca], ca)
-            self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
+                assert_signature([ca], ca)
+            assert ca.pub.loaded.version == x509.Version.v3
 
             # test the private key
             # NOTE: password is always None since we don't encrypt the stored key with --password
+            ca_key = ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
             if data["key_type"] == "EC":
-                key = typing.cast(ec.EllipticCurvePrivateKey, ca.key())
+                key = typing.cast(ec.EllipticCurvePrivateKey, ca_key)
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
             elif data["key_type"] == "RSA":
-                key = typing.cast(rsa.RSAPrivateKey, ca.key())  # type: ignore[assignment]
+                key = typing.cast(rsa.RSAPrivateKey, ca_key)  # type: ignore[assignment]
                 self.assertIsInstance(key, rsa.RSAPrivateKey)
             elif data["key_type"] == "DSA":
-                key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
+                key = typing.cast(dsa.DSAPrivateKey, ca_key)  # type: ignore[assignment]
                 self.assertIsInstance(key, dsa.DSAPrivateKey)
             elif data["key_type"] == "Ed25519":
-                key = typing.cast(ed25519.Ed25519PrivateKey, ca.key())  # type: ignore[assignment]
+                key = typing.cast(ed25519.Ed25519PrivateKey, ca_key)  # type: ignore[assignment]
                 assert isinstance(key, ed25519.Ed25519PrivateKey)
             elif data["key_type"] == "Ed448":
-                key = typing.cast(ed448.Ed448PrivateKey, ca.key())  # type: ignore[assignment]
+                key = typing.cast(ed448.Ed448PrivateKey, ca_key)  # type: ignore[assignment]
                 assert isinstance(key, ed448.Ed448PrivateKey)
             else:
                 raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
@@ -116,58 +119,6 @@ class ImportCATest(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_der(self) -> None:
-        """Test importing a der key.
-
-        Note: freeze time because we verify the certificate here.
-        """
-        cas = {
-            name: data
-            for name, data in CERT_DATA.items()
-            if data.get("key_der_path") and data["type"] == "ca"
-        }
-
-        for name, data in cas.items():
-            key_path = data["key_der_path"]
-            pem_path = data["pub_der_path"]
-            out, err = cmd("import_ca", name, key_path, pem_path, import_password=data.get("password"))
-
-            self.assertEqual(out, "")
-            self.assertEqual(err, "")
-
-            ca = CertificateAuthority.objects.get(name=name)
-            ca.full_clean()  # assert e.g. max_length in serials
-
-            if not data.get("parent"):
-                self.assert_signature(reversed(ca.bundle), ca)
-
-            self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
-
-            # test the private key
-            if data["key_type"] == "EC":
-                key = typing.cast(ec.EllipticCurvePrivateKey, ca.key())
-                self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
-            elif data["key_type"] == "RSA":
-                key = typing.cast(rsa.RSAPrivateKey, ca.key(None))  # type: ignore[assignment]
-                self.assertIsInstance(key, rsa.RSAPrivateKey)
-            elif data["key_type"] == "DSA":
-                key = typing.cast(dsa.DSAPrivateKey, ca.key())  # type: ignore[assignment]
-                self.assertIsInstance(key, dsa.DSAPrivateKey)
-            elif data["key_type"] == "Ed25519":
-                key = typing.cast(ed25519.Ed25519PrivateKey, ca.key())  # type: ignore[assignment]
-                assert isinstance(key, ed25519.Ed25519PrivateKey)
-            elif data["key_type"] == "Ed448":
-                key = typing.cast(ed448.Ed448PrivateKey, ca.key())  # type: ignore[assignment]
-                assert isinstance(key, ed448.Ed448PrivateKey)
-            else:
-                raise ValueError(f"CA with unknown key type encountered: {data['key_type']}")
-
-            if data["key_type"] not in ("EC", "Ed25519", "Ed448"):
-                self.assertEqual(key.key_size, data["key_size"])
-            self.assertEqual(ca.serial, data["serial"])
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_password(self) -> None:
         """Test importing a CA with a password for the private key.
 
@@ -179,22 +130,25 @@ class ImportCATest(TestCaseMixin, TestCase):
         pem_path = CERT_DATA["root"]["pub_path"]
         out, err = cmd("import_ca", name, key_path, pem_path, password=password)
 
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
+        assert out == ""
+        assert err == ""
 
         ca = CertificateAuthority.objects.get(name=name)
-        self.assert_signature([ca], ca)
+        assert_signature([ca], ca)
         ca.full_clean()  # assert e.g. max_length in serials
         self.assertEqual(ca.pub.loaded.version, x509.Version.v3)
 
         # test the private key
-        with self.assertRaisesRegex(TypeError, "^Password was not given but private key is encrypted$"):
-            ca.key(None)
+        with pytest.raises(TypeError, match="^Password was not given but private key is encrypted$"):
+            ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
 
-        key = typing.cast(rsa.RSAPrivateKey, ca.key(password))
-        self.assertIsInstance(key, rsa.RSAPrivateKey)
-        self.assertEqual(key.key_size, CERT_DATA["root"]["key_size"])
-        self.assertEqual(ca.serial, CERT_DATA["root"]["serial"])
+        ca_key = typing.cast(
+            rsa.RSAPrivateKey, ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=password))
+        )
+
+        assert isinstance(ca_key, rsa.RSAPrivateKey)
+        assert ca_key.key_size == CERT_DATA["root"]["key_size"]
+        assert ca.serial == CERT_DATA["root"]["serial"]
 
     @override_tmpcadir()
     def test_sign_options(self) -> None:
@@ -268,25 +222,6 @@ class ImportCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.ocsp_responder_key_validity, 10)
         self.assertEqual(ca.ocsp_response_validity, 3600)
 
-    @override_tmpcadir()
-    def test_permission_denied(self) -> None:
-        """Test importing a CA when we can't ready one of the files."""
-        name = "testname"
-        key_path = CERT_DATA["root"]["key_path"]
-        pem_path = CERT_DATA["root"]["pub_path"]
-        self.assertTrue(key_path.exists())  # just make sure that file exists
-        self.assertTrue(pem_path.exists())  # just make sure that file exists
-        os.chmod(settings.CA_DIR, 0o000)
-
-        try:
-            serial = CERT_DATA["root"]["serial"].replace(":", "")
-            error = rf"^{serial}\.key: Permission denied: Could not open file for writing$"
-            with assert_command_error(error):
-                cmd("import_ca", name, key_path, pem_path)
-        finally:
-            # otherwise we might not be able to remove temporary CA_DIR
-            os.chmod(settings.CA_DIR, 0o755)
-
     def test_create_cadir(self) -> None:
         """Test importing a CA when the directory does not yet exist."""
         name = "testname"
@@ -296,19 +231,6 @@ class ImportCATest(TestCaseMixin, TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             ca_dir = os.path.join(tempdir, "foo", "bar")
             with mock_cadir(ca_dir):
-                cmd("import_ca", name, key_path, pem_path)
-
-    def test_create_cadir_permission_denied(self) -> None:
-        """Test importing a CA when the directory does not yet exist and we cannot create it."""
-        name = "testname"
-        key_path = CERT_DATA["root"]["key_path"]
-        pem_path = CERT_DATA["root"]["pub_path"]
-
-        with tempfile.TemporaryDirectory() as tempdir:
-            os.chmod(tempdir, 0o000)
-            ca_dir = os.path.join(tempdir, "foo", "bar")
-            msg = rf"^{ca_dir}: Could not create CA_DIR: Permission denied.$"
-            with mock_cadir(ca_dir), assert_command_error(msg):
                 cmd("import_ca", name, key_path, pem_path)
 
     @override_tmpcadir()

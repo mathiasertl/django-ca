@@ -17,32 +17,38 @@
 """
 
 import argparse
-import os
 import typing
 from typing import Any, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.x509.oid import ExtensionOID
 
-from django.core.files.base import ContentFile
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
+from django_ca.backends import KeyBackend, key_backends
+from django_ca.constants import PRIVATE_KEY_TYPES
 from django_ca.management.actions import PasswordAction
-from django_ca.management.base import BaseCommand, add_password
-from django_ca.management.mixins import CertificateAuthorityDetailMixin
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
 from django_ca.models import CertificateAuthority
-from django_ca.utils import get_storage
 
 
-class Command(CertificateAuthorityDetailMixin, BaseCommand):
+class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseCommand):
     """Implement :command:`manage.py import_ca`."""
 
     help = """Import an existing certificate authority.
 
 Note that the private key will be copied to the directory configured by the CA_DIR setting."""
+
+    def add_store_private_key_arguments(self, parser: CommandParser) -> None:
+        """Add general arguments for private keys."""
+        for backend in key_backends:
+            group = backend.add_store_private_key_group(parser)
+            if group is not None:
+                backend.add_store_private_key_options(group)
 
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(
@@ -51,9 +57,8 @@ Note that the private key will be copied to the directory configured by the CA_D
             help_text="Make the CA an intermediate CA of the named CA. By default, this is a new root CA.",
             no_default=True,
         )
-        add_password(
-            parser, help_text="Password used to encrypt the private key. Pass no argument to be prompted."
-        )
+        self.add_key_backend_option(parser)
+        self.add_store_private_key_arguments(parser)
         parser.add_argument(
             "--import-password",
             nargs="?",
@@ -76,13 +81,13 @@ Note that the private key will be copied to the directory configured by the CA_D
             "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
         self,
         name: str,
         key: typing.BinaryIO,
         pem: typing.BinaryIO,
+        key_backend: KeyBackend,
         parent: Optional[CertificateAuthority],
-        password: Optional[bytes],
         import_password: Optional[bytes],
         # Authority Information Access extension  for certificates (MUST be non-critical)
         sign_authority_information_access: Optional[x509.AuthorityInformationAccess],
@@ -99,23 +104,14 @@ Note that the private key will be copied to the directory configured by the CA_D
         ocsp_response_validity: Optional[int],
         **options: Any,
     ) -> None:
-        if not os.path.exists(ca_settings.CA_DIR):
-            try:
-                os.makedirs(ca_settings.CA_DIR)
-            except PermissionError as ex:
-                pem.close()
-                key.close()
-                raise CommandError(
-                    f"{ca_settings.CA_DIR}: Could not create CA_DIR: Permission denied."
-                ) from ex
-            # FileNotFoundError shouldn't happen, whole point of this block is to create it
-
         pem_data = pem.read()
         key_data = key.read()
 
         # close reader objects (otherwise we get a ResourceWarning)
         key.close()
         pem.close()
+
+        key_backend_options = key_backend.get_store_private_key_options(options)
 
         # Add extensions for signing new certificates
         sign_authority_information_access_ext = None
@@ -153,6 +149,7 @@ Note that the private key will be copied to the directory configured by the CA_D
 
         ca = CertificateAuthority(
             name=name,
+            key_backend_alias=key_backend.alias,
             parent=parent,
             sign_authority_information_access=sign_authority_information_access_ext,
             sign_certificate_policies=sign_certificate_policies_ext,
@@ -189,7 +186,6 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception as ex:
                 raise CommandError("Unable to load public key.") from ex
         ca.update_certificate(pem_loaded)
-        serial = ca.serial.replace(":", "")
 
         # load private key
         try:
@@ -200,24 +196,14 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception as ex:
                 raise CommandError("Unable to load private key.") from ex
 
-        if password is None:
-            encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
-        else:
-            encryption = serialization.BestAvailableEncryption(password)
+        # Ensure correct type
+        if not isinstance(key_loaded, PRIVATE_KEY_TYPES):
+            raise CommandError(f"{key_loaded}: Invalid private key type.")
+        key_loaded = typing.cast(CertificateIssuerPrivateKeyTypes, key_loaded)
 
-        # write private key to file
-        pem_as_bytes = key_loaded.private_bytes(
-            encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
-        )
-
-        storage = get_storage()
-        ca.private_key_path = storage.generate_filename(f"{serial}.key")
-        try:
-            storage.save(ca.private_key_path, ContentFile(pem_as_bytes))
-        except PermissionError as ex:
-            raise CommandError(
-                f"{ca.private_key_path}: Permission denied: Could not open file for writing"
-            ) from ex
+        # Store the private key
+        # TODO: error handling
+        key_backend.store_private_key(ca, key_loaded, key_backend_options)
 
         # Only save CA to database if we loaded all data and copied private key
         ca.save()

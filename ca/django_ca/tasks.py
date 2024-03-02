@@ -101,7 +101,8 @@ def cache_crls(serials: Optional[Iterable[str]] = None) -> None:
         )
 
     for serial in serials:
-        run_task(cache_crl, serial)
+        # TODO: ability for task to pass options for each
+        run_task(cache_crl, serial, {"password": None})
 
 
 @shared_task
@@ -160,7 +161,10 @@ def generate_ocsp_keys(**kwargs: Any) -> List[Optional[Tuple[str, str, int]]]:
     """Task to generate an OCSP keys for all usable CAs."""
     keys = []
     for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):
-        keys.append(generate_ocsp_key(serial, **kwargs))
+        # TODO: target task should be able to determine settings
+        # TODO: catch errors here
+        # TODO: use run_task instead of calling function directly
+        keys.append(generate_ocsp_key(serial, {"password": None}, **kwargs))
     return keys
 
 
@@ -189,6 +193,8 @@ def sign_certificate(
         subject=subject,
     )
 
+    key_backend_options = ca.key_backend.get_load_private_key_options({})
+
     parsed_extensions = message.get_extensions()
 
     extension_oids = [ext.oid for ext in parsed_extensions]
@@ -198,6 +204,7 @@ def sign_certificate(
 
     # Create a signed certificate
     certificate = ca.sign(
+        key_backend_options,
         message.get_csr(),
         subject=message.subject.cryptography,  # pylint: disable=no-member  # false positive
         algorithm=message.get_algorithm(),
@@ -376,9 +383,12 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     csr = acme_cert.parse_csr()
 
+    # Initialize key backend options
+    key_backend_options = ca.key_backend.get_load_private_key_options({})
+
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(
-        ca, csr=csr, profile=profile, expires=expires, extensions=extensions
+        ca, key_backend_options, csr=csr, profile=profile, expires=expires, extensions=extensions
     )
 
     acme_cert.cert = cert

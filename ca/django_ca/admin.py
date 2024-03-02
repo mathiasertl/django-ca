@@ -659,9 +659,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         """Get CA details for the embedded JSON data."""
         data: Dict[int, Dict[str, Any]] = {}
         for ca in CertificateAuthority.objects.usable():
-            if ca.key_exists is False:
-                continue
-
             extensions = SignCertificateExtensionsList.validate_python(ca.extensions_for_certificate.values())
 
             hash_algorithm_name: Optional[str] = None
@@ -677,10 +674,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one usable CA
-        for ca in CertificateAuthority.objects.usable():
-            if ca.key_exists:
-                return True
-        return False
+        return CertificateAuthority.objects.usable().exists()
 
     def csr_pem(self, obj: Certificate) -> str:
         """Get the CSR in PEM form for display."""
@@ -743,21 +737,15 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         else:
             # Form for a completely new certificate
 
-            ca = None
             try:
                 ca = CertificateAuthority.objects.default()
-            except ImproperlyConfigured as ex:
+            except ImproperlyConfigured as ex:  # pragma: no cover
+                # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
+                # button would not even show up.
                 log.error(ex)
+                ca = CertificateAuthority.objects.usable().order_by("-expires", "serial").first()
 
-            # If the default CA is not usable, use the first one that we can use instead.
-            if ca is None or ca.key_exists is False:
-                for usable_ca in CertificateAuthority.objects.usable().order_by("-expires", "serial"):
-                    if usable_ca.key_exists:
-                        ca = usable_ca
-
-            # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
-            # button would not even show up.
-            if ca is None:  # pragma: no cover
+            if ca is None:
                 raise ImproperlyConfigured("Cannot determine default CA.")
 
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
@@ -1051,18 +1039,18 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 extensions[oid] = ext  # pragma: no cover  # all extensions should be handled above!
 
             ca: CertificateAuthority = data["ca"]
+            certificate = ca.sign(
+                data["key_backend_options"],
+                csr,
+                subject=data["subject"],
+                algorithm=data["algorithm"],
+                expires=expires,
+                extensions=extensions.values(),
+                password=data["password"],
+            )
 
             obj.profile = profile.name
-            obj.update_certificate(
-                ca.sign(
-                    csr,
-                    subject=data["subject"],
-                    algorithm=data["algorithm"],
-                    expires=expires,
-                    extensions=extensions.values(),
-                    password=data["password"],
-                )
-            )
+            obj.update_certificate(certificate)
             obj.save()
             post_issue_cert.send(sender=self.model, cert=obj)
         else:

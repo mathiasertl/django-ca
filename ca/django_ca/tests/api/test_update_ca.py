@@ -25,7 +25,6 @@ from django.test import Client
 from django.urls import reverse_lazy
 
 import pytest
-from freezegun import freeze_time
 
 from django_ca import constants
 from django_ca.models import CertificateAuthority
@@ -100,7 +99,7 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
     return dict(
         payload,
         **{
-            "can_sign_certificates": False,
+            "can_sign_certificates": True,
             "created": iso_format(root.created),
             "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
             "not_after": iso_format(root.expires),
@@ -150,7 +149,7 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
     )
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_update(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -202,7 +201,7 @@ def test_update(
             assert expected == actual
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_minimal_update(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -228,7 +227,7 @@ def test_minimal_update(
     assert root.ocsp_responder_key_validity == 10
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_clear_sign_certificate_policies(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -260,7 +259,7 @@ def test_clear_sign_certificate_policies(
     assert root.sign_certificate_policies is None
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_validation(
     root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:
@@ -279,7 +278,7 @@ def test_validation(
     assert root.ocsp_responder_key_validity == refetched_root.ocsp_responder_key_validity
 
 
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_update_expired_ca(
     api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
 ) -> None:

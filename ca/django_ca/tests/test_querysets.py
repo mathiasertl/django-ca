@@ -17,12 +17,6 @@ import typing
 from contextlib import contextmanager
 from typing import Any, Iterator
 
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from cryptography.x509.oid import ExtensionOID, NameOID
-
 from django.db import models
 from django.test import TestCase, TransactionTestCase, override_settings
 
@@ -38,7 +32,6 @@ from django_ca.models import (
     Certificate,
     CertificateAuthority,
 )
-from django_ca.tests.base.assertions import assert_authority_key_identifier
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import basic_constraints, key_usage, override_tmpcadir
@@ -71,163 +64,6 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
     """Test cases for :py:class:`~django_ca.querysets.CertificateAuthorityQuerySet`."""
 
     load_cas = ("root", "child")
-
-    @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Basic test for init()."""
-        key_size = ca_settings.CA_MIN_KEY_SIZE
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
-        ca = CertificateAuthority.objects.init(
-            name="Root CA",
-            key_size=key_size,
-            key_type="RSA",
-            algorithm=hashes.SHA256(),
-            expires=self.expires(720),
-            parent=None,
-            path_length=0,
-            subject=subject,
-        )
-
-        self.assertEqual(ca.name, "Root CA")
-
-        # verify private key properties
-        key = typing.cast(rsa.RSAPrivateKey, ca.key(None))
-        self.assertIsInstance(key, rsa.RSAPrivateKey)
-        self.assertEqual(key.key_size, 1024)
-        self.assertIsInstance(ca.key(None).public_key(), rsa.RSAPublicKey)
-
-        # verify public key properties
-        self.assertBasic(ca.pub.loaded)
-        self.assertEqual(ca.subject, subject)
-
-        # verify X509 properties
-        self.assertEqual(
-            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
-        )
-        self.assertEqual(ca.extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True))
-        for oid in [
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-            ExtensionOID.EXTENDED_KEY_USAGE,
-            ExtensionOID.TLS_FEATURE,
-            ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-        ]:
-            self.assertNotIn(oid, ca.extensions)
-        self.assertFalse(ca.is_openssh_ca)
-
-    @override_tmpcadir()
-    def test_path_length(self) -> None:
-        """Test path_length parameter in manager."""
-        subject = x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="ca.example.com")])
-        ca = CertificateAuthority.objects.init(
-            name="1", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
-        )
-        self.assertEqual(ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True))
-
-        ca = CertificateAuthority.objects.init(
-            path_length=0, name="2", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
-        )
-        self.assertEqual(
-            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=0)
-        )
-
-        ca = CertificateAuthority.objects.init(
-            path_length=2, name="3", key_size=ca_settings.CA_MIN_KEY_SIZE, subject=subject
-        )
-        self.assertEqual(
-            ca.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints(ca=True, path_length=2)
-        )
-
-    @override_tmpcadir()
-    def test_parent(self) -> None:
-        """Test parent parameter in manager."""
-        key_size = ca_settings.CA_MIN_KEY_SIZE
-
-        parent = CertificateAuthority.objects.init(
-            name="Root",
-            parent=None,
-            path_length=1,
-            key_size=key_size,
-            subject=x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="ca.example.com")]),
-        )
-        child = CertificateAuthority.objects.init(
-            name="Child",
-            parent=parent,
-            path_length=0,
-            key_size=key_size,
-            subject=x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="child.ca.example.com")]),
-        )
-
-        assert_authority_key_identifier(parent, child)
-
-    @override_tmpcadir()
-    def test_openssh_ca(self) -> None:
-        """Test OpenSSH CA support."""
-        ca_name = "OpenSSH CA"
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "openssh.example.com")])
-
-        # try creating a CA with a parent
-        with self.assertRaisesRegex(ValueError, "OpenSSH does not support intermediate authorities"):
-            CertificateAuthority.objects.init(
-                name=ca_name,
-                key_size=None,
-                key_type="Ed25519",
-                subject=subject,
-                parent=self.ca,
-                openssh_ca=True,
-            )
-            self.assertFalse(CertificateAuthority.objects.filter(name=ca_name).exists())
-
-        ca = CertificateAuthority.objects.init(
-            name=ca_name, key_size=None, key_type="Ed25519", subject=subject, openssh_ca=True
-        )
-
-        self.assertEqual(ca.name, ca_name)
-
-        # verify private key properties
-        self.assertIsInstance(ca.key(None).public_key(), Ed25519PublicKey)
-
-        # verity public key properties
-        self.assertEqual(ca.subject, subject)
-
-        # verify X509 properties
-        self.assertEqual(ca.extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, key_cert_sign=True))
-
-        for oid in [
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-            ExtensionOID.EXTENDED_KEY_USAGE,
-            ExtensionOID.TLS_FEATURE,
-            ExtensionOID.ISSUER_ALTERNATIVE_NAME,
-        ]:
-            self.assertNotIn(oid, ca.extensions)
-
-        self.assertTrue(ca.is_openssh_ca)
-
-    @override_tmpcadir()
-    def test_key_size(self) -> None:
-        """Test key size validation in manager."""
-        kwargs = {
-            "name": "Root CA",
-            "key_type": "RSA",
-            "algorithm": "sha256",
-            "expires": self.expires(720),
-            "parent": None,
-            "path_length": 0,
-            "subject": {
-                "CN": "ca.example.com",
-            },
-        }
-
-        key_size = ca_settings.CA_MIN_KEY_SIZE
-
-        # type ignores because kwargs is Dict[str, Any]
-        with self.assertRaisesRegex(ValueError, r"^3072: Key size must be a power of two$"):
-            CertificateAuthority.objects.init(key_size=key_size * 3, **kwargs)  # type: ignore[arg-type]
-        with self.assertRaisesRegex(ValueError, r"^1025: Key size must be a power of two$"):
-            CertificateAuthority.objects.init(key_size=key_size + 1, **kwargs)  # type: ignore[arg-type]
-        with self.assertRaisesRegex(ValueError, r"^512: Key size must be least 1024 bits$"):
-            CertificateAuthority.objects.init(key_size=int(key_size / 2), **kwargs)  # type: ignore[arg-type]
-        with self.assertRaisesRegex(ValueError, r"^256: Key size must be least 1024 bits$"):
-            CertificateAuthority.objects.init(key_size=int(key_size / 4), **kwargs)  # type: ignore[arg-type]
 
     def test_enabled_disabled(self) -> None:
         """Test enabled/disabled filter."""

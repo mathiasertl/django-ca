@@ -23,7 +23,7 @@ from django.core.management.base import CommandParser
 from django_ca import ca_settings
 from django_ca.management.base import BaseViewCommand
 from django_ca.models import CertificateAuthority
-from django_ca.utils import add_colons, get_storage
+from django_ca.utils import add_colons
 
 
 class Command(BaseViewCommand):
@@ -58,19 +58,14 @@ class Command(BaseViewCommand):
 
         self.stdout.write(f"* Maximum levels of sub-CAs (path length): {path_length}")
 
-        storage = get_storage()
-        if storage.exists(ca.private_key_path):
-            try:
-                path = storage.path(ca.private_key_path)
-            except NotImplementedError:
-                # Will raise NotImplementedError if storage backend does not support path(), in which case we
-                # use the relative path from the database.
-                # https://docs.djangoproject.com/en/dev/ref/files/storage/#django.core.files.storage.Storage.path
-                path = ca.private_key_path
-
-            self.stdout.write(f"* Path to private key:\n  {path}")
+        self.stdout.write("")
+        self.stdout.write("Key storage options:")
+        self.stdout.write(f"* backend: {ca.key_backend_alias}")
+        if ca.key_backend_options:
+            for key, value in ca.key_backend_options.items():
+                self.stdout.write(f"* {key}: {value}")
         else:
-            self.stdout.write("* Private key not available locally.")
+            self.stdout.write("* No information available.")
 
         if ca.website:
             self.stdout.write(f"* Website: {ca.website}")

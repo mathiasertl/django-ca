@@ -26,13 +26,14 @@ from django.core.management.base import CommandError, CommandParser
 from django_ca import ca_settings, constants
 from django_ca.management.actions import ExpiresAction
 from django_ca.management.base import BaseCommand, add_elliptic_curve, add_key_size, add_password
+from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_key, run_task
 from django_ca.typehints import AllowedHashTypes, ParsableKeyType
 from django_ca.utils import add_colons, validate_private_key_parameters
 
 
-class Command(BaseCommand):
+class Command(UsePrivateKeyMixin, BaseCommand):
     """Implement the :command:`manage.py regenerate_ocsp_keys` command."""
 
     help = "Regenerate OCSP keys."
@@ -66,13 +67,14 @@ class Command(BaseCommand):
         )
         add_key_size(private_key_group)
         add_elliptic_curve(private_key_group)
-        add_password(parser)
+
+        self.add_use_private_key_arguments(parser)
 
         self.add_profile(
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(  # noqa: PLR0913
+    def handle(
         self,
         serials: Iterable[str],
         profile: Optional[str],
@@ -81,7 +83,6 @@ class Command(BaseCommand):
         key_type: Optional[ParsableKeyType],
         key_size: Optional[int],
         elliptic_curve: Optional[ec.EllipticCurve],
-        password: Optional[bytes],
         quiet: bool,
         force: bool,
         **options: Any,
@@ -101,12 +102,13 @@ class Command(BaseCommand):
             serial = serial.replace(":", "").strip().upper()
             hr_serial = add_colons(serial)
             try:
-                ca = CertificateAuthority.objects.get(serial=serial)
+                ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
             except CertificateAuthority.DoesNotExist:
                 self.stderr.write(self.style.ERROR(f"{hr_serial}: Unknown CA."))
                 continue
 
-            if not ca.key_exists:
+            key_backend_options = ca.key_backend.get_load_private_key_options(options)
+            if not ca.key_backend.is_usable(ca, key_backend_options):
                 if quiet is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.
                     self.stderr.write(self.style.WARNING(f"{hr_serial}: CA has no private key."))
@@ -139,12 +141,12 @@ class Command(BaseCommand):
             run_task(
                 generate_ocsp_key,
                 ca.serial,
+                key_backend_options.model_dump(mode="json"),
                 profile=profile,
                 expires=expires.total_seconds(),
                 algorithm=algorithm_name,
                 key_size=ca_key_size,
                 key_type=ca_key_type,
                 elliptic_curve=elliptic_curve_name,
-                password=password,
                 force=force,
             )

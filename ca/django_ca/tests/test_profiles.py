@@ -17,6 +17,8 @@ import doctest
 from datetime import timedelta
 from typing import Any, Dict
 
+from pydantic import BaseModel
+
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -26,6 +28,7 @@ from django.test import TestCase, override_settings
 import pytest
 
 from django_ca import ca_settings
+from django_ca.backends.storages import LoadPrivateKeyOptions
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
 from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.models import Certificate, CertificateAuthority
@@ -48,6 +51,8 @@ from django_ca.tests.base.utils import (
     subject_key_identifier,
     uri,
 )
+
+key_backend_options = LoadPrivateKeyOptions(password=None)
 
 
 class DocumentationTestCase(TestCaseMixin, TestCase):
@@ -88,10 +93,18 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
 class ProfileTestCase(TestCaseMixin, TestCase):
     """Main tests for the profile class."""
 
-    def create_cert(self, prof: Profile, ca: CertificateAuthority, *args: Any, **kwargs: Any) -> Certificate:
+    def create_cert(
+        self,
+        prof: Profile,
+        ca: CertificateAuthority,
+        key_backend_options: BaseModel,
+        csr: x509.CertificateSigningRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Certificate:
         """Shortcut to create a cert with the given profile."""
         cert = Certificate(ca=ca)
-        cert.update_certificate(prof.create_cert(ca, *args, **kwargs))
+        cert.update_certificate(prof.create_cert(ca, key_backend_options, csr, *args, **kwargs))
         return cert
 
     @override_tmpcadir()
@@ -105,6 +118,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
@@ -128,6 +142,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=x509.Name([country_name]),
                 algorithm=hashes.SHA256(),
@@ -163,7 +178,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             add_issuer_alternative_name=False,
         )
         with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject)
+            cert = self.create_cert(prof, ca, key_backend_options, csr, subject=self.subject)
         self.assertEqual(pre.call_count, 1)
         self.assertEqual(cert.subject, expected_subject)
         self.assertEqual(cert.ca, ca)
@@ -182,6 +197,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_crl_url=True,
@@ -208,7 +224,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile("example", extensions={"ocsp_no_check": None})
 
         with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
+            cert = self.create_cert(
+                prof, ca, key_backend_options, csr, subject=self.subject, extensions=[ocsp_no_check()]
+            )
         self.assertEqual(pre.call_count, 1)
         self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.extensions)
 
@@ -228,6 +246,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_crl_url=False,
@@ -261,6 +280,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_crl_url=True,
@@ -298,6 +318,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 root,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_crl_url=True,
@@ -325,6 +346,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_crl_url=False,
@@ -370,6 +392,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_crl_url=False,
@@ -407,6 +430,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
@@ -449,6 +473,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
@@ -496,6 +521,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
@@ -522,6 +548,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             cert = self.create_cert(
                 prof,
                 ca,
+                key_backend_options,
                 csr,
                 subject=self.subject,
                 add_issuer_alternative_name=False,
@@ -552,7 +579,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile("example")
         msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
         with mock_signal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, subject=None)
+            self.create_cert(prof, ca, key_backend_options, csr, subject=None)
         self.assertEqual(pre.call_count, 0)
 
     @override_tmpcadir()
@@ -564,7 +591,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with mock_signal(pre_sign_cert) as pre:
-            self.create_cert(prof, ca, csr, extensions=[san])
+            self.create_cert(prof, ca, key_backend_options, csr, extensions=[san])
         self.assertEqual(pre.call_count, 1)
 
     def test_unknown_signature_hash_algorithm(self) -> None:
@@ -579,17 +606,17 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         prof = Profile("test")
         with self.assertRaisesRegex(ValueError, r"^Cannot determine subject for certificate\.$"):
-            self.create_cert(prof, ca, csr)
+            self.create_cert(prof, ca, key_backend_options, csr)
 
     def test_str(self) -> None:
         """Test str()."""
         for name in ca_settings.CA_PROFILES:
-            self.assertEqual(str(profiles[name]), f"<Profile: {name}>")
+            assert str(profiles[name]) == f"<Profile: {name}>"
 
     def test_repr(self) -> None:
         """Test repr()."""
         for name in ca_settings.CA_PROFILES:
-            self.assertEqual(repr(profiles[name]), f"<Profile: {name}>")
+            assert repr(profiles[name]) == f"<Profile: {name}>"
 
 
 def test_deprecated_subject_value() -> None:

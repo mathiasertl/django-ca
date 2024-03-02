@@ -178,11 +178,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         # Set choices, so we can filter out CAs where the private key does not exist locally
         field = typing.cast(forms.ModelChoiceField, self.fields["ca"])
         qs = typing.cast(CertificateAuthorityQuerySet, field.queryset)
-        field.choices = [
-            (field.prepare_value(ca), field.label_from_instance(ca))
-            for ca in qs.filter(enabled=True)
-            if ca.key_exists
-        ]
+        field.choices = [(field.prepare_value(ca), field.label_from_instance(ca)) for ca in qs.usable()]
 
     def clean_algorithm(self) -> Optional[hashes.HashAlgorithm]:  # pylint: disable=missing-function-docstring
         if algorithm_name := self.cleaned_data["algorithm"]:
@@ -210,7 +206,6 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
         expires = data.get("expires")
         ca: CertificateAuthority = data["ca"]
-        password = typing.cast(Optional[str], data.get("password"))
         subject = typing.cast(Optional[x509.Name], data.get("subject"))
         algorithm = typing.cast(Optional[hashes.HashAlgorithm], data.get("algorithm"))
         subject_alternative_name = data.get("subject_alternative_name", (None, False))
@@ -219,11 +214,12 @@ class CreateCertificateBaseForm(CertificateModelForm):
             Optional[x509.Extension[x509.SubjectAlternativeName]], subject_alternative_name
         )
 
-        # Load the CA to test the password
-        try:
-            ca.key(password)
-        except Exception as e:  # pylint: disable=broad-except; for simplicity
-            self.add_error("password", str(e))
+        # Load the CA to test loading options
+        key_backend_options = ca.key_backend.get_load_private_key_options(data)
+        data["key_backend_options"] = key_backend_options
+        if not ca.key_backend.is_usable(ca, key_backend_options):
+            # TODO: this still assumes storages backend
+            self.add_error("password", "Certificate authority is not usable.")
 
         if ca.key_type in ("Ed448", "Ed25519") and algorithm is not None:
             self.add_error(

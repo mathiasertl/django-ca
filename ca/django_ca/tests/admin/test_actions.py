@@ -40,6 +40,7 @@ from django_ca.pydantic.general_name import GeneralNameModelList
 from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AdminTestCaseMixin
+from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 from django_ca.tests.base.utils import override_tmpcadir
 
@@ -190,12 +191,12 @@ class AdminChangeActionTestCaseMixin(
         self, pre_called: bool = True, post_called: bool = True
     ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
         """Assert that the signals were (not) called."""
-        with self.mock_signal(self.pre_signal) as pre, self.mock_signal(self.post_signal) as post:
+        with mock_signal(self.pre_signal) as pre, mock_signal(self.post_signal) as post:
             try:
                 yield pre, post
             finally:
-                self.assertEqual(pre.called, pre_called)
-                self.assertEqual(post.called, post_called)
+                assert pre.called is pre_called
+                assert post.called is post_called
 
     @override_tmpcadir()
     def test_get(self) -> None:
