@@ -597,7 +597,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             "sign_authority_information_access", CERT_DATA[name].get("sign_authority_information_access")
         )
 
-        ca = CertificateAuthority(name=name, private_key_path=path, enabled=enabled, parent=parent, **kwargs)
+        ca = CertificateAuthority(
+            name=name,
+            enabled=enabled,
+            parent=parent,
+            key_backend_alias="default",
+            key_backend_options={"path": path},
+            **kwargs,
+        )
         ca.update_certificate(parsed)  # calculates serial etc
         ca.full_clean()
         ca.save()
