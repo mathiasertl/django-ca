@@ -672,10 +672,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with mock.patch.object(*args, **kwargs) as mocked:
             yield mocked
 
-    def reverse(self, name: str, *args: Any, **kwargs: Any) -> str:
-        """Shortcut to reverse a URI name."""
-        return reverse(f"django_ca:{name}", args=args, kwargs=kwargs)
-
     @property
     def usable_cas(self) -> Iterator[Tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
