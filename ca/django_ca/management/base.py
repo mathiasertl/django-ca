@@ -37,6 +37,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.management import actions, mixins
+from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import (
@@ -505,7 +506,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         self.add_critical_option(group, ExtensionOID.TLS_FEATURE)
 
 
-class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
+class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABCMeta):
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
@@ -517,7 +518,7 @@ class BaseSignCertCommand(BaseSignCommand, metaclass=abc.ABCMeta):
         self.add_subject_group(parser)
         self.add_algorithm(general_group)
         self.add_ca(general_group, no_default=no_default_ca)
-        add_password(general_group)
+        self.add_use_private_key_arguments(parser)
         self.add_authority_information_access_group(parser)
         self.add_certificate_policies_group(
             parser,

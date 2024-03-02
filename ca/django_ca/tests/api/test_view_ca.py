@@ -20,7 +20,6 @@ from django.test import Client
 from django.urls import reverse_lazy
 
 import pytest
-from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.api.conftest import APIPermissionTestBase
@@ -37,7 +36,7 @@ def api_permission() -> Tuple[Type[Model], str]:
     return CertificateAuthority, "view_certificateauthority"
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_view(api_client: Client, root_response: Dict[str, Any]) -> None:
     """Test an ordinary view."""
     response = api_client.get(path)
@@ -45,7 +44,7 @@ def test_view(api_client: Client, root_response: Dict[str, Any]) -> None:
     assert response.json() == root_response, response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_view_expired_ca(api_client: Client, root_response: Dict[str, Any]) -> None:
     """Test that we can view an expired CA."""
     response = api_client.get(path)

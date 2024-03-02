@@ -28,6 +28,8 @@ from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, Optional, Union
 
+from pydantic import BaseModel
+
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
@@ -91,6 +93,14 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     include_issuing_distribution_point: Optional[bool] = None
     """Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension."""
 
+    def get_key_backend_options(self, ca: CertificateAuthority) -> BaseModel:
+        """Method to get the key backend options to access the private key.
+
+        If a custom CA backend needs transient parameters (e.g. passwords), a view overriding this method
+        must be implemented.
+        """
+        return ca.key_backend.get_load_private_key_options({"password": self.password})
+
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         encoding = parse_encoding(request.GET.get("encoding", self.type))
@@ -108,9 +118,10 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                 )
 
             encoding = parse_encoding(self.type)
+            key_backend_options = self.get_key_backend_options(ca)
             crl = ca.get_crl(
+                key_backend_options,
                 expires=self.expires,
-                password=self.password,
                 scope=self.scope,
                 include_issuing_distribution_point=self.include_issuing_distribution_point,
             )

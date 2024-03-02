@@ -23,7 +23,7 @@ from freezegun import freeze_time
 
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import cmd, override_tmpcadir
 from django_ca.utils import get_crl_cache_key
 
 

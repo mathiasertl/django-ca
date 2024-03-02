@@ -22,7 +22,10 @@ from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.types import (
+    CertificateIssuerPublicKeyTypes,
+    CertificateIssuerPrivateKeyTypes,
+)
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import CommandParser
@@ -36,11 +39,17 @@ if typing.TYPE_CHECKING:
 
 
 Self = typing.TypeVar("Self", bound="KeyBackend")  # pragma: only py<3.11  # replace with typing.Self
-CreatePrivateKeyOptions = typing.TypeVar("CreatePrivateKeyOptions", bound=BaseModel)
-LoadPrivateKeyOptions = typing.TypeVar("LoadPrivateKeyOptions", bound=BaseModel)
+CreatePrivateKeyOptionsTypeVar = typing.TypeVar("CreatePrivateKeyOptionsTypeVar", bound=BaseModel)
+UsePrivateKeyOptionsTypeVar = typing.TypeVar("UsePrivateKeyOptionsTypeVar", bound=BaseModel)
+StorePrivateKeyOptionsTypeVar = typing.TypeVar("StorePrivateKeyOptionsTypeVar", bound=BaseModel)
 
 
-class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions], metaclass=abc.ABCMeta):
+class KeyBackend(
+    typing.Generic[
+        CreatePrivateKeyOptionsTypeVar, StorePrivateKeyOptionsTypeVar, UsePrivateKeyOptionsTypeVar
+    ],
+    metaclass=abc.ABCMeta,
+):
     """Base class for all key storage backends.
 
     All implementations of a key storage backend must implement this abstract base class.
@@ -56,7 +65,7 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
     description: typing.ClassVar[str]
 
     #: The Pydantic model representing the options used for loading a private key.
-    load_model: Type[LoadPrivateKeyOptions]
+    load_model: Type[UsePrivateKeyOptionsTypeVar]
 
     def __init__(self, alias: str, **kwargs: Any) -> None:
         self.alias = alias
@@ -83,6 +92,28 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
             f"The backend used with --key-backend={self.alias}. {self.description}",
         )
 
+    def add_store_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+        """Add an argument group for storing private keys (when importing an existing CA).
+
+        By default, this method adds the same group as
+        :py:func:`~django_ca.backends.base.KeyBackend.add_private_key_group`
+        """
+        return self.add_private_key_group(parser)
+
+    def add_use_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+        """Add an argument group for arguments required for using a private key stored with this backend.
+
+        By default, the title and description of the argument group is based on
+        :py:attr:`~django_ca.backends.base.KeyBackend.alias` and
+        :py:attr:`~django_ca.backends.base.KeyBackend.title`.
+
+        Return ``None`` if you don't need to create such a group.
+        """
+        return parser.add_argument_group(
+            f"{self.alias} key storage",
+            f"Arguments for using private keys stored with the {self.alias} backend.",
+        )
+
     def add_private_key_arguments(self, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
         """Add arguments for private key generation with this backend.
 
@@ -101,10 +132,18 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
         """
         return None
 
+    def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:
+        """Add arguments required for using private key stored with this backend.
+
+        The arguments you add here are expected to be loaded (and validated) using
+        :py:func:`~django_ca.backends.base.KeyBackend.get_load_parent_private_key_options`.
+        """
+        return None
+
     @abc.abstractmethod
     def get_create_private_key_options(
         self, key_type: ParsableKeyType, options: Dict[str, Any]
-    ) -> CreatePrivateKeyOptions:
+    ) -> CreatePrivateKeyOptionsTypeVar:
         """Load options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The
@@ -112,7 +151,11 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
         """
 
     @abc.abstractmethod
-    def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+    def add_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
+        """Add arguments for storing private keys (when importing an existing CA)."""
+
+    @abc.abstractmethod
+    def get_load_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
         """Load options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
@@ -120,7 +163,11 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
         """
 
     @abc.abstractmethod
-    def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+    def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
+        ...
+
+    @abc.abstractmethod
+    def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
         """Load options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
@@ -128,12 +175,12 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
         """
 
     @abc.abstractmethod
-    def is_usable(self, ca: "CertificateAuthority", options: LoadPrivateKeyOptions) -> bool:
+    def is_usable(self, ca: "CertificateAuthority", options: UsePrivateKeyOptionsTypeVar) -> bool:
         ...
 
     @abc.abstractmethod
     def create_private_key(
-        self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
+        self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptionsTypeVar
     ) -> CertificateIssuerPublicKeyTypes:
         """Create a private key for the certificate authority.
 
@@ -141,15 +188,30 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
         used to load the private key. Since this value will be stored in the database, you should not add
         secrets to `key_backend_options`.
 
-        Note that `ca` is not yet a *saved* database entity, so it does not have a private key and fields
-        populated will be incomplete.
+        Note that `ca` is not yet a *saved* database entity, so fields are only partially populated.
+        """
+
+    @abc.abstractmethod
+    def store_private_key(
+        self,
+        ca: "CertificateAuthority",
+        key: CertificateIssuerPrivateKeyTypes,
+        options: StorePrivateKeyOptionsTypeVar,
+    ) -> None:
+        """Store a private key for the certificate authority.
+
+        The method is expected to set `key_backend_options` on `ca` with a set of options that can later be
+        used to load the private key. Since this value will be stored in the database, you should not add
+        secrets to `key_backend_options`.
+
+        Note that `ca` is not yet a *saved* database entity, so fields are only partially populated.
         """
 
     @abc.abstractmethod
     def sign_certificate(
         self,
         ca: "CertificateAuthority",
-        load_options: LoadPrivateKeyOptions,
+        load_options: UsePrivateKeyOptionsTypeVar,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
@@ -164,17 +226,19 @@ class KeyBackend(typing.Generic[CreatePrivateKeyOptions, LoadPrivateKeyOptions],
     def sign_certificate_revocation_list(
         self,
         ca: "CertificateAuthority",
-        load_options: LoadPrivateKeyOptions,
+        load_options: UsePrivateKeyOptionsTypeVar,
         builder: x509.CertificateRevocationListBuilder,
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
         """Sign a certificate revocation list request."""
 
-    def get_ocsp_key_size(self) -> int:
+    def get_ocsp_key_size(self, ca: "CertificateAuthority", load_options: UsePrivateKeyOptionsTypeVar) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
         return ca_settings.CA_DEFAULT_KEY_SIZE
 
-    def get_ocsp_key_elliptic_curve(self) -> ec.EllipticCurve:
+    def get_ocsp_key_elliptic_curve(
+        self, ca: "CertificateAuthority", load_options: UsePrivateKeyOptionsTypeVar
+    ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
         return ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
 

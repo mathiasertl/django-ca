@@ -24,7 +24,6 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, CertificatePoliciesOID, ExtensionOID, NameOID
 
-from django.core.files.storage import storages
 from django.test import TestCase
 
 import pytest
@@ -238,20 +237,6 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         CertificateAuthority.objects.exclude(name="ed448").delete()
         self._test_get()
 
-    @override_tmpcadir()
-    def test_default_ca_key_does_not_exist(self) -> None:
-        """Do a basic get request (to test CSS etc)."""
-        storages["django-ca"].delete(self.ca.private_key_path)
-        response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-
-        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
-
-        field = form.fields["ca"]
-        bound_field = field.get_bound_field(form, "ca")
-        self.assertNotEqual(bound_field.initial, self.ca)
-        self.assertIsInstance(bound_field.initial, CertificateAuthority)
-
     @override_tmpcadir(CA_DEFAULT_CA=CERT_DATA["child"]["serial"])
     def test_cas_expired(self) -> None:
         """Do a basic get request (to test CSS etc)."""
@@ -260,18 +245,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         with self.assertLogs() as logcm:
             response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(
-            logcm.output,
-            [f"ERROR:django_ca.admin:CA_DEFAULT_CA: {self.ca.serial} is disabled."],
-        )
+        assert response.status_code == HTTPStatus.OK
+        assert logcm.output == [f"ERROR:django_ca.admin:CA_DEFAULT_CA: {self.ca.serial} is disabled."]
 
         form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
 
-        field = form.fields["ca"]
-        bound_field = field.get_bound_field(form, "ca")
-        self.assertNotEqual(bound_field.initial, self.ca)
-        self.assertIsInstance(bound_field.initial, CertificateAuthority)
+        field = form.fields["ca"].get_bound_field(form, "ca")
+        assert field.initial != self.ca
+        assert isinstance(field.initial, CertificateAuthority)
 
     @override_tmpcadir(
         CA_PROFILES={"webserver": {"extensions": {"ocsp_no_check": {"critical": True}}}},
@@ -451,20 +432,18 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # first post without password
         with assert_create_cert_signals(False, False):
             response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"password": ["Password was not given but private key is encrypted"]},
-        )
+        assert response.context["adminform"].form.is_valid() is False
+        assert response.context["adminform"].form.errors == {
+            "password": ["Certificate authority is not usable."]
+        }
 
-        # now post with a false password
+        # now post with a wrong password
         with assert_create_cert_signals(False, False):
             response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "password": "wrong"})
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"password": ["Could not decrypt private key - bad password?"]},
-        )
+        assert response.context["adminform"].form.is_valid() is False
+        assert response.context["adminform"].form.errors == {
+            "password": ["Certificate authority is not usable."]
+        }
 
         # post with correct password!
         with assert_create_cert_signals() as (pre, post):
@@ -476,23 +455,20 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=self.hostname)
         assert_post_issue_cert(post, cert)
-        self.assertEqual(
-            cert.pub.loaded.subject,
-            x509.Name(
-                [
-                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
-                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
-                ]
-            ),
+        assert cert.pub.loaded.subject == x509.Name(
+            [
+                x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
+            ]
         )
-        self.assertIssuer(ca, cert)
+        assert ca.subject == cert.issuer
         assert_authority_key_identifier(ca, cert)
-        self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem, CSR)
+        assert cert.ca == ca
+        assert cert.csr.pem == CSR
 
         # Some extensions are not set
-        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.extensions)
-        self.assertNotIn(ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS, cert.extensions)
+        assert ExtensionOID.ISSUER_ALTERNATIVE_NAME not in cert.extensions
+        assert ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS not in cert.extensions
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
@@ -711,7 +687,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         CertificateAuthority.objects.update(enabled=False)
         response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
         with assert_create_cert_signals(False, False):
             response = self.client.post(
@@ -738,46 +714,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "extended_key_usage_1": False,
                 },
             )
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-
-    def test_add_unusable_cas(self) -> None:
-        """Try adding with an unusable CA."""
-        ca = self.cas["root"]
-        CertificateAuthority.objects.update(private_key_path="not/exist/add-unusable-cas")
-
-        # check that we have some enabled CAs, just to make sure this test is really useful
-        self.assertTrue(CertificateAuthority.objects.filter(enabled=True).exists())
-
-        with assert_create_cert_signals(False, False):
-            response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-
-        with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": CSR,
-                    "ca": ca.pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "subject_alternative_name_1": True,
-                    "algorithm": "SHA-256",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
-                    "key_usage_0": [
-                        "digital_signature",
-                        "key_agreement",
-                    ],
-                    "key_usage_1": True,
-                    "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
-                    ],
-                    "extended_key_usage_1": False,
-                },
-            )
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 @pytest.mark.selenium

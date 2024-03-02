@@ -18,6 +18,7 @@ from typing import List, Optional
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.test import override_settings
@@ -172,6 +173,56 @@ def test_init_grandchild(
     assert_ca_properties(ca, ca_name, parent=usable_child)
     assert_certificate(ca, subject, parent=usable_child)
     assert_intermediate_extensions(usable_child, ca)
+
+
+@pytest.mark.django_db
+def test_openssh_ca(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
+    """Test OpenSSH CA support."""
+    ca_key_backend_options = CreatePrivateKeyOptions(password=None, path="ca")
+    ca = CertificateAuthority.objects.init(
+        ca_name,
+        key_backend,
+        ca_key_backend_options,
+        key_type="Ed25519",
+        subject=subject,
+        openssh_ca=True,
+        parent_key_backend_options=LoadPrivateKeyOptions(password=None),
+    )
+
+    assert ca.name == ca_name
+    assert isinstance(ca.pub.loaded.public_key(), Ed25519PublicKey)
+    assert ca.subject == subject
+
+    # verify X509 properties
+    assert ca.extensions[ExtensionOID.KEY_USAGE] == key_usage(crl_sign=True, key_cert_sign=True)
+
+    for oid in [
+        ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+        ExtensionOID.EXTENDED_KEY_USAGE,
+        ExtensionOID.TLS_FEATURE,
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+    ]:
+        assert oid not in ca.extensions
+
+    assert ca.is_openssh_ca is True
+
+
+def test_openssh_ca_for_intermediate(
+    ca_name: str, subject: x509.Name, key_backend: StoragesBackend, root: CertificateAuthority
+) -> None:
+    """Test creating an intermediate CA for OpenSSH CAs, which is not supported."""
+    ca_key_backend_options = CreatePrivateKeyOptions(password=None, path="ca")
+    with pytest.raises(ValueError, match="^OpenSSH does not support intermediate authorities$"):
+        CertificateAuthority.objects.init(
+            ca_name,
+            key_backend,
+            ca_key_backend_options,
+            key_type="Ed25519",
+            subject=subject,
+            parent=root,
+            openssh_ca=True,
+        )
+    assert CertificateAuthority.objects.filter(name=ca_name).exists() is False
 
 
 def test_init_with_no_default_hostname(

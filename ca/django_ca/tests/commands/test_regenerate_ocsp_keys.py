@@ -22,9 +22,9 @@ from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPri
 from cryptography.hazmat.primitives.serialization import load_der_private_key
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from django.core.files.storage import storages
 from django.test import TestCase
 
+from django_ca.backends.storages import LoadPrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA
@@ -58,7 +58,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertTrue(file_exists(priv_path))
         self.assertTrue(file_exists(cert_path))
         if key_type is None:
-            key_type = type(ca.key())
+            ca_key = ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+            key_type = type(ca_key)
 
         priv = typing.cast(
             CertificateIssuerPrivateKeyTypes, load_der_private_key(read_file(priv_path), password)
@@ -156,7 +157,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         with self.mute_celery(
             (
                 (
-                    (CERT_DATA["root"]["serial"],),
+                    (CERT_DATA["root"]["serial"], {"password": None}),
                     {
                         "profile": "ocsp",
                         "expires": 172800.0,
@@ -164,7 +165,6 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "key_size": None,
                         "key_type": "RSA",
                         "elliptic_curve": None,
-                        "password": None,
                         "force": False,
                     },
                 ),
@@ -236,18 +236,16 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
         self.assertHasNoKey(CERT_DATA["root"]["serial"])
 
-    @override_tmpcadir()
     def test_no_private_key(self) -> None:
         """Try when there is no private key."""
         ca = self.cas["root"]
-        storages["django-ca"].delete(ca.private_key_path)
         stdout, stderr = cmd("regenerate_ocsp_keys", ca.serial, no_color=True)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, f"{add_colons(ca.serial)}: CA has no private key.\n")
+        assert stdout == ""
+        assert stderr == f"{add_colons(ca.serial)}: CA has no private key.\n"
         self.assertHasNoKey(ca.serial)
 
         # and in quiet mode
         stdout, stderr = cmd("regenerate_ocsp_keys", ca.serial, quiet=True, no_color=True)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         self.assertHasNoKey(ca.serial)

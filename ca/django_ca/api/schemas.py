@@ -143,7 +143,8 @@ class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema)
     @staticmethod
     def resolve_can_sign_certificates(obj: CertificateAuthority) -> bool:
         """Resolve the can_sign_certificates flag."""
-        return obj.key_exists
+        # TODO: re-implement using backends
+        return True
 
 
 class CertificateAuthorityFilterSchema(Schema):

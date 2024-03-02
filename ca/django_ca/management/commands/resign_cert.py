@@ -70,7 +70,6 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         subject: Optional[str],
         expires: Optional[timedelta],
         watch: List[str],
-        password: Optional[bytes],
         profile: Optional[str],
         algorithm: Optional[AllowedHashTypes],
         # Authority Information Access extension
@@ -107,6 +106,9 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
 
         profile_obj = self.get_profile(profile, cert)
         self.test_options(ca=ca, expires=expires, profile=profile_obj, **options)
+
+        # Get key backend options
+        key_backend_options = ca.key_backend.get_load_private_key_options(options)
 
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
@@ -185,13 +187,13 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         try:
             cert = Certificate.objects.create_cert(
                 ca=ca,
+                key_backend_options=key_backend_options,
                 csr=cert.csr.loaded,
                 profile=profile_obj,
                 expires=expires,
                 subject=parsed_subject,
                 algorithm=algorithm,
                 extensions=extensions.values(),
-                password=password,
             )
         except Exception as ex:
             raise CommandError(ex) from ex

@@ -585,7 +585,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         **kwargs: Any,
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
-        path = f"{name}.key"
         if parsed is None:
             parsed = CERT_DATA[name]["pub"]["parsed"]
         if parent is None and CERT_DATA[name].get("parent"):
@@ -597,12 +596,16 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             "sign_authority_information_access", CERT_DATA[name].get("sign_authority_information_access")
         )
 
+        key_backend_options = {}
+        if CERT_DATA[name]["key_filename"]:
+            key_backend_options["path"] = CERT_DATA[name]["key_filename"]
+
         ca = CertificateAuthority(
             name=name,
             enabled=enabled,
             parent=parent,
             key_backend_alias="default",
-            key_backend_options={"path": path},
+            key_backend_options=key_backend_options,
             **kwargs,
         )
         ca.update_certificate(parsed)  # calculates serial etc

@@ -161,7 +161,6 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         root = self.cas["root"]
         child = self.cas["child"]
         idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
-        self.assertIsNotNone(root.key(password=None))
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
         self.assertEqual(response.status_code, 200)
@@ -198,7 +197,6 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         child = self.cas["child"]
         full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/")]
         idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
-        self.assertIsNotNone(child.key(password=None))
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
         self.assertEqual(response.status_code, 200)
@@ -209,9 +207,12 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_password(self) -> None:
         """Test getting a CRL with a password."""
         ca = self.cas["pwd"]
+        key_backend_options = ca.key_backend.get_load_private_key_options(
+            {"password": CERT_DATA["pwd"]["password"]}
+        )
 
         # getting CRL from view directly doesn't work
-        with self.assertRaisesRegex(TypeError, r"^Password was not given but private key is encrypted$"):
+        with self.assertRaisesRegex(ValueError, r"^Backend cannot be used for signing by this process.$"):
             self.client.get(reverse("default", kwargs={"serial": ca.serial}))
 
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
@@ -221,7 +222,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             config["OVERRIDES"][ca.serial]["password"] = CERT_DATA["pwd"]["password"]
 
         with override_settings(CA_CRL_PROFILES=profiles):
-            ca.cache_crls()  # cache CRLs for this CA
+            ca.cache_crls(key_backend_options)  # cache CRLs for this CA
 
         idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))

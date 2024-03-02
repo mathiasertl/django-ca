@@ -61,6 +61,16 @@ class CreatePrivateKeyOptions(pydantic.BaseModel):
     elliptic_curve: Optional[ec.EllipticCurve] = None
 
 
+class StorePrivateKeyOptions(pydantic.BaseModel):
+    """Options for loading a private key."""
+
+    # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
+    model_config = ConfigDict(frozen=True)
+
+    path: Path
+    password: Optional[bytes]
+
+
 class LoadPrivateKeyOptions(pydantic.BaseModel):
     """Options for loading a private key."""
 
@@ -70,7 +80,7 @@ class LoadPrivateKeyOptions(pydantic.BaseModel):
     password: Optional[bytes]
 
 
-class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]):
+class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, LoadPrivateKeyOptions]):
     """A simple storage backend that does not yet do much."""
 
     name = "storages"
@@ -87,13 +97,26 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
     # cached variables
     _key: Optional[CertificateIssuerPrivateKeyTypes] = None
 
-    def add_private_key_arguments(cls, group: ArgumentGroup) -> None:
+    def _add_password_argument(self, group: ArgumentGroup) -> None:
+        group.add_argument(
+            "--password",
+            nargs="?",
+            action=PasswordAction,
+            metavar="PASSWORD",
+            prompt="Password for CA: ",
+            help="Password for the private key of the CA, if stored using the Django storage system.",
+        )
+
+    def _add_path_argument(self, group: ArgumentGroup) -> None:
         group.add_argument(
             "--path",
             type=Path,
             default=Path("ca"),
-            help="Path where to store Certificate Authorities (within the configured storage backend).",
+            help="Path for storing the private key (in the storage backend, default: %(default)s).",
         )
+
+    def add_private_key_arguments(self, group: ArgumentGroup) -> None:
+        self._add_path_argument(group)
         add_key_size(group)
         add_elliptic_curve(group)
         add_password(
@@ -102,7 +125,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
             "prompted. By default, the private key is not encrypted.",
         )
 
-    def add_parent_private_key_arguments(cls, group: ArgumentGroup) -> None:
+    def add_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         group.add_argument(
             "--parent-password",
             nargs="?",
@@ -111,6 +134,13 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
             prompt="Password for parent CA: ",
             help="Password for the private key of the parent CA, if stored using the Django storage system.",
         )
+
+    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
+        self._add_password_argument(group)
+        self._add_path_argument(group)
+
+    def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:
+        self._add_password_argument(group)
 
     def get_create_private_key_options(
         self, key_type: ParsableKeyType, options: Dict[str, Any]
@@ -125,8 +155,11 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
             elliptic_curve=elliptic_curve,
         )
 
+    def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptions:
+        return StorePrivateKeyOptions(password=options["password"], path=options["path"])
+
     def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
-        return LoadPrivateKeyOptions(password=options["password"])
+        return LoadPrivateKeyOptions(password=options.get("password"))
 
     def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
         return LoadPrivateKeyOptions(password=options["parent_password"])
@@ -155,6 +188,29 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
         ca.key_backend_options = {"path": path}
 
         return self._key.public_key()
+
+    def store_private_key(
+        self,
+        ca: "CertificateAuthority",
+        key: CertificateIssuerPrivateKeyTypes,
+        options: StorePrivateKeyOptions,
+    ) -> None:
+        storage = storages[self.storage_alias]
+
+        if options.password is None:
+            encryption: serialization.KeySerializationEncryption = serialization.NoEncryption()
+        else:
+            encryption = serialization.BestAvailableEncryption(options.password)
+
+        der = key.private_bytes(
+            encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
+        )
+
+        safe_serial = ca.serial.replace(":", "")
+        path = storage.save(str(options.path / f"{safe_serial}.key"), ContentFile(der))
+
+        # Update model instance
+        ca.key_backend_options = {"path": path}
 
     def get_key(
         self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions
@@ -217,3 +273,15 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, LoadPrivateKeyOptions]
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
         return builder.sign(private_key=self.get_key(ca, load_options), algorithm=algorithm)
+
+    def get_ocsp_key_size(self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions) -> int:
+        """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
+        key = self.get_key(ca, load_options)
+        return key.key_size
+
+    def get_ocsp_key_elliptic_curve(
+        self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions
+    ) -> ec.EllipticCurve:
+        """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
+        key = self.get_key(ca, load_options)
+        return key.curve

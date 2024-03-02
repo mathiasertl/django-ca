@@ -23,12 +23,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca.management.base import BinaryCommand, add_password
+from django_ca.management.base import BinaryCommand
+from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority
 from django_ca.typehints import AllowedHashTypes
 
 
-class Command(BinaryCommand):
+class Command(UsePrivateKeyMixin, BinaryCommand):
     """Implement :command:`manage.py dump_crl`."""
 
     help = "Write the certificate revocation list (CRL)."
@@ -68,7 +69,7 @@ class Command(BinaryCommand):
         self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
-        add_password(parser)
+        self.add_use_private_key_arguments(parser)
         super().add_arguments(parser)
 
     def handle(
@@ -79,7 +80,6 @@ class Command(BinaryCommand):
         algorithm: Optional[AllowedHashTypes],
         scope: Optional[typing.Literal["ca", "user", "attribute"]],
         include_issuing_distribution_point: Optional[bool],
-        password: Optional[bytes],
         expires: int,
         **options: Any,
     ) -> None:
@@ -91,13 +91,15 @@ class Command(BinaryCommand):
                 "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
             )
 
+        key_backend_options = ca.key_backend.get_load_private_key_options(options)
+
         # Actually create the CRL
         try:
             crl = ca.get_crl(
+                key_backend_options,
                 include_issuing_distribution_point=include_issuing_distribution_point,
                 scope=scope,
                 algorithm=algorithm,
-                password=password,
                 expires=expires,
             ).public_bytes(encoding)
         except Exception as ex:

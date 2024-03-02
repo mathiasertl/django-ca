@@ -16,7 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import os
 from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Iterable, List, Optional
 
@@ -29,9 +28,9 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.backends import KeyBackend, key_backends
-from django_ca.management.actions import ExpiresAction, IntegerRangeAction, KeyBackendAction, NameAction
+from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
 from django_ca.management.base import BaseSignCommand
-from django_ca.management.mixins import CertificateAuthorityDetailMixin
+from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import (
@@ -44,7 +43,7 @@ from django_ca.typehints import (
 from django_ca.utils import format_general_name, parse_general_name
 
 
-class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
+class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCommand):
     """Implement :command:`manage.py init_ca`."""
 
     help = "Create a certificate authority."
@@ -135,21 +134,10 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             "is required.",
         )
 
-    def add_key_backend_option(self, parser: CommandParser) -> None:
-        """Add argument group for the --key-backend option."""
-        group = parser.add_argument_group("Private key options")
-        self.add_key_type(group)
-        group.add_argument(
-            "--key-backend",
-            action=KeyBackendAction,
-            help="The key can be stored using different backends. Depending on the backend, you have to "
-            "choose different options below for private keys. (default: "
-            f"{ca_settings.CA_DEFAULT_KEY_BACKEND}).",
-        )
-
-    def add_private_key_storage_arguments(self, parser: CommandParser) -> None:
+    def add_create_private_key_arguments(self, parser: CommandParser) -> None:
         """Add general arguments for private keys."""
         for backend in key_backends:
+            # TODO: methods in backend should be called add_create_* for consistency
             group = backend.add_private_key_group(parser)
             if group is not None:
                 backend.add_private_key_arguments(group)
@@ -179,8 +167,9 @@ class Command(CertificateAuthorityDetailMixin, BaseSignCommand):
             general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
 
-        self.add_key_backend_option(parser)
-        self.add_private_key_storage_arguments(parser)
+        key_backend_group = self.add_key_backend_option(parser)
+        self.add_key_type(key_backend_group)
+        self.add_create_private_key_arguments(parser)
 
         intermediate_group = parser.add_argument_group(
             "Intermediate certificate authority", "Options to create an intermediate certificate authority."

@@ -153,12 +153,12 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         ca = self.cas["pwd"]
 
         # Giving no password raises a CommandError
-        with assert_command_error("^Password was not given but private key is encrypted$"):
+        with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
             cmd("dump_crl", ca=ca, scope="user")
 
         # False password
         ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with assert_command_error(self.re_false_password):
+        with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
             cmd("dump_crl", ca=ca, scope="user", password=b"wrong")
 
         stdout, stderr = cmd(
@@ -169,7 +169,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             stdout=BytesIO(),
             stderr=BytesIO(),
         )
-        self.assertEqual(stderr, b"")
+        assert stderr == b""
 
         expected_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
@@ -291,7 +291,6 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     def test_disabled(self) -> None:
         """Test creating a CRL with a disabled CA."""
         ca = self.cas["root"]
-        self.assertIsNotNone(ca.key(password=None))
         ca.enabled = False
         ca.save()
 
@@ -350,12 +349,8 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_ca_crl(self) -> None:
-        """Test creating a CA CRL.
-
-        NOTE: freeze_time() b/c it does not work for expired CAs.
-        """
+        """Test creating a CA CRL."""
         child = self.cas["child"]
-        self.assertIsNotNone(child.key(password=None))
         self.assertNotRevoked(child)
 
         stdout, stderr = cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())

@@ -27,6 +27,7 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from django_ca import ca_settings
+from django_ca.backends.storages import LoadPrivateKeyOptions
 from django_ca.constants import ReasonFlags
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
@@ -138,9 +139,8 @@ class AcmeCertificateRevocationViewTestCase(
         builder = builder.public_key(pkey)
         builder = builder.issuer_name(self.ca.subject)
         builder = builder.subject_name(self.cert.pub.loaded.subject)
-        cert = builder.sign(
-            private_key=self.ca.key(), algorithm=ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
-        )
+        ca_key = self.ca.key_backend.get_key(self.ca, LoadPrivateKeyOptions(password=None))
+        cert = builder.sign(private_key=ca_key, algorithm=ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
         message = self.message_cls(certificate=jose.util.ComparableX509(X509.from_cryptography(cert)))
 
         resp = self.acme(self.url, message, kid=self.kid)
