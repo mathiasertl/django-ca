@@ -21,7 +21,6 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 
-from django.conf import settings
 from django.test import TestCase
 
 import pytest
@@ -88,7 +87,9 @@ class ImportCATest(TestCaseMixin, TestCase):
 
             # test the private key
             # NOTE: password is always None since we don't encrypt the stored key with --password
-            ca_key = ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+            ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+                ca, LoadPrivateKeyOptions(password=None)
+            )
             if data["key_type"] == "EC":
                 key = typing.cast(ec.EllipticCurvePrivateKey, ca_key)
                 self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
@@ -140,10 +141,15 @@ class ImportCATest(TestCaseMixin, TestCase):
 
         # test the private key
         with pytest.raises(TypeError, match="^Password was not given but private key is encrypted$"):
-            ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+            ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+                ca, LoadPrivateKeyOptions(password=None)
+            )
 
         ca_key = typing.cast(
-            rsa.RSAPrivateKey, ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=password))
+            rsa.RSAPrivateKey,
+            ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+                ca, LoadPrivateKeyOptions(password=password)
+            ),
         )
 
         assert isinstance(ca_key, rsa.RSAPrivateKey)

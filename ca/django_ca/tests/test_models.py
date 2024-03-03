@@ -586,8 +586,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         for name, ca in self.usable_cas:
             private_key_options = LoadPrivateKeyOptions(password=CERT_DATA[name].get("password"))
             with self.generate_ocsp_key(ca, private_key_options) as (key, cert):
-                print(name, ca, private_key_options)
-                ca_key = ca.key_backend.get_key(ca, private_key_options)
+                ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+                    ca, private_key_options
+                )
                 assert isinstance(key, type(ca_key))
 
     @override_tmpcadir(CA_DEFAULT_ELLIPTIC_CURVE="secp192r1")

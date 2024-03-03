@@ -293,6 +293,10 @@ unusable_ca_names = [
 ]
 all_ca_names = usable_ca_names + unusable_ca_names
 
+# names for certificates that are signed by CAs (e.g. root-cert, ...)
+ca_cert_names = [
+    f"{name}-cert" for name, conf in CERT_DATA.items() if conf["type"] == "ca" and conf.get("key_filename")
+]
 usable_cert_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "cert" and conf["cat"] == "generated"
 ]

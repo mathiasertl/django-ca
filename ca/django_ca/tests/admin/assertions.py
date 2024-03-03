@@ -17,10 +17,11 @@ from http import HTTPStatus
 from typing import Any, Tuple
 
 from django.db import models
-from django.http import HttpResponse
 from django.templatetags.static import static
 
 from pytest_django.asserts import assertInHTML
+
+from django_ca.tests.base.typehints import HttpResponse
 
 
 def assert_change_response(

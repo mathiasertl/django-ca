@@ -13,56 +13,101 @@
 
 """Test the cache_crls management command."""
 
-from cryptography import x509
+from typing import List, Optional
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.urls import reverse
 
-from freezegun import freeze_time
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import cmd, override_tmpcadir
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.tests.base.assertions import assert_crl
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.utils import cmd, get_idp, idp_full_name, uri
 from django_ca.utils import get_crl_cache_key
 
+# freeze time as otherwise CRLs might have rounding errors
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
-class CacheCRLsTestCase(TestCaseMixin, TestCase):
-    """Main test class for this command."""
 
-    load_cas = "__usable__"
+def assert_crl_by_ca(ca: CertificateAuthority, expected: Optional[List[Certificate]] = None) -> None:
+    """Assert all cached CRLs for the given CA."""
+    key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
+    crl = cache.get(key)
+    assert crl is not None
+    if ca.parent:
+        url_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
+        idp = get_idp(full_name=[uri(f"http://localhost:8000{url_path}")], only_contains_ca_certs=True)
+    else:
+        idp = get_idp(only_contains_ca_certs=True)
 
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_basic(self) -> None:
-        """Test the basic command.
+    assert_crl(crl, signer=ca, algorithm=ca.algorithm, encoding=Encoding.DER, idp=idp)
 
-        Note: Without an explicit serial expired CAs are excluded, that's why we need @freeze_time().
-        """
-        stdout, stderr = cmd("cache_crls")
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+    key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
+    crl = cache.get(key)
+    assert crl is not None
+    idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
+    assert_crl(crl, signer=ca, algorithm=ca.algorithm, encoding=Encoding.DER, idp=idp, expected=expected)
 
-        for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
 
-            key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
+def test_cmd(settings: SettingsWrapper, usable_cas: List[CertificateAuthority]) -> None:
+    """Test the basic command."""
+    settings.CA_CRL_PROFILES = {
+        "user": {
+            "expires": 86400,
+            "scope": "user",
+            "encodings": ["PEM", "DER"],
+            "OVERRIDES": {
+                CERT_DATA["pwd"]["serial"]: {"skip": True},
+            },
+        },
+        "ca": {
+            "expires": 86400,
+            "scope": "ca",
+            "encodings": ["PEM", "DER"],
+            "OVERRIDES": {
+                CERT_DATA["pwd"]["serial"]: {"skip": True},
+            },
+        },
+    }
 
-    @override_tmpcadir()
-    def test_serial(self) -> None:
-        """Test passing an explicit serial."""
-        stdout, stderr = cmd("cache_crls", self.ca.serial)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+    stdout, stderr = cmd("cache_crls")
+    assert stdout == ""
+    assert stderr == ""
 
-        key = get_crl_cache_key(self.ca.serial, Encoding.DER, "ca")
-        crl = x509.load_der_x509_crl(cache.get(key))
-        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
+    for ca in usable_cas:
+        if ca.name == "pwd":
+            # TODO: not supported yet
+            continue
+        assert_crl_by_ca(ca)
 
-        key = get_crl_cache_key(self.ca.serial, Encoding.DER, "user")
-        crl = x509.load_der_x509_crl(cache.get(key))
-        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
+def test_with_serial(usable_cert: Certificate) -> None:
+    """Test passing an explicit serial."""
+    usable_cert.revoke()
+    ca = usable_cert.ca
+    if CERT_DATA[ca.name].get("password"):
+        # TODO: not yet possible
+        return
+
+    stdout, stderr = cmd("cache_crls", ca.serial)
+    assert stdout == ""
+    assert stderr == ""
+    assert_crl_by_ca(ca, expected=[usable_cert])
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
+def test_with_serial_with_empty_crl(usable_ca: CertificateAuthority) -> None:
+    """Test passing an explicit serial."""
+    if CERT_DATA[usable_ca.name].get("password"):
+        # TODO: not yet possible
+        return
+
+    stdout, stderr = cmd("cache_crls", usable_ca.serial)
+    assert stdout == ""
+    assert stderr == ""
+    assert_crl_by_ca(usable_ca)

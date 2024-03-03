@@ -28,7 +28,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
 )
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.management import CommandParser
+from django.core.management import CommandParser  # type: ignore[attr-defined]  # false positive
 from django.utils.module_loading import import_string
 
 from django_ca import ca_settings
@@ -38,7 +38,8 @@ if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
-Self = typing.TypeVar("Self", bound="KeyBackend")  # pragma: only py<3.11  # replace with typing.Self
+# NOTE: Self only needed before Python3.11, replace with typing.Self then
+Self = typing.TypeVar("Self", bound="KeyBackend[BaseModel,BaseModel,BaseModel]")  # pragma: only py<3.11
 CreatePrivateKeyOptionsTypeVar = typing.TypeVar("CreatePrivateKeyOptionsTypeVar", bound=BaseModel)
 UsePrivateKeyOptionsTypeVar = typing.TypeVar("UsePrivateKeyOptionsTypeVar", bound=BaseModel)
 StorePrivateKeyOptionsTypeVar = typing.TypeVar("StorePrivateKeyOptionsTypeVar", bound=BaseModel)
@@ -87,7 +88,7 @@ class KeyBackend(
 
         Return ``None`` if you don't need to create such a group.
         """
-        return parser.add_argument_group(
+        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not typehinted
             f"{self.alias}: {self.title}",
             f"The backend used with --key-backend={self.alias}. {self.description}",
         )
@@ -101,7 +102,7 @@ class KeyBackend(
         return self.add_private_key_group(parser)
 
     @abc.abstractmethod
-    def add_store_private_key_options(self, group: ArgumentGroup) -> StorePrivateKeyOptionsTypeVar:
+    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
         """Add arguments for storing private keys (when importing an existing CA)."""
 
     def add_use_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
@@ -113,7 +114,7 @@ class KeyBackend(
 
         Return ``None`` if you don't need to create such a group.
         """
-        return parser.add_argument_group(
+        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not typehinted
             f"{self.alias} key storage",
             f"Arguments for using private keys stored with the {self.alias} backend.",
         )
@@ -263,28 +264,29 @@ class KeyBackends:
     def __init__(self) -> None:
         self._backends = local()
 
-    def __getitem__(self, name: Optional[str]) -> KeyBackend:
+    def __getitem__(self, name: Optional[str]) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         if name is None:
             name = ca_settings.CA_DEFAULT_KEY_BACKEND
 
         try:
-            return typing.cast(KeyBackend, self._backends.backends[name])
+            return typing.cast(KeyBackend[BaseModel, BaseModel, BaseModel], self._backends.backends[name])
         except AttributeError:
             self._backends.backends = {}
         except KeyError:
             pass
 
         self._backends.backends[name] = self._get_key_backend(name)
-        return self._backends.backends[name]
+        # TYPEHINT NOTE: _get_key_backend should not write anything into this variable
+        return self._backends.backends[name]  # type: ignore[no-any-return]
 
-    def __iter__(self) -> Iterator[KeyBackend]:
+    def __iter__(self) -> Iterator[KeyBackend[BaseModel, BaseModel, BaseModel]]:
         for name in ca_settings.CA_KEY_BACKENDS:
             yield self[name]
 
     def _reset(self) -> None:
         self._backends = local()
 
-    def _get_key_backend(self, alias: str) -> KeyBackend:
+    def _get_key_backend(self, alias: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         """Get the key backend with the given alias."""
         try:
             params = ca_settings.CA_KEY_BACKENDS[alias].copy()
@@ -298,7 +300,12 @@ class KeyBackends:
             backend_cls = import_string(backend)
         except ImportError as ex:
             raise ImproperlyConfigured(f"Could not find backend {backend!r}: {ex}") from ex
-        return backend_cls(alias, **options)
+
+        if not issubclass(backend_cls, KeyBackend):
+            raise ImproperlyConfigured(f"{backend}: Class does not refer to a key backend.")
+
+        # TYPEHINT NOTE: we check for the correct subclass above.
+        return backend_cls(alias, **options)  # type: ignore[no-any-return]
 
 
 key_backends = KeyBackends()

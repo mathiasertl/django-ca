@@ -400,7 +400,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self, ca: CertificateAuthority, password: Optional[Union[str, bytes]] = None
     ) -> None:
         """Assert some basic properties for a private key."""
-        key = ca.key(password)
+        key = ca.key(password)  # type: ignore[attr-defined]  # we assume StoragesBackend
         self.assertIsNotNone(key)
         if not isinstance(  # pragma: no branch  # only used for RSA keys
             key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)

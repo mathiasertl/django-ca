@@ -139,7 +139,9 @@ class AcmeCertificateRevocationViewTestCase(
         builder = builder.public_key(pkey)
         builder = builder.issuer_name(self.ca.subject)
         builder = builder.subject_name(self.cert.pub.loaded.subject)
-        ca_key = self.ca.key_backend.get_key(self.ca, LoadPrivateKeyOptions(password=None))
+        ca_key = self.ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            self.ca, LoadPrivateKeyOptions(password=None)
+        )
         cert = builder.sign(private_key=ca_key, algorithm=ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
         message = self.message_cls(certificate=jose.util.ComparableX509(X509.from_cryptography(cert)))
 

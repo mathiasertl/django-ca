@@ -58,7 +58,9 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertTrue(file_exists(priv_path))
         self.assertTrue(file_exists(cert_path))
         if key_type is None:
-            ca_key = ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+            ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+                ca, LoadPrivateKeyOptions(password=None)
+            )
             key_type = type(ca_key)
 
         priv = typing.cast(

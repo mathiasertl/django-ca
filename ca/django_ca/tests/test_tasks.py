@@ -158,12 +158,12 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         """Test creating a CRL for a CA where we have no password."""
         msg = r"^Backend cannot be used for signing by this process\.$"
         with self.settings(CA_PASSWORDS={}), pytest.raises(ValueError, match=msg):
-            tasks.cache_crl(self.cas["pwd"].serial, key_backend_options)
+            tasks.cache_crl(self.cas["pwd"].serial, {"password": None})
 
     def test_no_private_key(self) -> None:
         """Test creating a CRL for a CA where no private key is available."""
         with pytest.raises(ValueError, match=r"^Backend cannot be used for signing by this process\.$"):
-            tasks.cache_crl(self.cas["pwd"].serial, key_backend_options)
+            tasks.cache_crl(self.cas["pwd"].serial, {"password": None})
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
