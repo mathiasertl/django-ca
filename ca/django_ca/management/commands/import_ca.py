@@ -20,6 +20,8 @@ import argparse
 import typing
 from typing import Any, List, Optional
 
+from pydantic import BaseModel
+
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
@@ -86,7 +88,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         name: str,
         key: typing.BinaryIO,
         pem: typing.BinaryIO,
-        key_backend: KeyBackend,
+        key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         parent: Optional[CertificateAuthority],
         import_password: Optional[bytes],
         # Authority Information Access extension  for certificates (MUST be non-critical)

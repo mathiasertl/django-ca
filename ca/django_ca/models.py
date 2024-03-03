@@ -600,7 +600,7 @@ class CertificateAuthority(X509CertMixin):
         return self.name
 
     @property
-    def key_backend(self) -> KeyBackend:
+    def key_backend(self) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         """The key backend that can be used to use the private key."""
         if self._key_backend is None:
             self._key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]

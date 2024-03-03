@@ -19,6 +19,8 @@
 from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Iterable, List, Optional
 
+from pydantic import BaseModel
+
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
@@ -249,7 +251,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         parent: Optional[CertificateAuthority],
         expires: timedelta,
         # private key storage options
-        key_backend: KeyBackend,
+        key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         key_type: ParsableKeyType,
         algorithm: Optional[AllowedHashTypes],
         # Authority Information Access extension (MUST be non-critical)

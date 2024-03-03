@@ -743,7 +743,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
                 # button would not even show up.
                 log.error(ex)
-                ca = CertificateAuthority.objects.usable().order_by("-expires", "serial").first()
+                ca_qs = CertificateAuthority.objects.usable().order_by("-expires", "serial")
+                ca = ca_qs.first()  # type: ignore[assignment]  # Could be None, handled below
 
             if ca is None:
                 raise ImproperlyConfigured("Cannot determine default CA.")

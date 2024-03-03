@@ -170,7 +170,12 @@ def test_basic(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject:
     assert_certificate(ca, subject)
 
     # test the private key
-    key = typing.cast(RSAPrivateKey, ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None)))
+    key = typing.cast(
+        RSAPrivateKey,
+        ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            ca, LoadPrivateKeyOptions(password=None)
+        ),
+    )
     assert key.key_size == 1024
     assert_authority_key_identifier(ca, ca)
 
@@ -225,7 +230,10 @@ def test_arguments(hostname: str, ca_name: str) -> None:
 
     # test the private key
     key = typing.cast(
-        ec.EllipticCurvePrivateKey, ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+        ec.EllipticCurvePrivateKey,
+        ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            ca, LoadPrivateKeyOptions(password=None)
+        ),
     )
     assert isinstance(key, ec.EllipticCurvePrivateKey)
     assert key.key_size == 256
@@ -662,7 +670,10 @@ def test_ec(ca_name: str) -> None:
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert_post_create_ca(post, ca)
     key = typing.cast(
-        ec.EllipticCurvePrivateKey, ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+        ec.EllipticCurvePrivateKey,
+        ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            ca, LoadPrivateKeyOptions(password=None)
+        ),
     )
     assert isinstance(key, ec.EllipticCurvePrivateKey)
 
@@ -678,7 +689,9 @@ def test_dsa(ca_name: str) -> None:
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert_post_create_ca(post, ca)
 
-    key = ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=None))
+    key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+        ca, LoadPrivateKeyOptions(password=None)
+    )
     assert isinstance(key, dsa.DSAPrivateKey)
     assert key.key_size == 1024
 
@@ -901,17 +914,24 @@ def test_password(ca_name: str) -> None:
     msg = "^Password was not given but private key is encrypted$"
     parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")
     with pytest.raises(TypeError, match=msg):
-        parent.key_backend.get_key(parent, LoadPrivateKeyOptions(password=None))
+        parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            parent, LoadPrivateKeyOptions(password=None)
+        )
 
     # Wrong password doesn't work either
     with pytest.raises(ValueError):
         # NOTE: cryptography is notoriously unstable when it comes to the error message here, so we only
         # check the exception class.
-        parent.key_backend.get_key(parent, LoadPrivateKeyOptions(password=b"wrong"))
+        parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            parent, LoadPrivateKeyOptions(password=b"wrong")
+        )
 
     # test the private key
     key = typing.cast(
-        RSAPrivateKey, parent.key_backend.get_key(parent, LoadPrivateKeyOptions(password=password))
+        RSAPrivateKey,
+        parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            parent, LoadPrivateKeyOptions(password=password)
+        ),
     )
     assert isinstance(key, RSAPrivateKey)
     assert key.key_size == 1024

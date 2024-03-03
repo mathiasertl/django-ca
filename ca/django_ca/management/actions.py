@@ -20,6 +20,8 @@ import typing
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Type
 
+from pydantic import BaseModel
+
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -31,7 +33,7 @@ from django_ca import ca_settings, constants
 from django_ca.backends import KeyBackend, key_backends
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType
+from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType, EllipticCurves
 from django_ca.utils import is_power2, parse_encoding, parse_general_name
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
@@ -184,7 +186,7 @@ class FormatAction(SingleValueAction[str, Encoding]):
             raise argparse.ArgumentError(self, str(ex)) from ex
 
 
-class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
+class EllipticCurveAction(SingleValueAction[EllipticCurves, ec.EllipticCurve]):
     """Action to parse an elliptic curve value.
 
     >>> parser = argparse.ArgumentParser()
@@ -199,7 +201,7 @@ class EllipticCurveAction(SingleValueAction[str, ec.EllipticCurve]):
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         super().__init__(**kwargs)
 
-    def parse_value(self, value: str) -> ec.EllipticCurve:
+    def parse_value(self, value: EllipticCurves) -> ec.EllipticCurve:
         """Parse the value for this action."""
         # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
         return constants.ELLIPTIC_CURVE_TYPES[value]()
@@ -237,13 +239,16 @@ class IntegerRangeAction(SingleValueAction[int, int]):
         return value
 
 
-class KeyBackendAction(SingleValueAction[str, KeyBackend]):
+class KeyBackendAction(SingleValueAction[str, KeyBackend[BaseModel, BaseModel, BaseModel]]):
+    """Action for configuring the key backend to use for a new certificate authority."""
+
     def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("choices", list(ca_settings.CA_KEY_BACKENDS))
         kwargs.setdefault("default", key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND])
         super().__init__(**kwargs)
 
-    def parse_value(self, value: str) -> KeyBackend:
+    def parse_value(self, value: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
+        """Parse the value for this action."""
         print("parse_value", value, key_backends[value])
         return key_backends[value]
 

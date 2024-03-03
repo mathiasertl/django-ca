@@ -219,7 +219,8 @@ class CertificateAuthorityManager(
     def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
-        key_backend: KeyBackend,
+        # If BaseModel is used, you can no longer pass subclasses without a mypy warning (-> variance)
+        key_backend: KeyBackend[Any, Any, Any],
         key_backend_options: Any,
         subject: x509.Name,
         expires: Expires = None,

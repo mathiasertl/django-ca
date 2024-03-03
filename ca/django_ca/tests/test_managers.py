@@ -133,9 +133,10 @@ def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: Stora
 
     # Test that we can re-load the private key with the password
     reloaded_ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
-    private_key = reloaded_ca.key_backend.get_key(reloaded_ca, test_parent_key_backend_options)
-    # TYPEHINT NOTE: We explicitly pass a StoragesBackend above, which has a key prop
-    assert isinstance(private_key, rsa.RSAPrivateKey)  # type: ignore[attr-defined]
+    private_key = reloaded_ca.key_backend.get_key(  # type: ignore[attr-defined]
+        reloaded_ca, test_parent_key_backend_options
+    )
+    assert isinstance(private_key, rsa.RSAPrivateKey)
 
 
 def test_init_intermediate(

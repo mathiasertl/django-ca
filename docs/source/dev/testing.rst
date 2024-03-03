@@ -63,6 +63,10 @@ Fixtures
 
 .. autofunction:: django_ca.tests.conftest.usable_ca
 
+.. autofunction:: django_ca.tests.conftest.usable_cas
+
+.. autofunction:: django_ca.tests.conftest.usable_cert
+
 Generated fixtures
 ------------------
 

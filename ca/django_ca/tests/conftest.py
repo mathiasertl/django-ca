@@ -41,10 +41,11 @@ from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings
 from django_ca import ca_settings
 from django_ca.backends import key_backends
 from django_ca.backends.storages import StoragesBackend
-from django_ca.models import Certificate
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
     all_cert_names,
+    ca_cert_names,
     generate_ca_fixture,
     generate_cert_fixture,
     generate_pub_fixture,
@@ -142,10 +143,10 @@ def hostname(ca_name: str) -> Iterator[str]:
 
 
 @pytest.fixture()
-def key_backend(request: "SubRequest") -> StoragesBackend:
+def key_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
     """Return a :py:class:`~django_ca.backends.storages.StoragesBackend` suitable for creating a new CA."""
     request.getfixturevalue("tmpcadir")
-    yield key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
+    yield key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]  # type: ignore[misc]
 
 
 @pytest.fixture()
@@ -155,7 +156,7 @@ def rfc4514_subject(subject: x509.Name) -> Iterator[str]:
     The common name is based on :py:func:`~django_ca.tests.conftest.hostname` and identical to
     :py:func:`~django_ca.tests.conftest.subject`.
     """
-    return x509.Name(reversed(list(subject))).rfc4514_string()
+    yield x509.Name(reversed(list(subject))).rfc4514_string()
 
 
 @pytest.fixture()
@@ -241,9 +242,26 @@ for cert_name in usable_cert_names:
 
 
 @pytest.fixture(params=usable_ca_names)
-def usable_ca(request: "SubRequest") -> Iterator[Certificate]:
+def usable_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for every usable CA (with usable private key)."""
     yield request.getfixturevalue(f"usable_{request.param}")
+
+
+@pytest.fixture()
+def usable_cas(request: "SubRequest") -> Iterator[List[CertificateAuthority]]:
+    """Fixture for all usable CAs as a list."""
+    cas = []
+    for name in usable_ca_names:
+        cas.append(request.getfixturevalue(f"usable_{name}"))
+    yield cas
+
+
+@pytest.fixture(params=ca_cert_names)
+def usable_cert(request: "SubRequest") -> Iterator[Certificate]:
+    """Parametrized fixture for every ``{ca}-cert`` certificate."""
+    cert = request.getfixturevalue(request.param.replace("-", "_"))
+    request.getfixturevalue(f"usable_{cert.ca.name}")
+    yield cert
 
 
 @pytest.fixture()

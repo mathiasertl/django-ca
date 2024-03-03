@@ -124,7 +124,7 @@ def assert_ca_properties(
 
 
 def assert_certificate(
-    cert: X509CertMixin,
+    cert: Union[Certificate, CertificateAuthority],
     subject: x509.Name,
     algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
     parent: Optional[CertificateAuthority] = None,
@@ -137,7 +137,7 @@ def assert_certificate(
     else:
         parent = cert.parent
     assert cert.pub.loaded.version == x509.Version.v3
-    assert cert.issuer == parent.subject
+    assert cert.issuer == parent.subject  # type: ignore[union-attr]
     assert cert.subject == subject
     assert isinstance(cert.algorithm, algorithm)
 
@@ -236,7 +236,7 @@ def assert_crl(
     assert list(parsed_crl.extensions) == extensions
 
     entries = {e.serial_number: e for e in parsed_crl}
-    assert entries == {c.pub.loaded.serial_number: c for c in expected}
+    assert list(entries) == [c.pub.loaded.serial_number for c in expected]
     for entry in entries.values():
         assert revoked_certificate_revocation_date(entry) == now
         assert not list(entry.extensions)
@@ -277,13 +277,17 @@ def assert_e2e_error(
 
     if isinstance(stdout, (str, bytes)):
         assert stdout == actual_stdout.getvalue()
-    else:
+    elif isinstance(stdout.pattern, str):
         assert stdout.search(actual_stdout.getvalue())  # pragma: no cover
+    else:  # pragma: no cover
+        raise NotImplementedError
 
     if isinstance(stderr, (str, bytes)):
         assert stderr == actual_stderr.getvalue()
-    else:
+    elif isinstance(stderr.pattern, str):
         assert stderr.search(actual_stderr.getvalue())
+    else:  # pragma: no cover
+        raise NotImplementedError
 
 
 def assert_extensions(

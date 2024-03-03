@@ -23,7 +23,7 @@ from pydantic import ConfigDict
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
@@ -291,6 +291,8 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def get_ocsp_key_size(self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
         key = self.get_key(ca, load_options)
+        if not isinstance(key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey)):
+            raise ValueError("This function should only be called with RSA/DSA CAs.")
         return key.key_size
 
     def get_ocsp_key_elliptic_curve(
@@ -298,4 +300,6 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
         key = self.get_key(ca, load_options)
+        if not isinstance(key, ec.EllipticCurvePrivateKey):
+            raise ValueError("This function should only be called with EllipticCurve-based CAs.")
         return key.curve
