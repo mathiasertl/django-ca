@@ -140,7 +140,7 @@ def cmd(
 
 @typing.overload
 def cmd_e2e(
-    cmd: typing.Sequence[str],
+    args: typing.Sequence[str],
     *,
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[StringIO] = None,
@@ -151,7 +151,7 @@ def cmd_e2e(
 
 @typing.overload
 def cmd_e2e(
-    cmd: typing.Sequence[str],
+    args: typing.Sequence[str],
     *,
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: BytesIO,
@@ -162,7 +162,7 @@ def cmd_e2e(
 
 @typing.overload
 def cmd_e2e(
-    cmd: typing.Sequence[str],
+    args: typing.Sequence[str],
     *,
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[StringIO] = None,
@@ -173,7 +173,7 @@ def cmd_e2e(
 
 @typing.overload
 def cmd_e2e(
-    cmd: typing.Sequence[str],
+    args: typing.Sequence[str],
     *,
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: BytesIO,
@@ -183,7 +183,7 @@ def cmd_e2e(
 
 
 def cmd_e2e(
-    cmd: typing.Sequence[str],
+    args: typing.Sequence[str],
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[Union[BytesIO, StringIO]] = None,
     stderr: Optional[Union[BytesIO, StringIO]] = None,
@@ -217,7 +217,7 @@ def cmd_e2e(
         stderr.buffer = stderr  # type: ignore[attr-defined]
 
     with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
-        util = ManagementUtility(["manage.py", *cmd])
+        util = ManagementUtility(["manage.py", *args])
         util.execute()
 
     return stdout.getvalue(), stderr.getvalue()

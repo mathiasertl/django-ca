@@ -25,7 +25,7 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
 from django_ca.management.actions import ExpiresAction
-from django_ca.management.base import BaseCommand, add_elliptic_curve, add_key_size, add_password
+from django_ca.management.base import BaseCommand, add_elliptic_curve, add_key_size
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_key, run_task
@@ -108,7 +108,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 continue
 
             key_backend_options = ca.key_backend.get_load_private_key_options(options)
-            if not ca.key_backend.is_usable(ca, key_backend_options):
+            if not ca.is_usable(key_backend_options):
                 if quiet is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.
                     self.stderr.write(self.style.WARNING(f"{hr_serial}: CA has no private key."))

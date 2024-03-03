@@ -138,15 +138,15 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                 )
             yield out_path
 
-    def openssl(self, cmd: str, *args: str, code: int = 0, **kwargs: str) -> None:
+    def openssl(self, command: str, *args: str, code: int = 0, **kwargs: str) -> None:
         """Run openssl."""
         exp_stdout = kwargs.pop("stdout", False)
         exp_stderr = kwargs.pop("stderr", False)
-        cmd = cmd.format(*args, **kwargs)
+        command = command.format(*args, **kwargs)
         if kwargs.pop("verbose", False):
-            print(f"openssl {cmd}")
+            print(f"openssl {command}")
         proc = subprocess.run(
-            ["openssl", *shlex.split(cmd)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
+            ["openssl", *shlex.split(command)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
         )
         stdout = proc.stdout.decode("utf-8")
         stderr = proc.stderr.decode("utf-8")
@@ -158,7 +158,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
 
     def verify(
         self,
-        cmd: str,
+        command: str,
         *args: str,
         untrusted: Optional[Iterable[str]] = None,
         crl: Optional[Iterable[str]] = None,
@@ -168,12 +168,12 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         """Run openssl verify."""
         if untrusted:
             untrusted_args = " ".join(f"-untrusted {path}" for path in untrusted)
-            cmd = f"{untrusted_args} {cmd}"
+            command = f"{untrusted_args} {command}"
         if crl:
             crlfile_args = " ".join(f"-CRLfile {path}" for path in crl)
-            cmd = f"{crlfile_args} {cmd}"
+            command = f"{crlfile_args} {command}"
 
-        self.openssl(f"verify {cmd}", *args, code=code, **kwargs)
+        self.openssl(f"verify {command}", *args, code=code, **kwargs)
 
     @override_tmpcadir()
     def test_root_ca(self) -> None:
