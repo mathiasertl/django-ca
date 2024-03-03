@@ -116,25 +116,24 @@ def test_init_with_dsa(ca_name: str, subject: x509.Name, key_backend: StoragesBa
 @pytest.mark.django_db
 def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a CA with a password."""
-    key_backend_options = CreatePrivateKeyOptions(
+    test_key_backend_options = CreatePrivateKeyOptions(
         password=b"password", path=Path("ca"), key_size=1024, elliptic_curve=None
     )
-    parent_key_backend_options = LoadPrivateKeyOptions(password=b"password")
+    test_parent_key_backend_options = LoadPrivateKeyOptions(password=b"password")
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
             ca_name,
             key_backend,
-            key_backend_options,
+            test_key_backend_options,
             subject,
-            parent_key_backend_options=parent_key_backend_options,
+            parent_key_backend_options=test_parent_key_backend_options,
         )
-    ca.key_backend._key = None
     assert_ca_properties(ca, ca_name, password=b"password")
     assert_certificate(ca, subject)
 
     # Test that we can re-load the private key with the password
     reloaded_ca: CertificateAuthority = CertificateAuthority.objects.get(id=ca.id)
-    private_key = reloaded_ca.key_backend.get_key(reloaded_ca, parent_key_backend_options)
+    private_key = reloaded_ca.key_backend.get_key(reloaded_ca, test_parent_key_backend_options)
     # TYPEHINT NOTE: We explicitly pass a StoragesBackend above, which has a key prop
     assert isinstance(private_key, rsa.RSAPrivateKey)  # type: ignore[attr-defined]
 

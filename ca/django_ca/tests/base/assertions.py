@@ -96,7 +96,6 @@ def assert_ca_properties(
     assert ca.issuer == issuer
     # TYPEHINT NOTE: We assume a StoragesBackend here
 
-    ca.key_backend._key = None  # make sure that the key is not cached
     assert isinstance(
         ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=password)),  # type: ignore[attr-defined]
         private_key_type,
@@ -240,7 +239,7 @@ def assert_crl(
     assert entries == {c.pub.loaded.serial_number: c for c in expected}
     for entry in entries.values():
         assert revoked_certificate_revocation_date(entry) == now
-        assert list(entry.extensions) == []
+        assert not list(entry.extensions)
 
 
 def assert_e2e_command_error(

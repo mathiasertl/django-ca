@@ -23,8 +23,8 @@ from pydantic import BaseModel
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.types import (
-    CertificateIssuerPublicKeyTypes,
     CertificateIssuerPrivateKeyTypes,
+    CertificateIssuerPublicKeyTypes,
 )
 
 from django.core.exceptions import ImproperlyConfigured
@@ -100,6 +100,10 @@ class KeyBackend(
         """
         return self.add_private_key_group(parser)
 
+    @abc.abstractmethod
+    def add_store_private_key_options(self, group: ArgumentGroup) -> StorePrivateKeyOptionsTypeVar:
+        """Add arguments for storing private keys (when importing an existing CA)."""
+
     def add_use_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
         """Add an argument group for arguments required for using a private key stored with this backend.
 
@@ -132,7 +136,7 @@ class KeyBackend(
         """
         return None
 
-    def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:
+    def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
         """Add arguments required for using private key stored with this backend.
 
         The arguments you add here are expected to be loaded (and validated) using
@@ -151,12 +155,8 @@ class KeyBackend(
         """
 
     @abc.abstractmethod
-    def add_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
-        """Add arguments for storing private keys (when importing an existing CA)."""
-
-    @abc.abstractmethod
     def get_load_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
-        """Load options to create private keys into a Pydantic model.
+        """Get options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
         backend is expected to be able to sign certificates and CRLs using the options provided here.
@@ -164,19 +164,27 @@ class KeyBackend(
 
     @abc.abstractmethod
     def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
-        ...
+        """Get options used when storing private keys."""
 
     @abc.abstractmethod
     def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
-        """Load options to create private keys into a Pydantic model.
+        """Get options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
         backend is expected to be able to sign certificate authorities using the options provided here.
         """
 
     @abc.abstractmethod
-    def is_usable(self, ca: "CertificateAuthority", options: UsePrivateKeyOptionsTypeVar) -> bool:
-        ...
+    def is_usable(
+        self, ca: "CertificateAuthority", options: Optional[UsePrivateKeyOptionsTypeVar] = None
+    ) -> bool:
+        """Boolean returning if the given `ca` can be used to sign new certificates (or CRLs).
+
+        The `options` are the options returned by
+        :py:func:`~django_ca.backends.base.KeyBackend.get_load_private_key_options`. It may be ``None`` in
+        cases where key options cannot (yet) be loaded. If ``None``, the backend should return ``False`` if it
+        knows for sure that it will not be usable, and ``True`` if usability cannot be determined.
+        """
 
     @abc.abstractmethod
     def create_private_key(
@@ -232,12 +240,18 @@ class KeyBackend(
     ) -> x509.CertificateRevocationList:
         """Sign a certificate revocation list request."""
 
-    def get_ocsp_key_size(self, ca: "CertificateAuthority", load_options: UsePrivateKeyOptionsTypeVar) -> int:
+    def get_ocsp_key_size(
+        self,
+        ca: "CertificateAuthority",  # pylint: disable=unused-argument
+        load_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
+    ) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
         return ca_settings.CA_DEFAULT_KEY_SIZE
 
     def get_ocsp_key_elliptic_curve(
-        self, ca: "CertificateAuthority", load_options: UsePrivateKeyOptionsTypeVar
+        self,
+        ca: "CertificateAuthority",  # pylint: disable=unused-argument
+        load_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
         return ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
@@ -260,7 +274,7 @@ class KeyBackends:
         except KeyError:
             pass
 
-        self._backends.backends[name] = self.get_key_backend(name)
+        self._backends.backends[name] = self._get_key_backend(name)
         return self._backends.backends[name]
 
     def __iter__(self) -> Iterator[KeyBackend]:
@@ -270,7 +284,8 @@ class KeyBackends:
     def _reset(self) -> None:
         self._backends = local()
 
-    def get_key_backend(self, alias: str) -> KeyBackend:
+    def _get_key_backend(self, alias: str) -> KeyBackend:
+        """Get the key backend with the given alias."""
         try:
             params = ca_settings.CA_KEY_BACKENDS[alias].copy()
         except KeyError as ex:

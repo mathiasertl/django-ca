@@ -43,7 +43,13 @@ from django_ca.backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
-from django_ca.utils import generate_private_key, get_cert_builder, read_file, validate_private_key_parameters
+from django_ca.utils import (
+    file_exists,
+    generate_private_key,
+    get_cert_builder,
+    read_file,
+    validate_private_key_parameters,
+)
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -238,11 +244,19 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
         return key
 
-    def is_usable(self, ca: "CertificateAuthority", options: LoadPrivateKeyOptions) -> bool:
+    def is_usable(self, ca: "CertificateAuthority", options: Optional[LoadPrivateKeyOptions] = None) -> bool:
+        # If key_backend_options is not set or path is not set, it is certainly unusable.
+        if not ca.key_backend_options or not ca.key_backend_options.get("path"):
+            return False
+
+        # If options are not passed, we return True if the file exists.
+        if not options:
+            return file_exists(ca.key_backend_options["path"])
+
         try:
             self.get_key(ca, options)
             return True
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught  # want to return bool
             return False
 
     def sign_certificate(

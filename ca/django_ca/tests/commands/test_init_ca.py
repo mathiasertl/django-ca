@@ -162,6 +162,7 @@ def init_ca_cmd(**kwargs: Any) -> Tuple[str, str]:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_basic(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str) -> None:
     """Basic tests for the command."""
     ca = init_ca(ca_name, rfc4514_subject, "--subject-format=rfc4514")
@@ -184,6 +185,7 @@ def test_basic(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_basic_without_timezone_support(
     hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str, settings: SettingsWrapper
 ) -> None:
@@ -194,16 +196,16 @@ def test_basic_without_timezone_support(
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_arguments(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str) -> None:
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
+def test_arguments(hostname: str, ca_name: str) -> None:
     """Test most arguments."""
     hostname = "example.com"
     website = f"https://{hostname}"
     tos = f"{website}/tos/"
     caa = f"caa.{hostname}"
-    name = "test_arguments"
 
     ca = init_ca(
-        name,
+        ca_name,
         "CN={self.hostname}",
         "--subject-format=rfc4514",
         "--algorithm=SHA-256",  # hashes.SHA256(),
@@ -253,6 +255,14 @@ def test_arguments(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subj
     assert ca.acme_enabled is False
     assert ca.acme_registration is True
     assert ca.acme_requires_contact is True
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+def test_arguments_without_timezone_support(settings: SettingsWrapper, hostname: str, ca_name: str) -> None:
+    """Test arguments without timezone support."""
+    settings.USE_TZ = False
+    test_arguments(hostname, ca_name)
 
 
 @pytest.mark.django_db
@@ -695,17 +705,7 @@ def test_excluded(hostname: str, ca_name: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_arguments_without_timezone_support(
-    settings: SettingsWrapper, hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str
-) -> None:
-    """Test arguments without timezone support."""
-    settings.USE_TZ = False
-    test_arguments(hostname, ca_name, subject, rfc4514_subject)
-
-
-@pytest.mark.django_db
-@pytest.mark.usefixtures("tmpcadir")
-def test_no_path_length(hostname: str, ca_name: str) -> None:
+def test_no_path_length(ca_name: str) -> None:
     """Test creating a CA with no path length."""
     with assert_create_ca_signals() as (pre, post):
         out, err = init_ca_cmd(name=ca_name, path_length=None)
@@ -854,10 +854,10 @@ def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> No
     """Test that if we request an expiry after that of the parent, we override to that of the parent."""
     expires = usable_root.expires - timezone.now() + timedelta(days=10)
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="Child", parent=usable_root, expires=expires)
+        out, err = init_ca_cmd(name=ca_name, parent=usable_root, expires=expires)
     assert out == ""
     assert err == ""
-    child = CertificateAuthority.objects.get(name="Child")
+    child = CertificateAuthority.objects.get(name=ca_name)
     assert_post_create_ca(post, child)
     child.full_clean()  # assert e.g. max_length in serials
     assert_signature([usable_root], child)
@@ -865,7 +865,7 @@ def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> No
     assert usable_root.expires == child.expires
     assert usable_root.parent is None
     assert child.parent == usable_root
-    assert list(child.children.all()) == []
+    assert not list(child.children.all())
     assert list(usable_root.children.all()) == [child]
     assert_authority_key_identifier(usable_root, child)
 
@@ -877,8 +877,8 @@ def test_expires_override_with_use_tz_false(
     settings.USE_TZ = False
     usable_root.refresh_from_db()
     expires = usable_root.expires - timezone.now() + timedelta(days=10)
-    init_ca_cmd(name="Child", expires=expires, parent=usable_root)
-    ca = CertificateAuthority.objects.get(name="Child")
+    init_ca_cmd(name=ca_name, expires=expires, parent=usable_root)
+    ca = CertificateAuthority.objects.get(name=ca_name)
     assert ca.expires.tzinfo is None
     assert ca.expires == usable_root.expires
 
@@ -889,17 +889,17 @@ def test_password(ca_name: str) -> None:
     """Test creating a CA with a password."""
     password = b"testpassword"
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="Parent", password=password, path_length=1)
+        out, err = init_ca_cmd(name=f"{ca_name}-parent", password=password, path_length=1)
     assert out == ""
     assert err == ""
-    parent = CertificateAuthority.objects.get(name="Parent")
+    parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")
     assert_post_create_ca(post, parent)
     parent.full_clean()  # assert e.g. max_length in serials
     assert_signature([parent], parent)
 
     # Assert that we cannot access this without a password
     msg = "^Password was not given but private key is encrypted$"
-    parent = CertificateAuthority.objects.get(name="Parent")
+    parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")
     with pytest.raises(TypeError, match=msg):
         parent.key_backend.get_key(parent, LoadPrivateKeyOptions(password=None))
 
@@ -918,21 +918,23 @@ def test_password(ca_name: str) -> None:
 
     # create a child ca, also password protected
     child_password = b"childpassword"
-    parent = CertificateAuthority.objects.get(name="Parent")  # Get again, key is cached
+    parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")  # Get again, key is cached
 
     with assert_command_error(r"^Parent CA is not usable\.$"), assert_create_ca_signals(False, False):
-        out, err = init_ca_cmd(name="Child", parent=parent, password=password)
+        out, err = init_ca_cmd(name=f"{ca_name}-child", parent=parent, password=password)
     assert out == ""
     assert err == ""
-    assert CertificateAuthority.objects.filter(name="Child").exists() is False
+    assert CertificateAuthority.objects.filter(name=f"{ca_name}-child").exists() is False
 
     # Create again with parent ca
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="Child", parent=parent, password=child_password, parent_password=password)
+        out, err = init_ca_cmd(
+            name=f"{ca_name}-child", parent=parent, password=child_password, parent_password=password
+        )
     assert out == ""
     assert err == ""
 
-    child = CertificateAuthority.objects.get(name="Child")
+    child = CertificateAuthority.objects.get(name=f"{ca_name}-child")
     assert_post_create_ca(post, child)
     child.full_clean()  # assert e.g. max_length in serials
     assert_signature([parent], child)

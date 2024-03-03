@@ -601,9 +601,14 @@ class CertificateAuthority(X509CertMixin):
 
     @property
     def key_backend(self) -> KeyBackend:
+        """The key backend that can be used to use the private key."""
         if self._key_backend is None:
             self._key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
         return self._key_backend
+
+    def is_usable(self, options: Optional[BaseModel]) -> bool:
+        """Shortcut determining if the certificate authority can be used for signing."""
+        return self.key_backend.is_usable(self, options)
 
     @property
     def key_type(self) -> ParsableKeyType:
@@ -1156,7 +1161,7 @@ class CertificateAuthority(X509CertMixin):
         builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
 
         # Get the backend.
-        if self.key_backend.is_usable(ca=self, options=key_backend_options) is False:
+        if self.is_usable(options=key_backend_options) is False:
             raise ValueError("Backend cannot be used for signing by this process.")
 
         # increase crl_number for the given scope and save
