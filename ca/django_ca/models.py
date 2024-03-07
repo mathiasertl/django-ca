@@ -606,7 +606,7 @@ class CertificateAuthority(X509CertMixin):
             self._key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
         return self._key_backend
 
-    def is_usable(self, options: Optional[BaseModel]) -> bool:
+    def is_usable(self, options: Optional[BaseModel] = None) -> bool:
         """Shortcut determining if the certificate authority can be used for signing."""
         return self.key_backend.is_usable(self, options)
 
