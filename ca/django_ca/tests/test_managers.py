@@ -28,7 +28,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
-from django_ca.backends.storages import CreatePrivateKeyOptions, LoadPrivateKeyOptions, StoragesBackend
+from django_ca.backends.storages import CreatePrivateKeyOptions, StoragesBackend, UsePrivateKeyOptions
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
@@ -75,7 +75,7 @@ def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: C
 
 
 key_backend_options = CreatePrivateKeyOptions(password=None, path=Path("ca"), key_size=1024)
-parent_key_backend_options = LoadPrivateKeyOptions(password=None)
+parent_key_backend_options = UsePrivateKeyOptions(password=None)
 
 
 @pytest.mark.django_db
@@ -119,7 +119,7 @@ def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: Stora
     test_key_backend_options = CreatePrivateKeyOptions(
         password=b"password", path=Path("ca"), key_size=1024, elliptic_curve=None
     )
-    test_parent_key_backend_options = LoadPrivateKeyOptions(password=b"password")
+    test_parent_key_backend_options = UsePrivateKeyOptions(password=b"password")
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
             ca_name,
@@ -186,7 +186,7 @@ def test_openssh_ca(ca_name: str, subject: x509.Name, key_backend: StoragesBacke
         key_type="Ed25519",
         subject=subject,
         openssh_ca=True,
-        parent_key_backend_options=LoadPrivateKeyOptions(password=None),
+        parent_key_backend_options=UsePrivateKeyOptions(password=None),
     )
 
     assert ca.name == ca_name

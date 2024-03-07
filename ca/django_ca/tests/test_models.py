@@ -47,7 +47,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.backends.storages import LoadPrivateKeyOptions
+from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
@@ -82,7 +82,7 @@ from django_ca.typehints import PolicyQualifier
 from django_ca.utils import get_crl_cache_key, get_storage
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
-key_backend_options = LoadPrivateKeyOptions(password=None)
+key_backend_options = UsePrivateKeyOptions(password=None)
 
 
 class TestWatcher(TestCase):
@@ -429,7 +429,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             ]
 
         for name, ca in self.usable_cas:
-            ca_private_key_options = LoadPrivateKeyOptions(password=CERT_DATA[name].get("password"))
+            ca_private_key_options = UsePrivateKeyOptions(password=CERT_DATA[name].get("password"))
             der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
             pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
             der_ca_key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
@@ -584,7 +584,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_generate_ocsp_key(self) -> None:
         """Test generate_ocsp_key()."""
         for name, ca in self.usable_cas:
-            private_key_options = LoadPrivateKeyOptions(password=CERT_DATA[name].get("password"))
+            private_key_options = UsePrivateKeyOptions(password=CERT_DATA[name].get("password"))
             with self.generate_ocsp_key(ca, private_key_options) as (key, cert):
                 ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
                     ca, private_key_options

@@ -176,7 +176,9 @@ class KeyBackend(
 
     @abc.abstractmethod
     def is_usable(
-        self, ca: "CertificateAuthority", options: Optional[UsePrivateKeyOptionsTypeVar] = None
+        self,
+        ca: "CertificateAuthority",
+        use_private_key_options: Optional[UsePrivateKeyOptionsTypeVar] = None,
     ) -> bool:
         """Boolean returning if the given `ca` can be used to sign new certificates (or CRLs).
 
@@ -234,7 +236,7 @@ class KeyBackend(
     def sign_certificate_revocation_list(
         self,
         ca: "CertificateAuthority",
-        load_options: UsePrivateKeyOptionsTypeVar,
+        use_private_key_options: UsePrivateKeyOptionsTypeVar,
         builder: x509.CertificateRevocationListBuilder,
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
@@ -243,7 +245,7 @@ class KeyBackend(
     def get_ocsp_key_size(
         self,
         ca: "CertificateAuthority",  # pylint: disable=unused-argument
-        load_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
+        use_private_key_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
     ) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
         return ca_settings.CA_DEFAULT_KEY_SIZE
@@ -251,7 +253,7 @@ class KeyBackend(
     def get_ocsp_key_elliptic_curve(
         self,
         ca: "CertificateAuthority",  # pylint: disable=unused-argument
-        load_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
+        use_private_key_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
         return ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()

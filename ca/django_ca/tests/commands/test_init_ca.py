@@ -35,7 +35,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
-from django_ca.backends.storages import LoadPrivateKeyOptions
+from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
@@ -173,7 +173,7 @@ def test_basic(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject:
     key = typing.cast(
         RSAPrivateKey,
         ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            ca, LoadPrivateKeyOptions(password=None)
+            ca, UsePrivateKeyOptions(password=None)
         ),
     )
     assert key.key_size == 1024
@@ -232,7 +232,7 @@ def test_arguments(hostname: str, ca_name: str) -> None:
     key = typing.cast(
         ec.EllipticCurvePrivateKey,
         ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            ca, LoadPrivateKeyOptions(password=None)
+            ca, UsePrivateKeyOptions(password=None)
         ),
     )
     assert isinstance(key, ec.EllipticCurvePrivateKey)
@@ -672,7 +672,7 @@ def test_ec(ca_name: str) -> None:
     key = typing.cast(
         ec.EllipticCurvePrivateKey,
         ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            ca, LoadPrivateKeyOptions(password=None)
+            ca, UsePrivateKeyOptions(password=None)
         ),
     )
     assert isinstance(key, ec.EllipticCurvePrivateKey)
@@ -690,7 +690,7 @@ def test_dsa(ca_name: str) -> None:
     assert_post_create_ca(post, ca)
 
     key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-        ca, LoadPrivateKeyOptions(password=None)
+        ca, UsePrivateKeyOptions(password=None)
     )
     assert isinstance(key, dsa.DSAPrivateKey)
     assert key.key_size == 1024
@@ -915,7 +915,7 @@ def test_password(ca_name: str) -> None:
     parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")
     with pytest.raises(TypeError, match=msg):
         parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            parent, LoadPrivateKeyOptions(password=None)
+            parent, UsePrivateKeyOptions(password=None)
         )
 
     # Wrong password doesn't work either
@@ -923,14 +923,14 @@ def test_password(ca_name: str) -> None:
         # NOTE: cryptography is notoriously unstable when it comes to the error message here, so we only
         # check the exception class.
         parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            parent, LoadPrivateKeyOptions(password=b"wrong")
+            parent, UsePrivateKeyOptions(password=b"wrong")
         )
 
     # test the private key
     key = typing.cast(
         RSAPrivateKey,
         parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            parent, LoadPrivateKeyOptions(password=password)
+            parent, UsePrivateKeyOptions(password=password)
         ),
     )
     assert isinstance(key, RSAPrivateKey)

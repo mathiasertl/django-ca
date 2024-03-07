@@ -71,7 +71,7 @@ class StorePrivateKeyOptions(pydantic.BaseModel):
     password: Optional[bytes]
 
 
-class LoadPrivateKeyOptions(pydantic.BaseModel):
+class UsePrivateKeyOptions(pydantic.BaseModel):
     """Options for loading a private key."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -80,7 +80,7 @@ class LoadPrivateKeyOptions(pydantic.BaseModel):
     password: Optional[bytes]
 
 
-class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, LoadPrivateKeyOptions]):
+class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):
     """A simple storage backend that does not yet do much."""
 
     name = "storages"
@@ -89,7 +89,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         "It is most commonly used to store private keys on the filesystem. Custom file storage backends can "
         "be used to store keys on other systems (e.g. a cloud storage system)."
     )
-    load_model = LoadPrivateKeyOptions
+    load_model = UsePrivateKeyOptions
 
     # Backend options
     storage_alias: str
@@ -158,11 +158,11 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptions:
         return StorePrivateKeyOptions(password=options["password"], path=options["path"])
 
-    def get_use_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
-        return LoadPrivateKeyOptions(password=options.get("password"))
+    def get_use_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptions:
+        return UsePrivateKeyOptions(password=options.get("password"))
 
-    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
-        return LoadPrivateKeyOptions(password=options["parent_password"])
+    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptions:
+        return UsePrivateKeyOptions(password=options["parent_password"])
 
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
@@ -213,7 +213,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         ca.key_backend_options = {"path": path}
 
     def get_key(
-        self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions
+        self, ca: "CertificateAuthority", load_options: UsePrivateKeyOptions
     ) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key."""
         path = ca.key_backend_options["path"]
@@ -238,17 +238,19 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
         return key
 
-    def is_usable(self, ca: "CertificateAuthority", options: Optional[LoadPrivateKeyOptions] = None) -> bool:
+    def is_usable(
+        self, ca: "CertificateAuthority", use_private_key_options: Optional[UsePrivateKeyOptions] = None
+    ) -> bool:
         # If key_backend_options is not set or path is not set, it is certainly unusable.
         if not ca.key_backend_options or not ca.key_backend_options.get("path"):
             return False
 
         # If options are not passed, we return True if the file exists.
-        if not options:
+        if not use_private_key_options:
             return storages[self.storage_alias].exists(ca.key_backend_options["path"])
 
         try:
-            self.get_key(ca, options)
+            self.get_key(ca, use_private_key_options)
             return True
         except Exception:  # pylint: disable=broad-exception-caught  # want to return bool
             return False
@@ -256,7 +258,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def sign_certificate(
         self,
         ca: "CertificateAuthority",
-        load_options: LoadPrivateKeyOptions,
+        use_private_key_options: UsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
@@ -271,29 +273,31 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         builder = builder.subject_name(subject)
         for extension in extensions:
             builder = builder.add_extension(extension.value, critical=extension.critical)
-        return builder.sign(private_key=self.get_key(ca, load_options), algorithm=algorithm)
+        return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)
 
     def sign_certificate_revocation_list(
         self,
         ca: "CertificateAuthority",
-        load_options: LoadPrivateKeyOptions,
+        use_private_key_options: UsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
-        return builder.sign(private_key=self.get_key(ca, load_options), algorithm=algorithm)
+        return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)
 
-    def get_ocsp_key_size(self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions) -> int:
+    def get_ocsp_key_size(
+        self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions
+    ) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
-        key = self.get_key(ca, load_options)
+        key = self.get_key(ca, use_private_key_options)
         if not isinstance(key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey)):
             raise ValueError("This function should only be called with RSA/DSA CAs.")
         return key.key_size
 
     def get_ocsp_key_elliptic_curve(
-        self, ca: "CertificateAuthority", load_options: LoadPrivateKeyOptions
+        self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
-        key = self.get_key(ca, load_options)
+        key = self.get_key(ca, use_private_key_options)
         if not isinstance(key, ec.EllipticCurvePrivateKey):
             raise ValueError("This function should only be called with EllipticCurve-based CAs.")
         return key.curve

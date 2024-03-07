@@ -1170,7 +1170,7 @@ class CertificateAuthority(X509CertMixin):
         self.save()
 
         return self.key_backend.sign_certificate_revocation_list(
-            ca=self, load_options=key_backend_options, builder=builder, algorithm=algorithm
+            ca=self, use_private_key_options=key_backend_options, builder=builder, algorithm=algorithm
         )
 
     def get_password(self) -> Optional[str]:

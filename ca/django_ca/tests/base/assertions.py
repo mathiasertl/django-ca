@@ -34,7 +34,7 @@ from django.core.management import CommandError
 import pytest
 
 from django_ca import ca_settings
-from django_ca.backends.storages import LoadPrivateKeyOptions
+from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
     crl_last_update,
@@ -97,7 +97,7 @@ def assert_ca_properties(
     # TYPEHINT NOTE: We assume a StoragesBackend here
 
     assert isinstance(
-        ca.key_backend.get_key(ca, LoadPrivateKeyOptions(password=password)),  # type: ignore[attr-defined]
+        ca.key_backend.get_key(ca, UsePrivateKeyOptions(password=password)),  # type: ignore[attr-defined]
         private_key_type,
     )
 

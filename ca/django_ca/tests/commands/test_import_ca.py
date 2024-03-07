@@ -27,7 +27,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.backends.storages import LoadPrivateKeyOptions
+from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -88,7 +88,7 @@ class ImportCATest(TestCaseMixin, TestCase):
             # test the private key
             # NOTE: password is always None since we don't encrypt the stored key with --password
             ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-                ca, LoadPrivateKeyOptions(password=None)
+                ca, UsePrivateKeyOptions(password=None)
             )
             if data["key_type"] == "EC":
                 key = typing.cast(ec.EllipticCurvePrivateKey, ca_key)
@@ -142,13 +142,13 @@ class ImportCATest(TestCaseMixin, TestCase):
         # test the private key
         with pytest.raises(TypeError, match="^Password was not given but private key is encrypted$"):
             ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-                ca, LoadPrivateKeyOptions(password=None)
+                ca, UsePrivateKeyOptions(password=None)
             )
 
         ca_key = typing.cast(
             rsa.RSAPrivateKey,
             ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-                ca, LoadPrivateKeyOptions(password=password)
+                ca, UsePrivateKeyOptions(password=password)
             ),
         )
 
