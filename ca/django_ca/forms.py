@@ -178,8 +178,11 @@ class CreateCertificateBaseForm(CertificateModelForm):
         # Set choices, so we can filter out CAs where the private key does not exist locally
         field = typing.cast(forms.ModelChoiceField, self.fields["ca"])
         qs = typing.cast(CertificateAuthorityQuerySet, field.queryset)
+        # NOTE: field.initial is set in admin
         field.choices = [
-            (field.prepare_value(ca), field.label_from_instance(ca)) for ca in qs.usable() if ca.is_usable()
+            (field.prepare_value(ca), field.label_from_instance(ca))
+            for ca in qs.usable().preferred_order()
+            if ca.is_usable()
         ]
 
     def clean_algorithm(self) -> Optional[hashes.HashAlgorithm]:  # pylint: disable=missing-function-docstring
