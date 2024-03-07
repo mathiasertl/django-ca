@@ -1251,9 +1251,10 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         would not show up in the signed certificate.
         """
         # Make sure that the CA has field values set.
+        # CertificateAuthority.objects.exclude(id=self.ca.id).delete()
         cn = "test-only-ca.example.com"
-        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
-        self.assertIsNotNone(self.ca.sign_authority_information_access)
+        assert self.ca.sign_authority_information_access is not None
+        assert self.ca.sign_crl_distribution_points is not None
         self.ca.sign_certificate_policies = self.certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=x509.ObjectIdentifier("1.2.3"),
@@ -1274,23 +1275,21 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         form["subject_alternative_name_0"] = json.dumps([{"type": "DNS", "value": self.hostname}])
         response = form.submit().follow()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Check that we get all the extensions from the CA
         cert: Certificate = Certificate.objects.get(cn="test-only-ca.example.com")
-        self.assertEqual(
-            cert.sorted_extensions,
-            [
-                cert.ca.sign_authority_information_access,
-                cert.ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                cert.ca.sign_crl_distribution_points,
-                self.ca.sign_certificate_policies,
-                self.ca.sign_issuer_alternative_name,
-                subject_alternative_name(dns(self.hostname)),
-                subject_key_identifier(cert),
-            ],
-        )
+        assert cert.ca == self.ca
+        assert cert.sorted_extensions == [
+            cert.ca.sign_authority_information_access,
+            cert.ca.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            cert.ca.sign_crl_distribution_points,
+            self.ca.sign_certificate_policies,
+            self.ca.sign_issuer_alternative_name,
+            subject_alternative_name(dns(self.hostname)),
+            subject_key_identifier(cert),
+        ]
 
     @override_tmpcadir(
         CA_PROFILES={
