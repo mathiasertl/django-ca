@@ -194,7 +194,7 @@ def sign_certificate(
         subject=subject,
     )
 
-    key_backend_options = ca.key_backend.get_load_private_key_options({})
+    key_backend_options = ca.key_backend.get_use_private_key_options({})
 
     parsed_extensions = message.get_extensions()
 
@@ -385,7 +385,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
     csr = acme_cert.parse_csr()
 
     # Initialize key backend options
-    key_backend_options = ca.key_backend.get_load_private_key_options({})
+    key_backend_options = ca.key_backend.get_use_private_key_options({})
 
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(

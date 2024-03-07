@@ -107,7 +107,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 self.stderr.write(self.style.ERROR(f"{hr_serial}: Unknown CA."))
                 continue
 
-            key_backend_options = ca.key_backend.get_load_private_key_options(options)
+            key_backend_options = ca.key_backend.get_use_private_key_options(options)
             if not ca.is_usable(key_backend_options):
                 if quiet is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.

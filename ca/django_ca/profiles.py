@@ -348,9 +348,9 @@ class Profile:
         )
 
         return ca.key_backend.sign_certificate(
-            ca=ca,
-            load_options=key_backend_options,
-            public_key=public_key,
+            ca,
+            key_backend_options,
+            public_key,
             serial=serial,
             algorithm=algorithm,
             issuer=ca.subject,

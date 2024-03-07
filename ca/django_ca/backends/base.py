@@ -78,7 +78,7 @@ class KeyBackend(
         """Shortcut returning the full Python class path of this instance."""
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
 
-    def add_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_create_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
         """Add an argument group for arguments for private key generation with this backend.
 
         By default, the title and description of the argument group is based on
@@ -97,13 +97,9 @@ class KeyBackend(
         """Add an argument group for storing private keys (when importing an existing CA).
 
         By default, this method adds the same group as
-        :py:func:`~django_ca.backends.base.KeyBackend.add_private_key_group`
+        :py:func:`~django_ca.backends.base.KeyBackend.add_create_private_key_group`
         """
-        return self.add_private_key_group(parser)
-
-    @abc.abstractmethod
-    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
-        """Add arguments for storing private keys (when importing an existing CA)."""
+        return self.add_create_private_key_group(parser)
 
     def add_use_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
         """Add an argument group for arguments required for using a private key stored with this backend.
@@ -119,23 +115,26 @@ class KeyBackend(
             f"Arguments for using private keys stored with the {self.alias} backend.",
         )
 
-    def add_private_key_arguments(self, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
+    @abc.abstractmethod
+    def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for private key generation with this backend.
 
         Add arguments that can be used for generating private keys with your backend to `group`. The arguments
         you add here are expected to be loaded (and validated) using
         :py:func:`~django_ca.backends.base.KeyBackend.get_create_private_key_options`.
         """
-        return None
 
-    # pylint: disable-next=unused-argument
-    def add_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
+    @abc.abstractmethod
+    def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for loading the private key of a parent certificate authority.
 
         The arguments you add here are expected to be loaded (and validated) using
         :py:func:`~django_ca.backends.base.KeyBackend.get_load_parent_private_key_options`.
         """
-        return None
+
+    @abc.abstractmethod
+    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
+        """Add arguments for storing private keys (when importing an existing CA)."""
 
     def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
         """Add arguments required for using private key stored with this backend.
@@ -156,7 +155,15 @@ class KeyBackend(
         """
 
     @abc.abstractmethod
-    def get_load_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
+    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
+        """Get options to create private keys into a Pydantic model.
+
+        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
+        backend is expected to be able to sign certificate authorities using the options provided here.
+        """
+
+    @abc.abstractmethod
+    def get_use_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
         """Get options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
@@ -166,14 +173,6 @@ class KeyBackend(
     @abc.abstractmethod
     def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
         """Get options used when storing private keys."""
-
-    @abc.abstractmethod
-    def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
-        """Get options to create private keys into a Pydantic model.
-
-        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
-        backend is expected to be able to sign certificate authorities using the options provided here.
-        """
 
     @abc.abstractmethod
     def is_usable(
@@ -220,7 +219,7 @@ class KeyBackend(
     def sign_certificate(
         self,
         ca: "CertificateAuthority",
-        load_options: UsePrivateKeyOptionsTypeVar,
+        use_private_key_options: UsePrivateKeyOptionsTypeVar,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
