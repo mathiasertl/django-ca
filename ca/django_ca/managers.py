@@ -572,6 +572,9 @@ class CertificateManager(
         def not_yet_valid(self) -> "CertificateQuerySet":
             ...
 
+        def preferred_order(self) -> "CertificateQuerySet":
+            ...
+
         def revoked(self) -> "CertificateQuerySet":
             ...
 

@@ -168,6 +168,10 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         """Return CAs that are enabled."""
         return self.filter(enabled=True)
 
+    def preferred_order(self) -> "CertificateAuthorityQuerySet":
+        """Return CAs in order of preference."""
+        return self.order_by("-expires", "serial")
+
     def valid(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are currently valid."""
         now = timezone.now()
