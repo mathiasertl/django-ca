@@ -34,11 +34,18 @@ Use ``CertificateAuthority.objects.init()`` to create new certificate authoritie
 but is designed to provide defaults that work in most cases::
 
    >>> from cryptography.x509.oid import NameOID
+   >>> from django_ca.backends import key_backends
+   >>> from django_ca.backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
    >>> from django_ca.models import CertificateAuthority
+   >>> key_backend = key_backends["default"]
+   >>> key_backend_options = CreatePrivateKeyOptions(password=None, path="ca", key_size=1024)
    >>> ca = CertificateAuthority.objects.init(
-   ...   name='ca',
-   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
-   ...   path_length=1  # so we can create one level of intermediate CAs
+   ...     name='ca',
+   ...     key_backend=key_backends["default"],
+   ...     key_backend_options=key_backend_options,
+   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
+   ...     path_length=1  # so we can create one level of intermediate CAs
    ... )
    >>> ca
    <CertificateAuthority: ca>
@@ -47,9 +54,13 @@ This CA will contain all properties and X509 extensions to be a fully functionin
 intermediate CA, simply pass the parent::
 
    >>> child = CertificateAuthority.objects.init(
-   ...   name='child',
-   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
-   ...   parent=ca)
+   ...     name='child',
+   ...     key_backend=key_backends["default"],
+   ...     key_backend_options=key_backend_options,
+   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
+   ...     parent=ca
+   ... )
    >>> child.parent
    <CertificateAuthority: ca>
    >>> ca.children.all()
@@ -60,26 +71,29 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    >>> from cryptography import x509
    >>> from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
    >>> full = CertificateAuthority.objects.init(
-   ...   name='full',
-   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
-   ...   parent=ca,  # some extensions are only valid for intermediate CAs
+   ...     name='full',
+   ...     key_backend=key_backends["default"],
+   ...     key_backend_options=key_backend_options,
+   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
+   ...     parent=ca,  # some extensions are only valid for intermediate CAs
    ...
-   ...   # Extensions for the certificate authority itself
-   ...   extensions=[
-   ...       x509.Extension(
-   ...           oid=ExtensionOID.NAME_CONSTRAINTS,
-   ...           critical=True,
-   ...           value=x509.NameConstraints(
-   ...               permitted_subtrees=[x509.DNSName('.com')],
-   ...               excluded_subtrees=None
-   ...           ),
-   ...       ),
-   ...       x509.Extension(
-   ...           oid=ExtensionOID.INHIBIT_ANY_POLICY,
-   ...           critical=True,
-   ...           value=x509.InhibitAnyPolicy(0)
-   ...       )
-   ...   ],
+   ...     # Extensions for the certificate authority itself
+   ...     extensions=[
+   ...         x509.Extension(
+   ...             oid=ExtensionOID.NAME_CONSTRAINTS,
+   ...             critical=True,
+   ...             value=x509.NameConstraints(
+   ...                 permitted_subtrees=[x509.DNSName('.com')],
+   ...                 excluded_subtrees=None
+   ...             ),
+   ...         ),
+   ...         x509.Extension(
+   ...             oid=ExtensionOID.INHIBIT_ANY_POLICY,
+   ...             critical=True,
+   ...             value=x509.InhibitAnyPolicy(0)
+   ...         )
+   ...     ],
    ... )
 
 You can also add extensions to be added to certificates when they are signed by this CA. These parameters can
@@ -143,12 +157,15 @@ always be added later (but of course, only new certificates will have the change
    ...     )
    ... )
    >>> CertificateAuthority.objects.init(
-   ...   name='add-extensions',
-   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "add-extensions")]),
-   ...   sign_authority_information_access=authority_information_access,
-   ...   sign_certificate_policies=certificate_policies,
-   ...   sign_crl_distribution_points=crl_distribution_points,
-   ...   sign_issuer_alternative_name=None,
+   ...     name='add-extensions',
+   ...     key_backend=key_backends["default"],
+   ...     key_backend_options=key_backend_options,
+   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "add-extensions")]),
+   ...     sign_authority_information_access=authority_information_access,
+   ...     sign_certificate_policies=certificate_policies,
+   ...     sign_crl_distribution_points=crl_distribution_points,
+   ...     sign_issuer_alternative_name=None,
    ... )
    <CertificateAuthority: add-extensions>
 
@@ -157,14 +174,18 @@ There are some more parameters to configure how the CA will be signed::
 
    >>> from cryptography.hazmat.primitives.asymmetric import ec
    >>> from cryptography.hazmat.primitives import hashes
+   >>> key_backend_options = CreatePrivateKeyOptions(
+   ...     password=b'foobar', path="ca", elliptic_curve=ec.SECP256R1()
+   ... )
    >>> CertificateAuthority.objects.init(
-   ...   name='props',
-   ...   subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
-   ...   algorithm=hashes.SHA256(),  # SHA512 would be the default
-   ...   path_length=3,  # three levels of intermediate CAs allowed,
-   ...   password=b'foobar',  # encrypt private key with this password
-   ...   key_type='EC',  # create a private key using Elliptic Curve cryptography
-   ...   elliptic_curve=ec.SECP256R1()  # Elliptic curve for the key
+   ...     name='props',
+   ...     key_backend=key_backends["default"],
+   ...     key_backend_options=key_backend_options,
+   ...     parent_key_backend_options=UsePrivateKeyOptions(password=b'foobar'),
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
+   ...     algorithm=hashes.SHA256(),  # SHA512 would be the default
+   ...     path_length=3,  # three levels of intermediate CAs allowed,
+   ...     key_type='EC',  # create a private key using Elliptic Curve cryptography
    ... )
    <CertificateAuthority: props>
 
@@ -193,7 +214,10 @@ using ``Certificate.objects``, e.g.::
    <...CertificateSigningRequest object at ...>
    >>> from django_ca.models import Certificate
    >>> Certificate.objects.create_cert(
-   ...     csr=csr, ca=ca, subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+   ...     ca=ca,
+   ...     key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     csr=csr,
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
    ... )
    <Certificate: example.com>
 

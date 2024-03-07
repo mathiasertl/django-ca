@@ -80,7 +80,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         self.assertEqual(failures, 0, f"{failures} doctests failed, see above for output.")
 
     @override_tmpcadir()
-    def test_python_intro(self) -> None:
+    def test_docs(self) -> None:
         """Test python/profiles.rst."""
         failures, _tests = doctest.testfile(
             "../../../docs/source/python/profiles.rst", globs=self.get_globs()
