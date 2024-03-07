@@ -43,13 +43,7 @@ from django_ca.backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
-from django_ca.utils import (
-    file_exists,
-    generate_private_key,
-    get_cert_builder,
-    read_file,
-    validate_private_key_parameters,
-)
+from django_ca.utils import generate_private_key, get_cert_builder, read_file, validate_private_key_parameters
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -251,7 +245,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
         # If options are not passed, we return True if the file exists.
         if not options:
-            return file_exists(ca.key_backend_options["path"])
+            return storages[self.storage_alias].exists(ca.key_backend_options["path"])
 
         try:
             self.get_key(ca, options)

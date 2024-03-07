@@ -281,6 +281,8 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
 
 
 class StorePrivateKeyMixin:
+    """Mixin to add options for storing a private key."""
+
     def add_key_backend_option(self, parser: CommandParser) -> ArgumentGroup:
         """Add argument group for the --key-backend option."""
         group = parser.add_argument_group("Private key options")
@@ -295,6 +297,8 @@ class StorePrivateKeyMixin:
 
 
 class UsePrivateKeyMixin:
+    """Mixin to add options for using a private key."""
+
     def add_use_private_key_arguments(self, parser: CommandParser) -> None:
         """Add arguments for loading a parent CA via its key backend."""
         for backend in key_backends:
