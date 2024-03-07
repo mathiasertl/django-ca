@@ -207,7 +207,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_password(self) -> None:
         """Test getting a CRL with a password."""
         ca = self.cas["pwd"]
-        key_backend_options = ca.key_backend.get_load_private_key_options(
+        key_backend_options = ca.key_backend.get_use_private_key_options(
             {"password": CERT_DATA["pwd"]["password"]}
         )
 

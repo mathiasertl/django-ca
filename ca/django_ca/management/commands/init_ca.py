@@ -140,14 +140,14 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         """Add general arguments for private keys."""
         for backend in key_backends:
             # TODO: methods in backend should be called add_create_* for consistency
-            group = backend.add_private_key_group(parser)
+            group = backend.add_create_private_key_group(parser)
             if group is not None:
-                backend.add_private_key_arguments(group)
+                backend.add_create_private_key_arguments(group)
 
     def add_parent_private_key_storage_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for loading a parent CA via its key backend."""
         for backend in key_backends:
-            backend.add_parent_private_key_arguments(group)
+            backend.add_use_parent_private_key_arguments(group)
 
     def add_arguments(self, parser: CommandParser) -> None:
         # Load all supported key backend classes so that they can add command-line arguments.
@@ -306,7 +306,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
     ) -> None:
         try:
             key_backend_options = key_backend.get_create_private_key_options(key_type, options)
-            load_key_backend_options = key_backend.get_load_private_key_options(options)
+            load_key_backend_options = key_backend.get_use_private_key_options(options)
 
             # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
             # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
@@ -314,7 +314,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             if parent is None:
                 signer_key_backend_options = load_key_backend_options
             else:
-                signer_key_backend_options = parent.key_backend.get_load_parent_private_key_options(options)
+                signer_key_backend_options = parent.key_backend.get_use_parent_private_key_options(options)
                 if parent.is_usable(signer_key_backend_options) is False:
                     raise CommandError("Parent CA is not usable.")
         except Exception as ex:

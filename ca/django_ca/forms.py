@@ -215,7 +215,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         )
 
         # Load the CA to test loading options
-        key_backend_options = ca.key_backend.get_load_private_key_options(data)
+        key_backend_options = ca.key_backend.get_use_private_key_options(data)
         data["key_backend_options"] = key_backend_options
         if not ca.is_usable(key_backend_options):
             # TODO: this still assumes storages backend

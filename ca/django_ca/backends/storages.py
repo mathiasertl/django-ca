@@ -121,7 +121,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
             help="Path for storing the private key (in the storage backend, default: %(default)s).",
         )
 
-    def add_private_key_arguments(self, group: ArgumentGroup) -> None:
+    def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_path_argument(group)
         add_key_size(group)
         add_elliptic_curve(group)
@@ -131,7 +131,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
             "prompted. By default, the private key is not encrypted.",
         )
 
-    def add_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
+    def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         group.add_argument(
             "--parent-password",
             nargs="?",
@@ -164,10 +164,10 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptions:
         return StorePrivateKeyOptions(password=options["password"], path=options["path"])
 
-    def get_load_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+    def get_use_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
         return LoadPrivateKeyOptions(password=options.get("password"))
 
-    def get_load_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
+    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> LoadPrivateKeyOptions:
         return LoadPrivateKeyOptions(password=options["parent_password"])
 
     def create_private_key(

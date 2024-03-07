@@ -114,7 +114,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             raise CommandError("Certificate Authority is revoked.")
 
         # Get key backend options
-        key_backend_options = ca.key_backend.get_load_private_key_options(options)
+        key_backend_options = ca.key_backend.get_use_private_key_options(options)
 
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
