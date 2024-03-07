@@ -23,7 +23,6 @@ from django.test.client import Client
 from django.urls import reverse_lazy
 
 import pytest
-from freezegun import freeze_time
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.api.conftest import APIPermissionTestBase, ListResponse
@@ -58,7 +57,7 @@ def test_empty_list_view(api_client: Client) -> None:
     assert response.json() == []
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_list_view(api_client: Client, expected_response: ListResponse) -> None:
     """Test an ordinary list view."""
     response = request(api_client)
@@ -67,7 +66,7 @@ def test_list_view(api_client: Client, expected_response: ListResponse) -> None:
 
 
 @pytest.mark.usefixtures("root")
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_certificate_authorities_are_excluded(api_client: Client) -> None:
     """Test that expired CAs are excluded by default."""
     response = request(api_client)
@@ -76,7 +75,7 @@ def test_expired_certificate_authorities_are_excluded(api_client: Client) -> Non
     assert response.json() == [], response.json()
 
 
-@freeze_time(TIMESTAMPS["everything_expired"])
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_filter(api_client: Client, expected_response: ListResponse) -> None:
     """Test that expired CAs are excluded by default."""
     response = request(api_client, {"expired": "1"})
