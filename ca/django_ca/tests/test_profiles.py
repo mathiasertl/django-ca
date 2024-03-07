@@ -26,7 +26,7 @@ from django.test import TestCase, override_settings
 import pytest
 
 from django_ca import ca_settings
-from django_ca.backends.storages import LoadPrivateKeyOptions
+from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
 from django_ca.deprecation import RemovedInDjangoCA128Warning
 from django_ca.models import Certificate, CertificateAuthority
@@ -50,7 +50,7 @@ from django_ca.tests.base.utils import (
     uri,
 )
 
-key_backend_options = LoadPrivateKeyOptions(password=None)
+key_backend_options = UsePrivateKeyOptions(password=None)
 
 
 class DocumentationTestCase(TestCaseMixin, TestCase):
