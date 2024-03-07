@@ -750,8 +750,8 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 log.error(ex)
 
             # If the default CA is not usable, use the first one that we can use instead.
-            if ca is None or ca.is_usable():
-                for usable_ca in CertificateAuthority.objects.usable().order_by("-expires", "serial"):
+            if ca is None or ca.is_usable() is False:
+                for usable_ca in CertificateAuthority.objects.usable().preferred_order():
                     if usable_ca.is_usable():
                         ca = usable_ca
 
