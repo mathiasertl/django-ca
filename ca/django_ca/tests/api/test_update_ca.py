@@ -99,7 +99,7 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
     return dict(
         payload,
         **{
-            "can_sign_certificates": True,
+            "can_sign_certificates": False,
             "created": iso_format(root.created),
             "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
             "not_after": iso_format(root.expires),

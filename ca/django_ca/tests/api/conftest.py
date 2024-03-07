@@ -75,7 +75,7 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
         "acme_registration": True,
         "acme_requires_contact": True,
         "caa_identity": "",
-        "can_sign_certificates": True,
+        "can_sign_certificates": False,
         "created": iso_format(root.created),
         "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
         "not_after": iso_format(root.expires),
