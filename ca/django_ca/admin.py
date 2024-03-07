@@ -659,6 +659,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         """Get CA details for the embedded JSON data."""
         data: Dict[int, Dict[str, Any]] = {}
         for ca in CertificateAuthority.objects.usable():
+            if ca.key_backend.is_usable():
+                continue
+
             extensions = SignCertificateExtensionsList.validate_python(ca.extensions_for_certificate.values())
 
             hash_algorithm_name: Optional[str] = None
@@ -674,7 +677,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         # Only grant add permissions if there is at least one usable CA
-        return CertificateAuthority.objects.usable().exists()
+        for ca in CertificateAuthority.objects.usable():
+            if ca.key_backend.is_usable():
+                return True
+        return False
 
     def csr_pem(self, obj: Certificate) -> str:
         """Get the CSR in PEM form for display."""
@@ -737,14 +743,17 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         else:
             # Form for a completely new certificate
 
+            ca = None
             try:
                 ca = CertificateAuthority.objects.default()
-            except ImproperlyConfigured as ex:  # pragma: no cover
-                # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
-                # button would not even show up.
+            except ImproperlyConfigured as ex:
                 log.error(ex)
-                ca_qs = CertificateAuthority.objects.usable().order_by("-expires", "serial")
-                ca = ca_qs.first()  # type: ignore[assignment]  # Could be None, handled below
+
+            # If the default CA is not usable, use the first one that we can use instead.
+            if ca is None or ca.key_backend.is_usable():
+                for usable_ca in CertificateAuthority.objects.usable().order_by("-expires", "serial"):
+                    if usable_ca.key_backend.is_usable():
+                        ca = usable_ca
 
             if ca is None:
                 raise ImproperlyConfigured("Cannot determine default CA.")
