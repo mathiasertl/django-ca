@@ -249,7 +249,6 @@ class KeyBackendAction(SingleValueAction[str, KeyBackend[BaseModel, BaseModel, B
 
     def parse_value(self, value: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         """Parse the value for this action."""
-        print("parse_value", value, key_backends[value])
         return key_backends[value]
 
 
