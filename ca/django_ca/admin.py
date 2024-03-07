@@ -659,7 +659,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         """Get CA details for the embedded JSON data."""
         data: Dict[int, Dict[str, Any]] = {}
         for ca in CertificateAuthority.objects.usable():
-            if ca.is_usable():
+            if ca.is_usable() is False:
                 continue
 
             extensions = SignCertificateExtensionsList.validate_python(ca.extensions_for_certificate.values())
