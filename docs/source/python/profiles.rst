@@ -11,10 +11,14 @@ the ``webserver`` profile::
    # Note: "csr" is a predefined variable, see https://cryptography.io/en/latest/x509/tutorial/
    >>> from cryptography import x509
    >>> from cryptography.x509.oid import NameOID
+   >>> from django_ca.backends.storages import UsePrivateKeyOptions
    >>> from django_ca.models import Certificate
    >>> from django_ca.profiles import profiles
    >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
-   >>> Certificate.objects.create_cert(ca, csr, profile=profiles['webserver'], subject=subject)
+   >>> key_backend_options = UsePrivateKeyOptions(password=None)
+   >>> Certificate.objects.create_cert(
+   ...    ca, key_backend_options, csr, profile=profiles['webserver'], subject=subject
+   ... )
    <Certificate: example.com>
 
 But you can also create your own profile manually to create a special type of certificate::
@@ -26,7 +30,7 @@ But you can also create your own profile manually to create a special type of ce
    ...     extensions={'ocsp_no_check': {}}
    ... )
    >>> ca = CertificateAuthority.objects.first()
-   >>> profile.create_cert(ca, csr, subject=subject)
+   >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)
    <Certificate(subject=<Name(C=AT,CN=example.com)>, ...)>
 
 

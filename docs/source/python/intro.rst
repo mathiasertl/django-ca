@@ -35,18 +35,26 @@ retrieve and manipulate CAs::
 
    >>> from cryptography.x509.oid import NameOID
    >>> from django_ca.models import CertificateAuthority
-   >>> ca = CertificateAuthority.objects.get(name='root')
+   >>> ca = CertificateAuthority.objects.get(name="root")
    >>> ca.enabled = False
    >>> ca.save()
 
 To create a new CA, you have to :py:meth:`~django_ca.managers.CertificateAuthorityManager.init`, this example
-creates a minimal CA::
+creates a minimal CA using the filesystem storage backend::
 
+   >>> from datetime import datetime
+   >>> from django_ca.backends import key_backends
+   >>> from django_ca.backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
    >>> from django_ca.models import CertificateAuthority
    >>> from django_ca.utils import x509_name
-   >>> from datetime import datetime
+   >>> key_backend = key_backends["default"]
+   >>> key_backend_options = CreatePrivateKeyOptions(password=None, path="ca", key_size=1024)
    >>> CertificateAuthority.objects.init(
-   ...     name='ca-two', subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
+   ...     name="ca-two",
+   ...     key_backend=key_backends["default"],
+   ...     key_backend_options=key_backend_options,
+   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
    ... )
    <CertificateAuthority: ca-two>
 
@@ -68,7 +76,10 @@ Much like with certificate authorities, creating a new certificate requires a ma
 
    >>> from django_ca.utils import x509_name
    >>> Certificate.objects.create_cert(
-   ...     ca, csr, subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
+   ...     ca,
+   ...     UsePrivateKeyOptions(password=None),
+   ...     csr,
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
    ... )
    <Certificate: example.com>
 

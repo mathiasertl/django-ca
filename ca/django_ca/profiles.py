@@ -195,13 +195,15 @@ class Profile:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
         This function is the core function used to create x509 certificates. In its simplest form, you only
-        need to pass a ca, a CSR and a subject to get a valid certificate::
+        need to pass a ca, private key options, a CSR and a subject to get a valid certificate::
 
             >>> from cryptography import x509
             >>> from cryptography.x509.oid import NameOID
+            >>> from django_ca.backends.storages import UsePrivateKeyOptions
             >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
+            >>> key_backend_options = UsePrivateKeyOptions(password=None)
             >>> profile = get_profile('webserver')
-            >>> profile.create_cert(ca, csr, subject=subject)  # doctest: +ELLIPSIS
+            >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
 
         .. versionchanged:: 1.26.0
@@ -220,6 +222,8 @@ class Profile:
         ----------
         ca : :py:class:`~django_ca.models.CertificateAuthority`
             The CA to sign the certificate with.
+        key_backend_options : BaseModel
+            Options required for using the private key of the certificate authority.
         csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
             The CSR for the certificate.
         subject : :py:class:`~cg:cryptography.x509.Name`, optional
