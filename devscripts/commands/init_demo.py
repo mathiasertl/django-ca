@@ -217,7 +217,7 @@ class Command(DevCommand):
         from django.core.management import call_command as manage
 
         from django_ca import ca_settings
-        from django_ca.backends.storages import UsePrivateKeyOptions
+        from django_ca.key_backends.storages import UsePrivateKeyOptions
         from django_ca.utils import ca_storage
 
         # pylint: enable=import-outside-toplevel

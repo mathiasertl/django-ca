@@ -29,7 +29,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
-from django_ca.backends import KeyBackend, key_backends
+from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
@@ -116,7 +116,7 @@ def test_key_backends_getitem_with_default() -> None:
 
 def test_key_backends_getitem_caching() -> None:
     """Test that lookups are cached properly."""
-    patch_target = "django_ca.backends.key_backends._get_key_backend"
+    patch_target = "django_ca.key_backends.key_backends._get_key_backend"
     value = "xxx"
     with patch(patch_target, autospec=True, return_value=value) as load_mock:
         assert key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND] == value  # type: ignore[comparison-overlap]
@@ -139,7 +139,7 @@ def test_key_backends_iter(settings: SettingsWrapper) -> None:
 
     settings.CA_KEY_BACKENDS = {
         ca_settings.CA_DEFAULT_KEY_BACKEND: {
-            "BACKEND": "django_ca.backends.storages.StoragesBackend",
+            "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "django-ca"},
         },
         "test": {

@@ -26,8 +26,8 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings, constants
-from django_ca.backends.base import KeyBackend
 from django_ca.extensions.utils import format_extensions, get_formatting_context
+from django_ca.key_backends.base import KeyBackend
 from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
@@ -270,8 +270,9 @@ class CertificateAuthorityManager(
         ----------
         name : str
             The name of the CA. This is a human-readable string and is used for administrative purposes only.
-        key_backend : :py:class:`~django_ca.backends.base.KeyBackend`
-            A subclass of :py:class:`~django_ca.backends.base.KeyBackend` to use for storing the private key.
+        key_backend : :py:class:`~django_ca.key_backends.base.KeyBackend`
+            A subclass of :py:class:`~django_ca.key_backends.base.KeyBackend` to use for storing the private
+            key.
         key_backend_options : BaseModel
             Parameters required for creating the private key using `key_backend`.
         subject : :py:class:`cg:cryptography.x509.Name`

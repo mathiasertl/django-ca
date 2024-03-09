@@ -35,8 +35,8 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
-from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import ExtendedKeyUsageOID
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
 from django_ca.tests.base.assertions import (

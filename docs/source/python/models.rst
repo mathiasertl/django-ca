@@ -34,8 +34,8 @@ Use ``CertificateAuthority.objects.init()`` to create new certificate authoritie
 but is designed to provide defaults that work in most cases::
 
    >>> from cryptography.x509.oid import NameOID
-   >>> from django_ca.backends import key_backends
-   >>> from django_ca.backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
+   >>> from django_ca.key_backends import key_backends
+   >>> from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
    >>> from django_ca.models import CertificateAuthority
    >>> key_backend = key_backends["default"]
    >>> key_backend_options = CreatePrivateKeyOptions(password=None, path="ca", key_size=1024)

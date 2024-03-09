@@ -28,8 +28,8 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
-from django_ca.backends.storages import CreatePrivateKeyOptions, StoragesBackend, UsePrivateKeyOptions
 from django_ca.constants import ExtendedKeyUsageOID
+from django_ca.key_backends.storages import CreatePrivateKeyOptions, StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet

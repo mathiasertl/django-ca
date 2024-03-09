@@ -17,8 +17,8 @@ from typing import Iterator
 
 import pytest
 
-from django_ca.backends import key_backends
-from django_ca.backends.base import KeyBackends
+from django_ca.key_backends import key_backends
+from django_ca.key_backends.base import KeyBackends
 
 
 @pytest.fixture()

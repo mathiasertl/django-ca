@@ -32,8 +32,8 @@ from django.test import TestCase, override_settings
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.backends import key_backends
 from django_ca.constants import ReasonFlags
+from django_ca.key_backends import key_backends
 from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA
@@ -51,11 +51,11 @@ def key_backend_parser(settings: SettingsWrapper) -> Iterator[argparse.ArgumentP
     }
     settings.CA_KEY_BACKENDS = {
         "default": {
-            "BACKEND": "django_ca.backends.storages.StoragesBackend",
+            "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "django-ca"},
         },
         "other": {
-            "BACKEND": "django_ca.backends.storages.StoragesBackend",
+            "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "other-storage"},
         },
     }

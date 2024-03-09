@@ -502,10 +502,11 @@ nitpick_ignore = [
     ("py:class", "KeyUsages"),
     ("py:class", "GeneralNames"),
     # TypeVars for classes that make no sense in documenting.
-    ("py:class", "django_ca.backends.base.CreatePrivateKeyOptionsTypeVar"),
-    ("py:class", "django_ca.backends.base.UsePrivateKeyOptionsTypeVar"),
+    ("py:class", "django_ca.key_backends.base.CreatePrivateKeyOptionsTypeVar"),
+    ("py:class", "django_ca.key_backends.base.StorePrivateKeyOptionsTypeVar"),
+    ("py:class", "django_ca.key_backends.base.UsePrivateKeyOptionsTypeVar"),
     # Just no need to document these
-    ("py:class", "django_ca.backends.base.Self"),  # pragma: only py<3.11  # replace with typing.Self
+    ("py:class", "django_ca.key_backends.base.Self"),  # pragma: only py<3.11  # replace with typing.Self
     # Undocumented in Python:
     ("py:class", "argparse._ArgumentGroup"),
     ("py:class", "doctest.TestResults"),

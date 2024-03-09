@@ -30,8 +30,8 @@ from cryptography.x509.oid import ExtensionOID
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
-from django_ca.backends import KeyBackend, key_backends
 from django_ca.constants import PRIVATE_KEY_TYPES, PUBLIC_KEY_TYPES
+from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin

@@ -199,7 +199,7 @@ class Profile:
 
             >>> from cryptography import x509
             >>> from cryptography.x509.oid import NameOID
-            >>> from django_ca.backends.storages import UsePrivateKeyOptions
+            >>> from django_ca.key_backends.storages import UsePrivateKeyOptions
             >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
             >>> key_backend_options = UsePrivateKeyOptions(password=None)
             >>> profile = get_profile('webserver')

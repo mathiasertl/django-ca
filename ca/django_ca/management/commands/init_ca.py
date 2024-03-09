@@ -29,7 +29,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
-from django_ca.backends import KeyBackend, key_backends
+from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
 from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin

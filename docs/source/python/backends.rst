@@ -6,7 +6,7 @@
 Supported backends
 ******************
 
-.. autoclass:: django_ca.backends.storages.StoragesBackend
+.. autoclass:: django_ca.key_backends.storages.StoragesBackend
 
 ***********************
 Writing custom backends
@@ -16,6 +16,6 @@ Writing custom backends
 Base class documentation
 ************************
 
-.. autoclass:: django_ca.backends.base.KeyBackend
+.. autoclass:: django_ca.key_backends.base.KeyBackend
    :members:
    :exclude-members: class_path

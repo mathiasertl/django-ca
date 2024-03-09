@@ -34,13 +34,13 @@ from django.core.management import CommandError
 import pytest
 
 from django_ca import ca_settings
-from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
     crl_last_update,
     crl_next_update,
     revoked_certificate_revocation_date,
 )
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca, pre_sign_cert
 from django_ca.tests.base.mocks import mock_signal

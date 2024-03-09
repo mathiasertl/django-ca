@@ -24,7 +24,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.test import TestCase
 
-from django_ca.backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA

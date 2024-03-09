@@ -43,8 +43,8 @@ To create a new CA, you have to :py:meth:`~django_ca.managers.CertificateAuthori
 creates a minimal CA using the filesystem storage backend::
 
    >>> from datetime import datetime
-   >>> from django_ca.backends import key_backends
-   >>> from django_ca.backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
+   >>> from django_ca.key_backends import key_backends
+   >>> from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
    >>> from django_ca.models import CertificateAuthority
    >>> from django_ca.utils import x509_name
    >>> key_backend = key_backends["default"]

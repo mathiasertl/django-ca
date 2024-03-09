@@ -54,7 +54,7 @@ except ModuleNotFoundError as ex:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first.
-from django_ca.backends.storages import UsePrivateKeyOptions  # noqa: E402
+from django_ca.key_backends.storages import UsePrivateKeyOptions  # noqa: E402
 from django_ca.models import Certificate, CertificateAuthority  # noqa: E402
 
 # pylint: enable=wrong-import-position
