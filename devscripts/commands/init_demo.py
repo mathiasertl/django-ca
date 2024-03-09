@@ -19,7 +19,9 @@ import subprocess
 import sys
 import types
 import typing
-from typing import Any, Dict, Union
+from typing import Any, Dict, Type, Union
+
+from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -43,6 +45,8 @@ class Command(DevCommand):
 
     modules = (("termcolor", "termcolor"),)
     termcolor: types.ModuleType
+
+    UsePrivateKeyOptions: Type[BaseModel]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -94,24 +98,33 @@ class Command(DevCommand):
             serial = loaded_cas[ca].serial[:11]
             print(f"  * {bold(f'{dump_crl} -f PEM --ca {serial} > {ca}.crl')}")
 
+        verify = "openssl verify -CAfile"  # command base
+
         self.ok("* Verify with pre-generated CRL:")
         for ca, ca_path, cert_path in cas:
             if ca == "child":
                 ca_path = child_bundle
-            print(f"  * {bold(f'openssl verify -CAfile {ca_path} -CRLfile {ca}.crl -crl_check {cert_path}')}")
+            else:
+                ca_path = f"{ca_path}.pem"
+            print(f"  * {bold(f'{verify} {ca_path} -CRLfile {ca}.crl -crl_check {cert_path}')}")
 
         self.ok("* Verify with auto-downloaded CRL:")
         for ca, ca_path, cert_path in cas:
             if ca == "child":
                 ca_path = child_bundle
-            print(f"  * {bold(f'openssl verify -CAfile {ca_path} -crl_download -crl_check {cert_path}')}")
+            else:
+                ca_path = f"{ca_path}.pem"
+            print(f"  * {bold(f'{verify} {ca_path} -crl_download -crl_check {cert_path}')}")
 
         self.ok("* Verify certificate with OCSP:")
         for ca, ca_path, cert_path in cas:
             ocsp_post_path = reverse("django_ca:ocsp-cert-post", kwargs={"serial": certs[ca]["serial"]})
             ocsp_url = f"{base_url}{ocsp_post_path}"
+
             if ca == "child":
                 ca_path = child_bundle
+            else:
+                ca_path = f"{ca_path}.pem"
 
             cmd = f"openssl ocsp -CAfile {ca_path} -issuer {ca_path} -cert {cert_path} -url {ocsp_url} -resp_text"  # noqa: E501
             print(f"  * {bold(cmd)}")
@@ -136,7 +149,11 @@ class Command(DevCommand):
                     continue  # CA without private key (e.g. real-world CA)
 
                 name = cert_data["name"]
-                cert = CertificateAuthority(name=name, private_key_path=f"{name}.key")
+                cert = CertificateAuthority(
+                    name=name,
+                    key_backend_alias=ca_settings.CA_DEFAULT_KEY_BACKEND,
+                    key_backend_options={"path": f"{name}.key"},
+                )
                 loaded_cas[cert.name] = cert
             else:
                 if cert_data["cat"] != "generated":
@@ -151,17 +168,24 @@ class Command(DevCommand):
                 profile = cert_data.get("profile", ca_settings.CA_DEFAULT_PROFILE)
                 cert = Certificate(ca=loaded_cas[cert_data["ca"]], csr=csr_pem, profile=profile)
 
-            with open(os.path.join(ca_settings.CA_DIR, cert_data["pub_filename"]), "rb") as stream:
+            pub_path = os.path.join(ca_settings.CA_DIR, cert_data["pub_filename"])
+            with open(pub_path, "rb") as stream:
                 der = stream.read()
-            cert.update_certificate(x509.load_der_x509_certificate(der))
+            loaded_certificate = x509.load_der_x509_certificate(der)
+            cert.update_certificate(loaded_certificate)
             cert.save()
+
+            # Save the public key as .pem, as "openssl verify" requires a PEM file
+            with open(pub_path + ".pem", "wb") as stream:
+                stream.write(loaded_certificate.public_bytes(Encoding.PEM))
 
             # Generate OCSP key after saving, as cert.pub is still `bytes` before `save()`.
             if isinstance(cert, CertificateAuthority):
                 password = cert_data.get("password")
                 if password is not None:
                     password = password.encode("utf-8")
-                cert.generate_ocsp_key(password=password)
+
+                cert.generate_ocsp_key(self.UsePrivateKeyOptions(password=password))
 
         # Set parent relationships of CAs
         for cert_name, cert_data in certs.items():
@@ -193,9 +217,12 @@ class Command(DevCommand):
         from django.core.management import call_command as manage
 
         from django_ca import ca_settings
+        from django_ca.backends.storages import UsePrivateKeyOptions
         from django_ca.utils import ca_storage
 
         # pylint: enable=import-outside-toplevel
+
+        self.UsePrivateKeyOptions = UsePrivateKeyOptions
 
         print("Creating database...", end="")
         manage("migrate", verbosity=0)
