@@ -87,7 +87,7 @@ class UsePrivateKeyOptions(pydantic.BaseModel):
         """Validator to load the password from CA_PASSWORDS if not given."""
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
-            if ca:
+            if ca:  # pragma: no branch  # when we pass a context, we also pass a ca, but just to be sure
                 if settings_password := ca_settings.CA_PASSWORDS.get(ca.serial):
                     return settings_password
 
@@ -206,7 +206,9 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         # Update model instance
         ca.key_backend_options = {"path": path}
 
-        use_private_key_options = UsePrivateKeyOptions(password=options.password)
+        use_private_key_options = UsePrivateKeyOptions.model_validate(
+            {"password": options.password}, context={"ca": ca}
+        )
 
         return key.public_key(), use_private_key_options
 
