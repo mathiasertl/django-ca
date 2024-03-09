@@ -19,7 +19,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import pydantic
-from pydantic import ConfigDict
+from pydantic import ConfigDict, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -39,7 +40,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 
-from django_ca import constants
+from django_ca import ca_settings, constants
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
@@ -79,6 +80,21 @@ class UsePrivateKeyOptions(pydantic.BaseModel):
     model_config = ConfigDict(frozen=True)
 
     password: Optional[bytes]
+
+    @field_validator("password", mode="after")
+    @classmethod
+    def load_default_password(cls, password: Optional[bytes], info: ValidationInfo) -> Optional[bytes]:
+        """Validator to load the password from CA_PASSWORDS if not given."""
+        if info.context is not None and password is None:
+            ca: CertificateAuthority = info.context.get("ca")
+            if ca:
+                settings_password = ca_settings.CA_PASSWORDS.get(ca.serial)
+                if isinstance(settings_password, str):
+                    return settings_password.encode()
+                elif isinstance(settings_password, bytes):
+                    return settings_password
+
+        return password
 
 
 class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):

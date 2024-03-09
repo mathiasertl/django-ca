@@ -117,16 +117,12 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_valid"])
-    @pytest.mark.xfail
     def test_cache_all_crls(self) -> None:
         """Test caching when all CAs are valid."""
         enc_cls = Encoding.DER
         tasks.cache_crls()
 
         for ca in self.cas.values():
-            if ca.name == "pwd":
-                continue
-
             key = get_crl_cache_key(ca.serial, enc_cls, "ca")
             crl = x509.load_der_x509_crl(cache.get(key))
 
@@ -184,7 +180,6 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
             self.assertTrue(storage.exists(f"ocsp/{ca.serial}.pem"))
 
     @override_tmpcadir()
-    @pytest.mark.xfail
     def test_all(self) -> None:
         """Test creating all keys."""
         tasks.generate_ocsp_keys()
