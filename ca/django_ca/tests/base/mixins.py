@@ -14,7 +14,6 @@
 """Collection of mixin classes for unittest.TestCase subclasses."""
 
 import copy
-import io
 import json
 import re
 import textwrap
@@ -22,13 +21,13 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, AnyStr, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
 from unittest import mock
 from urllib.parse import quote
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ed448, ed25519, rsa, x448, x25519
+from cryptography.hazmat.primitives.asymmetric import x448, x25519
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 
@@ -36,7 +35,7 @@ from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.storage import storages
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
@@ -44,18 +43,17 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
-from django_ca import ca_settings, constants
+from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
-from django_ca.tests.base.assertions import assert_system_exit
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import certificate_policies, cmd_e2e
+from django_ca.tests.base.utils import certificate_policies
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -165,14 +163,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         if name.startswith(":"):  # pragma: no branch
             name = f"django_ca{name}"
         return f"http://{hostname}{reverse(name, kwargs=kwargs)}"
-
-    def assertBasic(  # pylint: disable=invalid-name
-        self, cert: x509.Certificate, algo: Type[hashes.HashAlgorithm] = hashes.SHA256
-    ) -> None:
-        """Assert some basic key properties."""
-        self.assertEqual(cert.version, x509.Version.v3)
-        self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
-        self.assertIsInstance(cert.signature_hash_algorithm, algo)
 
     def assertCRL(
         # pylint: disable=invalid-name
@@ -323,56 +313,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         """Type equality function for x509.TLSFeature."""
         self.assertEqual(set(first), set(second), msg=msg)
 
-    def assertE2ECommandError(  # pylint: disable=invalid-name
-        self,
-        cmd: typing.Sequence[str],
-        stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-        stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-    ) -> None:
-        """Assert that the passed command raises a CommandError with the given message."""
-        if isinstance(stdout, str):  # pragma: no cover
-            stdout = "CommandError: " + stdout + "\n"
-        elif isinstance(stdout, bytes):  # pragma: no cover
-            stdout = b"CommandError: " + stdout + b"\n"
-        self.assertE2EError(cmd, stdout=stdout, stderr=stderr, code=1)
-
-    def assertE2EError(  # pylint: disable=invalid-name
-        self,
-        cmd: typing.Sequence[str],
-        stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-        stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-        code: int = 2,
-    ) -> None:
-        """Assert an error was through in an e2e command."""
-        if isinstance(stdout, str) or (isinstance(stdout, re.Pattern) and isinstance(stdout.pattern, str)):
-            actual_stdout = io.StringIO()
-        else:
-            actual_stdout = io.BytesIO()  # type: ignore[assignment]
-
-        if isinstance(stderr, str) or (isinstance(stderr, re.Pattern) and isinstance(stderr.pattern, str)):
-            actual_stderr = io.StringIO()
-        else:
-            actual_stderr = io.BytesIO()  # type: ignore[assignment]
-
-        with assert_system_exit(code):
-            cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
-
-        if isinstance(stdout, (str, bytes)):
-            self.assertEqual(stdout, actual_stdout.getvalue())
-        else:
-            self.assertRegex(actual_stdout.getvalue(), stdout)  # type: ignore[misc]  # pragma: no cover
-
-        if isinstance(stderr, (str, bytes)):
-            self.assertEqual(stderr, actual_stderr.getvalue())
-        else:
-            self.assertRegex(actual_stderr.getvalue(), stderr)  # type: ignore[misc]
-
-    @contextmanager
-    def assertImproperlyConfigured(self, msg: str) -> Iterator[None]:  # pylint: disable=invalid-name
-        """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
-        with self.assertRaisesRegex(ImproperlyConfigured, msg):
-            yield
-
     def assertIssuer(  # pylint: disable=invalid-name
         self, issuer: CertificateAuthority, cert: X509CertMixin
     ) -> None:
@@ -395,17 +335,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    def assertPrivateKey(  # pylint: disable=invalid-name
-        self, ca: CertificateAuthority, password: Optional[Union[str, bytes]] = None
-    ) -> None:
-        """Assert some basic properties for a private key."""
-        key = ca.key(password)  # type: ignore[attr-defined]  # we assume StoragesBackend
-        self.assertIsNotNone(key)
-        if not isinstance(  # pragma: no branch  # only used for RSA keys
-            key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)
-        ):
-            self.assertTrue(key.key_size > 0)
 
     def assertRevoked(  # pylint: disable=invalid-name
         self, cert: X509CertMixin, reason: Optional[str] = None, compromised: Optional[datetime] = None
@@ -485,14 +414,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                     config["OVERRIDES"][data["serial"]]["password"] = data["password"]
 
         return profiles
-
-    def ext(
-        self, value: x509.ExtensionType, critical: Optional[bool] = None
-    ) -> x509.Extension[x509.ExtensionType]:
-        """Shortcut to get a x509.Extension object from the given ExtensionType."""
-        if critical is None:  # pragma: no branch
-            critical = constants.EXTENSION_DEFAULT_CRITICAL[value.oid]
-        return x509.Extension(oid=value.oid, critical=critical, value=value)
 
     def freshest_crl(
         self,

@@ -20,12 +20,15 @@ from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey
+from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
 
 from django.test import TestCase
 
 import pytest
 from freezegun import freeze_time
 
+from ca import settings
 from django_ca import ca_settings
 from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
@@ -45,19 +48,20 @@ from django_ca.tests.base.utils import (
 )
 
 
+def import_ca_e2e(hostname: str, *args: str) -> CertificateAuthority:
+    """Shortcut for running the import_ca command."""
+    key_path = str(CERT_DATA["root"]["key_path"])
+    pem_path = str(CERT_DATA["root"]["pub_path"])
+
+    out, err = cmd_e2e(["import_ca", hostname, *args, key_path, pem_path])
+    assert out == ""
+    assert err == ""
+
+    return CertificateAuthority.objects.get(name=hostname)
+
+
 class ImportCATest(TestCaseMixin, TestCase):
     """Test the import_ca management command."""
-
-    def import_ca(self, *args: str) -> CertificateAuthority:
-        """Shortcut for running the import_ca command."""
-        key_path = str(CERT_DATA["root"]["key_path"])
-        pem_path = str(CERT_DATA["root"]["pub_path"])
-
-        out, err = cmd_e2e(["import_ca", self.hostname, *args, key_path, pem_path])
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-
-        return CertificateAuthority.objects.get(name=self.hostname)
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_valid"])
@@ -165,7 +169,8 @@ class ImportCATest(TestCaseMixin, TestCase):
         crl2 = "http://crl2.example.com"
         ian = "http://ian.example.com"
 
-        ca = self.import_ca(
+        ca = import_ca_e2e(
+            self.hostname,
             f"--sign-ca-issuer={ca_issuer}",
             f"--sign-ocsp-responder={ocsp_responder}",
             f"--sign-issuer-alternative-name={ian}",
@@ -203,7 +208,8 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_acme_arguments(self) -> None:
         """Test ACME arguments."""
-        ca = self.import_ca(
+        ca = import_ca_e2e(
+            self.hostname,
             "--acme-enable",
             "--acme-disable-account-registration",
             "--acme-contact-optional",
@@ -217,13 +223,13 @@ class ImportCATest(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_rest_api_arguments(self) -> None:
         """Test REST API arguments."""
-        ca = self.import_ca("--api-enable")
+        ca = import_ca_e2e(self.hostname, "--api-enable")
         self.assertIs(ca.api_enabled, True)
 
     @override_tmpcadir()
     def test_ocsp_responder_arguments(self) -> None:
         """Test OCSP responder arguments."""
-        ca = self.import_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
+        ca = import_ca_e2e(self.hostname, "--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
 
         self.assertEqual(ca.ocsp_responder_key_validity, 10)
         self.assertEqual(ca.ocsp_response_validity, 3600)
@@ -239,20 +245,45 @@ class ImportCATest(TestCaseMixin, TestCase):
             with mock_cadir(ca_dir):
                 cmd("import_ca", name, key_path, pem_path)
 
-    @override_tmpcadir()
-    def test_bogus_pub(self) -> None:
-        """Test importing a CA with a bogus public key."""
-        name = "testname"
-        key_path = CERT_DATA["root"]["key_path"]
-        with assert_command_error(r"^Unable to load public key\.$"):
-            cmd("import_ca", name, key_path, Path(__file__).resolve())
-        self.assertEqual(CertificateAuthority.objects.count(), 0)
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_bogus_priv(self) -> None:
-        """Test importing a CA with a bogus private key."""
-        name = "testname"
-        pem_path = CERT_DATA["root"]["pub_path"]
-        with assert_command_error(r"^Unable to load private key\.$"):
-            cmd("import_ca", name, Path(__file__).resolve(), pem_path)
-        self.assertEqual(CertificateAuthority.objects.count(), 0)
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("db")
+def test_key_backend_option(ca_name: str) -> None:
+    """Test the --key-backend option."""
+    key_path = CERT_DATA["root"]["key_path"]
+    certificate_path = CERT_DATA["root"]["pub_path"]
+    out, err = cmd_e2e(["import_ca", ca_name, str(key_path), str(certificate_path), "--key-backend=default"])
+    assert out == ""
+    assert err == ""
+
+    ca = CertificateAuthority.objects.get(name=ca_name)
+    assert ca.key_backend_alias == "default"
+
+
+def test_bogus_public_key(ca_name: str) -> None:
+    """Test importing a CA with a bogus public key."""
+    key_path = CERT_DATA["root"]["key_path"]
+    with assert_command_error(r"^Unable to load public key\.$"):
+        cmd("import_ca", ca_name, key_path, Path(__file__).resolve())
+
+
+def test_bogus_private_key(ca_name: str) -> None:
+    """Test importing a CA with a bogus private key."""
+    pem_path = CERT_DATA["root"]["pub_path"]
+    with assert_command_error(r"^Unable to load private key\.$"):
+        cmd("import_ca", ca_name, Path(__file__).resolve(), pem_path)
+
+
+def test_invalid_private_key_type(ca_name: str) -> None:
+    """Test importing a CA with an invalid private key type."""
+    private_key = X448PrivateKey.generate()
+    private_key_der = private_key.private_bytes(
+        Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
+    )
+    private_key_path = os.path.join(settings.CA_DIR, "x448.key")  # type: ignore[arg-type]
+    with open(private_key_path, "wb") as stream:
+        stream.write(private_key_der)
+
+    pem_path = CERT_DATA["root"]["pub_path"]
+    with assert_command_error(r"^X448PrivateKey: Invalid private key type\.$"):
+        cmd("import_ca", ca_name, private_key_path, pem_path)

@@ -141,7 +141,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         for backend in key_backends:
             # TODO: methods in backend should be called add_create_* for consistency
             group = backend.add_create_private_key_group(parser)
-            if group is not None:
+            if group is not None:  # pragma: no branch  # all current backends add a group.
                 backend.add_create_private_key_arguments(group)
 
     def add_parent_private_key_storage_arguments(self, group: ArgumentGroup) -> None:

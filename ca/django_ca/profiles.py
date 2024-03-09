@@ -313,7 +313,8 @@ class Profile:
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
         public_key = typing.cast(CertificateIssuerPublicKeyTypes, csr.public_key())
-        if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):
+        # COVERAGE NOTE: unable to create CSR other types
+        if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
 
         # Add the SubjectKeyIdentifier extension

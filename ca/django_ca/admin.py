@@ -755,7 +755,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     if usable_ca.is_usable():
                         ca = usable_ca
 
-            if ca is None:
+            # NOTE: This should not happen because if no CA is usable from the admin interface, the "add"
+            # button would not even show up.
+            if ca is None:  # pragma: no cover
                 raise ImproperlyConfigured("Cannot determine default CA.")
 
             profile = profiles[ca_settings.CA_DEFAULT_PROFILE]

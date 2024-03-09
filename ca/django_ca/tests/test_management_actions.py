@@ -18,7 +18,7 @@ import os
 import sys
 from datetime import timedelta
 from io import StringIO
-from typing import Any, List
+from typing import Any, Iterator, List
 from unittest import mock
 
 from cryptography import x509
@@ -29,6 +29,10 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 
 from django.test import TestCase, override_settings
 
+import pytest
+from pytest_django.fixtures import SettingsWrapper
+
+from django_ca.backends import key_backends
 from django_ca.constants import ReasonFlags
 from django_ca.management import actions
 from django_ca.models import Certificate, CertificateAuthority
@@ -37,26 +41,57 @@ from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import dns, key_usage, override_tmpcadir, uri
 
 
+@pytest.fixture()
+def key_backend_parser(settings: SettingsWrapper) -> Iterator[argparse.ArgumentParser]:
+    """Fixture with a paser for various options."""
+    # Make sure that some settings are in place
+    settings.STORAGES = {
+        "django-ca": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "other-storage": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    }
+    settings.CA_KEY_BACKENDS = {
+        "default": {
+            "BACKEND": "django_ca.backends.storages.StoragesBackend",
+            "OPTIONS": {"storage_alias": "django-ca"},
+        },
+        "other": {
+            "BACKEND": "django_ca.backends.storages.StoragesBackend",
+            "OPTIONS": {"storage_alias": "other-storage"},
+        },
+    }
+
+    # Make sure that no key backends are loaded.
+    key_backends._reset()  # pylint: disable=protected-access
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--key-backend", action=actions.KeyBackendAction)
+    yield parser
+
+    # Make sure that no key backends are loaded after the test.
+    key_backends._reset()  # pylint: disable=protected-access
+
+
+def assert_parser_error(
+    parser: argparse.ArgumentParser, args: List[str], expected: str, **kwargs: Any
+) -> str:
+    """Assert that given args throw a parser error."""
+    kwargs.setdefault("script", os.path.basename(sys.argv[0]))
+    expected = expected.format(**kwargs)
+
+    buf = StringIO()
+    with pytest.raises(SystemExit), mock.patch("sys.stderr", buf):
+        parser.parse_args(args)
+
+    output = buf.getvalue()
+    assert output == expected
+    return output
+
+
 class ParserTestCaseMixin(TestCaseMixin):
     """Mixin class that provides assertParserError."""
 
     parser: argparse.ArgumentParser
     script = os.path.basename(sys.argv[0])
-
-    def assertParserError(  # pylint: disable=invalid-name
-        self, args: List[str], expected: str, **kwargs: Any
-    ) -> str:
-        """Assert that given args throw a parser error."""
-        kwargs.setdefault("script", self.script)
-        expected = expected.format(**kwargs)
-
-        buf = StringIO()
-        with self.assertRaises(SystemExit), mock.patch("sys.stderr", buf):
-            self.parser.parse_args(args)
-
-        output = buf.getvalue()
-        self.assertEqual(output, expected)
-        return output
 
 
 class AlternativeNameLegacyAction(ParserTestCaseMixin, TestCase):
@@ -153,7 +188,8 @@ class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase
 
     def test_missing_policy_identifier(self) -> None:
         """Test not passing a policy information before."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--cps", "http://example.com/cps"],
             "usage: {script} [-h] [--pi OID] [--cps URL]\n"
             "{script}: error: argument --cps: Must be preceded by --policy-identifier.\n",
@@ -161,7 +197,8 @@ class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase
 
     def test_invalid_url(self) -> None:
         """Test passing an invalid URL."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--pi", "1.2.3", "--cps", "not-a-url"],
             "usage: {script} [-h] [--pi OID] [--cps URL]\n"
             "{script}: error: argument --cps: not-a-url: Not a valid URL.\n",
@@ -197,7 +234,8 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_duplicate_values(self) -> None:
         """Test wrong option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--eku", "clientAuth", "1.3.6.1.5.5.7.3.2"],
             "usage: {script} [-h] [--eku EKU [EKU ...]]\n"
             "{script}: error: argument --eku: 1.3.6.1.5.5.7.3.2: "
@@ -206,7 +244,8 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_unknown_extended_key_usage(self) -> None:
         """Test wrong option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--eku", "FOO"],
             "usage: {script} [-h] [--eku EKU [EKU ...]]\n"
             "{script}: error: argument --eku: FOO: Not a dotted string or known Extended Key Usage.\n",
@@ -255,7 +294,8 @@ class PolicyIdentifierActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_any_policy_value_disallowed(self) -> None:
         """Test that the special anyPolicy value is correctly understood."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--pi", "anyPolicy"],
             "usage: {script} [-h] [--pi OID]\n"
             "{script}: error: argument --pi: anyPolicy is not allowed in this context.\n",
@@ -281,7 +321,8 @@ class PolicyIdentifierActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_invalid_dotted_string(self) -> None:
         """Test passing a value that is not a dotted string."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--pi", "abc"],
             "usage: {script} [-h] [--pi OID]\n"
             "{script}: error: argument --pi: invalid ObjectIdentifier value: 'abc'\n",
@@ -305,7 +346,8 @@ class IntegerRangeActionTestCase(ParserTestCaseMixin, TestCase):
         self.parser.add_argument("--value", action=actions.IntegerRangeAction, min=0)
         self.assertEqual(self.parser.parse_args(["--value=0"]).value, 0)
         self.assertEqual(self.parser.parse_args(["--value=1"]).value, 1)
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--value=-1"],
             "usage: {script} [-h] [--value INT]\n"
             "{script}: error: argument --value: INT must be equal or greater then 0.\n",
@@ -317,7 +359,8 @@ class IntegerRangeActionTestCase(ParserTestCaseMixin, TestCase):
         self.parser.add_argument("--value", action=actions.IntegerRangeAction, max=0)
         self.assertEqual(self.parser.parse_args(["--value=0"]).value, 0)
         self.assertEqual(self.parser.parse_args(["--value=-1"]).value, -1)
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--value=1"],
             "usage: {script} [-h] [--value INT]\n"
             "{script}: error: argument --value: INT must be equal or smaller then 0.\n",
@@ -344,7 +387,8 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_invalid_values(self) -> None:
         """Test passing invalid values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--key-usage", "foo"],
             "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
             "{script}: error: argument --key-usage: foo: Invalid key usage.\n",
@@ -352,13 +396,15 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test wrong option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--key-usage", "encipherOnly"],
             "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
             "{script}: error: argument --key-usage: encipher_only and decipher_only can only be true when "
             "key_agreement is true\n",
         )
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--key-usage", "decipherOnly"],
             "usage: {script} [-h] [--key-usage KEY_USAGE [KEY_USAGE ...]]\n"
             "{script}: error: argument --key-usage: encipher_only and decipher_only can only be true when "
@@ -383,7 +429,7 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
 #
 #     def test_error(self) -> None:
 #         """Test false option values."""
-#         self.assertParserError(
+#         assert_parser_error(self.parser,
 #             ["--name=/WRONG=foobar"],
 #             "usage: {script} [-h] [--name NAME]\n"
 #             "{script}: error: argument --name: Unknown x509 name field: WRONG\n",
@@ -414,7 +460,8 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test wrong option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--tls-feature", "FOO"],
             "usage: {script} [-h] [--tls-feature TLS_FEATURE [TLS_FEATURE ...]]\n"
             "{script}: error: argument --tls-feature: Unknown TLSFeature: FOO\n",
@@ -495,7 +542,8 @@ class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_missing_policy_identifier(self) -> None:
         """Test not passing a policy information before."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--notice", "http://example.com/cps"],
             "usage: {script} [-h] [--pi OID] [--notice TEXT]\n"
             "{script}: error: argument --notice: Must be preceded by --policy-identifier.\n",
@@ -503,7 +551,8 @@ class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_invalid_url(self) -> None:
         """Test passing a user notice that is too long."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--pi", "1.2.3", "--notice", "a" * 201],  # RFC 5280 says maximum length is 200 characters
             "usage: {script} [-h] [--pi OID] [--notice TEXT]\n"
             "{script}: error: argument --notice: TEXT must not be longer then 200 characters.\n",
@@ -531,7 +580,8 @@ class FormatActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--action=foo"],
             "usage: {script} [-h] [--action ACTION]\n"
             "{script}: error: argument --action: "
@@ -560,7 +610,8 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--curve=foo"],
             "usage: {script} [-h] [--curve {{secp256r1,secp384r1,secp521r1,...}}]\n"
             "{script}: error: argument --curve: invalid choice: 'foo' (choose from 'brainpoolP256r1', "
@@ -588,7 +639,8 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--algo=foo"],
             "usage: {script} [-h] [--algo {{SHA-512,SHA-256,...}}]\n"
             "{script}: error: argument --algo: invalid choice: 'foo' (choose from 'SHA-224', 'SHA-256', "
@@ -620,10 +672,10 @@ class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
         expected = """usage: {script} [-h] [--size SIZE]
 {script}: error: argument --size: %s: Must be a power of two (2048, 4096, ...).\n"""
 
-        self.assertParserError(["--size=2047"], expected % 2047)
-        self.assertParserError(["--size=2049"], expected % 2049)
-        self.assertParserError(["--size=3084"], expected % 3084)
-        self.assertParserError(["--size=4095"], expected % 4095)
+        assert_parser_error(self.parser, ["--size=2047"], expected % 2047)
+        assert_parser_error(self.parser, ["--size=2049"], expected % 2049)
+        assert_parser_error(self.parser, ["--size=3084"], expected % 3084)
+        assert_parser_error(self.parser, ["--size=4095"], expected % 4095)
 
     @override_settings(CA_MIN_KEY_SIZE=2048, CA_DEFAULT_KEY_SIZE=4096)
     def test_to_small(self) -> None:
@@ -631,16 +683,16 @@ class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
         expected = """usage: {script} [-h] [--size SIZE]
 {script}: error: argument --size: %s: Must be at least 2048 bits.\n"""
 
-        self.assertParserError(["--size=1024"], expected % 1024)
-        self.assertParserError(["--size=512"], expected % 512)
-        self.assertParserError(["--size=256"], expected % 256)
+        assert_parser_error(self.parser, ["--size=1024"], expected % 1024)
+        assert_parser_error(self.parser, ["--size=512"], expected % 512)
+        assert_parser_error(self.parser, ["--size=256"], expected % 256)
 
     def test_no_str(self) -> None:
         """Test giving values that are too small."""
         expected = """usage: {script} [-h] [--size SIZE]
 {script}: error: argument --size: foo: Must be an integer.\n"""
 
-        self.assertParserError(["--size=foo"], expected)
+        assert_parser_error(self.parser, ["--size=foo"], expected)
 
 
 class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
@@ -707,7 +759,8 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
     def test_missing(self) -> None:
         """Test giving an unknown cert."""
         serial = "foo"
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             [serial],
             "usage: {script} [-h] cert\n"
             "{script}: error: argument cert: {serial}: Certificate not found.\n",
@@ -723,7 +776,8 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
         cert.save()
 
         serial = cert.serial[:8]
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             [serial],
             "usage: {script} [-h] cert\n"
             "{script}: error: argument cert: {serial}: Multiple certificates match.\n",
@@ -756,7 +810,8 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_missing(self) -> None:
         """Test giving an unknown CA."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["foo"],
             "usage: {script} [-h] ca\n"
             "{script}: error: argument ca: foo: Certificate authority not found.\n",
@@ -770,7 +825,8 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         ca2.save()
 
         serial = ca2.serial[:8]
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             [serial],
             "usage: {script} [-h] ca\n"
             "{script}: error: argument ca: {serial}: Multiple Certificate authorities match.\n",
@@ -786,7 +842,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         expected = """usage: {script} [-h] ca
 {script}: error: argument ca: {serial}: Certificate authority not found.\n"""
 
-        self.assertParserError([self.ca.serial], expected, serial=self.ca.serial)
+        assert_parser_error(self.parser, [self.ca.serial], expected, serial=self.ca.serial)
 
         # test allow_disabled=True
         parser = argparse.ArgumentParser()
@@ -801,7 +857,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     #     self.ca.private_key_path = "does-not-exist"
     #     self.ca.save()
     #
-    #     self.assertParserError(
+    #     assert_parser_error(self.parser,
     #         [self.ca.serial],
     #         "usage: {script} [-h] ca\n"
     #         "{script}: error: argument ca: {name}: {path}: Private key does not exist.\n",
@@ -832,7 +888,8 @@ class URLActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--url=foo"],
             "usage: {script} [-h] [--url URL]\n{script}: error: argument --url: foo: Not a valid URL.\n",
         )
@@ -863,7 +920,8 @@ class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
     def test_negative(self) -> None:
         """Test passing a negative value."""
         # this always is one day more, because N days jumps to the next midnight.
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--expires=-1"],
             "usage: {script} [-h] [--expires EXPIRES]\n"
             "{script}: error: argument --expires: -1: Value must not be negative.\n",
@@ -872,7 +930,8 @@ class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
     def test_error(self) -> None:
         """Test false option values."""
         value = "foobar"
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             [f"--expires={value}"],
             "usage: {script} [-h] [--expires EXPIRES]\n"
             f"{{script}}: error: argument --expires: {value}: Value must be an integer.\n",
@@ -895,7 +954,8 @@ class ReasonActionTestCase(ParserTestCaseMixin, TestCase):
     def test_error(self) -> None:
         """Test false option values."""
         whitespace = " " * len(f"usage: {self.script} ")
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["foo"],
             "usage: {script} [-h]\n"
             + whitespace  # whitespace indent depends on length of the name of the script
@@ -939,7 +999,28 @@ class MultipleURLActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_error(self) -> None:
         """Test false option values."""
-        self.assertParserError(
+        assert_parser_error(
+            self.parser,
             ["--url=foo"],
             "usage: {script} [-h] [--url URL]\n{script}: error: argument --url: foo: Not a valid URL.\n",
         )
+
+
+# pylint: disable=redefined-outer-name
+def test_key_backend_action(key_backend_parser: argparse.ArgumentParser) -> None:
+    """Test the KeyBackendAction."""
+    assert key_backend_parser.parse_args(["--key-backend=default"]).key_backend == key_backends["default"]
+    assert key_backend_parser.parse_args(["--key-backend=other"]).key_backend == key_backends["other"]
+
+
+def test_key_backend_action_with_invalid_value(key_backend_parser: argparse.ArgumentParser) -> None:
+    """Test the KeyBackendAction."""
+    assert_parser_error(
+        key_backend_parser,
+        ["--key-backend=wrong"],
+        "usage: {script} [-h] [--key-backend {{default,other}}]\n"
+        "{script}: error: argument --key-backend: invalid choice: 'wrong' (choose from 'default', 'other')\n",
+    )
+
+
+# pylint: enable=redefined-outer-name

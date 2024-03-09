@@ -30,7 +30,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_command_error
+from django_ca.tests.base.assertions import assert_command_error, assert_e2e_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -213,7 +213,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         raises an extension.
         """
         root = self.cas["root"]
-        self.assertE2ECommandError(
+        assert_e2e_command_error(
             ["dump_crl", f"--ca={root.serial}", "--include-issuing-distribution-point"],
             b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
             b"",

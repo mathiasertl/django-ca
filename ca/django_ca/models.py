@@ -745,7 +745,8 @@ class CertificateAuthority(X509CertMixin):
 
         # Load (and check) the public key
         public_key = typing.cast(CertificateIssuerPublicKeyTypes, csr.public_key())
-        if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):
+        # COVERAGE NOTE: unable to create CSR other types
+        if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
 
         exts = OrderedDict([(ext.oid, ext) for ext in extensions])
@@ -1172,11 +1173,6 @@ class CertificateAuthority(X509CertMixin):
         return self.key_backend.sign_certificate_revocation_list(
             ca=self, use_private_key_options=key_backend_options, builder=builder, algorithm=algorithm
         )
-
-    def get_password(self) -> Optional[str]:
-        """Get password for the private key from the ``CA_PASSWORDS`` setting."""
-        # TODO: method should be removed
-        return ca_settings.CA_PASSWORDS.get(self.serial)
 
     @property
     def path_length(self) -> Optional[int]:

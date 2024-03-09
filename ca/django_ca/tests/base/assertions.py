@@ -130,8 +130,9 @@ def assert_certificate(
     parent: Optional[CertificateAuthority] = None,
 ) -> None:
     """Assert certificate properties."""
-    if isinstance(cert, Certificate):
+    if isinstance(cert, Certificate):  # pragma: no cover  # pylint: disable=no-else-raise
         parent = cert.ca
+        raise NotImplementedError("Remove no-cover pragma if this is caught.")
     elif parent is None:
         parent = cert
     else:
@@ -277,8 +278,8 @@ def assert_e2e_error(
 
     if isinstance(stdout, (str, bytes)):
         assert stdout == actual_stdout.getvalue()
-    elif isinstance(stdout.pattern, str):
-        assert stdout.search(actual_stdout.getvalue())  # pragma: no cover
+    elif isinstance(stdout.pattern, str):  # pragma: no cover
+        assert stdout.search(actual_stdout.getvalue())
     else:  # pragma: no cover
         raise NotImplementedError
 
