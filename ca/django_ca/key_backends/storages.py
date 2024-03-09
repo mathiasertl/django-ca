@@ -85,13 +85,13 @@ class UsePrivateKeyOptions(pydantic.BaseModel):
     @classmethod
     def load_default_password(cls, password: Optional[bytes], info: ValidationInfo) -> Optional[bytes]:
         """Validator to load the password from CA_PASSWORDS if not given."""
-        if info.context is not None and password is None:
+        if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
             if ca:
                 settings_password = ca_settings.CA_PASSWORDS.get(ca.serial)
                 if isinstance(settings_password, str):
                     return settings_password.encode()
-                elif isinstance(settings_password, bytes):
+                if isinstance(settings_password, bytes):
                     return settings_password
 
         return password
