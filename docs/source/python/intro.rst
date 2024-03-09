@@ -40,7 +40,7 @@ retrieve and manipulate CAs::
    >>> ca.save()
 
 To create a new CA, you have to :py:meth:`~django_ca.managers.CertificateAuthorityManager.init`, this example
-creates a minimal CA using the filesystem storage backend::
+creates a minimal CA using the file system storage backend::
 
    >>> from datetime import datetime
    >>> from django_ca.key_backends import key_backends

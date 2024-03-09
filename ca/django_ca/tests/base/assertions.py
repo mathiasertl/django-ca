@@ -196,7 +196,6 @@ def assert_crl(
     crl : bytes
         The raw CRL
     expected : list
-        CAs/certs to be expected in this CRL.
     signer
     expires
     algorithm

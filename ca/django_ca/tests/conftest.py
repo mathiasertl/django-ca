@@ -205,7 +205,7 @@ def user_client(user: "User", client: Client) -> Iterator[Client]:
 
 @pytest.fixture()
 def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrapper]:
-    """Fixture to create a temporary directory for storing files using the storages backend."""
+    """Fixture to create a temporary directory for storing files using the StoragesBackend."""
     settings.CA_DIR = str(tmp_path)
 
     # Set the full setting and do **not** update the setting in place. This *somehow* makes a difference.

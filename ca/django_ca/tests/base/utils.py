@@ -417,7 +417,7 @@ def mock_slug() -> Iterator[str]:
 
 @contextmanager
 def mock_cadir(path: str) -> Iterator[None]:
-    """Contextmanager to set the CA_DIR to a given path without actually creating it."""
+    """Context manager to set the CA_DIR to a given path without actually creating it."""
     with override_settings(CA_DIR=path), patch.object(ca_storage, "location", path), patch.object(
         ca_storage, "_location", path
     ):
