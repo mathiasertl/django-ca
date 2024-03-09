@@ -46,7 +46,7 @@ Welcome to django-ca's documentation!
 
    Introduction <python/intro>
    signals
-   python/backends
+   python/key_backends
    python/extensions
    python/profiles
    python/models

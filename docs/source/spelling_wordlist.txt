@@ -1,4 +1,5 @@
 AllowedHashTypes
+Parametrized
 Psycopg
 Pydantic
 Quickstart
@@ -18,6 +19,7 @@ cron
 datastructure
 dicts
 django
+doctests
 encipherment
 env
 filestorage

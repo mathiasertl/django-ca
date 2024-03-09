@@ -1,10 +1,10 @@
-#####################################
-``django_ca.backends`` - Key backends
-#####################################
+#########################################
+``django_ca.key_backends`` - Key backends
+#########################################
 
-******************
-Supported backends
-******************
+**********************
+Supported key backends
+**********************
 
 .. autoclass:: django_ca.key_backends.storages.StoragesBackend
 

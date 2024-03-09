@@ -88,10 +88,7 @@ class UsePrivateKeyOptions(pydantic.BaseModel):
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
             if ca:
-                settings_password = ca_settings.CA_PASSWORDS.get(ca.serial)
-                if isinstance(settings_password, str):
-                    return settings_password.encode()
-                if isinstance(settings_password, bytes):
+                if settings_password := ca_settings.CA_PASSWORDS.get(ca.serial):
                     return settings_password
 
         return password

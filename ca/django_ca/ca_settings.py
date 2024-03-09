@@ -293,7 +293,7 @@ if CA_DEFAULT_PROFILE not in CA_PROFILES:
 CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
 CA_NOTIFICATION_DAYS = getattr(settings, "CA_NOTIFICATION_DAYS", [14, 7, 3, 1])
 CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
-CA_PASSWORDS: Dict[str, str] = getattr(settings, "CA_PASSWORDS", {})
+CA_PASSWORDS: Dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
 
 # ACME settings
 CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", True)
