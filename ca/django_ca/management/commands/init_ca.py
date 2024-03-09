@@ -498,7 +498,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 expires=expires_datetime,
                 algorithm=algorithm,
                 parent=parent,
-                parent_key_backend_options=signer_key_backend_options,
+                use_parent_private_key_options=signer_key_backend_options,
                 path_length=path_length,
                 key_type=key_type,
                 extensions=extensions.values(),

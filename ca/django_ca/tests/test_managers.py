@@ -82,13 +82,7 @@ parent_key_backend_options = UsePrivateKeyOptions(password=None)
 def test_init(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create the most basic possible CA."""
     with assert_create_ca_signals():
-        ca = CertificateAuthority.objects.init(
-            ca_name,
-            key_backend,
-            key_backend_options,
-            subject,
-            parent_key_backend_options=parent_key_backend_options,
-        )
+        ca = CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject)
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
 
@@ -102,12 +96,7 @@ def test_init_with_dsa(ca_name: str, subject: x509.Name, key_backend: StoragesBa
     """Create a DSA-based CA."""
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
-            ca_name,
-            key_backend,
-            key_backend_options,
-            subject,
-            key_type="DSA",
-            parent_key_backend_options=parent_key_backend_options,
+            ca_name, key_backend, key_backend_options, subject, key_type="DSA"
         )
     assert_ca_properties(ca, ca_name, private_key_type=dsa.DSAPrivateKey)
     assert_certificate(ca, subject, algorithm=hashes.SHA256)
@@ -121,13 +110,7 @@ def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: Stora
     )
     test_parent_key_backend_options = UsePrivateKeyOptions(password=b"password")
     with assert_create_ca_signals():
-        ca = CertificateAuthority.objects.init(
-            ca_name,
-            key_backend,
-            test_key_backend_options,
-            subject,
-            parent_key_backend_options=test_parent_key_backend_options,
-        )
+        ca = CertificateAuthority.objects.init(ca_name, key_backend, test_key_backend_options, subject)
     assert_ca_properties(ca, ca_name, password=b"password")
     assert_certificate(ca, subject)
 
@@ -150,7 +133,7 @@ def test_init_intermediate(
             key_backend_options,
             subject,
             parent=usable_root,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
         )
     assert_ca_properties(ca, ca_name, parent=usable_root)
     assert_certificate(ca, subject, parent=usable_root)
@@ -168,7 +151,7 @@ def test_init_grandchild(
             key_backend_options,
             subject,
             parent=usable_child,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
         )
     assert_ca_properties(ca, ca_name, parent=usable_child)
     assert_certificate(ca, subject, parent=usable_child)
@@ -180,13 +163,7 @@ def test_openssh_ca(ca_name: str, subject: x509.Name, key_backend: StoragesBacke
     """Test OpenSSH CA support."""
     ca_key_backend_options = CreatePrivateKeyOptions(password=None, path="ca")
     ca = CertificateAuthority.objects.init(
-        ca_name,
-        key_backend,
-        ca_key_backend_options,
-        key_type="Ed25519",
-        subject=subject,
-        openssh_ca=True,
-        parent_key_backend_options=UsePrivateKeyOptions(password=None),
+        ca_name, key_backend, ca_key_backend_options, key_type="Ed25519", subject=subject, openssh_ca=True
     )
 
     assert ca.name == ca_name
@@ -220,6 +197,7 @@ def test_openssh_ca_for_intermediate(
             key_type="Ed25519",
             subject=subject,
             parent=root,
+            use_parent_private_key_options=parent_key_backend_options,
             openssh_ca=True,
         )
     assert CertificateAuthority.objects.filter(name=ca_name).exists() is False
@@ -236,7 +214,7 @@ def test_init_with_no_default_hostname(
             key_backend_options,
             subject,
             parent=usable_child,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
             default_hostname=False,
         )
     # Without a default hostname, we cannot set sign_* extension fields
@@ -263,12 +241,7 @@ def test_init_with_extra_extensions(ca_name: str, subject: x509.Name, key_backen
 
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
-            ca_name,
-            key_backend,
-            key_backend_options,
-            subject,
-            parent_key_backend_options=parent_key_backend_options,
-            extensions=extensions,
+            ca_name, key_backend, key_backend_options, subject, extensions=extensions
         )
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
@@ -296,7 +269,7 @@ def test_init_with_partial_authority_information_access(
             key_backend_options,
             subject,
             parent=usable_root,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
         )
 
@@ -314,7 +287,7 @@ def test_init_with_partial_authority_information_access(
             key_backend_options,
             subject,
             parent=usable_root,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
         )
     assert ca.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == authority_information_access(
@@ -342,7 +315,7 @@ def test_init_with_formatting(
             key_backend_options,
             subject,
             parent=usable_root,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
         )
 
@@ -376,7 +349,7 @@ def test_init_with_formatting_with_no_uri(
             key_backend_options,
             subject,
             parent=usable_root,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
         )
 
@@ -400,7 +373,7 @@ def test_init_with_formatting_with_rdn_in_crldp(
             key_backend_options,
             subject,
             parent=usable_root,
-            parent_key_backend_options=parent_key_backend_options,
+            use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
         )
     assert_ca_properties(ca, ca_name, parent=usable_root)
@@ -413,12 +386,7 @@ def test_init_with_no_extensions(ca_name: str, subject: x509.Name, key_backend: 
     """Test passing no extensions."""
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
-            ca_name,
-            key_backend,
-            key_backend_options,
-            subject,
-            parent_key_backend_options=parent_key_backend_options,
-            extensions=None,
+            ca_name, key_backend, key_backend_options, subject, extensions=None
         )
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
@@ -434,7 +402,6 @@ def test_init_with_acme_parameters(ca_name: str, subject: x509.Name, key_backend
             key_backend,
             key_backend_options,
             subject,
-            parent_key_backend_options=parent_key_backend_options,
             acme_enabled=True,
             acme_profile="client",
             acme_requires_contact=False,
@@ -452,7 +419,6 @@ def test_init_with_api_parameters(ca_name: str, subject: x509.Name, key_backend:
             key_backend,
             key_backend_options,
             subject,
-            parent_key_backend_options=parent_key_backend_options,
             api_enabled=True,
         )
     assert_ca_properties(ca, ca_name)

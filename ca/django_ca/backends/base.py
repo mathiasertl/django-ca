@@ -16,7 +16,7 @@ import abc
 import typing
 from datetime import datetime
 from threading import local
-from typing import Any, Dict, Iterator, List, Optional, Type
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 from pydantic import BaseModel
 
@@ -191,7 +191,7 @@ class KeyBackend(
     @abc.abstractmethod
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptionsTypeVar
-    ) -> CertificateIssuerPublicKeyTypes:
+    ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptionsTypeVar]:
         """Create a private key for the certificate authority.
 
         The method is expected to set `key_backend_options` on `ca` with a set of options that can later be
