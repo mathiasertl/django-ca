@@ -65,8 +65,6 @@ def add_elliptic_curve(parser: ActionsContainer) -> None:
 
 def add_password(parser: ActionsContainer, help_text: str = "") -> None:
     """Add a password option."""
-    if not help_text:
-        help_text = "Password used for accessing the private key of the CA."
     parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
 
 

@@ -447,6 +447,16 @@ def test_init_with_unknown_extension_type(subject: x509.Name, key_backend: Stora
     assert CertificateAuthority.objects.count() == 0
 
 
+@pytest.mark.django_db
+def test_init_with_parent_with_no_use_parent_private_key_options(
+    root: CertificateAuthority, subject: x509.Name, key_backend: StoragesBackend
+) -> None:
+    """Test that use_parent_private_key_options is a mandatory option when parent is passed."""
+    match = r"^use_parent_private_key_options is required when parent is passed\.$"
+    with pytest.raises(ValueError, match=match):
+        CertificateAuthority.objects.init("error", key_backend, key_backend_options, subject, parent=root)
+
+
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_default(root: CertificateAuthority, child: CertificateAuthority, settings: SettingsWrapper) -> None:
     """Test the correct CA is returned if CA_DEFAULT_CA is set."""

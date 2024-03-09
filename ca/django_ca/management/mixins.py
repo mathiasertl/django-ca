@@ -303,5 +303,5 @@ class UsePrivateKeyMixin:
         """Add arguments for loading a parent CA via its key backend."""
         for backend in key_backends:
             group = backend.add_use_private_key_group(parser)
-            if group is not None:
+            if group is not None:  # pragma: no branch  # all implementations add an option group
                 backend.add_use_private_key_arguments(group)

@@ -35,6 +35,7 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
 )
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 
@@ -94,8 +95,13 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     # Backend options
     storage_alias: str
 
-    # cached variables
-    _key: Optional[CertificateIssuerPrivateKeyTypes] = None
+    def __init__(self, alias: str, storage_alias: str) -> None:
+        if storage_alias not in settings.STORAGES:
+            raise ValueError(f"{alias}: {storage_alias}: Storage alias is not configured.")
+        super().__init__(alias, storage_alias=storage_alias)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, StoragesBackend) and self.storage_alias == other.storage_alias
 
     def _add_password_argument(self, group: ArgumentGroup) -> None:
         group.add_argument(
@@ -174,9 +180,9 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         else:
             encryption = serialization.BestAvailableEncryption(options.password)
 
-        self._key = generate_private_key(options.key_size, key_type, options.elliptic_curve)
+        key = generate_private_key(options.key_size, key_type, options.elliptic_curve)
 
-        der = self._key.private_bytes(
+        der = key.private_bytes(
             encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
         )
 
@@ -189,7 +195,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
         use_private_key_options = UsePrivateKeyOptions(password=options.password)
 
-        return self._key.public_key(), use_private_key_options
+        return key.public_key(), use_private_key_options
 
     def store_private_key(
         self,

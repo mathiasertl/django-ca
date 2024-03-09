@@ -31,7 +31,7 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
 from django_ca.backends import KeyBackend, key_backends
-from django_ca.constants import PRIVATE_KEY_TYPES
+from django_ca.constants import PRIVATE_KEY_TYPES, PUBLIC_KEY_TYPES
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
@@ -49,7 +49,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         """Add general arguments for private keys."""
         for backend in key_backends:
             group = backend.add_store_private_key_group(parser)
-            if group is not None:
+            if group is not None:  # pragma: no branch  # all current backends add a group.
                 backend.add_store_private_key_options(group)
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -106,8 +106,8 @@ Note that the private key will be copied to the directory configured by the CA_D
         ocsp_response_validity: Optional[int],
         **options: Any,
     ) -> None:
-        pem_data = pem.read()
         key_data = key.read()
+        certificate_data = pem.read()
 
         # close reader objects (otherwise we get a ResourceWarning)
         key.close()
@@ -179,15 +179,23 @@ Note that the private key will be copied to the directory configured by the CA_D
             if (api_enabled := options.get("api_enabled")) is not None:
                 ca.api_enabled = api_enabled
 
-        # load public key
+        # load certificate
         try:
-            pem_loaded = x509.load_pem_x509_certificate(pem_data)
+            loaded_certificate = x509.load_pem_x509_certificate(certificate_data)
         except Exception:  # pylint: disable=broad-except
             try:
-                pem_loaded = x509.load_der_x509_certificate(pem_data)
+                loaded_certificate = x509.load_der_x509_certificate(certificate_data)
             except Exception as ex:
                 raise CommandError("Unable to load public key.") from ex
-        ca.update_certificate(pem_loaded)
+
+        # Ensure correct certificate type
+        # COVERAGE NOTE: All public key types that can be encoded as PEM/DER work (x448/x255129 cannot be
+        #   encoded as PEM or DER).
+        if not isinstance(loaded_certificate.public_key(), PUBLIC_KEY_TYPES):  # pragma: no cover
+            raise CommandError(f"{loaded_certificate.__class__.__name__}: Invalid certificate type.")
+
+        # Store certificate and derived fields in database
+        ca.update_certificate(loaded_certificate)
 
         # load private key
         try:
@@ -198,9 +206,9 @@ Note that the private key will be copied to the directory configured by the CA_D
             except Exception as ex:
                 raise CommandError("Unable to load private key.") from ex
 
-        # Ensure correct type
+        # Ensure correct private key type
         if not isinstance(key_loaded, PRIVATE_KEY_TYPES):
-            raise CommandError(f"{key_loaded}: Invalid private key type.")
+            raise CommandError(f"{key_loaded.__class__.__name__}: Invalid private key type.")
         key_loaded = typing.cast(CertificateIssuerPrivateKeyTypes, key_loaded)
 
         # Store the private key

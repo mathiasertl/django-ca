@@ -222,7 +222,7 @@ class Command(DevCommand):
 
         # pylint: enable=import-outside-toplevel
 
-        self.UsePrivateKeyOptions = UsePrivateKeyOptions
+        self.UsePrivateKeyOptions = UsePrivateKeyOptions  # pylint: disable=invalid-name
 
         print("Creating database...", end="")
         manage("migrate", verbosity=0)

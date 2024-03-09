@@ -73,11 +73,6 @@ class KeyBackend(
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    @property
-    def class_path(self) -> str:
-        """Shortcut returning the full Python class path of this instance."""
-        return f"{self.__class__.__module__}.{self.__class__.__name__}"
-
     def add_create_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
         """Add an argument group for arguments for private key generation with this backend.
 
@@ -136,7 +131,8 @@ class KeyBackend(
     def add_store_private_key_options(self, group: ArgumentGroup) -> None:
         """Add arguments for storing private keys (when importing an existing CA)."""
 
-    def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:  # pylint: disable=unused-argument
+    # pylint: disable=unused-argument  # Method may not be overwritten, just providing default here
+    def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments required for using private key stored with this backend.
 
         The arguments you add here are expected to be loaded (and validated) using
@@ -265,16 +261,13 @@ class KeyBackends:
     def __init__(self) -> None:
         self._backends = local()
 
-    def __getitem__(self, name: Optional[str]) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
-        if name is None:
-            name = ca_settings.CA_DEFAULT_KEY_BACKEND
-
+    def __getitem__(self, name: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         try:
             return typing.cast(KeyBackend[BaseModel, BaseModel, BaseModel], self._backends.backends[name])
         except AttributeError:
-            self._backends.backends = {}
+            self._backends.backends = {}  # first backend is loaded
         except KeyError:
-            pass
+            pass  # this backend not yet loaded
 
         self._backends.backends[name] = self._get_key_backend(name)
         # TYPEHINT NOTE: _get_key_backend should not write anything into this variable
@@ -292,9 +285,8 @@ class KeyBackends:
         try:
             params = ca_settings.CA_KEY_BACKENDS[alias].copy()
         except KeyError as ex:
-            raise ImproperlyConfigured(
-                f"Could not find config for '{alias}' in settings.CA_KEY_BACKENDS"
-            ) from ex
+            raise ValueError(f"{alias}: key backend is not configured.") from ex
+
         backend = params.pop("BACKEND")
         options = params.pop("OPTIONS", {})
         try:
