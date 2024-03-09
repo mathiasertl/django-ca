@@ -89,7 +89,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         "It is most commonly used to store private keys on the filesystem. Custom file storage backends can "
         "be used to store keys on other systems (e.g. a cloud storage system)."
     )
-    load_model = UsePrivateKeyOptions
+    use_model = UsePrivateKeyOptions
 
     # Backend options
     storage_alias: str

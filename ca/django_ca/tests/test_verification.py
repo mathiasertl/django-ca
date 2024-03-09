@@ -78,7 +78,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         key_backend = key_backends["default"]
         key_backend_options = CreatePrivateKeyOptions(password=None, path="ca", key_size=1024)
         if kwargs.get("parent"):
-            kwargs["use_parent_private_key_options"] = key_backend.load_model(password=None)
+            kwargs["use_parent_private_key_options"] = key_backend.use_model(password=None)
         return CertificateAuthority.objects.init(name, key_backend, key_backend_options, subject, **kwargs)
 
     @contextmanager

@@ -53,7 +53,6 @@ creates a minimal CA using the filesystem storage backend::
    ...     name="ca-two",
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
    ... )
    <CertificateAuthority: ca-two>
