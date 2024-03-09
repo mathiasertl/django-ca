@@ -66,7 +66,7 @@ class KeyBackend(
     description: typing.ClassVar[str]
 
     #: The Pydantic model representing the options used for loading a private key.
-    load_model: Type[UsePrivateKeyOptionsTypeVar]
+    use_model: Type[UsePrivateKeyOptionsTypeVar]
 
     def __init__(self, alias: str, **kwargs: Any) -> None:
         self.alias = alias

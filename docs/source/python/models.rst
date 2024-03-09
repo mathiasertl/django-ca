@@ -43,7 +43,6 @@ but is designed to provide defaults that work in most cases::
    ...     name='ca',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
    ...     path_length=1  # so we can create one level of intermediate CAs
    ... )
@@ -57,7 +56,7 @@ intermediate CA, simply pass the parent::
    ...     name='child',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     use_parent_private_key_options=UsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
    ...     parent=ca
    ... )
@@ -74,9 +73,9 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    ...     name='full',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
    ...     parent=ca,  # some extensions are only valid for intermediate CAs
+   ...     use_parent_private_key_options=UsePrivateKeyOptions(password=None),
    ...
    ...     # Extensions for the certificate authority itself
    ...     extensions=[
@@ -160,7 +159,6 @@ always be added later (but of course, only new certificates will have the change
    ...     name='add-extensions',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     parent_key_backend_options=UsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "add-extensions")]),
    ...     sign_authority_information_access=authority_information_access,
    ...     sign_certificate_policies=certificate_policies,
@@ -181,7 +179,6 @@ There are some more parameters to configure how the CA will be signed::
    ...     name='props',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     parent_key_backend_options=UsePrivateKeyOptions(password=b'foobar'),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
    ...     algorithm=hashes.SHA256(),  # SHA512 would be the default
    ...     path_length=3,  # three levels of intermediate CAs allowed,

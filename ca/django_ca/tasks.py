@@ -86,7 +86,7 @@ def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
 def cache_crl(serial: str, key_backend_options: Dict[str, Any]) -> None:
     """Task to cache the CRL for a given CA."""
     ca = CertificateAuthority.objects.get(serial=serial)
-    key_backend_options_model = ca.key_backend.load_model.model_validate(key_backend_options)
+    key_backend_options_model = ca.key_backend.use_model.model_validate(key_backend_options)
     ca.cache_crls(key_backend_options_model)
 
 
@@ -128,7 +128,7 @@ def generate_ocsp_key(
     a new certificate was generated, otherwise it returns ``None``.
     """
     ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
-    key_backend_options_model = ca.key_backend.load_model.model_validate(key_backend_options)
+    key_backend_options_model = ca.key_backend.use_model.model_validate(key_backend_options)
 
     parsed_expires: Optional[timedelta] = None
     parsed_algorithm: Optional[AllowedHashTypes] = None
