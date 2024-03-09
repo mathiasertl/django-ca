@@ -29,8 +29,8 @@ from django.urls import reverse
 
 from freezegun import freeze_time
 
-from django_ca.backends import key_backends
-from django_ca.backends.storages import CreatePrivateKeyOptions
+from django_ca.key_backends import key_backends
+from django_ca.key_backends.storages import CreatePrivateKeyOptions
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin

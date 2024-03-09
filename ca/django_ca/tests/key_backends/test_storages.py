@@ -17,8 +17,8 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
-from django_ca.backends import key_backends
-from django_ca.backends.storages import StoragesBackend, UsePrivateKeyOptions
+from django_ca.key_backends import key_backends
+from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 
 
@@ -27,7 +27,7 @@ def test_invalid_storages_alias(settings: SettingsWrapper) -> None:
     """Test configuring an invalid storage alias."""
     settings.CA_KEY_BACKENDS = {
         ca_settings.CA_DEFAULT_KEY_BACKEND: {
-            "BACKEND": "django_ca.backends.storages.StoragesBackend",
+            "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "invalid"},
         },
     }

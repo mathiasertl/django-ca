@@ -30,7 +30,7 @@ from freezegun import freeze_time
 
 from ca import settings
 from django_ca import ca_settings
-from django_ca.backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS

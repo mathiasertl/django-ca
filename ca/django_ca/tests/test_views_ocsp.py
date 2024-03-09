@@ -38,8 +38,8 @@ from django.urls import path, re_path, reverse
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import ReasonFlags
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DIR, TIMESTAMPS

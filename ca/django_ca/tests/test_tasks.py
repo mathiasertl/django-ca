@@ -42,7 +42,7 @@ import requests_mock
 from freezegun import freeze_time
 
 from django_ca import ca_settings, tasks
-from django_ca.backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,

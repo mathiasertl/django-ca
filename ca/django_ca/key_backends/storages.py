@@ -40,7 +40,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 
 from django_ca import constants
-from django_ca.backends.base import KeyBackend
+from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType

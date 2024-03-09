@@ -47,9 +47,9 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,

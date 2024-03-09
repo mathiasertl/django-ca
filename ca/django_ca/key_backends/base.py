@@ -77,9 +77,9 @@ class KeyBackend(
         """Add an argument group for arguments for private key generation with this backend.
 
         By default, the title and description of the argument group is based on
-        :py:attr:`~django_ca.backends.base.KeyBackend.alias`,
-        :py:attr:`~django_ca.backends.base.KeyBackend.title` and
-        :py:attr:`~django_ca.backends.base.KeyBackend.description`.
+        :py:attr:`~django_ca.key_backends.base.KeyBackend.alias`,
+        :py:attr:`~django_ca.key_backends.base.KeyBackend.title` and
+        :py:attr:`~django_ca.key_backends.base.KeyBackend.description`.
 
         Return ``None`` if you don't need to create such a group.
         """
@@ -92,7 +92,7 @@ class KeyBackend(
         """Add an argument group for storing private keys (when importing an existing CA).
 
         By default, this method adds the same group as
-        :py:func:`~django_ca.backends.base.KeyBackend.add_create_private_key_group`
+        :py:func:`~django_ca.key_backends.base.KeyBackend.add_create_private_key_group`
         """
         return self.add_create_private_key_group(parser)
 
@@ -100,8 +100,8 @@ class KeyBackend(
         """Add an argument group for arguments required for using a private key stored with this backend.
 
         By default, the title and description of the argument group is based on
-        :py:attr:`~django_ca.backends.base.KeyBackend.alias` and
-        :py:attr:`~django_ca.backends.base.KeyBackend.title`.
+        :py:attr:`~django_ca.key_backends.base.KeyBackend.alias` and
+        :py:attr:`~django_ca.key_backends.base.KeyBackend.title`.
 
         Return ``None`` if you don't need to create such a group.
         """
@@ -116,7 +116,7 @@ class KeyBackend(
 
         Add arguments that can be used for generating private keys with your backend to `group`. The arguments
         you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.backends.base.KeyBackend.get_create_private_key_options`.
+        :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options`.
         """
 
     @abc.abstractmethod
@@ -124,7 +124,7 @@ class KeyBackend(
         """Add arguments for loading the private key of a parent certificate authority.
 
         The arguments you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.backends.base.KeyBackend.get_load_parent_private_key_options`.
+        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_parent_private_key_options`.
         """
 
     @abc.abstractmethod
@@ -136,7 +136,7 @@ class KeyBackend(
         """Add arguments required for using private key stored with this backend.
 
         The arguments you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.backends.base.KeyBackend.get_load_parent_private_key_options`.
+        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_parent_private_key_options`.
         """
         return None
 
@@ -147,7 +147,8 @@ class KeyBackend(
         """Load options to create private keys into a Pydantic model.
 
         `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The
-        returned model will be passed to :py:func:`~django_ca.backends.base.KeyBackend.create_private_key`.
+        returned model will be passed to
+        :py:func:`~django_ca.key_backends.base.KeyBackend.create_private_key`.
         """
 
     @abc.abstractmethod
@@ -179,7 +180,7 @@ class KeyBackend(
         """Boolean returning if the given `ca` can be used to sign new certificates (or CRLs).
 
         The `options` are the options returned by
-        :py:func:`~django_ca.backends.base.KeyBackend.get_load_private_key_options`. It may be ``None`` in
+        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_private_key_options`. It may be ``None`` in
         cases where key options cannot (yet) be loaded. If ``None``, the backend should return ``False`` if it
         knows for sure that it will not be usable, and ``True`` if usability cannot be determined.
         """

@@ -30,8 +30,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
-from django_ca.backends import KeyBackend, key_backends
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
+from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType, EllipticCurves
 from django_ca.utils import is_power2, parse_encoding, parse_general_name

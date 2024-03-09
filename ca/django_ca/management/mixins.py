@@ -25,8 +25,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from django_ca import ca_settings
-from django_ca.backends import key_backends
 from django_ca.extensions import extension_as_text, get_extension_name
+from django_ca.key_backends import key_backends
 from django_ca.management import actions
 from django_ca.management.actions import IntegerRangeAction, KeyBackendAction
 from django_ca.models import CertificateAuthority, X509CertMixin

@@ -54,10 +54,10 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from django_ca.backends import KeyBackend, key_backends
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.extensions import get_extension_name
+from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.managers import (
     AcmeAccountManager,
     AcmeAuthorizationManager,

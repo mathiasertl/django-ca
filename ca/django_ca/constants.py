@@ -59,7 +59,7 @@ ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = 
     }
 )
 
-DEFAULT_STORAGE_BACKEND = "django_ca.backends.storages.StoragesBackend"
+DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: "MappingProxyType[EllipticCurves, Type[ec.EllipticCurve]]" = MappingProxyType(

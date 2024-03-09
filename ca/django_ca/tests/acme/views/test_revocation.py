@@ -27,8 +27,8 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.backends.storages import UsePrivateKeyOptions
 from django_ca.constants import ReasonFlags
+from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder, Certificate
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
