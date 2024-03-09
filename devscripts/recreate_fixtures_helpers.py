@@ -41,6 +41,8 @@ from freezegun import freeze_time
 
 from devscripts import config
 from django_ca import ca_settings
+from django_ca.backends import key_backends
+from django_ca.backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.pydantic.extensions import (
@@ -135,7 +137,8 @@ def _write_ca(
         encryption: KeySerializationEncryption = NoEncryption()
     else:
         encryption = BestAvailableEncryption(password)
-    key_der = ca.key(password=password).private_bytes(
+    key_backend_options = UsePrivateKeyOptions(password=password)
+    key_der = ca.key_backend.get_key(ca, key_backend_options).private_bytes(  # type: ignore[attr-defined]
         encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
     )
 
@@ -262,25 +265,32 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
     for name in ca_names:
         # Get some data from the parent, if present
         parent: Optional[CertificateAuthority] = None
+        use_parent_private_key_options = None
         parent_name = data[name].get("parent")
         if parent_name:
             parent = CertificateAuthority.objects.get(name=parent_name)
+            use_parent_private_key_options = UsePrivateKeyOptions(password=data[parent_name].get("password"))
 
         freeze_now = now
         if delay:
             freeze_now += data[name]["delta"]
 
+        key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
+        key_backend_options = CreatePrivateKeyOptions(
+            password=data[name].get("password"), path="ca", key_size=data[name].get("key_size")
+        )
         with freeze_time(freeze_now):
             ca = CertificateAuthority.objects.init(
-                name=data[name]["name"],
-                password=data[name].get("password"),
+                data[name]["name"],
+                key_backend,
+                key_backend_options,
                 subject=x509.Name(parse_serialized_name_attributes((data[name]["subject"]))),
                 expires=datetime.now(tz=tz.utc) + data[name]["expires"],
                 key_type=data[name]["key_type"],
-                key_size=data[name].get("key_size"),
                 algorithm=data[name].get("algorithm"),
                 path_length=data[name]["path_length"],
                 parent=parent,
+                use_parent_private_key_options=use_parent_private_key_options,
             )
 
         ca_instances.append(ca)
@@ -316,11 +326,11 @@ def create_certs(
         with freeze_time(freeze_now):
             cert = Certificate.objects.create_cert(
                 ca=ca,
+                key_backend_options=UsePrivateKeyOptions(password=pwd),
                 csr=csr,
                 profile=profiles["server"],
                 expires=data[name]["expires"],
                 algorithm=data[name]["algorithm"],
-                password=pwd,
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
                 extensions=data[name].get("extensions", {}).values(),
             )
@@ -349,11 +359,11 @@ def create_certs(
         with freeze_time(freeze_now):
             cert = Certificate.objects.create_cert(
                 ca=ca,
+                key_backend_options=UsePrivateKeyOptions(password=pwd),
                 csr=csr,
                 profile=profiles[profile],
                 algorithm=data[name]["algorithm"],
                 expires=data[name]["expires"],
-                password=pwd,
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
                 extensions=data[name].get("extensions", {}).values(),
             )
@@ -390,7 +400,8 @@ def create_special_certs(  # noqa: PLR0915
         builder = builder.issuer_name(ca.pub.loaded.subject)
         builder = builder.public_key(csr.public_key())
 
-        x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256())
+        key = ca.key_backend.get_key(ca, UsePrivateKeyOptions(password=pwd))  # type: ignore[attr-defined]
+        x509_cert = builder.sign(private_key=key, algorithm=hashes.SHA256())
         cert = Certificate(ca=ca)
         cert.update_certificate(x509_cert)
         _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -418,12 +429,12 @@ def create_special_certs(  # noqa: PLR0915
     with freeze_time(now + data[name]["delta"]):
         cert = Certificate.objects.create_cert(
             ca=ca,
+            key_backend_options=UsePrivateKeyOptions(password=data[ca.name].get("password")),
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
             subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
             expires=data[name]["expires"],
-            password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
         )
     _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -440,12 +451,12 @@ def create_special_certs(  # noqa: PLR0915
     with freeze_time(now + data[name]["delta"]):
         cert = Certificate.objects.create_cert(
             ca=ca,
+            key_backend_options=UsePrivateKeyOptions(password=data[ca.name].get("password")),
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
             subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
             expires=data[name]["expires"],
-            password=data[ca.name].get("password"),
             extensions=data[name]["extensions"].values(),
         )
     _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -475,7 +486,8 @@ def create_special_certs(  # noqa: PLR0915
         for ext in data[name]["extensions"].values():
             builder = builder.add_extension(ext.value, ext.critical)
 
-        x509_cert = builder.sign(private_key=ca.key(pwd), algorithm=hashes.SHA256())
+        key = ca.key_backend.get_key(ca, UsePrivateKeyOptions(password=pwd))  # type: ignore[attr-defined]
+        x509_cert = builder.sign(private_key=key, algorithm=hashes.SHA256())
         cert = Certificate(ca=ca)
         cert.update_certificate(x509_cert)
 

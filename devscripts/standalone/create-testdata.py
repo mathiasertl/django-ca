@@ -58,6 +58,9 @@ except ModuleNotFoundError as django_ex:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first
+from django_ca import ca_settings  # noqa: E402
+from django_ca.backends import key_backends  # noqa: E402
+from django_ca.backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions  # noqa: E402
 from django_ca.models import Certificate, CertificateAuthority  # noqa: E402
 
 # pylint: enable=wrong-import-position
@@ -111,7 +114,9 @@ def create_cert(ca: CertificateAuthority) -> Certificate:
     csr_request = csr_builder.sign(cert_key, hashes.SHA256())
 
     # Create a certificate
-    cert = Certificate.objects.create_cert(ca=ca, csr=csr_request, subject=subject)
+    cert = Certificate.objects.create_cert(
+        ca=ca, key_backend_options=UsePrivateKeyOptions(password=None), csr=csr_request, subject=subject
+    )
     return cert
 
 
@@ -121,27 +126,48 @@ test_initial_state(args.env)
 if args.env != "frontend":
     print("* User for admin interface: user / nopass")
     User.objects.create_superuser(username="user", password="nopass")
+    key_backend = key_backends["default"]
 
-    rsa_root = CertificateAuthority.objects.init(name="rsa.example.com", subject=cn("rsa.example.com"))
+    rsa_root = CertificateAuthority.objects.init(
+        "rsa.example.com",
+        key_backend,
+        CreatePrivateKeyOptions(password=None, path="ca", key_size=2048),
+        subject=cn("rsa.example.com"),
+    )
     ec_root = CertificateAuthority.objects.init(
-        name="ecc.example.net", subject=cn("ecc.example.net"), key_type="EC"
+        "ecc.example.net",
+        key_backend,
+        CreatePrivateKeyOptions(
+            password=None, path="ca", elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+        ),
+        subject=cn("ecc.example.net"),
+        key_type="EC",
     )
 
     rsa_child = CertificateAuthority.objects.init(
-        name="child.rsa.example.com", subject=cn("child.rsa.example.com"), parent=rsa_root, path="ca/shared/"
+        "child.rsa.example.com",
+        key_backend,
+        CreatePrivateKeyOptions(password=None, path="ca/shared/"),
+        subject=cn("child.rsa.example.com"),
+        parent=rsa_root,
+        use_parent_private_key_options=UsePrivateKeyOptions(password=None),
     )
-    ecc_child = CertificateAuthority.objects.init(
-        name="child.ecc.example.net",
+    ec_child = CertificateAuthority.objects.init(
+        "child.ecc.example.net",
+        key_backend,
+        CreatePrivateKeyOptions(
+            password=None, path="ca/shared/", elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+        ),
         subject=cn("child.ecc.example.net"),
         key_type="EC",
         parent=ec_root,
-        path="ca/shared/",
+        use_parent_private_key_options=UsePrivateKeyOptions(password=None),
     )
 else:
     rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")
     ec_root = CertificateAuthority.objects.get(name="ecc.example.net")
     rsa_child = CertificateAuthority.objects.get(name="child.rsa.example.com")
-    ecc_child = CertificateAuthority.objects.get(name="child.ecc.example.net")
+    ec_child = CertificateAuthority.objects.get(name="child.ecc.example.net")
 
 # we can only create certs for root CAs if we're not in the frontend environment
 if args.env != "frontend":
@@ -150,4 +176,4 @@ if args.env != "frontend":
 
 if args.env != "backend":
     rsa_child_cert = create_cert(rsa_child)
-    ecc_child_cert = create_cert(ecc_child)
+    ecc_child_cert = create_cert(ec_child)
