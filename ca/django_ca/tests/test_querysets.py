@@ -13,7 +13,6 @@
 
 """Test querysets."""
 
-import typing
 from contextlib import contextmanager
 from typing import Any, Iterator
 
@@ -22,7 +21,6 @@ from django.test import TestCase, TransactionTestCase, override_settings
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
@@ -34,7 +32,6 @@ from django_ca.models import (
 )
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
-from django_ca.tests.base.utils import basic_constraints, key_usage, override_tmpcadir
 
 
 class QuerySetTestCaseMixin(TestCaseMixin):

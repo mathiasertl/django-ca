@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="certificateauthority",
             name="key_backend_options",
-            field=models.JSONField(default=dict, help_text="Key backend options"),
+            field=models.JSONField(blank=True, default=dict, help_text="Key backend options"),
         ),
         migrations.AddField(
             model_name="certificateauthority",
