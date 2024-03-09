@@ -16,7 +16,7 @@
 import typing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pydantic
 from pydantic import ConfigDict
@@ -166,7 +166,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
-    ) -> CertificateIssuerPublicKeyTypes:
+    ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
         storage = storages[self.storage_alias]
 
         if options.password is None:
@@ -187,7 +187,9 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         # Update model instance
         ca.key_backend_options = {"path": path}
 
-        return self._key.public_key()
+        use_private_key_options = UsePrivateKeyOptions(password=options.password)
+
+        return self._key.public_key(), use_private_key_options
 
     def store_private_key(
         self,

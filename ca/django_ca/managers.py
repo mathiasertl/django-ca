@@ -226,7 +226,7 @@ class CertificateAuthorityManager(
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
         parent: Optional["CertificateAuthority"] = None,
-        parent_key_backend_options: Any = None,
+        use_parent_private_key_options: Optional[BaseModel] = None,
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,
         key_type: ParsableKeyType = "RSA",
@@ -287,8 +287,9 @@ class CertificateAuthorityManager(
         parent : :py:class:`~django_ca.models.CertificateAuthority`, optional
             Parent certificate authority for the new CA. Passing this value makes the CA an intermediate
             authority. Let unset if this CA will be used for OpenSSH.
-        parent_key_backend_options : BaseModel
-            Transient parameters required for signing certificates with `parent` (e.g. a password).
+        use_parent_private_key_options : BaseModel, optional
+            Transient parameters required for signing certificates with `parent` (e.g. a password). This
+            argument is required if `parent` is given.
         default_hostname : str, optional
             Override the URL configured with :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` with a
             different hostname. Set to ``False`` to disable the hostname.
@@ -334,11 +335,13 @@ class CertificateAuthorityManager(
         Raises
         ------
         ValueError
-            For various cases of wrong input data (e.g. ``key_size`` not being the power of two).
-        PermissionError
-            If the private key file cannot be written to disk.
+            For various cases of wrong input data (e.g. extensions of invalid type).
         """
         # pylint: disable=too-many-locals
+        if parent is not None and use_parent_private_key_options is None:
+            raise ValueError("use_parent_private_key_options is required when parent is passed.")
+        if openssh_ca and parent:
+            raise ValueError("OpenSSH does not support intermediate authorities")
         if extensions is None:
             extensions = []
         else:
@@ -353,9 +356,6 @@ class CertificateAuthorityManager(
         algorithm = validate_public_key_parameters(key_type, algorithm)
 
         expires = parse_expires(expires)
-
-        if openssh_ca and parent:
-            raise ValueError("OpenSSH does not support intermediate authorities")
 
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
@@ -498,7 +498,9 @@ class CertificateAuthorityManager(
         )
 
         # Actually generate the private key and set ca.key_backend_options.
-        public_key = key_backend.create_private_key(ca, key_type, key_backend_options)
+        public_key, use_private_key_options = key_backend.create_private_key(
+            ca, key_type, key_backend_options
+        )
 
         # Add Basic Constraints extension
         extensions.append(
@@ -527,6 +529,7 @@ class CertificateAuthorityManager(
         else:
             signer_ca = parent
             signer_backend = parent.key_backend
+            use_private_key_options = use_parent_private_key_options
             aki = parent.get_authority_key_identifier()
             issuer = parent.subject
 
@@ -537,7 +540,7 @@ class CertificateAuthorityManager(
         # Sign the certificate
         certificate = signer_backend.sign_certificate(
             signer_ca,
-            parent_key_backend_options,
+            use_private_key_options,
             public_key,
             serial,
             algorithm,
