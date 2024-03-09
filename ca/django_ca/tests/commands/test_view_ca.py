@@ -21,6 +21,9 @@ from cryptography import x509
 from django.conf import settings
 from django.test import TestCase
 
+from freezegun import freeze_time
+
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, issuer_alternative_name, override_tmpcadir, uri
 from django_ca.utils import format_general_name
@@ -1091,7 +1094,7 @@ Digest:
   * commonName (CN): GlobalSign Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
-* Status: Expired
+* Status: Valid
 
 Certificate Authority information:
 * Certificate authority is a root CA.
@@ -1705,6 +1708,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         return "\n".join(textwrap.wrap(text, columns, subsequent_indent=" " * 11))
 
     @override_tmpcadir()
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_all_cas(self) -> None:
         """Test viewing all CAs."""
         for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
@@ -1714,6 +1718,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
             assert stderr == ""
 
     @override_tmpcadir(USE_TZ=True)
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_with_timezone_support(self) -> None:
         """Test viewing certificate with USE_TZ=True."""
         self.assertTrue(settings.USE_TZ)
@@ -1724,6 +1729,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
     @override_tmpcadir(USE_TZ=False)
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_with_use_tz_is_false(self) -> None:
         """Test viewing certificate without timezone support."""
         self.assertFalse(settings.USE_TZ)
@@ -1734,6 +1740,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
     @override_tmpcadir()
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_properties(self) -> None:
         """Test viewing of various optional properties."""
         ca = self.cas["root"]
@@ -1751,6 +1758,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertMultiLineEqual(stdout, expected["root-properties"].format(ca=ca, **data))
 
     @override_tmpcadir(CA_ENABLE_ACME=False)
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_acme_disabled(self) -> None:
         """Test viewing when ACME is disabled."""
         stdout, stderr = cmd("view_ca", self.cas["root"].serial, wrap=False)
@@ -1767,6 +1775,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertMultiLineEqual(stdout, expected["root-no-extensions"].format(**data))
 
     @override_tmpcadir()
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_sign_options(self) -> None:
         """Test options for signing certificates."""
         ian_uri = uri("http://ian.example.com")
@@ -1792,6 +1801,7 @@ class ViewCATestCase(TestCaseMixin, TestCase):
         self.assertMultiLineEqual(stdout, expected["root-sign-options"].format(**data))
 
     @override_tmpcadir()
+    @freeze_time(TIMESTAMPS["everything_valid"])
     def test_sign_options_only_issuer_alternative_name(self) -> None:
         """Test options for signing certificates with only an Issuer Alternative Name.
 
