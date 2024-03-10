@@ -22,7 +22,6 @@
 import base64
 import binascii
 import logging
-import os
 import typing
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
@@ -50,7 +49,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
@@ -231,12 +230,6 @@ class OCSPView(View):
             serial = self.responder_cert.replace(":", "")
             return Certificate.objects.get(serial=serial).pub.loaded
         else:
-            if os.path.isabs(self.responder_cert):
-                log.warning(
-                    "%s: OCSP responder uses absolute path to certificate. Please see %s.",
-                    self.responder_cert,
-                    ca_settings.CA_FILE_STORAGE_URL,
-                )
             responder_cert = read_file(self.responder_cert)
 
         try:

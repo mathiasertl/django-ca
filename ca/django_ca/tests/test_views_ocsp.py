@@ -37,7 +37,6 @@ from django.urls import path, re_path, reverse
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate
@@ -149,15 +148,6 @@ urlpatterns = [
         name="false-key",
     ),
     # set invalid responder_certs
-    re_path(
-        r"^ocsp/false-pem/(?P<data>[a-zA-Z0-9=+/]+)$",
-        OCSPView.as_view(
-            ca=CERT_DATA["child"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert="/false/foobar/",
-        ),
-        name="false-pem",
-    ),
     re_path(
         r"^ocsp/false-pem-serial/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
@@ -627,18 +617,6 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         """Try configuring a bad responder cert."""
         data = base64.b64encode(req1).decode("utf-8")
         msg = "ERROR:django_ca.views:Could not read responder key/cert."
-        prefix = "WARNING:django_ca.views"
-
-        url = ca_settings.CA_FILE_STORAGE_URL
-        urlpath = "/false/foobar/"
-        pem_msg = f"{prefix}:{urlpath}: OCSP responder uses absolute path to certificate. Please see {url}."
-
-        with self.assertLogs() as logcm:
-            response = self.client.get(reverse("false-pem", kwargs={"data": data}))
-        self.assertEqual(logcm.output, [pem_msg, msg])
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        ocsp_response = ocsp.load_der_ocsp_response(response.content)
-        self.assertEqual(ocsp_response.response_status, ocsp.OCSPResponseStatus.INTERNAL_ERROR)
 
         with self.assertLogs() as logcm:
             response = self.client.get(reverse("false-pem-serial", kwargs={"data": data}))

@@ -42,6 +42,9 @@ ChangeLog
 
 * Add :doc:`Pydantic models for cryptography classes <python/pydantic>`. These are required for the REST API,
   but are also used internally for various places where serialization of objects is required.
+* Support for configuring absolute paths for OCSP responder certificates in manual OCSP views was removed.
+  This was a left over, it was deprecated and issued a warning since 2019.
+
 
 REST API changes
 ================
