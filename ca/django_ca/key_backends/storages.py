@@ -45,7 +45,7 @@ from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
-from django_ca.utils import generate_private_key, get_cert_builder, read_file, validate_private_key_parameters
+from django_ca.utils import generate_private_key, get_cert_builder, validate_private_key_parameters
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority

@@ -1,14 +1,18 @@
+# The "django-ca" storage alias is mandatory. Added by default in full project
+# setups (from source, or with Docker or Docker Compose), but must be set if
+# used as Django app. In full project setups, you can also just set CA_DIR to
+# change the storage directory.
 STORAGES:
   default:
     BACKEND: django.core.files.storage.FileSystemStorage
+  staticfiles:
+    BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
   django-ca:
     BACKEND: django.core.files.storage.FileSystemStorage
     OPTIONS:
       directory_permissions_mode: 0700
       file_permissions_mode: 0600
       location: files/
-  staticfiles:
-    BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
 
 CA_KEY_BACKENDS:
   default:
