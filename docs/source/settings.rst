@@ -353,8 +353,24 @@ CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
 CA_PASSWORDS
    Default: ``{}``
 
-   A dictionary configuring passwords for the private keys of CAs. This setting is required if you create a CA
-   with an encrypted private key and want to automatically create CRLs and OCSP keys.
+   A dictionary configuring passwords for the private keys of CAs. It is a mapping of certificate authority
+   serials and their respective password.
+
+   This setting is required for automatically generating CRLs and OCSP keys for certificate authorities that
+   where encrypted with a password and that use the default file system storage to store private keys.
+
+   Example:
+
+   .. tab:: in Python
+
+      .. literalinclude:: include/config/setting_ca_passwords.py
+         :language: python
+
+   .. tab:: with YAML
+
+      .. literalinclude:: include/config/setting_ca_passwords.yaml
+         :language: yaml
+
 
 .. _settings-ca-profiles:
 

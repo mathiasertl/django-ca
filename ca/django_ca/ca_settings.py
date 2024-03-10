@@ -293,7 +293,16 @@ if CA_DEFAULT_PROFILE not in CA_PROFILES:
 CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
 CA_NOTIFICATION_DAYS = getattr(settings, "CA_NOTIFICATION_DAYS", [14, 7, 3, 1])
 CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
+
+# Load and process CA_PASSWORDS
 CA_PASSWORDS: Dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
+for key, value in CA_PASSWORDS.items():
+    if isinstance(value, str):
+        value = value.encode("utf-8")
+    elif not isinstance(value, bytes):
+        raise ImproperlyConfigured(f"CA_PASSWORDS: {value}: value must be bytes or str.")
+    CA_PASSWORDS[key] = value
+CA_PASSWORDS = {key.upper().replace(":", ""): value for key, value in CA_PASSWORDS.items()}
 
 # ACME settings
 CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", True)

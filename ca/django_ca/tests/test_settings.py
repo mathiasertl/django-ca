@@ -26,6 +26,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from ca.settings_utils import (
     get_settings_files,
@@ -294,6 +295,21 @@ def test_load_secret_key_with_no_secret_key_file() -> None:
     """Test exception when no SECRET_KEY can be determined."""
     with pytest.raises(ImproperlyConfigured, match=r"Unable to determine SECRET_KEY\.$"):
         load_secret_key(None, None)
+
+
+def test_ca_passwords(settings: SettingsWrapper) -> None:
+    """Test type coercion and sanitization of keys."""
+    settings.CA_PASSWORDS = {
+        "AA:BB:CC": "secret-str",
+        "11:22:33": b"secret-bytes",
+    }
+    assert ca_settings.CA_PASSWORDS == {"112233": b"secret-bytes", "AABBCC": b"secret-str"}
+
+
+def test_ca_passwords_with_invalid_type(settings: SettingsWrapper) -> None:
+    """Test setting an invalid password type."""
+    with assert_improperly_configured(r"CA_PASSWORDS: None: value must be bytes or str\."):
+        settings.CA_PASSWORDS = {"AA:BB:CC": None}
 
 
 class SettingsTestCase(TestCase):
