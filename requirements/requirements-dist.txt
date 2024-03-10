@@ -1,4 +1,4 @@
-build==1.0.3
+build==1.1.1
 twine==5.0.0
 wheel==0.42.0
 # See pyproject.toml for reasoning for required minimum version

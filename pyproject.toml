@@ -18,6 +18,7 @@ pydantic = ["2.5", "2.6"]
 alpine = [
     "3.17",  # until 2024-11-22
     "3.18",  # until 2025-05-09
+    "3.19",  # until 2025-11-01
 ]
 
 # Blacklist images that are just no longer built
@@ -28,7 +29,7 @@ docker-image-blacklist = [
 # List of tested Debian releases:
 #   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
 debian-releases = [
-    "bullseye",  # June 2026
+    "bullseye",  # until June 2026
     "bookworm",  # until June 2028
 ]
 
@@ -37,7 +38,6 @@ debian-releases = [
 ubuntu-releases = [
     "focal",  # 20.04, until 2025-04-23
     "jammy",  # 22.04, until 2027-04-21
-    "lunar",  # 23.04, until 2024-01-20
     "mantic",  # 23.10, until 2024-07
 ]
 
