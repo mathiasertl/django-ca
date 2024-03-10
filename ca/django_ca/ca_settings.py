@@ -296,12 +296,11 @@ CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES"
 
 # Load and process CA_PASSWORDS
 CA_PASSWORDS: Dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
-for key, value in CA_PASSWORDS.items():
-    if isinstance(value, str):
-        value = value.encode("utf-8")
-    elif not isinstance(value, bytes):
-        raise ImproperlyConfigured(f"CA_PASSWORDS: {value}: value must be bytes or str.")
-    CA_PASSWORDS[key] = value
+for _ca_passwords_key, _ca_passwords_value in CA_PASSWORDS.items():
+    if isinstance(_ca_passwords_value, str):
+        CA_PASSWORDS[_ca_passwords_key] = _ca_passwords_value.encode("utf-8")
+    elif not isinstance(_ca_passwords_value, bytes):
+        raise ImproperlyConfigured(f"CA_PASSWORDS: {_ca_passwords_value}: value must be bytes or str.")
 CA_PASSWORDS = {key.upper().replace(":", ""): value for key, value in CA_PASSWORDS.items()}
 
 # ACME settings

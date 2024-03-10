@@ -32,7 +32,6 @@ from django.urls import reverse
 
 import pytest
 from _pytest.fixtures import SubRequest
-from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings, constants
 from django_ca.models import Certificate, CertificateAuthority
@@ -182,7 +181,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
 
 def generate_usable_ca_fixture(
     name: str,
-) -> typing.Callable[["SubRequest", SettingsWrapper], Iterator[CertificateAuthority]]:
+) -> typing.Callable[["SubRequest", Path], Iterator[CertificateAuthority]]:
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture()

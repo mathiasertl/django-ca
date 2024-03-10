@@ -181,6 +181,7 @@ mypy_path = "ca/:stubs/:docs/source/"
 exclude = [
     "dist/",  # mypy complains about an extracted wheel
     "migrations/.*\\.py$",
+    "docs/source/include/key_backend_tutorial/create_key_example.py",
 ]
 plugins = [
     "mypy_django_plugin.main",
