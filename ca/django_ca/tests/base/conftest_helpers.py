@@ -16,6 +16,7 @@ import os
 import shutil
 import sys
 import typing
+from pathlib import Path
 from typing import Any, Iterator, Optional, Tuple
 
 import coverage
@@ -185,10 +186,10 @@ def generate_usable_ca_fixture(
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture()
-    def fixture(request: "SubRequest", tmpcadir: SettingsWrapper) -> Iterator[CertificateAuthority]:
+    def fixture(request: "SubRequest", tmpcadir: Path) -> Iterator[CertificateAuthority]:
         ca = request.getfixturevalue(name)  # load the CA into the database
         data = CERT_DATA[name]
-        shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir.CA_DIR)
+        shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir)
 
         yield ca
 

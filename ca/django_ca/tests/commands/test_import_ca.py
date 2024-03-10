@@ -262,13 +262,13 @@ def test_bogus_private_key(ca_name: str) -> None:
         cmd("import_ca", ca_name, Path(__file__).resolve(), pem_path)
 
 
-def test_invalid_private_key_type(ca_name: str, tmpcadir: SettingsWrapper) -> None:
+def test_invalid_private_key_type(tmp_path: Path, ca_name: str) -> None:
     """Test importing a CA with an invalid private key type."""
     private_key = X448PrivateKey.generate()
     private_key_der = private_key.private_bytes(
         Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
     )
-    private_key_path = os.path.join(tmpcadir.CA_DIR, "x448.key")
+    private_key_path = os.path.join(tmp_path, "x448.key")
     with open(private_key_path, "wb") as stream:
         stream.write(private_key_der)
 

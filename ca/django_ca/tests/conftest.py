@@ -42,7 +42,6 @@ from django_ca import ca_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.profiles import profiles
 from django_ca.tests.base.conftest_helpers import (
     all_cert_names,
     ca_cert_names,
@@ -204,7 +203,7 @@ def user_client(user: "User", client: Client) -> Iterator[Client]:
 
 
 @pytest.fixture()
-def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrapper]:
+def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[Path]:
     """Fixture to create a temporary directory for storing files using the StoragesBackend."""
     settings.CA_DIR = str(tmp_path)
 
@@ -214,14 +213,9 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[SettingsWrap
     updated_storages["django-ca"]["OPTIONS"]["location"] = str(tmp_path)
     settings.STORAGES = updated_storages
 
-    # Reset profiles, so that they are loaded again on first access
-    profiles._reset()  # pylint: disable=protected-access
-
     try:
-        yield settings
+        yield tmp_path
     finally:
-        profiles._reset()  # pylint: disable=protected-access
-
         # Reset storages, otherwise the path lives into the next test in some cases
         # pylint: disable-next=protected-access  # only way to reset this
         storages._storages = {}  # type: ignore[attr-defined]  # not defined in django-stubs
