@@ -95,7 +95,27 @@ class UsePrivateKeyOptions(pydantic.BaseModel):
 
 
 class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):
-    """A simple storage backend that does not yet do much."""
+    """The default storage backend that uses Django's file storage API.
+
+    This backend takes a single option, ``storage_alias``. It defines the storage system (as defined in
+    `STORAGES <https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES>`_) to use.
+    The default configuration is a good example:
+
+    .. tab:: Python
+
+       .. literalinclude:: /include/config/settings_default_ca_key_backends.py
+          :language: python
+
+    .. tab:: YAML
+
+       .. literalinclude:: /include/config/settings_default_ca_key_backends.yaml
+          :language: YAML
+
+    .. seealso::
+
+       * `STORAGES setting <https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES>`_
+       * `Django file storage API <https://docs.djangoproject.com/en/5.0/ref/files/storage/>`_
+    """
 
     name = "storages"
     title = "Store private keys using the Django file storage API"

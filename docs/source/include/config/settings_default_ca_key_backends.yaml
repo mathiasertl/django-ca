@@ -1,3 +1,15 @@
+STORAGES:
+  default:
+    BACKEND: django.core.files.storage.FileSystemStorage
+  django-ca:
+    BACKEND: django.core.files.storage.FileSystemStorage
+    OPTIONS:
+      directory_permissions_mode: 0700
+      file_permissions_mode: 0600
+      location: files/
+  staticfiles:
+    BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
+
 CA_KEY_BACKENDS:
   default:
     BACKEND: django_ca.key_backends.storages.StoragesBackend
