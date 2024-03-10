@@ -50,7 +50,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
     def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
         return None
 
-    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
+    def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
         return None
 
     def get_create_private_key_options(
