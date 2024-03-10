@@ -1162,7 +1162,7 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
 def get_storage() -> Storage:
     """Get the django-ca storage class."""
     try:
-        return storages["django-ca"]
+        return storages[ca_settings.CA_DEFAULT_STORAGE_ALIAS]
     except InvalidStorageError:
         warnings.warn(
             "Support for CA_FILE_STORAGE is deprecated and will be removed in django-ca==2.0.",

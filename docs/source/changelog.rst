@@ -18,7 +18,7 @@ ChangeLog
 * Add support for ``Django~=5.0``, ``cryptography~=42``, ``acme==2.8.0`` and ``acme==2.9.0``.
 * ``pydantic>=2.5`` is now a required dependency.
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
-  :ref:`settings-ca-storage`. Installations :doc:`as app <quickstart_as_app>` must add a
+  :ref:`settings-ca-key-backends`. Installations :doc:`as Django app <quickstart_as_app>` must add a
   ``"django-ca"`` storage alias in their configuration.
 * Private keys (for CAs and OCSP responder certificates) are now stored as DER keys to improve loading speed.
 * The admin interface now presents lists of general names (e.g. in the Subject Alternative Name extension) as
