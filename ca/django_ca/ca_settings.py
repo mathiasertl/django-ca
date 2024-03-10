@@ -359,14 +359,13 @@ CA_KEY_BACKENDS: Dict[str, Dict[str, Any]] = getattr(
 
 
 # Old file storage settings
-# pragma: only django-ca<2.0: CA_DIR and CA_FILE_* settings can be removed in django-ca==2.0
-CA_DIR = getattr(settings, "CA_DIR", os.path.join(settings.BASE_DIR, "files"))
+# pragma: only django-ca<2.0: CA_FILE_* settings can be removed in django-ca==2.0
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
 CA_FILE_STORAGE_KWARGS = getattr(
     settings,
     "CA_FILE_STORAGE_KWARGS",
     {
-        "location": CA_DIR,
+        "location": getattr(settings, "CA_DIR", os.path.join(settings.BASE_DIR, "files")),
         "file_permissions_mode": 0o600,
         "directory_permissions_mode": 0o700,
     },

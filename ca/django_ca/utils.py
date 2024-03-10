@@ -1169,7 +1169,8 @@ def get_storage() -> Storage:
             RemovedInDjangoCA200Warning,
             stacklevel=2,
         )
-        return ca_storage
+        ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)
+        return ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)
 
 
 def file_exists(path: str) -> bool:
@@ -1229,12 +1230,3 @@ def split_str(val: str, sep: str) -> Iterator[str]:
 def get_crl_cache_key(serial: str, encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
     """Get the cache key for a CRL with the given parameters."""
     return f"crl_{serial}_{encoding.name}_{scope}"
-
-
-ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)
-
-# NOINSPECTION NOTE: ca_storage_class is typed to the base class (django.core.files.storage.Storage), which
-#   does not accept any arguments. PyCharm thinks you can't pass any argument here, but in reality it's up to
-#   the user.
-# noinspection PyArgumentList
-ca_storage = ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)

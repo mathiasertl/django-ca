@@ -28,12 +28,12 @@ from cryptography.x509.oid import (
     NameOID,
 )
 
+from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.tests.base.assertions import assert_command_error, assert_create_cert_signals
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -649,7 +649,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_to_file(self) -> None:
         """Test writing output to file."""
-        out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
+        out_path = os.path.join(settings.CA_DIR, "test.pem")
 
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", self.cert.serial, out=out_path)

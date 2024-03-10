@@ -15,6 +15,7 @@
 import io
 import os
 from datetime import timedelta
+from pathlib import Path
 from typing import Any, Tuple
 
 from cryptography import x509
@@ -125,9 +126,9 @@ def test_from_file(usable_root: CertificateAuthority, subject: x509.Name, rfc451
     assert ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in actual
 
 
-def test_to_file(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_to_file(tmp_path: Path, usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test writing PEM to file."""
-    out_path = os.path.join(ca_settings.CA_DIR, "test.pem")
+    out_path = os.path.join(tmp_path, "test.pem")
     with assert_create_cert_signals() as (pre, post):
         stdout, stderr = sign_cert(usable_root, rfc4514_subject, out=out_path, stdin=csr)
     assert stdout == "Please paste the CSR:\n"

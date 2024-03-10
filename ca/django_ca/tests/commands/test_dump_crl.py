@@ -23,12 +23,12 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import CRLEntryExtensionOID, NameOID
 
+from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_e2e_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -131,7 +131,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_file(self) -> None:
         """Test dumping to a file."""
-        path = os.path.join(ca_settings.CA_DIR, "crl-test.crl")
+        path = os.path.join(settings.CA_DIR, "crl-test.crl")
         stdout, stderr = cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stdout, b"")
         self.assertEqual(stderr, b"")
@@ -142,7 +142,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         self.assertCRL(crl, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
         # test an output path that doesn't exist
-        path = os.path.join(ca_settings.CA_DIR, "test", "crl-test.crl")
+        path = os.path.join(settings.CA_DIR, "test", "crl-test.crl")
 
         with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
             cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())

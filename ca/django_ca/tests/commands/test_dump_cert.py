@@ -19,9 +19,9 @@ from io import BytesIO
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.test import TestCase
 
-from django_ca import ca_settings
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, override_tmpcadir
@@ -63,7 +63,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_file_output(self) -> None:
         """Test writing to a file."""
-        path = os.path.join(ca_settings.CA_DIR, "test_cert.pem")
+        path = os.path.join(settings.CA_DIR, "test_cert.pem")
         stdout, stderr = cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
         self.assertEqual(stderr, b"")
         self.assertEqual(stdout, b"")
@@ -73,7 +73,7 @@ class DumpCertTestCase(TestCaseMixin, TestCase):
 
     def test_errors(self) -> None:
         """Test some error conditions."""
-        path = os.path.join(ca_settings.CA_DIR, "does-not-exist", "test_cert.pem")
+        path = os.path.join(settings.CA_DIR, "does-not-exist", "test_cert.pem")
         msg = rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"
         with assert_command_error(msg):
             cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())

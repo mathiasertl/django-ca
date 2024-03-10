@@ -26,7 +26,6 @@ from datetime import datetime
 from io import BytesIO, StringIO
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 from unittest import mock
-from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -39,7 +38,6 @@ from django.utils.crypto import get_random_string
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
-from django_ca.utils import ca_storage
 
 
 def authority_information_access(
@@ -413,15 +411,6 @@ def mock_slug() -> Iterator[str]:
     slug = get_random_string(length=12)
     with mock.patch("django_ca.models.get_random_string", return_value=slug):
         yield slug
-
-
-@contextmanager
-def mock_cadir(path: str) -> Iterator[None]:
-    """Context manager to set the CA_DIR to a given path without actually creating it."""
-    with override_settings(CA_DIR=path), patch.object(ca_storage, "location", path), patch.object(
-        ca_storage, "_location", path
-    ):
-        yield
 
 
 STRIP_WHITESPACE = doctest.register_optionflag("STRIP_WHITESPACE")

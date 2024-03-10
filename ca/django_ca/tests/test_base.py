@@ -20,6 +20,7 @@ from typing import Tuple
 
 from cryptography.x509.oid import ExtensionOID
 
+from django.conf import settings
 from django.test import TestCase, override_settings
 
 from django_ca import ca_settings
@@ -39,8 +40,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_override_tmpcadir(self) -> None:
         """Test override_tmpcadir as decorator."""
-        ca_dir = ca_settings.CA_DIR
-        self.assertTrue(ca_dir.startswith(tempfile.gettempdir()))
+        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
 
     @override_tmpcadir()
     def test_assert_extensions(self) -> None:
@@ -121,21 +121,21 @@ class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_a(self) -> None:
         # add three tests to make sure that every test case sees a different dir
-        self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
-        self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
-        self.seen_dirs.add(ca_settings.CA_DIR)
+        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
+        self.assertNotIn(settings.CA_DIR, self.seen_dirs)
+        self.seen_dirs.add(settings.CA_DIR)
 
     @override_tmpcadir()
     def test_b(self) -> None:
-        self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
-        self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
-        self.seen_dirs.add(ca_settings.CA_DIR)
+        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
+        self.assertNotIn(settings.CA_DIR, self.seen_dirs)
+        self.seen_dirs.add(settings.CA_DIR)
 
     @override_tmpcadir()
     def test_c(self) -> None:
-        self.assertTrue(ca_settings.CA_DIR.startswith(tempfile.gettempdir()), ca_settings.CA_DIR)
-        self.assertNotIn(ca_settings.CA_DIR, self.seen_dirs)
-        self.seen_dirs.add(ca_settings.CA_DIR)
+        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
+        self.assertNotIn(settings.CA_DIR, self.seen_dirs)
+        self.seen_dirs.add(settings.CA_DIR)
 
     def test_no_classes(self) -> None:
         msg = r"^Only functions can use override_tmpcadir\(\)$"
