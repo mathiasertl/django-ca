@@ -19,6 +19,7 @@ import os
 import typing
 import unittest
 from datetime import datetime, timedelta, timezone as tz
+from pathlib import Path
 from typing import Iterable, List, Tuple, Type
 
 from cryptography import x509
@@ -76,10 +77,10 @@ def test_doctests() -> None:
 
 
 @pytest.mark.usefixtures("tmpcadir")
-def test_read_file() -> None:
+def test_read_file(tmp_path: Path) -> None:
     """Test :py:func:`django_ca.utils.read_file`."""
     name = "test-data"
-    path = os.path.join(ca_settings.CA_DIR, name)
+    path = os.path.join(tmp_path, name)
     data = b"test data"
     with open(path, "wb") as stream:
         stream.write(data)

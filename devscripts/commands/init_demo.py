@@ -27,7 +27,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import load_der_x509_csr
 
-from django.core.files.storage import Storage
+from django.core.files.storage import Storage, storages
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -130,7 +130,7 @@ class Command(DevCommand):
             print(f"  * {bold(cmd)}")
 
     def save_fixture_data(  # pylint: disable=too-many-locals
-        self, ca_settings: types.ModuleType, fixture_data: "FixtureData"
+        self, ca_dir: str, ca_settings: types.ModuleType, fixture_data: "FixtureData"
     ) -> Dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""
         # pylint: disable=import-outside-toplevel  # see handle() imports
@@ -159,7 +159,7 @@ class Command(DevCommand):
                 if cert_data["cat"] != "generated":
                     continue  # Imported cert
 
-                csr_path = os.path.join(ca_settings.CA_DIR, cert_data["csr_filename"])
+                csr_path = os.path.join(ca_dir, cert_data["csr_filename"])
                 with open(csr_path, "rb") as stream:
                     csr = stream.read()
                 csr_parsed = load_der_x509_csr(csr)
@@ -168,7 +168,7 @@ class Command(DevCommand):
                 profile = cert_data.get("profile", ca_settings.CA_DEFAULT_PROFILE)
                 cert = Certificate(ca=loaded_cas[cert_data["ca"]], csr=csr_pem, profile=profile)
 
-            pub_path = os.path.join(ca_settings.CA_DIR, cert_data["pub_filename"])
+            pub_path = os.path.join(ca_dir, cert_data["pub_filename"])
             with open(pub_path, "rb") as stream:
                 der = stream.read()
             loaded_certificate = x509.load_der_x509_certificate(der)
@@ -214,11 +214,11 @@ class Command(DevCommand):
         self.setup_django("ca.settings")
 
         # pylint: disable=import-outside-toplevel; have to call setup_django() first
+        from django.conf import settings
         from django.core.management import call_command as manage
 
         from django_ca import ca_settings
         from django_ca.key_backends.storages import UsePrivateKeyOptions
-        from django_ca.utils import ca_storage
 
         # pylint: enable=import-outside-toplevel
 
@@ -228,8 +228,8 @@ class Command(DevCommand):
         manage("migrate", verbosity=0)
         self.ok()
 
-        if not os.path.exists(ca_settings.CA_DIR):
-            os.makedirs(ca_settings.CA_DIR)
+        if not os.path.exists(settings.CA_DIR):
+            os.makedirs(settings.CA_DIR)
 
         # NOTE: Invoke dev.py as a subscript, because recreate-fixtures **requires**
         #       DJANGO_SETTINGS_MODULE=ca.test_settings (b/c it writes to the database and this script writes
@@ -246,15 +246,16 @@ class Command(DevCommand):
                 "--no-contrib",
                 "--ca-validity=3650",
                 "--cert-validity=732",
-                f"--dest={ca_settings.CA_DIR}",
+                f"--dest={settings.CA_DIR}",
             ]
         )
-        with open(os.path.join(ca_settings.CA_DIR, "cert-data.json"), encoding="utf-8") as stream:
+        with open(os.path.join(settings.CA_DIR, "cert-data.json"), encoding="utf-8") as stream:
             fixture_data = json.load(stream)
         self.ok()
 
         print("Saving fixture data to database.", end="")
-        loaded_cas = self.save_fixture_data(ca_settings, fixture_data)
+        loaded_cas = self.save_fixture_data(settings.CA_DIR, ca_settings, fixture_data)
         self.ok()
 
-        self.output_info(ca_settings.CA_DIR, ca_storage, loaded_cas, fixture_data["certs"], args.base_url)
+        ca_storage = storages[ca_settings.CA_DEFAULT_STORAGE_ALIAS]
+        self.output_info(settings.CA_DIR, ca_storage, loaded_cas, fixture_data["certs"], args.base_url)

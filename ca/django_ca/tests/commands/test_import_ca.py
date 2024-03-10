@@ -27,6 +27,7 @@ from django.test import TestCase
 
 import pytest
 from freezegun import freeze_time
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
 from django_ca.key_backends.storages import UsePrivateKeyOptions
@@ -41,7 +42,6 @@ from django_ca.tests.base.utils import (
     crl_distribution_points,
     distribution_point,
     issuer_alternative_name,
-    mock_cadir,
     override_tmpcadir,
     uri,
 )
@@ -233,18 +233,6 @@ class ImportCATest(TestCaseMixin, TestCase):
         self.assertEqual(ca.ocsp_responder_key_validity, 10)
         self.assertEqual(ca.ocsp_response_validity, 3600)
 
-    @override_tmpcadir()
-    def test_create_cadir(self) -> None:
-        """Test importing a CA when the directory does not yet exist."""
-        name = "testname"
-        key_path = CERT_DATA["root"]["key_path"]
-        pem_path = CERT_DATA["root"]["pub_path"]
-
-        with tempfile.TemporaryDirectory() as tempdir:
-            ca_dir = os.path.join(tempdir, "foo", "bar")
-            with mock_cadir(ca_dir):
-                cmd("import_ca", name, key_path, pem_path)
-
 
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("db")
@@ -274,14 +262,13 @@ def test_bogus_private_key(ca_name: str) -> None:
         cmd("import_ca", ca_name, Path(__file__).resolve(), pem_path)
 
 
-@pytest.mark.usefixtures("tmpcadir")
-def test_invalid_private_key_type(ca_name: str) -> None:
+def test_invalid_private_key_type(ca_name: str, tmpcadir: SettingsWrapper) -> None:
     """Test importing a CA with an invalid private key type."""
     private_key = X448PrivateKey.generate()
     private_key_der = private_key.private_bytes(
         Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
     )
-    private_key_path = os.path.join(ca_settings.CA_DIR, "x448.key")
+    private_key_path = os.path.join(tmpcadir.CA_DIR, "x448.key")
     with open(private_key_path, "wb") as stream:
         stream.write(private_key_der)
 

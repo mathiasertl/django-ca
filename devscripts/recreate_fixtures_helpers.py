@@ -37,6 +37,8 @@ from cryptography.hazmat.primitives.serialization import (
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID
 
+from django.conf import settings
+
 from freezegun import freeze_time
 
 from devscripts import config
@@ -308,8 +310,8 @@ def create_certs(
     # let's create a standard certificate for every CA
     for ca in cas:
         name = f"{ca.name}-cert"
-        key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
-        csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+        key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
+        csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
         csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
         csr = _create_csr(
             key_path,
@@ -341,8 +343,8 @@ def create_certs(
         name = f"profile-{profile}"
         ca = CertificateAuthority.objects.get(name=data[name]["ca"])
 
-        key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
-        csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+        key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
+        csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
         csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
         csr = _create_csr(
             key_path,
@@ -379,8 +381,8 @@ def create_special_certs(  # noqa: PLR0915
     # create a cert with absolutely no extensions
     name = "no-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
-    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+    key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
     csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
@@ -421,8 +423,8 @@ def create_special_certs(  # noqa: PLR0915
     #       https://github.com/pyca/cryptography/issues/1947)
     name = "all-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
-    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+    key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
     csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
@@ -443,8 +445,8 @@ def create_special_certs(  # noqa: PLR0915
     # * CRL with relative_name (full_name and relative_name are mutually exclusive!)
     name = "alt-extensions"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
-    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+    key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
     csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
@@ -464,8 +466,8 @@ def create_special_certs(  # noqa: PLR0915
     # Create a certificate with no subjects
     name = "empty-subject"
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
-    key_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.key"))
-    csr_path = Path(os.path.join(ca_settings.CA_DIR, f"{name}.csr"))
+    key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
+    csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
     csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
