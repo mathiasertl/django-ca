@@ -18,8 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import pydantic
-from pydantic import ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
@@ -51,7 +50,7 @@ if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
-class CreatePrivateKeyOptions(pydantic.BaseModel):
+class CreatePrivateKeyOptions(BaseModel):
     """Options for initializing private keys."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -63,8 +62,8 @@ class CreatePrivateKeyOptions(pydantic.BaseModel):
     elliptic_curve: Optional[ec.EllipticCurve] = None
 
 
-class StorePrivateKeyOptions(pydantic.BaseModel):
-    """Options for loading a private key."""
+class StorePrivateKeyOptions(BaseModel):
+    """Options for storing a private key."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(frozen=True)
@@ -73,8 +72,8 @@ class StorePrivateKeyOptions(pydantic.BaseModel):
     password: Optional[bytes]
 
 
-class UsePrivateKeyOptions(pydantic.BaseModel):
-    """Options for loading a private key."""
+class UsePrivateKeyOptions(BaseModel):
+    """Options for using a private key."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(frozen=True)
@@ -96,6 +95,11 @@ class UsePrivateKeyOptions(pydantic.BaseModel):
 
 class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):
     """The default storage backend that uses Django's file storage API.
+
+    The most common use case for this key backend is to store keys on the local file system. However, you can
+    use any custom Django storage system, for example from
+    `django-storages <https://django-storages.readthedocs.io/en/latest/>`_.
+
 
     This backend takes a single option, ``storage_alias``. It defines the storage system (as defined in
     `STORAGES <https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES>`_) to use.
@@ -303,7 +307,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         try:
             self.get_key(ca, use_private_key_options)
             return True
-        except Exception:  # pylint: disable=broad-exception-caught  # want to return bool
+        except Exception:  # pylint: disable=broad-exception-caught  # want to always return bool
             return False
 
     def sign_certificate(
