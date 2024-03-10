@@ -178,7 +178,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
             help="Password for the private key of the parent CA, if stored using the Django storage system.",
         )
 
-    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
+    def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_password_argument(group)
         self._add_path_argument(group)
 

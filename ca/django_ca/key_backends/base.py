@@ -128,7 +128,7 @@ class KeyBackend(
         """
 
     @abc.abstractmethod
-    def add_store_private_key_options(self, group: ArgumentGroup) -> None:
+    def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for storing private keys (when importing an existing CA)."""
 
     # pylint: disable=unused-argument  # Method may not be overwritten, just providing default here

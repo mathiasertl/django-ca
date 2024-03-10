@@ -50,7 +50,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         for backend in key_backends:
             group = backend.add_store_private_key_group(parser)
             if group is not None:  # pragma: no branch  # all current backends add a group.
-                backend.add_store_private_key_options(group)
+                backend.add_store_private_key_arguments(group)
 
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_ca(
