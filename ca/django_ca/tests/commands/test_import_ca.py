@@ -14,7 +14,6 @@
 """Test the import_ca management command."""
 
 import os
-import tempfile
 import typing
 from pathlib import Path
 
@@ -27,7 +26,6 @@ from django.test import TestCase
 
 import pytest
 from freezegun import freeze_time
-from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
 from django_ca.key_backends.storages import UsePrivateKeyOptions

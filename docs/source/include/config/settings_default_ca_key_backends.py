@@ -1,3 +1,7 @@
+# The "django-ca" storage alias is mandatory. Added by default in full project
+# setups (from source, or with Docker or Docker Compose), but must be set if
+# used as Django app. In full project setups, you can also just set CA_DIR to
+# change the storage directory.
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
