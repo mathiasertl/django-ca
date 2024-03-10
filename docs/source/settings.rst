@@ -259,8 +259,10 @@ CA_DEFAULT_STORAGE_ALIAS
    Default: ``"django-ca"``
 
    The default storage alias to use with the default key storage backend. The value defined here has to be an
-   alias in `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_. This value is not used
-   if you define your own :ref:`settings-ca-key-backends`.
+   alias in `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_.
+
+   The value is used as the default storage alias in the default key backend (see
+   :ref:`settings-ca-key-backends`) and to store OCSP responder certificates.
 
 .. _settings-ca-default-subject:
 
@@ -313,7 +315,8 @@ CA_FILE_STORAGE
 
    .. deprecated:: 1.28.0
 
-      Use :ref:`settings-ca-storage` instead. Support for this setting will be removed in ``django-ca==2.0``.
+      Use :ref:`settings-ca-key-backends` instead. Support for this setting will be removed in
+      ``django-ca==2.0``.
 
    Default storage backend for files created by django-ca. The default is the same as *the default* for
    ``DEFAULT_FILE_STORAGE``, so django-ca will still use local file system storage even if you configure a
@@ -329,7 +332,8 @@ CA_FILE_STORAGE_KWARGS
 
    .. deprecated:: 1.28.0
 
-      Use :ref:`settings-ca-storage` instead. Support for this setting will be removed in ``django-ca==2.0``.
+      Use :ref:`settings-ca-key-backends` instead. Support for this setting will be removed in
+      ``django-ca==2.0``.
 
    Add any arguments to the storage backend configured in :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
 
@@ -349,10 +353,15 @@ CA_KEY_BACKENDS
          :language: YAML
 
    The backends available to store private keys. Currently, only file system storage is supported out of the
-   box, see :doc:`Key backends </python/key_backends>` for a list ov available backends and their options. The
-   default ``StoragesBackend`` uses a storage alias called ``"django-ca"`` by default, so it implies that the
-   `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ setting has a "django-ca" alias
-   defined (which is the case _unless_ you use django-ca as a Django app).
+   box, see :doc:`Key backends </python/key_backends>` for a list of available backends and their options.
+
+   The default ``StoragesBackend`` uses a storage alias called ``"django-ca"`` by default, so it implies that
+   the `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ setting has a "django-ca"
+   alias defined. If you use the full project (e.g. installed with :doc:`from source
+   </quickstart_from_source>`, :doc:`with Docker </docker>` or :doc:`Docker Compose
+   <quickstart_docker_compose>`), this will be the file system directory set by :ref:`settings-ca-dir`, unless
+   you define your own storage backend. If you use django-ca :doc:`as Django app <quickstart_as_app>`, you
+   have to define this storage alias.
 
 .. _settings-ca-min-key-size:
 
@@ -495,8 +504,8 @@ CA_DIR
    ``manage.py`` file.
 
    This setting has no effect if you define a ``"django-ca"`` alias in `STORAGES
-   <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ (see also: :ref:`CA_STORAGE
-   <settings-ca-storage>`).
+   <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ (see also:
+   :ref:`settings-ca-key-backends`).
 
 
 CA_ENABLE_CLICKJACKING_PROTECTION
@@ -506,21 +515,6 @@ CA_ENABLE_CLICKJACKING_PROTECTION
    <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
    ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
    already set by the web server.
-
-.. _settings-ca-storage:
-
-CA_STORAGE
-   Default:
-
-   .. literalinclude:: include/config/setting_ca_storage_default.py
-      :language: python
-
-   The storage configuration used for storing certificates. The default location is based on the
-   :ref:`CA_DIR <settings-ca-dir>` setting.
-
-   This setting has **no effect** if you define a ``"django-ca"`` alias in `STORAGES
-   <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_.
-
 
 .. _settings-ca-url-path:
 

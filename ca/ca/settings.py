@@ -105,6 +105,7 @@ STORAGES = {
 }
 
 # Configure storage for certificate authorities
+CA_DEFAULT_STORAGE_ALIAS = "django-ca"
 CA_DIR = None
 
 # List of finder classes that know how to find static files in
@@ -254,21 +255,18 @@ if STORAGES is None:
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
 
-if "django-ca" not in STORAGES:
-    if CA_STORAGE is not None:
-        STORAGES["django-ca"] = CA_STORAGE
-    else:
-        if CA_DIR is None:
-            CA_DIR = os.path.join(BASE_DIR, "files")
+if CA_DEFAULT_STORAGE_ALIAS not in STORAGES:
+    if CA_DIR is None:
+        CA_DIR = os.path.join(BASE_DIR, "files")
 
-        STORAGES["django-ca"] = {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "OPTIONS": {  # type: ignore[dict-item]  # django-stubs seems to have an issue here
-                "location": CA_DIR,
-                "file_permissions_mode": 0o600,
-                "directory_permissions_mode": 0o700,
-            },
-        }
+    STORAGES[CA_DEFAULT_STORAGE_ALIAS] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {  # type: ignore[dict-item]  # django-stubs seems to have an issue here
+            "location": CA_DIR,
+            "file_permissions_mode": 0o600,
+            "directory_permissions_mode": 0o700,
+        },
+    }
 
 if LOGGING is None:
     LOGGING = {
