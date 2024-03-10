@@ -17,6 +17,7 @@ ChangeLog
 
 * Add support for ``Django~=5.0``, ``cryptography~=42``, ``acme==2.8.0`` and ``acme==2.9.0``.
 * ``pydantic>=2.5`` is now a required dependency.
+* Preparations for support for using Hardware Security Modules, "Key backend support" below.
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
   :ref:`settings-ca-key-backends`. Installations :doc:`as Django app <quickstart_as_app>` must add a
   ``"django-ca"`` storage alias in their configuration.
@@ -45,6 +46,14 @@ ChangeLog
 * Support for configuring absolute paths for OCSP responder certificates in manual OCSP views was removed.
   This was a left over, it was deprecated and issued a warning since 2019.
 
+Key backend support
+===================
+
+This version adds support for "key backends", allowing you to store and use private keys in different places,
+for example the file system or a Hardware Security Module (HSM). At present, the only backend available uses
+the Django file storage API, usually storing private keys on the file system.
+
+Future versions will add support for other ways to handle private keys, including HSMs.
 
 REST API changes
 ================
