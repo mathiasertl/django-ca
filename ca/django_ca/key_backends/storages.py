@@ -239,8 +239,16 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self, ca: "CertificateAuthority", load_options: UsePrivateKeyOptions
     ) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key."""
+        storage = storages[self.storage_alias]
         path = ca.key_backend_options["path"]
-        key_data = read_file(path)
+
+        # Load private key data
+        stream = storage.open(path, mode="rb")
+        try:
+            key_data: bytes = stream.read()
+        finally:
+            stream.close()
+
         password = load_options.password
 
         try:
