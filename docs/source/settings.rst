@@ -166,6 +166,14 @@ CA_DEFAULT_HOSTNAME
 
    Example value: ``"ca.example.com"``.
 
+.. _settings-ca-default-key-backend:
+
+CA_DEFAULT_KEY_BACKEND
+   Default: ``"default"``
+
+   The key backend to use by default. You do not usually have to update this setting.
+
+
 .. _settings-ca-default-key-size:
 
 CA_DEFAULT_KEY_SIZE
@@ -245,6 +253,15 @@ CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
    Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
    be configured separately using :ref:`settings-ca-default-dsa-signature-hash-algorithm`.
 
+.. _settings-ca-default-storage-alias:
+
+CA_DEFAULT_STORAGE_ALIAS
+   Default: ``"django-ca"``
+
+   The default storage alias to use with the default key storage backend. The value defined here has to be an
+   alias in `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_. This value is not used
+   if you define your own :ref:`settings-ca-key-backends`.
+
 .. _settings-ca-default-subject:
 
 CA_DEFAULT_SUBJECT
@@ -315,6 +332,27 @@ CA_FILE_STORAGE_KWARGS
       Use :ref:`settings-ca-storage` instead. Support for this setting will be removed in ``django-ca==2.0``.
 
    Add any arguments to the storage backend configured in :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
+
+.. _settings-ca-key-backends:
+
+CA_KEY_BACKENDS
+   Default:
+
+   .. tab:: Python
+
+      .. literalinclude:: /include/config/settings_default_ca_key_backends.py
+         :language: python
+
+   .. tab:: YAML
+
+      .. literalinclude:: /include/config/settings_default_ca_key_backends.yaml
+         :language: YAML
+
+   The backends available to store private keys. Currently, only file system storage is supported out of the
+   box, see :doc:`Key backends </python/key_backends>` for a list ov available backends and their options. The
+   default ``StoragesBackend`` uses a storage alias called ``"django-ca"`` by default, so it implies that the
+   `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ setting has a "django-ca" alias
+   defined (which is the case _unless_ you use django-ca as a Django app).
 
 .. _settings-ca-min-key-size:
 

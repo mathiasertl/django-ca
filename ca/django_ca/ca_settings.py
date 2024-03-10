@@ -383,8 +383,6 @@ if isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, int):
 elif not isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta):
     raise ImproperlyConfigured("CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int.")
 
-CA_FILE_STORAGE_URL = "https://django-ca.readthedocs.io/en/latest/update.html#update-to-1-12-0-or-later"
-
 
 # Decide if we should use Celery or not
 CA_USE_CELERY = getattr(settings, "CA_USE_CELERY", None)

@@ -105,7 +105,6 @@ STORAGES = {
 }
 
 # Configure storage for certificate authorities
-CA_STORAGE = None
 CA_DIR = None
 
 # List of finder classes that know how to find static files in
