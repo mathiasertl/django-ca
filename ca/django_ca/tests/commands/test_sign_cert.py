@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test the sign_cert management command."""
+
 import io
 import os
 from datetime import timedelta

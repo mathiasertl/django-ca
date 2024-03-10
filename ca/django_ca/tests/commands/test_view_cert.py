@@ -869,12 +869,12 @@ Digest:
         # pylint: disable=consider-using-f-string
         name = "letsencrypt_x3-cert"
         context = self.get_cert_context(name)
-        context[
-            "id1"
-        ] = "6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13"
-        context[
-            "id2"
-        ] = "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"
+        context["id1"] = (
+            "6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13"
+        )
+        context["id2"] = (
+            "29:3C:51:96:54:C8:39:65:BA:AA:50:FC:58:07:D4:B7:6F:BF:58:7A:29:72:DC:A4:C3:0C:F4:E5:45:47:F4:78"
+        )
 
         sct = """* Precertificate Signed Certificate Timestamps:
   * Precertificate (v1):

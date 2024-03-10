@@ -16,6 +16,7 @@
 This module collects functions that are used in data migrations. The functions are moved here to make sure
 that they are tested properly.
 """
+
 import typing
 from typing import List, Optional
 

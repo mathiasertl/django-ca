@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test Pydantic models for extensions."""
+
 import re
 from typing import Any, Dict, List, Optional, Type, Union
 

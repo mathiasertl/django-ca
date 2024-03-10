@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
+
 from typing import Optional, Tuple, Union
 
 import semantic_version

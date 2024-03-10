@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test the edit_ca management command."""
+
 from cryptography import x509
 
 from django.test import TestCase

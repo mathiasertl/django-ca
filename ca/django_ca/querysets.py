@@ -30,11 +30,7 @@ from django_ca.utils import sanitize_serial
 if not TYPE_CHECKING:
     # Inverting TYPE_CHECKING check here to make pylint==2.9.3 happy:
     #   https://github.com/PyCQA/pylint/issues/4697
-    AcmeAccountQuerySetBase = (
-        AcmeAuthorizationQuerySetBase
-    ) = (
-        AcmeCertificateQuerySetBase
-    ) = (
+    AcmeAccountQuerySetBase = AcmeAuthorizationQuerySetBase = AcmeCertificateQuerySetBase = (
         AcmeChallengeQuerySetBase
     ) = AcmeOrderQuerySetBase = CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
 
@@ -79,8 +75,7 @@ class QuerySetProtocol(
 
     model: X509CertMixinTypeVar
 
-    def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar:
-        ...
+    def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
 
 
 class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):

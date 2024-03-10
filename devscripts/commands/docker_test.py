@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """The docker-test subcommand generates the Docker image using various base images."""
+
 import argparse
 import os
 import subprocess

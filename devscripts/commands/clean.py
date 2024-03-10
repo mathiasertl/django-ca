@@ -16,6 +16,7 @@
 This module takes care not to require any external imports, because it is also used in (minimal) Docker
 environments.
 """
+
 import argparse
 import importlib
 

@@ -13,6 +13,7 @@
 
 
 """Test utility functions."""
+
 import doctest
 
 import pytest

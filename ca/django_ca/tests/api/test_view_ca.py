@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test the detail-view for a CA."""
+
 from http import HTTPStatus
 from typing import Any, Dict, Tuple, Type
 

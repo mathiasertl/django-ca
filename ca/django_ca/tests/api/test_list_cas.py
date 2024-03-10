@@ -14,6 +14,7 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the view to list certificate authorities."""
+
 import typing
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional, Tuple, Type

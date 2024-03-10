@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Endpoint implementation for the API."""
+
 from http import HTTPStatus
 from typing import List
 

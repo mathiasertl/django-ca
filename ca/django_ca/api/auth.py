@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Authentication classes for the API."""
+
 from typing import Literal, Union
 
 from ninja.security import HttpBasicAuth

@@ -15,6 +15,7 @@
 
 .. seealso:: https://docs.celeryproject.org/en/stable/index.html
 """
+
 import logging
 import typing
 from datetime import datetime, timedelta, timezone as tz

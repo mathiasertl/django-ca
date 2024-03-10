@@ -60,7 +60,6 @@ serialized versions of a model (e.g. as JSON), but does not have to be given whe
 directly.
 """
 
-
 import abc
 import base64
 import typing
@@ -168,8 +167,7 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> SerializedPydanticExtension:
-            ...
+        ) -> SerializedPydanticExtension: ...
 
 
 class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):

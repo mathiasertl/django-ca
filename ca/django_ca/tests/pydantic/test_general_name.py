@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test GeneralNameModel."""
+
 import ipaddress
 from datetime import datetime, timezone as tz
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network

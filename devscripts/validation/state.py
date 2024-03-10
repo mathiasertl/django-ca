@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Script to make sure that the source code is in a consistent state."""
+
 import argparse
 import configparser
 import importlib.util

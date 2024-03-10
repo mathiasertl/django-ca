@@ -13,6 +13,7 @@
 
 
 """Test cases for the ``ca_settings`` module."""
+
 import os
 from datetime import timedelta
 from pathlib import Path

@@ -14,6 +14,7 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """pytest configuration for API tests."""
+
 import base64
 import typing
 from http import HTTPStatus

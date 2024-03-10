@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """TestCases for various model managers."""
+
 from pathlib import Path
 from typing import List, Optional
 

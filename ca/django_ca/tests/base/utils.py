@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Utility functions used in testing."""
+
 import doctest
 import importlib
 import inspect
@@ -88,25 +89,25 @@ def certificate_policies(
 
 
 @typing.overload
-def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]:
-    ...
+def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]: ...
 
 
 @typing.overload
-def cmd(*args: Any, stdout: BytesIO, stderr: Optional[StringIO] = None, **kwargs: Any) -> Tuple[bytes, str]:
-    ...
+def cmd(
+    *args: Any, stdout: BytesIO, stderr: Optional[StringIO] = None, **kwargs: Any
+) -> Tuple[bytes, str]: ...
 
 
 @typing.overload
-def cmd(*args: Any, stdout: Optional[StringIO] = None, stderr: BytesIO, **kwargs: Any) -> Tuple[str, bytes]:
-    ...
+def cmd(
+    *args: Any, stdout: Optional[StringIO] = None, stderr: BytesIO, **kwargs: Any
+) -> Tuple[str, bytes]: ...
 
 
 @typing.overload
 def cmd(
     *args: Any, stdout: Optional[StringIO] = None, stderr: Optional[StringIO] = None, **kwargs: Any
-) -> Tuple[str, str]:
-    ...
+) -> Tuple[str, str]: ...
 
 
 def cmd(
@@ -143,8 +144,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[StringIO] = None,
     stderr: Optional[StringIO] = None,
-) -> Tuple[str, str]:
-    ...
+) -> Tuple[str, str]: ...
 
 
 @typing.overload
@@ -154,8 +154,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: BytesIO,
     stderr: Optional[StringIO] = None,
-) -> Tuple[bytes, str]:
-    ...
+) -> Tuple[bytes, str]: ...
 
 
 @typing.overload
@@ -165,8 +164,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[StringIO] = None,
     stderr: BytesIO,
-) -> Tuple[str, bytes]:
-    ...
+) -> Tuple[str, bytes]: ...
 
 
 @typing.overload
@@ -176,8 +174,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: BytesIO,
     stderr: BytesIO,
-) -> Tuple[bytes, bytes]:
-    ...
+) -> Tuple[bytes, bytes]: ...
 
 
 def cmd_e2e(

@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """The init-demo subcommand generates useful demo data."""
+
 import argparse
 import json
 import os

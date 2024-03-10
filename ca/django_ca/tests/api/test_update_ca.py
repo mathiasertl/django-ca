@@ -14,6 +14,7 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the detail-view for a CA."""
+
 from http import HTTPStatus
 from typing import Any, Dict, Optional, Tuple, Type
 

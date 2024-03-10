@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Tests for NameAttributeModel and NameModel."""
+
 from typing import Any, Dict, List
 
 from cryptography import x509

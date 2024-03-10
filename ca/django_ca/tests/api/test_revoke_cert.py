@@ -14,6 +14,7 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """Test the revoking certificates via the API."""
+
 from http import HTTPStatus
 from typing import Any, Dict, Tuple, Type
 

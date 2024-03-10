@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Model for x509.Name."""
+
 import base64
 import typing
 from typing import Any, List

@@ -14,6 +14,7 @@
 # pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 
 """pytest configuration."""
+
 import copy
 import importlib.metadata
 import os

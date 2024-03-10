@@ -13,7 +13,6 @@
 
 """Test custom Sphinx extensions."""
 
-
 from typing import List
 from unittest import TestCase
 

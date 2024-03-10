@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Functions for validating docker compose and the respective tutorial."""
+
 import argparse
 import os
 import re

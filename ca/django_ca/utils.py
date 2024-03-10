@@ -553,8 +553,7 @@ def validate_private_key_parameters(
     key_type: typing.Literal["DSA", "RSA"],
     key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> Tuple[int, None]:
-    ...
+) -> Tuple[int, None]: ...
 
 
 @typing.overload
@@ -562,8 +561,7 @@ def validate_private_key_parameters(
     key_type: typing.Literal["EC"],
     key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> Tuple[None, ec.EllipticCurve]:
-    ...
+) -> Tuple[None, ec.EllipticCurve]: ...
 
 
 @typing.overload
@@ -571,8 +569,7 @@ def validate_private_key_parameters(
     key_type: typing.Literal["Ed448", "Ed25519"],
     key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> Tuple[None, None]:
-    ...
+) -> Tuple[None, None]: ...
 
 
 def validate_private_key_parameters(
@@ -659,8 +656,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: typing.Literal["DSA"],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> dsa.DSAPrivateKey:
-    ...
+) -> dsa.DSAPrivateKey: ...
 
 
 @typing.overload
@@ -668,8 +664,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: typing.Literal["RSA"],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> rsa.RSAPrivateKey:
-    ...
+) -> rsa.RSAPrivateKey: ...
 
 
 @typing.overload
@@ -677,8 +672,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: typing.Literal["EC"],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> ec.EllipticCurvePrivateKey:
-    ...
+) -> ec.EllipticCurvePrivateKey: ...
 
 
 @typing.overload
@@ -686,8 +680,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: typing.Literal["Ed25519"],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> ed25519.Ed25519PrivateKey:
-    ...
+) -> ed25519.Ed25519PrivateKey: ...
 
 
 @typing.overload
@@ -695,8 +688,7 @@ def generate_private_key(
     key_size: Optional[int],
     key_type: typing.Literal["Ed448"],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> ed448.Ed448PrivateKey:
-    ...
+) -> ed448.Ed448PrivateKey: ...
 
 
 def generate_private_key(

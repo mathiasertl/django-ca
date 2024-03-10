@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Shared code for Pydantic-related tests."""
+
 import re
 import typing
 from typing import Any, Dict, List, Tuple, Type, TypeVar, Union
@@ -43,8 +44,7 @@ def assert_validation_errors(
     model_class: Type[CryptographyModelTypeVar],
     parameters: Dict[str, Any],
     expected_errors: ExpectedErrors,
-) -> None:
-    ...
+) -> None: ...
 
 
 @typing.overload
@@ -52,8 +52,7 @@ def assert_validation_errors(
     model_class: Type[CryptographyRootModelTypeVar],
     parameters: List[Dict[str, Any]],
     expected_errors: ExpectedErrors,
-) -> None:
-    ...
+) -> None: ...
 
 
 def assert_validation_errors(

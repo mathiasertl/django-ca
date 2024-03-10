@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Some extensions use a more complex datastructure, so attributes are represented as nested models."""
+
 import base64
 import typing
 from datetime import datetime

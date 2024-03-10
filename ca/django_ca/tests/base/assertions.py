@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """:py:mod:`django_ca.tests.base.assertions` collects assertions used throughout the entire test suite."""
+
 import io
 import re
 import typing

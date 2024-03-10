@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test the revoke_cert management command."""
+
 import re
 from datetime import datetime, timedelta, timezone as tz
 from typing import List, Optional

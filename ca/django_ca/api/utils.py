@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """API utility functions."""
+
 import typing
 from typing import Any
 

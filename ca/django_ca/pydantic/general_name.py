@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Model for GeneralName subclasses."""
+
 import binascii
 import ipaddress
 import typing

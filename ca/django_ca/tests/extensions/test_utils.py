@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test extension utility functions in django_ca.extensions.utils."""
+
 from typing import Union
 from unittest import TestCase
 

@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """URL configuration for this project."""
+
 from typing import List, Union
 
 from django.conf import settings

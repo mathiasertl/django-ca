@@ -15,6 +15,7 @@
 # type: ignore
 
 """Test custom Django form fields."""
+
 import html
 import json
 from typing import Any, Dict, List, Tuple, Type

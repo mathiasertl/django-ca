@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test the view_ca management command."""
+
 import os
 import textwrap
 from unittest import mock

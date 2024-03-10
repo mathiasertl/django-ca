@@ -312,8 +312,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
 
         def __get__(  # type: ignore[override]
             self, instance: Any, owner: Any
-        ) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
-            ...
+        ) -> Optional[x509.Extension[ExtensionTypeTypeVar]]: ...
 
         def __set__(
             self,
@@ -323,8 +322,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
                     x509.Extension[ExtensionTypeTypeVar], ExtensionModelTypeVar, SerializedPydanticExtension
                 ]
             ],
-        ) -> None:
-            ...
+        ) -> None: ...
 
     def formfield(
         self,

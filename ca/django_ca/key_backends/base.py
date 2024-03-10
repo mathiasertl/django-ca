@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Base classes for CA backends."""
+
 import abc
 import typing
 from datetime import datetime

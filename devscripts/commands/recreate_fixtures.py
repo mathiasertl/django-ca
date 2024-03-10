@@ -15,6 +15,7 @@
 
 The test suite should be sufficiently modular to still run without errors after running this command.
 """
+
 import argparse
 import ipaddress
 import json

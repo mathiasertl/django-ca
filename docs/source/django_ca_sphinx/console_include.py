@@ -48,8 +48,7 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
         for chunk in chunks:
             if re.match("-[a-z]$", chunk):  # chunk appears to be an option
                 if unsplit:  # previous option was also an optarg, so yield what was there
-                    for unsplit_chunk in unsplit:
-                        yield unsplit_chunk
+                    yield from unsplit
                 unsplit = [chunk]
             elif chunk == " ":
                 if unsplit:  # this is the whitespace after an option
@@ -68,16 +67,14 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
             # There is something in the unsplit buffer, but this chunk does not look like a value (maybe
             # it's a long option?), so we yield tokens from the buffer and then this chunk.
             elif unsplit:
-                for unsplit_chunk in unsplit:
-                    yield unsplit_chunk
+                yield from unsplit
                 unsplit = []
                 yield chunk
             else:
                 yield chunk
 
         # yield any remaining chunks
-        for chunk in unsplit:
-            yield chunk
+        yield from unsplit
 
     def _split(self, text: str) -> typing.List[str]:
         chunks = super()._split(text)
@@ -132,7 +129,7 @@ class ConsoleIncludeDirective(CodeBlock):
     required_arguments = 0
     has_content = False
     # RUFF NOTE: Suggested fix (ClassVar) does not work for overriding values.
-    option_spec: OptionSpec = dict(  # noqa: RUF012
+    option_spec: OptionSpec = dict(  # type: ignore[misc]  # noqa: RUF012
         CodeBlock.option_spec,
         include=directives.unchanged_required,
         context=directives.unchanged_required,

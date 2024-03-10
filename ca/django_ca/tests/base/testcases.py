@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Some common base classes for test cases."""
+
 import os
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase

@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Release script."""
+
 import argparse
 import difflib
 import importlib

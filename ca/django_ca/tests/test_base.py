@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test some code in the test base module to make sure it really works."""
+
 import importlib
 import io
 import tempfile

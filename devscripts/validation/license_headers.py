@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """validation module to validate license headers."""
+
 import argparse
 import difflib
 import os

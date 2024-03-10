@@ -13,7 +13,6 @@
 
 """Test django-ca system checks."""
 
-
 from django.apps import apps
 from django.core import checks
 from django.test import TestCase

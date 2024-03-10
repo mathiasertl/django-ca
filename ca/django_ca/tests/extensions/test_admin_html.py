@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Test how extensions look like in the admin interface."""
+
 import base64
 import typing
 from typing import Any, Dict

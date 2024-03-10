@@ -12,6 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 """Utility functions for loading settings."""
+
 import logging
 import os
 from pathlib import Path
