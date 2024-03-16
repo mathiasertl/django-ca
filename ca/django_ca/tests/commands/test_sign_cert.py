@@ -15,6 +15,7 @@
 
 import io
 import os
+import shutil
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, Tuple
@@ -549,6 +550,21 @@ def test_no_subject(settings: SettingsWrapper, usable_root: CertificateAuthority
     assert_signature([usable_root], cert)
     assert cert.pub.loaded.subject == x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value=hostname)])
     assert cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(dns(hostname))
+
+
+@pytest.mark.usefixtures("tmpcadir")
+def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> None:
+    """Sign a certificate with a CA in the secondary backend."""
+    # Prepare root so that it is usable with the secondary backend.
+    secondary_location = storages["secondary"].location
+    shutil.copy(os.path.join(FIXTURES_DIR, CERT_DATA["pwd"]["key_filename"]), secondary_location)
+    pwd.key_backend_alias = "secondary"
+    pwd.save()
+
+    with assert_create_cert_signals() as (pre, post):
+        sign_cert(pwd, rfc4514_subject, secondary_password=CERT_DATA["pwd"]["password"], stdin=csr)
+    cert = Certificate.objects.get()
+    assert_signature([pwd], cert)
 
 
 def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:

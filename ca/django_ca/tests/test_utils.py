@@ -76,11 +76,10 @@ def test_doctests() -> None:
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
-@pytest.mark.usefixtures("tmpcadir")
-def test_read_file(tmp_path: Path) -> None:
+def test_read_file(tmpcadir: Path) -> None:
     """Test :py:func:`django_ca.utils.read_file`."""
     name = "test-data"
-    path = os.path.join(tmp_path, name)
+    path = os.path.join(tmpcadir, name)
     data = b"test data"
     with open(path, "wb") as stream:
         stream.write(data)

@@ -150,6 +150,13 @@ def key_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
 
 
 @pytest.fixture()
+def secondary_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
+    """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for the secondary key backend."""
+    request.getfixturevalue("tmpcadir")
+    yield key_backends["secondary"]  # type: ignore[misc]
+
+
+@pytest.fixture()
 def rfc4514_subject(subject: x509.Name) -> Iterator[str]:
     """Fixture for an RFC 4514 formatted name to use for a subject.
 
@@ -206,16 +213,22 @@ def user_client(user: "User", client: Client) -> Iterator[Client]:
 @pytest.fixture()
 def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[Path]:
     """Fixture to create a temporary directory for storing files using the StoragesBackend."""
-    settings.CA_DIR = str(tmp_path)
+    primary_directory = tmp_path / "storages" / "django-ca"
+    secondary_directory = tmp_path / "storages" / "secondary"
+    os.makedirs(primary_directory, exist_ok=True)
+    os.makedirs(secondary_directory, exist_ok=True)
+
+    settings.CA_DIR = str(primary_directory)
 
     # Set the full setting and do **not** update the setting in place. This *somehow* makes a difference.
     orig_storages = copy.deepcopy(settings.STORAGES)
     updated_storages = copy.deepcopy(settings.STORAGES)
-    updated_storages["django-ca"]["OPTIONS"]["location"] = str(tmp_path)
+    updated_storages["django-ca"]["OPTIONS"]["location"] = str(primary_directory)
+    updated_storages["secondary"]["OPTIONS"]["location"] = str(secondary_directory)
     settings.STORAGES = updated_storages
 
     try:
-        yield tmp_path
+        yield primary_directory
     finally:
         # Reset storages, otherwise the path lives into the next test in some cases
         # pylint: disable-next=protected-access  # only way to reset this

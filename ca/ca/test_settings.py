@@ -89,7 +89,15 @@ STORAGES = {
     "django-ca": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
         "OPTIONS": {
-            "location": "/does/not/exist/",
+            "location": "/does/not/exist/django-ca",
+            "file_permissions_mode": 0o600,
+            "directory_permissions_mode": 0o700,
+        },
+    },
+    "secondary": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": "/does/not/exist/secondary",
             "file_permissions_mode": 0o600,
             "directory_permissions_mode": 0o700,
         },
@@ -176,6 +184,18 @@ LOGGING = {
 # import situation.
 with open(BASE_DIR / "django_ca" / "tests" / "fixtures" / "cert-data.json", encoding="utf-8") as stream:
     _fixture_data = json.load(stream)
+
+
+CA_KEY_BACKENDS = {
+    "default": {
+        "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
+        "OPTIONS": {"storage_alias": "django-ca"},
+    },
+    "secondary": {
+        "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
+        "OPTIONS": {"storage_alias": "secondary"},
+    },
+}
 
 # Custom settings
 CA_DEFAULT_SUBJECT = (

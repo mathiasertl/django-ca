@@ -69,8 +69,19 @@ class KeyBackend(
     #: The Pydantic model representing the options used for loading a private key.
     use_model: Type[UsePrivateKeyOptionsTypeVar]
 
+    #: Prefix for argparse to use for arguments. Empty for the default alias, and `{alias}-` otherwise.
+    argparse_prefix: str = ""
+
+    #: Prefix to use for loading options. Empty for the default alias, and `{alias}_` otherwise.
+    options_prefix: str = ""
+
     def __init__(self, alias: str, **kwargs: Any) -> None:
         self.alias = alias
+
+        if self.alias != ca_settings.CA_DEFAULT_KEY_BACKEND:
+            self.argparse_prefix = f"{alias.lower().replace('_', '-')}-"
+            self.options_prefix = f"{alias.lower().replace('-', '_')}_"
+
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -84,7 +95,7 @@ class KeyBackend(
 
         Return ``None`` if you don't need to create such a group.
         """
-        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not typehinted
+        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not type-hinted
             f"{self.alias}: {self.title}",
             f"The backend used with --key-backend={self.alias}. {self.description}",
         )
@@ -106,7 +117,7 @@ class KeyBackend(
 
         Return ``None`` if you don't need to create such a group.
         """
-        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not typehinted
+        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not type-hinted
             f"{self.alias} key storage",
             f"Arguments for using private keys stored with the {self.alias} backend.",
         )

@@ -603,7 +603,7 @@ class CertificateAuthority(X509CertMixin):
     def key_backend(self) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         """The key backend that can be used to use the private key."""
         if self._key_backend is None:
-            self._key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
+            self._key_backend = key_backends[self.key_backend_alias]
         return self._key_backend
 
     def is_usable(self, options: Optional[BaseModel] = None) -> bool:
