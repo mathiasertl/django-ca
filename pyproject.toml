@@ -391,27 +391,22 @@ filterwarnings = [
     "error:::cryptography",
     "error:::acme",
     "error:::josepy",
-    # utcnow() and utcfromtimestamp() are deprecated in Python 3.12. django-ca no longer uses either, but
-    # various third-party software still does, so we silence the warnings outside of django-ca.
-    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated",
-    "ignore:datetime.datetime.utcnow\\(\\) is deprecated",
+    "error:::pydantic",
+
     # Disabled because cryptography calls the function directly and the warning is issued with stacklevel=2,
     # so it's shown for our code. See: https://github.com/pyca/cryptography/issues/9580
-    #"error:datetime.datetime.utcfromtimestamp\\(\\) is deprecated::django_ca",  # pragma: only cg<42
-    "error:datetime.datetime.utcnow\\(\\) is deprecated::django_ca",
+    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated::django_ca",  # pragma: only cg<42
 
-    # pragma: only django<4.2  # Will have to get rid of this functionality with django 5.1.
-    "ignore:django.core.files.storage.get_storage_class is deprecated",
-
-    # pytest-freezegun==0.4.2 issues this (harmless for now) warning:
-    "ignore:distutils Version classes are deprecated. Use packaging.version instead.::pytest_freezegun",
+    # Will have to get rid of this functionality with django 5.1.
+    "ignore:django.core.files.storage.get_storage_class is deprecated",  # pragma: only django<4.2
 
     # pyOpenSSL>=23.3.0 raises this warning, acme==2.7.3 still uses the deprecated APIs.
     # acme uses X509Extension in acme.crypto_util.gen_ss_cert(). See also:
     #   https://github.com/certbot/certbot/issues/9828
     "ignore:^X509Extension support in pyOpenSSL is deprecated\\. You should use the APIs in cryptography\\.$::acme",
 
-    # django-ninja still uses class-based configuration, deprecated in Pydantic 2.0
+    # django-ninja==1.1.0 still uses class-based configuration, deprecated in Pydantic 2.0
+    #   https://github.com/vitalik/django-ninja/issues/1093
     "ignore:^Support for class-based `config` is deprecated, use ConfigDict instead.::pydantic",
 ]
 

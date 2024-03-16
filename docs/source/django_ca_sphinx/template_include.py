@@ -16,6 +16,7 @@
 import typing
 
 from docutils.parsers.rst import directives
+from docutils.statemachine import StringList
 from jinja2 import Environment, FileSystemLoader
 from sphinx.directives.code import CodeBlock  # code-block directive from Sphinx
 from sphinx.util.typing import OptionSpec
@@ -59,7 +60,7 @@ class TemplateDirective(CodeBlock):
         self.jinja_env.policies.update(self.config.jinja_policies)  # type: ignore[attr-defined]
 
     @property
-    def content(self) -> typing.List[str]:
+    def content(self) -> StringList:
         """Actually render the template."""
         template = self.jinja_env.get_template(self.arguments[1])
         context_name = self.options.get("context")
@@ -73,7 +74,7 @@ class TemplateDirective(CodeBlock):
             context = self.config.jinja_contexts[context_name].copy()
 
         content = template.render(**context)
-        return content.splitlines()
+        return StringList(content.splitlines())
 
     @content.setter
     def content(self, value: typing.Any) -> None:
