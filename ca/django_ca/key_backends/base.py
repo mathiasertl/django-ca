@@ -156,27 +156,39 @@ class KeyBackend(
     def get_create_private_key_options(
         self, key_type: ParsableKeyType, options: Dict[str, Any]
     ) -> CreatePrivateKeyOptionsTypeVar:
-        """Load options to create private keys into a Pydantic model.
+        """Get options to create private keys into a Pydantic model.
 
-        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The
-        returned model will be passed to
+        `options` is the dictionary of arguments from :command:`manage.py init_ca` (including default values).
+        The returned model will be passed to
         :py:func:`~django_ca.key_backends.base.KeyBackend.create_private_key`.
         """
 
     @abc.abstractmethod
-    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
-        """Get options to create private keys into a Pydantic model.
+    def get_use_parent_private_key_options(
+        self, ca: "CertificateAuthority", options: Dict[str, Any]
+    ) -> UsePrivateKeyOptionsTypeVar:
+        """Get options to use the private key of a parent certificate authority.
 
-        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
-        backend is expected to be able to sign certificate authorities using the options provided here.
+        The returned model will be used for the certificate authority `ca`. You can pass it as extra context
+        to influence model validation.
+
+        `options` is the dictionary of arguments to :command:`manage.py init_ca` (including default values).
+        The key backend is expected to be able to sign certificate authorities using the options provided
+        here.
         """
 
     @abc.abstractmethod
-    def get_use_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptionsTypeVar:
-        """Get options to create private keys into a Pydantic model.
+    def get_use_private_key_options(
+        self, ca: Optional["CertificateAuthority"], options: Dict[str, Any]
+    ) -> UsePrivateKeyOptionsTypeVar:
+        """Get options to use the private key of a certificate authority.
 
-        `options` is the dictionary of arguments to ``manage.py init_ca`` (including default values). The key
-        backend is expected to be able to sign certificates and CRLs using the options provided here.
+        The returned model will be used for the certificate authority `ca`. You can pass it as extra context
+        to influence model validation. If `ca` is ``None``, it indicates that the CA is currently being
+        created via :command:`manage.py init_ca`.
+
+        `options` is the dictionary of arguments to :command:`manage.py init_ca` (including default values).
+        The key backend is expected to be able to sign certificates and CRLs using the options provided here.
         """
 
     @abc.abstractmethod

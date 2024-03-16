@@ -15,7 +15,7 @@ Supported key backends
 Writing custom backends
 ***********************
 
-.. INFO:: The key backend interface is new and might change in future versions without notice.
+.. warning:: The key backend interface is new and might change in future versions without notice.
 
 Writing a custom key backend allows you to store keys in a custom way, e.g. in a custom Hardware Security
 Module (HSM) or using a different library that handles some kind of file storage or dedicated private key

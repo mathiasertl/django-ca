@@ -147,7 +147,7 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
             cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_PASSWORDS={})
     def test_password(self) -> None:
         """Test creating a CRL with a CA with a password."""
         ca = self.cas["pwd"]
@@ -170,6 +170,23 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
             stderr=BytesIO(),
         )
         assert stderr == b""
+
+        expected_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
+        self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
+
+    @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
+    def test_password_with_ca_settings(self) -> None:
+        """Test creating a CRL with a CA with a password."""
+        ca = self.cas["pwd"]
+
+        # Giving no password raises a CommandError
+        stdout, stderr = cmd(
+            "dump_crl",
+            ca=ca,
+            scope="user",
+            stdout=BytesIO(),
+            stderr=BytesIO(),
+        )
 
         expected_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)

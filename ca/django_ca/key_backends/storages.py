@@ -86,7 +86,7 @@ class UsePrivateKeyOptions(BaseModel):
         """Validator to load the password from CA_PASSWORDS if not given."""
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
-            if ca:  # pragma: no branch  # when we pass a context, we also pass a ca, but just to be sure
+            if ca is not None:
                 if settings_password := ca_settings.CA_PASSWORDS.get(ca.serial):
                     return settings_password
 
@@ -207,11 +207,19 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
             password=options[f"{self.options_prefix}password"], path=options[f"{self.options_prefix}path"]
         )
 
-    def get_use_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions(password=options.get(f"{self.options_prefix}password"))
+    def get_use_private_key_options(
+        self, ca: Optional["CertificateAuthority"], options: Dict[str, Any]
+    ) -> UsePrivateKeyOptions:
+        return UsePrivateKeyOptions.model_validate(
+            {"password": options.get(f"{self.options_prefix}password")}, context={"ca": ca}
+        )
 
-    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions(password=options[f"{self.options_prefix}parent_password"])
+    def get_use_parent_private_key_options(
+        self, ca: "CertificateAuthority", options: Dict[str, Any]
+    ) -> UsePrivateKeyOptions:
+        return UsePrivateKeyOptions.model_validate(
+            {"password": options[f"{self.options_prefix}parent_password"]}, context={"ca": ca}
+        )
 
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions

@@ -91,7 +91,7 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
                 "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
             )
 
-        key_backend_options = ca.key_backend.get_use_private_key_options(options)
+        key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
 
         # Actually create the CRL
         try:

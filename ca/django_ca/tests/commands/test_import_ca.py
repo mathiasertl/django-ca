@@ -270,7 +270,7 @@ def test_secondary_key_backend(ca_name: str) -> None:
     assert ca.key_backend_alias == "secondary"
     assert ca.key_backend_options["path"].startswith("secondary-ca-path")
     assert isinstance(ca.key_backend, StoragesBackend)
-    assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password="foobar"))
+    assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password="foobar"))  # type: ignore[attr-defined]
 
 
 def test_bogus_public_key(ca_name: str) -> None:

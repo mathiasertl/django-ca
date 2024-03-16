@@ -263,7 +263,7 @@ max-locals = 20
 max-parents = 15
 
 # Maximum number of public methods for a class (see R0904).
-max-public-methods = 25
+max-public-methods = 30
 
 [tool.pylint.format]
 max-line-length = 110
@@ -400,7 +400,8 @@ filterwarnings = [
     #"error:datetime.datetime.utcfromtimestamp\\(\\) is deprecated::django_ca",  # pragma: only cg<42
     "error:datetime.datetime.utcnow\\(\\) is deprecated::django_ca",
 
-    "ignore:django.core.files.storage.get_storage_class is deprecated::django",  # pragma: only django<4.2
+    # pragma: only django<4.2  # Will have to get rid of this functionality with django 5.1.
+    "ignore:django.core.files.storage.get_storage_class is deprecated",
 
     # pytest-freezegun==0.4.2 issues this (harmless for now) warning:
     "ignore:distutils Version classes are deprecated. Use packaging.version instead.::pytest_freezegun",
