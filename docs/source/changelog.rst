@@ -79,7 +79,7 @@ Backwards incompatible changes
 Deprecation notices
 ===================
 
-* This is the last release to support Python 3.8.
+* This is the last release to support Python 3.8, ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
 * The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
 * ``django_ca.extensions.parse_extension()`` is deprecated and should not longer be used. Use Pydantic models
