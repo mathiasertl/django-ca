@@ -15,7 +15,6 @@
 
 import io
 import re
-import typing
 from datetime import timedelta
 from typing import Any, List, Optional, Tuple
 from unittest import mock
@@ -36,7 +35,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
 from django_ca.tests.base.assertions import (
@@ -72,6 +71,8 @@ from django_ca.tests.base.utils import (
     uri,
 )
 from django_ca.utils import get_crl_cache_key
+
+use_options = UsePrivateKeyOptions(password=None)
 
 
 def assert_post_create_ca(post: mock.Mock, ca: CertificateAuthority) -> None:
@@ -163,19 +164,17 @@ def init_ca_cmd(**kwargs: Any) -> Tuple[str, str]:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
-def test_basic(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str) -> None:
+def test_basic(
+    hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str, key_backend: StoragesBackend
+) -> None:
     """Basic tests for the command."""
     ca = init_ca(ca_name, rfc4514_subject, "--subject-format=rfc4514")
     assert_ca_properties(ca, ca_name, crl_number='{"scope": {"user": 1, "ca": 1}}')
     assert_certificate(ca, subject)
 
     # test the private key
-    key = typing.cast(
-        RSAPrivateKey,
-        ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            ca, UsePrivateKeyOptions(password=None)
-        ),
-    )
+    key = key_backend.get_key(ca, use_options)
+    assert isinstance(key, RSAPrivateKey)
     assert key.key_size == 1024
     assert_authority_key_identifier(ca, ca)
 
@@ -192,17 +191,22 @@ def test_basic(hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject:
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_basic_without_timezone_support(
-    hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str, settings: SettingsWrapper
+    hostname: str,
+    ca_name: str,
+    subject: x509.Name,
+    rfc4514_subject: str,
+    key_backend: StoragesBackend,
+    settings: SettingsWrapper,
 ) -> None:
     """Basic test without timezone support."""
     settings.USE_TZ = True
-    return test_basic(hostname, ca_name, subject, rfc4514_subject)
+    return test_basic(hostname, ca_name, subject, rfc4514_subject, key_backend=key_backend)
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
-def test_arguments(hostname: str, ca_name: str) -> None:
+def test_arguments(hostname: str, ca_name: str, key_backend: StoragesBackend) -> None:
     """Test most arguments."""
     hostname = "example.com"
     website = f"https://{hostname}"
@@ -229,12 +233,7 @@ def test_arguments(hostname: str, ca_name: str) -> None:
     assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in actual
 
     # test the private key
-    key = typing.cast(
-        ec.EllipticCurvePrivateKey,
-        ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            ca, UsePrivateKeyOptions(password=None)
-        ),
-    )
+    key = key_backend.get_key(ca, use_options)
     assert isinstance(key, ec.EllipticCurvePrivateKey)
     assert key.key_size == 256
 
@@ -267,10 +266,12 @@ def test_arguments(hostname: str, ca_name: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_arguments_without_timezone_support(settings: SettingsWrapper, hostname: str, ca_name: str) -> None:
+def test_arguments_without_timezone_support(
+    settings: SettingsWrapper, hostname: str, ca_name: str, key_backend: StoragesBackend
+) -> None:
     """Test arguments without timezone support."""
     settings.USE_TZ = False
-    test_arguments(hostname, ca_name)
+    test_arguments(hostname, ca_name, key_backend=key_backend)
 
 
 @pytest.mark.django_db
@@ -661,7 +662,7 @@ def test_invalid_ocsp_responder_arguments() -> None:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_ec(ca_name: str) -> None:
+def test_ec(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating an ECC CA."""
     with assert_create_ca_signals() as (pre, post):
         out, err = init_ca_cmd(name=ca_name, key_type="EC")
@@ -669,18 +670,12 @@ def test_ec(ca_name: str) -> None:
     assert err == ""
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert_post_create_ca(post, ca)
-    key = typing.cast(
-        ec.EllipticCurvePrivateKey,
-        ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            ca, UsePrivateKeyOptions(password=None)
-        ),
-    )
-    assert isinstance(key, ec.EllipticCurvePrivateKey)
+    assert isinstance(key_backend.get_key(ca, use_options), ec.EllipticCurvePrivateKey)
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_dsa(ca_name: str) -> None:
+def test_dsa(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating a certificate authority with a DSA private key."""
     with assert_create_ca_signals() as (pre, post):
         out, err = init_ca_cmd(name=ca_name, key_type="DSA")
@@ -689,9 +684,7 @@ def test_dsa(ca_name: str) -> None:
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert_post_create_ca(post, ca)
 
-    key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-        ca, UsePrivateKeyOptions(password=None)
-    )
+    key = key_backend.get_key(ca, use_options)
     assert isinstance(key, dsa.DSAPrivateKey)
     assert key.key_size == 1024
 
@@ -898,7 +891,7 @@ def test_expires_override_with_use_tz_false(
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_password(ca_name: str) -> None:
+def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating a CA with a password."""
     password = b"testpassword"
     with assert_create_ca_signals() as (pre, post):
@@ -914,25 +907,16 @@ def test_password(ca_name: str) -> None:
     msg = "^Password was not given but private key is encrypted$"
     parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")
     with pytest.raises(TypeError, match=msg):
-        parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            parent, UsePrivateKeyOptions(password=None)
-        )
+        key_backend.get_key(parent, use_options)
 
     # Wrong password doesn't work either
     with pytest.raises(ValueError):
         # NOTE: cryptography is notoriously unstable when it comes to the error message here, so we only
         # check the exception class.
-        parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            parent, UsePrivateKeyOptions(password=b"wrong")
-        )
+        key_backend.get_key(parent, UsePrivateKeyOptions(password=b"wrong"))
 
     # test the private key
-    key = typing.cast(
-        RSAPrivateKey,
-        parent.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            parent, UsePrivateKeyOptions(password=password)
-        ),
-    )
+    key = key_backend.get_key(parent, UsePrivateKeyOptions(password=password))
     assert isinstance(key, RSAPrivateKey)
     assert key.key_size == 1024
 
@@ -1036,6 +1020,64 @@ def test_multiple_ocsp_and_ca_issuers(hostname: str, ca_name: str, usable_root: 
         [uri(issuer_uri_one), uri(issuer_uri_two)], [uri(ocsp_uri_one), uri(ocsp_uri_two)]
     )
     assert actual == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+def test_non_default_key_backend_with_rsa_key(
+    ca_name: str, rfc4514_subject: str, secondary_backend: StoragesBackend
+) -> None:
+    """Test creating a key with a non-default key backend."""
+    password = "secure-password"
+    ca = init_ca(
+        ca_name,
+        rfc4514_subject,
+        "--subject-format=rfc4514",
+        "--key-backend=secondary",
+        "--secondary-path=secondary-ca-path",
+        "--secondary-key-size=2048",
+        "--path-length=1",
+        f"--secondary-password={password}",
+    )
+    assert ca.key_backend_alias == "secondary"
+    assert ca.key_backend_options["path"].startswith("secondary-ca-path")
+
+    key = secondary_backend.get_key(ca, UsePrivateKeyOptions(password=password))
+    assert isinstance(key, RSAPrivateKey)
+    assert key.key_size == 2048
+
+    # Create a child CA to test parent password
+    child = init_ca(
+        f"{ca_name} child",
+        rfc4514_subject,
+        "--subject-format=rfc4514",
+        f"--parent={ca.serial}",
+        f"--secondary-parent-password={password}",
+        chain=[ca],
+    )
+    assert child.key_backend_alias == "default"
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+def test_non_default_key_backend_with_ec_key(
+    ca_name: str, rfc4514_subject: str, secondary_backend: StoragesBackend
+) -> None:
+    """Test creating an EC key with a non-default key backend."""
+    assert ca_settings.CA_DEFAULT_ELLIPTIC_CURVE != ec.SECT571R1  # make sure that curve is not default
+    ca = init_ca(
+        ca_name,
+        rfc4514_subject,
+        "--subject-format=rfc4514",
+        "--key-backend=secondary",
+        "--key-type=EC",
+        "--secondary-elliptic-curve=sect571r1",  # non default curve
+    )
+    assert ca.key_backend_alias == "secondary"
+
+    key = secondary_backend.get_key(ca, use_options)
+    assert isinstance(key, ec.EllipticCurvePrivateKey)
+    assert isinstance(key.curve, ec.SECT571R1)
 
 
 def test_invalid_public_key_parameters(ca_name: str) -> None:

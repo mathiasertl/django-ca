@@ -42,7 +42,7 @@ from django.core.files.storage import storages
 from django_ca import ca_settings, constants
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
-from django_ca.management.base import add_elliptic_curve, add_key_size, add_password
+from django_ca.management.base import add_elliptic_curve, add_key_size
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import generate_private_key, get_cert_builder, validate_private_key_parameters
 
@@ -142,7 +142,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def _add_password_argument(self, group: ArgumentGroup) -> None:
         group.add_argument(
-            "--password",
+            f"--{self.argparse_prefix}password",
             nargs="?",
             action=PasswordAction,
             metavar="PASSWORD",
@@ -152,7 +152,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def _add_path_argument(self, group: ArgumentGroup) -> None:
         group.add_argument(
-            "--path",
+            f"--{self.argparse_prefix}path",
             type=Path,
             default=Path("ca"),
             help="Path for storing the private key (in the storage backend, default: %(default)s).",
@@ -160,17 +160,19 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_path_argument(group)
-        add_key_size(group)
-        add_elliptic_curve(group)
-        add_password(
-            group,
-            help_text="Encrypt the private key with PASSWORD. If PASSWORD is not passed, you will be "
-            "prompted. By default, the private key is not encrypted.",
+        add_key_size(group, prefix=self.argparse_prefix)
+        add_elliptic_curve(group, prefix=self.argparse_prefix)
+        group.add_argument(
+            f"--{self.argparse_prefix}password",
+            nargs="?",
+            action=PasswordAction,
+            help="Encrypt the private key with PASSWORD. If PASSWORD is not passed, you will be prompted. By "
+            "default, the private key is not encrypted.",
         )
 
     def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         group.add_argument(
-            "--parent-password",
+            f"--{self.argparse_prefix}parent-password",
             nargs="?",
             action=PasswordAction,
             metavar="PASSWORD",
@@ -189,23 +191,27 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self, key_type: ParsableKeyType, options: Dict[str, Any]
     ) -> CreatePrivateKeyOptions:
         key_size, elliptic_curve = validate_private_key_parameters(
-            key_type, options["key_size"], options["elliptic_curve"]
+            key_type,
+            options[f"{self.options_prefix}key_size"],
+            options[f"{self.options_prefix}elliptic_curve"],
         )
         return CreatePrivateKeyOptions(
-            password=options["password"],
-            path=options["path"],
+            password=options[f"{self.options_prefix}password"],
+            path=options[f"{self.options_prefix}path"],
             key_size=key_size,
             elliptic_curve=elliptic_curve,
         )
 
     def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptions:
-        return StorePrivateKeyOptions(password=options["password"], path=options["path"])
+        return StorePrivateKeyOptions(
+            password=options[f"{self.options_prefix}password"], path=options[f"{self.options_prefix}path"]
+        )
 
     def get_use_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions(password=options.get("password"))
+        return UsePrivateKeyOptions(password=options.get(f"{self.options_prefix}password"))
 
     def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions(password=options["parent_password"])
+        return UsePrivateKeyOptions(password=options[f"{self.options_prefix}parent_password"])
 
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions

@@ -53,25 +53,20 @@ if typing.TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
 
 
-def add_elliptic_curve(parser: ActionsContainer) -> None:
+def add_elliptic_curve(parser: ActionsContainer, prefix: str = "") -> None:
     """Add --elliptic-curve option."""
     default = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
     parser.add_argument(
-        "--elliptic-curve",
+        f"--{prefix}elliptic-curve",
         action=actions.EllipticCurveAction,
         help=f"Elliptic Curve used for EC keys (default: {default}).",
     )
 
 
-def add_password(parser: ActionsContainer, help_text: str = "") -> None:
-    """Add a password option."""
-    parser.add_argument("-p", "--password", nargs="?", action=actions.PasswordAction, help=help_text)
-
-
-def add_key_size(parser: ActionsContainer) -> None:
+def add_key_size(parser: ActionsContainer, prefix: str = "") -> None:
     """Add --key-size option (2048, 4096, ...)."""
     parser.add_argument(
-        "--key-size",
+        f"--{prefix}key-size",
         action=actions.KeySizeAction,
         help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
     )

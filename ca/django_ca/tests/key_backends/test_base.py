@@ -135,7 +135,7 @@ def test_key_backends_getitem_with_invalid_backend() -> None:
 
 def test_key_backends_iter(settings: SettingsWrapper) -> None:
     """Test dict-style lookup ."""
-    assert list(key_backends) == [key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]]
+    assert list(key_backends) == [key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND], key_backends["secondary"]]
 
     settings.CA_KEY_BACKENDS = {
         ca_settings.CA_DEFAULT_KEY_BACKEND: {

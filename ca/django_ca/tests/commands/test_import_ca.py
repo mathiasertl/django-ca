@@ -28,7 +28,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -244,6 +244,33 @@ def test_key_backend_option(ca_name: str) -> None:
 
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert ca.key_backend_alias == "default"
+
+
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("db")
+def test_secondary_key_backend(ca_name: str) -> None:
+    """Use secondary key backend with a password."""
+    key_path = CERT_DATA["root"]["key_path"]
+    certificate_path = CERT_DATA["root"]["pub_path"]
+    out, err = cmd_e2e(
+        [
+            "import_ca",
+            ca_name,
+            str(key_path),
+            str(certificate_path),
+            "--key-backend=secondary",
+            "--secondary-password=foobar",
+            "--secondary-path=secondary-ca-path",
+        ]
+    )
+    assert out == ""
+    assert err == ""
+
+    ca: CertificateAuthority = CertificateAuthority.objects.get(name=ca_name)
+    assert ca.key_backend_alias == "secondary"
+    assert ca.key_backend_options["path"].startswith("secondary-ca-path")
+    assert isinstance(ca.key_backend, StoragesBackend)
+    assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password="foobar"))
 
 
 def test_bogus_public_key(ca_name: str) -> None:
