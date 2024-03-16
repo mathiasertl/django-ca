@@ -20,6 +20,7 @@ import typing
 import jinja2
 import yaml
 from docutils.parsers.rst import directives
+from docutils.statemachine import StringList
 from sphinx.directives.code import CodeBlock  # code-block directive from Sphinx
 from sphinx.util.typing import OptionSpec
 
@@ -175,7 +176,7 @@ class ConsoleIncludeDirective(CodeBlock):
         return lines
 
     @property
-    def content(self) -> typing.List[str]:
+    def content(self) -> StringList:
         """Actually render the template."""
         include = self.options.get("include")
         if not include:
@@ -223,7 +224,7 @@ class ConsoleIncludeDirective(CodeBlock):
             if "display_output" in config:
                 lines += self._render_template(config["display_output"], context).splitlines()
 
-        return lines
+        return StringList(lines)
 
     @content.setter
     def content(self, value: typing.Any) -> None:
