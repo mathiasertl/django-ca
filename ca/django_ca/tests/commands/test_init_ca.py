@@ -50,7 +50,7 @@ from django_ca.tests.base.assertions import (
     assert_signature,
     assert_system_exit,
 )
-from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
@@ -942,6 +942,20 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     assert_post_create_ca(post, child)
     child.full_clean()  # assert e.g. max_length in serials
     assert_signature([parent], child)
+
+
+def test_parent_password_with_ca_passwords(
+    ca_name: str, usable_pwd: CertificateAuthority, settings: SettingsWrapper
+) -> None:
+    """Use a password-encrypted parent where the password is stored in the CA_PASSWORDS setting."""
+    settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA[usable_pwd.name]["password"]}
+
+    with assert_create_ca_signals():
+        out, err = init_ca_cmd(name=ca_name, parent=usable_pwd)
+    assert out == ""
+    assert err == ""
+    ca: CertificateAuthority = CertificateAuthority.objects.get(name=ca_name)
+    assert ca.parent == usable_pwd
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])

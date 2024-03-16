@@ -14,6 +14,7 @@
 """Test basic views."""
 
 import copy
+from http import HTTPStatus
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -23,6 +24,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import include, path, re_path, reverse
 
+import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
@@ -84,8 +86,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         # test the default view
         idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content,
             encoding=Encoding.DER,
@@ -99,8 +101,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
 
         # fetch again - we should see a cached response
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content,
             encoding=Encoding.DER,
@@ -112,8 +114,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         # clear the cache and fetch again
         cache.clear()
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content,
             expected=[self.cert],
@@ -132,8 +134,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         self.ca.save()
 
         response = self.client.get(reverse("full", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content,
             encoding=Encoding.DER,
@@ -144,8 +146,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
 
         # If scope is None, CRLs for a root CA should *not* include the IssuingDistributionPoint extension:
         response = self.client.get(reverse("full", kwargs={"serial": self.cas["root"].serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content,
             encoding=Encoding.DER,
@@ -163,8 +165,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/plain")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "text/plain"
         self.assertCRL(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
 
         child.revoke()
@@ -172,15 +174,15 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
 
         # fetch again - we should see a cached response
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/plain")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "text/plain"
         self.assertCRL(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
 
         # clear the cache and fetch again
         cache.clear()
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/plain")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "text/plain"
         self.assertCRL(
             response.content,
             expected=[child],
@@ -199,20 +201,20 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/plain")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "text/plain"
         self.assertCRL(response.content, expires=600, idp=idp, signer=child, algorithm=child.algorithm)
 
-    @override_tmpcadir()
+    @override_tmpcadir(CA_PASSWORDS={})
     def test_password(self) -> None:
         """Test getting a CRL with a password."""
         ca = self.cas["pwd"]
         key_backend_options = ca.key_backend.get_use_private_key_options(
-            {"password": CERT_DATA["pwd"]["password"]}
+            ca, {"password": CERT_DATA["pwd"]["password"]}
         )
 
         # getting CRL from view directly doesn't work
-        with self.assertRaisesRegex(ValueError, r"^Backend cannot be used for signing by this process.$"):
+        with pytest.raises(ValueError, match=r"^Backend cannot be used for signing by this process.$"):
             self.client.get(reverse("default", kwargs={"serial": ca.serial}))
 
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
@@ -226,14 +228,22 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
 
         idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
+        self.assertCRL(response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm)
+
+    @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
+    def test_password_with_ca_settings(self) -> None:
+        """Test getting a CRL with a password with CA_SETTINGS."""
+        ca = self.cas["pwd"]
+
+        # getting CRL from view directly works due to CA_PASSWORDS having a password
+        response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))
+        idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
-            response.content,
-            encoding=Encoding.DER,
-            idp=idp,
-            signer=ca,
-            algorithm=ca.algorithm,
+            response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm, expires=600
         )
 
     @override_tmpcadir()
@@ -241,8 +251,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         """Test overwriting a CRL."""
         idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
         response = self.client.get(reverse("advanced", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/plain")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "text/plain"
         self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.SHA256())
 
     @override_tmpcadir()
@@ -251,15 +261,15 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         # View still works with self.ca, because it's the child CA
         idp = get_idp(full_name=idp_full_name(self.ca))
         response = self.client.get(reverse("include_idp", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content, encoding=Encoding.DER, expires=600, idp=idp, algorithm=self.ca.algorithm
         )
 
-        with self.assertRaisesRegex(
+        with pytest.raises(
             ValueError,
-            r"^Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs\.$",
+            match=r"^Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs\.$",
         ):
             response = self.client.get(reverse("include_idp", kwargs={"serial": self.cas["root"].serial}))
 
@@ -267,8 +277,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_force_idp_exclusion(self) -> None:
         """Test that forcing exclusion of CRLs works."""
         response = self.client.get(reverse("exclude_idp", kwargs={"serial": self.ca.serial}))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pkix-crl")
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
         self.assertCRL(
             response.content, encoding=Encoding.DER, expires=600, idp=None, algorithm=self.ca.algorithm
         )
@@ -296,5 +306,5 @@ class GenericCAIssuersViewTests(TestCaseMixin, TestCase):
         for ca in self.cas.values():
             url = reverse("django_ca:issuer", kwargs={"serial": ca.root.serial})
             resp = self.client.get(url)
-            self.assertEqual(resp["Content-Type"], "application/pkix-cert")
-            self.assertEqual(resp.content, ca.root.pub.der)
+            assert resp["Content-Type"] == "application/pkix-cert"
+            assert resp.content == ca.root.pub.der

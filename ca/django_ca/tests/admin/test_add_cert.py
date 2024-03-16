@@ -439,7 +439,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.get(cert.admin_change_url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple(), CA_PASSWORDS={})
     def test_add_with_password(self) -> None:
         """Test adding with a password."""
         ca = self.cas["pwd"]
@@ -487,7 +487,38 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        assert response.status_code == HTTPStatus.OK
+
+    @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
+    def test_add_with_password_with_ca_passwords(self) -> None:
+        """Test adding with a password with the CA_PASSWORDS setting."""
+        ca = self.cas["pwd"]
+
+        # post with correct password!
+        with assert_create_cert_signals() as (pre, post):
+            response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
+        self.assertRedirects(response, self.changelist_url)
+
+        cert = Certificate.objects.get(cn=self.hostname)
+        assert_post_issue_cert(post, cert)
+        assert cert.pub.loaded.subject == x509.Name(
+            [
+                x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
+            ]
+        )
+        assert ca.subject == cert.issuer
+        assert_authority_key_identifier(ca, cert)
+        assert cert.ca == ca
+        assert cert.csr.pem == CSR
+
+        # Some extensions are not set
+        assert ExtensionOID.ISSUER_ALTERNATIVE_NAME not in cert.extensions
+        assert ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS not in cert.extensions
+
+        # Test that we can view the certificate
+        response = self.client.get(cert.admin_change_url)
+        assert response.status_code == HTTPStatus.OK
 
     @override_tmpcadir()
     def test_invalid_csr(self) -> None:

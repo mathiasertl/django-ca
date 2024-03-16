@@ -19,8 +19,9 @@ ChangeLog
 * ``pydantic>=2.5`` is now a required dependency.
 * Preparations for support for using Hardware Security Modules, "Key backend support" below.
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
-  :ref:`settings-ca-key-backends`. Installations :doc:`as Django app <quickstart_as_app>` must add a
-  ``"django-ca"`` storage alias in their configuration.
+  :ref:`settings-ca-key-backends` and will be removed in ``django-ca==2.0``. Installations :doc:`as Django
+  app <quickstart_as_app>` must add a ``"django-ca"`` storage alias in their configuration.
+* The :ref:`settings-ca-passwords` setting is now consistently used whenever required.
 * Private keys (for CAs and OCSP responder certificates) are now stored as DER keys to improve loading speed.
 * The admin interface now presents lists of general names (e.g. in the Subject Alternative Name extension) as
   a list of order-able key/value pairs when adding certificates.
@@ -84,6 +85,8 @@ Deprecation notices
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
 * ``django_ca.extensions.parse_extension()`` is deprecated and should not longer be used. Use Pydantic models
   instead.
+* The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
+  :ref:`settings-ca-key-backends` and will be removed in ``django-ca==2.0``.
 
 .. _changelog-1.27.0:
 

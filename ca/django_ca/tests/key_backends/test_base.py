@@ -61,7 +61,9 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
     def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         return None
 
-    def get_use_parent_private_key_options(self, options: Dict[str, Any]) -> DummyModel:
+    def get_use_parent_private_key_options(
+        self, ca: CertificateAuthority, options: Dict[str, Any]
+    ) -> DummyModel:
         return DummyModel()
 
     def get_store_private_key_options(self, options: Dict[str, Any]) -> DummyModel:
@@ -72,7 +74,9 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
     ) -> Tuple[CertificateIssuerPublicKeyTypes, DummyModel]:
         return None, DummyModel()  # type: ignore[return-value]
 
-    def get_use_private_key_options(self, options: Dict[str, Any]) -> DummyModel:
+    def get_use_private_key_options(
+        self, ca: Optional[CertificateAuthority], options: Dict[str, Any]
+    ) -> DummyModel:
         return DummyModel()
 
     def is_usable(

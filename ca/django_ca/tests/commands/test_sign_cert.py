@@ -543,7 +543,7 @@ def test_no_subject(settings: SettingsWrapper, usable_root: CertificateAuthority
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = tuple()
     san = subject_alternative_name(dns(hostname)).value
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals():
         cmd("sign_cert", ca=usable_root, subject_alternative_name=san, stdin=csr)
 
     cert = Certificate.objects.get()
@@ -556,7 +556,7 @@ def test_no_subject(settings: SettingsWrapper, usable_root: CertificateAuthority
 def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> None:
     """Sign a certificate with a CA in the secondary backend."""
     # Prepare root so that it is usable with the secondary backend.
-    secondary_location = storages["secondary"].location
+    secondary_location = storages["secondary"].location  # type: ignore[attr-defined]
     shutil.copy(os.path.join(FIXTURES_DIR, CERT_DATA["pwd"]["key_filename"]), secondary_location)
     pwd.key_backend_alias = "secondary"
     pwd.save()
@@ -565,6 +565,17 @@ def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> N
         sign_cert(pwd, rfc4514_subject, secondary_password=CERT_DATA["pwd"]["password"], stdin=csr)
     cert = Certificate.objects.get()
     assert_signature([pwd], cert)
+
+
+def test_encrypted_ca_with_ca_settings(
+    usable_pwd: CertificateAuthority, rfc4514_subject: str, settings: SettingsWrapper
+) -> None:
+    """Sign a certificate with an encrypted CA, with the password in CA_PASSWORDS."""
+    settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA[usable_pwd.name]["password"]}
+    with assert_create_cert_signals():
+        sign_cert(usable_pwd, rfc4514_subject, stdin=csr)
+    cert = Certificate.objects.get()
+    assert_signature([usable_pwd], cert)
 
 
 def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
@@ -576,8 +587,11 @@ def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, rfc4514
     assert Certificate.objects.exists() is False
 
 
-def test_encrypted_ca_with_no_password(usable_pwd: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_encrypted_ca_with_no_password(
+    usable_pwd: CertificateAuthority, rfc4514_subject: str, settings: SettingsWrapper
+) -> None:
     """Test signing with a CA that is protected with a password, but not giving a password."""
+    settings.CA_PASSWORDS = {}
     with assert_command_error(
         r"^Password was not given but private key is encrypted$"
     ), assert_create_cert_signals(True, False):

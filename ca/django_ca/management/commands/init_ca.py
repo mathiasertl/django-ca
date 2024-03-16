@@ -306,7 +306,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
     ) -> None:
         try:
             key_backend_options = key_backend.get_create_private_key_options(key_type, options)
-            load_key_backend_options = key_backend.get_use_private_key_options(options)
+            load_key_backend_options = key_backend.get_use_private_key_options(None, options)
 
             # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
             # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
@@ -314,7 +314,9 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             if parent is None:
                 signer_key_backend_options = load_key_backend_options
             else:
-                signer_key_backend_options = parent.key_backend.get_use_parent_private_key_options(options)
+                signer_key_backend_options = parent.key_backend.get_use_parent_private_key_options(
+                    parent, options
+                )
                 if parent.is_usable(signer_key_backend_options) is False:
                     raise CommandError("Parent CA is not usable.")
         except Exception as ex:

@@ -98,7 +98,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         If a custom CA backend needs transient parameters (e.g. passwords), a view overriding this method
         must be implemented.
         """
-        return ca.key_backend.get_use_private_key_options({"password": self.password})
+        return ca.key_backend.get_use_private_key_options(ca, {"password": self.password})
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
