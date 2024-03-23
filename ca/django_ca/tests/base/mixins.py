@@ -44,7 +44,6 @@ from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from django_ca import ca_settings
-from django_ca.constants import ReasonFlags
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
@@ -335,23 +334,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    def assertRevoked(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, reason: Optional[str] = None, compromised: Optional[datetime] = None
-    ) -> None:
-        """Assert that the certificate is now revoked."""
-        if isinstance(cert, CertificateAuthority):
-            cert = CertificateAuthority.objects.get(serial=cert.serial)
-        else:
-            cert = Certificate.objects.get(serial=cert.serial)
-
-        self.assertTrue(cert.revoked)
-        self.assertEqual(cert.compromised, compromised)
-
-        if reason is None:
-            self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
-        else:
-            self.assertEqual(cert.revoked_reason, reason)
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard

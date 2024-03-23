@@ -13,33 +13,25 @@
 
 """Test the cert_watchers management command."""
 
-from django.test import TestCase
-
-from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.models import Certificate
 from django_ca.tests.base.utils import cmd
 
 
-class CertWatchersTestCase(TestCaseMixin, TestCase):
-    """Main test class for this command."""
+def test_basic(root_cert: Certificate) -> None:
+    """Just some basic tests here."""
+    stdout, stderr = cmd("cert_watchers", root_cert.serial, add=["user-added@example.com"])
+    assert stdout == ""
+    assert stderr == ""
+    assert root_cert.watchers.filter(mail="user-added@example.com").exists() is True
 
-    load_cas = ("root",)
-    load_certs = ("root-cert",)
+    # remove user again
+    stdout, stderr = cmd("cert_watchers", root_cert.serial, rm=["user-added@example.com"])
+    assert stdout == ""
+    assert stderr == ""
+    assert root_cert.watchers.filter(mail="user-added@example.com").exists() is False
 
-    def test_basic(self) -> None:
-        """Just some basic tests here."""
-        stdout, stderr = cmd("cert_watchers", self.cert.serial, add=["user-added@example.com"])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertTrue(self.cert.watchers.filter(mail="user-added@example.com").exists())
-
-        # remove user again
-        stdout, stderr = cmd("cert_watchers", self.cert.serial, rm=["user-added@example.com"])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertFalse(self.cert.watchers.filter(mail="user-added@example.com").exists())
-
-        # removing again does nothing, but doesn't throw an error either
-        stdout, stderr = cmd("cert_watchers", self.cert.serial, rm=["user-added@example.com"])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertFalse(self.cert.watchers.filter(mail="user-added@example.com").exists())
+    # removing again does nothing, but doesn't throw an error either
+    stdout, stderr = cmd("cert_watchers", root_cert.serial, rm=["user-added@example.com"])
+    assert stdout == ""
+    assert stderr == ""
+    assert root_cert.watchers.filter(mail="user-added@example.com").exists() is False

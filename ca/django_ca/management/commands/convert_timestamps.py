@@ -44,7 +44,11 @@ class Command(BaseCommand):
         if settings.USE_TZ is False:
             raise CommandError("This command requires that you have configured USE_TZ=True.")
 
-        warnings.warn("This command will be removed in django-ca==2.0.", category=RemovedInDjangoCA200Warning)
+        warnings.warn(
+            "This command will be removed in django-ca==2.0.",
+            category=RemovedInDjangoCA200Warning,
+            stacklevel=1,
+        )
 
         self.stdout.write(
             self.style.ERROR(

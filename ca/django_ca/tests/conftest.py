@@ -249,6 +249,18 @@ for cert_name in usable_cert_names:
     globals()[cert_name.replace("-", "_")] = generate_cert_fixture(cert_name)
 
 
+@pytest.fixture(params=("ed448", "ed25519"))
+def ed_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
+    """Parametrized fixture for CAs with an Edwards-curve algorithm (ed448, ed25519)."""
+    yield request.getfixturevalue(f"{request.param}")
+
+
+@pytest.fixture(params=usable_ca_names)
+def usable_ca_name(request: "SubRequest") -> Iterator[CertificateAuthority]:
+    """Parametrized fixture for the name of every usable CA."""
+    yield request.param
+
+
 @pytest.fixture(params=usable_ca_names)
 def usable_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for every usable CA (with usable private key)."""

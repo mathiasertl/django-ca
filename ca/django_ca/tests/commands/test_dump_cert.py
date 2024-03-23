@@ -13,77 +13,71 @@
 
 """Test the dump_cert management command."""
 
-import os
 import re
 from io import BytesIO
+from pathlib import Path
+from typing import Any
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django.conf import settings
-from django.test import TestCase
+import pytest
 
+from django_ca.models import Certificate
 from django_ca.tests.base.assertions import assert_command_error
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import cmd, override_tmpcadir
+from django_ca.tests.base.utils import cmd
 
 
-class DumpCertTestCase(TestCaseMixin, TestCase):
-    """Main test class for this command."""
+def dump_cert(serial: str, *args: Any, **kwargs: Any) -> bytes:
+    """Execute the dump_cert command."""
+    stdout, stderr = cmd("dump_cert", serial, *args, stdout=BytesIO(), stderr=BytesIO(), **kwargs)
+    assert stderr == b""
+    return stdout
 
-    load_cas = ("root",)
-    load_certs = ("root-cert",)
 
-    def test_basic(self) -> None:
-        """Basic test of this command."""
-        stdout, stderr = cmd("dump_cert", self.cert.serial, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        self.assertEqual(stdout.decode(), self.cert.pub.pem)
+def test_basic(root_cert: Certificate) -> None:
+    """Basic test of this command."""
+    stdout = dump_cert(root_cert.serial)
+    assert stdout.decode() == root_cert.pub.pem
 
-    def test_format(self) -> None:
-        """Test various formats."""
-        for encoding in [Encoding.PEM, Encoding.DER]:
-            stdout, stderr = cmd(
-                "dump_cert", self.cert.serial, format=encoding, stdout=BytesIO(), stderr=BytesIO()
-            )
-            self.assertEqual(stderr, b"")
-            self.assertEqual(stdout, self.cert.pub.encode(encoding))
 
-    def test_explicit_stdout(self) -> None:
-        """Test writing to stdout."""
-        stdout, stderr = cmd("dump_cert", self.cert.serial, "-", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        self.assertEqual(stdout.decode(), self.cert.pub.pem)
+@pytest.mark.parametrize("encoding", (Encoding.PEM, Encoding.DER))
+def test_format(root_cert: Certificate, encoding: Encoding) -> None:
+    """Test encoding formats."""
+    stdout = dump_cert(root_cert.serial, format=encoding)
+    assert stdout == root_cert.pub.encode(encoding)
 
-    def test_bundle(self) -> None:
-        """Test getting the bundle."""
-        stdout, stderr = cmd("dump_cert", self.cert.serial, bundle=True, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        self.assertEqual(stdout.decode(), self.cert.pub.pem + self.ca.pub.pem)
 
-    @override_tmpcadir()
-    def test_file_output(self) -> None:
-        """Test writing to a file."""
-        path = os.path.join(settings.CA_DIR, "test_cert.pem")
-        stdout, stderr = cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        self.assertEqual(stdout, b"")
+def test_explicit_stdout(root_cert: Certificate) -> None:
+    """Test writing to stdout."""
+    stdout = dump_cert(root_cert.serial, "-")
+    assert stdout.decode() == root_cert.pub.pem
 
-        with open(path, encoding="ascii") as stream:
-            self.assertEqual(stream.read(), self.cert.pub.pem)
 
-    def test_errors(self) -> None:
-        """Test some error conditions."""
-        path = os.path.join(settings.CA_DIR, "does-not-exist", "test_cert.pem")
-        msg = rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"
-        with assert_command_error(msg):
-            cmd("dump_cert", self.cert.serial, path, stdout=BytesIO(), stderr=BytesIO())
+def test_bundle(root_cert: Certificate) -> None:
+    """Test getting the bundle."""
+    stdout = dump_cert(root_cert.serial, bundle=True)
+    assert stdout.decode() == root_cert.pub.pem + root_cert.ca.pub.pem
 
-        with assert_command_error(r"^Cannot dump bundle when using DER format\.$"):
-            cmd(
-                "dump_cert",
-                self.cert.serial,
-                format=Encoding.DER,
-                bundle=True,
-                stdout=BytesIO(),
-                stderr=BytesIO(),
-            )
+
+def test_file_output(tmp_path: Path, root_cert: Certificate) -> None:
+    """Test writing to a file."""
+    destination = tmp_path / "cert.pem"
+    stdout = dump_cert(root_cert.serial, destination)
+    assert stdout == b""
+
+    with open(destination, encoding="ascii") as stream:
+        assert stream.read() == root_cert.pub.pem
+
+
+def test_directory_does_not_exist(tmp_path: Path, root_cert: Certificate) -> None:
+    """Test writing to a directory that does not exist."""
+    destination = tmp_path / "does-not-exist" / "cert.pem"
+    msg = rf"^\[Errno 2\] No such file or directory: '{re.escape(str(destination))}'$"
+    with assert_command_error(msg):
+        dump_cert(root_cert.serial, destination)
+
+
+def test_der_bundle_error(root_cert: Certificate) -> None:
+    """Test writing a DER bundle (which does not work)."""
+    with assert_command_error(r"^Cannot dump bundle when using DER format\.$"):
+        dump_cert(root_cert.serial, format=Encoding.DER, bundle=True)

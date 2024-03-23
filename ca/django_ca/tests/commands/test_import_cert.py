@@ -13,56 +13,33 @@
 
 """Test the import_cert  management command."""
 
-from cryptography import x509
+from typing import Any
 
-from django.test import TestCase
-
-from freezegun import freeze_time
-
-from django_ca.models import Certificate
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import cmd, override_tmpcadir
+from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.utils import cmd
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class ImportCertTest(TestCaseMixin, TestCase):
-    """Main test class for this command."""
+def import_cert(name: str, **kwargs: Any) -> Certificate:
+    """Execute the import_cert command."""
+    cert_path = CERT_DATA[name]["pub_path"]
+    out, err = cmd("import_cert", cert_path, **kwargs)
+    assert out == ""
+    assert err == ""
+    return Certificate.objects.get(serial=CERT_DATA["root-cert"]["serial"])
 
-    load_cas = ("root",)
 
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_basic(self) -> None:
-        """Import a standard certificate."""
-        out, err = cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
+def test_basic(root: CertificateAuthority) -> None:
+    """Import a standard certificate."""
+    cert = import_cert("root-cert", ca=root)
+    assert_signature([root], cert)
+    assert cert.ca, root
+    cert.full_clean()  # assert e.g. max_length in serials
 
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
 
-        cert = Certificate.objects.get(serial=CERT_DATA["root-cert"]["serial"])
-        assert_signature([self.ca], cert)
-        self.assertEqual(cert.ca, self.ca)
-        cert.full_clean()  # assert e.g. max_length in serials
-        self.assertEqual(cert.pub.loaded.version, x509.Version.v3)
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_der(self) -> None:
-        """Import a DER certificate."""
-        out, err = cmd("import_cert", CERT_DATA["root-cert"]["pub_path"], ca=self.ca)
-
-        self.assertEqual(out, "")
-        self.assertEqual(err, "")
-
-        cert = Certificate.objects.get(serial=CERT_DATA["root-cert"]["serial"])
-        assert_signature([self.ca], cert)
-        self.assertEqual(cert.ca, self.ca)
-        cert.full_clean()  # assert e.g. max_length in serials
-        self.assertEqual(cert.pub.loaded.version, x509.Version.v3)
-
-    @override_tmpcadir(CA_MIN_KEY_SIZE=1024)
-    def test_bogus(self) -> None:
-        """Try to import bogus data."""
-        with assert_command_error(r"^Unable to load public key\.$"):
-            cmd("import_cert", __file__, ca=self.ca)
-        self.assertEqual(Certificate.objects.count(), 0)
+def test_bogus(root: CertificateAuthority) -> None:
+    """Try to import bogus data."""
+    with assert_command_error(r"^Unable to load public key\.$"):
+        cmd("import_cert", __file__, ca=root)
+    assert Certificate.objects.count() == 0

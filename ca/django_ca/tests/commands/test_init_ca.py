@@ -16,7 +16,7 @@
 import io
 import re
 from datetime import timedelta
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 from unittest import mock
 
 from cryptography import x509
@@ -123,7 +123,28 @@ def assert_crls(ca: CertificateAuthority) -> None:
     assert_crl(crl, signer=ca, algorithm=ca.algorithm, idp=ca_idp)
 
 
-def init_ca(
+def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
+    """Run a basic init_ca command."""
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    if kwargs.get("key_type", "RSA") in ("RSA", "DSA"):
+        kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
+
+    out, err = cmd(
+        "init_ca",
+        name,
+        f"C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN={name}",
+        subject_format="rfc4514",
+        stdout=stdout,
+        stderr=stderr,
+        **kwargs,
+    )
+    assert out == ""
+    assert err == ""
+    return CertificateAuthority.objects.get(name=name)
+
+
+def init_ca_e2e(
     name: str, subject: str, *args: str, chain: Optional[List[CertificateAuthority]] = None
 ) -> CertificateAuthority:
     """Run a init_ca command via cmd_e2e()."""
@@ -142,25 +163,6 @@ def init_ca(
     return ca
 
 
-def init_ca_cmd(**kwargs: Any) -> Tuple[str, str]:
-    """Run a basic init_ca command."""
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-    name = kwargs.pop("name", "Test CA")
-    if kwargs.get("key_type", "RSA") in ("RSA", "DSA"):
-        kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
-
-    return cmd(
-        "init_ca",
-        name,
-        f"C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN={name}",
-        subject_format="rfc4514",
-        stdout=stdout,
-        stderr=stderr,
-        **kwargs,
-    )
-
-
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
@@ -168,7 +170,7 @@ def test_basic(
     hostname: str, ca_name: str, subject: x509.Name, rfc4514_subject: str, key_backend: StoragesBackend
 ) -> None:
     """Basic tests for the command."""
-    ca = init_ca(ca_name, rfc4514_subject, "--subject-format=rfc4514")
+    ca = init_ca_e2e(ca_name, rfc4514_subject, "--subject-format=rfc4514")
     assert_ca_properties(ca, ca_name, crl_number='{"scope": {"user": 1, "ca": 1}}')
     assert_certificate(ca, subject)
 
@@ -213,7 +215,7 @@ def test_arguments(hostname: str, ca_name: str, key_backend: StoragesBackend) ->
     tos = f"{website}/tos/"
     caa = f"caa.{hostname}"
 
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         "CN={self.hostname}",
         "--subject-format=rfc4514",
@@ -278,7 +280,7 @@ def test_arguments_without_timezone_support(
 @pytest.mark.usefixtures("tmpcadir")
 def test_add_extensions(hostname: str, ca_name: str) -> None:
     """Test adding various extensions."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -384,7 +386,7 @@ def test_add_extensions(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_add_extensions_with_non_default_critical(hostname: str, ca_name: str) -> None:
     """Test setting non-default critical values."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -439,7 +441,7 @@ def test_add_extensions_with_formatting(
     hostname: str, ca_name: str, usable_root: CertificateAuthority
 ) -> None:
     """Test adding various extensions."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -474,7 +476,7 @@ def test_add_extensions_with_formatting_without_uri(
     hostname: str, ca_name: str, usable_root: CertificateAuthority
 ) -> None:
     """Test adding various extensions."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -514,7 +516,7 @@ def test_add_extensions_with_formatting_without_uri(
 
 def test_sign_extensions(hostname: str, ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test adding extensions for signed certificates."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         f"--parent={usable_root.serial}",
@@ -553,7 +555,7 @@ def test_sign_extensions(hostname: str, ca_name: str, usable_root: CertificateAu
 @pytest.mark.usefixtures("tmpcadir")
 def test_multiple_ians(hostname: str, ca_name: str) -> None:
     """Test that we can set multiple IssuerAlternativeName values."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         "--sign-issuer-alternative-name=example.com",
         "--sign-issuer-alternative-name=https://example.com",
@@ -569,7 +571,7 @@ def test_multiple_ians(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_acme_arguments(hostname: str, ca_name: str) -> None:
     """Test ACME arguments."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -589,7 +591,7 @@ def test_acme_arguments(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_api_arguments(hostname: str, ca_name: str) -> None:
     """Test REST API arguments."""
-    ca = init_ca(ca_name, f"CN={hostname}", "--api-enable", "--subject-format=rfc4514")
+    ca = init_ca_e2e(ca_name, f"CN={hostname}", "--api-enable", "--subject-format=rfc4514")
 
     assert ca.api_enabled is True
 
@@ -634,7 +636,7 @@ def test_unknown_acme_profile(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_ocsp_responder_arguments(hostname: str, ca_name: str) -> None:
     """Test ACME arguments."""
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -665,10 +667,7 @@ def test_invalid_ocsp_responder_arguments() -> None:
 def test_ec(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating an ECC CA."""
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name, key_type="EC")
-    assert out == ""
-    assert err == ""
-    ca = CertificateAuthority.objects.get(name=ca_name)
+        ca = init_ca(name=ca_name, key_type="EC")
     assert_post_create_ca(post, ca)
     assert isinstance(key_backend.get_key(ca, use_options), ec.EllipticCurvePrivateKey)
 
@@ -678,10 +677,7 @@ def test_ec(ca_name: str, key_backend: StoragesBackend) -> None:
 def test_dsa(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating a certificate authority with a DSA private key."""
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name, key_type="DSA")
-    assert out == ""
-    assert err == ""
-    ca = CertificateAuthority.objects.get(name=ca_name)
+        ca = init_ca(name=ca_name, key_type="DSA")
     assert_post_create_ca(post, ca)
 
     key = key_backend.get_key(ca, use_options)
@@ -693,7 +689,7 @@ def test_dsa(ca_name: str, key_backend: StoragesBackend) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_permitted(hostname: str, ca_name: str) -> None:
     """Test the NameConstraints extension with 'permitted'."""
-    ca = init_ca(ca_name, "--subject-format=rfc4514", "--permit-name", "DNS:.com", f"CN={hostname}")
+    ca = init_ca_e2e(ca_name, "--subject-format=rfc4514", "--permit-name", "DNS:.com", f"CN={hostname}")
     assert ca.extensions[ExtensionOID.NAME_CONSTRAINTS] == name_constraints(
         permitted=[dns(".com")], critical=True
     )
@@ -703,7 +699,7 @@ def test_permitted(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_excluded(hostname: str, ca_name: str) -> None:
     """Test the NameConstraints extension with 'excluded'."""
-    ca = init_ca(ca_name, "--subject-format=rfc4514", "--exclude-name", "DNS:.com", f"CN={hostname}")
+    ca = init_ca_e2e(ca_name, "--subject-format=rfc4514", "--exclude-name", "DNS:.com", f"CN={hostname}")
     assert ca.extensions[ExtensionOID.NAME_CONSTRAINTS] == name_constraints(
         excluded=[dns(".com")], critical=True
     )
@@ -714,10 +710,7 @@ def test_excluded(hostname: str, ca_name: str) -> None:
 def test_no_path_length(ca_name: str) -> None:
     """Test creating a CA with no path length."""
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name, path_length=None)
-    assert out == ""
-    assert err == ""
-    ca = CertificateAuthority.objects.get(name=ca_name)
+        ca = init_ca(name=ca_name, path_length=None)
     assert_post_create_ca(post, ca)
     ca.full_clean()  # assert e.g. max_length in serials
     assert_signature([ca], ca)
@@ -763,13 +756,10 @@ def test_no_cn(ca_name: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_intermediate_check(ca_name: str) -> None:  # noqa: PLR0915
+def test_intermediate_check(ca_name: str) -> None:
     """Test intermediate path length checks."""
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name)
-    assert out == ""
-    assert err == ""
-    parent = CertificateAuthority.objects.get(name=ca_name)
+        parent = init_ca(name=ca_name)
     assert_post_create_ca(post, parent)
     parent.full_clean()  # assert e.g. max_length in serials
     assert parent.path_length == 0
@@ -777,10 +767,7 @@ def test_intermediate_check(ca_name: str) -> None:  # noqa: PLR0915
     assert parent.allows_intermediate_ca is False
 
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=f"{ca_name}-1", path_length=1)
-    assert out == ""
-    assert err == ""
-    path_length_1 = CertificateAuthority.objects.get(name=f"{ca_name}-1")
+        path_length_1 = init_ca(name=f"{ca_name}-1", path_length=1)
     assert_post_create_ca(post, path_length_1)
     path_length_1.full_clean()  # assert e.g. max_length in serials
     assert path_length_1.path_length == 1
@@ -788,10 +775,7 @@ def test_intermediate_check(ca_name: str) -> None:  # noqa: PLR0915
     assert path_length_1.allows_intermediate_ca is True
 
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=f"{ca_name}-2", path_length=None, parent=path_length_1)
-    assert out == ""
-    assert err == ""
-    path_length_1_none = CertificateAuthority.objects.get(name=f"{ca_name}-2")
+        path_length_1_none = init_ca(name=f"{ca_name}-2", path_length=None, parent=path_length_1)
     assert_post_create_ca(post, path_length_1_none)
     path_length_1_none.full_clean()  # assert e.g. max_length in serials
 
@@ -802,15 +786,10 @@ def test_intermediate_check(ca_name: str) -> None:  # noqa: PLR0915
     with assert_command_error(
         r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
     ), assert_create_ca_signals(False, False):
-        out, err = init_ca_cmd(name="wrong", parent=path_length_1_none)
-    assert out == ""
-    assert err == ""
+        init_ca(name="wrong", parent=path_length_1_none)
 
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="path-length-1-three", path_length=3, parent=path_length_1)
-    assert out == ""
-    assert err == ""
-    path_length_1_three = CertificateAuthority.objects.get(name="path-length-1-three")
+        path_length_1_three = init_ca(name="path-length-1-three", path_length=3, parent=path_length_1)
     assert_post_create_ca(post, path_length_1_three)
     path_length_1_three.full_clean()  # assert e.g. max_length in serials
 
@@ -821,14 +800,10 @@ def test_intermediate_check(ca_name: str) -> None:  # noqa: PLR0915
     with assert_command_error(
         r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
     ), assert_create_ca_signals(False, False):
-        out, _err = init_ca_cmd(name="wrong", parent=path_length_1_none)
-    assert out == ""
+        init_ca(name="wrong", parent=path_length_1_none)
 
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="path-length-none", path_length=None)
-    assert out == ""
-    assert err == ""
-    path_length_none = CertificateAuthority.objects.get(name="path-length-none")
+        path_length_none = init_ca(name="path-length-none", path_length=None)
     assert_post_create_ca(post, path_length_none)
     path_length_none.full_clean()  # assert e.g. max_length in serials
     assert path_length_none.path_length is None
@@ -836,20 +811,16 @@ def test_intermediate_check(ca_name: str) -> None:  # noqa: PLR0915
     assert path_length_none.allows_intermediate_ca is True
 
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="path-length-none-none", path_length=None, parent=path_length_none)
-    assert out == ""
-    assert err == ""
-    path_length_none_none = CertificateAuthority.objects.get(name="path-length-none-none")
+        path_length_none_none = init_ca(
+            name="path-length-none-none", path_length=None, parent=path_length_none
+        )
     assert_post_create_ca(post, path_length_none_none)
     path_length_none_none.full_clean()  # assert e.g. max_length in serials
     assert path_length_none_none.path_length is None
     assert path_length_none_none.max_path_length is None
 
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name="path-length-none-1", path_length=1, parent=path_length_none)
-    assert out == ""
-    assert err == ""
-    path_length_none_1 = CertificateAuthority.objects.get(name="path-length-none-1")
+        path_length_none_1 = init_ca(name="path-length-none-1", path_length=1, parent=path_length_none)
     assert_post_create_ca(post, path_length_none_1)
     path_length_none_1.full_clean()  # assert e.g. max_length in serials
     assert path_length_none_1.path_length == 1
@@ -860,10 +831,7 @@ def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> No
     """Test that if we request an expiry after that of the parent, we override to that of the parent."""
     expires = usable_root.expires - timezone.now() + timedelta(days=10)
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name, parent=usable_root, expires=expires)
-    assert out == ""
-    assert err == ""
-    child = CertificateAuthority.objects.get(name=ca_name)
+        child = init_ca(name=ca_name, parent=usable_root, expires=expires)
     assert_post_create_ca(post, child)
     child.full_clean()  # assert e.g. max_length in serials
     assert_signature([usable_root], child)
@@ -883,8 +851,7 @@ def test_expires_override_with_use_tz_false(
     settings.USE_TZ = False
     usable_root.refresh_from_db()
     expires = usable_root.expires - timezone.now() + timedelta(days=10)
-    init_ca_cmd(name=ca_name, expires=expires, parent=usable_root)
-    ca = CertificateAuthority.objects.get(name=ca_name)
+    ca = init_ca(name=ca_name, expires=expires, parent=usable_root)
     assert ca.expires.tzinfo is None
     assert ca.expires == usable_root.expires
 
@@ -895,10 +862,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating a CA with a password."""
     password = b"testpassword"
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=f"{ca_name}-parent", password=password, path_length=1)
-    assert out == ""
-    assert err == ""
-    parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")
+        parent = init_ca(name=f"{ca_name}-parent", password=password, path_length=1)
     assert_post_create_ca(post, parent)
     parent.full_clean()  # assert e.g. max_length in serials
     assert_signature([parent], parent)
@@ -925,18 +889,12 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")  # Get again, key is cached
 
     with assert_command_error(r"^Parent CA is not usable\.$"), assert_create_ca_signals(False, False):
-        out, err = init_ca_cmd(name=f"{ca_name}-child", parent=parent, password=password)
-    assert out == ""
-    assert err == ""
+        init_ca(name=f"{ca_name}-child", parent=parent, password=password)
     assert CertificateAuthority.objects.filter(name=f"{ca_name}-child").exists() is False
 
     # Create again with parent ca
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(
-            name=f"{ca_name}-child", parent=parent, password=child_password, parent_password=password
-        )
-    assert out == ""
-    assert err == ""
+        init_ca(name=f"{ca_name}-child", parent=parent, password=child_password, parent_password=password)
 
     child = CertificateAuthority.objects.get(name=f"{ca_name}-child")
     assert_post_create_ca(post, child)
@@ -951,10 +909,7 @@ def test_parent_password_with_ca_passwords(
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA[usable_pwd.name]["password"]}
 
     with assert_create_ca_signals():
-        out, err = init_ca_cmd(name=ca_name, parent=usable_pwd)
-    assert out == ""
-    assert err == ""
-    ca: CertificateAuthority = CertificateAuthority.objects.get(name=ca_name)
+        ca = init_ca(name=ca_name, parent=usable_pwd)
     assert ca.parent == usable_pwd
 
 
@@ -965,10 +920,7 @@ def test_default_hostname(hostname: str, ca_name: str, usable_root: CertificateA
     Note: freeze time b/c this test uses root CA as a parent.
     """
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name, parent=usable_root, default_hostname=hostname)
-    assert out == ""
-    assert err == ""
-    ca = CertificateAuthority.objects.get(name=ca_name)
+        ca = init_ca(name=ca_name, parent=usable_root, default_hostname=hostname)
     assert_post_create_ca(post, ca)
 
     # Test signing extensions
@@ -996,10 +948,7 @@ def test_default_hostname(hostname: str, ca_name: str, usable_root: CertificateA
 def test_no_default_hostname(ca_name: str) -> None:
     """Disable default hostname via the command line."""
     with assert_create_ca_signals() as (pre, post):
-        out, err = init_ca_cmd(name=ca_name, default_hostname=False)
-    assert out == ""
-    assert err == ""
-    ca = CertificateAuthority.objects.get(name=ca_name)
+        ca = init_ca(name=ca_name, default_hostname=False)
     assert_post_create_ca(post, ca)
 
     assert ExtensionOID.AUTHORITY_INFORMATION_ACCESS not in ca.extensions
@@ -1015,7 +964,7 @@ def test_multiple_ocsp_and_ca_issuers(hostname: str, ca_name: str, usable_root: 
     ocsp_uri_two = "http://ocsp.example.net/two"
     issuer_uri_one = "http://issuer.example.com/one"
     issuer_uri_two = "http://issuer.example.com/two"
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
         "--subject-format=rfc4514",
@@ -1043,7 +992,7 @@ def test_non_default_key_backend_with_rsa_key(
 ) -> None:
     """Test creating a key with a non-default key backend."""
     password = "secure-password"
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
         "--subject-format=rfc4514",
@@ -1061,7 +1010,7 @@ def test_non_default_key_backend_with_rsa_key(
     assert key.key_size == 2048
 
     # Create a child CA to test parent password
-    child = init_ca(
+    child = init_ca_e2e(
         f"{ca_name} child",
         rfc4514_subject,
         "--subject-format=rfc4514",
@@ -1079,7 +1028,7 @@ def test_non_default_key_backend_with_ec_key(
 ) -> None:
     """Test creating an EC key with a non-default key backend."""
     assert ca_settings.CA_DEFAULT_ELLIPTIC_CURVE != ec.SECT571R1  # make sure that curve is not default
-    ca = init_ca(
+    ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
         "--subject-format=rfc4514",
@@ -1098,7 +1047,7 @@ def test_invalid_public_key_parameters(ca_name: str) -> None:
     """Test passing invalid public key parameters."""
     msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
-        init_ca_cmd(name=ca_name, key_type="Ed25519", algorithm=hashes.SHA256())
+        init_ca(name=ca_name, key_type="Ed25519", algorithm=hashes.SHA256())
 
 
 def test_root_ca_crl_url(ca_name: str) -> None:
@@ -1106,7 +1055,7 @@ def test_root_ca_crl_url(ca_name: str) -> None:
     with assert_command_error(r"^CRLs cannot be used to revoke root CAs\.$"), assert_create_ca_signals(
         False, False
     ):
-        init_ca_cmd(name=ca_name, crl_full_name="https://example.com")
+        init_ca(name=ca_name, crl_full_name="https://example.com")
 
 
 def test_root_ca_ocsp_responder(ca_name: str) -> None:
@@ -1115,7 +1064,7 @@ def test_root_ca_ocsp_responder(ca_name: str) -> None:
     with assert_command_error(
         r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"
     ), assert_create_ca_signals(False, False):
-        init_ca_cmd(name=ca_name, authority_information_access=aia.value)
+        init_ca(name=ca_name, authority_information_access=aia.value)
 
 
 def test_root_ca_issuer(ca_name: str) -> None:
@@ -1124,48 +1073,48 @@ def test_root_ca_issuer(ca_name: str) -> None:
     with assert_command_error(
         r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"
     ), assert_create_ca_signals(False, False):
-        init_ca_cmd(name=ca_name, authority_information_access=aia.value)
+        init_ca(name=ca_name, authority_information_access=aia.value)
 
 
-def test_small_key_size() -> None:
+def test_small_key_size(ca_name: str) -> None:
     """Test creating a key with a key size that is too small."""
     with assert_command_error(
         r"^key_size: Input should be greater than or equal to 1024$"
     ), assert_create_ca_signals(False, False):
-        init_ca_cmd(key_size=256)
+        init_ca(ca_name, key_size=256)
 
 
-def test_key_not_power_of_two() -> None:
+def test_key_not_power_of_two(ca_name: str) -> None:
     """Test creating a key with invalid key size."""
     with assert_command_error(
         r"^key_size: Value error, 2049: Must be a power of two$"
     ), assert_create_ca_signals(False, False):
-        init_ca_cmd(key_size=2049)
+        init_ca(ca_name, key_size=2049)
 
 
-def test_multiple_validation_errors() -> None:
+def test_multiple_validation_errors(ca_name: str) -> None:
     """Test case where multiple validation errors are thrown."""
     msg = r"""2 errors:
 \* password: Input should be a valid bytes
 \* key_size: Input should be a valid integer, unable to parse string as an integer"""
     with assert_command_error(msg), assert_create_ca_signals(False, False):
-        init_ca_cmd(key_size="not-an-int", password=123)
+        init_ca(ca_name, key_size="not-an-int", password=123)
 
 
 @pytest.mark.parametrize("key_type", ("RSA", "DSA", "Ed448", "Ed25519"))
-def test_non_ec_key_with_elliptic_curve(key_type: str) -> None:
+def test_non_ec_key_with_elliptic_curve(ca_name: str, key_type: str) -> None:
     """Test creating a key with an elliptic curve where the key type does not support it."""
     msg = rf"^Value error, Elliptic curves are not supported for {key_type} keys\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
-        init_ca_cmd(key_type=key_type, elliptic_curve=ec.SECT571R1())
+        init_ca(ca_name, key_type=key_type, elliptic_curve=ec.SECT571R1())
 
 
 @pytest.mark.parametrize("key_type", ("EC", "Ed448", "Ed25519"))
-def test_key_size_with_unsupported_key_type(key_type: str) -> None:
+def test_key_size_with_unsupported_key_type(ca_name: str, key_type: str) -> None:
     """Test creating a key with a key size where the key type does not support it."""
     msg = rf"^Value error, Key size is not supported for {key_type} keys\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
-        init_ca_cmd(key_type=key_type, key_size=2048)
+        init_ca(ca_name, key_type=key_type, key_size=2048)
 
 
 @pytest.mark.django_db
@@ -1175,7 +1124,7 @@ def test_deprecated_subject_format(hostname: str, ca_name: str) -> None:
     stdout = io.StringIO()
     stderr = io.StringIO()
 
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals():
         out, err = cmd("init_ca", ca_name, f"/CN={hostname}", stdout=stdout, stderr=stderr)
     assert out == ""
     # message is too long, just make sure it's there:

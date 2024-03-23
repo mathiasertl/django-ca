@@ -35,6 +35,7 @@ from django.core.management import CommandError
 import pytest
 
 from django_ca import ca_settings
+from django_ca.constants import ReasonFlags
 from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
     crl_last_update,
@@ -189,6 +190,7 @@ def assert_crl(
     idp: Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
     extensions: Optional[List["x509.Extension[x509.ExtensionType]"]] = None,
     crl_number: int = 0,
+    entry_extensions: Optional[Tuple[List[x509.Extension[x509.ExtensionType]]]] = None,
 ) -> None:
     """Test the given CRL.
 
@@ -238,9 +240,12 @@ def assert_crl(
 
     entries = {e.serial_number: e for e in parsed_crl}
     assert list(entries) == [c.pub.loaded.serial_number for c in expected]
-    for entry in entries.values():
+    for i, entry in enumerate(entries.values()):
         assert revoked_certificate_revocation_date(entry) == now
-        assert not list(entry.extensions)
+        if entry_extensions:
+            assert list(entry.extensions) == entry_extensions[i]
+        else:
+            assert not list(entry.extensions)
 
 
 def assert_e2e_command_error(
@@ -361,6 +366,24 @@ def assert_improperly_configured(msg: str) -> Iterator[None]:
 def assert_post_issue_cert(post: Mock, cert: Certificate) -> None:
     """Assert that the post_issue_cert signal was called with the expected certificate."""
     post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
+
+
+def assert_revoked(
+    cert: X509CertMixin, reason: Optional[str] = None, compromised: Optional[datetime] = None
+) -> None:
+    """Assert that the certificate is now revoked."""
+    if isinstance(cert, CertificateAuthority):
+        cert = CertificateAuthority.objects.get(serial=cert.serial)
+    else:
+        cert = Certificate.objects.get(serial=cert.serial)
+
+    assert cert.revoked
+    assert cert.compromised == compromised
+
+    if reason is None:
+        assert cert.revoked_reason == ReasonFlags.unspecified.name
+    else:
+        assert cert.revoked_reason == reason
 
 
 def assert_signature(

@@ -13,9 +13,14 @@
 
 """Test the edit_ca management command."""
 
+from typing import Any
+
 from cryptography import x509
 
 from django.test import TestCase
+
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
 from django_ca.models import CertificateAuthority
@@ -23,12 +28,12 @@ from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
+    certificate_policies,
     cmd,
     cmd_e2e,
     crl_distribution_points,
     distribution_point,
     issuer_alternative_name,
-    override_tmpcadir,
     uri,
 )
 
@@ -36,227 +41,180 @@ from django_ca.tests.base.utils import (
 class EditCATestCase(TestCaseMixin, TestCase):
     """Test the edit_ca management command."""
 
-    load_cas = ("root",)
-    issuer = "https://issuer-test.example.org"
-    ian = "http://ian-test.example.org"
-    ocsp_url = "http://ocsp-test.example.org"
-    crl = ("http://example.org/crl-test",)
-    caa = "caa.example.com"
-    website = "https://website.example.com"
-    tos = "https://tos.example.com"
 
-    def edit_ca(self, *args: str) -> None:
-        """Shortcut for calling the edit_ca management command."""
-        stdout, stderr = cmd_e2e(["edit_ca", self.ca.serial, *args])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.ca.refresh_from_db()
+ISSUER = "https://issuer-test.example.org"
+ISSUER_ALTERNATIVE_NAME = "http://ian-test.example.org"
+OCSP_URL = "http://ocsp-test.example.org"
+CRL = ("http://example.org/crl-test",)
+CAA = "caa.example.com"
+WEBSITE = "https://website.example.com"
+TOS = "https://tos.example.com"
 
-    @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Test command with e2e cli argument parsing."""
-        stdout, stderr = cmd_e2e(
-            ["edit_ca", self.ca.serial, f"--caa={self.caa}", f"--website={self.website}", f"--tos={self.tos}"]
+
+def edit_ca(ca: CertificateAuthority, **kwargs: Any) -> None:
+    """Execute the edit_ca command."""
+    stdout, stderr = cmd("edit_ca", ca.serial, **kwargs)
+    assert stdout == ""
+    assert stderr == ""
+    ca.refresh_from_db()
+
+
+def test_basic(root: CertificateAuthority) -> None:
+    """Test basic command."""
+    edit_ca(root, caa=CAA, website=WEBSITE, tos=TOS)
+
+    assert root.caa_identity == CAA
+    assert root.website == WEBSITE
+    assert root.terms_of_service, TOS
+
+
+def test_signing_extensions(root: CertificateAuthority) -> None:
+    """Test editing extensions used for signing certificates."""
+    stdout, stderr = cmd_e2e(
+        [
+            "edit_ca",
+            root.serial,
+            f"--sign-ca-issuer={ISSUER}",
+            f"--sign-issuer-alternative-name={ISSUER_ALTERNATIVE_NAME}",
+            f"--sign-ocsp-responder={OCSP_URL}",
+            f"--sign-crl-full-name={CRL[0]}",
+            # Certificate Policies extension
+            "--sign-policy-identifier=1.2.3",
+            "--sign-certification-practice-statement=https://cps.example.com",
+            "--sign-user-notice=explicit-text",
+        ]
+    )
+    assert stdout == ""
+    assert stderr == ""
+    root.refresh_from_db()
+
+    assert root.sign_authority_information_access == authority_information_access(
+        ocsp=[uri(OCSP_URL)], ca_issuers=[uri(ISSUER)]
+    )
+
+    assert root.sign_issuer_alternative_name == issuer_alternative_name(uri(ISSUER_ALTERNATIVE_NAME))
+    assert root.sign_crl_distribution_points == crl_distribution_points(distribution_point([uri(CRL[0])]))
+
+    # Certificate Policies extension
+    assert root.sign_certificate_policies == certificate_policies(
+        x509.PolicyInformation(
+            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+            policy_qualifiers=[
+                "https://cps.example.com",
+                x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+            ],
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+    )
 
-        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertEqual(ca.caa_identity, self.caa)
-        self.assertEqual(ca.website, self.website)
-        self.assertEqual(ca.terms_of_service, self.tos)
 
-    @override_tmpcadir()
-    def test_signing_extensions(self) -> None:
-        """Test editing extensions used for signing certificates."""
-        stdout, stderr = cmd_e2e(
-            [
-                "edit_ca",
-                self.ca.serial,
-                f"--sign-ca-issuer={self.issuer}",
-                f"--sign-issuer-alternative-name={self.ian}",
-                f"--sign-ocsp-responder={self.ocsp_url}",
-                f"--sign-crl-full-name={self.crl[0]}",
-                # Certificate Policies extension
-                "--sign-policy-identifier=1.2.3",
-                "--sign-certification-practice-statement=https://cps.example.com",
-                "--sign-user-notice=explicit-text",
-            ]
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+def test_enable_disable(root: CertificateAuthority) -> None:
+    """Test the enable/disable options."""
+    assert root.enabled  # initial state
 
-        ca: CertificateAuthority = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertEqual(
-            ca.sign_authority_information_access,
-            authority_information_access(ocsp=[uri(self.ocsp_url)], ca_issuers=[uri(self.issuer)]),
-        )
-        self.assertEqual(ca.sign_issuer_alternative_name, issuer_alternative_name(uri(self.ian)))
-        self.assertEqual(
-            ca.sign_crl_distribution_points, crl_distribution_points(distribution_point([uri(self.crl[0])]))
-        )
+    edit_ca(root, enabled=False)
+    assert root.enabled is False
+    edit_ca(root, enabled=True)
+    assert root.enabled
 
-        # Certificate Policies extension
-        self.assertEqual(
-            ca.sign_certificate_policies,
-            self.certificate_policies(
-                x509.PolicyInformation(
-                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                    policy_qualifiers=[
-                        "https://cps.example.com",
-                        x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
-                    ],
-                )
-            ),
-        )
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", "--enable", "--disable"])
+    assert exception_info.value.args == (2,)
+    assert root.enabled  # state unchanged
 
-    @override_tmpcadir()
-    def test_enable_disable(self) -> None:
-        """Test the enable/disable options."""
-        self.assertTrue(self.ca.enabled)  # initial state
 
-        self.edit_ca("--disable")
-        self.assertFalse(self.ca.enabled)
-        self.edit_ca("--enable")
-        self.assertTrue(self.ca.enabled)
+def test_acme_arguments(root: CertificateAuthority) -> None:
+    """Test ACME arguments."""
+    # Test initial state
+    assert root.acme_enabled is False
+    assert root.acme_registration
+    assert root.acme_profile == ca_settings.CA_DEFAULT_PROFILE
+    assert root.acme_requires_contact
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--enable", "--disable")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertTrue(self.ca.enabled)  # state unchanged
+    # change all settings
+    edit_ca(
+        root, acme_enabled=True, acme_registration=False, acme_requires_contact=False, acme_profile="client"
+    )
+    assert root.acme_enabled, True
+    assert root.acme_registration is False
+    assert root.acme_profile == "client"
+    assert root.acme_requires_contact is False
 
-        # Try again, this time with a disabled state
-        self.ca.enabled = False
-        self.ca.save()
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--enable", "--disable")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertFalse(self.ca.enabled)  # state unchanged
 
-    @override_tmpcadir()
-    def test_acme_arguments(self) -> None:
-        """Test ACME arguments."""
-        # Test initial state
-        self.assertIs(self.ca.acme_enabled, False)
-        self.assertIs(self.ca.acme_registration, True)
-        self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertIs(self.ca.acme_requires_contact, True)
+def test_acme_arguments_mutually_exclusive(root: CertificateAuthority) -> None:
+    """Try mutually exclusive ACME arguments."""
+    # Check initial state:
+    assert root.acme_enabled is False
+    assert root.acme_requires_contact is True
 
-        # change all settings
-        self.edit_ca(
-            "--acme-enable",
-            "--acme-disable-account-registration",
-            "--acme-contact-optional",
-            "--acme-profile=client",
-        )
-        self.assertIs(self.ca.acme_enabled, True)
-        self.assertIs(self.ca.acme_registration, False)
-        self.assertEqual(self.ca.acme_profile, "client")
-        self.assertIs(self.ca.acme_requires_contact, False)
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", "--acme-enable", "--acme-disable"])
+    assert exception_info.value.args == (2,)
+    assert root.acme_enabled is False  # state unchanged
 
-        # Try mutually exclusive arguments
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-enable", "--acme-disable")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertIs(self.ca.acme_enabled, True)  # state unchanged
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", "--acme-contact-optional", "--acme-contact-required"])
+    assert exception_info.value.args == (2,)
+    assert root.acme_requires_contact is True  # state unchanged
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-contact-optional", "--acme-contact-required")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertIs(self.ca.acme_requires_contact, False)  # state unchanged
 
-        # Try switching both settings
-        self.edit_ca("--acme-disable", "--acme-contact-required")
-        self.assertFalse(self.ca.acme_enabled)
-        self.assertTrue(self.ca.acme_requires_contact)
+def test_rest_api_arguments(root: CertificateAuthority) -> None:
+    """Test REST API arguments."""
+    # Test initial state
+    assert root.api_enabled is False
 
-        # Try mutually exclusive arguments again
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-enable", "--acme-disable")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertIs(self.ca.acme_enabled, False)  # state unchanged
+    # change all settings
+    edit_ca(root, api_enable=True)
+    assert root.api_enabled is True
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-contact-optional", "--acme-contact-required")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertIs(self.ca.acme_requires_contact, True)  # state unchanged
 
-    @override_tmpcadir()
-    def test_rest_api_arguments(self) -> None:
-        """Test REST API arguments."""
-        # Test initial state
-        self.assertIs(self.ca.api_enabled, False)
+def test_rest_api_arguments_mutually_exclusive(root: CertificateAuthority) -> None:
+    """Try mutually exclusive rest api arguments."""
+    assert root.api_enabled is False  # test initial state
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", "--api-enable", "--api-disable"])
+    assert exception_info.value.args == (2,)
+    assert root.api_enabled is False  # state unchanged
 
-        # change all settings
-        self.edit_ca("--api-enable")
-        self.assertIs(self.ca.api_enabled, True)
 
-        # Try mutually exclusive arguments
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--api-enable", "--api-disable")
-        self.assertEqual(excm.exception.args, (2,))
-        self.assertIs(self.ca.api_enabled, True)  # state unchanged
+def test_ocsp_responder_arguments(root: CertificateAuthority) -> None:
+    """Test ACME arguments."""
+    edit_ca(root, ocsp_responder_key_validity=10, ocsp_response_validity=3600)
 
-        # change all settings
-        self.edit_ca("--api-disable")
-        self.assertIs(self.ca.api_enabled, False)
+    assert root.ocsp_responder_key_validity == 10
+    assert root.ocsp_response_validity == 3600
 
-    @override_tmpcadir()
-    def test_ocsp_responder_arguments(self) -> None:
-        """Test ACME arguments."""
-        self.edit_ca("--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600")
 
-        self.assertEqual(self.ca.ocsp_responder_key_validity, 10)
-        self.assertEqual(self.ca.ocsp_response_validity, 3600)
+def test_invalid_acme_profile(root: CertificateAuthority) -> None:
+    """Test setting an invalid ACME profile."""
+    with assert_command_error(r"^unknown-profile: Profile is not defined\.$"):
+        edit_ca(root, acme_profile="unknown-profile")
+    assert root.acme_profile == ca_settings.CA_DEFAULT_PROFILE
 
-    @override_tmpcadir()
-    def test_invalid_acme_profile(self) -> None:
-        """Test setting an invalid ACME profile."""
-        self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
 
-        with assert_command_error(r"^unknown-profile: Profile is not defined\.$"):
-            cmd("edit_ca", self.ca.serial, acme_profile="unknown-profile")
+def test_acme_disabled(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+    """Test ACME arguments do not work when ACME support is disabled."""
+    settings.CA_ENABLE_ACME = False
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", root.serial, "--acme-enable"])
+    assert exception_info.value.args == (2,)
 
-        self.ca.refresh_from_db()
-        self.assertEqual(self.ca.acme_profile, ca_settings.CA_DEFAULT_PROFILE)
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", root.serial, "--acme-contact-optional"])
+    assert exception_info.value.args == (2,)
 
-    @override_tmpcadir(CA_ENABLE_ACME=False)
-    def test_acme_disabled(self) -> None:
-        """Test ACME arguments do not work when ACME support is disabled."""
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-enable")
-        self.assertEqual(excm.exception.args, (2,))
+    with pytest.raises(SystemExit, match=r"^2$") as exception_info:
+        cmd_e2e(["edit_ca", root.serial, "--acme-profile=foo"])
+    assert exception_info.value.args == (2,)
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-contact-optional")
-        self.assertEqual(excm.exception.args, (2,))
 
-        with self.assertRaisesRegex(SystemExit, r"^2$") as excm:
-            self.edit_ca("--acme-profile=foo")
-        self.assertEqual(excm.exception.args, (2,))
+def test_enable(root: CertificateAuthority) -> None:
+    """Test enabling the CA."""
+    root.enabled = False
+    root.save()
 
-    @override_tmpcadir()
-    def test_enable(self) -> None:
-        """Test enabling the CA."""
-        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        ca.enabled = False
-        ca.save()
+    edit_ca(root, enabled=True)
+    assert root.enabled
 
-        # we can also change nothing at all
-        stdout, stderr = cmd("edit_ca", self.ca.serial, enabled=True)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-
-        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertEqual(ca.sign_authority_information_access, self.ca.sign_authority_information_access)
-        self.assertEqual(ca.sign_certificate_policies, self.ca.sign_certificate_policies)
-        self.assertEqual(ca.sign_crl_distribution_points, self.ca.sign_crl_distribution_points)
-        self.assertEqual(ca.sign_issuer_alternative_name, self.ca.sign_issuer_alternative_name)
-        self.assertTrue(ca.enabled)
-
-        # disable it again
-        stdout, stderr = cmd("edit_ca", self.ca.serial, enabled=False)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        ca = CertificateAuthority.objects.get(serial=self.ca.serial)
-        self.assertFalse(ca.enabled)
+    # disable it again
+    edit_ca(root, enabled=False)
+    assert root.enabled is False

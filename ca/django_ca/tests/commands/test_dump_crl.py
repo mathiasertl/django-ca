@@ -17,396 +17,288 @@ import os
 import re
 from datetime import timedelta
 from io import BytesIO
-from typing import Any, Tuple
+from pathlib import Path
+from typing import Any
+from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import CRLEntryExtensionOID, NameOID
 
-from django.conf import settings
-from django.test import TestCase
 from django.utils import timezone
 
-from freezegun import freeze_time
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_command_error, assert_e2e_command_error
+from django_ca.tests.base.assertions import (
+    assert_command_error,
+    assert_crl,
+    assert_e2e_command_error,
+    assert_revoked,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     cmd,
-    cmd_e2e,
     crl_distribution_points,
     distribution_point,
     get_idp,
     idp_full_name,
-    override_tmpcadir,
 )
 
+# freeze time as otherwise CRLs might have rounding errors
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
-def dump_crl(**kwargs: Any) -> Tuple[bytes, bytes]:
+
+def dump_crl(*args: Any, **kwargs: Any) -> bytes:
     """Execute the dump_crl command."""
-    return cmd("dump_crl", stdout=BytesIO(), stderr=BytesIO(), **kwargs)
+    out, err = cmd("dump_crl", *args, stdout=BytesIO(), stderr=BytesIO(), **kwargs)
+    assert err == b""
+    return out
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class DumpCRLTestCase(TestCaseMixin, TestCase):
-    """Test the dump_crl management command."""
+def test_command(usable_ca: CertificateAuthority) -> None:
+    """Test the command for every usable CA."""
+    stdout = dump_crl(ca=usable_ca, scope="user")
+    expected_idp = get_idp(full_name=idp_full_name(usable_ca), only_contains_user_certs=True)
+    assert_crl(stdout, signer=usable_ca, algorithm=usable_ca.algorithm, idp=expected_idp)
 
-    default_ca = "root"
-    default_cert = "root-cert"
-    load_cas = (
-        "root",
-        "child",
-        "pwd",
-        "dsa",
-        "ec",
-        "ed448",
-        "ed25519",
+
+def test_rsa_ca_with_sha512(usable_root: CertificateAuthority) -> None:
+    """Test creating a CRL from an RSA key with a custom algorithm."""
+    hash_cls = hashes.SHA512
+    assert not isinstance(usable_root.algorithm, hash_cls)  # make sure that test has a point
+    stdout = dump_crl(ca=usable_root, scope="user", algorithm=hash_cls())
+    expected_idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+    assert_crl(stdout, signer=usable_root, algorithm=hash_cls(), idp=expected_idp)
+
+
+def test_file(tmp_path: Path, usable_root: CertificateAuthority) -> None:
+    """Test dumping to a file."""
+    path = os.path.join(tmp_path, "crl-test.crl")
+    stdout = dump_crl(path, ca=usable_root, scope="user")
+    assert stdout == b""
+
+    with open(path, "rb") as stream:
+        crl = stream.read()
+    expected_idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+    assert_crl(crl, signer=usable_root, algorithm=usable_root.algorithm, idp=expected_idp)
+
+
+def test_file_with_destination_does_not_exist(tmp_path: Path, usable_root: CertificateAuthority) -> None:
+    """Test dumping to a file where the destination does not exist."""
+    path = os.path.join(tmp_path, "test", "crl-test.crl")
+
+    with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
+        dump_crl(path, ca=usable_root, scope="user")
+
+
+def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: CertificateAuthority) -> None:
+    """Test creating a CRL for a CA with a password without giving a password."""
+    settings.CA_PASSWORDS = {}
+    with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
+        dump_crl(ca=usable_pwd, scope="user")
+
+
+def test_pwd_ca_with_wrong_password(usable_pwd: CertificateAuthority) -> None:
+    """Test creating a CRL for a CA with a password with the wrong password."""
+    with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
+        dump_crl(ca=usable_pwd, scope="user", password=b"wrong")
+
+
+def test_pwd_ca(usable_pwd: CertificateAuthority) -> None:
+    """Test creating a CRL for a CA with a password with the wrong password."""
+    stdout = dump_crl(ca=usable_pwd, scope="user", password=CERT_DATA["pwd"]["password"])
+
+    expected_idp = get_idp(full_name=idp_full_name(usable_pwd), only_contains_user_certs=True)
+    assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm, idp=expected_idp)
+
+
+def test_pwd_ca_with_password_in_settings(
+    settings: SettingsWrapper, usable_pwd: CertificateAuthority
+) -> None:
+    """Test creating a CRL with a CA with a password."""
+    settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA["pwd"]["password"]}
+
+    # This works because CA_PASSWORDS is set
+    stdout = dump_crl(ca=usable_pwd, scope="user")
+
+    expected_idp = get_idp(full_name=idp_full_name(usable_pwd), only_contains_user_certs=True)
+    assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm, idp=expected_idp)
+
+
+def test_no_scope_with_root_ca(usable_root: CertificateAuthority) -> None:
+    """Test no-scope CRL for root CA."""
+    # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
+    stdout = dump_crl(ca=usable_root, scope=None)
+    assert_crl(
+        stdout, encoding=Encoding.PEM, expires=86400, signer=usable_root, algorithm=usable_root.algorithm
     )
-    load_certs = ("root-cert", "ed448-cert")
 
-    @override_tmpcadir()
-    def test_rsa_ca(self) -> None:
-        """Test creating a CRL from an RSA key."""
-        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
 
-    @override_tmpcadir()
-    def test_rsa_ca_with_sha512(self) -> None:
-        """Test creating a CRL from an RSA key with a custom algorithm."""
-        stdout, stderr = cmd(
-            "dump_crl",
-            ca=self.ca,
-            scope="user",
-            stdout=BytesIO(),
-            stderr=BytesIO(),
-            algorithm=hashes.SHA512(),
-        )
-        self.assertEqual(stderr, b"")
-        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        self.assertCRL(stdout, signer=self.ca, algorithm=hashes.SHA512(), idp=expected_idp)
+def test_no_scope_with_child_ca(usable_child: CertificateAuthority) -> None:
+    """Test no-scope CRL for child CA."""
+    idp = get_idp(full_name=idp_full_name(usable_child))
+    stdout = dump_crl(ca=usable_child, scope=None)
+    assert_crl(
+        stdout,
+        encoding=Encoding.PEM,
+        expires=86400,
+        signer=usable_child,
+        idp=idp,
+        algorithm=usable_child.algorithm,
+    )
 
-    @override_tmpcadir()
-    def test_dsa_ca(self) -> None:
-        """Test creating a CRL from a DSA key."""
-        ca = self.cas["dsa"]
-        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
-        self.assertEqual(list(crl), [])
+def test_include_issuing_distribution_point(root: CertificateAuthority) -> None:
+    """Test forcing the inclusion of the IssuingDistributionPoint extension.
 
-    @override_tmpcadir()
-    def test_ec_ca(self) -> None:
-        """Test creating a CRL from an EC key."""
-        ca = self.cas["ec"]
-        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
+    Note: The only case where it is not included is for CRLs for root CAs with no scope, in which case not
+    enough information is available to even add the extension, so the test here asserts that the call
+    raises an extension.
+    """
+    assert_e2e_command_error(
+        ["dump_crl", f"--ca={root.serial}", "--include-issuing-distribution-point"],
+        b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
+        b"",
+    )
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, hashes.SHA256)
-        self.assertEqual(list(crl), [])
 
-    @override_tmpcadir()
-    def test_ed448_ca(self) -> None:
-        """Test creating a CRL from a DSA key."""
-        ca = self.cas["ed448"]
-        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
+def test_exclude_issuing_distribution_point_with_root_ca(usable_root: CertificateAuthority) -> None:
+    """Test forcing the exclusion of the IssuingDistributionPoint extension."""
+    # For Root CAs, there should not be an IssuingDistributionPoint extension, test that forced exclusion
+    # does not break this.
+    stdout = dump_crl(ca=usable_root, include_issuing_distribution_point=False)
+    assert_crl(
+        stdout,
+        encoding=Encoding.PEM,
+        expires=86400,
+        signer=usable_root,
+        idp=None,
+        algorithm=usable_root.algorithm,
+    )
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsNone(crl.signature_hash_algorithm)
-        self.assertEqual(list(crl), [])
 
-    @override_tmpcadir()
-    def test_ed25519_ca(self) -> None:
-        """Test creating a CRL from a DSA key."""
-        ca = self.cas["ed25519"]
-        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
+def test_exclude_issuing_distribution_point_with_child_ca(usable_child: CertificateAuthority) -> None:
+    """Test forcing the exclusion of the IssuingDistributionPoint extension."""
+    stdout = dump_crl(ca=usable_child, include_issuing_distribution_point=False)
+    assert_crl(
+        stdout,
+        encoding=Encoding.PEM,
+        expires=86400,
+        signer=usable_child,
+        idp=None,
+        algorithm=usable_child.algorithm,
+    )
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsNone(crl.signature_hash_algorithm)
-        self.assertEqual(list(crl), [])
 
-    @override_tmpcadir()
-    def test_file(self) -> None:
-        """Test dumping to a file."""
-        path = os.path.join(settings.CA_DIR, "crl-test.crl")
-        stdout, stderr = cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stdout, b"")
-        self.assertEqual(stderr, b"")
-
-        with open(path, "rb") as stream:
-            crl = stream.read()
-        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        self.assertCRL(crl, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
-
-        # test an output path that doesn't exist
-        path = os.path.join(settings.CA_DIR, "test", "crl-test.crl")
-
-        with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
-            cmd("dump_crl", path, ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-
-    @override_tmpcadir(CA_PASSWORDS={})
-    def test_password(self) -> None:
-        """Test creating a CRL with a CA with a password."""
-        ca = self.cas["pwd"]
-
-        # Giving no password raises a CommandError
-        with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
-            cmd("dump_crl", ca=ca, scope="user")
-
-        # False password
-        ca = CertificateAuthority.objects.get(pk=ca.pk)
-        with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
-            cmd("dump_crl", ca=ca, scope="user", password=b"wrong")
-
-        stdout, stderr = cmd(
-            "dump_crl",
-            ca=ca,
-            scope="user",
-            password=CERT_DATA["pwd"]["password"],
-            stdout=BytesIO(),
-            stderr=BytesIO(),
-        )
-        assert stderr == b""
-
-        expected_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
-        self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
-
-    @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
-    def test_password_with_ca_settings(self) -> None:
-        """Test creating a CRL with a CA with a password."""
-        ca = self.cas["pwd"]
-
-        # Giving no password raises a CommandError
-        stdout, stderr = cmd(
-            "dump_crl",
-            ca=ca,
-            scope="user",
-            stdout=BytesIO(),
-            stderr=BytesIO(),
-        )
-
-        expected_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
-        self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
-
-    @override_tmpcadir()
-    def test_scope_none(self) -> None:
-        """Test behavior of CRLs when they have no scope."""
-        # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
-        root = self.cas["root"]
-        stdout, stderr = cmd("dump_crl", ca=root, scope=None, stdout=BytesIO(), stderr=BytesIO())
-        self.assertCRL(
-            stdout,
-            encoding=Encoding.PEM,
-            expires=86400,
-            signer=root,
-            idp=None,
-            algorithm=root.algorithm,
-        )
-        self.assertEqual(stderr, b"")
-
-        # ... but the child CA should have one
-        child = self.cas["child"]
-        idp = get_idp(full_name=idp_full_name(child))
-        stdout, stderr = cmd("dump_crl", ca=child, scope=None, stdout=BytesIO(), stderr=BytesIO())
-        self.assertCRL(
-            stdout,
-            encoding=Encoding.PEM,
-            expires=86400,
-            signer=child,
-            idp=idp,
-            algorithm=root.algorithm,
-        )
-        self.assertEqual(stderr, b"")
-
-    @override_tmpcadir()
-    def test_include_issuing_distribution_point(self) -> None:
-        """Test forcing the inclusion of the IssuingDistributionPoint extension.
-
-        Note: The only case where it is not included is for CRLs for root CAs with no scope, in which case not
-        enough information is available to even add the extension, so the test here asserts that the call
-        raises an extension.
-        """
-        root = self.cas["root"]
-        assert_e2e_command_error(
-            ["dump_crl", f"--ca={root.serial}", "--include-issuing-distribution-point"],
-            b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
-            b"",
-        )
-
-    @override_tmpcadir()
-    def test_exclude_issuing_distribution_point(self) -> None:
-        """Test forcing the exclusion of the IssuingDistributionPoint extension."""
-        # For Root CAs, there should not be an IssuingDistributionPoint extension, test that forced exclusion
-        # does not break this.
-        root = self.cas["root"]
-        stdout, stderr = cmd_e2e(
-            [
-                "dump_crl",
-                f"--ca={root.serial}",
-                "--exclude-issuing-distribution-point",
-            ],
-            stdout=BytesIO(),
-            stderr=BytesIO(),
-        )
-        self.assertCRL(
-            stdout,
-            encoding=Encoding.PEM,
-            expires=86400,
-            signer=root,
-            idp=None,
-            algorithm=root.algorithm,
-        )
-        self.assertEqual(stderr, b"")
-
-        child = self.cas["child"]  # CRL for child CA would normally include extension
-        stdout, stderr = cmd_e2e(
-            [
-                "dump_crl",
-                f"--ca={child.serial}",
-                "--exclude-issuing-distribution-point",
-            ],
-            stdout=BytesIO(),
-            stderr=BytesIO(),
-        )
-        self.assertCRL(
-            stdout,
-            encoding=Encoding.PEM,
-            expires=86400,
-            signer=child,
-            idp=None,
-            algorithm=child.algorithm,
-        )
-        self.assertEqual(stderr, b"")
-
-    @override_tmpcadir()
-    def test_no_full_name_in_sign_crl_distribution_point(self) -> None:
-        """Test dumping a CRL where the CRL Distribution Point extension for signing has only an RDN."""
-        child = self.cas["child"]
-        child.sign_crl_distribution_points = crl_distribution_points(
-            distribution_point(
-                relative_name=x509.RelativeDistinguishedName(
-                    [x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com")]
-                )
+def test_no_full_name_in_sign_crl_distribution_point(usable_child: CertificateAuthority) -> None:
+    """Test dumping a CRL where the CRL Distribution Point extension for signing has only an RDN."""
+    usable_child.sign_crl_distribution_points = crl_distribution_points(
+        distribution_point(
+            relative_name=x509.RelativeDistinguishedName(
+                [x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com")]
             )
         )
-        child.save()
-        stdout, stderr = cmd_e2e(["dump_crl", f"--ca={child.serial}"], stdout=BytesIO(), stderr=BytesIO())
-        self.assertCRL(
-            stdout,
-            encoding=Encoding.PEM,
-            expires=86400,
-            signer=child,
-            idp=None,
-            algorithm=child.algorithm,
+    )
+    usable_child.save()
+    stdout = dump_crl(ca=usable_child)
+    assert_crl(
+        stdout,
+        encoding=Encoding.PEM,
+        expires=86400,
+        signer=usable_child,
+        idp=None,
+        algorithm=usable_child.algorithm,
+    )
+
+
+def test_disabled(usable_root: CertificateAuthority) -> None:
+    """Test creating a CRL with a disabled CA."""
+    usable_root.enabled = False
+    usable_root.save()
+
+    stdout = dump_crl(ca=usable_root, scope="user")
+    expected_idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+    assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm, idp=expected_idp)
+
+
+@pytest.mark.parametrize("reason", list(x509.ReasonFlags))
+def test_revoked_with_reason(
+    usable_root: CertificateAuthority, root_cert: Certificate, reason: x509.ReasonFlags
+) -> None:
+    """Test revoked certificates."""
+    idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+    root_cert.revoke(reason=reason)  # type: ignore[arg-type]
+
+    stdout = dump_crl(ca=usable_root, scope="user")
+
+    # unspecified is not included (see RFC 5280, 5.3.1)
+    if reason == x509.ReasonFlags.unspecified:
+        entry_extensions = None
+    else:
+        reason_ext: x509.Extension[x509.ExtensionType] = x509.Extension(
+            oid=CRLEntryExtensionOID.CRL_REASON, critical=False, value=x509.CRLReason(reason)
         )
-        self.assertEqual(stderr, b"")
+        entry_extensions = ([reason_ext],)
 
-    @override_tmpcadir()
-    def test_disabled(self) -> None:
-        """Test creating a CRL with a disabled CA."""
-        ca = self.cas["root"]
-        ca.enabled = False
-        ca.save()
+    assert_crl(
+        stdout,
+        [root_cert],
+        signer=usable_root,
+        algorithm=usable_root.algorithm,
+        idp=idp,
+        entry_extensions=entry_extensions,
+    )
 
-        stdout, stderr = cmd("dump_crl", ca=ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        expected_idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        self.assertCRL(stdout, signer=ca, algorithm=ca.algorithm, idp=expected_idp)
 
-    @override_tmpcadir()
-    def test_revoked(self) -> None:
-        """Test revoked certificates.
+def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
+    """Test creating a CRL with a compromised cert with a compromised timestamp."""
+    idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+    stamp = timezone.now().replace(microsecond=0) - timedelta(10)
+    root_cert.revoke(compromised=stamp)
 
-        NOTE: freeze time because expired certs are not in a CRL.
-        """
-        self.cert.revoke()
-        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
+    invalidity_date = x509.Extension(
+        oid=CRLEntryExtensionOID.INVALIDITY_DATE,
+        critical=False,
+        value=x509.InvalidityDate(stamp.replace(tzinfo=None)),
+    )
+    stdout = dump_crl(ca=usable_root, scope="user")
+    assert_crl(
+        stdout,
+        [root_cert],
+        signer=usable_root,
+        algorithm=usable_root.algorithm,
+        idp=idp,
+        entry_extensions=([invalidity_date],),
+    )
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
-        self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
-        self.assertEqual(len(crl[0].extensions), 0)
 
-        # try all possible reasons
-        for reason in [r[0] for r in Certificate.REVOCATION_REASONS if r[0]]:
-            self.cert.revoked_reason = reason
-            self.cert.save()
+def test_ca_crl(usable_root: CertificateAuthority, child: CertificateAuthority) -> None:
+    """Test creating a CA CRL."""
+    stdout = dump_crl(ca=usable_root, scope="ca")
+    idp = get_idp(only_contains_ca_certs=True)
+    assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm, idp=idp)
 
-            stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-            crl = x509.load_pem_x509_crl(stdout)
-            self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
-            self.assertEqual(len(list(crl)), 1)
-            self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
+    # revoke the CA and see if it's there
+    child.revoke()
+    assert_revoked(child)
+    stdout = dump_crl(ca=usable_root, scope="ca")
+    assert_crl(stdout, [child], signer=usable_root, algorithm=usable_root.algorithm, idp=idp, crl_number=1)
 
-            # unspecified is not included (see RFC 5280, 5.3.1)
-            if reason != "unspecified":
-                self.assertEqual(crl[0].extensions[0].value.reason.name, reason)
 
-    @override_tmpcadir()
-    def test_compromised(self) -> None:
-        """Test creating a CRL with a compromised cert."""
-        stamp = timezone.now().replace(microsecond=0) - timedelta(10)
-        self.cert.revoke(compromised=stamp)
+def test_hash_algorithm_not_allowed(ed_ca: CertificateAuthority) -> None:
+    """Test creating a CRL with a hash algorithm and for a CA that does not allow it."""
+    with assert_command_error(rf"^{ed_ca.key_type} keys do not allow an algorithm for signing\.$"):
+        dump_crl(ca=ed_ca, algorithm=hashes.SHA512())
 
-        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="user", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
 
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
-        self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, self.cert.pub.loaded.serial_number)
-        self.assertEqual(len(crl[0].extensions), 1)
-        self.assertEqual(crl[0].extensions[0].oid, CRLEntryExtensionOID.INVALIDITY_DATE)
-        self.assertEqual(crl[0].extensions[0].value.invalidity_date, stamp.replace(tzinfo=None))
-
-    @override_tmpcadir()
-    def test_ca_crl(self) -> None:
-        """Test creating a CA CRL."""
-        child = self.cas["child"]
-        self.assertNotRevoked(child)
-
-        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-        expected_idp = get_idp(only_contains_ca_certs=True)
-        self.assertCRL(stdout, signer=self.ca, algorithm=self.ca.algorithm, idp=expected_idp)
-
-        # revoke the CA and see if it's there
-        child.revoke()
-        self.assertRevoked(child)
-        stdout, stderr = cmd("dump_crl", ca=self.ca, scope="ca", stdout=BytesIO(), stderr=BytesIO())
-        self.assertEqual(stderr, b"")
-
-        crl = x509.load_pem_x509_crl(stdout)
-        self.assertIsInstance(crl.signature_hash_algorithm, type(self.ca.algorithm))
-        self.assertEqual(len(list(crl)), 1)
-        self.assertEqual(crl[0].serial_number, child.pub.loaded.serial_number)
-        self.assertEqual(len(crl[0].extensions), 0)
-
-    def test_invalid_hash_algorithm(self) -> None:
-        """Try creating a CRL with an invalid hash algorithm."""
-        with assert_command_error(r"^Ed448 keys do not allow an algorithm for signing\.$"):
-            cmd("dump_crl", ca=self.cas["ed448"], algorithm=hashes.SHA512())
-
-        with assert_command_error(r"^Ed25519 keys do not allow an algorithm for signing\.$"):
-            cmd("dump_crl", ca=self.cas["ed25519"], algorithm=hashes.SHA512())
-
-    @override_tmpcadir()
-    def test_error(self) -> None:
-        """Test that creating a CRL fails for an unknown reason."""
-        method = "django_ca.models.CertificateAuthority.get_crl"
-        with self.patch(method, side_effect=Exception("foo")), assert_command_error("foo"):
-            cmd("dump_crl", ca=self.ca, stdout=BytesIO(), stderr=BytesIO())
+def test_unknown_error(root: CertificateAuthority) -> None:
+    """Test that creating a CRL fails for an unknown reason."""
+    method = "django_ca.models.CertificateAuthority.get_crl"
+    with mock.patch(method, side_effect=Exception("foo")), assert_command_error("foo"):
+        dump_crl(ca=root)
 
 
 def test_model_validation_error(root: CertificateAuthority) -> None:

@@ -38,6 +38,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, X509CertMixin
 from django_ca.pydantic.general_name import GeneralNameModelList
 from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
+from django_ca.tests.base.assertions import assert_revoked
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AdminTestCaseMixin
 from django_ca.tests.base.mocks import mock_signal
@@ -276,7 +277,7 @@ class RevokeActionTestCase(AdminActionTestCaseMixin[Certificate], TestCase):
 
     def assertSuccessfulRequest(self, response: "HttpResponse", *objects: Certificate) -> None:
         for obj in objects:
-            self.assertRevoked(obj)
+            assert_revoked(obj)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -314,7 +315,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
     ) -> None:
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
-        self.assertRevoked(self.cert, reason=reason, compromised=compromised)
+        assert_revoked(self.cert, reason=reason, compromised=compromised)
 
     def test_no_reason(self) -> None:
         """Test revoking without any reason."""
@@ -383,7 +384,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         with self.assertNoSignals():
             response = self.client.post(self.get_url(self.cert), data={"revoked_reason": "certificateHold"})
         self.assertRedirects(response, self.change_url())
-        self.assertRevoked(self.cert)
+        assert_revoked(self.cert)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
