@@ -69,17 +69,18 @@ can also download the file for other versions `from github
 You can also get versions for specific versions of **django-ca** from the table below, which also shows
 bundled third-party Docker images.
 
-====================================================== ===== =========== =====
-Version                                                Redis PostgreSQL  NGINX
-====================================================== ===== =========== =====
-:download:`1.27.0 </_files/1.27.0/docker-compose.yml>` 7     12          1.24
-:download:`1.26.0 </_files/1.26.0/docker-compose.yml>` 7     12          1.24
-:download:`1.25.0 </_files/1.25.0/docker-compose.yml>` 7     12          1.24
-:download:`1.24.0 </_files/1.24.0/docker-compose.yml>` 7     12          1.23
-:download:`1.23.0 </_files/1.23.0/docker-compose.yml>` 7     12          1.23
-:download:`1.22.0 </_files/1.22.0/docker-compose.yml>` 7     12          1.20
-:download:`1.21.0 </_files/1.21.0/docker-compose.yml>` 6     12          1.20
-====================================================== ===== =========== =====
+==================================================================================== ===== =========== =====
+Version                                                                              Redis PostgreSQL  NGINX
+==================================================================================== ===== =========== =====
+`1.28.0 <https://github.com/mathiasertl/django-ca/blob/1.28.0/docker-compose.yml>`_  7     12          1.24
+`1.27.0 <https://github.com/mathiasertl/django-ca/blob/1.27.0/docker-compose.yml>`_  7     12          1.24
+`1.26.0 <https://github.com/mathiasertl/django-ca/blob/1.26.0/docker-compose.yml>`_  7     12          1.24
+`1.25.0 <https://github.com/mathiasertl/django-ca/blob/1.25.0/docker-compose.yml>`_  7     12          1.24
+`1.24.0 <https://github.com/mathiasertl/django-ca/blob/1.24.0/docker-compose.yml>`_  7     12          1.23
+`1.23.0 <https://github.com/mathiasertl/django-ca/blob/1.23.0/docker-compose.yml>`_  7     12          1.23
+`1.22.0 <https://github.com/mathiasertl/django-ca/blob/1.22.0/docker-compose.yml>`_  7     12          1.20
+`1.21.0 <https://github.com/mathiasertl/django-ca/blob/1.21.0/docker-compose.yml>`_  6     12          1.20
+==================================================================================== ===== =========== =====
 
 Add ``docker-compose.override.yml``
 ===================================
