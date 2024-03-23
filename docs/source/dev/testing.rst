@@ -49,23 +49,10 @@ pytest
 Fixtures
 ========
 
-.. autofunction:: django_ca.tests.conftest.ca_name
 
-.. autofunction:: django_ca.tests.conftest.hostname
+.. automodule:: django_ca.tests.base.fixtures
+   :members:
 
-.. autofunction:: django_ca.tests.conftest.key_backend
-
-.. autofunction:: django_ca.tests.conftest.rfc4514_subject
-
-.. autofunction:: django_ca.tests.conftest.subject
-
-.. autofunction:: django_ca.tests.conftest.tmpcadir
-
-.. autofunction:: django_ca.tests.conftest.usable_ca
-
-.. autofunction:: django_ca.tests.conftest.usable_cas
-
-.. autofunction:: django_ca.tests.conftest.usable_cert
 
 Generated fixtures
 ------------------
