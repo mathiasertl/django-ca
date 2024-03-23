@@ -85,6 +85,7 @@ Deprecation notices
 * Support for OpenSSL-style subjects will be removed in django-ca 2.2.
 * ``django_ca.extensions.parse_extension()`` is deprecated and should not longer be used. Use Pydantic models
   instead.
+* The :command:`manage.py convert_timestamps` command will be removed in ``django-ca==2.0``.
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
   :ref:`settings-ca-key-backends` and will be removed in ``django-ca==2.0``.
 

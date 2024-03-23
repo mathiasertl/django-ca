@@ -14,6 +14,7 @@
 """convert_timestamps management command."""
 
 import datetime
+import warnings
 from datetime import timezone as tz
 from typing import Any
 
@@ -21,6 +22,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
+from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.models import AcmeAccount, AcmeChallenge, AcmeOrder, Certificate, CertificateAuthority
 
 
@@ -41,6 +43,8 @@ class Command(BaseCommand):
     def handle(self, **options: Any) -> None:
         if settings.USE_TZ is False:
             raise CommandError("This command requires that you have configured USE_TZ=True.")
+
+        warnings.warn("This command will be removed in django-ca==2.0.", category=RemovedInDjangoCA200Warning)
 
         self.stdout.write(
             self.style.ERROR(

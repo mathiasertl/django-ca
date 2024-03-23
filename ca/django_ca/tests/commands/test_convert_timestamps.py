@@ -19,7 +19,7 @@ from freezegun import freeze_time
 
 from django_ca import ca_settings
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
-from django_ca.tests.base.assertions import assert_command_error
+from django_ca.tests.base.assertions import assert_command_error, assert_removed_in_200
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd
@@ -51,7 +51,8 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertIsNone(acme_challenge.validated)
 
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="YES"):
-            cmd("convert_timestamps")
+            with assert_removed_in_200(r"^This command will be removed in django-ca==2.0\.$"):
+                cmd("convert_timestamps")
 
             self.ca.refresh_from_db()
             self.cert.refresh_from_db()
@@ -103,7 +104,8 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(acme_challenge.validated, now)
 
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="YES"):
-            cmd("convert_timestamps")
+            with assert_removed_in_200(r"^This command will be removed in django-ca==2.0\.$"):
+                cmd("convert_timestamps")
 
             self.ca.refresh_from_db()
             self.cert.refresh_from_db()
@@ -129,7 +131,8 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         """Test that nothing happens if the user doesn't give confirmation."""
         self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
         with self.settings(USE_TZ=True), self.patch(INPUT_PATH, return_value="no"):
-            out, err = cmd("convert_timestamps")
+            with assert_removed_in_200(r"^This command will be removed in django-ca==2.0\.$"):
+                out, err = cmd("convert_timestamps")
         self.assertIn("Aborting.", out)
         self.ca.refresh_from_db()
         self.assertEqual(self.ca.created, TIMESTAMPS["everything_valid_naive"])
