@@ -21,9 +21,15 @@ alpine = [
     "3.19",  # until 2025-11-01
 ]
 
-# Blacklist images that are just no longer built
+# Blacklist images that we don't want to build for
 docker-image-blacklist = [
-    "python:3.12-alpine3.16",
+    # Python 3.8/3.9 images don't work with pinned requirements that include Django 5.0.
+    "python:3.9-alpine3.19",
+    "python:3.9-alpine3.18",
+    "python:3.9-alpine3.17",
+    "python:3.8-alpine3.19",
+    "python:3.8-alpine3.18",
+    "python:3.8-alpine3.17",
 ]
 
 # List of tested Debian releases:
