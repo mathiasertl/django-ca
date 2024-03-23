@@ -203,7 +203,7 @@ class CertificateAuthorityManager(
         name: str,
         # If BaseModel is used, you can no longer pass subclasses without a mypy warning (-> variance)
         key_backend: KeyBackend[Any, Any, Any],
-        key_backend_options: Any,
+        key_backend_options: BaseModel,
         subject: x509.Name,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,

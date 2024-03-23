@@ -279,7 +279,10 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
 
         key_backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
         key_backend_options = CreatePrivateKeyOptions(
-            password=data[name].get("password"), path="ca", key_size=data[name].get("key_size")
+            key_type=data[name]["key_type"],
+            password=data[name].get("password"),
+            path="ca",
+            key_size=data[name].get("key_size"),
         )
         with freeze_time(freeze_now):
             ca = CertificateAuthority.objects.init(

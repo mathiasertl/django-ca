@@ -753,3 +753,13 @@ def test_add_any_policy(root: CertificateAuthority) -> None:
 
     assert "" == actual_stdout.getvalue()
     assert "anyPolicy is not allowed in this context." in actual_stderr.getvalue()
+
+
+def test_model_validation_error(root: CertificateAuthority, rfc4514_subject: str) -> None:
+    """Test model validation is tested properly.
+
+    NOTE: This example is contrived for the default backend, as the type of the password would already be
+    checked by argparse. Other backends however might have other validation mechanisms.
+    """
+    with assert_command_error(r"^password: Input should be a valid bytes$"):
+        sign_cert(root, rfc4514_subject, password=123)

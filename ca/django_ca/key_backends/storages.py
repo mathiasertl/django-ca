@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
@@ -43,8 +43,9 @@ from django_ca import ca_settings, constants
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size
+from django_ca.pydantic.type_aliases import PrivateKeySize
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
-from django_ca.utils import generate_private_key, get_cert_builder, validate_private_key_parameters
+from django_ca.utils import generate_private_key, get_cert_builder
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -54,12 +55,31 @@ class CreatePrivateKeyOptions(BaseModel):
     """Options for initializing private keys."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
-    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    key_type: ParsableKeyType
     password: Optional[bytes]
     path: Path
-    key_size: Optional[int] = None
+    key_size: Optional[PrivateKeySize] = None
     elliptic_curve: Optional[ec.EllipticCurve] = None
+
+    @model_validator(mode="after")
+    def validate_key_size(self) -> "CreatePrivateKeyOptions":
+        """Validate that the key size is not set for invalid key types."""
+        if self.key_type in ("RSA", "DSA") and self.key_size is None:
+            self.key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+        elif self.key_type not in ("RSA", "DSA") and self.key_size is not None:
+            raise ValueError(f"Key size is not supported for {self.key_type} keys.")
+        return self
+
+    @model_validator(mode="after")
+    def validate_elliptic_curve(self) -> "CreatePrivateKeyOptions":
+        """Validate that the elliptic curve is not set for invalid key types."""
+        if self.key_type == "EC" and self.elliptic_curve is None:
+            self.elliptic_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+        elif self.key_type != "EC" and self.elliptic_curve is not None:
+            raise ValueError(f"Elliptic curves are not supported for {self.key_type} keys.")
+        return self
 
 
 class StorePrivateKeyOptions(BaseModel):
@@ -190,16 +210,12 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def get_create_private_key_options(
         self, key_type: ParsableKeyType, options: Dict[str, Any]
     ) -> CreatePrivateKeyOptions:
-        key_size, elliptic_curve = validate_private_key_parameters(
-            key_type,
-            options[f"{self.options_prefix}key_size"],
-            options[f"{self.options_prefix}elliptic_curve"],
-        )
         return CreatePrivateKeyOptions(
+            key_type=key_type,
             password=options[f"{self.options_prefix}password"],
             path=options[f"{self.options_prefix}path"],
-            key_size=key_size,
-            elliptic_curve=elliptic_curve,
+            key_size=options[f"{self.options_prefix}key_size"],
+            elliptic_curve=options[f"{self.options_prefix}elliptic_curve"],
         )
 
     def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptions:

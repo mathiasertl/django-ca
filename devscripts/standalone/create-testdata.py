@@ -131,14 +131,14 @@ if args.env != "frontend":
     rsa_root = CertificateAuthority.objects.init(
         "rsa.example.com",
         key_backend,
-        CreatePrivateKeyOptions(password=None, path="ca", key_size=2048),
+        CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=2048),
         subject=cn("rsa.example.com"),
     )
     ec_root = CertificateAuthority.objects.init(
         "ecc.example.net",
         key_backend,
         CreatePrivateKeyOptions(
-            password=None, path="ca", elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+            key_type="EC", password=None, path="ca", elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
         ),
         subject=cn("ecc.example.net"),
         key_type="EC",
@@ -147,7 +147,7 @@ if args.env != "frontend":
     rsa_child = CertificateAuthority.objects.init(
         "child.rsa.example.com",
         key_backend,
-        CreatePrivateKeyOptions(password=None, path="ca/shared/"),
+        CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca/shared/"),
         subject=cn("child.rsa.example.com"),
         parent=rsa_root,
         use_parent_private_key_options=UsePrivateKeyOptions(password=None),
@@ -156,7 +156,10 @@ if args.env != "frontend":
         "child.ecc.example.net",
         key_backend,
         CreatePrivateKeyOptions(
-            password=None, path="ca/shared/", elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+            key_type="EC",
+            password=None,
+            path="ca/shared/",
+            elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE(),
         ),
         subject=cn("child.ecc.example.net"),
         key_type="EC",

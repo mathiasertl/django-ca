@@ -1129,18 +1129,43 @@ def test_root_ca_issuer(ca_name: str) -> None:
 
 def test_small_key_size() -> None:
     """Test creating a key with a key size that is too small."""
-    with assert_command_error(r"^256: Key size must be least 1024 bits$"), assert_create_ca_signals(
-        False, False
-    ):
+    with assert_command_error(
+        r"^key_size: Input should be greater than or equal to 1024$"
+    ), assert_create_ca_signals(False, False):
         init_ca_cmd(key_size=256)
 
 
 def test_key_not_power_of_two() -> None:
     """Test creating a key with invalid key size."""
-    with assert_command_error(r"^2049: Key size must be a power of two$"), assert_create_ca_signals(
-        False, False
-    ):
+    with assert_command_error(
+        r"^key_size: Value error, 2049: Must be a power of two$"
+    ), assert_create_ca_signals(False, False):
         init_ca_cmd(key_size=2049)
+
+
+def test_multiple_validation_errors() -> None:
+    """Test case where multiple validation errors are thrown."""
+    msg = r"""2 errors:
+\* password: Input should be a valid bytes
+\* key_size: Input should be a valid integer, unable to parse string as an integer"""
+    with assert_command_error(msg), assert_create_ca_signals(False, False):
+        init_ca_cmd(key_size="not-an-int", password=123)
+
+
+@pytest.mark.parametrize("key_type", ("RSA", "DSA", "Ed448", "Ed25519"))
+def test_non_ec_key_with_elliptic_curve(key_type: str) -> None:
+    """Test creating a key with an elliptic curve where the key type does not support it."""
+    msg = rf"^Value error, Elliptic curves are not supported for {key_type} keys\.$"
+    with assert_command_error(msg), assert_create_ca_signals(False, False):
+        init_ca_cmd(key_type=key_type, elliptic_curve=ec.SECT571R1())
+
+
+@pytest.mark.parametrize("key_type", ("EC", "Ed448", "Ed25519"))
+def test_key_size_with_unsupported_key_type(key_type: str) -> None:
+    """Test creating a key with a key size where the key type does not support it."""
+    msg = rf"^Value error, Key size is not supported for {key_type} keys\.$"
+    with assert_command_error(msg), assert_create_ca_signals(False, False):
+        init_ca_cmd(key_type=key_type, key_size=2048)
 
 
 @pytest.mark.django_db

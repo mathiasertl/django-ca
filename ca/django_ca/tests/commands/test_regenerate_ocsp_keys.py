@@ -14,7 +14,7 @@
 """Test the regenerate_ocsp_keys management command."""
 
 import typing
-from typing import Iterable, Optional, Tuple, Type
+from typing import Any, Iterable, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
@@ -31,6 +31,11 @@ from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
 from django_ca.utils import add_colons, file_exists, read_file
+
+
+def regenerate_ocsp_keys(*serials: str, **kwargs: Any) -> Tuple[str, str]:
+    """Execute the regenerate_ocsp_keys command."""
+    return cmd("regenerate_ocsp_keys", *serials, **kwargs)
 
 
 class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
@@ -251,3 +256,13 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         assert stdout == ""
         assert stderr == ""
         self.assertHasNoKey(ca.serial)
+
+
+def test_model_validation_error(root: CertificateAuthority) -> None:
+    """Test model validation is tested properly.
+
+    NOTE: This example is contrived for the default backend, as the type of the password would already be
+    checked by argparse. Other backends however might have other validation mechanisms.
+    """
+    with assert_command_error(r"^password: Input should be a valid bytes$"):
+        regenerate_ocsp_keys(root.serial, password=123)

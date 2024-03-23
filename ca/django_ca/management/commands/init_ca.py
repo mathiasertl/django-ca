@@ -19,7 +19,7 @@
 from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Iterable, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -319,7 +319,11 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 )
                 if parent.is_usable(signer_key_backend_options) is False:
                     raise CommandError("Parent CA is not usable.")
-        except Exception as ex:
+        except ValidationError as ex:
+            self.validation_error_to_command_error(ex)
+        except CommandError:
+            raise
+        except Exception as ex:  # pragma: no cover
             raise CommandError(*ex.args) from ex
 
         # Get/validate signature hash algorithm

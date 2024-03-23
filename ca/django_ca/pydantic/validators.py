@@ -18,12 +18,20 @@ from typing import Any, List, Union
 from cryptography import x509
 
 from django_ca import constants
+from django_ca.utils import is_power2
 
 
 def access_method_parser(value: Any) -> Any:
     """Convert access method type aliases to dotted string."""
     if oid := constants.ACCESS_METHOD_TYPES.get(value):
         return oid.dotted_string
+    return value
+
+
+def is_power_two_validator(value: int) -> int:
+    """Validate that a given integer is a power of two."""
+    if not is_power2(value):
+        raise ValueError(f"{value}: Must be a power of two")
     return value
 
 

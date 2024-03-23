@@ -163,7 +163,6 @@ class X509CertMixinTestCaseMixin(TestCaseProtocol):
         self.assertEqual(encoded_chain, found)
 
 
-# pylint: disable-next=too-many-public-methods
 class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.CertificateAuthority`."""
 

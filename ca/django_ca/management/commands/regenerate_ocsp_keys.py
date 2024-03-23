@@ -19,6 +19,8 @@
 from datetime import timedelta
 from typing import Any, Iterable, Optional
 
+from pydantic import ValidationError
+
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.core.management.base import CommandError, CommandParser
@@ -74,7 +76,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(
+    def handle(  # pylint: disable=too-many-locals
         self,
         serials: Iterable[str],
         profile: Optional[str],
@@ -107,7 +109,11 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 self.stderr.write(self.style.ERROR(f"{hr_serial}: Unknown CA."))
                 continue
 
-            key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+            try:
+                key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+            except ValidationError as ex:
+                self.validation_error_to_command_error(ex)
+
             if not ca.is_usable(key_backend_options):
                 if quiet is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.

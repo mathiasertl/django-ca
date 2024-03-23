@@ -15,7 +15,7 @@
 
 import os
 from datetime import timedelta
-from typing import Optional
+from typing import Any, Optional, Tuple
 from unittest.mock import patch
 
 from cryptography import x509
@@ -55,6 +55,11 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
+
+
+def resign_cert(serial: str, **kwargs: Any) -> Tuple[str, str]:
+    """Execute the regenerate_ocsp_keys command."""
+    return cmd("resign_cert", serial, **kwargs)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -705,3 +710,13 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         msg_re = rf'^Profile "{self.cert.profile}" for original certificate is no longer defined, please set one via the command line\.$'  # NOQA: E501
         with assert_command_error(msg_re):
             cmd("resign_cert", self.cert.serial)
+
+
+def test_model_validation_error(root_cert: Certificate) -> None:
+    """Test model validation is tested properly.
+
+    NOTE: This example is contrived for the default backend, as the type of the password would already be
+    checked by argparse. Other backends however might have other validation mechanisms.
+    """
+    with assert_command_error(r"^password: Input should be a valid bytes$"):
+        resign_cert(root_cert.serial, password=123)

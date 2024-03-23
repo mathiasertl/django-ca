@@ -38,7 +38,9 @@ but is designed to provide defaults that work in most cases::
    >>> from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
    >>> from django_ca.models import CertificateAuthority
    >>> key_backend = key_backends["default"]
-   >>> key_backend_options = CreatePrivateKeyOptions(password=None, path="ca", key_size=1024)
+   >>> key_backend_options = CreatePrivateKeyOptions(
+   ...     key_type="RSA", key_size=1024, password=None, path="ca"
+   ... )
    >>> ca = CertificateAuthority.objects.init(
    ...     name='ca',
    ...     key_backend=key_backends["default"],
@@ -173,10 +175,10 @@ There are some more parameters to configure how the CA will be signed::
    >>> from cryptography.hazmat.primitives.asymmetric import ec
    >>> from cryptography.hazmat.primitives import hashes
    >>> key_backend_options = CreatePrivateKeyOptions(
-   ...     password=b'foobar', path="ca", elliptic_curve=ec.SECP256R1()
+   ...     key_type="EC", elliptic_curve=ec.SECP256R1(), password=b"secret", path="ca"
    ... )
    >>> CertificateAuthority.objects.init(
-   ...     name='props',
+   ...     name="props",
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),

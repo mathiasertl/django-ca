@@ -16,7 +16,9 @@
 import abc
 import typing
 from textwrap import indent
-from typing import Optional
+from typing import NoReturn, Optional
+
+from pydantic import ValidationError
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -278,6 +280,27 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         enable_group.add_argument(
             "--api-disable", dest="api_enabled", action="store_false", help="Disable API support."
         )
+
+
+class PydanticModelValidationMixin:
+    """Mixin providing common functions for Pydantic model handling."""
+
+    def validation_error_to_command_error(self, ex: ValidationError) -> NoReturn:
+        """Convert a Pydantic validation error into a Django Command Error."""
+        # Convert Pydantic errors into a list of "nice" strings
+        messages = []
+        for error in ex.errors():
+            if error["loc"]:
+                locations = (str(loc) for loc in error["loc"])
+                messages.append(f"{', '.join(locations)}: {error['msg']}")
+            else:
+                messages.append(error["msg"])
+
+        if len(messages) == 1:  # pylint: disable=no-else-raise  # just makes the code clearer
+            raise CommandError(messages[0]) from ex
+        else:
+            message = "\n".join(f"* {msg}" for msg in messages)
+            raise CommandError(f"{len(messages)} errors:\n{message}") from ex
 
 
 class StorePrivateKeyMixin:

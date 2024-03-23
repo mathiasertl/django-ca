@@ -17,6 +17,7 @@ import os
 import re
 from datetime import timedelta
 from io import BytesIO
+from typing import Any, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -42,6 +43,11 @@ from django_ca.tests.base.utils import (
     idp_full_name,
     override_tmpcadir,
 )
+
+
+def dump_crl(**kwargs: Any) -> Tuple[bytes, bytes]:
+    """Execute the dump_crl command."""
+    return cmd("dump_crl", stdout=BytesIO(), stderr=BytesIO(), **kwargs)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -401,3 +407,13 @@ class DumpCRLTestCase(TestCaseMixin, TestCase):
         method = "django_ca.models.CertificateAuthority.get_crl"
         with self.patch(method, side_effect=Exception("foo")), assert_command_error("foo"):
             cmd("dump_crl", ca=self.ca, stdout=BytesIO(), stderr=BytesIO())
+
+
+def test_model_validation_error(root: CertificateAuthority) -> None:
+    """Test model validation is tested properly.
+
+    NOTE: This example is contrived for the default backend, as the type of the password would already be
+    checked by argparse. Other backends however might have other validation mechanisms.
+    """
+    with assert_command_error(r"^password: Input should be a valid bytes$"):
+        dump_crl(ca=root, password=123)

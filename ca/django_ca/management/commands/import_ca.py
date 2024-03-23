@@ -20,7 +20,7 @@ import argparse
 import typing
 from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -113,7 +113,10 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
-        key_backend_options = key_backend.get_store_private_key_options(options)
+        try:
+            key_backend_options = key_backend.get_store_private_key_options(options)
+        except ValidationError as ex:
+            self.validation_error_to_command_error(ex)
 
         # Add extensions for signing new certificates
         sign_authority_information_access_ext = None

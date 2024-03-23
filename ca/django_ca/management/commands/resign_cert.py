@@ -19,6 +19,8 @@
 from datetime import timedelta
 from typing import Any, List, Optional
 
+from pydantic import ValidationError
+
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID, NameOID
 
@@ -108,7 +110,10 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         self.test_options(ca=ca, expires=expires, profile=profile_obj, **options)
 
         # Get key backend options
-        key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+        try:
+            key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+        except ValidationError as ex:
+            self.validation_error_to_command_error(ex)
 
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)

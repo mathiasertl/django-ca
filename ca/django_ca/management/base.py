@@ -98,7 +98,9 @@ class BinaryOutputWrapper(OutputWrapper):
         self._out.write(msg)
 
 
-class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
+class BinaryCommand(
+    mixins.ArgumentsMixin, mixins.PydanticModelValidationMixin, _BaseCommand, metaclass=abc.ABCMeta
+):
     """A :py:class:`~django:django.core.management.BaseCommand` that supports binary output."""
 
     stdout: BinaryOutputWrapper
@@ -142,7 +144,9 @@ class BinaryCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
                 raise CommandError(ex) from ex
 
 
-class BaseCommand(mixins.ArgumentsMixin, _BaseCommand, metaclass=abc.ABCMeta):
+class BaseCommand(
+    mixins.ArgumentsMixin, mixins.PydanticModelValidationMixin, _BaseCommand, metaclass=abc.ABCMeta
+):
     """Base class for most/all management commands."""
 
     def add_authority_information_access_group(

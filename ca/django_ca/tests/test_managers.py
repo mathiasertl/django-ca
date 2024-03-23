@@ -75,7 +75,7 @@ def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: C
     )
 
 
-key_backend_options = CreatePrivateKeyOptions(password=None, path=Path("ca"), key_size=1024)
+key_backend_options = CreatePrivateKeyOptions(key_type="RSA", password=None, path=Path("ca"), key_size=1024)
 parent_key_backend_options = UsePrivateKeyOptions(password=None)
 
 
@@ -107,7 +107,7 @@ def test_init_with_dsa(ca_name: str, subject: x509.Name, key_backend: StoragesBa
 def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a CA with a password."""
     test_key_backend_options = CreatePrivateKeyOptions(
-        password=b"password", path=Path("ca"), key_size=1024, elliptic_curve=None
+        password=b"password", path=Path("ca"), key_type="RSA", key_size=1024
     )
     test_parent_key_backend_options = UsePrivateKeyOptions(password=b"password")
     with assert_create_ca_signals():
@@ -162,7 +162,7 @@ def test_init_grandchild(
 @pytest.mark.django_db
 def test_openssh_ca(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test OpenSSH CA support."""
-    ca_key_backend_options = CreatePrivateKeyOptions(password=None, path="ca")
+    ca_key_backend_options = CreatePrivateKeyOptions(key_type="Ed25519", password=None, path="ca")
     ca = CertificateAuthority.objects.init(
         ca_name, key_backend, ca_key_backend_options, key_type="Ed25519", subject=subject, openssh_ca=True
     )
@@ -189,7 +189,7 @@ def test_openssh_ca_for_intermediate(
     ca_name: str, subject: x509.Name, key_backend: StoragesBackend, root: CertificateAuthority
 ) -> None:
     """Test creating an intermediate CA for OpenSSH CAs, which is not supported."""
-    ca_key_backend_options = CreatePrivateKeyOptions(password=None, path="ca")
+    ca_key_backend_options = CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca")
     with pytest.raises(ValueError, match="^OpenSSH does not support intermediate authorities$"):
         CertificateAuthority.objects.init(
             ca_name,

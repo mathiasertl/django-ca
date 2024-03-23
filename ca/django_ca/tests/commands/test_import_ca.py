@@ -13,9 +13,9 @@
 
 """Test the import_ca management command."""
 
-import os
 import typing
 from pathlib import Path
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
@@ -43,6 +43,17 @@ from django_ca.tests.base.utils import (
     override_tmpcadir,
     uri,
 )
+
+
+def import_ca(
+    name: str, key_path: Optional[Path] = None, pem_path: Optional[Path] = None, **kwargs: Any
+) -> None:
+    """Execute the dump_crl command."""
+    key_path = key_path or CERT_DATA["root"]["key_path"]
+    pem_path = pem_path or CERT_DATA["root"]["pub_path"]
+    out, err = cmd("import_ca", name, key_path, pem_path, **kwargs)
+    assert out == ""
+    assert err == ""
 
 
 def import_ca_e2e(hostname: str, *args: str) -> CertificateAuthority:
@@ -277,14 +288,14 @@ def test_bogus_public_key(ca_name: str) -> None:
     """Test importing a CA with a bogus public key."""
     key_path = CERT_DATA["root"]["key_path"]
     with assert_command_error(r"^Unable to load public key\.$"):
-        cmd("import_ca", ca_name, key_path, Path(__file__).resolve())
+        import_ca(ca_name, key_path, Path(__file__).resolve())
 
 
 def test_bogus_private_key(ca_name: str) -> None:
     """Test importing a CA with a bogus private key."""
     pem_path = CERT_DATA["root"]["pub_path"]
     with assert_command_error(r"^Unable to load private key\.$"):
-        cmd("import_ca", ca_name, Path(__file__).resolve(), pem_path)
+        import_ca(ca_name, Path(__file__).resolve(), pem_path)
 
 
 def test_invalid_private_key_type(tmp_path: Path, ca_name: str) -> None:
@@ -293,10 +304,20 @@ def test_invalid_private_key_type(tmp_path: Path, ca_name: str) -> None:
     private_key_der = private_key.private_bytes(
         Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
     )
-    private_key_path = os.path.join(tmp_path, "x448.key")
+    private_key_path = tmp_path / "x448.key"
     with open(private_key_path, "wb") as stream:
         stream.write(private_key_der)
 
     pem_path = CERT_DATA["root"]["pub_path"]
     with assert_command_error(r"^X448PrivateKey: Invalid private key type\.$"):
-        cmd("import_ca", ca_name, private_key_path, pem_path)
+        import_ca(ca_name, private_key_path, pem_path)
+
+
+def test_model_validation_error(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test model validation is tested properly.
+
+    NOTE: This example is contrived for the default backend, as the type of the password would already be
+    checked by argparse. Other backends however might have other validation mechanisms.
+    """
+    with assert_command_error(r"^password: Input should be a valid bytes$"):
+        import_ca(ca_name, key_backend=key_backend, password=123)

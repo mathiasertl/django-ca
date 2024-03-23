@@ -19,6 +19,8 @@
 import typing
 from typing import Any, Optional
 
+from pydantic import ValidationError
+
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
@@ -91,7 +93,10 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
                 "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
             )
 
-        key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+        try:
+            key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+        except ValidationError as ex:
+            self.validation_error_to_command_error(ex)
 
         # Actually create the CRL
         try:
