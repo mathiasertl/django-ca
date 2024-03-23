@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.6.0
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
-ARG IMAGE=python:3.12-alpine3.18
+ARG IMAGE=python:3.12-alpine3.19
 
 FROM $IMAGE as base
 WORKDIR /usr/src/django-ca
