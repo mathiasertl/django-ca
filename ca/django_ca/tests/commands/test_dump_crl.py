@@ -97,13 +97,13 @@ def test_file_with_destination_does_not_exist(tmp_path: Path, usable_root: Certi
 def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: CertificateAuthority) -> None:
     """Test creating a CRL for a CA with a password without giving a password."""
     settings.CA_PASSWORDS = {}
-    with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
+    with assert_command_error(r"^Password was not given but private key is encrypted$"):
         dump_crl(ca=usable_pwd, scope="user")
 
 
 def test_pwd_ca_with_wrong_password(usable_pwd: CertificateAuthority) -> None:
     """Test creating a CRL for a CA with a password with the wrong password."""
-    with assert_command_error(r"^Backend cannot be used for signing by this process\.$"):
+    with assert_command_error(r"^Could not decrypt private key - bad password\?$"):
         dump_crl(ca=usable_pwd, scope="user", password=b"wrong")
 
 
@@ -294,11 +294,11 @@ def test_hash_algorithm_not_allowed(ed_ca: CertificateAuthority) -> None:
         dump_crl(ca=ed_ca, algorithm=hashes.SHA512())
 
 
-def test_unknown_error(root: CertificateAuthority) -> None:
+def test_unknown_error(usable_root: CertificateAuthority) -> None:
     """Test that creating a CRL fails for an unknown reason."""
     method = "django_ca.models.CertificateAuthority.get_crl"
     with mock.patch(method, side_effect=Exception("foo")), assert_command_error("foo"):
-        dump_crl(ca=root)
+        dump_crl(ca=usable_root)
 
 
 def test_model_validation_error(root: CertificateAuthority) -> None:

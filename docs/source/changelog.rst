@@ -12,10 +12,14 @@ ChangeLog
 
 .. NOTE::
 
-   django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
-   :ref:`update_126_rfc4514_subjects` for migration information.
+   * django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
+     :ref:`update_126_rfc4514_subjects` for migration information.
+   * **Docker Compose users:** The PostgreSQL version was updated to PostgreSQL 16. See
+     :ref:`postgresql_update` for update instructions.
 
 * Add support for ``Django~=5.0``, ``cryptography~=42``, ``acme==2.8.0`` and ``acme==2.9.0``.
+* **Docker Compose:** The PostgreSQL version was updated to PostgreSQL 16. See :ref:`postgresql_update` for
+  update instructions.
 * ``pydantic>=2.5`` is now a required dependency.
 * Preparations for support for using Hardware Security Modules, "Key backend support" below.
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
@@ -73,6 +77,8 @@ code using the API will have to be updated.
 Backwards incompatible changes
 ==============================
 
+* **Docker Compose:** The PostgreSQL version was updated to PostgreSQL 16. See :ref:`postgresql_update` for
+  update instructions.
 * Drop support for ``Django~=3.2``, ``acme==1.26.0`` and ``Alpine~=3.16``.
 * ``django_ca.extensions.serialize_extension()`` is removed and replaced by :doc:`Pydantic serialization
   <python/pydantic>`.

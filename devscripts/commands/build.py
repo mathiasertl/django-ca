@@ -19,7 +19,7 @@ from devscripts.commands import DevSubCommand
 class Command(DevSubCommand):
     """Class implementing the ``dev.py build`` command."""
 
-    help_text = "Build various release assests."
+    help_text = "Build various release assets."
     description = "Build release assets, see subcommands for possible assets."
 
     module_name = "build"

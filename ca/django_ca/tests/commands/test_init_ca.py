@@ -888,7 +888,9 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     child_password = b"childpassword"
     parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")  # Get again, key is cached
 
-    with assert_command_error(r"^Parent CA is not usable\.$"), assert_create_ca_signals(False, False):
+    with assert_command_error(
+        r"^Password was not given but private key is encrypted$"
+    ), assert_create_ca_signals(False, False):
         init_ca(name=f"{ca_name}-child", parent=parent, password=password)
     assert CertificateAuthority.objects.filter(name=f"{ca_name}-child").exists() is False
 

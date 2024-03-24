@@ -121,6 +121,12 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         except ValidationError as ex:
             self.validation_error_to_command_error(ex)
 
+        # Check if the private key is usable
+        try:
+            ca.check_usable(key_backend_options)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
+
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
 

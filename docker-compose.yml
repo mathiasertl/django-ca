@@ -7,7 +7,9 @@ services:
         volumes:
            - redis:/data
     db:
-        image: postgres:12-alpine
+        # See also: https://www.postgresql.org/support/versioning/
+        #   https://www.postgresql.org/developer/roadmap/
+        image: postgres:16-alpine
         environment:
             POSTGRES_DB:
             POSTGRES_DB_FILE:
@@ -19,10 +21,10 @@ services:
             - database
         restart: unless-stopped
         volumes:
-            - pgdata:/var/lib/postgresql/data
+            - pgdata_16:/var/lib/postgresql/data
 
     backend:
-        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.27.0}
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.28.0}
         command: ./celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             - cache
@@ -56,7 +58,7 @@ services:
         stop_grace_period: 30s
 
     frontend:
-        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.27.0}
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.28.0}
         depends_on:
             - cache
             - db
@@ -126,7 +128,7 @@ volumes:
     shared_ca_dir:
     ocsp_key_dir:
     nginx_templates:
-    pgdata:
+    pgdata_16:
     redis:
 
 networks:

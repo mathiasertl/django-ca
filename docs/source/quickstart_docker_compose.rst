@@ -63,23 +63,29 @@ can also download the file for other versions `from github
 
 .. NOTE::
 
-   Because of how **docker compose** works, it is better to put the file in a sub-directory and `not` directly
+   Because of how **Docker Compose** works, it is better to put the file in a sub-directory and `not` directly
    into your home directory. We assume you put all files into ``~/ca/`` from now on.
 
 You can also get versions for specific versions of **django-ca** from the table below, which also shows
 bundled third-party Docker images.
 
-====================================================== ===== =========== =====
-Version                                                Redis PostgreSQL  NGINX
-====================================================== ===== =========== =====
-:download:`1.27.0 </_files/1.27.0/docker-compose.yml>` 7     12          1.24
-:download:`1.26.0 </_files/1.26.0/docker-compose.yml>` 7     12          1.24
-:download:`1.25.0 </_files/1.25.0/docker-compose.yml>` 7     12          1.24
-:download:`1.24.0 </_files/1.24.0/docker-compose.yml>` 7     12          1.23
-:download:`1.23.0 </_files/1.23.0/docker-compose.yml>` 7     12          1.23
-:download:`1.22.0 </_files/1.22.0/docker-compose.yml>` 7     12          1.20
-:download:`1.21.0 </_files/1.21.0/docker-compose.yml>` 6     12          1.20
-====================================================== ===== =========== =====
+.. WARNING::
+
+   When updating, check if the PostgreSQL version has been updated. If yes, see :ref:`postgresql_update`
+   for upgrade instructions.
+
+==================================================================================== ===== ========== =======
+Version                                                                              Redis PostgreSQL NGINX
+==================================================================================== ===== ========== =======
+`1.28.0 <https://github.com/mathiasertl/django-ca/blob/1.28.0/docker-compose.yml>`_  7     **16**     1.24
+`1.27.0 <https://github.com/mathiasertl/django-ca/blob/1.27.0/docker-compose.yml>`_  7     12         1.24
+`1.26.0 <https://github.com/mathiasertl/django-ca/blob/1.26.0/docker-compose.yml>`_  7     12         1.24
+`1.25.0 <https://github.com/mathiasertl/django-ca/blob/1.25.0/docker-compose.yml>`_  7     12         **1.24**
+`1.24.0 <https://github.com/mathiasertl/django-ca/blob/1.24.0/docker-compose.yml>`_  7     12         1.23
+`1.23.0 <https://github.com/mathiasertl/django-ca/blob/1.23.0/docker-compose.yml>`_  7     12         **1.23**
+`1.22.0 <https://github.com/mathiasertl/django-ca/blob/1.22.0/docker-compose.yml>`_  **7** 12         1.20
+`1.21.0 <https://github.com/mathiasertl/django-ca/blob/1.21.0/docker-compose.yml>`_  6     12         1.20
+==================================================================================== ===== ========== =======
 
 Add ``docker-compose.override.yml``
 ===================================
@@ -286,7 +292,8 @@ Update
 
 .. WARNING::
 
-   **Updating from django-ca 1.18.0 or earlier?** Please see :ref:`update_119`.
+   * **Updating from django-ca 1.28.0 or earlier?** Please see :ref:`postgresql_update`.
+   * **Updating from django-ca 1.18.0 or earlier?** Please see :ref:`update_119`.
 
 Remember to :ref:`backup your data <docker-compose-backup>` before you perform any update.
 
@@ -297,3 +304,40 @@ In general, updating django-ca is done by getting the :ref:`latest version of do
 
    user@host:~/ca/$ curl -O https://.../docker-compose.yml
    user@host:~/ca/$ docker compose up -d
+
+.. _postgresql_update:
+
+PostgreSQL update
+=================
+
+When a new version :file:`docker-compose.yml` includes a new version of PostgreSQL, you have to take some
+extra steps to migrate the PostgreSQL database.
+
+**Before you upgrade**, back up your PostgreSQL database as usual:
+
+.. code-block:: console
+
+   user@host:~/ca/$ docker-compose down
+   user@host:~/ca/$ docker compose up -d db
+   user@host:~/ca/$ docker compose exec db pg_dump -U postgres -d postgres > backup.sql
+
+Now update :file:`docker-compose.yml` but then **only start the database**:
+
+.. code-block:: console
+
+   user@host:~/ca/$ curl -O https://.../docker-compose.yml
+   user@host:~/ca/$ docker compose up -d db
+
+Once the database is started, update the database with data from your backup and normally start your setup:
+
+.. code-block:: console
+
+   user@host:~/ca/$ cat backup.sql | docker compose exec -T db psql -U postgres -d postgres
+   user@host:~/ca/$ docker compose up -d
+
+Forgot to backup?
+-----------------
+
+If you forgot to backup your database and started the update already, don't panic. Whenever we update the
+PostgreSQL version, we use a a new Docker volume. You should be able to reset :file:`docker-compose.yml` and
+then proceed to do the backup normally.

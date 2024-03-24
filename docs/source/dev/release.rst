@@ -32,7 +32,6 @@ docker-compose
 
 * Verify that :file:`docker-compose.yml` uses up-to-date version of 3rd-party containers.
 * Set the default django-ca version in :file:`docker-compose.yml` to the new version.
-* Copy :file:`docker-compose.yml` to :file:`docs/source/_files/{version}/docker-compose.yml`.
 * Update table in ``docs/source/quickstart_docker_compose.rst``.
 
 ******************

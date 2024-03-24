@@ -340,6 +340,33 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         except Exception:  # pylint: disable=broad-exception-caught  # want to always return bool
             return False
 
+    def check_usable(self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions) -> None:
+        """Check if the given CA is usable, raise ValueError if not.
+
+        The `options` are the options returned by
+        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_private_key_options`. It may be ``None`` in
+        cases where key options cannot (yet) be loaded. If ``None``, the backend should return ``False`` if it
+        knows for sure that it will not be usable, and ``True`` if usability cannot be determined.
+        """
+        if not ca.key_backend_options or not ca.key_backend_options.get("path"):
+            raise ValueError(f"{ca.key_backend_options}: Path not configured in database.")
+
+        try:
+            self.get_key(ca, use_private_key_options)
+        except FileNotFoundError as ex:
+            storage = storages[self.storage_alias]
+            try:
+                path = storage.path(ca.key_backend_options["path"])
+            except NotImplementedError:  # pragma: no cover
+                # Backends that do not implement path() should raise NotImplementedError
+                path = ca.key_backend_options["path"]
+
+            raise ValueError(f"{path}: Private key file not found.") from ex
+        except ValueError:
+            raise
+        except Exception as ex:
+            raise ValueError(*ex.args) from ex
+
     def sign_certificate(
         self,
         ca: "CertificateAuthority",

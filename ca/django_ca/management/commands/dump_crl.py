@@ -98,6 +98,12 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
         except ValidationError as ex:
             self.validation_error_to_command_error(ex)
 
+        # Check if the private key is usable
+        try:
+            ca.check_usable(key_backend_options)
+        except ValueError as ex:
+            raise CommandError(*ex.args) from ex
+
         # Actually create the CRL
         try:
             crl = ca.get_crl(

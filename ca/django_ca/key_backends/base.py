@@ -210,6 +210,18 @@ class KeyBackend(
         """
 
     @abc.abstractmethod
+    def check_usable(
+        self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptionsTypeVar
+    ) -> None:
+        """Check if the given CA is usable, raise ValueError if not.
+
+        The `options` are the options returned by
+        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_private_key_options`. It may be ``None`` in
+        cases where key options cannot (yet) be loaded. If ``None``, the backend should return ``False`` if it
+        knows for sure that it will not be usable, and ``True`` if usability cannot be determined.
+        """
+
+    @abc.abstractmethod
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptionsTypeVar
     ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptionsTypeVar]:

@@ -37,7 +37,7 @@ from cryptography.hazmat.primitives.serialization import (
     Encoding,
     NoEncryption,
     PrivateFormat,
-    load_pem_private_key,
+    load_der_private_key,
 )
 from cryptography.x509.oid import NameOID
 
@@ -237,10 +237,10 @@ def create_signed_cert(
     """
     with open(signer_private_key_path, "rb") as stream:
         signer_private_key = typing.cast(
-            CertificateIssuerPrivateKeyTypes, load_pem_private_key(stream.read(), password)
+            CertificateIssuerPrivateKeyTypes, load_der_private_key(stream.read(), password)
         )
     with open(signer_public_key_path, "rb") as stream:
-        signer_public_key = x509.load_pem_x509_certificate(stream.read())
+        signer_public_key = x509.load_der_x509_certificate(stream.read())
 
     one_day = datetime.timedelta(1, 0, 0)
     private_key = rsa.generate_private_key(

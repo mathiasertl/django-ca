@@ -54,6 +54,14 @@ def test_eq(settings: SettingsWrapper) -> None:
     assert StoragesBackend("foo", "foo-alias") != StoragesBackend("foo", "bar-alias")
 
 
+def test_check_usable_no_path_configured(root: CertificateAuthority) -> None:
+    """Test check_usable() when no path is configured."""
+    root.key_backend_options = {}
+    root.save()
+    with pytest.raises(ValueError, match=r"^{}: Path not configured in database\.$"):
+        root.check_usable(UsePrivateKeyOptions(password=None))
+
+
 def test_get_ocsp_key_size_with_invalid_key_type(usable_ec: CertificateAuthority) -> None:
     """Test getting key size for a non-RSA/DSA CA."""
     with pytest.raises(ValueError, match=r"^This function should only be called with RSA/DSA CAs\.$"):

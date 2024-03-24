@@ -30,6 +30,7 @@ import requests
 import yaml
 
 from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from devscripts import config, utils
@@ -73,7 +74,7 @@ def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
         f"--ca={ca}",
         "--subject-format=rfc4514",
         f"--subject=CN={subject}",
-        input=csr.encode("utf-8"),
+        input=csr.encode("ascii"),
         compose_args=["-T"],
         **kwargs,
     )
@@ -89,6 +90,16 @@ def _openssl_verify(ca_file: str, cert_file: str, **kwargs: Any) -> "subprocess.
     return utils.run(
         ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file], **kwargs
     )
+
+
+def der_certificate_to_pem(source: Path, destination: Path) -> None:
+    """Convert a DER certificate to a PEM."""
+    with open(source, "rb") as stream:
+        data = stream.read()
+    certificate = x509.load_der_x509_certificate(data)
+    pem = certificate.public_bytes(Encoding.PEM)
+    with open(destination, "wb") as stream:
+        stream.write(pem)
 
 
 def _openssl_ocsp(
@@ -212,7 +223,7 @@ def _sign_certificates(csr: str) -> str:
     try:
         _sign_cert("frontend", "Root", csr, capture_output=True)
     except subprocess.CalledProcessError as ex:
-        assert re.search(rb"Root:.*Private key does not exist\.", ex.stderr)
+        assert re.search(rb"Private key file not found\.", ex.stderr), (ex.stdout, ex.stderr)
     else:
         raise RuntimeError("Was able to sign root cert in frontend.")
 
@@ -234,8 +245,12 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
     csr_path = config.FIXTURES_DIR / "root-cert.csr"
 
     # Read CSR so we can pass it in context
-    with open(csr_path, encoding="utf-8") as stream:
+    with open(csr_path, "rb") as stream:
         csr = stream.read()
+
+    # Convert CSR to PEM (sign_cert only accepts PEM on stdin)
+    loaded_csr = x509.load_der_x509_csr(csr)
+    csr_pem = loaded_csr.public_bytes(Encoding.PEM).decode("ascii")
 
     _ca_default_hostname = "localhost"
     _tls_cert_root = "/etc/certs/"
@@ -249,14 +264,19 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
         "dhparam_name": "dhparam.pem",
         "certbot_root": "./",
         "tls_cert_root": _tls_cert_root,
-        "csr": csr,
+        "csr": csr_pem,
         "django_ca_version": release,
     }
 
     with start_tutorial("quickstart_with_docker_compose", context) as tut:
+        cwd = Path(os.getcwd())
         tut.write_template("docker-compose.override.yml.jinja")
         tut.write_template(".env.jinja")
-        shutil.copy(docker_compose_yml, ".")
+        shutil.copy(docker_compose_yml, cwd)
+
+        # Convert DER certificates from fixtures to PEM (requests needs PEM certificates).
+        ca_pub_pem = cwd / "root.pem"
+        der_certificate_to_pem(ca_pub, ca_pub_pem)
 
         # Set up fake ACME certificates
         live_path = Path("live", _ca_default_hostname).resolve()
@@ -288,11 +308,13 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
             errors += _test_connectivity(standalone_dir)
 
             # Test that HTTPS connection and admin interface is working:
-            resp = requests.get("https://localhost/admin/", verify=str(ca_pub), timeout=10)
+            resp = requests.get("https://localhost/admin/", verify=str(ca_pub_pem), timeout=10)
             resp.raise_for_status()
 
             # Test static files
-            resp = requests.get("https://localhost/static/admin/css/base.css", verify=str(ca_pub), timeout=10)
+            resp = requests.get(
+                "https://localhost/static/admin/css/base.css", verify=str(ca_pub_pem), timeout=10
+            )
             resp.raise_for_status()
 
             with tut.run("setup-cas.yaml"):  # Creates initial CAs
@@ -307,7 +329,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 assert len(cas) == 2, f"Found {len(cas)} CAs."
 
                 # sign some certs
-                cert_subject = _sign_certificates(csr)
+                cert_subject = _sign_certificates(csr_pem)
 
                 certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
                 assert len(certs) == 5, f"Found {len(certs)} certs instead of 5."
@@ -347,12 +369,19 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 assert len(certs) == 4, f"Found {len(certs)} certs instead of 4."
 
                 # sign certificates again to make sure that CAs are still present
-                cert_subject = _sign_certificates(csr)
+                cert_subject = _sign_certificates(csr_pem)
 
     if errors == 0:
         ok("Tutorial successfully validated.")
 
     return errors
+
+
+def get_postgres_version(path: Union[Path, str]) -> str:
+    """Get the PostgreSQL version in the current docker-compose.yml."""
+    with open(path, encoding="utf-8") as stream:
+        parsed_data = yaml.safe_load(stream)
+    return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
 
 
 def test_update(release: str) -> int:
@@ -380,9 +409,9 @@ POSTGRES_PASSWORD=mysecretpassword
                 )
 
             # Start previous version
+            info(f"Start previous version ({last_release}).")
             with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
                 # Make sure we have started the right version
-                info(f"Start previous version ({last_release}).")
                 _validate_container_versions(last_release)
 
                 info("Create test data...")
@@ -391,17 +420,61 @@ POSTGRES_PASSWORD=mysecretpassword
                 _compose_exec("backend", "./create-testdata.py", "--env", "backend")
                 _compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
 
+            old_postgres_version = get_postgres_version("docker-compose.yml")
+            new_postgres_version = get_postgres_version(config.ROOT_DIR / "docker-compose.yml")
+
+            # Backup database if there was a PostgreSQL update
+            if old_postgres_version != new_postgres_version:
+                info(
+                    f"PostgreSQL update ({old_postgres_version} -> {new_postgres_version}) detected, "
+                    f"backing up database..."
+                )
+                utils.run(["docker", "compose", "up", "-d", "db"], env={"DJANGO_CA_VERSION": release})
+                with open("backup.sql", "w", encoding="utf-8") as stream:
+                    utils.run(
+                        ["docker", "compose", "exec", "db", "pg_dump", "-U", "postgres", "-d", "postgres"],
+                        env={"DJANGO_CA_VERSION": release},
+                        stdout=stream,
+                    )
             # copy new docker-compose file
             shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
+            ok("Updated docker-compose.yml")
 
+            # Apply backup if there was a PostreSQL update
+            if old_postgres_version != new_postgres_version:
+                info("Applying PostgreSQL backup due to version change...")
+                utils.run(["docker", "compose", "up", "-d", "db"], env={"DJANGO_CA_VERSION": release})
+
+                # Wait for database to come up
+                for _i in range(10):
+                    try:
+                        utils.run(
+                            ["docker", "compose", "exec", "db", "nc", "-z", "localhost:5432"],
+                            env={"DJANGO_CA_VERSION": release},
+                        )
+                        break
+                    except subprocess.SubprocessError:
+                        time.sleep(1)
+
+                with open("backup.sql", "rb") as stream:
+                    utils.run(
+                        ["docker", "compose", "exec", "-T", "db", "psql", "-U", "postgres", "-d", "postgres"],
+                        env={"DJANGO_CA_VERSION": release},
+                        stdin=stream,
+                    )
+
+            # Path to validation script in the **new** version
+            validation_script = config.ROOT_DIR / "devscripts" / "standalone" / "validate-testdata.py"
+
+            # Start and check new version
+            info(f"Start current version ({release}).")
             with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
-                info(f"Start current version ({release}).")
                 # Make sure we have the new version
                 _validate_container_versions(release)
 
                 info("Validate test data...")
-                docker_cp(str(standalone_dir / "validate-testdata.py"), backend, standalone_dest)
-                docker_cp(str(standalone_dir / "validate-testdata.py"), frontend, standalone_dest)
+                docker_cp(str(validation_script), backend, standalone_dest)
+                docker_cp(str(validation_script), frontend, standalone_dest)
                 _compose_exec("backend", "./validate-testdata.py", "--env", "backend")
                 _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend")
 
@@ -465,7 +538,6 @@ def test_acme(release: str, image: str) -> int:
                         "http-01.example.com",
                         *extra_certonly_args,
                         env=environ,
-                        stdout=subprocess.DEVNULL,
                     )
                     ok("Created certificate via a http-01 challenge.")
                     _compose_exec(
@@ -475,7 +547,6 @@ def test_acme(release: str, image: str) -> int:
                         "dns-01.example.com",
                         *extra_certonly_args,
                         env=environ,
-                        stdout=subprocess.DEVNULL,
                     )
                     ok("Created certificate via a dns-01 challenge.")
                 except subprocess.SubprocessError as ex:
@@ -519,8 +590,8 @@ class Command(DevCommand):
 
     @property
     def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
-        # pylint: disable-next=no-member  # set in the constructor of parent class
-        return [self.parent.docker_options]  # type: ignore[attr-defined]  # see pylint above
+        # TYPEHINT NOTE: It's a subcommand, so we know parent is not None
+        return [self.parent.docker_options]  # type: ignore[union-attr]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
