@@ -186,3 +186,5 @@ class Command(DevCommand):
 
         if errors != 0:
             raise CommandError(f"A total of {errors} error(s) found!")
+
+        ok("Validated Docker image.")

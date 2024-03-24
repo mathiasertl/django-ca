@@ -377,6 +377,13 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
     return errors
 
 
+def get_postgres_version(path: Union[Path, str]) -> str:
+    """Get the PostgreSQL version in the current docker-compose.yml."""
+    with open(path, encoding="utf-8") as stream:
+        parsed_data = yaml.safe_load(stream)
+    return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
+
+
 def test_update(release: str) -> int:
     """Validate updating with docker compose."""
     info("Validating docker compose update...")
@@ -402,9 +409,9 @@ POSTGRES_PASSWORD=mysecretpassword
                 )
 
             # Start previous version
+            info(f"Start previous version ({last_release}).")
             with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
                 # Make sure we have started the right version
-                info(f"Start previous version ({last_release}).")
                 _validate_container_versions(last_release)
 
                 info("Create test data...")
@@ -413,17 +420,61 @@ POSTGRES_PASSWORD=mysecretpassword
                 _compose_exec("backend", "./create-testdata.py", "--env", "backend")
                 _compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
 
+            old_postgres_version = get_postgres_version("docker-compose.yml")
+            new_postgres_version = get_postgres_version(config.ROOT_DIR / "docker-compose.yml")
+
+            # Backup database if there was a PostgreSQL update
+            if old_postgres_version != new_postgres_version:
+                info(
+                    f"PostgreSQL update ({old_postgres_version} -> {new_postgres_version}) detected, "
+                    f"backing up database..."
+                )
+                utils.run(["docker", "compose", "up", "-d", "db"], env={"DJANGO_CA_VERSION": release})
+                with open("backup.sql", "w", encoding="utf-8") as stream:
+                    utils.run(
+                        ["docker", "compose", "exec", "db", "pg_dump", "-U", "postgres", "-d", "postgres"],
+                        env={"DJANGO_CA_VERSION": release},
+                        stdout=stream,
+                    )
             # copy new docker-compose file
             shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
+            ok("Updated docker-compose.yml")
 
+            # Apply backup if there was a PostreSQL update
+            if old_postgres_version != new_postgres_version:
+                info("Applying PostgreSQL backup due to version change...")
+                utils.run(["docker", "compose", "up", "-d", "db"], env={"DJANGO_CA_VERSION": release})
+
+                # Wait for database to come up
+                for _i in range(10):
+                    try:
+                        utils.run(
+                            ["docker", "compose", "exec", "db", "nc", "-z", "localhost:5432"],
+                            env={"DJANGO_CA_VERSION": release},
+                        )
+                        break
+                    except subprocess.SubprocessError:
+                        time.sleep(1)
+
+                with open("backup.sql", "rb") as stream:
+                    utils.run(
+                        ["docker", "compose", "exec", "-T", "db", "psql", "-U", "postgres", "-d", "postgres"],
+                        env={"DJANGO_CA_VERSION": release},
+                        stdin=stream,
+                    )
+
+            # Path to validation script in the **new** version
+            validation_script = config.ROOT_DIR / "devscripts" / "standalone" / "validate-testdata.py"
+
+            # Start and check new version
+            info(f"Start current version ({release}).")
             with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
-                info(f"Start current version ({release}).")
                 # Make sure we have the new version
                 _validate_container_versions(release)
 
                 info("Validate test data...")
-                docker_cp(str(standalone_dir / "validate-testdata.py"), backend, standalone_dest)
-                docker_cp(str(standalone_dir / "validate-testdata.py"), frontend, standalone_dest)
+                docker_cp(str(validation_script), backend, standalone_dest)
+                docker_cp(str(validation_script), frontend, standalone_dest)
                 _compose_exec("backend", "./validate-testdata.py", "--env", "backend")
                 _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend")
 
@@ -487,7 +538,6 @@ def test_acme(release: str, image: str) -> int:
                         "http-01.example.com",
                         *extra_certonly_args,
                         env=environ,
-                        stdout=subprocess.DEVNULL,
                     )
                     ok("Created certificate via a http-01 challenge.")
                     _compose_exec(
@@ -497,7 +547,6 @@ def test_acme(release: str, image: str) -> int:
                         "dns-01.example.com",
                         *extra_certonly_args,
                         env=environ,
-                        stdout=subprocess.DEVNULL,
                     )
                     ok("Created certificate via a dns-01 challenge.")
                 except subprocess.SubprocessError as ex:
