@@ -60,6 +60,9 @@ class DevCommand:
     help_text: str = ""
     description = ""
 
+    # Parent command if any
+    parent: Optional["DevCommand"] = None
+
     @property
     def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
         """Argument parser parents, can be overwritten by subclasses."""
@@ -174,7 +177,11 @@ class DevCommand:
 
     def command(self, *args: str) -> Any:
         """Run a dev.py command."""
-        parsed_args = self.parser.parse_args(args)
+        if self.parent is None:
+            parser = self.parser
+        else:
+            parser = self.parent.parser
+        parsed_args = parser.parse_args(args)
         return parsed_args.func(self.parser, parsed_args)
 
 

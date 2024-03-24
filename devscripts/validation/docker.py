@@ -166,8 +166,8 @@ class Command(DevCommand):
 
     @property
     def parser_parents(self) -> Sequence[argparse.ArgumentParser]:
-        # pylint: disable-next=no-member  # set in the constructor of parent class
-        return [self.parent.docker_options]  # type: ignore[attr-defined]  # see pylint above
+        # TYPEHINT NOTE: It's a subcommand, so we know parent is not None
+        return [self.parent.docker_options]  # type: ignore[union-attr]
 
     def handle(self, args: argparse.Namespace) -> None:
         if args.docker_prune:
