@@ -15,6 +15,7 @@
 
 import os
 import sys
+from datetime import date
 from typing import Any, Dict, List
 
 import sphinx_rtd_theme
@@ -126,7 +127,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-ca"
-copyright = "2016 - 2023, Mathias Ertl"
+copyright = f"2016 - {date.today().year}, Mathias Ertl"
 author = "Mathias Ertl"
 
 import django_ca  # NOQA: E402
