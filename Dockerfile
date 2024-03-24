@@ -19,19 +19,17 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 
-COPY requirements/ requirements/
-COPY requirements-pinned.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
 
+COPY requirements/ requirements/
 COPY ca/django_ca/__init__.py ca/django_ca/
-COPY pyproject.toml ./
+COPY pyproject.toml requirements-pinned.txt ./
 COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
 RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
         -r requirements-pinned.txt \
         -e .[celery,redis,mysql,psycopg3,yaml]
-
 
 # Finally, copy sources
 COPY ca/ ca/
@@ -49,8 +47,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
     -r requirements/requirements-test.txt
 
 # copy this late so that changes do not trigger a cache miss during build
-COPY tox.ini pyproject.toml ./
-COPY setup.py dev.py ./
+COPY pyproject.toml ./
 COPY --chown=django-ca:django-ca ca/ ca/
 
 # Create some files/directories that we need later on
@@ -63,8 +60,7 @@ USER django-ca:django-ca
 # doctests are run by test suite, CA files are also loaded
 COPY docs/source/ docs/source/
 
-# Run linters and unit tests
-COPY devscripts/ devscripts/
+# Finally run tests
 ARG FAIL_UNDER=100
 ENV COVERAGE_FILE=/tmp/.coverage
 RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium
