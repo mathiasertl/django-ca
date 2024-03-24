@@ -610,6 +610,10 @@ class CertificateAuthority(X509CertMixin):
         """Shortcut determining if the certificate authority can be used for signing."""
         return self.key_backend.is_usable(self, options)
 
+    def check_usable(self, options: BaseModel) -> None:
+        """Shortcut determining if the key is usable and raise ValueError otherwise."""
+        return self.key_backend.check_usable(self, options)
+
     @property
     def key_type(self) -> ParsableKeyType:
         """The type of key as a string, e.g. "RSA" or "Ed448"."""

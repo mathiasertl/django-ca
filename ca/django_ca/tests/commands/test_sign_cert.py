@@ -582,7 +582,7 @@ def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, rfc4514
     """Test signing with a CA that is not protected with a password, but giving a password."""
     with assert_command_error(
         r"^Password was given but private key is not encrypted\.$"
-    ), assert_create_cert_signals(True, False):
+    ), assert_create_cert_signals(False, False):
         sign_cert(usable_root, rfc4514_subject, password=b"there-is-no-password", stdin=csr)
     assert Certificate.objects.exists() is False
 
@@ -594,7 +594,7 @@ def test_encrypted_ca_with_no_password(
     settings.CA_PASSWORDS = {}
     with assert_command_error(
         r"^Password was not given but private key is encrypted$"
-    ), assert_create_cert_signals(True, False):
+    ), assert_create_cert_signals(False, False):
         sign_cert(usable_pwd, rfc4514_subject, stdin=csr)
     assert Certificate.objects.exists() is False
 
@@ -603,7 +603,7 @@ def test_encrypted_ca_with_wrong_password(usable_pwd: CertificateAuthority, rfc4
     """Test that passing the wrong password raises an error."""
     with assert_command_error(
         r"^Could not decrypt private key - bad password\?$"
-    ), assert_create_cert_signals(True, False):
+    ), assert_create_cert_signals(False, False):
         sign_cert(usable_pwd, rfc4514_subject, stdin=csr, password=b"wrong")
     assert Certificate.objects.exists() is False
 
@@ -616,7 +616,7 @@ def test_unparsable_private_key(usable_root: CertificateAuthority, rfc4514_subje
 
     with assert_command_error(
         r"^Could not decrypt private key - bad password\?$"
-    ), assert_create_cert_signals(True, False):
+    ), assert_create_cert_signals(False, False):
         sign_cert(usable_root, rfc4514_subject, stdin=csr)
 
 
@@ -668,7 +668,7 @@ def test_unsortable_subject_with_profile_subject(
 
 
 def test_unsortable_subject_with_no_common_name(
-    settings: SettingsWrapper, root: CertificateAuthority, hostname: str
+    settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str
 ) -> None:
     """Test passing a subject that cannot be sorted and has no CommonName.
 
@@ -680,18 +680,18 @@ def test_unsortable_subject_with_no_common_name(
     san = subject_alternative_name(dns(hostname)).value
     with assert_command_error(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(False, False):
         # NOTE: pass SAN as otherwise check for missing common name or san would fire
-        sign_cert(root, subject, subject_alternative_name=san, stdin=csr)
+        sign_cert(usable_root, subject, subject_alternative_name=san, stdin=csr)
 
 
-def test_expiry_too_late(root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_expiry_too_late(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing with an expiry after the CA expires."""
-    time_left = (root.expires - timezone.now()).days
+    time_left = (usable_root.expires - timezone.now()).days
     expires = timedelta(days=time_left + 3)
 
     with assert_command_error(
         rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
     ), assert_create_cert_signals(False, False):
-        sign_cert(root, rfc4514_subject, expires=expires, stdin=csr)
+        sign_cert(usable_root, rfc4514_subject, expires=expires, stdin=csr)
 
 
 def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
@@ -704,10 +704,10 @@ def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
         sign_cert(root, rfc4514_subject, stdin=csr)
 
 
-def test_invalid_algorithm(ed448: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_invalid_algorithm(usable_ed448: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test passing an invalid algorithm."""
     with assert_command_error(r"^Ed448 keys do not allow an algorithm for signing\.$"):
-        sign_cert(ed448, rfc4514_subject, algorithm=hashes.SHA512())
+        sign_cert(usable_ed448, rfc4514_subject, algorithm=hashes.SHA512())
 
 
 def test_no_cn_or_san(usable_root: CertificateAuthority, hostname: str) -> None:
@@ -722,10 +722,8 @@ def test_no_cn_or_san(usable_root: CertificateAuthority, hostname: str) -> None:
 
 def test_unusable_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing with an unusable CA."""
-    path = storages["django-ca"].path(root.key_backend_options["path"])
-    msg = rf"^\[Errno 2\] No such file or directory: '{path}'"
-
-    with assert_command_error(msg), assert_create_cert_signals(True, False):
+    msg = r"root.key: Private key file not found\.$"
+    with assert_command_error(msg), assert_create_cert_signals(False, False):
         sign_cert(root, rfc4514_subject, stdin=csr)
 
 

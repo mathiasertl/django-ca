@@ -712,6 +712,12 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             cmd("resign_cert", self.cert.serial)
 
 
+def test_unusable_private_key(root_cert: Certificate) -> None:
+    """Test resigning with an unusable CA."""
+    with assert_command_error(r"root.key: Private key file not found\.$"):
+        resign_cert(root_cert.serial)
+
+
 def test_model_validation_error(root_cert: Certificate) -> None:
     """Test model validation is tested properly.
 

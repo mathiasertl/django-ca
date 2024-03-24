@@ -84,6 +84,9 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
     ) -> bool:
         return True
 
+    def check_usable(self, ca: "CertificateAuthority", use_private_key_options: DummyModel) -> None:
+        return
+
     def sign_certificate_revocation_list(
         self,
         ca: "CertificateAuthority",

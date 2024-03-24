@@ -317,11 +317,12 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 signer_key_backend_options = parent.key_backend.get_use_parent_private_key_options(
                     parent, options
                 )
-                if parent.is_usable(signer_key_backend_options) is False:
-                    raise CommandError("Parent CA is not usable.")
+
+                # Check if the parent key is usable
+                parent.check_usable(signer_key_backend_options)
         except ValidationError as ex:
             self.validation_error_to_command_error(ex)
-        except CommandError:
+        except CommandError:  # pragma: no cover
             raise
         except Exception as ex:  # pragma: no cover
             raise CommandError(*ex.args) from ex
