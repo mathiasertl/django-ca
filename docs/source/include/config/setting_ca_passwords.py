@@ -1,3 +1,3 @@
 CA_PASSWORDS = {
-    "AABBCC:...": "secret-password",
+    "AABBCC...": "secret-password",
 }
