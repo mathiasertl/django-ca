@@ -6,10 +6,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
-from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
@@ -26,8 +25,6 @@ from python_x509_pkcs11 import KEYTYPES, get_keytypes_enum, PKCS11Session
 import asyncio
 
 from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import storages
 
 from django_ca import ca_settings, constants
 from django_ca.key_backends.base import KeyBackend
@@ -61,6 +58,17 @@ def get_private_key(key_label:str, hsm_key_type: str):
         return PKCS11ED448PrivateKey(key_label)
     elif hsm_key_type in ["secp256r1", "secp384r1", "secp521r1"]:
         return PKCS11ECPrivateKey(key_label, hsm_key_type)
+
+def get_signing_algo(ca: CertificateAuthority) -> Optional[AllowedHashTypes]:
+    "Get the right algorithm for signing a certificate."
+    # FIXME: We should deal with algorithm in a better way.
+    hsm_key_type = ca.key_backend_options["hsm_key_type"]
+    if hsm_key_type == "rsa_2048":
+        return hashes.SHA256()
+    elif hsm_key_type == "rsa_4096":
+        return hashes.SHA512()
+    else:
+        return None
 
 
 class CreatePrivateKeyOptions(BaseModel):
@@ -211,7 +219,6 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
         )
 
         key = get_private_key(key_label=options.key_label, hsm_key_type=hsm_key_type)
-
         return key.public_key(), use_private_key_options
 
     def store_private_key(
@@ -279,6 +286,8 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
         builder = builder.subject_name(subject)
         for extension in extensions:
             builder = builder.add_extension(extension.value, critical=extension.critical)
+        # We need the correct algorithm
+        algorithm = get_signing_algo(ca)
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)
 
     def sign_certificate_revocation_list(
@@ -288,6 +297,8 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
         builder: x509.CertificateRevocationListBuilder,
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
+        # We need the correct algorithm
+        algorithm = get_signing_algo(ca)
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)
 
     def get_ocsp_key_size(
