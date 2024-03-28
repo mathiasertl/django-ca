@@ -59,7 +59,7 @@ def get_private_key(key_label:str, hsm_key_type: str):
     elif hsm_key_type in ["secp256r1", "secp384r1", "secp521r1"]:
         return PKCS11ECPrivateKey(key_label, hsm_key_type)
 
-def get_signing_algo(ca: CertificateAuthority) -> Optional[AllowedHashTypes]:
+def get_signing_algo(ca: "CertificateAuthority") -> Optional[AllowedHashTypes]:
     "Get the right algorithm for signing a certificate."
     # FIXME: We should deal with algorithm in a better way.
     hsm_key_type = ca.key_backend_options["hsm_key_type"]
@@ -160,12 +160,9 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
 
     def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         group.add_argument(
-            f"--{self.argparse_prefix}parent-password",
-            nargs="?",
-            action=PasswordAction,
-            metavar="PASSWORD",
-            prompt="Password for parent CA: ",
-            help="Password for the private key of the parent CA, if stored using the Django storage system.",
+            f"--{self.argparse_prefix}parent_key_label",
+            type=str,
+            help="KEY_LABEL for the private key of the parent CA, if stored using the Django storage system.",
         )
 
     def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
@@ -200,7 +197,7 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
         self, ca: "CertificateAuthority", options: Dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
-            {"password": options[f"{self.options_prefix}parent_password"]}, context={"ca": ca}
+            {"key_label": options[f"{self.options_prefix}parent_key_label"]}, context={"ca": ca}
         )
 
 
@@ -209,7 +206,10 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
     ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
 
         hsm_key_type = options.hsm_key_type
-        asyncio.run(_create_key_pair(key_label=options.key_label, hsm_key_type=hsm_key_type))
+        try:
+            asyncio.run(_create_key_pair(key_label=options.key_label, hsm_key_type=hsm_key_type))
+        except Exception as e:
+            raise  e
 
         # Update model instance
         ca.key_backend_options = {"key_label": options.key_label, "hsm_key_type": hsm_key_type}
