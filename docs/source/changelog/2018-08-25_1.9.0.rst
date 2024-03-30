@@ -1,0 +1,33 @@
+##################
+1.9.0 (2018-08-25)
+##################
+
+* Allow the creation of Certificates with multiple OUs in their subject (command-line only).
+* Fix issues with handling CAs with a password on the command-line.
+* Fix handling of certificates with no CommonName and/or no x509 extensions.
+* Add support for displaying Signed Certificate Timestamps (SCT) Lists, as described in
+  `RFC 6962, section 3.3 <https://tools.ietf.org/html/rfc6962#section-3.3>`_.
+* Add limited support for displaying Certificate Policies, as described in
+  `RFC 5280, section 4.2.14 <https://tools.ietf.org/html/rfc5280#section-4.2.1.4>`_ and
+  `RFC 3647 <https://tools.ietf.org/html/rfc3647>`_.
+* Correctly display extensions with an OID unknown to django-ca or even cryptography.
+* Properly escape x509 extensions to prevent any injection attacks.
+* Django 2.1 is now fully supported.
+* Fix example command to generate a CSR (had a stray '/').
+* Run test-suite with template debugging enabled to catch silently skipped template errors.
+
+******
+Docker
+******
+
+* Base the :doc:`Docker image </docker>` on ``python:3-alpine`` (instead of ``python:3``), yielding a much
+  smaller image (~965MB -> ~235MB).
+* Run complete test-suite in a separate build stage when building the image.
+* Provide ``uwsgi.ini`` for fast deployments with the uWSGI protocol.
+* Add support for passing additional parameters to uWSGI using the ``DJANGO_CA_UWSGI_PARAMS`` environment
+  variable.
+* Create user/group with a predefined UID/GID of 9000 to allow better sharing of containers.
+* Add ``/usr/share/django-ca/`` as named volume, allowing a setup where an external web server serves static
+  files.
+* Add documentation on how to run the container in combination with an external web server.
+* Add documentation on how to run the container as a different UID/GID.

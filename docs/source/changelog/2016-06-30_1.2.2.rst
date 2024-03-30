@@ -1,0 +1,5 @@
+##################
+1.2.2 (2016-06-30)
+##################
+
+* Rebuild to remove old migrations accidentally present in previous release.

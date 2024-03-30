@@ -1,0 +1,10 @@
+##################
+1.6.3 (2017-10-21)
+##################
+
+* Fix various operations when ``USE_TZ`` is ``True``.
+* Email addresses are now independently validated by ``validate_email``. cryptography 2.1 no longer validates
+  email addresses itself.
+* Require ``cryptography>=2.1``. Older versions should not be broken, but the output changes breaking
+  :py:mod:`doctests <doctest>`, meaning they're no longer tested either.
+* CA keys are no longer stored with colons in their filename, fixing ``init_ca`` under Windows.

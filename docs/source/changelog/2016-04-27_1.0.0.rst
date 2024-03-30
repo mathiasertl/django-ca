@@ -1,0 +1,51 @@
+##################
+1.0.0 (2016-04-27)
+##################
+
+This represents a massive new release (hence the big version jump). The project
+now has a new name (**django-ca** instead of just "certificate authority") and
+is now installable via pip. Since versions prior to this release probably had no users (as it
+wasn't advertised anywhere), it includes several incompatible changes.
+
+*******
+General
+*******
+
+* This project now runs under the name **django-ca** instead of just "certificate authority".
+* Move the git repository is now hosted at https://github.com/mathiasertl/django-ca.
+* This version now absolutely assumes Python3. Python2 is no longer supported.
+* Require Django  1.8 or later.
+* django-ca is now usable as a stand-alone project (via git) or as a reusable app (via pip).
+
+*************
+Functionality
+*************
+
+* The main app was renamed from ``certificate`` to ``django_ca``. See below for how to upgrade.
+
+***********************
+``manage.py`` interface
+***********************
+
+* :command:`manage.py` commands are now renamed to be more specific:
+
+  * ``init`` -> ``init_ca``
+  * ``sign`` -> ``sign_cert``
+  * ``list`` -> ``list_certs``
+  * ``revoke`` -> ``revoke_cert``
+  * ``crl`` -> ``dump_crl``
+  * ``view`` -> ``view_cert``
+  * ``watch`` -> ``notify_expiring_certs``
+  * ``watchers`` -> ``cert_watchers``
+
+* Several new :command:`manage.py` commands:
+
+  * ``dump_ca`` to dump CA certificates.
+  * ``dump_cert`` to dump certificates to a file.
+  * ``dump_ocsp_index`` for an OCSP responder, ``dump_crl`` no longer outputs this file.
+  * ``edit_ca`` to edit CA properties from the command line.
+  * ``list_cas`` to list available CAs.
+  * ``view_ca`` to view a CA.
+
+* Removed the :command:`manage.py remove` command.
+* ``dump_{ca,cert,crl}`` can now output DER/ASN1 data to stdout.

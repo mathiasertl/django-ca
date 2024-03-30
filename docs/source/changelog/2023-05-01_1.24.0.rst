@@ -1,0 +1,80 @@
+###################
+1.24.0 (2023-05-01)
+###################
+
+.. WARNING::
+
+   **docker or source users that do *not* use PostgreSQL:**
+
+   The `USE_TZ <https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-USE_TZ>`_ setting was
+   switched to ``True`` in the Django project. See :ref:`switch-use-tz` for update information.
+
+* Add support for cryptography 40.0, django 4.2 and acme 2.4.0 and 2.5.0.
+* Use Django's timezone support by default by enabling ``USE_TZ=True``. See :ref:`switch-use-tz` for update
+  information.
+* Make the default order of subjects configurable via :ref:`settings-ca-default-name-order`.
+* Certificates for OCSP responders now include the "OCSPNoCheck" extension by default.
+* Certificates for OCSP responders now use a commonName designating the certificate as OCSP responder as
+  subject, other fields from the CAs subject are discarded.
+* A profile can now ignore :ref:`settings-ca-default-subject` by setting ``subject`` to ``False``.
+* Copy all extensions when using :command:`manage.py resign_cert`.
+* Add support for multiple OCSP responder and CA Issuer entries when creating a certificate authority.
+* Add typehints when installing as wheel.
+
+**********************
+Command-line interface
+**********************
+
+Continuing the standardization effort started in 1.23.0, some options have been replaced and/or use a
+different syntax. See the :ref:`update notes <cli-1.24.0-updates>` for more detailed instructions.
+
+* The ``--pathlen`` and ``--no-pathlen`` parameters for :command:`manage.py init_ca` were renamed to
+  ``--path-length`` and ``--no-path-length``.
+* The ``--key-usage`` option was changed to/split into ``--key-usage`` and ``--key-usage-non-critical``.
+  ``--key-usage`` takes multiple option values instead of a single comma-separated list.
+* The ``--ext-key-usage`` option was changed to/split into ``--extended-key-usage`` and
+  ``--extended-key-usage-critical``. ``--extended-key-usage`` takes multiple option values instead of a single
+  comma-separated list.
+* The ``--tls-feature`` option was changed to/split into ``--tls-feature`` and ``--tls-feature-critical``.
+  ``--tls-feature`` takes multiple option values instead of a single comma-separated list.
+* Add support for specifying a custom Key Usage extension when using :command:`manage.py init_ca`.
+* Add support for adding the Inhibit :spelling:word:`anyPolicy`, Policy Constraints and TLS feature extensions
+  when using :command:`manage.py init_ca`.
+* Add support for adding the OCSP No Check extension in when issuing certificates with :command:`manage.py
+  sign_cert` or :command:`manage.py resign_cert`.
+* Add support for specifying a date when the certificate was compromised when revoking a certificate with
+  :command:`manage.py revoke_cert`.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* The ``--ext-key-usage`` flag to :command:`manage.py sign_cert` was replaced with ``--extended-key-usage``.
+* The critical flag for the Key Usage, Extended Key Usage and TLS Feature is now set with dedicated options,
+  with the recommended value being the default. See above and the :ref:`update notes <cli-1.24.0-updates>` for
+  details.
+* The ``pre_issue_cert`` was removed. Use the :py:class:`~django_ca.signals.pre_sign_cert` signal instead.
+
+*******************
+Deprecation notices
+*******************
+
+Removed in ``django-ca==1.25.0``:
+
+* This is the last release to support acme 2.3.0 and cryptography 38.
+* Support for the ``CA_DIGEST_ALGORITHM`` setting, use ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM`` instead.
+* Support for the ``CA_DEFAULT_ECC_CURVE`` setting, use ``CA_DEFAULT_ELLIPTIC_CURVE`` instead.
+* Support for non-standard algorithm names (e.g. ``sha512``, use ``SHA-512`` instead).
+* Support for non-standard elliptic key curve names (e.g. ``SECP384R1``, use ``secp384r1`` instead).
+
+Removed in ``django-ca==1.26.0``:
+
+* Support for ``cryptography==39`` and ``acme==2.4.0`` (other versions may removed depending on release time).
+* Support for using ``ECC`` and ``EdDSA`` as key type. Use ``EC`` and ``Ed25519`` instead.
+* The ``--pathlen`` and ``--no-pathlen`` parameters to :command:`manage.py init_ca` will be removed. Use
+  ``--path-length`` and ``--no-path-length`` instead.
+* Support for comma-separated lists in ``--key-usage``, ``--extended-key-usage`` and ``--tls-feature``.
+  Use lists instead (e.g. ``--key-usage keyAgreement keyEncipherment`` instead of
+  ``--key usagekeyAgreement,keyEncipherment``.
+* Support for non-standard TLS feature names "OCSPMustStaple" and "MultipleCertStatusRequest". Use
+  ``status_request`` and ``status_request_v2`` instead.

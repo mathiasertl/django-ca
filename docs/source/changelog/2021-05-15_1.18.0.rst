@@ -1,0 +1,68 @@
+###################
+1.18.0 (2021-05-15)
+###################
+
+* Add support for Django 3.2.
+* Prevent auto-completion of the CA password field in the admin interface.
+* Improve CSR validation when using the admin interface.
+* Check permissions when resigning certificates.
+* Require the ``change certificate`` permission when revoking certificates.
+* Preselect profile of original certificate when resigning certificates.
+* Make sure that operators for OrderedSetExtension always return an instance of the implementing class, not of
+  the base class.
+* Certificate bundles now always end with a newline, as normal bundles do.
+* Add setuptools extras for ``mysql`` and ``postgres``.
+* Add MySQL support for the Docker image.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* Don't load configuration from ``localsettings.py`` (deprecated since ``1.15.0``).
+* The ``x509`` property and ``dump_certificate()`` where removed from
+  :py:class:`~django_ca.models.CertificateAuthority` and :py:class:`~django_ca.models.Certificate`:
+
+  * To access a string-encoded PEM use ``obj.pub.pem`` (was: ``obj.x509``).
+  * To update an instance with a certificate use :py:func:`~django_ca.models.X509CertMixin.update_certificate`
+    (was: ``obj.x509 = ...``).
+  * Use ``obj.pub.pem`` or ``obj.pub.der`` to get an encoded certificate (was: ``obj.dump_certificate()``).
+
+* Drop support for Django 3.0.
+* Drop support for cryptography 2.8 and 2.9.
+* Drop support for Celery 4.3 and 4.4.
+* Drop support for idna 2.9.
+
+**********
+Python API
+**********
+
+* Store certificates and CSRs as bytes to improve access speed.
+
+**********************************
+Linting and continuous integration
+**********************************
+
+* Use `GitHub Actions <https://github.com/features/actions>`_ instead of Travis.
+* Use :file:`pyproject.toml` for all tools that support it.
+* Code is now formatted with `black <https://github.com/psf/black>`_.
+* Code is now linted using `pylint <https://www.pylint.org/>`_.
+* Code is now fully type-hinted and type safe according to `mypy <https://mypy.readthedocs.io/>`_. This
+  requires the upcoming release of cryptography (current: 3.4).
+* Documentation is now cleaned with `doc8 <https://github.com/PyCQA/doc8>`_.
+* Documentation is now spell-checked using `sphinxcontrib.spelling
+  <https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html>`_.
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support cryptography 3.0, 3.1 and 3.2.
+* Passing a ``str`` or ``bytes`` to :py:func:`~django_ca.managers.CertificateManager.create_cert` will be
+  removed in django-ca 1.20.0.
+* Passing a ``str`` as an algorithm in :py:func:`~django_ca.models.CertificateAuthority.get_crl`,
+  :py:func:`~django_ca.profiles.Profile.create_cert` is deprecated and will no longer work in django-ca
+  1.20.0. Pass a :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance instead.
+* ``django_ca.utils.parse_csr()`` is no longer useful and will be removed in django-ca 1.20.0.
+* Creating an index for running an OCSP responder with :manpage:`openssl-ocsp(1SSL)` is deprecated and will be
+  removed in django-ca 1.20.0. The man page explicitly states it "is only useful for test and demonstration
+  purposes", and we can solidly run our own responders by now.

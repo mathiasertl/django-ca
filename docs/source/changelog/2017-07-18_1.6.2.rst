@@ -1,0 +1,10 @@
+##################
+1.6.2 (2017-07-18)
+##################
+
+* No longer require a strict cryptography version but only ``>=1.8``. The previously pinned version is
+  incompatible with Python 3.5.
+* Update requirements files to newest versions.
+* Update imports to ``django.urls.reverse`` so they are compatible with Django 2.0 and 1.8.
+* Make sure that :command:`manage.py check` exit status is not ignored for ``setup.py code_quality``.
+* Conform to new sorting restrictions for ``isort``.

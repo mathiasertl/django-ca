@@ -1,0 +1,13 @@
+##################
+1.4.1 (2017-02-26)
+##################
+
+* Update requirements.
+* Use `Travis CI <https://travis-ci.org>`_ for continuous integration. **django-ca** is now tested
+  with Python 2.7, 3.4, 3.5, 3.6 and nightly, using Django 1.8, 1.9 and 1.10.
+* Fix a few test errors for Django 1.8.
+* Examples now consistently use 4096 bit certificates.
+* Some functionality is now migrated to ``cryptography`` in the ongoing process to deprecate
+  pyOpenSSL (which is no longer maintained).
+* OCSPView now supports directly passing the public key as bytes. As a consequence, a bad
+  certificate is now only detected at runtime.

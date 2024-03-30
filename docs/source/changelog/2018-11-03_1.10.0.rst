@@ -1,0 +1,46 @@
+###################
+1.10.0 (2018-11-03)
+###################
+
+* New dependency: `django-object-actions <https://github.com/crccheck/django-object-actions>`_.
+* Add ability to resign existing certificates.
+* Management command ``list_cas`` now optionally supports a tree view.
+* Use more consistent naming for extensions throughout the code and documentation.
+* Renamed the ``--tls-features`` option of the ``sign_cert`` command to ``--tls-feature``, in line with the
+  actual name of the extension.
+* Allow the ``TLSFeature`` extension in profiles.
+* Add link in the admin interface to easily download certificate bundles.
+* Support ECC private keys for new Certificate Authorities.
+* Store CA private keys in the more secure `PKCS8 format
+  <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8>`_.
+* The Certificate change view now has a second "Revoke" button as object action next to the "History" button.
+
+**********
+Python API
+**********
+
+* Add the :doc:`Python API </python/intro>` as a fully supported interface to **django-ca**.
+* New module ``django_ca.extensions`` to allow easy and consistent handling of X509 extensions.
+* Fully document various member attributes of :py:class:`~django_ca.models.CertificateAuthority` and
+  :py:class:`~django_ca.models.Certificate`, as well ``django_ca.subject.Subject`` and as all new Python code.
+* The parameters for functions in :py:class:`~django_ca.managers.CertificateManager` and
+  :py:meth:`~django_ca.managers.CertificateAuthorityManager.init` were cleaned up for consistent naming and so
+  that a user no longer needs to use classes from the cryptography library. Parameters are now optional if
+  default settings exist.
+* Variable names have been renamed to be more consistent to make the code more readable.
+
+*******
+Testing
+*******
+
+* Also test with Python 3.7.0.
+* Add configuration for `tox <https://tox.readthedocs.io/en/latest/>`_.
+* Speed up test-suite by using :py:meth:`~django:django.test.Client.force_login` and
+  `PASSWORD_HASHERS <https://docs.djangoproject.com/en/dev/topics/testing/overview/#password-hashing>`_.
+* Load keys and certs in for every test case instead for every class, improving test case isolation.
+* Add two certificates that include all and no extensions at all respectively to be able to test edge cases
+  more consistently and thoroughly.
+* Add function ``cmd_e2e`` to call :command:`manage.py` scripts in a way that arguments are passed by argparse
+  as if they where called from the command-line. This allows more complete testing including parsing
+  command-line arguments.
+* Error on any :py:mod:`python:warnings` coming from django-ca when running the test-suite.

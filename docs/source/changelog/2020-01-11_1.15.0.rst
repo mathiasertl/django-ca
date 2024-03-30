@@ -1,0 +1,83 @@
+###################
+1.15.0 (2020-01-11)
+###################
+
+* Add support for Django 3.0.
+* The Docker image is now based on Alpine Linux 3.11.
+* The default project now supports configuring django-ca using YAML configuration files. Configuration using
+  ``localsettings.py`` is now deprecated and will be removed in ``django-ca>=1.18.0``.
+* Start supporting Celery tasks to allow running tasks in a distributed, asynchronous task queue. Some tasks
+  will automatically be run with Celery if it is enabled. Celery is used automatically if installed, but can
+  always be disabled by setting ``CA_USE_CELERY=False``.
+* Drop dependency ``six`` (since we no longer support Python 2.7).
+* Allow caching of CRLs via :command:`manage.py cache_crls`.
+* The :command:`manage.py init_ca` command will now automatically cache CRLs and generate OCSP keys for the
+  new CA.
+* Support ``POSTGRES_*`` and ``MYSQL_*`` environment variables to configure database access credentials in the
+  same way as the Docker images for PostgreSQL and MySQL do.
+* There now are `setuptools extras
+  <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_ for ``redis``
+  and ``celery``, so you can install all required dependencies at once.
+* Add ``CA_PASSWORDS`` setting to allow you to set the passwords for CAs with encrypted private keys. This
+  is required for automated tasks where the private key is required.
+* Add ``CA_CRL_PROFILES`` setting to configure automatically generated CRLs. Note that this setting will
+  likely be moved to a more general setting for automatic tasks in future releases.
+* ``django_ca.extensions.AuthorityKeyIdentifier`` now also supports issuers and serials.
+* :py:func:`~django_ca.utils.parse_general_name` now returns a :py:class:`~cg:cryptography.x509.GeneralName`
+  unchanged, but throws an error if the name isn't a ``str`` otherwise.
+* New class ``django_ca.utils.GeneralNameList`` for extensions that store a list of general names.
+* Add support for the ``django_ca.extensions.FreshestCRL`` extension.
+* Store CA private keys in the ``ca/`` subdirectory by default, the directory can be configured using
+  ``manage.py init_ca --path=...``.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* Drop support for Python 2.7.
+* Drop support for cryptography 2.5 and 2.6.
+* Drop support for Alpine 3.8 (because PostgreSQL and MySQL depend on LibreSSL).
+* Removed the ``manage.py migrate_ca`` command. If you upgrade from before
+  :doc:`1.12.0 </changelog/2019-04-02_1.12.0>`, upgrade to :doc:`1.14.0 </changelog/2019-11-03_1.14.0>` first
+  and update the file storage setting.
+* Removed the ``ca_crl`` setting in :py:class:`~django_ca.views.CertificateRevocationListView`, use ``scope``
+  instead.
+
+******
+Docker
+******
+
+* Add a :ref:`docker-compose.yml <docker-compose>` file to quickly launch a complete service stack.
+* Add support for Celery, MySQL, PostgreSQL and Redis.
+* Change the working directory to ``/usr/src/django-ca/ca``, so :command:`manage.py` can now be invoked using
+  ``python manage.py`` instead of ``python ca/manage.py``.
+* Add a Celery startup script (``./celery.sh``).
+* Add a NGINX configuration template at ``nginx/default.template``.
+* Static files are now included in a "collected" form, so they don't have to collected on startup.
+* Generate OCSP keys and cache CRLs on startup.
+* Use `BuildKit <https://docs.docker.com/develop/develop-images/build_enhancements/>`__ to massively speed up
+  the Docker image build.
+
+********
+Bugfixes
+********
+
+* Fix generation of CRLs and OCSP keys for CAs with a DSA private key.
+* Fix storing an empty list of CRL URLs in some corner cases (when the function receives an empty list).
+* Fix naming CAs via serial on the command line if the serial starts with a zero.
+* Consistently style serials in a monospace font in admin interface.
+* The ``ocsp`` profile used for OCSP keys no longer copies the CommonName (which is the same as in the CA) to
+  to the SubjectAlternativeName extension. The CommonName is frequently a human-readable name in CAs.
+
+Deprecation notices
+===================
+
+* This is the last release to support Django 1.11 and 2.1.
+* The Django project included in this git repository will stop loading ``localsetttings.py`` files in
+  ``django-ca>=1.18.0``.
+* ``Certificate.objects.init()`` and ``get_cert_profile_kwargs()`` were deprecated in :doc:`1.14.0
+  </changelog/2019-11-03_1.14.0>` and will be removed in ``django-ca==1.16.0``. Use
+  :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>` instead.
+* The format for the ``CA_PROFILES`` setting has changed in :doc:`1.14.0 </changelog/2019-11-03_1.14.0>`.
+  Support for the old format will be removed in ``django-ca==1.17.0``. Please see previous versions for
+  migration instructions.

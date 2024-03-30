@@ -1,0 +1,54 @@
+###################
+1.11.0 (2018-12-29)
+###################
+
+* Remove colons from CA private keys (fixes `#29 <https://github.com/mathiasertl/django-ca/issues/28>`_).
+* Filenames for downloading certificates are based on the CommonName (fixes
+  `#53 <https://github.com/mathiasertl/django-ca/issues/53>`_).
+* Fix certificate bundle order (fixes `#55 <https://github.com/mathiasertl/django-ca/issues/55>`_).
+* Management commands ``dump_ca`` and ``dump_cert`` can now dump whole certificate bundles.
+* New setting :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` to configure the default key size
+  for new CAs.
+* Fix display of the NameConstraints extension in the admin interface.
+* Further optimize the Docker image size (~235MB -> ~140MB).
+
+*******************
+Deprecation Notices
+*******************
+
+This release will be the last release to support some software versions:
+
+* This will be the last release that supports for Python 3.4
+  (see `Status of Python branches <https://devguide.python.org/#status-of-python-branches>`_).
+* This will be the last release that supports for Django 2.0
+  (see `Supported Versions <https://www.djangoproject.com/download/#supported-versions>`_).
+* This will be the last release that supports cryptography 2.1.
+
+**********
+Python API
+**********
+
+* **BACKWARDS INCOMPATIBLE:** Renamed the ``subjectAltName`` parameter of
+  ``Certificate.objects.init()`` to ``subject_alternative_name`` to be consistent with other extensions.
+* Document how to use the ``name_constraints`` parameter in
+  :py:meth:`CertificateAuthority.objects.init() <django_ca.managers.CertificateAuthorityManager.init>`
+* Extensions can now always be passed as ``django_ca.extensions.base.Extension`` subclass or as any
+  value accepted by the constructor of the specific class.
+* Add ability to add any custom additional extension using the ``extra_extensions`` parameter.
+* ``django_ca.subject.Subject`` now implements every ``dict`` method.
+* The ``~django_ca.signals.pre_issue_cert`` signal will now receive normalized values.
+* The ``~django_ca.signals.pre_issue_cert`` signal is only invoked after all parameters are verified.
+* Implement the ``django_ca.extensions.AuthorityInformationAccess``,
+  ``django_ca.extensions.BasicConstraints``, ``django_ca.extensions.IssuerAlternativeName``,
+  ``django_ca.extensions.SubjectAlternativeName`` and ``django_ca.extensions.NameConstraints`` extensions.
+
+*******
+Testing
+*******
+
+* Add cryptography 2.4.2 to the test-suite.
+* Add the ``setup.py docker_test`` command to test the image using various alpine-based images.
+* Test for certificates that are not yet valid.
+* The child CA used for testing now contains more extensions.
+* Freeze time in some test cases to avoid test failures when certificates eventually expire.
+* Test some documentation pages, to make sure they are actually correct.

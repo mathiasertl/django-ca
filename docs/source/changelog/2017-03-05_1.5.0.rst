@@ -1,0 +1,15 @@
+##################
+1.5.0 (2017-03-05)
+##################
+
+* Completely remove pyOpenSSL and consistently use `cryptography <https://cryptography.io/>`_.
+* Due to the transition to cryptography, some features have been removed:
+
+  * The ``tlsfeature`` extension is no longer supported. It will be again once cryptography adds support.
+  * The ``msCodeInd``, ``msCodeCom``, ``msCTLSign``, ``msEFS`` values for the ExtendedKeyUsage extension are
+    no longer supported. Support for these was largely academic anyway, so they most likely will not be added
+    again.
+  * ``TEXT`` is no longer a supported output format for dumping certificates.
+
+* The ``keyUsage`` extension is now marked as critical for certificate authorities.
+* Add the ``privilegeWithdrawn`` and ``aACompromise`` attributes for revocation lists.

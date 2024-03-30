@@ -1,0 +1,57 @@
+###################
+1.27.0 (2023-11-26)
+###################
+
+.. NOTE::
+
+   django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
+   :ref:`update_126_rfc4514_subjects` for migration information.
+
+* Add support for Python 3.12 and acme 2.7.0.
+* Update the Docker image to use Alpine Linux 3.18 with Python 3.12.
+* Add support for passing subjects in RFC 4514 format when creating certificate authorities and certificates
+  via the ``--subject-format=rfc4514`` option. This format will become the default in django-ca 2.0.
+* Support for subjects in OpenSSL-style format when creating certificate authorities and certificates is
+  deprecated and will issue a warning. Support for this format will be removed in django-ca 2.2.
+* :ref:`settings-ca-default-subject`, :ref:`subjects in profiles <profiles-subject>` and
+  :ref:`settings-ca-default-name-order` now also support a dotted string to include arbitrary object
+  identifiers.
+* :ref:`settings-ca-default-name-order` can now be configured in YAML files.
+* Do not implicitly sort the subject of new certificate authorities according to
+  :ref:`settings-ca-default-name-order`. The user is expected to supply the correct order.
+* When signing certificates via the command line, implicitly sort the subject only when the profile defines a
+  subject and/or the CommonName is not given and added via the SubjectAlternativeName extension. If neither is
+  the case, the user is expected to supply the correct order.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* Removed support for the old ``--issuer-url``, ``--issuer-alt-name``, ``--crl-url`` and ``--ocsp-url``
+  options for :command:`manage.py init_ca`, :command:`manage.py edit_ca` and :command:`manage.py import_ca` in
+  favor of ``--sign-ca-issuer``, ``--sign-issuer-alternative-name``, ``--sign-crl-full-name`` and
+  ``--sign-ocsp-responder``.
+* Support for non-standard algorithm names in profile settings was removed.
+* Drop support for ``Django~=4.1``, ``cryptography~=40``, ``acme==1.25.0`` and ``celery~=5.2``.
+
+*******************
+Deprecation notices
+*******************
+
+* The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
+* Support for OpenSSL-style subjects will be removed in django-ca 2.2.
+* This is the last release to support Django 3.2.
+* This is the last release to support acme 2.6.0.
+* This is the last release to support Alpine 3.16.
+
+****************
+REST API changes
+****************
+
+.. NOTE:: The :doc:`/rest_api` is still experimental and endpoints will change without notice.
+
+* Certificate issuance is now asynchronous, similar to how certificates are issued via ACME. This enables
+  using CAs where the private key is not directly available to the web server.
+* The REST API must now be enabled explicitly for each certificate authority. This can be done via the admin
+  interface or the ``--enable-api`` flag for :command:`manage.py init_ca`, :command:`manage.py edit_ca` and
+  :command:`manage.py import_ca`.

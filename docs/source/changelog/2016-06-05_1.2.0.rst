@@ -1,0 +1,7 @@
+##################
+1.2.0 (2016-06-05)
+##################
+
+* **django-ca** now provides a complete :doc:`OCSP responder </ocsp>`.
+* Various tests are now run with a precomputed CA, making tests much faster and output more predictable.
+* Update lots of documentation.

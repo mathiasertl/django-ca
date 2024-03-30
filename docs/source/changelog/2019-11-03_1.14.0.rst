@@ -1,0 +1,57 @@
+###################
+1.14.0 (2019-11-03)
+###################
+
+* ``regenerate_ocsp_keys`` now has a quiet mode and only generates keys where the CA private key is available.
+* Minor changes to make the release compatible with Django 3.0a1.
+* Introduce a new, more flexible format for the The format of the :ref:`CA_PROFILES <settings-ca-profiles>`
+  setting. The new :doc:`/profiles` page provides more information.
+* New dependency: `six <https://pypi.org/project/six/>`_, since Django 3.0 no longer includes it.
+* New dependency: `asn1crypto <https://pypi.org/project/asn1crypto/>`_, since cryptography no longer depends
+  on it.
+* Serials are now zero-padded when output so that the last element always consists of two characters.
+* More consistently output serials with colons, use a monospace font in the admin interface.
+* Fix profile selection in the admin interface.
+* Fix display of values from CSR in the admin interface.
+* Add a copy-button next to values from the CSR to enable easy copy/paste from the CSR.
+* Test suite now includes Selenium tests for all JavaScript functionality.
+* ``dev.py coverage`` can now output a text summary using ``--format=text``.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* Drop support for cryptography 2.3 and 2.4.
+* Drop support for idna 2.7.
+* Extensions now always expect a dict or a cryptography extension as a value.  Anything else was unused in
+  practice.
+* ``django_ca.extensions.KeyUsage``, ``django_ca.extensions.ExtendedKeyUsage`` and
+  ``django_ca.extensions.TLSFeature`` now behave like an ordered set and support all operators that a set
+  does.
+* Running an OCSP responder using ``oscrypto``/``ocspbuilder`` is no longer supported.
+
+**********
+Extensions
+**********
+
+* ``django_ca.extensions.KeyUsage`` is now marked as critical by default.
+* ``django_ca.extensions.ExtendedKeyUsage`` now supports the ``anyExtendedKeyUsage`` OID.
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support Python 2.7.
+* This is the last release to support cryptography 2.5 and 2.6.
+* This is the last release to be tested with Alpine 3.7.
+* This is the last release to support updating CA private keys to the filestorage API. :command:`manage.py
+  migrate_ca` will be removed in the next release.
+* This will be the last release to support the ``ca_crl`` setting in
+  :py:class:`~django_ca.views.CertificateRevocationListView`.
+* ``Certificate.objects.init()`` has been deprecated in favor of :py:func:`Certificate.objects.create_cert()
+  <django_ca.managers.CertificateManager.create_cert>`.  The old method will be removed in
+  ``django-ca==1.16``.
+* ``get_cert_profile_kwargs()`` was only used by ``Certificate.objects.init()`` and will  thus also be removed
+  in ``django-ca==1.16``.
+* The old format for ``CA_PROFILES`` will be supported until ``django-ca==1.16``. Please see previous versions
+  for migration instructions.

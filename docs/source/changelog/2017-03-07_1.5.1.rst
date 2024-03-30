@@ -1,0 +1,7 @@
+##################
+1.5.1 (2017-03-07)
+##################
+
+* Increase minimum field length of serial and common name fields.
+* Tests now call full_clean() for created models. SQLite (which is used for testing) does not enforce the
+  ``max_length`` parameter.

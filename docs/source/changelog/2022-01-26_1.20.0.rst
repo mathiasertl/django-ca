@@ -1,0 +1,66 @@
+###################
+1.20.0 (2022-01-26)
+###################
+
+.. WARNING::
+
+   **docker-compose users:** Update from 1.18 or earlier? See :ref:`the update notes <update_119>` or you
+   might loose private keys!
+
+* Parsing and formatting of names now correctly escapes or quotes special characters.
+* ``django_ca.utils.shlex_split()`` was renamed to :py:func:`~django_ca.utils.split_str`. The old name will be
+  removed in ``django_ca==1.22``.
+* Require a CommonName when generating a CA instead of implicitly setting the human-readable name if no
+  CommonName was given.
+* Add support for cryptography 36.0.0.
+* Add support for Alpine 3.15.
+* Make log level and message format more easily configurable with :ref:`LOG_LEVEL <settings-log-level>`,
+  :ref:`LIBRARY_LOG_LEVEL <settings-library-log-level>` and :ref:`LOG_FORMAT <settings-log-format>`.
+* Drop ``pytz`` as dependency (and use :py:class:`python:datetime.timezone` directly).
+* Add mdlDS and mdlJWS X509 extensions for support
+  `mobile Driver Licence <https://en.wikipedia.org/wiki/Mobile_driver%27s_license>`_.
+* Reworked :doc:`installation instructions </install>` to link to a set of quickstart guides dedicated to each
+  installation option.
+* Add ``--bundle`` option to ``manage.py sign_cert`` to allow writing the whole certificate bundle.
+
+**************
+ACMEv2 support
+**************
+
+ACMEv2 support will be included and enabled by default starting with ``django-ca==1.22``. You will still have
+to enable the ACMEv2 interface for each CA that should provide one. The documentation has been updated to
+assume that you want to enable ACMEv2 support.
+
+* Add support for updating an accounts email address.
+* Add support for deactivating ACME accounts.
+* Fix issuing certificates if ``settings.USE_TZ=True`` (fixes `issue 82
+  <https://github.com/mathiasertl/django-ca/issues/82>`_).
+* Fix issuing certificates for root CAs (fixes `issue 83
+  <https://github.com/mathiasertl/django-ca/issues/83>`).
+
+*************************
+Docker and docker-compose
+*************************
+
+* Update Docker image to be based on Alpine 3.15.
+* Update to PostgreSQL 14 when using docker-compose.
+* Do not expose ports of internal daemons when using docker-compose.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* Drop support for Python 3.6.
+* Drop support for Django 3.1.
+* Drop support for idna 2.8, 3.0 and 3.1.
+* Removed the ``manage.py dump_ocsp_index`` command.
+* Remove the ``--csr-format`` parameter to ``manage.py sign_cert`` (deprecated since 1.18.0).
+* ``django_ca.utils.parse_csr()`` has been removed (deprecated since 1.18.0).
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support Django 2.2.
+* This is the last release to support cryptography 3.3 and 3.4.
+* This is the last release to support Alpine 3.12 and 3.13.

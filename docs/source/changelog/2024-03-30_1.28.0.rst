@@ -1,0 +1,94 @@
+###################
+1.28.0 (2024-03-30)
+###################
+
+.. NOTE::
+
+   * django-ca 1.27.0 introduced a major change in how subjects are parsed on the command-line. Please see
+     :ref:`update_126_rfc4514_subjects` for migration information.
+   * **Docker Compose users:** The PostgreSQL version was updated to PostgreSQL 16. See
+     :ref:`postgresql_update` for update instructions.
+
+* Add support for ``Django~=5.0.0``, ``cryptography~=42.0``, ``acme==2.8.0`` and ``acme==2.9.0``.
+* **Docker Compose:** The PostgreSQL version was updated to PostgreSQL 16. See :ref:`postgresql_update` for
+  update instructions.
+* ``pydantic>=2.5`` is now a required dependency.
+* Preparations for support for using Hardware Security Modules, "Key backend support" below.
+* The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
+  :ref:`settings-ca-key-backends` and will be removed in ``django-ca==2.0``. Installations :doc:`as Django
+  app </quickstart_as_app>` must add a ``"django-ca"`` storage alias in their configuration.
+* The :ref:`settings-ca-passwords` setting is now consistently used whenever required.
+* Private keys (for CAs and OCSP responder certificates) are now stored as DER keys to improve loading speed.
+* The admin interface now presents lists of general names (e.g. in the Subject Alternative Name extension) as
+  a list of order-able key/value pairs when adding certificates.
+* Extensions added by the CA when signing new certificates can now have the same complexity as when giving
+  the extensions directly when signing the certificate.
+
+  * The ``--sign-ca-issuer``, ``--sign-ocsp-responder`` and ``--sign-issuer-alternative-name`` options to
+    :command:`manage.py sign_cert` etc. now support any general name type and giving multiple general names.
+  * The CRL Distribution Points extension added to certificates may now be marked as critical via
+    ``--sign-crl-distribution-points-critical``.
+  * When editing a CA, the admin interface presents these fields in the same way as when signing a
+    certificate.
+
+* Remove the option to add the Common Name to the Subject Alternative Name extension, as the result is
+  unpredictable:
+
+  * The :command:`manage.py sign_cert` ``--cn-in-san`` option was removed.
+  * The checkbox in the admin interface was removed.
+  * The profile option no longer has any effect and issues a warning.
+
+* Add :doc:`Pydantic models for cryptography classes </python/pydantic>`. These are required for the REST API,
+  but are also used internally for various places where serialization of objects is required.
+* Support for configuring absolute paths for OCSP responder certificates in manual OCSP views was removed.
+  This was a left over, it was deprecated and issued a warning since 2019.
+* Fixed bash shortcut if installing from source to allow spaces (fixes `issue 123
+  <https://github.com/mathiasertl/django-ca/issues/123>`_).
+
+*******************
+Key backend support
+*******************
+
+This version adds support for "key backends", allowing you to store and use private keys in different places,
+for example the file system or a Hardware Security Module (HSM). At present, the only backend available uses
+the Django file storage API, usually storing private keys on the file system.
+
+Future versions will add support for other ways to handle private keys, including HSMs.
+
+****************
+REST API changes
+****************
+
+.. NOTE:: The :doc:`/rest_api` is still experimental and endpoints will change without notice.
+
+The update to django-ninja 1.1 and Pydantic brings a general update on how extensions are represented. Any
+code using the API will have to be updated.
+
+* Update to ``django-ninja==1.1.0``, including a full migration to Pydantic 2.
+* The format of extensions now includes a ``type`` parameter indicating the extension type.
+* Extension objects are now more in line with `RFC 5280`_ and no longer use arbitrary abbreviations.
+* Extensions are now represented as a list.
+* General names are now represented as an object, instead of string that has to be parsed.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* **Docker Compose:** The PostgreSQL version was updated to PostgreSQL 16. See :ref:`postgresql_update` for
+  update instructions.
+* Drop support for ``Django~=3.2``, ``acme==1.26.0`` and ``Alpine~=3.16``.
+* ``django_ca.extensions.serialize_extension()`` is removed and replaced by :doc:`Pydantic serialization
+  </python/pydantic>`.
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support Python 3.8, ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
+* The default subject format will switch from OpenSSL-style to RFC 4514 in django-ca 2.0.
+* Support for OpenSSL-style subjects will be removed in django-ca 2.2.
+* ``django_ca.extensions.parse_extension()`` is deprecated and should not longer be used. Use Pydantic models
+  instead.
+* The :command:`manage.py convert_timestamps` command will be removed in ``django-ca==2.0``.
+* The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings are deprecated in favor of
+  :ref:`settings-ca-key-backends` and will be removed in ``django-ca==2.0``.

@@ -1,0 +1,92 @@
+###################
+1.13.0 (2019-07-14)
+###################
+
+* Add support for cryptography 2.7.
+* Moved ``setup.py recreate_fixtures`` to ``recreate-fixtures.py``.
+* Moved all other extra ``setup.py`` commands to ``dev.py`` to remove clutter.
+* Move ``fab init_demo`` to ``dev.py init-demo``.
+* Use OpenSSL instead of LibreSSL in :file:`Dockerfile` to enable testing for Alpine 3.7. The cryptography
+  documentation also `suggests <https://cryptography.io/en/stable/installation/#alpine>`_ OpenSSL.
+* The Fabric file has been removed.
+* Remove the ``CA_PROVIDE_GENERIC_CRL`` setting, the default URL configuration now includes it.
+* The Docker image is now based on Alpine Linux 3.10.
+* **BACKWARDS INCOMPATIBLE:** Drop support for cryptography 2.2.
+* **BACKWARDS INCOMPATIBLE:** Drop support for idna 2.6.
+
+*******************
+Deprecation Notices
+*******************
+
+* This is the last release to support cryptography 2.3 and 2.4.
+* This is the last release to support idna 2.7.
+* This is the last release to support OCSP using ``oscrypto``/``ocspbuilder``.
+* ``CertificateRevocationListView.ca_crl`` is deprecated in favor of the ``scope`` parameter. If you have set
+  ``ca_crl=True`` just set ``scope="ca"`` instead.
+* A new more extendable format for the :ref:`CA_PROFILES <settings-ca-profiles>` setting will be introduced in
+  1.14.0. As a result, extensions will no longer support instantiation from lists or strings, so avoid usage
+  wherever you can.
+
+**********
+Extensions
+**********
+
+* Implement the ``django_ca.extensions.CRLDistributionPoints`` extension and
+  ``django_ca.extensions.CertificatePolicies`` extension.
+* Add the ``ipsecEndSystem``, ``ipsecTunnel`` and ``ipsecUser`` extended key usage types. These are actually
+  very rare and only occur in the "TrustID Server A52" CA.
+* Extensions now consistently serialize to dictionaries.
+
+**********************
+Command-line interface
+**********************
+
+* The ``view_ca`` command will now display the full path to the private key, if possible.
+* The ``migrate_ca`` command now has a ``--dry`` parameter and has a updated help texts.
+* The new ``regenerate_ocsp_keys`` command allows you to automatically generate OCSP keys that are used by the
+  new default OCSP views.
+
+**********
+Python API
+**********
+
+* Add the ``root`` property to CAs and certificates returning the root Certificate Authority.
+* ``django_ca.managers.CertificateManager.sign_cert()`` now also accepts a
+  :py:class:`~cg:cryptography.x509.CertificateSigningRequest` as ``csr`` value.
+* Add the ``issuer_url``, ``crl_url``, ``ocsp_url`` and ``issuer_alternative_name`` parameter to
+  ``django_ca.managers.CertificateManager.sign_cert()`` to allow overriding or disabling the default
+  values from the CA. This can also be used to pass extensions that do not just contain the URL using the
+  ``extra_extensions`` parameter.
+* Add the :py:func:`~django_ca.models.CertificateAuthority.get_crl` function to get a CRL for the CA.
+* Add the :py:func:`~django_ca.models.CertificateAuthority.generate_ocsp_key` function to generate OCSP keys
+  that are automatically picked up by the generic OCSP views.
+* Both :py:class:`~django_ca.models.CertificateAuthority` and
+  :py:class:`~django_ca.models.Certificate` now have a ``root`` property pointing to the Root CA.
+
+****
+OCSP
+****
+
+* The :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` setting is now used to set generic OCSP URLs
+  by default.
+* The ``dump_ocsp_index`` management command now excludes certificates expired for more then a day or are not
+  yet valid.
+
+****
+CRLs
+****
+
+* Issued CRLs now confirm to `RFC 5280`_:
+
+  * Add the `CRL Number <https://tools.ietf.org/html/rfc5280.html#section-5.2.3>`_ extension.
+  * Add the `Authority Key Identifier <https://tools.ietf.org/html/rfc5280.html#section-5.2.1>`_ extension.
+
+* Add the `Issuing Distribution Point <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_
+  extension. This extension requires that you use cryptography>=2.5.
+* Add support for setting an Invalidity Date (see `RFC 5280, 5.3.2
+  <https://tools.ietf.org/html/rfc5280.html#section-5.3.2>`_) for CRLs, indicating when the certificate was
+  compromised.
+* CRL entries will no longer include a `Reason Code <https://tools.ietf.org/html/rfc5280#section-5.3.1>`_ if
+  the reason is unspecified (recommended in RFC 5280).
+* Expose an API for creating CRLs via :py:func:`CertificateAuthority.get_crl()
+  <django_ca.models.CertificateAuthority.get_crl>`.

@@ -1,0 +1,26 @@
+##################
+1.6.0 (2017-04-21)
+##################
+
+*****************************
+New features and improvements
+*****************************
+
+* Support CSRs in DER format when signing a certificate via :command:`manage.py sign_cert`.
+* Support encrypting private keys of CAs with a password.
+* Support Django 1.11.
+* Allow creating CRLs of disabled CAs via :command:`manage.py dump_crl`.
+* Validate DNSNames when parsing general names. This means that signing a certificate with CommonName that is
+  not a valid domain name fails if it should also be added as SubjectAlternativeName extension (see
+  ``--cn-in-san`` option).
+* When configuring :py:class:`~django_ca.views.OCSPView`, the responder key and certificate are verified
+  during configuration. An erroneous configuration thus throws an error on startup, not during runtime.
+* The test suite now tests certificate signatures itself via ``pyOpenSSL``,  so an independent library is used
+  for verification.
+
+********
+Bugfixes
+********
+
+* Fix the ``authorityKeyIdentifier`` extension when signing certificates with an intermediate CA.
+* Fix creation of intermediate CAs.

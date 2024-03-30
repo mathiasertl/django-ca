@@ -1,0 +1,46 @@
+###################
+1.26.0 (2023-08-26)
+###################
+
+* Add experimental support for a :doc:`REST API </rest_api>` (fixes `issue 107
+  <https://github.com/mathiasertl/django-ca/issues/107>`_).
+* Add support for configuring certificate authorities to automatically include a Certificate Policy extension
+  when signing certificates.
+* Add support for configuring how long automatically generated OCSP responder certificates are valid.
+* Add support for configuring how long OCSP responses of the automatically configured OCSP responder will be
+  valid (fixes `issue 102 <https://github.com/mathiasertl/django-ca/issues/102>`_).
+* The web interface now allows creating certificates with arbitrary or even empty subjects (fixes `issue 77
+  <https://github.com/mathiasertl/django-ca/issues/77>`_).
+* The certificate subject is now displayed as a unambiguous list instead of a string. The issuer is now also
+  shown in the same way.
+* Fix NGINX configuration updates when using Docker Compose. The previous setup did not update configuration
+  on update if parts of it changed.
+* Fix ``POSTGRES_`` configuration environment variables when using the default PostgreSQL backend. It
+  previously only worked for an old, outdated alias name.
+* The root URL path can now be configured via the :ref:`CA_URL_PATH <settings-ca-url-path>` setting. This
+  allows you to use shorter URLs (that is, without the ``django_ca/`` prefix).
+* The admin interface can now be disabled by setting the new :ref:`ENABLE_ADMIN <settings-enable-admin>`
+  setting to ``False``.
+
+******************************
+Backwards incompatible changes
+******************************
+
+* Drop support for cryptography 37 and cryptography 39, acme 2.4.0 and celery 5.1.
+* Passing ``ECC`` and ``EdDSA`` as key types (e.g when using :command:`manage.py init_ca`) was removed. Use
+  ``EC`` and ``Ed25519`` instead. The old names where deprecated since 1.23.0.
+* Removed support for the old ``--pathlen`` and ``--no-pathlen`` options for :command:`manage.py init_ca` in
+  favor of ``--path-length`` and ``-no-path-length``. The old options where deprecated since 1.24.0.
+* Using comma-separated lists for the ``--key-usage``, ``--extended-key-usage`` and ``--tls-feature``
+  command-line options was removed. The old format was deprecated since 1.24.0.
+* Remove support for `HTTP Public Key Pinning <https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning>`_, as it
+  is obsolete.
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support Django 4.1.
+* This is the last release to support cryptography 40.
+* This is the last release to support acme 2.5.0.
+* This is the last release to support celery 5.2.

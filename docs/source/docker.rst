@@ -190,11 +190,11 @@ the old container and starting a new one with the same options:
 
    user@host:~$ docker ps
    CONTAINER ID   IMAGE                          ...	NAMES
-   ...            mathiasertl/django-ca:1.19.0   ...	frontend
-   ...            mathiasertl/django-ca:1.19.0   ...	backend
+   ...            mathiasertl/django-ca:1.28.0   ...	frontend
+   ...            mathiasertl/django-ca:1.28.0   ...	backend
    user@host:~$ docker kill frontend backend
    user@host:~$ docker rm frontend backend
-   user@host:~$ docker run ... mathiasertl/django-ca:1.20.0 frontend
-   user@host:~$ docker run ... mathiasertl/django-ca:1.20.0 backend
+   user@host:~$ docker run ... mathiasertl/django-ca:1.29.0 frontend
+   user@host:~$ docker run ... mathiasertl/django-ca:1.29.0 backend
 
 The ``docker run`` command must use at least the same volume options as the previous command.
