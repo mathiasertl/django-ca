@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterable
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
@@ -34,7 +34,7 @@ from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
 from django_ca.utils import add_colons, file_exists, read_file
 
 
-def regenerate_ocsp_keys(*serials: str, **kwargs: Any) -> Tuple[str, str]:
+def regenerate_ocsp_keys(*serials: str, **kwargs: Any) -> tuple[str, str]:
     """Execute the regenerate_ocsp_keys command."""
     return cmd("regenerate_ocsp_keys", *serials, **kwargs)
 
@@ -51,12 +51,12 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def assertKey(  # pylint: disable=invalid-name
         self,
         ca: CertificateAuthority,
-        key_type: Optional[Type[CertificateIssuerPrivateKeyTypes]] = None,
+        key_type: Optional[type[CertificateIssuerPrivateKeyTypes]] = None,
         key_size: Optional[int] = 2048,
         password: Optional[bytes] = None,
         excludes: Optional[Iterable[int]] = None,
-        elliptic_curve: Type[ec.EllipticCurve] = ec.SECP256R1,
-    ) -> Tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:
+        elliptic_curve: type[ec.EllipticCurve] = ec.SECP256R1,
+    ) -> tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:
         """Assert that they key is present and can be read."""
         priv_path = f"ocsp/{ca.serial}.key"
         cert_path = f"ocsp/{ca.serial}.pem"

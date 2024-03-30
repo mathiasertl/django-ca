@@ -20,7 +20,7 @@ import subprocess
 import sys
 import types
 import typing
-from typing import Any, Dict, Type, Union
+from typing import Any, Union
 
 from pydantic import BaseModel
 
@@ -47,7 +47,7 @@ class Command(DevCommand):
     modules = (("termcolor", "termcolor"),)
     termcolor: types.ModuleType
 
-    UsePrivateKeyOptions: Type[BaseModel]
+    UsePrivateKeyOptions: type[BaseModel]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -66,7 +66,7 @@ class Command(DevCommand):
         self,
         ca_dir: str,
         ca_storage: Storage,
-        loaded_cas: Dict[str, "CertificateAuthority"],
+        loaded_cas: dict[str, "CertificateAuthority"],
         certs: "CertFixtureData",
         base_url: str,
     ) -> None:
@@ -132,7 +132,7 @@ class Command(DevCommand):
 
     def save_fixture_data(  # pylint: disable=too-many-locals
         self, ca_dir: str, ca_settings: types.ModuleType, fixture_data: "FixtureData"
-    ) -> Dict[str, "CertificateAuthority"]:
+    ) -> dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""
         # pylint: disable=import-outside-toplevel  # see handle() imports
         from django.contrib.auth import get_user_model

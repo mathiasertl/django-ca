@@ -26,7 +26,7 @@ import typing
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import yaml
 
@@ -68,9 +68,9 @@ def chdir(path: Union[str, "os.PathLike[str]"]) -> Iterator[str]:
 
 
 def _wait_for(
-    wait_for: Iterable[Dict[str, Any]],
+    wait_for: Iterable[dict[str, Any]],
     jinja_env: "jinja2.Environment",
-    context: Dict[str, Any],
+    context: dict[str, Any],
     **kwargs: Any,
 ) -> None:
     """Helper function to wait until the "wait_for" command succeeds."""
@@ -88,7 +88,7 @@ def _wait_for(
 
 
 @contextmanager
-def console_include(path: str, context: Dict[str, Any]) -> Iterator[None]:
+def console_include(path: str, context: dict[str, Any]) -> Iterator[None]:
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
     import jinja2  # pylint: disable=import-outside-toplevel

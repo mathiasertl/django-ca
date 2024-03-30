@@ -21,7 +21,6 @@ import unittest
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
-from typing import List, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -65,7 +64,7 @@ from django_ca.utils import (
     x509_name,
 )
 
-SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[object])
+SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=type[object])
 
 
 def test_doctests() -> None:
@@ -116,10 +115,10 @@ def test_deprecated_storage_configuration(settings: SettingsWrapper) -> None:
     ],
 )
 def test_parse_serialized_name_attributes(
-    attributes: List[Tuple[x509.ObjectIdentifier, str]], expected: List[x509.NameAttribute]
+    attributes: list[tuple[x509.ObjectIdentifier, str]], expected: list[x509.NameAttribute]
 ) -> None:
     """Test :py:func:`django_ca.utils.parse_serialized_name_attributes`."""
-    serialized: List[SerializedObjectIdentifier] = [
+    serialized: list[SerializedObjectIdentifier] = [
         {"oid": attr[0].dotted_string, "value": attr[1]} for attr in attributes
     ]
     assert parse_serialized_name_attributes(serialized) == expected
@@ -129,7 +128,7 @@ class ParseNameX509TestCase(TestCase):
     """Test :py:func:`django_ca.utils.parse_name_x509`."""
 
     def assertSubject(  # pylint: disable=invalid-name
-        self, actual: str, expected: Iterable[Tuple[ObjectIdentifier, str]]
+        self, actual: str, expected: Iterable[tuple[ObjectIdentifier, str]]
     ) -> None:
         """Test that the given subject matches."""
         self.assertEqual(

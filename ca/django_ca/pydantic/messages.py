@@ -14,7 +14,7 @@
 """Pydantic models representing messages exchanged between various parts of the system."""
 
 from datetime import datetime, timezone as tz
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -52,7 +52,7 @@ class SignCertificateMessage(BaseModel):
         default_factory=lambda: datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES,
         json_schema_extra={"example": DATETIME_EXAMPLE},
     )
-    extensions: Optional[List[SignCertificateExtensions]] = Field(
+    extensions: Optional[list[SignCertificateExtensions]] = Field(
         default_factory=list,
         description="**Optional** additional extensions to add to the certificate.",
     )
@@ -73,7 +73,7 @@ class SignCertificateMessage(BaseModel):
         """Get CSR encoded in this message."""
         return x509.load_pem_x509_csr(self.csr)
 
-    def get_extensions(self) -> List[x509.Extension[x509.ExtensionType]]:
+    def get_extensions(self) -> list[x509.Extension[x509.ExtensionType]]:
         """Get extensions encoded in this message."""
         if self.extensions is None:
             return []

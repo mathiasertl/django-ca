@@ -19,7 +19,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 from unittest import mock
 
 from cryptography import x509
@@ -56,9 +56,9 @@ class AdminActionTestCaseMixin(
     """TestCase mixin for normal Django admin actions."""
 
     action = ""
-    data: Dict[str, Any]
-    insufficient_permissions: Tuple[str, ...] = ()
-    required_permissions: Tuple[str, ...] = ()
+    data: dict[str, Any]
+    insufficient_permissions: tuple[str, ...] = ()
+    required_permissions: tuple[str, ...] = ()
 
     def assertFailedRequest(  # pylint: disable=invalid-name
         self, response: "HttpResponse", *objects: DjangoCAModelTypeVar
@@ -146,7 +146,7 @@ class AdminChangeActionTestCaseMixin(
         "child",
     )
     load_certs = ("profile-webserver",)
-    data: Dict[str, Any]
+    data: dict[str, Any]
     tool = ""
     pre_signal: Signal
     post_signal: Signal
@@ -172,7 +172,7 @@ class AdminChangeActionTestCaseMixin(
     @contextmanager
     def assertNoSignals(  # pylint: disable=invalid-name
         self,
-    ) -> Iterator[Tuple[mock.MagicMock, mock.MagicMock]]:
+    ) -> Iterator[tuple[mock.MagicMock, mock.MagicMock]]:
         """Shortcut to assert that **no** signals where called."""
         with self.mockSignals(False, False) as (pre, post):
             yield pre, post
@@ -191,7 +191,7 @@ class AdminChangeActionTestCaseMixin(
     @contextmanager
     def mockSignals(  # pylint: disable=invalid-name
         self, pre_called: bool = True, post_called: bool = True
-    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
+    ) -> Iterator[tuple[mock.Mock, mock.Mock]]:
         """Assert that the signals were (not) called."""
         with mock_signal(self.pre_signal) as pre, mock_signal(self.post_signal) as post:
             try:
@@ -299,7 +299,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         self.assertNotRevoked(obj)
 
     def assertFormValidationError(  # pylint: disable=invalid-name
-        self, cert: X509CertMixin, response: "HttpResponse", **errors: List[str]
+        self, cert: X509CertMixin, response: "HttpResponse", **errors: list[str]
     ) -> None:
         """Assert that the form validation failed with the given errors."""
         self.assertNotRevoked(cert)
@@ -431,7 +431,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         self.assertNotEqual(obj.serial, resigned.serial)
 
     @property
-    def data(self) -> Dict[str, Any]:  # type: ignore[override]
+    def data(self) -> dict[str, Any]:  # type: ignore[override]
         """Return default data."""
         # mypy override: https://github.com/python/mypy/issues/4125
         san = typing.cast(

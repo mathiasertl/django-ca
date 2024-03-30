@@ -13,7 +13,7 @@
 
 """Reusable type aliases for Pydantic models."""
 
-from typing import Any, List, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import AfterValidator, BeforeValidator, Field
 
@@ -25,7 +25,7 @@ PrivateKeySize = Annotated[
     int, Field(ge=ca_settings.CA_MIN_KEY_SIZE), AfterValidator(validators.is_power_two_validator)
 ]
 
-NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=List[Any])
+NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 
 OIDType = Annotated[str, BeforeValidator(validators.oid_parser), AfterValidator(validators.oid_validator)]
 

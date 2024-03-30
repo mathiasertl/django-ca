@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -64,7 +64,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
         # CRL Distribution Points extension for certificates
-        sign_crl_full_names: Optional[List[x509.GeneralName]],
+        sign_crl_full_names: Optional[list[x509.GeneralName]],
         sign_crl_distribution_points_critical: bool,
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],

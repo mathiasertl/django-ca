@@ -21,7 +21,7 @@ import re
 import types
 import typing
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import yaml
 from setuptools.config.pyprojecttoml import read_configuration
@@ -102,7 +102,7 @@ def check(
     return errors
 
 
-def check_github_action_versions(job: Dict[str, Any]) -> int:
+def check_github_action_versions(job: dict[str, Any]) -> int:
     """Check versions of/in GitHub actions."""
     errors = 0
     expected_action_versions = config.GITHUB_CONFIG["actions"]
@@ -167,7 +167,7 @@ def check_tox() -> int:
     # Check that there is a testenv listing all versions
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_env_list = "py{%s}-dj{%s}-cg{%s}-acme{%s}" % (
+    expected_env_list = "py{{{}}}-dj{{{}}}-cg{{{}}}-acme{{{}}}".format(
         ",".join([pyver.replace(".", "") for pyver in config.PYTHON_RELEASES]),
         ",".join(config.DJANGO),
         ",".join(config.CRYPTOGRAPHY),

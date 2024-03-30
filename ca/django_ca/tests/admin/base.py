@@ -14,7 +14,7 @@
 """Mixin classes for admin view test cases."""
 
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -32,7 +32,7 @@ class CertificateAdminTestCaseMixin:
     classes.
     """
 
-    media_css: Tuple[str, ...] = (
+    media_css: tuple[str, ...] = (
         "django_ca/admin/css/base.css",
         "django_ca/admin/css/certificateadmin.css",
     )
@@ -85,12 +85,12 @@ class AddCertificateSeleniumTestCase(
         self.key_value_list = self.key_value_field.find_element(By.CSS_SELECTOR, ".key-value-list")
 
     @property
-    def value(self) -> List[Dict[str, str]]:
+    def value(self) -> list[dict[str, str]]:
         """Load the current value from the hidden input field."""
         return json.loads(self.hidden_input.get_attribute("value"))  # type: ignore[no-any-return,arg-type]
 
     @property
-    def displayed_value(self) -> List[Dict[str, str]]:
+    def displayed_value(self) -> list[dict[str, str]]:
         """Load the currently displayed value from the key/value list."""
         selects = self.key_value_list.find_elements(By.CSS_SELECTOR, "select")
         inputs = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")

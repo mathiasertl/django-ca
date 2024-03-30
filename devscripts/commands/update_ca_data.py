@@ -18,7 +18,7 @@ import os
 import typing
 from collections.abc import Iterable, Sequence
 from datetime import timedelta
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from tabulate import tabulate
 
@@ -75,7 +75,7 @@ def optional(
 
 cert_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "cert")
 ca_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "ca")
-certs: Dict[str, CertInfo] = {
+certs: dict[str, CertInfo] = {
     "digicert_sha2.pem": {  # derstandard.at
         "name": "DigiCert Secure Server",
         "last": "2019-07-06",
@@ -129,7 +129,7 @@ certs: Dict[str, CertInfo] = {
         "last": "2019-04-21",
     },
 }
-cas: Dict[str, CertInfo] = {
+cas: dict[str, CertInfo] = {
     "digicert_sha2.pem": {  # derstandard.at
         "name": "DigiCert Secure Server",
         "last": "2019-07-06",
@@ -268,7 +268,7 @@ def policy_as_str(policy: Union[str, x509.UserNotice]) -> str:
 
 
 def update_cert_data(  # noqa: PLR0912,PLR0915
-    prefix: str, dirname: str, cert_data: Dict[str, CertInfo], name_header: str
+    prefix: str, dirname: str, cert_data: dict[str, CertInfo], name_header: str
 ) -> None:
     """Update certificate/ca data."""
     # pylint: disable=too-many-locals; there are many extensions
@@ -279,7 +279,7 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
 
     # pylint: enable=import-outside-toplevel
 
-    cert_values: Dict[str, List[Sequence[str]]] = {
+    cert_values: dict[str, list[Sequence[str]]] = {
         "subject": [
             (
                 name_header,
@@ -561,7 +561,7 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
     }
 
     crl_dir = os.path.join(config.DOCS_SOURCE_DIR, "_files", "crl")
-    crl_values: Dict[str, List[Sequence[str]]] = {
+    crl_values: dict[str, list[Sequence[str]]] = {
         # meta data
         "crl_info": [("CRL", "Source", "Last accessed", "Info")],
         "crl_issuer": [("CRL", "Issuer Name")],
@@ -591,7 +591,7 @@ def update_crl_data() -> None:  # pylint: disable=too-many-locals
         crl_name = crls[crl_path]["name"]
 
         # set empty string as default value
-        this_crl_values: Dict[str, Iterable[str]] = {}
+        this_crl_values: dict[str, Iterable[str]] = {}
         for crl_key, crl_value in crl_values.items():
             this_crl_values[crl_key] = [""] * (len(crl_value[0]) - 1)
 

@@ -14,7 +14,7 @@
 """Test various extension values for serialization, parsing and text representation."""
 
 import typing
-from typing import Any, Dict, List
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -46,11 +46,11 @@ class _ExtensionExampleDict(typing.TypedDict):
 class ExtensionExampleDict(_ExtensionExampleDict, total=False):
     """Value used to define generic test cases."""
 
-    serialized_alternatives: List[Any]
-    extension_type_alternatives: List[x509.ExtensionType]
+    serialized_alternatives: list[Any]
+    extension_type_alternatives: list[x509.ExtensionType]
 
 
-TestValues = Dict[str, ExtensionExampleDict]
+TestValues = dict[str, ExtensionExampleDict]
 
 
 class ExtensionTestCaseMixin(TestCaseProtocol):
@@ -136,7 +136,7 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     def setUp(self) -> None:
         super().setUp()
 
-        rdn1: List[SerializedObjectIdentifier] = [
+        rdn1: list[SerializedObjectIdentifier] = [
             {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
         ]
 

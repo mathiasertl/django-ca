@@ -14,7 +14,7 @@
 """:py:mod:`django_ca.tests.admin.assertions` collects assertions used when testing the admin interface."""
 
 from http import HTTPStatus
-from typing import Any, Tuple
+from typing import Any
 
 from django.db import models
 from django.templatetags.static import static
@@ -25,7 +25,7 @@ from django_ca.tests.base.typehints import HttpResponse
 
 
 def assert_change_response(
-    response: "HttpResponse", media_css: Tuple[Tuple[str, str], ...] = tuple()
+    response: "HttpResponse", media_css: tuple[tuple[str, str], ...] = tuple()
 ) -> None:
     """Assert that the passed response is a model change view."""
     assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}"

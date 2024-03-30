@@ -26,7 +26,7 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 from unittest import mock
 
 from cryptography import x509
@@ -90,25 +90,25 @@ def certificate_policies(
 
 
 @typing.overload
-def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> Tuple[bytes, bytes]: ...
+def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> tuple[bytes, bytes]: ...
 
 
 @typing.overload
 def cmd(
     *args: Any, stdout: BytesIO, stderr: Optional[StringIO] = None, **kwargs: Any
-) -> Tuple[bytes, str]: ...
+) -> tuple[bytes, str]: ...
 
 
 @typing.overload
 def cmd(
     *args: Any, stdout: Optional[StringIO] = None, stderr: BytesIO, **kwargs: Any
-) -> Tuple[str, bytes]: ...
+) -> tuple[str, bytes]: ...
 
 
 @typing.overload
 def cmd(
     *args: Any, stdout: Optional[StringIO] = None, stderr: Optional[StringIO] = None, **kwargs: Any
-) -> Tuple[str, str]: ...
+) -> tuple[str, str]: ...
 
 
 def cmd(
@@ -116,7 +116,7 @@ def cmd(
     stdout: Optional[Union[StringIO, BytesIO]] = None,
     stderr: Optional[Union[StringIO, BytesIO]] = None,
     **kwargs: Any,
-) -> Tuple[Union[str, bytes], Union[str, bytes]]:
+) -> tuple[Union[str, bytes], Union[str, bytes]]:
     """Call to a manage.py command using call_command."""
     if stdout is None:
         stdout = StringIO()
@@ -145,7 +145,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[StringIO] = None,
     stderr: Optional[StringIO] = None,
-) -> Tuple[str, str]: ...
+) -> tuple[str, str]: ...
 
 
 @typing.overload
@@ -155,7 +155,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: BytesIO,
     stderr: Optional[StringIO] = None,
-) -> Tuple[bytes, str]: ...
+) -> tuple[bytes, str]: ...
 
 
 @typing.overload
@@ -165,7 +165,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[StringIO] = None,
     stderr: BytesIO,
-) -> Tuple[str, bytes]: ...
+) -> tuple[str, bytes]: ...
 
 
 @typing.overload
@@ -175,7 +175,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: BytesIO,
     stderr: BytesIO,
-) -> Tuple[bytes, bytes]: ...
+) -> tuple[bytes, bytes]: ...
 
 
 def cmd_e2e(
@@ -183,7 +183,7 @@ def cmd_e2e(
     stdin: Optional[Union[StringIO, bytes]] = None,
     stdout: Optional[Union[BytesIO, StringIO]] = None,
     stderr: Optional[Union[BytesIO, StringIO]] = None,
-) -> Tuple[Union[str, bytes], Union[str, bytes]]:
+) -> tuple[Union[str, bytes], Union[str, bytes]]:
     """Call a management command the way manage.py does.
 
     Unlike call_command, this method also tests the argparse configuration of the called command.
@@ -230,7 +230,7 @@ def crl_distribution_points(
 def distribution_point(
     full_name: Optional[Iterable[x509.GeneralName]] = None,
     relative_name: Optional[x509.RelativeDistinguishedName] = None,
-    reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+    reasons: Optional[frozenset[x509.ReasonFlags]] = None,
     crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
 ) -> x509.DistributionPoint:
     """Shortcut for generating a single distribution point."""
@@ -263,7 +263,7 @@ def get_idp(
     only_contains_attribute_certs: bool = False,
     only_contains_ca_certs: bool = False,
     only_contains_user_certs: bool = False,
-    only_some_reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+    only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None,
     relative_name: Optional[x509.RelativeDistinguishedName] = None,
 ) -> "x509.Extension[x509.IssuingDistributionPoint]":
     """Get an IssuingDistributionPoint extension."""
@@ -282,7 +282,7 @@ def get_idp(
     )
 
 
-def idp_full_name(ca: CertificateAuthority) -> Optional[List[x509.UniformResourceIdentifier]]:
+def idp_full_name(ca: CertificateAuthority) -> Optional[list[x509.UniformResourceIdentifier]]:
     """Get the IDP full name for `ca`."""
     if ca.sign_crl_distribution_points is None:  # pragma: no cover
         return None
@@ -397,7 +397,7 @@ def ip(
 
 
 def rdn(
-    name: Iterable[Tuple[x509.ObjectIdentifier, str]],
+    name: Iterable[tuple[x509.ObjectIdentifier, str]],
 ) -> x509.RelativeDistinguishedName:  # just a shortcut
     """Shortcut to get a :py:class:`cg:cryptography.x509.RelativeDistinguishedName`."""
     return x509.RelativeDistinguishedName([x509.NameAttribute(*t) for t in name])
@@ -427,11 +427,11 @@ class OutputChecker(doctest.OutputChecker):
 def doctest_module(
     module: str,
     name: Optional[str] = None,
-    globs: Optional[Dict[str, str]] = None,
+    globs: Optional[dict[str, str]] = None,
     verbose: Optional[bool] = False,
     report: bool = False,
     optionflags: int = 0,
-    extraglobs: Optional[Dict[str, str]] = None,
+    extraglobs: Optional[dict[str, str]] = None,
     raise_on_error: bool = False,
     exclude_empty: bool = False,
 ) -> doctest.TestResults:

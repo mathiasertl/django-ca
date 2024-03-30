@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterable
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -125,7 +125,7 @@ class CertificateAuthorityManager(
 
         def usable(self) -> "CertificateAuthorityQuerySet": ...
 
-    def _get_formatting_context(self, serial: int, signer_serial: int) -> Dict[str, Union[int, str]]:
+    def _get_formatting_context(self, serial: int, signer_serial: int) -> dict[str, Union[int, str]]:
         context = get_formatting_context(serial, signer_serial)
         kwargs = {"serial": context["SIGNER_SERIAL_HEX"]}
         context["OCSP_PATH"] = reverse("django_ca:ocsp-ca-post", kwargs=kwargs).lstrip("/")
@@ -143,7 +143,7 @@ class CertificateAuthorityManager(
         extension does not contain any access descriptions of the respective type.
         """
         oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
-        access_descriptions: List[x509.AccessDescription] = []
+        access_descriptions: list[x509.AccessDescription] = []
         if oid in extensions:
             extension = typing.cast(x509.AuthorityInformationAccess, extensions[oid].value)
             access_descriptions = list(extension)
@@ -670,7 +670,7 @@ class AcmeAuthorizationManager(AcmeAuthorizationManagerBase):
 
         def dns(self) -> "AcmeAuthorizationQuerySet": ...
 
-        def names(self) -> List[str]: ...
+        def names(self) -> list[str]: ...
 
         def url(self) -> "AcmeAuthorizationQuerySet": ...
 

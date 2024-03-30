@@ -16,7 +16,7 @@
 import typing
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -51,7 +51,7 @@ def _initial_expires() -> datetime:
     return datetime.today() + ca_settings.CA_DEFAULT_EXPIRES
 
 
-def _profile_choices() -> Iterable[Tuple[str, str]]:
+def _profile_choices() -> Iterable[tuple[str, str]]:
     return sorted([(p, p) for p in ca_settings.CA_PROFILES], key=lambda e: e[0])
 
 
@@ -101,7 +101,7 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
     sign_certificate_policies = fields.CertificatePoliciesField(required=False)
 
     class Meta:
-        labels: typing.ClassVar[Dict[str, "StrPromise"]] = {"acme_registration": _("Account registration")}
+        labels: typing.ClassVar[dict[str, "StrPromise"]] = {"acme_registration": _("Account registration")}
 
 
 class CreateCertificateBaseForm(CertificateModelForm):
@@ -203,7 +203,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
             return None
         return password.encode("utf-8")
 
-    def clean(self) -> Optional[Dict[str, Any]]:
+    def clean(self) -> Optional[dict[str, Any]]:
         data = super().clean()
 
         # COVERAGE Unclear if/when this happens, but django-stubs==1.15.0 reports data as Optional.
@@ -245,7 +245,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
                 % {"key_type": ca.key_type},
             )
 
-        common_names: List[x509.NameAttribute] = []
+        common_names: list[x509.NameAttribute] = []
         if subject is not None:
             common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
 
@@ -299,9 +299,9 @@ class RevokeCertificateForm(CertificateModelForm):
     class Meta:
         model = Certificate
         fields = ("revoked_reason", "compromised")
-        field_classes: typing.ClassVar[Dict[str, Type[forms.Field]]] = {
+        field_classes: typing.ClassVar[dict[str, type[forms.Field]]] = {
             "compromised": forms.SplitDateTimeField,
         }
-        widgets: typing.ClassVar[Dict[str, Type[forms.Widget]]] = {
+        widgets: typing.ClassVar[dict[str, type[forms.Widget]]] = {
             "compromised": AdminSplitDateTime,
         }

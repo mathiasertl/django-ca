@@ -21,7 +21,7 @@ import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 from unittest import mock
 
 import josepy as jose
@@ -145,7 +145,7 @@ class X509CertMixinTestCaseMixin(TestCaseProtocol):
     """Mixin collecting assertion methods for CertificateAuthority and Certificate."""
 
     def assertBundle(  # pylint: disable=invalid-name
-        self, chain: List[X509CertMixin], cert: X509CertMixin
+        self, chain: list[X509CertMixin], cert: X509CertMixin
     ) -> None:
         """Assert that a bundle contains the expected certificates."""
         encoded_chain = [c.pub.pem.encode() for c in chain]
@@ -173,7 +173,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @contextmanager
     def generate_ocsp_key(
         self, ca: CertificateAuthority, key_backend_options: BaseModel, *args: Any, **kwargs: Any
-    ) -> Iterator[Tuple[CertificateIssuerPrivateKeyTypes, Certificate]]:
+    ) -> Iterator[tuple[CertificateIssuerPrivateKeyTypes, Certificate]]:
         """Context manager to  create an OCSP key and test some basic properties."""
         private_path, cert_path, cert = ca.generate_ocsp_key(  # type: ignore[misc]
             key_backend_options, *args, **kwargs
@@ -744,12 +744,12 @@ def test_sign_certificate_policies_with_serialized_model(
     assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
 
 
-def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> Union[str, Dict[str, Any]]:
+def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> Union[str, dict[str, Any]]:
     """Duplicate of old CertificatePolicies serialization."""
     if isinstance(qualifier, str):
         return qualifier
 
-    value: Dict[str, Any] = {}
+    value: dict[str, Any] = {}
     if qualifier.explicit_text:
         value["explicit_text"] = qualifier.explicit_text
 
@@ -764,9 +764,9 @@ def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> Union[str, Di
 
 def _old_serialize_policy_information(
     policy_information: x509.PolicyInformation,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Duplicate of old CertificatePolicies serialization."""
-    policy_qualifiers: Optional[List[Union[str, Dict[str, Any]]]] = None
+    policy_qualifiers: Optional[list[Union[str, dict[str, Any]]]] = None
     if policy_information.policy_qualifiers is not None:
         policy_qualifiers = [_old_serialize_policy_qualifier(q) for q in policy_information.policy_qualifiers]
 
@@ -779,7 +779,7 @@ def _old_serialize_policy_information(
 
 def _old_certificate_policies_serialization(
     extension: x509.Extension[x509.CertificatePolicies],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Duplicate of old CertificatePolicies serialization."""
     value = [_old_serialize_policy_information(pi) for pi in extension.value]
     return {"critical": extension.critical, "value": value}
@@ -1626,7 +1626,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall = AcmeChallenge.objects.create(auth=self.auth, type=AcmeChallenge.TYPE_HTTP_01)
 
     def assertChallenge(  # pylint: disable=invalid-name
-        self, challenge: ChallengeTypeVar, typ: str, token: bytes, cls: Type[ChallengeTypeVar]
+        self, challenge: ChallengeTypeVar, typ: str, token: bytes, cls: type[ChallengeTypeVar]
     ) -> None:
         """Test that the ACME challenge is of the given type."""
         self.assertIsInstance(challenge, cls)

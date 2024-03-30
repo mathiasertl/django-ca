@@ -16,7 +16,7 @@ import json
 import logging
 import typing
 from collections.abc import Iterable
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -35,7 +35,7 @@ from django_ca.typehints import AlternativeNameTypeVar, KeyUsages
 log = logging.getLogger(__name__)
 
 
-ExtensionWidgetsType = Tuple[Union[Type[forms.Widget], forms.Widget], ...]
+ExtensionWidgetsType = tuple[Union[type[forms.Widget], forms.Widget], ...]
 
 
 class DjangoCaWidgetMixin:
@@ -49,14 +49,14 @@ class DjangoCaWidgetMixin:
 
     css_classes: Iterable[str] = ("django-ca-widget",)
 
-    def get_css_classes(self) -> typing.Set[str]:
+    def get_css_classes(self) -> set[str]:
         """Get set of configured CSS classes."""
         css_classes = set()
         for cls in reversed(self.__class__.__mro__):
             css_classes |= set(getattr(cls, "css_classes", set()))
         return css_classes
 
-    def add_css_classes(self, attrs: Dict[str, str]) -> None:
+    def add_css_classes(self, attrs: dict[str, str]) -> None:
         """Add CSS classes to the passed attributes."""
         css_classes = " ".join(sorted(self.get_css_classes()))
 
@@ -65,10 +65,10 @@ class DjangoCaWidgetMixin:
         else:
             attrs["class"] = css_classes
 
-    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
-        ctx: Dict[str, Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
+        ctx: dict[str, Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
         self.add_css_classes(ctx["widget"]["attrs"])
         return ctx
 
@@ -82,18 +82,18 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
 
     css_classes = ("django-ca-multiwidget",)
     template_name = "django_ca/forms/widgets/multiwidget.html"
-    labels: Tuple[Optional[str], ...] = ()
-    help_texts: Tuple[Optional[str], ...] = ()
+    labels: tuple[Optional[str], ...] = ()
+    help_texts: tuple[Optional[str], ...] = ()
 
     class Media:
-        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
+        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/multiwidget.css",),
         }
 
-    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
-        ctx: Dict[str, Any] = super().get_context(*args, **kwargs)
+        ctx: dict[str, Any] = super().get_context(*args, **kwargs)
         for widget, label in zip(ctx["widget"]["subwidgets"], self.labels):
             widget["label"] = label
         for widget, help_text in zip(ctx["widget"]["subwidgets"], self.help_texts):
@@ -105,7 +105,7 @@ class KeyValueWidget(widgets.TextInput):
     """Dynamic widget for key/value pairs."""
 
     template_name = "django_ca/admin/key_value.html"
-    key_choices: Tuple[Tuple[str, str], ...]
+    key_choices: tuple[tuple[str, str], ...]
     key_key = "key"
     value_key = "value"
 
@@ -116,7 +116,7 @@ class KeyValueWidget(widgets.TextInput):
             value = []
         return json.dumps(value)
 
-    def get_context(self, name: str, value: Any, attrs: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def get_context(self, name: str, value: Any, attrs: Optional[dict[str, Any]]) -> dict[str, Any]:
         context = super().get_context(name, value, attrs)
 
         # Set the input type to "hidden" in the context. This must *not* be done via a widgets.HiddenInput
@@ -154,7 +154,7 @@ class KeyValueWidget(widgets.TextInput):
 
     class Media:
         js = ("django_ca/admin/js/key_value.js",)
-        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/key_value.css",)}
+        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {"all": ("django_ca/admin/css/key_value.css",)}
 
 
 class NameWidget(KeyValueWidget):
@@ -170,7 +170,7 @@ class NameWidget(KeyValueWidget):
         return super().format_value(value)
 
     class Media:
-        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/subject.css",)}
+        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {"all": ("django_ca/admin/css/subject.css",)}
 
 
 class GeneralNameKeyValueWidget(KeyValueWidget):
@@ -212,7 +212,7 @@ class LabeledCheckboxInput(CheckboxInput):
         self.label = label
         super().__init__()
 
-    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["wrapper_classes"] = " ".join(self.wrapper_classes)
         ctx["widget"]["label"] = self.label
@@ -222,7 +222,7 @@ class LabeledCheckboxInput(CheckboxInput):
         return ctx
 
     class Media:
-        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {
+        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/labeledcheckboxinput.css",),
         }
 
@@ -237,7 +237,7 @@ class CriticalInput(LabeledCheckboxInput):
         self.oid = kwargs.pop("oid")
         super().__init__(label=_("critical"), wrapper_classes=("critical",))
 
-    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["oid"] = self.oid.dotted_string
         return ctx
@@ -271,7 +271,7 @@ class ProfileWidget(widgets.Select):
 
     template_name = "django_ca/forms/widgets/profile.html"
 
-    def get_context(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
         ctx["desc"] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
             "description", ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("desc", "")
@@ -284,7 +284,7 @@ class ProfileWidget(widgets.Select):
             "django_ca/admin/js/extensions.js",
             "django_ca/admin/js/profilewidget.js",
         )
-        css: typing.ClassVar[Dict[str, Tuple[str, ...]]] = {"all": ("django_ca/admin/css/profile.css",)}
+        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {"all": ("django_ca/admin/css/profile.css",)}
 
 
 class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an abstract class
@@ -297,7 +297,7 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
     oid: x509.ObjectIdentifier
     css_classes = ("extension",)
 
-    def __init__(self, attrs: Optional[Dict[str, str]] = None, **kwargs: Any) -> None:
+    def __init__(self, attrs: Optional[dict[str, str]] = None, **kwargs: Any) -> None:
         sub_widgets = (*self.get_widgets(**kwargs), CriticalInput(oid=self.oid))
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
@@ -317,7 +317,7 @@ class AlternativeNameWidget(ExtensionWidget, typing.Generic[AlternativeNameTypeV
 
     def decompress(
         self, value: Optional[x509.Extension[AlternativeNameTypeVar]]
-    ) -> Tuple[List[x509.GeneralName], bool]:
+    ) -> tuple[list[x509.GeneralName], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         return list(value.value), value.critical
@@ -341,9 +341,9 @@ class DistributionPointWidget(ExtensionWidget):
 
     def decompress(
         self, value: Optional[x509.Extension[x509.CRLDistributionPoints]]
-    ) -> Tuple[str, str, str, List[str], bool]:
+    ) -> tuple[str, str, str, list[str], bool]:
         full_name = relative_name = crl_issuer = ""
-        reasons: List[str] = []
+        reasons: list[str] = []
 
         if value is None:
             return full_name, relative_name, crl_issuer, reasons, EXTENSION_DEFAULT_CRITICAL[self.oid]
@@ -367,8 +367,8 @@ class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an
     """Base class for widgets that can be displayed with a simple SelectMultiple widget."""
 
     def get_widgets(  # type: ignore[override]  # we are more specific here
-        self, choices: typing.Sequence[Tuple[str, str]]
-    ) -> Tuple[widgets.SelectMultiple]:
+        self, choices: typing.Sequence[tuple[str, str]]
+    ) -> tuple[widgets.SelectMultiple]:
         return (widgets.SelectMultiple(choices=choices),)
 
 
@@ -391,7 +391,7 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
 
     def decompress(
         self, value: Optional[x509.Extension[x509.AuthorityInformationAccess]]
-    ) -> Tuple[List[x509.GeneralName], List[x509.GeneralName], bool]:
+    ) -> tuple[list[x509.GeneralName], list[x509.GeneralName], bool]:
         if value is None:
             return [], [], EXTENSION_DEFAULT_CRITICAL[self.oid]
 
@@ -432,7 +432,7 @@ class CertificatePoliciesWidget(ExtensionWidget):
 
     def decompress(
         self, value: Optional[x509.Extension[x509.CertificatePolicies]]
-    ) -> Tuple[str, str, str, bool]:
+    ) -> tuple[str, str, str, bool]:
         if value is None:
             return "", "", "", EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
 
@@ -443,7 +443,7 @@ class CertificatePoliciesWidget(ExtensionWidget):
             raise ValueError("This widget only supports a simple certificate policy values.")
 
         policy_information = ext_value[0]
-        practice_statement: List[str] = []
+        practice_statement: list[str] = []
         explicit_text = ""
         for policy_qualifier in policy_information.policy_qualifiers:
             if isinstance(policy_qualifier, str):
@@ -479,7 +479,7 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.EXTENDED_KEY_USAGE
 
-    def decompress(self, value: Optional[x509.Extension[x509.ExtendedKeyUsage]]) -> Tuple[List[str], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.ExtendedKeyUsage]]) -> tuple[list[str], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = [oid.dotted_string for oid in value.value]
@@ -497,7 +497,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.KEY_USAGE
 
-    def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> Tuple[List[KeyUsages], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> tuple[list[KeyUsages], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = []
@@ -528,7 +528,7 @@ class OCSPNoCheckWidget(ExtensionWidget):
     extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
     oid = ExtensionOID.OCSP_NO_CHECK
 
-    def decompress(self, value: Optional[x509.Extension[x509.OCSPNoCheck]]) -> Tuple[bool, bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.OCSPNoCheck]]) -> tuple[bool, bool]:
         if value is None:
             return False, EXTENSION_DEFAULT_CRITICAL[self.oid]
         return True, value.critical
@@ -545,7 +545,7 @@ class TLSFeatureWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.TLS_FEATURE
 
-    def decompress(self, value: Optional[x509.Extension[x509.TLSFeature]]) -> Tuple[List[str], bool]:
+    def decompress(self, value: Optional[x509.Extension[x509.TLSFeature]]) -> tuple[list[str], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         return [feature.name for feature in value.value], value.critical

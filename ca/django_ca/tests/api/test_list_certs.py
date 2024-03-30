@@ -16,7 +16,7 @@
 """Test the list-view for certificates."""
 
 from http import HTTPStatus
-from typing import Any, Dict, Tuple, Type
+from typing import Any
 
 from django.db.models import Model
 from django.test.client import Client
@@ -34,13 +34,13 @@ path = reverse_lazy("django_ca:api:list_certificates", kwargs={"serial": CERT_DA
 
 
 @pytest.fixture(scope="module")
-def api_permission() -> Tuple[Type[Model], str]:
+def api_permission() -> tuple[type[Model], str]:
     """Fixture for the permission required by this view."""
     return Certificate, "view_certificate"
 
 
 @pytest.fixture()
-def expected_response(root_cert_response: Dict[str, Any]) -> ListResponse:
+def expected_response(root_cert_response: dict[str, Any]) -> ListResponse:
     """Fixture for the regular response expected from this API view."""
     return [root_cert_response]
 

@@ -19,7 +19,7 @@ import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import AnyStr, List, Optional, Tuple, Type, Union
+from typing import AnyStr, Optional, Union
 from unittest.mock import Mock
 
 from cryptography import x509
@@ -72,7 +72,7 @@ def assert_ca_properties(
     ca: CertificateAuthority,
     name: str,
     parent: Optional[CertificateAuthority] = None,
-    private_key_type: Type[CertificateIssuerPrivateKeyTypes] = rsa.RSAPrivateKey,
+    private_key_type: type[CertificateIssuerPrivateKeyTypes] = rsa.RSAPrivateKey,
     acme_enabled: bool = False,
     acme_profile: Optional[str] = None,
     acme_requires_contact: bool = True,
@@ -129,7 +129,7 @@ def assert_ca_properties(
 def assert_certificate(
     cert: Union[Certificate, CertificateAuthority],
     subject: x509.Name,
-    algorithm: Type[hashes.HashAlgorithm] = hashes.SHA512,
+    algorithm: type[hashes.HashAlgorithm] = hashes.SHA512,
     parent: Optional[CertificateAuthority] = None,
 ) -> None:
     """Assert certificate properties."""
@@ -160,7 +160,7 @@ def assert_command_error(msg: str) -> Iterator[None]:
 
 
 @contextmanager
-def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[Tuple[Mock, Mock]]:
+def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[tuple[Mock, Mock]]:
     """Context manager asserting that the `pre_create_ca`/`post_create_ca` signals are (not) called."""
     with mock_signal(pre_create_ca) as pre_sig, mock_signal(post_create_ca) as post_sig:
         try:
@@ -171,7 +171,7 @@ def assert_create_ca_signals(pre: bool = True, post: bool = True) -> Iterator[Tu
 
 
 @contextmanager
-def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[Tuple[Mock, Mock]]:
+def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[tuple[Mock, Mock]]:
     """Context manager asserting that the `pre_create_cert`/`post_create_cert` signals are (not) called."""
     with mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_issue_cert) as post_sig:
         try:
@@ -189,9 +189,9 @@ def assert_crl(
     algorithm: Optional[hashes.HashAlgorithm] = None,
     encoding: Encoding = Encoding.PEM,
     idp: Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
-    extensions: Optional[List["x509.Extension[x509.ExtensionType]"]] = None,
+    extensions: Optional[list["x509.Extension[x509.ExtensionType]"]] = None,
     crl_number: int = 0,
-    entry_extensions: Optional[Tuple[List[x509.Extension[x509.ExtensionType]]]] = None,
+    entry_extensions: Optional[tuple[list[x509.Extension[x509.ExtensionType]]]] = None,
 ) -> None:
     """Test the given CRL.
 

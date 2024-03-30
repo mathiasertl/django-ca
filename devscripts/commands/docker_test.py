@@ -17,7 +17,7 @@ import argparse
 import os
 import subprocess
 import sys
-from typing import List, TypedDict
+from typing import TypedDict
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -38,12 +38,7 @@ class Command(DevCommand):
     help_text = "Build the Docker image using various base images."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        image_metavar = "default|python:{%s-%s}-alpine{%s-%s}" % (
-            config.PYTHON_RELEASES[0],
-            config.PYTHON_RELEASES[-1],
-            config.ALPINE_RELEASES[0],
-            config.ALPINE_RELEASES[-1],
-        )
+        image_metavar = f"default|python:{{{config.PYTHON_RELEASES[0]}-{config.PYTHON_RELEASES[-1]}}}-alpine{{{config.ALPINE_RELEASES[0]}-{config.ALPINE_RELEASES[-1]}}}"
 
         parser.add_argument(
             "-i",
@@ -64,7 +59,7 @@ class Command(DevCommand):
         parser.add_argument("-l", "--list", action="store_true", help="List images and exit.")
 
     def handle(self, args: argparse.Namespace) -> None:
-        docker_runs: List[DockerRunDict] = []
+        docker_runs: list[DockerRunDict] = []
 
         images = args.images or config.ALPINE_IMAGES
 
@@ -121,7 +116,7 @@ class Command(DevCommand):
                     failed_str = f"# {image} failed: return code {proc.returncode}. #"
 
                     # pylint: disable-next=consider-using-f-string  # just more convenient
-                    err("%s\n%s\n%s\n\n" % ("#" * len(failed_str), failed_str, "#" * len(failed_str)))
+                    err("{}\n{}\n{}\n\n".format("#" * len(failed_str), failed_str, "#" * len(failed_str)))
                     docker_runs.append(
                         {
                             "image": image,

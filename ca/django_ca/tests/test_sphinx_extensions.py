@@ -13,7 +13,6 @@
 
 """Test custom Sphinx extensions."""
 
-from typing import List
 from unittest import TestCase
 
 from django_ca_sphinx.console_include import CommandLineTextWrapper
@@ -22,12 +21,12 @@ from django_ca_sphinx.console_include import CommandLineTextWrapper
 class CommandLineTextWrapperTestCase(TestCase):
     """Test custom TextWrapper that smartly does not wrap short options and their value."""
 
-    def assertWraps(self, command: str, expected: List[str]) -> None:  # pylint: disable=invalid-name
+    def assertWraps(self, command: str, expected: list[str]) -> None:  # pylint: disable=invalid-name
         """Assert that the given command wraps to the expected full text."""
         wrapper = CommandLineTextWrapper(width=12)
         self.assertEqual(wrapper.wrap(command), expected)
 
-    def assertSplits(self, command: str, expected: List[str]) -> None:  # pylint: disable=invalid-name
+    def assertSplits(self, command: str, expected: list[str]) -> None:  # pylint: disable=invalid-name
         """Assert that the given command splits into the expected tokens."""
         wrapper = CommandLineTextWrapper()
         # PYLINT note: this is the function that we override

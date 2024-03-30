@@ -15,7 +15,7 @@
 
 import re
 from datetime import datetime, timedelta, timezone as tz
-from typing import List, Optional
+from typing import Optional
 
 from django.test import TestCase
 from django.utils import timezone
@@ -38,7 +38,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
     def revoke(
         self,
         cert: Certificate,
-        arguments: Optional[List[str]] = None,
+        arguments: Optional[list[str]] = None,
         reason: str = ReasonFlags.unspecified.name,
     ) -> None:
         """Revoke a certificate and make the necessary assertions afterwards."""

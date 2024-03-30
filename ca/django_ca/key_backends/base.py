@@ -18,7 +18,7 @@ import typing
 from collections.abc import Iterator
 from datetime import datetime
 from threading import local
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -68,7 +68,7 @@ class KeyBackend(
     description: typing.ClassVar[str]
 
     #: The Pydantic model representing the options used for loading a private key.
-    use_model: Type[UsePrivateKeyOptionsTypeVar]
+    use_model: type[UsePrivateKeyOptionsTypeVar]
 
     #: Prefix for argparse to use for arguments. Empty for the default alias, and `{alias}-` otherwise.
     argparse_prefix: str = ""
@@ -155,7 +155,7 @@ class KeyBackend(
 
     @abc.abstractmethod
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: Dict[str, Any]
+        self, key_type: ParsableKeyType, options: dict[str, Any]
     ) -> CreatePrivateKeyOptionsTypeVar:
         """Get options to create private keys into a Pydantic model.
 
@@ -166,7 +166,7 @@ class KeyBackend(
 
     @abc.abstractmethod
     def get_use_parent_private_key_options(
-        self, ca: "CertificateAuthority", options: Dict[str, Any]
+        self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptionsTypeVar:
         """Get options to use the private key of a parent certificate authority.
 
@@ -180,7 +180,7 @@ class KeyBackend(
 
     @abc.abstractmethod
     def get_use_private_key_options(
-        self, ca: Optional["CertificateAuthority"], options: Dict[str, Any]
+        self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
     ) -> UsePrivateKeyOptionsTypeVar:
         """Get options to use the private key of a certificate authority.
 
@@ -193,7 +193,7 @@ class KeyBackend(
         """
 
     @abc.abstractmethod
-    def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
+    def get_store_private_key_options(self, options: dict[str, Any]) -> StorePrivateKeyOptionsTypeVar:
         """Get options used when storing private keys."""
 
     @abc.abstractmethod
@@ -225,7 +225,7 @@ class KeyBackend(
     @abc.abstractmethod
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptionsTypeVar
-    ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptionsTypeVar]:
+    ) -> tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptionsTypeVar]:
         """Create a private key for the certificate authority.
 
         The method is expected to set `key_backend_options` on `ca` with a set of options that can later be
@@ -262,7 +262,7 @@ class KeyBackend(
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: List[x509.Extension[x509.ExtensionType]],
+        extensions: list[x509.Extension[x509.ExtensionType]],
     ) -> x509.Certificate:
         """Sign a certificate."""
 

@@ -57,7 +57,7 @@ class DevCommand:
     _docker_client: Optional["docker.client.DockerClient"] = None
     parser: argparse.ArgumentParser
 
-    modules: Tuple[Tuple[str, str], ...] = tuple()
+    modules: tuple[tuple[str, str], ...] = tuple()
     help_text: str = ""
     description = ""
 

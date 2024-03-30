@@ -15,7 +15,7 @@
 
 import re
 import typing
-from typing import Any, Dict, List, Tuple, Type, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 from pydantic import ValidationError
 
@@ -25,11 +25,11 @@ from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 
 CryptographyModelTypeVar = TypeVar("CryptographyModelTypeVar", bound=CryptographyModel[Any])
 CryptographyRootModelTypeVar = TypeVar("CryptographyRootModelTypeVar", bound=CryptographyRootModel[Any, Any])
-ExpectedErrors = List[Tuple[str, Tuple[str, ...], Union[str, "re.Pattern[str]"]]]
+ExpectedErrors = list[tuple[str, tuple[str, ...], Union[str, "re.Pattern[str]"]]]
 
 
 def assert_cryptography_model(
-    model_class: Type[CryptographyModelTypeVar], parameters: Dict[str, Any], expected: Any
+    model_class: type[CryptographyModelTypeVar], parameters: dict[str, Any], expected: Any
 ) -> CryptographyModelTypeVar:
     """Test that a cryptography model matches the expected value."""
     model = model_class(**parameters)
@@ -41,23 +41,23 @@ def assert_cryptography_model(
 
 @typing.overload
 def assert_validation_errors(
-    model_class: Type[CryptographyModelTypeVar],
-    parameters: Dict[str, Any],
+    model_class: type[CryptographyModelTypeVar],
+    parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None: ...
 
 
 @typing.overload
 def assert_validation_errors(
-    model_class: Type[CryptographyRootModelTypeVar],
-    parameters: List[Dict[str, Any]],
+    model_class: type[CryptographyRootModelTypeVar],
+    parameters: list[dict[str, Any]],
     expected_errors: ExpectedErrors,
 ) -> None: ...
 
 
 def assert_validation_errors(
-    model_class: Union[Type[CryptographyModelTypeVar], Type[CryptographyRootModelTypeVar]],
-    parameters: Union[List[Dict[str, Any]], Dict[str, Any]],
+    model_class: Union[type[CryptographyModelTypeVar], type[CryptographyRootModelTypeVar]],
+    parameters: Union[list[dict[str, Any]], dict[str, Any]],
     expected_errors: ExpectedErrors,
 ) -> None:
     """Assertion method to test validation errors."""

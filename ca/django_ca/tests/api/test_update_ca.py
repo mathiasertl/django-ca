@@ -16,7 +16,7 @@
 """Test the detail-view for a CA."""
 
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -49,19 +49,19 @@ path = reverse_lazy(
 )
 
 
-def request(client: Client, payload: Optional[Dict[str, JSON]]) -> "HttpResponse":
+def request(client: Client, payload: Optional[dict[str, JSON]]) -> "HttpResponse":
     """Shortcut to run a request."""
     return client.put(path, payload, content_type="application/json")
 
 
 @pytest.fixture(scope="module")
-def api_permission() -> Tuple[Type[Model], str]:
+def api_permission() -> tuple[type[Model], str]:
     """Fixture for the permission required by this view."""
     return CertificateAuthority, "change_certificateauthority"
 
 
 @pytest.fixture()
-def payload() -> Dict[str, Any]:
+def payload() -> dict[str, Any]:
     """Fixture for a standard request payload."""
     return {
         "acme_enabled": True,
@@ -95,7 +95,7 @@ def payload() -> Dict[str, Any]:
 
 
 @pytest.fixture()
-def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Dict[str, Any]:
+def expected_response(root: CertificateAuthority, payload: dict[str, Any]) -> dict[str, Any]:
     """Fixture for the expected response schema for the root CA."""
     return dict(
         payload,
@@ -152,7 +152,7 @@ def expected_response(root: CertificateAuthority, payload: Dict[str, Any]) -> Di
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_update(
-    root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
+    root: CertificateAuthority, api_client: Client, payload: dict[str, Any], expected_response: dict[str, Any]
 ) -> None:
     """Test an ordinary view."""
     # Make sure that we actually also intend to change things
@@ -204,7 +204,7 @@ def test_update(
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_minimal_update(
-    root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
+    root: CertificateAuthority, api_client: Client, payload: dict[str, Any], expected_response: dict[str, Any]
 ) -> None:
     """Test updating only one field."""
     # update expected response to what is currently in the DB, except what we actually change
@@ -230,7 +230,7 @@ def test_minimal_update(
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_clear_sign_certificate_policies(
-    root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
+    root: CertificateAuthority, api_client: Client, payload: dict[str, Any], expected_response: dict[str, Any]
 ) -> None:
     """Test clearing the ``sign_certificate_policies`` flag."""
     assert root.sign_certificate_policies is None
@@ -262,7 +262,7 @@ def test_clear_sign_certificate_policies(
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_validation(
-    root: CertificateAuthority, api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
+    root: CertificateAuthority, api_client: Client, payload: dict[str, Any], expected_response: dict[str, Any]
 ) -> None:
     """Test updating only one field."""
     for field in payload:
@@ -281,7 +281,7 @@ def test_validation(
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_update_expired_ca(
-    api_client: Client, payload: Dict[str, Any], expected_response: Dict[str, Any]
+    api_client: Client, payload: dict[str, Any], expected_response: dict[str, Any]
 ) -> None:
     """Test that we can update an expired CA."""
     expected_response["updated"] = iso_format(TIMESTAMPS["everything_expired"])

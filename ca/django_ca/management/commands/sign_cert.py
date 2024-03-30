@@ -18,7 +18,7 @@
 
 import sys
 from datetime import timedelta
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from pydantic import ValidationError
 
@@ -74,7 +74,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         ca: CertificateAuthority,
         subject: Optional[str],
         expires: Optional[timedelta],
-        watch: List[str],
+        watch: list[str],
         csr_path: str,
         bundle: bool,
         profile: Optional[str],
@@ -86,7 +86,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
         # CRL Distribution Points extension
-        crl_full_names: Optional[List[x509.GeneralName]],
+        crl_full_names: Optional[list[x509.GeneralName]],
         crl_distribution_points_critical: bool,
         # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],

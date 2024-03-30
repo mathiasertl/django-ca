@@ -18,7 +18,7 @@
 
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ValidationError
 
@@ -263,7 +263,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
         # CRL Distribution Points extension
-        crl_full_names: Optional[List[x509.GeneralName]],
+        crl_full_names: Optional[list[x509.GeneralName]],
         crl_distribution_points_critical: bool,
         # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],
@@ -294,7 +294,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         sign_certificate_policies: Optional[x509.CertificatePolicies],
         sign_certificate_policies_critical: bool,
         # CRL Distribution Points extension for certificates
-        sign_crl_full_names: Optional[List[x509.GeneralName]],
+        sign_crl_full_names: Optional[list[x509.GeneralName]],
         sign_crl_distribution_points_critical: bool,
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
@@ -364,11 +364,9 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             # No if check necessary here, authority_information_access contains either ocsp or ca_issuer
             # COVERAGE NOTE: next() will always return, so it's not a branch
             ca_issuer = next(  # pragma: no branch
-                
-                    ad
-                    for ad in authority_information_access
-                    if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
-                
+                ad
+                for ad in authority_information_access
+                if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
             )
             responder_value = format_general_name(ca_issuer.access_location)
             raise CommandError(f"{responder_value}: CA issuer cannot be added to root CAs.")

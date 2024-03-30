@@ -18,7 +18,7 @@
 
 import argparse
 import typing
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ValidationError
 
@@ -99,7 +99,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # CRL Distribution Points extension for certificates
-        sign_crl_full_names: Optional[List[x509.GeneralName]],
+        sign_crl_full_names: Optional[list[x509.GeneralName]],
         sign_crl_distribution_points_critical: bool,
         # OCSP responder configuration
         ocsp_responder_key_validity: Optional[int],

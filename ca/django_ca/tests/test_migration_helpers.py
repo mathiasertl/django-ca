@@ -13,7 +13,7 @@
 
 """Test migration helpers."""
 
-from typing import List, Optional
+from typing import Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -40,7 +40,7 @@ from django_ca.tests.base.utils import distribution_point, dns, rdn, uri
     ),
 )
 def test_0040_crl_url_to_sign_crl_distribution_points(
-    root: CertificateAuthority, crl_url: str, full_name: Optional[List[x509.GeneralName]]
+    root: CertificateAuthority, crl_url: str, full_name: Optional[list[x509.GeneralName]]
 ) -> None:
     """Test migrating a populated `crl_url` field to `sign_crl_distribution_points`."""
     root.crl_url = crl_url  # type: ignore[attr-defined]  # what we're testing
@@ -62,7 +62,7 @@ def test_0040_crl_url_to_sign_crl_distribution_points(
     ),
 )
 def test_0040_issuer_alt_name_to_sign_issuer_alternative_name(
-    root: CertificateAuthority, issuer_alt_name: str, general_names: List[x509.GeneralName]
+    root: CertificateAuthority, issuer_alt_name: str, general_names: list[x509.GeneralName]
 ) -> None:
     """Test migrating the `issuer_alt_name` field to `sign_issuer_alternative_name`."""
     root.issuer_alt_name = issuer_alt_name  # type: ignore[attr-defined]  # what we're testing
@@ -117,7 +117,7 @@ def test_0040_ocsp_url_and_issuer_url_to_sign_authority_information_access(
     root: CertificateAuthority,
     issuer_url: str,
     ocsp_url: str,
-    access_descriptions: List[x509.AccessDescription],
+    access_descriptions: list[x509.AccessDescription],
 ) -> None:
     """Test migrating `issuer_url` and `ocsp_url` to `sign_authority_information_access`."""
     root.issuer_url = issuer_url  # type: ignore[attr-defined]  # what we're testing
@@ -176,7 +176,7 @@ def test_0040_ocsp_url_and_issuer_url_to_sign_authority_information_access(
     ),
 )
 def test_0040_backwards_sign_crl_distribution_points_to_crl_url(
-    root: CertificateAuthority, distribution_points: List[x509.DistributionPoint], crl_url: str
+    root: CertificateAuthority, distribution_points: list[x509.DistributionPoint], crl_url: str
 ) -> None:
     """Test backwards-migrating a populated `sign_crl_distribution_points` field to `crl_url`."""
     root.sign_crl_distribution_points = x509.Extension(
@@ -197,7 +197,7 @@ def test_0040_backwards_sign_crl_distribution_points_to_crl_url(
     ),
 )
 def test_0040_backwards_sign_issuer_alternative_name_to_issuer_url(
-    root: CertificateAuthority, issuer_alt_name: str, general_names: List[x509.GeneralName]
+    root: CertificateAuthority, issuer_alt_name: str, general_names: list[x509.GeneralName]
 ) -> None:
     """Test migrating the `issuer_alt_name` field to `sign_issuer_alternative_name`."""
     root.sign_issuer_alternative_name = x509.Extension(
@@ -252,7 +252,7 @@ def test_0040_backwards_sign_authority_information_access_to_ocsp_url_and_issuer
     root: CertificateAuthority,
     issuer_url: str,
     ocsp_url: str,
-    access_descriptions: List[x509.AccessDescription],
+    access_descriptions: list[x509.AccessDescription],
 ) -> None:
     """Test migrating `issuer_url` and `ocsp_url` to `sign_authority_information_access`."""
     root.sign_authority_information_access = x509.Extension(

@@ -36,7 +36,7 @@ pytest.register_assert_rewrite(
 
 
 def reload_ca_settings(  # pylint: disable=unused-argument
-    sender: Type[Any], setting: str, **kwargs: Any
+    sender: type[Any], setting: str, **kwargs: Any
 ) -> None:
     """Reload ca_settings module if the settings are changed."""
     # WARNING:

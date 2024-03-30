@@ -20,7 +20,7 @@ import sys
 import textwrap
 import typing
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -465,7 +465,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         self,
         parser: CommandParser,
         description_suffix: str = "",
-        additional_option_strings: Tuple[str, ...] = tuple(),
+        additional_option_strings: tuple[str, ...] = tuple(),
     ) -> None:
         """Add argument group for the Subject Alternative Name extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
@@ -675,7 +675,7 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:
         """Output digest and PEM in footer."""
         self.stdout.write("\nDigest:")
-        hash_algorithms: Tuple[AllowedHashTypes, ...] = (hashes.SHA256(), hashes.SHA512())
+        hash_algorithms: tuple[AllowedHashTypes, ...] = (hashes.SHA256(), hashes.SHA512())
         for algorithm in hash_algorithms:
             algorithm_name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
             fingerprint = cert.get_fingerprint(algorithm)

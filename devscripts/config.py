@@ -15,7 +15,6 @@
 
 import typing
 from pathlib import Path
-from typing import List
 
 try:
     import tomllib
@@ -52,15 +51,15 @@ with open(PYPROJECT_PATH, "rb") as _pyproject_stream:
     _pyproject_toml = tomllib.load(_pyproject_stream)
 _release_config = _pyproject_toml["django-ca"]["release"]
 
-PYTHON_RELEASES = tuple(typing.cast(List[str], _release_config["python"]))
-DJANGO = tuple(typing.cast(List[str], _release_config["django"]))
-CRYPTOGRAPHY = tuple(typing.cast(List[str], _release_config["cryptography"]))
-ACME = tuple(typing.cast(List[str], _release_config["acme"]))
-PYDANTIC = tuple(typing.cast(List[str], _release_config["pydantic"]))
+PYTHON_RELEASES = tuple(typing.cast(list[str], _release_config["python"]))
+DJANGO = tuple(typing.cast(list[str], _release_config["django"]))
+CRYPTOGRAPHY = tuple(typing.cast(list[str], _release_config["cryptography"]))
+ACME = tuple(typing.cast(list[str], _release_config["acme"]))
+PYDANTIC = tuple(typing.cast(list[str], _release_config["pydantic"]))
 
-ALPINE_RELEASES = tuple(typing.cast(List[str], _release_config["alpine"]))
-DEBIAN_RELEASES = tuple(typing.cast(List[str], _release_config["debian-releases"]))
-UBUNTU_RELEASES = tuple(typing.cast(List[str], _release_config["ubuntu-releases"]))
+ALPINE_RELEASES = tuple(typing.cast(list[str], _release_config["alpine"]))
+DEBIAN_RELEASES = tuple(typing.cast(list[str], _release_config["debian-releases"]))
+UBUNTU_RELEASES = tuple(typing.cast(list[str], _release_config["ubuntu-releases"]))
 GITHUB_CONFIG = _release_config["github"]
 
 # Compute list of valid alpine images

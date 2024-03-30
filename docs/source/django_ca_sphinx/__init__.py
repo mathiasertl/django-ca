@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
     from sphinx.application import Sphinx
 
 
-def setup(app: "Sphinx") -> typing.Dict[str, bool]:
+def setup(app: "Sphinx") -> dict[str, bool]:
     """Sphinx setup function."""
     app.add_autodocumenter(MappingDocumentor)
 

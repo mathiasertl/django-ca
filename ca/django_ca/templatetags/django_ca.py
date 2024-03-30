@@ -14,7 +14,7 @@
 """Template tags used by the admin interface."""
 
 from collections.abc import Iterable
-from typing import Any, List, Union
+from typing import Any, Union
 
 from cryptography import x509
 
@@ -49,13 +49,13 @@ def critical_help(dotted_string: str) -> str:
 @register.filter
 def access_method(
     value: x509.AuthorityInformationAccess, oid: x509.ObjectIdentifier
-) -> List[x509.AccessDescription]:
+) -> list[x509.AccessDescription]:
     """Get all entries of an `AuthorityInformationAccess` extension with the given access method `oid`."""
     return [ad.access_location for ad in value if ad.access_method == oid]
 
 
 @register.filter
-def sort_reasons(reasons: x509.ReasonFlags) -> List[str]:
+def sort_reasons(reasons: x509.ReasonFlags) -> list[str]:
     """Return a sorted list of reasons."""
     # TYPE NOTE: mypy does not detect enum x509.ReasonsFlags as iterable
     return sorted(r.name for r in reasons)  # type: ignore[attr-defined]
@@ -85,7 +85,7 @@ def enum(mod: Any, cls_name_and_member: str) -> Any:
 
 
 @register.filter
-def format_general_names(value: Iterable[x509.GeneralName]) -> List[str]:
+def format_general_names(value: Iterable[x509.GeneralName]) -> list[str]:
     """A template tag to format general names.
 
     Note that currently general names always occur as list.

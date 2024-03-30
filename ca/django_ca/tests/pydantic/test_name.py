@@ -13,7 +13,7 @@
 
 """Tests for NameAttributeModel and NameModel."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.name import _ASN1Type
@@ -75,7 +75,7 @@ def test_doctests() -> None:
         ),
     ),
 )
-def test_name_attribute(parameters: Dict[str, Any], name_attr: x509.NameAttribute) -> None:
+def test_name_attribute(parameters: dict[str, Any], name_attr: x509.NameAttribute) -> None:
     """Test NameAttributeModel."""
     assert_cryptography_model(NameAttributeModel, parameters, name_attr)
 
@@ -89,7 +89,7 @@ def test_name_attribute(parameters: Dict[str, Any], name_attr: x509.NameAttribut
         ),
     ),
 )
-def test_name_attribute_errors(parameters: Dict[str, str], errors: ExpectedErrors) -> None:
+def test_name_attribute_errors(parameters: dict[str, str], errors: ExpectedErrors) -> None:
     """Test errors for NameAttributes."""
     assert_validation_errors(NameAttributeModel, parameters, errors)
 
@@ -144,7 +144,7 @@ def test_name_attribute_empty_common_name(oid: Any) -> None:
         ),
     ),
 )
-def test_name(serialized: List[Dict[str, Any]], expected: List[x509.NameAttribute]) -> None:
+def test_name(serialized: list[dict[str, Any]], expected: list[x509.NameAttribute]) -> None:
     """Test NameModel."""
     assert_cryptography_model(NameModel, {"root": serialized}, x509.Name(expected))  # type: ignore[type-var]
 
@@ -167,6 +167,6 @@ def test_name(serialized: List[Dict[str, Any]], expected: List[x509.NameAttribut
         ),
     ),
 )
-def test_name_errors(value: List[Dict[str, Any]], errors: ExpectedErrors) -> None:
+def test_name_errors(value: list[dict[str, Any]], errors: ExpectedErrors) -> None:
     """Test validation errors for NameModel."""
     assert_validation_errors(NameModel, value, errors)

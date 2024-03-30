@@ -17,7 +17,7 @@ import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from importlib import reload
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from unittest import mock
 
 import acme
@@ -59,7 +59,7 @@ class URLPatternTestCase(TestCase):
         self,
         name: str,
         args: Optional[typing.Sequence[Any]] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         """Context manager asserting that the given URL pattern is **not** found."""
         urlname = name

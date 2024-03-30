@@ -14,7 +14,7 @@
 """Module to parse serialized extensions into cryptography objects."""
 
 from collections.abc import Iterable, Iterator
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -73,11 +73,11 @@ def _parse_user_notice(value: ParsableUserNotice) -> x509.UserNotice:
 
 def _parse_policy_qualifiers(
     value: Optional[Iterable[Union[str, x509.UserNotice, ParsableUserNotice]]],
-) -> Optional[List[Union[str, x509.UserNotice]]]:
+) -> Optional[list[Union[str, x509.UserNotice]]]:
     if not value:
         return None
 
-    qualifiers: List[Union[str, x509.UserNotice]] = []
+    qualifiers: list[Union[str, x509.UserNotice]] = []
     for qual in value:
         if isinstance(qual, str):
             qualifiers.append(qual)
@@ -158,7 +158,7 @@ def _parse_authority_key_identifier(value: ParsableAuthorityKeyIdentifier) -> x5
 def _parse_authority_information_access(
     value: ParsableAuthorityInformationAccess,
 ) -> x509.AuthorityInformationAccess:
-    access_descriptions: List[x509.AccessDescription] = []
+    access_descriptions: list[x509.AccessDescription] = []
 
     # NOTE: OCSP is first because OID is lexicographically smaller
     ocsp: Optional[ParsableGeneralNameList] = value.get("ocsp")
@@ -197,7 +197,7 @@ def _parse_basic_constraints(value: ParsableBasicConstraints) -> x509.BasicConst
 def _parse_certificate_policies(
     value: Iterable[Union[x509.PolicyInformation, ParsablePolicyInformation]],
 ) -> x509.CertificatePolicies:
-    policies: List[x509.PolicyInformation] = []
+    policies: list[x509.PolicyInformation] = []
     for pol in value:
         if isinstance(pol, x509.PolicyInformation):
             policies.append(pol)
@@ -226,7 +226,7 @@ def _parse_crl_distribution_points(
 
 def _parse_extended_key_usage(value: Iterable[Union[str, x509.ObjectIdentifier]]) -> x509.ExtendedKeyUsage:
     mapping = {v: k for k, v in EXTENDED_KEY_USAGE_NAMES.items()}
-    usages: List[x509.ObjectIdentifier] = []
+    usages: list[x509.ObjectIdentifier] = []
     for unparsed in value:
         if isinstance(unparsed, str):
             try:
@@ -248,7 +248,7 @@ def _parse_freshest_crl(
 
 
 def _parse_key_usage(value: Iterator[str]) -> x509.KeyUsage:
-    kwargs: Dict[str, bool] = {k: k in value or v in value for k, v in KEY_USAGE_NAMES.items()}
+    kwargs: dict[str, bool] = {k: k in value or v in value for k, v in KEY_USAGE_NAMES.items()}
     return x509.KeyUsage(**kwargs)
 
 
@@ -283,7 +283,7 @@ def _parse_subject_key_identifier(value: ParsableSubjectKeyIdentifier) -> x509.S
 
 
 def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509.TLSFeature:
-    features: List[x509.TLSFeatureType] = []
+    features: list[x509.TLSFeatureType] = []
     for feature in value:
         if isinstance(feature, str):
             feature = TLS_FEATURE_NAMES[feature]

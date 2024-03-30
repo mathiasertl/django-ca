@@ -26,7 +26,7 @@ import typing
 from collections.abc import Iterable
 from datetime import datetime, timezone as tz
 from http import HTTPStatus
-from typing import Dict, Generic, List, Optional, Set, Type, TypeVar, Union, cast
+from typing import Generic, Optional, TypeVar, Union, cast
 
 import acme.jws
 import josepy as jose
@@ -83,7 +83,7 @@ from django_ca.utils import check_name, int_to_hex, validate_email
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
-DirectoryMetaAlias = Dict[str, Union[str, List[str]]]
+DirectoryMetaAlias = dict[str, Union[str, list[str]]]
 
 
 if typing.TYPE_CHECKING:
@@ -165,7 +165,7 @@ class AcmeDirectory(View):
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
         rnd = jose.json_util.encode_b64jose(secrets.token_bytes(16))
 
-        directory: Dict[str, Union[str, DirectoryMetaAlias]] = {
+        directory: dict[str, Union[str, DirectoryMetaAlias]] = {
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
             "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
             "newAccount": self._url(request, "acme-new-account", ca),
@@ -195,7 +195,7 @@ class AcmeGetNonceViewMixin:
     Note that this mixin depends on the presence of a ``serial`` argument to the URL resolver.
     """
 
-    kwargs: Dict[str, str]
+    kwargs: dict[str, str]
     nonce_length = 32
     """Length of generated Nonces."""
 
@@ -450,7 +450,7 @@ class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
 class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.ABCMeta):
     """Base class for ACME requests with a message payload."""
 
-    message_cls: Type[MessageTypeVar]
+    message_cls: type[MessageTypeVar]
 
     @abc.abstractmethod
     def acme_request(self, message: MessageTypeVar, slug: Optional[str]) -> AcmeResponse:
@@ -702,7 +702,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         not_before = cast(Optional[datetime], message.not_before)
         not_after = cast(Optional[datetime], message.not_after)
         # TODO: test if identifiers are acceptable
-        identifiers = typing.cast(List[messages.Identifier], message.identifiers)
+        identifiers = typing.cast(list[messages.Identifier], message.identifiers)
 
         if not_before and not_before < now:
             raise AcmeMalformed(message="Certificate cannot be valid before now.")
@@ -854,7 +854,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
 
         try:
             san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-            names_from_csr: Set[x509.GeneralName] = set(san_ext.value)
+            names_from_csr: set[x509.GeneralName] = set(san_ext.value)
         except x509.ExtensionNotFound as ex:
             raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
 

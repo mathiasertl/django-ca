@@ -18,7 +18,7 @@ import os
 import shutil
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -67,7 +67,7 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 # @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 
 
-def sign_cert(ca: CertificateAuthority, subject: str, **kwargs: Any) -> Tuple[str, str]:
+def sign_cert(ca: CertificateAuthority, subject: str, **kwargs: Any) -> tuple[str, str]:
     """Shortcut for the sign_cert command."""
     kwargs.setdefault("subject_format", "rfc4514")
     return cmd("sign_cert", ca=ca, subject=subject, **kwargs)

@@ -19,7 +19,7 @@ import sys
 from collections.abc import Iterator
 from datetime import timedelta
 from io import StringIO
-from typing import Any, List
+from typing import Any
 from unittest import mock
 
 from cryptography import x509
@@ -73,7 +73,7 @@ def key_backend_parser(settings: SettingsWrapper) -> Iterator[argparse.ArgumentP
 
 
 def assert_parser_error(
-    parser: argparse.ArgumentParser, args: List[str], expected: str, **kwargs: Any
+    parser: argparse.ArgumentParser, args: list[str], expected: str, **kwargs: Any
 ) -> str:
     """Assert that given args throw a parser error."""
     kwargs.setdefault("script", os.path.basename(sys.argv[0]))

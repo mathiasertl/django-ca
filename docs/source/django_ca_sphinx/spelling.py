@@ -41,7 +41,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
     in a wordlist but can be dropped here.
     """
 
-    MAGIC_WORDS: typing.ClassVar[typing.Set[str]] = {
+    MAGIC_WORDS: typing.ClassVar[set[str]] = {
         "anyPolicy",
         "GoDaddy",
         "TrustID",
@@ -70,7 +70,7 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         "otherName",
     }
 
-    words: typing.ClassVar[typing.Set[str]] = (
+    words: typing.ClassVar[set[str]] = (
         MAGIC_WORDS
         | set(constants.KEY_USAGE_NAMES.values())
         | set(constants.EXTENDED_KEY_USAGE_NAMES.values())

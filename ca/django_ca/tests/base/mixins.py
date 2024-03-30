@@ -22,7 +22,7 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 from unittest import mock
 from urllib.parse import quote
 
@@ -69,12 +69,12 @@ else:
 class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-methods
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: Union[str, Tuple[str, ...]] = tuple()
-    load_certs: Union[str, Tuple[str, ...]] = tuple()
+    load_cas: Union[str, tuple[str, ...]] = tuple()
+    load_certs: Union[str, tuple[str, ...]] = tuple()
     default_ca = "child"
     default_cert = "child-cert"
-    cas: Dict[str, CertificateAuthority]
-    certs: Dict[str, Certificate]
+    cas: dict[str, CertificateAuthority]
+    certs: dict[str, Certificate]
 
     # Note: cryptography sometimes adds another sentence at the end
     re_false_password = r"^Could not decrypt private key - bad password\?$"
@@ -111,7 +111,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
                 self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
             self.cert = self.certs[self.default_cert]
 
-    def load_named_cas(self, cas: Union[str, Tuple[str, ...]]) -> Tuple[str, ...]:
+    def load_named_cas(self, cas: Union[str, tuple[str, ...]]) -> tuple[str, ...]:
         """Load CAs by the given name."""
         if cas == "__all__":
             cas = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "ca")
@@ -128,7 +128,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             self.cas[name] = self.load_ca(name)
         return cas
 
-    def load_named_certs(self, names: Union[str, Tuple[str, ...]]) -> Tuple[str, ...]:
+    def load_named_certs(self, names: Union[str, tuple[str, ...]]) -> tuple[str, ...]:
         """Load certs by the given name."""
         if names == "__all__":
             names = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "cert")
@@ -174,7 +174,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         algorithm: Optional[hashes.HashAlgorithm] = None,
         encoding: Encoding = Encoding.PEM,
         idp: Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
-        extensions: Optional[List["x509.Extension[x509.ExtensionType]"]] = None,
+        extensions: Optional[list["x509.Extension[x509.ExtensionType]"]] = None,
         crl_number: int = 0,
     ) -> None:
         """Test the given CRL.
@@ -233,7 +233,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     @contextmanager
     def assertSignCertSignals(  # pylint: disable=invalid-name
         self, pre: bool = True, post: bool = True
-    ) -> Iterator[Tuple[mock.Mock, mock.Mock]]:
+    ) -> Iterator[tuple[mock.Mock, mock.Mock]]:
         """Context manager mocking both pre and post_create_ca signals."""
         with mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_sign_cert) as post_sig:
             try:
@@ -250,7 +250,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
     ) -> None:
         """Type equality function for x509.AuthorityInformationAccess."""
 
-        def sorter(ad: x509.AccessDescription) -> Tuple[str, str]:
+        def sorter(ad: x509.AccessDescription) -> tuple[str, str]:
             return ad.access_method.dotted_string, ad.access_location.value
 
         self.assertEqual(sorted(first, key=sorter), sorted(second, key=sorter), msg=msg)
@@ -320,7 +320,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(cert.issuer, issuer.subject)
 
     def assertMessages(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", expected: List[str]
+        self, response: "HttpResponse", expected: list[str]
     ) -> None:
         """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
@@ -338,7 +338,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
     @contextmanager
     def assertValidationError(  # pylint: disable=invalid-name; unittest standard
-        self, errors: Dict[str, List[str]]
+        self, errors: dict[str, list[str]]
     ) -> Iterator[None]:
         """Context manager to assert that a ValidationError is thrown."""
         with self.assertRaises(ValidationError) as cmex:
@@ -346,7 +346,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self.assertEqual(cmex.exception.message_dict, errors)
 
     @property
-    def ca_certs(self) -> Iterator[Tuple[str, Certificate]]:
+    def ca_certs(self) -> Iterator[tuple[str, Certificate]]:
         """Yield loaded certificates for each certificate authority."""
         for name, cert in self.certs.items():
             if name in [
@@ -370,7 +370,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         full_name: Optional[Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,
-        reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        reasons: Optional[frozenset[x509.ReasonFlags]] = None,
         crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
         critical: bool = False,
     ) -> x509.Extension[x509.CRLDistributionPoints]:
@@ -385,7 +385,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         )
 
     @property
-    def crl_profiles(self) -> Dict[str, Dict[str, Any]]:
+    def crl_profiles(self) -> dict[str, dict[str, Any]]:
         """Return a list of CRL profiles."""
         profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
         for config in profiles.values():
@@ -402,7 +402,7 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         self,
         full_name: Optional[Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,
-        reasons: Optional[typing.FrozenSet[x509.ReasonFlags]] = None,
+        reasons: Optional[frozenset[x509.ReasonFlags]] = None,
         crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
         critical: bool = False,
     ) -> x509.Extension[x509.FreshestCRL]:
@@ -446,9 +446,9 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         with freeze_time(timestamp) as frozen:
             yield frozen
 
-    def get_cert_context(self, name: str) -> Dict[str, Any]:
+    def get_cert_context(self, name: str) -> dict[str, Any]:
         """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
-        ctx: Dict[str, Any] = {}
+        ctx: dict[str, Any] = {}
 
         for key, value in sorted(CERT_DATA[name].items()):
             # Handle cryptography extensions
@@ -580,14 +580,14 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield mocked
 
     @property
-    def usable_cas(self) -> Iterator[Tuple[str, CertificateAuthority]]:
+    def usable_cas(self) -> Iterator[tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
         for name, ca in self.cas.items():
             if CERT_DATA[name]["key_filename"]:
                 yield name, ca
 
     @property
-    def usable_certs(self) -> Iterator[Tuple[str, Certificate]]:
+    def usable_certs(self) -> Iterator[tuple[str, Certificate]]:
         """Yield loaded generated certificates."""
         for name, cert in self.certs.items():
             if CERT_DATA[name]["cat"] == "generated":
@@ -597,10 +597,10 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     """Common mixin for testing admin classes for models."""
 
-    model: Type[DjangoCAModelTypeVar]
+    model: type[DjangoCAModelTypeVar]
     """Model must be configured for TestCase instances using this mixin."""
 
-    media_css: Tuple[str, ...] = tuple()
+    media_css: tuple[str, ...] = tuple()
     """List of custom CSS files loaded by the ModelAdmin.Media class."""
 
     view_name: str
@@ -669,12 +669,12 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
             self.client.force_login(self.user)
             yield frozen
 
-    def get_changelist_view(self, data: Optional[Dict[str, str]] = None) -> "HttpResponse":
+    def get_changelist_view(self, data: Optional[dict[str, str]] = None) -> "HttpResponse":
         """Get the response to a changelist view for the given model."""
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
-        self, obj: DjangoCAModelTypeVar, data: Optional[Dict[str, str]] = None
+        self, obj: DjangoCAModelTypeVar, data: Optional[dict[str, str]] = None
     ) -> "HttpResponse":
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)
@@ -696,7 +696,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
     def get_changelists(
         self,
-    ) -> Iterator[Tuple[Iterable[DjangoCAModel], Dict[str, str]]]:
+    ) -> Iterator[tuple[Iterable[DjangoCAModel], dict[str, str]]]:
         """Generate list of objects for possible changelist views.
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.

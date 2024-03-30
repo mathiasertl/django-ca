@@ -19,7 +19,7 @@ import sys
 import typing
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import coverage
 import packaging
@@ -45,8 +45,8 @@ from django_ca.utils import int_to_hex
 def exclude_versions(
     cov: coverage.Coverage,
     software: str,
-    current_version: Tuple[int, int],
-    pragma_version: Tuple[int, int],
+    current_version: tuple[int, int],
+    pragma_version: tuple[int, int],
     version_str: str,
 ) -> None:
     """Add pragmas to exclude lines of code if specific versions of `software` are *not* installed.
@@ -136,7 +136,7 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
         exclude_versions(cov, "django", django.VERSION[:2], version, version_str)
 
     # exclude cryptography-version specific code
-    this_version = typing.cast(Tuple[int, int], packaging.version.parse(cryptography.__version__).release[:2])
+    this_version = typing.cast(tuple[int, int], packaging.version.parse(cryptography.__version__).release[:2])
     cryptography_versions = [(37, 0), (38, 0), (39, 0), (40, 0), (41, 0), (42, 0), (43, 0), (44, 0)]
     for ver in cryptography_versions:
         version_str = ".".join([str(v) for v in ver])

@@ -24,7 +24,7 @@ import sys
 import tempfile
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -90,7 +90,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
     out_path = dest / "cert-data.json"
     dest.mkdir(exist_ok=True)
 
-    data: Dict[str, Dict[str, Any]] = {
+    data: dict[str, dict[str, Any]] = {
         "root": {
             "type": "ca",
             "path_length": ROOT_PATHLEN,

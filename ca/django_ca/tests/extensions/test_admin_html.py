@@ -15,7 +15,7 @@
 
 import base64
 import typing
-from typing import Any, Dict
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -36,7 +36,7 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
 
     load_cas = "__all__"
     load_certs = "__all__"
-    admin_html: typing.ClassVar[Dict[str, Dict[x509.ObjectIdentifier, str]]] = {
+    admin_html: typing.ClassVar[dict[str, dict[x509.ObjectIdentifier, str]]] = {
         "root": {},
         "child": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['child']['path_length']}",
@@ -680,7 +680,7 @@ DistributionPoint:
             self.admin_html[name].setdefault(ExtensionOID.OCSP_NO_CHECK, "Yes")
 
     def _set_distribution_point_extension(
-        self, name: str, value: Dict[str, Any], oid: x509.ObjectIdentifier
+        self, name: str, value: dict[str, Any], oid: x509.ObjectIdentifier
     ) -> None:
         full_names = []
         for dpoint in value["value"]:

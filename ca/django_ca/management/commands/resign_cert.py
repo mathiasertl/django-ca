@@ -17,7 +17,7 @@
 """
 
 from datetime import timedelta
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from pydantic import ValidationError
 
@@ -71,7 +71,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         ca: Optional[CertificateAuthority],
         subject: Optional[str],
         expires: Optional[timedelta],
-        watch: List[str],
+        watch: list[str],
         profile: Optional[str],
         algorithm: Optional[AllowedHashTypes],
         # Authority Information Access extension
@@ -80,7 +80,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
         certificate_policies: Optional[x509.CertificatePolicies],
         certificate_policies_critical: bool,
         # CRL Distribution Points extension
-        crl_full_names: Optional[List[x509.GeneralName]],
+        crl_full_names: Optional[list[x509.GeneralName]],
         crl_distribution_points_critical: bool,
         # Extended Key Usage extension
         extended_key_usage: Optional[x509.ExtendedKeyUsage],

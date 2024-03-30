@@ -15,7 +15,7 @@
 
 import abc
 import typing
-from typing import TYPE_CHECKING, Any, Generic, List, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
@@ -264,7 +264,7 @@ class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
         """Get all authorizations of type DNS."""
         return self.filter(type=self.model.TYPE_DNS)
 
-    def names(self) -> List[str]:
+    def names(self) -> list[str]:
         """Get a flat list of names identified by the current queryset."""
         return list(self.values_list("value", flat=True))
 

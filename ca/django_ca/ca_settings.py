@@ -17,7 +17,7 @@ import os
 import re
 import typing
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -63,7 +63,7 @@ def _normalize_x509_name(value: Any, hint: str) -> Optional[x509.Name]:
     if not isinstance(value, (tuple, list)):
         raise ImproperlyConfigured(f"{hint}: {value}: Value must be an x509.Name, list or tuple.")
 
-    name_attributes: List[x509.NameAttribute] = []
+    name_attributes: list[x509.NameAttribute] = []
     for elem in value:
         if isinstance(elem, x509.NameAttribute):
             name_attributes.append(elem)
@@ -115,7 +115,7 @@ def _get_hash_algorithm(setting: str, default: "HashAlgorithms") -> "AllowedHash
 
 CA_DEFAULT_KEY_SIZE: int = getattr(settings, "CA_DEFAULT_KEY_SIZE", 4096)
 
-CA_PROFILES: Dict[str, Dict[str, Any]] = {
+CA_PROFILES: dict[str, dict[str, Any]] = {
     "client": {
         # see: http://security.stackexchange.com/questions/68491/
         "description": _("A certificate for a client."),
@@ -221,7 +221,7 @@ CA_PROFILES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-_CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = {
+_CA_CRL_PROFILES: dict[str, dict[str, Any]] = {
     "user": {
         "expires": 86400,
         "scope": "user",
@@ -260,7 +260,7 @@ _CA_DEFAULT_NAME_ORDER = (
     x509.NameOID.EMAIL_ADDRESS,
     x509.NameOID.SERIAL_NUMBER,
 )
-CA_DEFAULT_NAME_ORDER: Tuple[x509.ObjectIdentifier, ...] = getattr(
+CA_DEFAULT_NAME_ORDER: tuple[x509.ObjectIdentifier, ...] = getattr(
     settings, "CA_DEFAULT_NAME_ORDER", _CA_DEFAULT_NAME_ORDER
 )
 if not isinstance(CA_DEFAULT_NAME_ORDER, (list, tuple)):
@@ -292,10 +292,10 @@ if CA_DEFAULT_PROFILE not in CA_PROFILES:
 
 CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
 CA_NOTIFICATION_DAYS = getattr(settings, "CA_NOTIFICATION_DAYS", [14, 7, 3, 1])
-CA_CRL_PROFILES: Dict[str, Dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
+CA_CRL_PROFILES: dict[str, dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
 
 # Load and process CA_PASSWORDS
-CA_PASSWORDS: Dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
+CA_PASSWORDS: dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
 for _ca_passwords_key, _ca_passwords_value in CA_PASSWORDS.items():
     if isinstance(_ca_passwords_value, str):
         CA_PASSWORDS[_ca_passwords_key] = _ca_passwords_value.encode("utf-8")
@@ -345,7 +345,7 @@ except KeyError as ex:
 
 CA_DEFAULT_KEY_BACKEND: str = getattr(settings, "CA_DEFAULT_KEY_BACKEND", "default")
 CA_DEFAULT_STORAGE_ALIAS: str = getattr(settings, "CA_DEFAULT_STORAGE_ALIAS", "django-ca")
-CA_KEY_BACKENDS: Dict[str, Dict[str, Any]] = getattr(
+CA_KEY_BACKENDS: dict[str, dict[str, Any]] = getattr(
     settings,
     "CA_KEY_BACKENDS",
     {

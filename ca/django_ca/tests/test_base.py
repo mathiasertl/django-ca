@@ -17,7 +17,6 @@ import importlib
 import io
 import tempfile
 import typing
-from typing import Tuple
 
 from cryptography.x509.oid import ExtensionOID
 
@@ -117,7 +116,7 @@ class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
 
     # pylint: disable=missing-function-docstring
 
-    seen_dirs: typing.ClassVar[typing.Set[str]] = set()
+    seen_dirs: typing.ClassVar[set[str]] = set()
 
     @override_tmpcadir()
     def test_a(self) -> None:
@@ -168,22 +167,22 @@ class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a su
 
     # pylint: disable=missing-function-docstring
 
-    def cmd_basic(self) -> Tuple[str, str]:
+    def cmd_basic(self) -> tuple[str, str]:
         stdout, stderr = cmd("example")
         return stdout, stderr
 
-    def cmd_explicit(self) -> Tuple[str, str]:
+    def cmd_explicit(self) -> tuple[str, str]:
         stdout, stderr = cmd("example", stdout=io.StringIO(), stderr=io.StringIO())
         return stdout, stderr
 
-    def cmd_stdout_bytes(self) -> Tuple[bytes, str]:
+    def cmd_stdout_bytes(self) -> tuple[bytes, str]:
         stdout, stderr = cmd("example", stdout=io.BytesIO())
         return stdout, stderr
 
-    def cmd_stderr_bytes(self) -> Tuple[str, bytes]:
+    def cmd_stderr_bytes(self) -> tuple[str, bytes]:
         stdout, stderr = cmd("example", stderr=io.BytesIO())
         return stdout, stderr
 
-    def cmd_bytes(self) -> Tuple[bytes, bytes]:
+    def cmd_bytes(self) -> tuple[bytes, bytes]:
         stdout, stderr = cmd("example", stdout=io.BytesIO(), stderr=io.BytesIO())
         return stdout, stderr

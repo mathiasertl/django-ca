@@ -13,7 +13,7 @@
 
 """Collection of exception classes for ACMEv2."""
 
-from typing import Any, Type
+from typing import Any
 
 from django_ca.acme.responses import (
     AcmeResponseBadCSR,
@@ -27,7 +27,7 @@ from django_ca.acme.responses import (
 class AcmeException(Exception):
     """Base class for all ACME exceptions."""
 
-    response: Type[AcmeResponseError] = AcmeResponseError
+    response: type[AcmeResponseError] = AcmeResponseError
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args)
@@ -41,7 +41,7 @@ class AcmeException(Exception):
 class AcmeMalformed(AcmeException):
     """Exception when the request was malformed."""
 
-    response: Type[AcmeResponseMalformed] = AcmeResponseMalformed
+    response: type[AcmeResponseMalformed] = AcmeResponseMalformed
 
 
 class AcmeUnauthorized(AcmeException):

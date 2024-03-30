@@ -17,7 +17,7 @@
 
 import typing
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Optional
 
 from django.db.models import Model
 from django.test.client import Client
@@ -34,18 +34,18 @@ path = reverse_lazy("django_ca:api:list_certificate_authorities")
 
 
 @pytest.fixture(scope="module")
-def api_permission() -> Tuple[Type[Model], str]:
+def api_permission() -> tuple[type[Model], str]:
     """Fixture for the permission required by this view."""
     return CertificateAuthority, "view_certificateauthority"
 
 
 @pytest.fixture()
-def expected_response(root_response: Dict[str, Any]) -> ListResponse:
+def expected_response(root_response: dict[str, Any]) -> ListResponse:
     """Fixture for the regular response expected from this API view."""
     return [root_response]
 
 
-def request(client: Client, data: Optional[Dict[str, str]] = None) -> HttpResponse:
+def request(client: Client, data: Optional[dict[str, str]] = None) -> HttpResponse:
     """Make a default request to the view under test."""
     return client.get(path, data=data)
 
@@ -90,4 +90,4 @@ class TestPermissions(APIPermissionTestBase):
     path = path
 
     expected_disabled_status_code = HTTPStatus.OK
-    expected_disabled_response: typing.ClassVar[List[Any]] = []
+    expected_disabled_response: typing.ClassVar[list[Any]] = []

@@ -17,7 +17,7 @@
 """
 
 from collections.abc import Mapping
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 from docutils.statemachine import StringList
 from sphinx.ext.autodoc import DataDocumenter, ObjectMember
@@ -45,7 +45,7 @@ class MappingDocumentor(DataDocumenter):
     # attribute that gets documented via the :members: directive.
     priority = DataDocumenter.priority - 10
 
-    def get_object_members(self, want_all: bool) -> Tuple[bool, List[ObjectMember]]:
+    def get_object_members(self, want_all: bool) -> tuple[bool, list[ObjectMember]]:
         """Overwritten from base class."""
         return False, []
 

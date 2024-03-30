@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -66,7 +66,7 @@ class MyStoragesBackend(
     # information to create a private key. The keys for ``options``
     # correspond to the "destination" of the argparse arguments.
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: Dict[str, Any]
+        self, key_type: ParsableKeyType, options: dict[str, Any]
     ) -> CreatePrivateKeyOptions:
         return CreatePrivateKeyOptions(
             password=options["password"],
@@ -76,7 +76,7 @@ class MyStoragesBackend(
 
     # Get the model to use the parents private key, if any.
     def get_use_parent_private_key_options(
-        self, options: Dict[str, Any]
+        self, options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions(password=options["parent_password"])
 
@@ -90,7 +90,7 @@ class MyStoragesBackend(
         key_type: ParsableKeyType,
         # from get_create_private_key_options():
         options: CreatePrivateKeyOptions,
-    ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
+    ) -> tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
         # Create the private key and store on filesystem:
         key = ...
         path = ...

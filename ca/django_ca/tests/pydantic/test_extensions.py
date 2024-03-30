@@ -14,7 +14,7 @@
 """Test Pydantic models for extensions."""
 
 import re
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Union
 
 from pydantic import ValidationError
 
@@ -112,7 +112,7 @@ MUST_BE_NON_CRITICAL_ERROR = (
 
 
 def assert_extension_model(
-    model_class: Type[ExtensionModelTypeVar],
+    model_class: type[ExtensionModelTypeVar],
     parameters: Any,
     expected: x509.ExtensionType,
     critical: Optional[bool],
@@ -202,7 +202,7 @@ def test_critical_validation() -> None:
         ),
     ),
 )
-def test_access_description_model(parameters: Dict[str, Any], expected: x509.AccessDescription) -> None:
+def test_access_description_model(parameters: dict[str, Any], expected: x509.AccessDescription) -> None:
     """Test the AccessDescriptionModel."""
     assert_cryptography_model(AccessDescriptionModel, parameters, expected)
 
@@ -242,7 +242,7 @@ def test_access_description_model(parameters: Dict[str, Any], expected: x509.Acc
         ),
     ),
 )
-def test_distribution_point(parameters: Dict[str, Any], expected: x509.DistributionPoint) -> None:
+def test_distribution_point(parameters: dict[str, Any], expected: x509.DistributionPoint) -> None:
     """Test the DistributionPointModel."""
     assert_cryptography_model(DistributionPointModel, parameters, expected)
 
@@ -269,7 +269,7 @@ def test_distribution_point(parameters: Dict[str, Any], expected: x509.Distribut
         ),
     ),
 )
-def test_distribution_point_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_distribution_point_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the DistributionPointModel."""
     assert_validation_errors(DistributionPointModel, parameters, expected_errors)
 
@@ -322,7 +322,7 @@ def test_distribution_point_errors(parameters: Dict[str, Any], expected_errors: 
     ),
 )
 def test_issuing_distribution_point_value(
-    parameters: Dict[str, Any], expected: x509.IssuingDistributionPoint
+    parameters: dict[str, Any], expected: x509.IssuingDistributionPoint
 ) -> None:
     """Test the DistributionPointModel."""
     assert_cryptography_model(IssuingDistributionPointValueModel, parameters, expected)
@@ -365,10 +365,10 @@ def test_signed_certificate_timestamp(signed_certificate_timestamp_pub: x509.Cer
 )
 def test_alternative_name_extensions(
     critical: Optional[bool],
-    general_names: List[Dict[str, str]],
-    parsed_general_names: List[x509.GeneralName],
+    general_names: list[dict[str, str]],
+    parsed_general_names: list[x509.GeneralName],
     model: AlternativeNameBaseModel[AlternativeNameTypeVar],
-    extension_type: Type[AlternativeNameExtensionType],
+    extension_type: type[AlternativeNameExtensionType],
 ) -> None:
     """Test the AlternativeName extensions."""
     extension = extension_type(general_names=parsed_general_names)
@@ -384,8 +384,8 @@ def test_alternative_name_extensions(
     ),
 )
 def test_alternative_name_extensions_errors(
-    model: Union[Type[SubjectAlternativeNameModel], Type[IssuerAlternativeNameModel]],
-    parameters: Dict[str, Any],
+    model: Union[type[SubjectAlternativeNameModel], type[IssuerAlternativeNameModel]],
+    parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:
     """Test validation errors SubjectAlternativeNameModel and IssuerAlternativeNameModel."""
@@ -413,7 +413,7 @@ def test_alternative_name_extensions_errors(
     ),
 )
 def test_authority_information_access(
-    critical: Optional[bool], parameters: Dict[str, Any], descriptions: List[x509.AccessDescription]
+    critical: Optional[bool], parameters: dict[str, Any], descriptions: list[x509.AccessDescription]
 ) -> None:
     """Test the Information Access extensions."""
     extension = x509.AuthorityInformationAccess(descriptions)
@@ -449,7 +449,7 @@ def test_authority_information_access(
     ),
 )
 def test_authority_information_access_errors(
-    parameters: Dict[str, Any], expected_errors: ExpectedErrors
+    parameters: dict[str, Any], expected_errors: ExpectedErrors
 ) -> None:
     """Test validation errors for the AuthorityInformationAccessModel."""
     assert_validation_errors(AuthorityInformationAccessModel, parameters, expected_errors)
@@ -492,7 +492,7 @@ def test_authority_information_access_errors(
     ),
 )
 def test_authority_key_identifier(
-    critical: Optional[bool], parameters: Dict[str, Any], extension: x509.AuthorityKeyIdentifier
+    critical: Optional[bool], parameters: dict[str, Any], extension: x509.AuthorityKeyIdentifier
 ) -> None:
     """Test the AuthorityKeyIdentifierModel."""
     assert_extension_model(AuthorityKeyIdentifierModel, parameters, extension, critical)
@@ -555,7 +555,7 @@ def test_authority_key_identifier(
         ),
     ),
 )
-def test_authority_key_identifier_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_authority_key_identifier_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the AuthorityKeyIdentifierModel."""
     assert_validation_errors(AuthorityKeyIdentifierModel, parameters, expected_errors)
 
@@ -571,7 +571,7 @@ def test_authority_key_identifier_errors(parameters: Dict[str, Any], expected_er
     ),
 )
 def test_basic_constraints(
-    critical: Optional[bool], parameters: Dict[str, Any], extension: x509.BasicConstraints
+    critical: Optional[bool], parameters: dict[str, Any], extension: x509.BasicConstraints
 ) -> None:
     """Test the BasicConstraintsModel."""
     model = assert_extension_model(BasicConstraintsModel, parameters, extension, critical)
@@ -609,7 +609,7 @@ def test_basic_constraints(
         ),
     ),
 )
-def test_basic_constraints_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_basic_constraints_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the BasicConstraintsModel."""
     assert_validation_errors(BasicConstraintsModel, {"value": parameters}, expected_errors)
 
@@ -734,7 +734,7 @@ def test_basic_constraints_errors(parameters: Dict[str, Any], expected_errors: E
     ),
 )
 def test_certificate_policies(
-    critical: Optional[bool], parameters: List[Dict[str, Any]], policies: List[x509.PolicyInformation]
+    critical: Optional[bool], parameters: list[dict[str, Any]], policies: list[x509.PolicyInformation]
 ) -> None:
     """Test the CertificatePoliciesModel."""
     assert_extension_model(CertificatePoliciesModel, parameters, x509.CertificatePolicies(policies), critical)
@@ -765,7 +765,7 @@ def test_certificate_policies(
         ),
     ),
 )
-def test_certificate_policies_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_certificate_policies_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for CRLDistributionPointsModel and FreshestCRLModel."""
     assert_validation_errors(CertificatePoliciesModel, {"value": parameters}, expected_errors)
 
@@ -808,8 +808,8 @@ DISTRIBUTION_POINTS_PARAMETERS = (
 )
 def test_crl_distribution_points(
     critical: Optional[bool],
-    parameters: List[Dict[str, Any]],
-    distribution_points: List[x509.DistributionPoint],
+    parameters: list[dict[str, Any]],
+    distribution_points: list[x509.DistributionPoint],
 ) -> None:
     """Test the CRLDistributionPointsModel."""
     assert_extension_model(
@@ -838,8 +838,8 @@ def test_crl_distribution_points(
     ),
 )
 def test_distribution_point_extension_errors(
-    model: Union[Type[FreshestCRLModel], Type[CRLDistributionPointsModel]],
-    parameters: Dict[str, Any],
+    model: Union[type[FreshestCRLModel], type[CRLDistributionPointsModel]],
+    parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:
     """Test common validation errors for CRLDistributionPointsModel and FreshestCRLModel."""
@@ -860,7 +860,7 @@ def test_crl_number(critical: Optional[bool], crl_number: int) -> None:
         ({"value": 0, "critical": True}, [MUST_BE_NON_CRITICAL_ERROR]),
     ),
 )
-def test_crl_number_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_crl_number_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the CRLNumberModel."""
     assert_validation_errors(CRLNumberModel, parameters, expected_errors)
 
@@ -880,7 +880,7 @@ def test_delta_crl_indicator(critical: Optional[bool], crl_number: int) -> None:
     ),
 )
 def test_delta_crl_indicator_errors(
-    parameters: Dict[str, Any],
+    parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:
     """Test validation errors for the DeltaCRLIndicatorModel."""
@@ -904,7 +904,7 @@ def test_delta_crl_indicator_errors(
 )
 def test_extended_key_usage(
     critical: Optional[bool],
-    usages: List[Union[str, x509.ObjectIdentifier]],
+    usages: list[Union[str, x509.ObjectIdentifier]],
     extension: x509.ExtendedKeyUsage,
 ) -> None:
     """Test the ExtendedKeyUsageModel."""
@@ -944,7 +944,7 @@ def test_extended_key_usage(
         ),
     ),
 )
-def test_extended_key_usage_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_extended_key_usage_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the ExtendedKeyUsageModel."""
     assert_validation_errors(ExtendedKeyUsageModel, {"value": parameters}, expected_errors)
 
@@ -953,8 +953,8 @@ def test_extended_key_usage_errors(parameters: Dict[str, Any], expected_errors: 
 @pytest.mark.parametrize("parameters,distribution_points", DISTRIBUTION_POINTS_PARAMETERS)
 def test_freshest_crl(
     critical: Optional[bool],
-    parameters: List[Dict[str, Any]],
-    distribution_points: List[x509.DistributionPoint],
+    parameters: list[dict[str, Any]],
+    distribution_points: list[x509.DistributionPoint],
 ) -> None:
     """Test the CRLDistributionPointsModel."""
     assert_extension_model(FreshestCRLModel, parameters, x509.FreshestCRL(distribution_points), critical)
@@ -986,7 +986,7 @@ def test_inhibit_any_policy(critical: Optional[bool], skip_certs: int) -> None:
         ({"value": 0, "critical": False}, [MUST_BE_CRITICAL_ERROR]),
     ),
 )
-def test_inhibit_any_policy_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_inhibit_any_policy_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the InhibitAnyPolicyModel."""
     assert_validation_errors(InhibitAnyPolicyModel, parameters, expected_errors)
 
@@ -1011,7 +1011,7 @@ def test_inhibit_any_policy_errors(parameters: Dict[str, Any], expected_errors: 
 )
 def test_issuing_distribution_point(
     critical: Optional[bool],
-    parameters: Dict[str, Any],
+    parameters: dict[str, Any],
     issuing_distribution_point: x509.IssuingDistributionPoint,
 ) -> None:
     """Test the IssuingDistributionPointModel."""
@@ -1056,7 +1056,7 @@ def test_issuing_distribution_point(
     ),
 )
 def test_issuing_distribution_point_errors(
-    parameters: Dict[str, Any], expected_errors: ExpectedErrors
+    parameters: dict[str, Any], expected_errors: ExpectedErrors
 ) -> None:
     """Test errors for the IssuingDistributionPointModel model."""
     assert_validation_errors(IssuingDistributionPointModel, parameters, expected_errors)
@@ -1073,7 +1073,7 @@ def test_issuing_distribution_point_errors(
         ),
     ),
 )
-def test_key_usage(critical: Optional[bool], parameters: Dict[str, bool], extension: x509.KeyUsage) -> None:
+def test_key_usage(critical: Optional[bool], parameters: dict[str, bool], extension: x509.KeyUsage) -> None:
     """Test the KeyUsageModel."""
     assert_extension_model(KeyUsageModel, parameters, extension, critical)
 
@@ -1117,7 +1117,7 @@ def test_key_usage(critical: Optional[bool], parameters: Dict[str, bool], extens
         ),
     ),
 )
-def test_key_usage_errors(parameters: Dict[str, bool], expected_errors: ExpectedErrors) -> None:
+def test_key_usage_errors(parameters: dict[str, bool], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the KeyUsageModel."""
     assert_validation_errors(KeyUsageModel, {"value": parameters}, expected_errors)
 
@@ -1145,7 +1145,7 @@ def test_key_usage_errors(parameters: Dict[str, bool], expected_errors: Expected
     ),
 )
 def test_ms_certificate_template(
-    critical: bool, parameters: Dict[str, Any], extension: x509.MSCertificateTemplate
+    critical: bool, parameters: dict[str, Any], extension: x509.MSCertificateTemplate
 ) -> None:
     """Test the MSCertificateTemplateModel."""
     assert_extension_model(MSCertificateTemplateModel, parameters, extension, critical)
@@ -1175,7 +1175,7 @@ def test_ms_certificate_template(
     ),
 )
 def test_name_constraints(
-    critical: Optional[bool], parameters: Dict[str, bool], extension: x509.KeyUsage
+    critical: Optional[bool], parameters: dict[str, bool], extension: x509.KeyUsage
 ) -> None:
     """Test the NameConstraintsModel."""
     assert_extension_model(NameConstraintsModel, parameters, extension, critical)
@@ -1227,7 +1227,7 @@ def test_name_constraints(
         ),
     ),
 )
-def test_name_constraints_errors(parameters: Dict[str, bool], expected_errors: ExpectedErrors) -> None:
+def test_name_constraints_errors(parameters: dict[str, bool], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the NameConstraintsModel."""
     assert_validation_errors(NameConstraintsModel, parameters, expected_errors)
 
@@ -1285,7 +1285,7 @@ def test_policy_constraints(
         ),
     ),
 )
-def test_policy_constraints_errors(parameters: Dict[str, Any], expected_errors: ExpectedErrors) -> None:
+def test_policy_constraints_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the PolicyConstraintsModel."""
     assert_validation_errors(PolicyConstraintsModel, parameters, expected_errors)
 
@@ -1341,7 +1341,7 @@ def test_signed_certificate_timestamps(signed_certificate_timestamps_pub: x509.C
 )
 @pytest.mark.parametrize("critical", (False, None))
 def test_subject_information_access(
-    parameters: Dict[str, Any], extension: x509.AuthorityInformationAccess, critical: Optional[bool]
+    parameters: dict[str, Any], extension: x509.AuthorityInformationAccess, critical: Optional[bool]
 ) -> None:
     """Test the SubjectInformationAccessModel."""
     assert_extension_model(SubjectInformationAccessModel, parameters, extension, critical)
@@ -1381,7 +1381,7 @@ def test_subject_information_access(
     ),
 )
 def test_subject_information_access_errors(
-    parameters: Dict[str, Any], expected_errors: ExpectedErrors
+    parameters: dict[str, Any], expected_errors: ExpectedErrors
 ) -> None:
     """Test validation errors for the SubjectInformationAccessModel."""
     assert_validation_errors(SubjectInformationAccessModel, parameters, expected_errors)
@@ -1436,8 +1436,8 @@ def test_subject_key_identifier_errors() -> None:
 )
 @pytest.mark.parametrize("critical", (True, False, None))
 def test_tls_feature(
-    parameters: List[Union[str, x509.TLSFeatureType]],
-    features: List[x509.TLSFeatureType],
+    parameters: list[Union[str, x509.TLSFeatureType]],
+    features: list[x509.TLSFeatureType],
     critical: Optional[bool],
 ) -> None:
     """Test the TLSFeatureModel."""
@@ -1461,7 +1461,7 @@ def test_tls_feature(
         ),
     ),
 )
-def test_tls_feature_errors(parameters: Dict[str, bool], expected_errors: ExpectedErrors) -> None:
+def test_tls_feature_errors(parameters: dict[str, bool], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the TLSFeatureModel."""
     assert_validation_errors(TLSFeatureModel, parameters, expected_errors)
 
@@ -1477,7 +1477,7 @@ def test_tls_feature_errors(parameters: Dict[str, bool], expected_errors: Expect
 )
 @pytest.mark.parametrize("critical", (True, False))
 def test_unrecognized_extension(
-    parameters: Dict[str, Any],
+    parameters: dict[str, Any],
     extension_type: x509.UnrecognizedExtension,
     critical: Optional[bool],
 ) -> None:

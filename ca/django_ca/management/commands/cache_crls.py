@@ -17,7 +17,7 @@
 """
 
 import argparse
-from typing import Any, List
+from typing import Any
 
 from django_ca.management.base import BaseCommand
 from django_ca.tasks import cache_crls, run_task
@@ -35,5 +35,5 @@ class Command(BaseCommand):
             help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.",
         )
 
-    def handle(self, serial: List[str], **options: Any) -> None:
+    def handle(self, serial: list[str], **options: Any) -> None:
         run_task(cache_crls, serial)

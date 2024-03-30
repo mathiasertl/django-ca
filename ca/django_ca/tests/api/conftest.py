@@ -18,7 +18,7 @@
 import base64
 import typing
 from http import HTTPStatus
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -32,12 +32,12 @@ from django_ca.pydantic.extensions import AuthorityInformationAccessModel, CRLDi
 from django_ca.tests.base.typehints import HttpResponse, User
 from django_ca.tests.base.utils import iso_format
 
-DetailResponse = Dict[str, Any]
-ListResponse = List[DetailResponse]
+DetailResponse = dict[str, Any]
+ListResponse = list[DetailResponse]
 
 
 @pytest.fixture
-def api_user(user: User, api_permission: Tuple[Type[Model], str]) -> User:
+def api_user(user: User, api_permission: tuple[type[Model], str]) -> User:
     """Extend user fixture to add required permission."""
     content_type = ContentType.objects.get_for_model(api_permission[0])
     permission = Permission.objects.get(codename=api_permission[1], content_type=content_type)

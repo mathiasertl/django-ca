@@ -19,7 +19,6 @@ import copy
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import List
 
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
@@ -300,7 +299,7 @@ def usable_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
 
 
 @pytest.fixture()
-def usable_cas(request: "SubRequest") -> Iterator[List[CertificateAuthority]]:
+def usable_cas(request: "SubRequest") -> Iterator[list[CertificateAuthority]]:
     """Fixture for all usable CAs as a list."""
     cas = []
     for name in usable_ca_names:

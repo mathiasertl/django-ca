@@ -44,8 +44,8 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
         self.break_on_hyphens = False
         self.break_long_words = False
 
-    def _unsplit_optargs(self, chunks: typing.List[str]) -> typing.Iterator[str]:
-        unsplit: typing.List[str] = []
+    def _unsplit_optargs(self, chunks: list[str]) -> typing.Iterator[str]:
+        unsplit: list[str] = []
         for chunk in chunks:
             if re.match("-[a-z]$", chunk):  # chunk appears to be an option
                 if unsplit:  # previous option was also an optarg, so yield what was there
@@ -77,7 +77,7 @@ class CommandLineTextWrapper(textwrap.TextWrapper):
         # yield any remaining chunks
         yield from unsplit
 
-    def _split(self, text: str) -> typing.List[str]:
+    def _split(self, text: str) -> list[str]:
         chunks = super()._split(text)
         unsplit = list(self._unsplit_optargs(chunks))
         return unsplit
@@ -156,7 +156,7 @@ class ConsoleIncludeDirective(CodeBlock):
         self.jinja_env.policies.update(self.config.jinja_policies)  # type: ignore[attr-defined]
 
     @property
-    def arguments(self) -> typing.List[str]:
+    def arguments(self) -> list[str]:
         """Return static argument "console"."""
         return ["console"]
 
@@ -164,7 +164,7 @@ class ConsoleIncludeDirective(CodeBlock):
     def arguments(self, value: typing.Any) -> None:
         pass
 
-    def _split_command(self, prompt: str, command: str) -> typing.List[str]:
+    def _split_command(self, prompt: str, command: str) -> list[str]:
         """Smartly split command into multiple lines."""
         line_length = self.options.get("line_length", 75)
         command = re.sub(r"\s+", " ", command)
@@ -230,7 +230,7 @@ class ConsoleIncludeDirective(CodeBlock):
     def content(self, value: typing.Any) -> None:
         """Setter for content (used by the constructor). Disregards the value."""
 
-    def _render_template(self, path: str, context: typing.Dict[str, typing.Any]) -> str:
+    def _render_template(self, path: str, context: dict[str, typing.Any]) -> str:
         """Small wrapper to render a template."""
         output_template = self.jinja_env.from_string(path)
         return output_template.render(context)

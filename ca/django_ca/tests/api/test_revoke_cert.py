@@ -16,7 +16,7 @@
 """Test the revoking certificates via the API."""
 
 from http import HTTPStatus
-from typing import Any, Dict, Tuple, Type
+from typing import Any
 
 from django.db.models import Model
 from django.test.client import Client
@@ -38,13 +38,13 @@ path = reverse_lazy(
 
 
 @pytest.fixture(scope="module")
-def api_permission() -> Tuple[Type[Model], str]:
+def api_permission() -> tuple[type[Model], str]:
     """Fixture for the permission required by this view."""
     return Certificate, "revoke_certificate"
 
 
 @pytest.fixture()
-def expected_response(root_cert_response: Dict[str, Any]) -> DetailResponse:
+def expected_response(root_cert_response: dict[str, Any]) -> DetailResponse:
     """Fixture for the regular response expected from this API view."""
     root_cert_response["revoked"] = True
     return root_cert_response

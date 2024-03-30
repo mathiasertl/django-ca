@@ -17,7 +17,7 @@ import abc
 import json
 import typing
 from collections.abc import Iterable
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -132,8 +132,8 @@ class KeyValueField(forms.CharField):
 
     def to_python(  # type: ignore[override]  # return type is str in CharField.to_python()
         self,
-        value: Optional[Union[str, List[Dict[str, Any]]]],
-    ) -> List[Dict[str, Any]]:
+        value: Optional[Union[str, list[dict[str, Any]]]],
+    ) -> list[dict[str, Any]]:
         # This method receives a coerced value (= list of key/value pairs) when a form is submitted and then
         # displayed again (due to an error or the "Save and continue editing" button in the admin interface).
         if isinstance(value, list):
@@ -168,7 +168,7 @@ class GeneralNameKeyValueField(KeyValueField):
 
     widget = GeneralNameKeyValueWidget
 
-    def to_python(self, value: Optional[str]) -> List[x509.GeneralName]:  # type: ignore[override]
+    def to_python(self, value: Optional[str]) -> list[x509.GeneralName]:  # type: ignore[override]
         parsed_value = super().to_python(value)
         try:
             models = GeneralNameModelList.validate_python(parsed_value)
@@ -207,16 +207,16 @@ class ReasonsField(forms.MultipleChoiceField):
 class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for form fields that serialize to a :py:class:`~cg:cryptography.Extension`."""
 
-    extension_type: Type[ExtensionTypeTypeVar]
+    extension_type: type[ExtensionTypeTypeVar]
     # TYPEHINT NOTE: the value can be handled by the get_fields() method.
-    fields: Optional[Tuple[forms.Field, ...]] = None  # type: ignore[assignment]
+    fields: Optional[tuple[forms.Field, ...]] = None  # type: ignore[assignment]
 
     def __init__(self, **kwargs: Any) -> None:
         fields = [*self.get_fields(), forms.BooleanField(required=False, initial=True)]
         kwargs.setdefault("label", get_extension_name(self.extension_type.oid))
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
 
-    def compress(self, data_list: List[Any]) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
+    def compress(self, data_list: list[Any]) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
         if not data_list:
             return None
 
@@ -226,7 +226,7 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
             return None
         return x509.Extension(critical=critical, oid=self.extension_type.oid, value=ext_value)
 
-    def get_fields(self) -> Tuple[forms.Field, ...]:
+    def get_fields(self) -> tuple[forms.Field, ...]:
         """Get the form fields used for this extension.
 
         Note that the `critical` input field is automatically appended.
@@ -248,10 +248,10 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
 class AlternativeNameField(ExtensionField[AlternativeNameTypeVar]):
     """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
-    extension_type: Type[AlternativeNameTypeVar]
+    extension_type: type[AlternativeNameTypeVar]
     fields = (GeneralNameKeyValueField(required=False),)
 
-    def get_value(self, value: List[x509.GeneralName]) -> Optional[AlternativeNameTypeVar]:
+    def get_value(self, value: list[x509.GeneralName]) -> Optional[AlternativeNameTypeVar]:
         if not value:
             return None
         return self.extension_type(general_names=value)
@@ -260,23 +260,23 @@ class AlternativeNameField(ExtensionField[AlternativeNameTypeVar]):
 class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
     """Base class for extensions that are basically a multiple choice field (plus critical)."""
 
-    choices = Tuple[Tuple[str, str], ...]
-    widget: Type[widgets.MultipleChoiceExtensionWidget]
+    choices = tuple[tuple[str, str], ...]
+    widget: type[widgets.MultipleChoiceExtensionWidget]
 
     def __init__(self, **kwargs: Any) -> None:
         kwargs["widget"] = self.widget(choices=self.choices)
         super().__init__(**kwargs)
 
-    def get_fields(self) -> Tuple[forms.MultipleChoiceField]:
+    def get_fields(self) -> tuple[forms.MultipleChoiceField]:
         return (forms.MultipleChoiceField(choices=self.choices, required=False),)
 
-    def get_value(self, value: List[str]) -> Optional[ExtensionTypeTypeVar]:
+    def get_value(self, value: list[str]) -> Optional[ExtensionTypeTypeVar]:
         if not value:
             return None
         return self.get_values(value)
 
     @abc.abstractmethod
-    def get_values(self, value: List[str]) -> Optional[ExtensionTypeTypeVar]:
+    def get_values(self, value: list[str]) -> Optional[ExtensionTypeTypeVar]:
         """Get the ExtensionType instance from the selected values."""
 
 
@@ -296,9 +296,9 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
 
     def get_value(
         self,
-        full_name: List[x509.GeneralName],
+        full_name: list[x509.GeneralName],
         relative_distinguished_name: Optional[x509.RelativeDistinguishedName],
-        crl_issuer: List[x509.GeneralName],
+        crl_issuer: list[x509.GeneralName],
         reasons: Optional[Iterable[str]],
     ) -> Optional[CRLExtensionTypeTypeVar]:
         if not full_name:
@@ -342,7 +342,7 @@ class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAc
     widget = widgets.AuthorityInformationAccessWidget
 
     def get_value(
-        self, ca_issuers: List[x509.GeneralName], ocsp: List[x509.GeneralName]
+        self, ca_issuers: list[x509.GeneralName], ocsp: list[x509.GeneralName]
     ) -> Optional[x509.AuthorityInformationAccess]:
         if not ca_issuers and not ocsp:
             return None
@@ -379,7 +379,7 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies]):
         if not policy_identifier or not (practice_statements or explicit_text):
             return None
 
-        policy_qualifiers = typing.cast(List[Union[str, x509.UserNotice]], practice_statements.splitlines())
+        policy_qualifiers = typing.cast(list[Union[str, x509.UserNotice]], practice_statements.splitlines())
         if explicit_text:
             policy_qualifiers.append(x509.UserNotice(notice_reference=None, explicit_text=explicit_text))
 
@@ -403,7 +403,7 @@ class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage])
     choices = _EXTENDED_KEY_USAGE_CHOICES
     widget = widgets.ExtendedKeyUsageWidget
 
-    def get_values(self, value: List[str]) -> Optional[x509.ExtendedKeyUsage]:
+    def get_values(self, value: list[str]) -> Optional[x509.ExtendedKeyUsage]:
         return x509.ExtendedKeyUsage(usages=[x509.ObjectIdentifier(name) for name in value])
 
 
@@ -429,8 +429,8 @@ class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
     extension_type = x509.KeyUsage
     widget = widgets.KeyUsageWidget
 
-    def get_values(self, value: List[str]) -> Optional[x509.KeyUsage]:
-        values: Dict[str, bool] = {choice: choice in value for choice in KEY_USAGE_NAMES}
+    def get_values(self, value: list[str]) -> Optional[x509.KeyUsage]:
+        values: dict[str, bool] = {choice: choice in value for choice in KEY_USAGE_NAMES}
         return x509.KeyUsage(**values)
 
 
@@ -464,7 +464,7 @@ class TLSFeatureField(MultipleChoiceExtensionField[x509.TLSFeature]):
     )  # TODO: choices can also be a function - better for testing for completeness
     widget = widgets.TLSFeatureWidget
 
-    def get_values(self, value: List[str]) -> Optional[x509.TLSFeature]:
+    def get_values(self, value: list[str]) -> Optional[x509.TLSFeature]:
         # Note: sort value to get predictable output in test cases
         features = [getattr(x509.TLSFeatureType, elem) for elem in sorted(value)]
         return self.extension_type(features=features)

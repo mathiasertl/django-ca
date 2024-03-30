@@ -18,7 +18,7 @@
 
 import html
 import json
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
@@ -61,7 +61,7 @@ HIDDEN_INPUT_ATTRS = 'type="hidden" data-key-key="type" data-value-key="value"'
 class FieldTestCaseMixin(TestCaseMixin):
     """Subclass of TestCaseMixin that adds a few form-field related fields."""
 
-    field_class: Type[forms.Field]
+    field_class: type[forms.Field]
 
     def assertRequiredError(self, value) -> None:  # pylint: disable=invalid-name
         """Assert that the field raises a required error for the given value."""
@@ -86,10 +86,10 @@ class FieldTestCaseMixin(TestCaseMixin):
 def test_alternative_name_fields(
     critical: bool,
     required: bool,
-    field_class: Type[fields.AlternativeNameField],
-    extension_type: Type[x509.ExtensionType],
+    field_class: type[fields.AlternativeNameField],
+    extension_type: type[x509.ExtensionType],
     value: Any,
-    general_names: List[x509.GeneralName],
+    general_names: list[x509.GeneralName],
 ) -> None:
     """Test output for AlternativeName fields."""
     field = field_class(required=required)
@@ -146,9 +146,9 @@ def test_alternative_name_fields(
 def test_distribution_point_fields(
     critical: bool,
     required: bool,
-    field_class: Type[fields.DistributionPointField],
-    extension_type: Type[x509.ExtensionType],
-    value: Tuple[List[Dict[str, Any]], str, List[Dict[str, Any]], Tuple[str, ...]],
+    field_class: type[fields.DistributionPointField],
+    extension_type: type[x509.ExtensionType],
+    value: tuple[list[dict[str, Any]], str, list[dict[str, Any]], tuple[str, ...]],
     dpoint: x509.DistributionPoint,
 ) -> None:
     """Test fields.CRLDistributionPointField."""
@@ -180,7 +180,7 @@ def test_distribution_point_fields(
 def test_crl_distribution_points_field_with_invalid_input(
     critical: bool,
     required: bool,
-    invalid: Tuple[List[Dict[str, Any]], str, List[Dict[str, Any]], Tuple[str, ...]],
+    invalid: tuple[list[dict[str, Any]], str, list[dict[str, Any]], tuple[str, ...]],
     error: str,
 ):
     """Test fields.CRLDistributionPointField with invalid input."""
@@ -201,7 +201,7 @@ def test_crl_distribution_points_field_with_invalid_input(
 def test_crl_distribution_points_field_with_empty_input(
     critical: bool,
     required: bool,
-    value: Tuple[List[Dict[str, Any]], str, List[Dict[str, Any]], Tuple[str, ...]],
+    value: tuple[list[dict[str, Any]], str, list[dict[str, Any]], tuple[str, ...]],
 ) -> None:
     """Test fields.CRLDistributionPointField with empty input."""
     field = fields.CRLDistributionPointField(required=required)
@@ -309,10 +309,10 @@ def test_crl_distribution_points_field_rendering_with_multiple_dps() -> None:
 def test_authority_information_access_field(
     critical: bool,
     required: bool,
-    ser_ca_issuers: List[Dict[str, Any]],
-    ser_ocsp: List[Dict[str, Any]],
-    ca_issuers: List[x509.GeneralName],
-    ocsp: List[x509.GeneralName],
+    ser_ca_issuers: list[dict[str, Any]],
+    ser_ocsp: list[dict[str, Any]],
+    ca_issuers: list[x509.GeneralName],
+    ocsp: list[x509.GeneralName],
 ) -> None:
     """Test AuthorityInformationAccessField field."""
     field = fields.AuthorityInformationAccessField(required=required)

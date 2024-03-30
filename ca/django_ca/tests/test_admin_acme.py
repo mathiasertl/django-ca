@@ -14,7 +14,6 @@
 """Test cases for ModelAdmin classes for ACME models."""
 
 import typing
-from typing import Dict
 
 from django.test import TestCase
 from django.utils import timezone
@@ -71,7 +70,7 @@ class AcmeAdminTestCaseMixin(
         "root",
         "child",
     )
-    cas: Dict[str, CertificateAuthority]
+    cas: dict[str, CertificateAuthority]
 
     def setUp(self) -> None:
         super().setUp()

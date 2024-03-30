@@ -21,7 +21,7 @@ import warnings
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone as tz
 from ipaddress import ip_address, ip_network
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 from urllib.parse import urlparse
 
 import idna
@@ -190,7 +190,7 @@ def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> Se
     return [{"oid": attr.oid.dotted_string, "value": _serialize_name_attribute_value(attr)} for attr in name]
 
 
-def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> List[Tuple[str, str]]:
+def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> list[tuple[str, str]]:
     """Convert a |Name| or |RelativeDistinguishedName| into a list of key/value pairs for display.
 
     This function is used as a helper function to loop over the elements of a name to prepare them for
@@ -208,7 +208,7 @@ def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> 
     ]
 
 
-def parse_serialized_name_attributes(name: SerializedName) -> List[x509.NameAttribute]:
+def parse_serialized_name_attributes(name: SerializedName) -> list[x509.NameAttribute]:
     """Parse a serialized list of name attributes into a list of NameAttributes.
 
     This function takes care of parsing hex-encoded byte values name attributes that are known to use bytes
@@ -223,7 +223,7 @@ def parse_serialized_name_attributes(name: SerializedName) -> List[x509.NameAttr
     :py:class:`~cg:cryptography.x509.Name` or :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`)
     and byte-values for unknown OIDs will **not** be correctly parsed.
     """
-    attrs: List[x509.NameAttribute] = []
+    attrs: list[x509.NameAttribute] = []
     for attr_dict in name:
         oid = x509.ObjectIdentifier(attr_dict["oid"])
         value = attr_dict["value"]
@@ -360,7 +360,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-def parse_name_x509(name: ParsableName) -> Tuple[x509.NameAttribute, ...]:
+def parse_name_x509(name: ParsableName) -> tuple[x509.NameAttribute, ...]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     .. versionchanged:: 1.20.0
@@ -425,7 +425,7 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
         >>> merge_x509_names(base, update)
         <Name(C=AT,O=Example Org,OU=Example Org Unit,CN=example.com)>
     """
-    attributes: List[x509.NameAttribute] = []
+    attributes: list[x509.NameAttribute] = []
     if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
         raise ValueError(f"{format_name_rfc4514(base)}: Unsortable name")
     if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in update):
@@ -526,7 +526,7 @@ def validate_private_key_parameters(
     key_type: typing.Literal["DSA", "RSA"],
     key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> Tuple[int, None]: ...
+) -> tuple[int, None]: ...
 
 
 @typing.overload
@@ -534,7 +534,7 @@ def validate_private_key_parameters(
     key_type: typing.Literal["EC"],
     key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> Tuple[None, ec.EllipticCurve]: ...
+) -> tuple[None, ec.EllipticCurve]: ...
 
 
 @typing.overload
@@ -542,12 +542,12 @@ def validate_private_key_parameters(
     key_type: typing.Literal["Ed448", "Ed25519"],
     key_size: Optional[int],
     elliptic_curve: Optional[ec.EllipticCurve],
-) -> Tuple[None, None]: ...
+) -> tuple[None, None]: ...
 
 
 def validate_private_key_parameters(
     key_type: ParsableKeyType, key_size: Optional[int], elliptic_curve: Optional[ec.EllipticCurve]
-) -> Tuple[Optional[int], Optional[ec.EllipticCurve]]:
+) -> tuple[Optional[int], Optional[ec.EllipticCurve]]:
     """Validate parameters for private key generation.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is

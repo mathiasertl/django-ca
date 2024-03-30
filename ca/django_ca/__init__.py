@@ -15,7 +15,7 @@
 
 from typing import Any, Tuple, Union
 
-VersionTuple = Union[Tuple[int, int, int], Tuple[int, int, int, str, int]]
+VersionTuple = Union[tuple[int, int, int], tuple[int, int, int, str, int]]
 
 # WARNING: This module MUST NOT include any dependencies, as it is read by setup.py
 
@@ -30,5 +30,5 @@ VERSION: VersionTuple = (1, 29, 0, "dev", 1)
 __version__ = ".".join([str(e) for e in VERSION[:3]])
 if len(VERSION) > 3:  # pragma: no cover
     # NOTE: dev_elements hack here only to make mypy happy in both dev and non-dev versions
-    dev_elements: Tuple[Any, ...] = VERSION[3:5]
+    dev_elements: tuple[Any, ...] = VERSION[3:5]
     __version__ += f".{''.join(str(e) for e in dev_elements)}"

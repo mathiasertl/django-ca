@@ -14,7 +14,7 @@
 """Some sanity tests for constants."""
 
 import typing
-from typing import Any, Set, Type
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -26,7 +26,7 @@ from django.test import TestCase
 from django_ca import constants
 from django_ca.typehints import GeneralNames, HashAlgorithms
 
-SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=Type[Any])
+SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=type[Any])
 KNOWN_EXTENSION_OIDS = list(
     filter(
         lambda attr: isinstance(attr, x509.ObjectIdentifier),
@@ -41,7 +41,7 @@ KNOWN_EXTENDED_KEY_USAGE_OIDS = list(
 )
 
 
-def get_subclasses(cls: Type[SuperclassTypeVar]) -> Set[Type[SuperclassTypeVar]]:
+def get_subclasses(cls: type[SuperclassTypeVar]) -> set[type[SuperclassTypeVar]]:
     """Recursively get a list of subclasses.
 
     .. seealso:: https://stackoverflow.com/a/3862957

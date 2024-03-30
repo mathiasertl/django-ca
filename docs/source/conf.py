@@ -16,7 +16,7 @@
 import os
 import sys
 from datetime import date
-from typing import Any, Dict, List
+from typing import Any
 
 import sphinx_rtd_theme
 from sphinx.addnodes import document, pending_xref
@@ -152,7 +152,7 @@ language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns: List[str] = []
+exclude_patterns: list[str] = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -282,7 +282,7 @@ htmlhelp_basename = "django-cadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements: Dict[Any, Any] = {}  # Note: we don't use this at all
+latex_elements: dict[Any, Any] = {}  # Note: we don't use this at all
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

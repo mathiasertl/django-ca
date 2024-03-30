@@ -13,7 +13,7 @@
 
 """Validators for Pydantic models."""
 
-from typing import Any, List, Union
+from typing import Any, Union
 
 from cryptography import x509
 
@@ -65,7 +65,7 @@ def extended_key_usage_validator(value: str) -> str:
     return value
 
 
-def unique_str_validator(value: List[str]) -> List[str]:
+def unique_str_validator(value: list[str]) -> list[str]:
     """Validate that every string in the list is unique."""
     for val in value:
         if value.count(val) > 1:
@@ -73,7 +73,7 @@ def unique_str_validator(value: List[str]) -> List[str]:
     return value
 
 
-def non_empty_validator(value: List[str]) -> List[str]:
+def non_empty_validator(value: list[str]) -> list[str]:
     """Validate that the given list is not empty."""
     if len(value) == 0:
         raise ValueError("value must not be empty")

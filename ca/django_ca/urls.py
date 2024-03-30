@@ -13,7 +13,7 @@
 
 """URL configuration for this project."""
 
-from typing import List, Union
+from typing import Union
 
 from django.conf import settings
 from django.urls import URLPattern, URLResolver, path, register_converter
@@ -27,7 +27,7 @@ register_converter(converters.Base64Converter, "base64")
 register_converter(converters.HexConverter, "hex")
 register_converter(converters.SerialConverter, "serial")
 
-urlpatterns: List[Union[URLResolver, URLPattern]] = [
+urlpatterns: list[Union[URLResolver, URLPattern]] = [
     path("issuer/<hex:serial>.der", views.GenericCAIssuersView.as_view(), name="issuer"),
     path("ocsp/<hex:serial>/cert/", views.GenericOCSPView.as_view(), name="ocsp-cert-post"),
     path("ocsp/<hex:serial>/cert/<base64:data>", views.GenericOCSPView.as_view(), name="ocsp-cert-get"),

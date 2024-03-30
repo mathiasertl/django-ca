@@ -14,7 +14,6 @@
 """Endpoint implementation for the API."""
 
 from http import HTTPStatus
-from typing import List
 
 from ninja import NinjaAPI, Query
 from ninja.errors import HttpError
@@ -53,7 +52,7 @@ def forbidden(request: WSGIRequest, exc: Exception) -> HttpResponse:  # pylint: 
 
 @api.get(
     "/ca/",
-    response=List[CertificateAuthoritySchema],
+    response=list[CertificateAuthoritySchema],
     auth=BasicAuth("django_ca.view_certificateauthority"),
     summary="List available certificate authorities",
     tags=["Certificate authorities"],
@@ -165,7 +164,7 @@ def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> Certi
 
 @api.get(
     "/ca/{serial:serial}/certs/",
-    response=List[CertificateSchema],
+    response=list[CertificateSchema],
     auth=BasicAuth("django_ca.view_certificate"),
     summary="List certificates",
     tags=["Certificates"],

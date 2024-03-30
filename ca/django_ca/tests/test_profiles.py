@@ -15,7 +15,7 @@
 
 import doctest
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -60,7 +60,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         super().setUp()
         self.ca = self.load_ca(name=CERT_DATA["root"]["name"], parsed=CERT_DATA["root"]["pub"]["parsed"])
 
-    def get_globs(self) -> Dict[str, Any]:
+    def get_globs(self) -> dict[str, Any]:
         """Get globals for doctests."""
         return {
             "Profile": Profile,

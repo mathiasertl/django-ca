@@ -18,7 +18,7 @@ import typing
 import warnings
 from datetime import datetime, timezone as tz
 from inspect import signature
-from typing import Any, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 from cryptography import x509
 
@@ -48,9 +48,9 @@ class RemovedInDjangoCA220Warning(PendingDeprecationWarning):
 RemovedInNextVersionWarning = RemovedInDjangoCA200Warning
 
 DeprecationWarningType = Union[
-    Type[RemovedInDjangoCA200Warning],
-    Type[RemovedInDjangoCA210Warning],
-    Type[RemovedInDjangoCA220Warning],
+    type[RemovedInDjangoCA200Warning],
+    type[RemovedInDjangoCA210Warning],
+    type[RemovedInDjangoCA220Warning],
 ]
 
 
@@ -84,7 +84,7 @@ def deprecate_argument(
 
 def deprecate_type(
     arg: str,
-    types: Union[Type[Any], Tuple[Type[Any], ...]],
+    types: Union[type[Any], tuple[type[Any], ...]],
     category: DeprecationWarningType,
     stacklevel: int = 2,
 ) -> typing.Callable[[F], F]:  # pragma: no cover  # not used at the beginning of 1.24.0 development

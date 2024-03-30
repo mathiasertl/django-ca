@@ -19,7 +19,7 @@ import subprocess
 import tempfile
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -44,7 +44,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     def assertFullName(  # pylint: disable=invalid-name
         self,
         crl: x509.CertificateRevocationList,
-        expected: Optional[List[x509.GeneralName]] = None,
+        expected: Optional[list[x509.GeneralName]] = None,
     ) -> None:
         """Assert that the full name of the CRL matches `expected`."""
         idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
@@ -85,7 +85,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
     @contextmanager
     def crl(
         self, ca: CertificateAuthority, **kwargs: Any
-    ) -> Iterator[Tuple[str, x509.CertificateRevocationList]]:
+    ) -> Iterator[tuple[str, x509.CertificateRevocationList]]:
         """Dump CRL to a tmpdir, yield path to it."""
         kwargs["ca"] = ca
         with tempfile.TemporaryDirectory() as tempdir:
@@ -98,7 +98,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             yield path, crl
 
     @contextmanager
-    def dumped(self, *certificates: X509CertMixin) -> Iterator[List[str]]:
+    def dumped(self, *certificates: X509CertMixin) -> Iterator[list[str]]:
         """Dump certificates to a tempdir, yield list of paths."""
         with tempfile.TemporaryDirectory() as tempdir:
             paths = []
@@ -140,9 +140,7 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
         command = command.format(*args, **kwargs)
         if kwargs.pop("verbose", False):
             print(f"openssl {command}")
-        proc = subprocess.run(
-            ["openssl", *shlex.split(command)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
-        )
+        proc = subprocess.run(["openssl", *shlex.split(command)], capture_output=True, check=False)
         stdout = proc.stdout.decode("utf-8")
         stderr = proc.stderr.decode("utf-8")
         self.assertEqual(proc.returncode, code, stderr)

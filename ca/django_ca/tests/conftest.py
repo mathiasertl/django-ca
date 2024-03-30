@@ -19,7 +19,7 @@ import importlib.metadata
 import os
 import sys
 from collections.abc import Iterator
-from typing import Any, List, Type
+from typing import Any
 
 import coverage
 
@@ -94,7 +94,7 @@ def pytest_configure(config: "PytestConfig") -> None:
         )
 
 
-def pytest_collection_modifyitems(config: "PytestConfig", items: List[Any]) -> None:  # pragma: no cover
+def pytest_collection_modifyitems(config: "PytestConfig", items: list[Any]) -> None:  # pragma: no cover
     """Mark Selenium tests as skipped if appropriate."""
     if config.getoption("--no-selenium") or not RUN_SELENIUM_TESTS:
         if config.getoption("--no-selenium"):
@@ -120,7 +120,7 @@ def user(
     #   https://docs.pytest.org/en/7.4.x/how-to/fixtures.html
     #   https://github.com/pytest-dev/pytest/issues/3664
     db: None,  # pylint: disable=unused-argument
-    django_user_model: Type["User"],
+    django_user_model: type["User"],
 ) -> "User":
     """Fixture for a basic Django user with no extra permissions."""
     username = "user"

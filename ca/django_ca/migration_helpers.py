@@ -18,7 +18,7 @@ that they are tested properly.
 """
 
 import typing
-from typing import List, Optional
+from typing import Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -179,7 +179,7 @@ class Migration0040Helper:
         if ca.sign_authority_information_access is None:
             return
 
-        descriptions: List[x509.AccessDescription] = list(ca.sign_authority_information_access.value)
+        descriptions: list[x509.AccessDescription] = list(ca.sign_authority_information_access.value)
 
         # Since the target fields are URL fields, we only consider x509.UniformResourceIdentifier instances.
         descriptions = [

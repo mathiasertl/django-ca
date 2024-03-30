@@ -19,7 +19,7 @@ import typing
 from collections.abc import Iterator
 from contextlib import contextmanager
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 from unittest import mock
 
 import acme
@@ -70,8 +70,8 @@ class AcmeTestCaseMixin(TestCaseMixin):
     CHILD_THUMBPRINT = "ux-66bpJQiyeDduTWQZHgkB4KJWK0kSdPOabnFiitFM"
     ACCOUNT_TWO_CONTACT = "mailto:two@example.net"
 
-    load_cas: Tuple[str, ...] = ("root",)
-    load_certs: Tuple[str, ...] = ("root-cert",)
+    load_cas: tuple[str, ...] = ("root",)
+    load_certs: tuple[str, ...] = ("root-cert",)
 
     def setUp(self) -> None:
         super().setUp()
@@ -94,7 +94,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         status: int,
         message: str,
         ca: Optional[CertificateAuthority] = None,
-        link_relations: Optional[Dict[str, str]] = None,
+        link_relations: Optional[dict[str, str]] = None,
         regex: bool = False,
     ) -> None:
         """Assert that an HTTP response confirms to an ACME problem report.
@@ -119,7 +119,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         self,
         response: "HttpResponse",
         ca: Optional[CertificateAuthority] = None,
-        link_relations: Optional[Dict[str, str]] = None,
+        link_relations: Optional[dict[str, str]] = None,
     ) -> None:
         """Assert basic Acme Response properties (Content-Type & Link header)."""
         link_relations = link_relations or {}
@@ -201,7 +201,7 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
 
     post_as_get = False
     requires_kid = True
-    message_cls: Type[MessageTypeVar]
+    message_cls: type[MessageTypeVar]
     view_name: str
 
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
@@ -227,8 +227,8 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
         cert: Optional[CertificateIssuerPrivateKeyTypes] = None,
         kid: Optional[str] = None,
         nonce: Optional[bytes] = None,
-        payload_cb: Optional[typing.Callable[[Dict[Any, Any]], Dict[Any, Any]]] = None,
-        post_kwargs: Optional[Dict[str, str]] = None,
+        payload_cb: Optional[typing.Callable[[dict[Any, Any]], dict[Any, Any]]] = None,
+        post_kwargs: Optional[dict[str, str]] = None,
     ) -> "HttpResponse":
         """Do a generic ACME request.
 

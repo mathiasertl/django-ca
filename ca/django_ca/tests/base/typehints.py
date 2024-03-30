@@ -14,7 +14,7 @@
 """Shared typehints for tests."""
 
 import typing
-from typing import Any, Callable, ContextManager, Dict, List, Protocol
+from typing import Any, Callable, ContextManager, Protocol
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
@@ -35,7 +35,7 @@ else:
 DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 
 
-CertFixtureData = Dict[str, Any]
+CertFixtureData = dict[str, Any]
 
 
 class _OcspFixtureData(typing.TypedDict):
@@ -59,15 +59,19 @@ class OcspFixtureData(_OcspFixtureData, total=False):
 class FixtureData(typing.TypedDict):
     """Fixture data loaded/stored from JSON."""
 
-    certs: Dict[str, CertFixtureData]
+    certs: dict[str, CertFixtureData]
 
 
 class KeyDict(typing.TypedDict):
     parsed: CertificateIssuerPrivateKeyTypes
+
+
 class PubDict(typing.TypedDict):
     pem: str
     parsed: x509.Certificate
     der: bytes
+
+
 class CsrDict(typing.TypedDict):
     parsed: x509.CertificateSigningRequest
 
@@ -77,7 +81,7 @@ class CaptureOnCommitCallbacks(Protocol):
 
     def __call__(
         self, using: str = DEFAULT_DB_ALIAS, execute: bool = False
-    ) -> ContextManager[List[Callable[..., Any]]]:  # pragma: no cover
+    ) -> ContextManager[list[Callable[..., Any]]]:  # pragma: no cover
         ...
 
 

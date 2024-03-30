@@ -64,7 +64,7 @@ import abc
 import base64
 import typing
 from types import MappingProxyType
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Literal, Optional, TypeVar, Union
 
 from pydantic import (
     AfterValidator,
@@ -176,10 +176,10 @@ class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABC
     This base class adds the ``_extension_type`` attribute and the ``get_extension_type_class`` classmethod.
     """
 
-    _extension_type: Type[ExtensionTypeTypeVar]
+    _extension_type: type[ExtensionTypeTypeVar]
 
     @classmethod
-    def get_extension_type_class(cls) -> Type[ExtensionTypeTypeVar]:
+    def get_extension_type_class(cls) -> type[ExtensionTypeTypeVar]:
         """Get the :py:class:`~cg:cryptography.x509.ExtensionType` class configured via ``_extension_type``.
 
         Pydantic models will have a ``ModelPrivateAttr`` in class methods, instead of the actual configured
@@ -195,7 +195,7 @@ class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABC
 class NoValueExtensionModel(BaseExtensionModel[NoValueExtensionTypeVar]):
     """Base model for extensions that do not have a value."""
 
-    _extension_type: Type[NoValueExtensionTypeVar]
+    _extension_type: type[NoValueExtensionTypeVar]
     value: None = Field(default=None, repr=False)
 
     @model_validator(mode="before")
@@ -216,9 +216,9 @@ class NoValueExtensionModel(BaseExtensionModel[NoValueExtensionTypeVar]):
 class AlternativeNameBaseModel(BaseExtensionModel[AlternativeNameTypeVar]):
     """Base model for extensions with a list of general names as value."""
 
-    _extension_type: Type[AlternativeNameTypeVar]
+    _extension_type: type[AlternativeNameTypeVar]
 
-    value: NonEmptyOrderedSet[List[GeneralNameModel]]
+    value: NonEmptyOrderedSet[list[GeneralNameModel]]
 
     @model_validator(mode="before")
     @classmethod
@@ -238,9 +238,9 @@ class AlternativeNameBaseModel(BaseExtensionModel[AlternativeNameTypeVar]):
 class CRLExtensionBaseModel(BaseExtensionModel[CRLExtensionTypeTypeVar]):
     """Base model for extensions with a list of distribution points."""
 
-    _extension_type: Type[CRLExtensionTypeTypeVar]
+    _extension_type: type[CRLExtensionTypeTypeVar]
 
-    value: NonEmptyOrderedSet[List[DistributionPointModel]]
+    value: NonEmptyOrderedSet[list[DistributionPointModel]]
 
     @model_validator(mode="before")
     @classmethod
@@ -260,10 +260,10 @@ class CRLExtensionBaseModel(BaseExtensionModel[CRLExtensionTypeTypeVar]):
 class InformationAccessBaseModel(BaseExtensionModel[InformationAccessTypeVar]):
     """Base model for extensions with a list of access descriptions."""
 
-    _extension_type: Type[InformationAccessTypeVar]
-    _acceptable_oids: typing.ClassVar[Tuple[str, ...]]
+    _extension_type: type[InformationAccessTypeVar]
+    _acceptable_oids: typing.ClassVar[tuple[str, ...]]
 
-    value: NonEmptyOrderedSet[List[AccessDescriptionModel]]
+    value: NonEmptyOrderedSet[list[AccessDescriptionModel]]
 
     @model_validator(mode="before")
     @classmethod
@@ -292,9 +292,9 @@ class SignedCertificateTimestampBaseModel(ExtensionModel[SignedCertificateTimest
     """Base class for a extensions with a list of signed certificate timestamps."""
 
     model_config = ConfigDict(from_attributes=True)
-    _extension_type: Type[SignedCertificateTimestampTypeVar]
+    _extension_type: type[SignedCertificateTimestampTypeVar]
 
-    value: NonEmptyOrderedSet[List[SignedCertificateTimestampModel]]
+    value: NonEmptyOrderedSet[list[SignedCertificateTimestampModel]]
 
     @property
     def extension_type(self) -> typing.NoReturn:  # pragma: no cover
@@ -480,7 +480,7 @@ class CertificatePoliciesModel(ExtensionModel[x509.CertificatePolicies]):
     type: Literal["certificate_policies"] = Field(default="certificate_policies", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
 
-    value: NonEmptyOrderedSet[List[PolicyInformationModel]] = Field(
+    value: NonEmptyOrderedSet[list[PolicyInformationModel]] = Field(
         description="The value of the CertificatePolicies extension is a list of policy information objects.",
         json_schema_extra={"minItems": 1, "uniqueItems": True},
     )
@@ -541,7 +541,7 @@ class ExtendedKeyUsageModel(ExtensionModel[x509.ExtendedKeyUsage]):
     type: Literal["extended_key_usage"] = Field(default="extended_key_usage", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.EXTENDED_KEY_USAGE]
     value: NonEmptyOrderedSet[
-        List[
+        list[
             Annotated[
                 str,
                 BeforeValidator(validators.oid_parser),
@@ -653,7 +653,7 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
 
     type: Literal["key_usage"] = Field(default="key_usage", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE]
-    value: NonEmptyOrderedSet[List[Literal[KeyUsages]]]
+    value: NonEmptyOrderedSet[list[Literal[KeyUsages]]]
 
     @model_validator(mode="before")
     @classmethod
@@ -661,7 +661,7 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.KeyUsage):
             extension_type: x509.KeyUsage = data.value
-            values: List[Literal[KeyUsages]] = []
+            values: list[Literal[KeyUsages]] = []
             for value in KEY_USAGE_NAMES:
                 try:
                     if getattr(extension_type, value) is True:
@@ -685,7 +685,7 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
     @property
     def extension_type(self) -> x509.KeyUsage:
         """Convert to a :py:class:`~cg:cryptography.x509.KeyUsage` instance."""
-        params: Dict[str, bool] = {k: k in self.value for k in KEY_USAGE_NAMES}
+        params: dict[str, bool] = {k: k in self.value for k in KEY_USAGE_NAMES}
         return x509.KeyUsage(**params)
 
 
@@ -957,7 +957,7 @@ class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):
     type: Literal["tls_feature"] = Field(default="tls_feature", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.TLS_FEATURE]
     value: NonEmptyOrderedSet[
-        List[
+        list[
             Annotated[
                 Literal["status_request", "status_request_v2"],
                 BeforeValidator(validators.tls_feature_validator),
@@ -1001,7 +1001,7 @@ class UnrecognizedExtensionModel(ExtensionModel[x509.UnrecognizedExtension]):
         return self.value.cryptography
 
 
-EXTENSION_MODEL_OIDS: "MappingProxyType[Type[ExtensionModel[Any]], x509.ObjectIdentifier]" = MappingProxyType(
+EXTENSION_MODEL_OIDS: "MappingProxyType[type[ExtensionModel[Any]], x509.ObjectIdentifier]" = MappingProxyType(
     {
         AuthorityInformationAccessModel: ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
         AuthorityKeyIdentifierModel: ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
@@ -1029,7 +1029,7 @@ EXTENSION_MODEL_OIDS: "MappingProxyType[Type[ExtensionModel[Any]], x509.ObjectId
         TLSFeatureModel: ExtensionOID.TLS_FEATURE,
     }
 )
-EXTENSION_MODELS: "MappingProxyType[x509.ObjectIdentifier, Type[ExtensionModel[Any]]]" = MappingProxyType(
+EXTENSION_MODELS: "MappingProxyType[x509.ObjectIdentifier, type[ExtensionModel[Any]]]" = MappingProxyType(
     {v: k for k, v in EXTENSION_MODEL_OIDS.items()}
 )
 
@@ -1097,7 +1097,7 @@ CertificateExtensions = Annotated[
     BeforeValidator(validate_cryptograph_extensions),
 ]
 
-SignCertificateExtensionsList = TypeAdapter(List[SignCertificateExtensions])
-CertificateExtensionsList = TypeAdapter(List[CertificateExtensions])
+SignCertificateExtensionsList = TypeAdapter(list[SignCertificateExtensions])
+CertificateExtensionsList = TypeAdapter(list[CertificateExtensions])
 
 ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])

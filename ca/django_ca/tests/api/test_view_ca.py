@@ -14,7 +14,7 @@
 """Test the detail-view for a CA."""
 
 from http import HTTPStatus
-from typing import Any, Dict, Tuple, Type
+from typing import Any
 
 from django.db.models import Model
 from django.test import Client
@@ -32,13 +32,13 @@ path = reverse_lazy(
 
 
 @pytest.fixture(scope="module")
-def api_permission() -> Tuple[Type[Model], str]:
+def api_permission() -> tuple[type[Model], str]:
     """Fixture for the permission required by this view."""
     return CertificateAuthority, "view_certificateauthority"
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_view(api_client: Client, root_response: Dict[str, Any]) -> None:
+def test_view(api_client: Client, root_response: dict[str, Any]) -> None:
     """Test an ordinary view."""
     response = api_client.get(path)
     assert response.status_code == HTTPStatus.OK, response.content
@@ -46,7 +46,7 @@ def test_view(api_client: Client, root_response: Dict[str, Any]) -> None:
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
-def test_view_expired_ca(api_client: Client, root_response: Dict[str, Any]) -> None:
+def test_view_expired_ca(api_client: Client, root_response: dict[str, Any]) -> None:
     """Test that we can view an expired CA."""
     response = api_client.get(path)
     assert response.status_code == HTTPStatus.OK, response.content

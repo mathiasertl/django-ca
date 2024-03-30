@@ -15,7 +15,7 @@
 
 import os
 from datetime import timedelta
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 from unittest.mock import patch
 
 from cryptography import x509
@@ -57,7 +57,7 @@ from django_ca.tests.base.utils import (
 )
 
 
-def resign_cert(serial: str, **kwargs: Any) -> Tuple[str, str]:
+def resign_cert(serial: str, **kwargs: Any) -> tuple[str, str]:
     """Execute the regenerate_ocsp_keys command."""
     return cmd("resign_cert", serial, **kwargs)
 

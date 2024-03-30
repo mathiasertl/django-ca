@@ -16,7 +16,7 @@
 import ipaddress
 from datetime import datetime, timezone as tz
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Any, Dict, Type
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -175,7 +175,7 @@ def test_othername_general_errors(value: bytes, match: str) -> None:
         ),
     ),
 )
-def test_general_name(parameters: Dict[str, Any], name: x509.GeneralName, discriminated: Type[Any]) -> None:
+def test_general_name(parameters: dict[str, Any], name: x509.GeneralName, discriminated: type[Any]) -> None:
     """Test GeneralNameModel."""
     model = assert_cryptography_model(GeneralNameModel, parameters, name)
 

@@ -18,7 +18,7 @@ import argparse
 import getpass
 import typing
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -55,7 +55,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], 
     The main purpose of this class is to improve type hinting.
     """
 
-    type: Type[ActionType]
+    type: type[ActionType]
 
     @abc.abstractmethod
     def parse_value(self, value: ParseType) -> ActionType:
@@ -559,13 +559,13 @@ class UserNoticeAction(argparse.Action):
 class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType], metaclass=abc.ABCMeta):
     """Base class for actions that return a cryptography ExtensionType instance."""
 
-    extension_type: Type[ExtensionType]
+    extension_type: type[ExtensionType]
 
 
 class AlternativeNameLegacyAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
     """Action for AlternativeName extensions."""
 
-    def __init__(self, extension_type: Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
+    def __init__(self, extension_type: type[AlternativeNameExtensionType], **kwargs: Any) -> None:
         self.extension_type = extension_type
         super().__init__(**kwargs)
 
@@ -605,7 +605,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
     <SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>
     """
 
-    def __init__(self, extension_type: Type[AlternativeNameExtensionType], **kwargs: Any) -> None:
+    def __init__(self, extension_type: type[AlternativeNameExtensionType], **kwargs: Any) -> None:
         self.extension_type = extension_type
         kwargs["metavar"] = "NAME"
         super().__init__(**kwargs)
@@ -709,10 +709,10 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: List[str],
+        values: list[str],
         option_string: Optional[str] = None,
     ) -> None:
-        usages: List[x509.ObjectIdentifier] = []
+        usages: list[x509.ObjectIdentifier] = []
 
         for value in values:
             if value in constants.EXTENDED_KEY_USAGE_OIDS:
@@ -763,7 +763,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: List[str],
+        values: list[str],
         option_string: Optional[str] = None,
     ) -> None:
         if invalid_usages := [ku for ku in values if ku not in KEY_USAGE_NAMES.values()]:
@@ -771,7 +771,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
                 self, f"{', '.join(sorted(set(invalid_usages)))}: Invalid key usage."
             )
 
-        key_usages: Dict[str, bool] = {k: v in values for k, v in KEY_USAGE_NAMES.items()}
+        key_usages: dict[str, bool] = {k: v in values for k, v in KEY_USAGE_NAMES.items()}
         try:
             extension_type = x509.KeyUsage(**key_usages)
         except ValueError as ex:
@@ -793,7 +793,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: List[str],
+        values: list[str],
         option_string: Optional[str] = None,
     ) -> None:
         try:

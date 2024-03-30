@@ -28,7 +28,7 @@ class Tutorial:
     This class lets you easily render templates or run commands from a sphinx tutorial.
     """
 
-    def __init__(self, name: str, context: typing.Dict[str, typing.Any]) -> None:
+    def __init__(self, name: str, context: dict[str, typing.Any]) -> None:
         self.name = name
         self.context = context
         self.context["sphinx"] = False
@@ -62,7 +62,7 @@ class Tutorial:
 
 
 @contextmanager
-def start_tutorial(name: str, context: typing.Dict[str, typing.Any]) -> typing.Iterator[Tutorial]:
+def start_tutorial(name: str, context: dict[str, typing.Any]) -> typing.Iterator[Tutorial]:
     """Context manager to start a tutorial in a temporary directory."""
     with utils.tmpdir():
         yield Tutorial(name, context=context)

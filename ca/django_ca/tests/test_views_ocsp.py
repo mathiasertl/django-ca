@@ -17,7 +17,7 @@ import base64
 import typing
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Optional, Tuple, Type, Union
+from typing import Optional, Union
 from unittest import mock
 
 from cryptography import x509
@@ -218,7 +218,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         self,
         certificate: Union[Certificate, CertificateAuthority],
         response: ocsp.OCSPSingleResponse,
-        hash_algorithm: Type[hashes.HashAlgorithm] = hashes.SHA256,
+        hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
     ) -> None:
         """Assert properties of OCSP Single responses.
 
@@ -236,9 +236,9 @@ class OCSPViewTestMixin(TestCaseMixin):
         nonce: Optional[bytes] = None,
         expires: int = 86400,
         responder_certificate: Optional[Certificate] = None,
-        signature_hash_algorithm: Optional[Type[hashes.HashAlgorithm]] = hashes.SHA256,
+        signature_hash_algorithm: Optional[type[hashes.HashAlgorithm]] = hashes.SHA256,
         signature_algorithm_oid: x509.ObjectIdentifier = SignatureAlgorithmOID.RSA_WITH_SHA256,
-        single_response_hash_algorithm: Type[hashes.HashAlgorithm] = hashes.SHA256,
+        single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
     ) -> None:
         """Assert an OCSP request."""
         if responder_certificate is None:
@@ -291,7 +291,7 @@ class OCSPViewTestMixin(TestCaseMixin):
 
     def generate_ocsp_key(
         self, ca: CertificateAuthority
-    ) -> Tuple[CertificateIssuerPrivateKeyTypes, Certificate]:
+    ) -> tuple[CertificateIssuerPrivateKeyTypes, Certificate]:
         """Generate an OCSP key for the given CA and return private kay and public key model instance."""
         key_backend_options = UsePrivateKeyOptions(password=CERT_DATA[ca.name].get("password"))
         priv_path, _cert_path, ocsp_cert = ca.generate_ocsp_key(key_backend_options)  # type: ignore[misc]
@@ -305,7 +305,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         self,
         certificate: Certificate,
         nonce: Optional[bytes] = None,
-        hash_algorithm: Type[hashes.HashAlgorithm] = hashes.SHA256,
+        hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
     ) -> "HttpResponse":
         """Make an OCSP get request."""
         builder = ocsp.OCSPRequestBuilder()

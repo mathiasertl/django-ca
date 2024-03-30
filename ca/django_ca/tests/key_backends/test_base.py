@@ -14,7 +14,7 @@
 """Test key backend base class."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from unittest.mock import patch
 
 from pydantic import BaseModel
@@ -54,7 +54,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
         return None
 
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: Dict[str, Any]
+        self, key_type: ParsableKeyType, options: dict[str, Any]
     ) -> DummyModel:
         return DummyModel()
 
@@ -62,20 +62,20 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
         return None
 
     def get_use_parent_private_key_options(
-        self, ca: CertificateAuthority, options: Dict[str, Any]
+        self, ca: CertificateAuthority, options: dict[str, Any]
     ) -> DummyModel:
         return DummyModel()
 
-    def get_store_private_key_options(self, options: Dict[str, Any]) -> DummyModel:
+    def get_store_private_key_options(self, options: dict[str, Any]) -> DummyModel:
         return DummyModel()
 
     def create_private_key(
         self, ca: CertificateAuthority, key_type: ParsableKeyType, options: DummyModel
-    ) -> Tuple[CertificateIssuerPublicKeyTypes, DummyModel]:
+    ) -> tuple[CertificateIssuerPublicKeyTypes, DummyModel]:
         return None, DummyModel()  # type: ignore[return-value]
 
     def get_use_private_key_options(
-        self, ca: Optional[CertificateAuthority], options: Dict[str, Any]
+        self, ca: Optional[CertificateAuthority], options: dict[str, Any]
     ) -> DummyModel:
         return DummyModel()
 
@@ -106,7 +106,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: List[x509.Extension[x509.ExtensionType]],
+        extensions: list[x509.Extension[x509.ExtensionType]],
     ) -> x509.Certificate:
         return None  # type: ignore[return-value]
 

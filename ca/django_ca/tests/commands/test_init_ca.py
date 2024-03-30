@@ -16,7 +16,7 @@
 import io
 import re
 from datetime import timedelta
-from typing import Any, List, Optional
+from typing import Any, Optional
 from unittest import mock
 
 from cryptography import x509
@@ -145,7 +145,7 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
 
 
 def init_ca_e2e(
-    name: str, subject: str, *args: str, chain: Optional[List[CertificateAuthority]] = None
+    name: str, subject: str, *args: str, chain: Optional[list[CertificateAuthority]] = None
 ) -> CertificateAuthority:
     """Run a init_ca command via cmd_e2e()."""
     if chain is None:

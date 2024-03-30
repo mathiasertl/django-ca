@@ -16,7 +16,6 @@
 import json
 import typing
 from http import HTTPStatus
-from typing import Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -90,7 +89,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
     @classmethod
     def create_csr(
         cls, subject: x509.Name
-    ) -> Tuple[CertificateIssuerPrivateKeyTypes, x509.CertificateSigningRequest]:
+    ) -> tuple[CertificateIssuerPrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
         builder = x509.CertificateSigningRequestBuilder()

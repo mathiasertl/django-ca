@@ -15,7 +15,7 @@
 
 import base64
 import typing
-from typing import Any, List
+from typing import Any
 
 from pydantic import BeforeValidator, ConfigDict, Field, model_validator
 
@@ -112,7 +112,7 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
         return x509.NameAttribute(oid=oid, value=self.value)
 
 
-class NameModel(CryptographyRootModel[List[NameAttributeModel], x509.Name]):
+class NameModel(CryptographyRootModel[list[NameAttributeModel], x509.Name]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.Name`.
 
     This model is a Pydantic :py:class:`~pydantic.root_model.RootModel` that takes a list of
@@ -130,7 +130,7 @@ class NameModel(CryptographyRootModel[List[NameAttributeModel], x509.Name]):
     ])
     """
 
-    root: List[NameAttributeModel] = Field(
+    root: list[NameAttributeModel] = Field(
         json_schema_extra={
             "format": "X.501 Name",
             "example": [

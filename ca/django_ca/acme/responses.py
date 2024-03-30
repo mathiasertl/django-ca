@@ -14,7 +14,7 @@
 """Collection of Django HTTP response subclasses representing ACME responses."""
 
 from http import HTTPStatus
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 from acme import messages
 
@@ -32,7 +32,7 @@ class AcmeResponse(JsonResponse):
 class AcmeSimpleResponse(AcmeResponse):
     """Base class for all responses returning an ACME recourses (accounts, etc.)."""
 
-    message_cls: Type[messages.ResourceBody]
+    message_cls: type[messages.ResourceBody]
 
     def __init__(self, **kwargs: Any):
         super().__init__(self.message_cls(**kwargs).to_json())

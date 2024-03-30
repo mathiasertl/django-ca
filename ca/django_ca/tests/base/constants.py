@@ -22,7 +22,7 @@ import typing
 from datetime import datetime, timedelta, timezone as tz
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import packaging.version
 
@@ -46,7 +46,7 @@ except ImportError:  # pragma: only py<3.11
     import tomli as tomllib  # type: ignore[no-redef]
 
 
-def _load_latest_version(versions: List[str]) -> Tuple[int, int]:
+def _load_latest_version(versions: list[str]) -> tuple[int, int]:
     parsed_versions = [tuple(int(e) for e in v.split("."))[:2] for v in versions]
     return sorted(parsed_versions)[-1]  # type: ignore[return-value]
 
@@ -322,7 +322,7 @@ CERT_DATA["cloudflare_1"] = {
 }
 
 
-def _load_key(data: Dict[Any, Any]) -> KeyDict:
+def _load_key(data: dict[Any, Any]) -> KeyDict:
     with open(data["key_path"], "rb") as stream:
         raw = stream.read()
 
@@ -333,7 +333,7 @@ def _load_key(data: Dict[Any, Any]) -> KeyDict:
     return {"parsed": typing.cast(CertificateIssuerPrivateKeyTypes, parsed)}
 
 
-def _load_csr(data: Dict[Any, Any]) -> CsrDict:
+def _load_csr(data: dict[Any, Any]) -> CsrDict:
     with open(FIXTURES_DIR / data["csr_filename"], "rb") as stream:
         raw = stream.read()
 
@@ -341,7 +341,7 @@ def _load_csr(data: Dict[Any, Any]) -> CsrDict:
     return {"parsed": parsed}
 
 
-def _load_pub(data: Dict[str, Any]) -> PubDict:
+def _load_pub(data: dict[str, Any]) -> PubDict:
     with open(data["pub_path"], "rb") as stream:
         key_data = stream.read()
 

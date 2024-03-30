@@ -18,7 +18,7 @@
 import ipaddress
 from datetime import timedelta
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -62,13 +62,13 @@ csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode(
 
 
 @pytest.fixture(scope="module")
-def api_permission() -> Tuple[Type[Model], str]:
+def api_permission() -> tuple[type[Model], str]:
     """Fixture for the permission required by this view."""
     return Certificate, "sign_certificate"
 
 
 @pytest.fixture()
-def expected_response() -> Dict[str, Any]:
+def expected_response() -> dict[str, Any]:
     """Fixture for the non-dynamic parts of the expected response."""
     return {
         "created": iso_format(TIMESTAMPS["everything_valid"]),
@@ -79,7 +79,7 @@ def expected_response() -> Dict[str, Any]:
     }
 
 
-def request(client: Client, data: Dict[str, Any]) -> HttpResponse:
+def request(client: Client, data: dict[str, Any]) -> HttpResponse:
     """Shortcut to run a request."""
     return client.post(path, data, content_type="application/json")
 
@@ -89,8 +89,8 @@ def sign_certificate(
     user: AbstractUser,
     client: Client,
     ca: CertificateAuthority,
-    data: Dict[str, Any],
-    expected_response: Dict[str, Any],
+    data: dict[str, Any],
+    expected_response: dict[str, Any],
     expected_algorithm: Optional[hashes.HashAlgorithm] = None,
 ) -> Certificate:
     """Common function to issue a certificate signing request."""
@@ -146,7 +146,7 @@ def test_sign_ca_values(
     api_user: AbstractUser,
     api_client: Client,
     usable_root: CertificateAuthority,
-    expected_response: Dict[str, Any],
+    expected_response: dict[str, Any],
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
 ) -> None:
     """Test that CA extensions are added."""
@@ -173,7 +173,7 @@ def test_private_key_unavailable(
     api_user: AbstractUser,
     api_client: Client,
     root: CertificateAuthority,
-    expected_response: Dict[str, Any],
+    expected_response: dict[str, Any],
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
 ) -> None:
     """Test the error when no private key is available."""
@@ -200,7 +200,7 @@ def test_sign_certificate_with_parameters(
     api_user: AbstractUser,
     api_client: Client,
     usable_root: CertificateAuthority,
-    expected_response: Dict[str, Any],
+    expected_response: dict[str, Any],
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
 ) -> None:
     """Test signing with parameters."""
@@ -230,7 +230,7 @@ def test_sign_certificate_with_extensions(
     api_user: AbstractUser,
     api_client: Client,
     usable_root: CertificateAuthority,
-    expected_response: Dict[str, Any],
+    expected_response: dict[str, Any],
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
 ) -> None:
     """Test signing certificates with extensions."""
@@ -389,7 +389,7 @@ def test_sign_certificate_with_subject_alternative_name(
     api_user: AbstractUser,
     api_client: Client,
     usable_root: CertificateAuthority,
-    expected_response: Dict[str, Any],
+    expected_response: dict[str, Any],
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
 ) -> None:
     """Test signing certificates with an additional subject alternative name."""

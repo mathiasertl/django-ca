@@ -17,7 +17,6 @@ import enum
 import typing
 from collections import defaultdict
 from types import MappingProxyType
-from typing import Tuple, Type
 
 import asn1crypto.core
 from cryptography import x509
@@ -62,7 +61,7 @@ ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = 
 DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
-ELLIPTIC_CURVE_TYPES: "MappingProxyType[EllipticCurves, Type[ec.EllipticCurve]]" = MappingProxyType(
+ELLIPTIC_CURVE_TYPES: "MappingProxyType[EllipticCurves, type[ec.EllipticCurve]]" = MappingProxyType(
     {
         "sect571r1": ec.SECT571R1,
         "sect409r1": ec.SECT409R1,
@@ -305,7 +304,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 )
 
 #: Map for types of general names.
-GENERAL_NAME_TYPES: "MappingProxyType[GeneralNames, Type[x509.GeneralName]]" = MappingProxyType(
+GENERAL_NAME_TYPES: "MappingProxyType[GeneralNames, type[x509.GeneralName]]" = MappingProxyType(
     {
         "email": x509.RFC822Name,
         "URI": x509.UniformResourceIdentifier,
@@ -316,12 +315,12 @@ GENERAL_NAME_TYPES: "MappingProxyType[GeneralNames, Type[x509.GeneralName]]" = M
         "otherName": x509.OtherName,
     }
 )
-GENERAL_NAME_NAMES: "MappingProxyType[Type[x509.GeneralName], GeneralNames]" = MappingProxyType(
+GENERAL_NAME_NAMES: "MappingProxyType[type[x509.GeneralName], GeneralNames]" = MappingProxyType(
     {v: k for k, v in GENERAL_NAME_TYPES.items()}
 )
 
 #: Map of hash algorithm types in cryptography to standard hash algorithm names.
-HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], HashAlgorithms]" = MappingProxyType(
+HASH_ALGORITHM_NAMES: "MappingProxyType[type[AllowedHashTypes], HashAlgorithms]" = MappingProxyType(
     {
         hashes.SHA224: "SHA-224",
         hashes.SHA256: "SHA-256",
@@ -343,7 +342,7 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[Type[AllowedHashTypes], HashAlgorithms]"
 )
 
 #: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
-HASH_ALGORITHM_TYPES: "MappingProxyType[HashAlgorithms, Type[AllowedHashTypes]]" = MappingProxyType(
+HASH_ALGORITHM_TYPES: "MappingProxyType[HashAlgorithms, type[AllowedHashTypes]]" = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
 )
 
@@ -502,7 +501,7 @@ OTHER_NAME_ALIASES: "MappingProxyType[str, OtherNames]" = MappingProxyType(
 )
 
 #: Tuple of supported public key types.
-PUBLIC_KEY_TYPES: Tuple[Type[CertificateIssuerPublicKeyTypes], ...] = (
+PUBLIC_KEY_TYPES: tuple[type[CertificateIssuerPublicKeyTypes], ...] = (
     dsa.DSAPublicKey,
     ec.EllipticCurvePublicKey,
     ed25519.Ed25519PublicKey,
@@ -511,14 +510,14 @@ PUBLIC_KEY_TYPES: Tuple[Type[CertificateIssuerPublicKeyTypes], ...] = (
 )
 
 #: Tuple of supported private key types.
-PRIVATE_KEY_TYPES: Tuple[Type[CertificateIssuerPrivateKeyTypes], ...] = (
+PRIVATE_KEY_TYPES: tuple[type[CertificateIssuerPrivateKeyTypes], ...] = (
     dsa.DSAPrivateKey,
     ec.EllipticCurvePrivateKey,
     ed25519.Ed25519PrivateKey,
     ed448.Ed448PrivateKey,
     rsa.RSAPrivateKey,
 )
-PARSABLE_KEY_TYPES: Tuple["ParsableKeyType", ...] = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
+PARSABLE_KEY_TYPES: tuple["ParsableKeyType", ...] = ("RSA", "DSA", "EC", "Ed25519", "Ed448")
 
 TLS_FEATURE_KEYS = MappingProxyType(
     {

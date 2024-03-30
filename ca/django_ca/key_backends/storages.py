@@ -16,7 +16,7 @@
 import typing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
@@ -208,7 +208,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self._add_password_argument(group)
 
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: Dict[str, Any]
+        self, key_type: ParsableKeyType, options: dict[str, Any]
     ) -> CreatePrivateKeyOptions:
         return CreatePrivateKeyOptions(
             key_type=key_type,
@@ -218,20 +218,20 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
             elliptic_curve=options[f"{self.options_prefix}elliptic_curve"],
         )
 
-    def get_store_private_key_options(self, options: Dict[str, Any]) -> StorePrivateKeyOptions:
+    def get_store_private_key_options(self, options: dict[str, Any]) -> StorePrivateKeyOptions:
         return StorePrivateKeyOptions(
             password=options[f"{self.options_prefix}password"], path=options[f"{self.options_prefix}path"]
         )
 
     def get_use_private_key_options(
-        self, ca: Optional["CertificateAuthority"], options: Dict[str, Any]
+        self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
             {"password": options.get(f"{self.options_prefix}password")}, context={"ca": ca}
         )
 
     def get_use_parent_private_key_options(
-        self, ca: "CertificateAuthority", options: Dict[str, Any]
+        self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
             {"password": options[f"{self.options_prefix}parent_password"]}, context={"ca": ca}
@@ -239,7 +239,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def create_private_key(
         self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
-    ) -> Tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
+    ) -> tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
         storage = storages[self.storage_alias]
 
         if options.password is None:
@@ -377,7 +377,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: List[x509.Extension[x509.ExtensionType]],
+        extensions: list[x509.Extension[x509.ExtensionType]],
     ) -> x509.Certificate:
         builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)

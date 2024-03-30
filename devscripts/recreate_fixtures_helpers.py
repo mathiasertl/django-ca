@@ -22,7 +22,7 @@ import shutil
 from collections.abc import Sequence
 from datetime import datetime, timezone as tz
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -75,7 +75,7 @@ class CertificateEncoder(json.JSONEncoder):
             return list(o)
         if isinstance(o, x509.Extension):
             if isinstance(o.value, x509.UnrecognizedExtension):
-                model_class: Type[ExtensionModel[Any]] = UnrecognizedExtensionModel
+                model_class: type[ExtensionModel[Any]] = UnrecognizedExtensionModel
             else:
                 model_class = EXTENSION_MODELS[o.oid]
             model = model_class.model_validate(o, context={"validate_required_critical": False})
@@ -125,7 +125,7 @@ def _create_csr(
     return csr
 
 
-def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: Dict[str, Any]) -> None:
+def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: dict[str, Any]) -> None:
     data["serial"] = cert.serial
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
@@ -179,7 +179,7 @@ def _copy_cert(dest: Path, cert: Certificate, data: CertFixtureData, key_path: P
 
 def _update_contrib(
     parsed: x509.Certificate,
-    data: Dict[str, Any],
+    data: dict[str, Any],
     cert: Union[Certificate, CertificateAuthority],
     name: str,
     filename: str,
@@ -203,7 +203,7 @@ def _update_contrib(
     data[name] = cert_data
 
 
-def _generate_contrib_files(data: Dict[str, Dict[str, Any]]) -> None:
+def _generate_contrib_files(data: dict[str, dict[str, Any]]) -> None:
     files_dir = config.DOCS_DIR / "source" / "_files"
     for filename in (files_dir / "ca").iterdir():
         name = filename.stem
@@ -257,7 +257,7 @@ def _generate_contrib_files(data: Dict[str, Dict[str, Any]]) -> None:
             raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
 
-def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> List[CertificateAuthority]:
+def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> list[CertificateAuthority]:
     """Create CAs."""
     ca_names = [v["name"] for k, v in data.items() if v.get("type") == "ca"]
 
@@ -308,7 +308,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
 
 
 def create_certs(
-    dest: Path, cas: Sequence[CertificateAuthority], now: datetime, delay: bool, data: Dict[str, Any]
+    dest: Path, cas: Sequence[CertificateAuthority], now: datetime, delay: bool, data: dict[str, Any]
 ) -> None:
     """Create regular certificates."""
     # let's create a standard certificate for every CA
@@ -500,9 +500,9 @@ def create_special_certs(  # noqa: PLR0915
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
-def regenerate_ocsp_files(dest: Path, data: CertFixtureData) -> Dict[str, OcspFixtureData]:
+def regenerate_ocsp_files(dest: Path, data: CertFixtureData) -> dict[str, OcspFixtureData]:
     """Regenerate OCSP example requests."""
-    ocsp_data: Dict[str, OcspFixtureData] = {
+    ocsp_data: dict[str, OcspFixtureData] = {
         "nonce": {"name": "nonce", "filename": "nonce.req"},
         "no-nonce": {"name": "no-nonce", "filename": "no-nonce.req"},
     }

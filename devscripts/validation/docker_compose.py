@@ -25,7 +25,7 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import requests
 import yaml
@@ -82,7 +82,7 @@ def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
     return subject
 
 
-def _run_py(container: str, code: str, env: Optional[Dict[str, str]] = None) -> str:
+def _run_py(container: str, code: str, env: Optional[dict[str, str]] = None) -> str:
     proc = _manage(container, "shell", "-c", code, capture_output=True, text=True, env=env)
     return typing.cast(str, proc.stdout)  # is a str because of text=True above
 
@@ -124,7 +124,7 @@ def _openssl_ocsp(
     )
 
 
-def _validate_container_versions(release: str, env: Optional[Dict[str, str]] = None) -> int:
+def _validate_container_versions(release: str, env: Optional[dict[str, str]] = None) -> int:
     errors = 0
     backend_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", env=env).strip()
     frontend_ver = _run_py("frontend", "import django_ca; print(django_ca.__version__)", env=env).strip()

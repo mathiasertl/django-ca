@@ -19,7 +19,7 @@
 import abc
 import typing
 from collections.abc import Sequence
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -86,7 +86,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
     _bytes: bytes
     _loaded: Optional[LoadedTypeVar] = None
     _pem_token: typing.ClassVar[bytes]
-    _type: Type[LoadedTypeVar]
+    _type: type[LoadedTypeVar]
 
     def __init__(self, value: DecodableTypeVar) -> None:
         """Constructor must accept a decodable type var."""
@@ -190,14 +190,14 @@ class LazyBinaryField(
 ):
     """Base class for binary fields that parse the value when first used."""
 
-    formfield_class: Type[forms.Field]
-    wrapper: Type[WrapperTypeVar]
+    formfield_class: type[forms.Field]
+    wrapper: type[WrapperTypeVar]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("editable", True)
         super().__init__(*args, **kwargs)
 
-    def deconstruct(self) -> Tuple[str, str, Sequence[str], Dict[str, str]]:
+    def deconstruct(self) -> tuple[str, str, Sequence[str], dict[str, str]]:
         """Used in migrations."""
         name, path, args, kwargs = super().deconstruct()
 
@@ -241,8 +241,8 @@ class LazyBinaryField(
 
     def formfield(
         self,
-        form_class: Optional[Type[forms.Field]] = None,
-        choices_form_class: Optional[Type[forms.ChoiceField]] = None,
+        form_class: Optional[type[forms.Field]] = None,
+        choices_form_class: Optional[type[forms.ChoiceField]] = None,
         **kwargs: Any,
     ) -> forms.Field:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
@@ -300,9 +300,9 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
     1. from_db_value() (with `value` being a string)
     """
 
-    extension_class: Type[ExtensionTypeTypeVar]
-    formfield_class: Type[fields.ExtensionField[ExtensionTypeTypeVar]]
-    model_class: Type[ExtensionModelTypeVar]
+    extension_class: type[ExtensionTypeTypeVar]
+    formfield_class: type[fields.ExtensionField[ExtensionTypeTypeVar]]
+    model_class: type[ExtensionModelTypeVar]
     default_error_messages = {  # noqa: RUF012  # defined in base class, cannot be overwritten
         "unparsable-extension": _("The value cannot be parsed to an extension."),
         "invalid-type": _("%(value)s: Not a cryptography.x509.Extension class."),
@@ -327,8 +327,8 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
 
     def formfield(
         self,
-        form_class: Optional[Type[forms.Field]] = None,
-        choices_form_class: Optional[Type[forms.ChoiceField]] = None,
+        form_class: Optional[type[forms.Field]] = None,
+        choices_form_class: Optional[type[forms.ChoiceField]] = None,
         **kwargs: Any,
     ) -> forms.Field:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
@@ -496,12 +496,12 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
         return x509.UserNotice(notice_reference=notice_reference, explicit_text=value.get("explicit_text"))
 
     def _parse_policy_qualifiers(
-        self, value: Optional[List[Union[str, SerializedUserNotice]]]
-    ) -> Optional[List[Union[str, x509.UserNotice]]]:
+        self, value: Optional[list[Union[str, SerializedUserNotice]]]
+    ) -> Optional[list[Union[str, x509.UserNotice]]]:
         if value is None:
             return None
 
-        qualifiers: List[Union[str, x509.UserNotice]] = []
+        qualifiers: list[Union[str, x509.UserNotice]] = []
 
         for qual in value:
             if isinstance(qual, str):
@@ -511,9 +511,9 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
         return qualifiers
 
     def _parse_certificate_policies(
-        self, value: List[SerializedPolicyInformation]
+        self, value: list[SerializedPolicyInformation]
     ) -> x509.CertificatePolicies:
-        policies: List[x509.PolicyInformation] = []
+        policies: list[x509.PolicyInformation] = []
         for pol in value:
             identifier = x509.ObjectIdentifier(pol["policy_identifier"])
             qualifiers = self._parse_policy_qualifiers(pol.get("policy_qualifiers"))
@@ -533,8 +533,8 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
         if not isinstance(critical, bool):
             raise self.unparsable(value)
 
-        serialized_certificate_policies: List[SerializedPolicyInformation] = typing.cast(
-            List[SerializedPolicyInformation], value.get("value")
+        serialized_certificate_policies: list[SerializedPolicyInformation] = typing.cast(
+            list[SerializedPolicyInformation], value.get("value")
         )
         if not isinstance(serialized_certificate_policies, list):
             raise self.unparsable(value)

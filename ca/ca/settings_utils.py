@@ -17,7 +17,7 @@ import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -57,7 +57,7 @@ def get_settings_files(base_dir: Path, paths: str) -> Iterator[Path]:
         yield settings_yaml
 
 
-def load_settings_from_files(base_dir: Path) -> Iterator[Tuple[str, Any]]:
+def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
     """Load settings from YAML files."""
     # TYPEHINT NOTE: mypy typehints this to a module in the initial import statement
     if yaml is False:  # type: ignore[comparison-overlap]
@@ -82,14 +82,13 @@ def load_settings_from_files(base_dir: Path) -> Iterator[Tuple[str, Any]]:
             raise ImproperlyConfigured(f"{full_path}: File is not a key/value mapping.")
         else:
             settings_files.append(full_path)
-            for key, value in data.items():
-                yield key, value
+            yield from data.items()
 
     # ALSO yield the SETTINGS_FILES setting with the loaded files.
     yield "SETTINGS_FILES", tuple(settings_files)
 
 
-def load_settings_from_environment() -> Iterator[Tuple[str, Any]]:
+def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
     """Load settings from the environment."""
     for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files
@@ -109,7 +108,7 @@ def parse_bool(value: str) -> bool:
 
 
 def _set_db_setting(
-    databases: Dict[str, Dict[str, Any]], name: str, env_name: str, default: Optional[str] = None
+    databases: dict[str, dict[str, Any]], name: str, env_name: str, default: Optional[str] = None
 ) -> None:
     if databases["default"].get(name):
         return
@@ -123,7 +122,7 @@ def _set_db_setting(
         databases["default"][name] = default
 
 
-def update_database_setting_from_environment(databases: Dict[str, Dict[str, Any]]) -> None:
+def update_database_setting_from_environment(databases: dict[str, dict[str, Any]]) -> None:
     """Update the DATABASES dict with Docker-style environment variables."""
     # use POSTGRES_* environment variables from the postgres Docker image
     if databases["default"]["ENGINE"] in (
