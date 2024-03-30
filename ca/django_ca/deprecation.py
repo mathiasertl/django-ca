@@ -39,9 +39,26 @@ class RemovedInDjangoCA200Warning(PendingDeprecationWarning):
     version = "2.0"
 
 
+class RemovedInDjangoCA210Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==2.1."""
+
+    version = "2.1"
+
+
+class RemovedInDjangoCA220Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca==2.2."""
+
+    version = "2.2"
+
+
 RemovedInNextVersionWarning = RemovedInDjangoCA200Warning
 
-DeprecationWarningType = Union[Type[RemovedInDjangoCA129Warning], Type[RemovedInDjangoCA200Warning]]
+DeprecationWarningType = Union[
+    Type[RemovedInDjangoCA129Warning],
+    Type[RemovedInDjangoCA200Warning],
+    Type[RemovedInDjangoCA210Warning],
+    Type[RemovedInDjangoCA220Warning],
+]
 
 
 def deprecate_argument(

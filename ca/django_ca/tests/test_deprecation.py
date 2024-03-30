@@ -14,47 +14,28 @@
 """Test :py:mod:`django_ca.deprecation`."""
 
 import contextlib
-import warnings
 from typing import Any, Iterator
 
 from django.test import TestCase
 
+import pytest
+
 from django_ca.deprecation import (
     DeprecationWarningType,
-    RemovedInDjangoCA129Warning,
     RemovedInDjangoCA200Warning,
+    RemovedInDjangoCA210Warning,
+    RemovedInDjangoCA220Warning,
     RemovedInNextVersionWarning,
     deprecate_argument,
 )
 
 
-class TestDjangoCATestCase(TestCase):
-    """Test :py:mod:`django_ca.deprecation`."""
-
-    msg_in_129 = "deprecated in 1.29"
-    msg_in_200 = "deprecated in 2.0"
-    msg_in_next = "deprecated in next version"
-
-    def deprecated_in_129(self) -> None:
-        """Emit a message about deprecation in 1.29."""
-        warnings.warn(self.msg_in_129, category=RemovedInDjangoCA129Warning)  # noqa: B028
-
-    def deprecated_in_200(self) -> None:
-        """Emit a message about deprecation in 2.0."""
-        warnings.warn(self.msg_in_200, category=RemovedInDjangoCA200Warning)  # noqa: B028
-
-    def deprecated_in_next(self) -> None:
-        """Emit a message about deprecation in the next version."""
-        warnings.warn(self.msg_in_next, category=RemovedInNextVersionWarning)  # noqa: B028
-
-    def test_base(self) -> None:
-        """Test warning messages."""
-        with self.assertWarnsRegex(RemovedInDjangoCA129Warning, rf"^{self.msg_in_129}$"):
-            self.deprecated_in_129()
-        with self.assertWarnsRegex(RemovedInNextVersionWarning, rf"^{self.msg_in_next}$"):
-            self.deprecated_in_next()
-        with self.assertWarnsRegex(RemovedInDjangoCA200Warning, rf"^{self.msg_in_200}$"):
-            self.deprecated_in_200()
+@pytest.mark.parametrize(
+    "cls", (RemovedInDjangoCA200Warning, RemovedInDjangoCA210Warning, RemovedInDjangoCA220Warning)
+)
+def test_deprecation_warnings(cls: PendingDeprecationWarning) -> None:
+    """Test versions in deprecation warnings."""
+    assert cls.__name__ == f"RemovedInDjangoCA{cls.version.replace('.', '')}0Warning"
 
 
 class DeprecateArgumentTestCase(TestCase):
