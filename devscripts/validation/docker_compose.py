@@ -21,10 +21,11 @@ import subprocess
 import tempfile
 import time
 import typing
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Iterator, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import requests
 import yaml

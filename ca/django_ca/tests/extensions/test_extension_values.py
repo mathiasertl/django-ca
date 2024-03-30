@@ -35,15 +35,12 @@ from django_ca.typehints import (
     SerializedObjectIdentifier,
 )
 
-_ExtensionExampleDict = typing.TypedDict(
-    "_ExtensionExampleDict",
-    {
-        "admin_html": str,
-        "serialized": Any,
-        "extension_type": x509.ExtensionType,
-        "text": "str",
-    },
-)
+
+class _ExtensionExampleDict(typing.TypedDict):
+    admin_html: str
+    serialized: Any
+    extension_type: x509.ExtensionType
+    text: "str"
 
 
 class ExtensionExampleDict(_ExtensionExampleDict, total=False):

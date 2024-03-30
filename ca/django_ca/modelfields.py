@@ -18,7 +18,8 @@
 
 import abc
 import typing
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
+from collections.abc import Sequence
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from pydantic import ValidationError as PydanticValidationError
 

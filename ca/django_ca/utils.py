@@ -18,9 +18,10 @@ import re
 import shlex
 import typing
 import warnings
+from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone as tz
 from ipaddress import ip_address, ip_network
-from typing import Iterator, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import idna

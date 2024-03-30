@@ -62,9 +62,14 @@ class FixtureData(typing.TypedDict):
     certs: Dict[str, CertFixtureData]
 
 
-KeyDict = typing.TypedDict("KeyDict", {"parsed": CertificateIssuerPrivateKeyTypes})
-PubDict = typing.TypedDict("PubDict", {"pem": str, "parsed": x509.Certificate, "der": bytes})
-CsrDict = typing.TypedDict("CsrDict", {"parsed": x509.CertificateSigningRequest})
+class KeyDict(typing.TypedDict):
+    parsed: CertificateIssuerPrivateKeyTypes
+class PubDict(typing.TypedDict):
+    pem: str
+    parsed: x509.Certificate
+    der: bytes
+class CsrDict(typing.TypedDict):
+    parsed: x509.CertificateSigningRequest
 
 
 class CaptureOnCommitCallbacks(Protocol):

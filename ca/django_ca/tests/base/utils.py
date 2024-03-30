@@ -22,10 +22,11 @@ import re
 import shutil
 import tempfile
 import typing
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO, StringIO
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from unittest import mock
 
 from cryptography import x509

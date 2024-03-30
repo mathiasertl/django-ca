@@ -17,8 +17,9 @@ import os
 import shlex
 import subprocess
 import tempfile
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from typing import Any, Iterable, Iterator, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding

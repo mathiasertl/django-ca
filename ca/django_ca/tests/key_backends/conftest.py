@@ -13,7 +13,7 @@
 
 """Test fixtures for testing key backends."""
 
-from typing import Iterator
+from collections.abc import Iterator
 
 import pytest
 

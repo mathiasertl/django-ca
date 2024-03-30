@@ -16,7 +16,8 @@
 import abc
 import json
 import typing
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from collections.abc import Iterable
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from pydantic import ValidationError as PydanticValidationError
 

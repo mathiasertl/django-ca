@@ -15,7 +15,8 @@
 import json
 import logging
 import typing
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from collections.abc import Iterable
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID

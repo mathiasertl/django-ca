@@ -14,7 +14,8 @@
 """Django model managers."""
 
 import typing
-from typing import Any, Dict, Generic, Iterable, List, Optional, TypeVar, Union
+from collections.abc import Iterable
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 

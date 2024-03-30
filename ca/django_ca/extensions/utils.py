@@ -14,7 +14,8 @@
 """``django_ca.extensions.utils`` contains various utility classes used by X.509 extensions."""
 
 import typing
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from collections.abc import Iterator
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp

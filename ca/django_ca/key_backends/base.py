@@ -15,9 +15,10 @@
 
 import abc
 import typing
+from collections.abc import Iterator
 from datetime import datetime
 from threading import local
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from pydantic import BaseModel
 

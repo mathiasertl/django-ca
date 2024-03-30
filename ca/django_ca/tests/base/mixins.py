@@ -18,10 +18,11 @@ import json
 import re
 import textwrap
 import typing
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from unittest import mock
 from urllib.parse import quote
 

@@ -13,7 +13,8 @@
 
 """Module to parse serialized extensions into cryptography objects."""
 
-from typing import Dict, Iterable, Iterator, List, Optional, Union
+from collections.abc import Iterable, Iterator
+from typing import Dict, List, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID

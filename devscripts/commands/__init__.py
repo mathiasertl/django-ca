@@ -21,7 +21,8 @@ import pkgutil
 import subprocess
 import sys
 import typing
-from typing import Any, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Tuple, Union
 
 import django
 

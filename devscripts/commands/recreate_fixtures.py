@@ -592,7 +592,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
             cert_values["password"] = cert_values["password"].decode("utf-8")
 
     if only_contrib:
-        with open(out_path, "r", encoding="utf-8") as stream:
+        with open(out_path, encoding="utf-8") as stream:
             fixture_data = json.load(stream)
         fixture_data["certs"].update(data)
     else:

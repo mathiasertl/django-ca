@@ -123,5 +123,5 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
             try:
                 with open(path, "wb") as stream:
                     stream.write(crl)
-            except IOError as ex:
+            except OSError as ex:
                 raise CommandError(ex) from ex

@@ -19,9 +19,10 @@ The test suite should be sufficiently modular to still run without errors after 
 import json
 import os
 import shutil
+from collections.abc import Sequence
 from datetime import datetime, timezone as tz
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -289,7 +290,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 data[name]["name"],
                 key_backend,
                 key_backend_options,
-                subject=x509.Name(parse_serialized_name_attributes((data[name]["subject"]))),
+                subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
                 expires=datetime.now(tz=tz.utc) + data[name]["expires"],
                 key_type=data[name]["key_type"],
                 algorithm=data[name].get("algorithm"),

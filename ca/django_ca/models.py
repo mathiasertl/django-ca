@@ -24,9 +24,10 @@ import random
 import re
 import typing
 from collections import OrderedDict
+from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import josepy as jose
 from acme import challenges, messages

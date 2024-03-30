@@ -17,8 +17,9 @@
 
 import copy
 import os
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, List
+from typing import List
 
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID

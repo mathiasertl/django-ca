@@ -23,9 +23,10 @@ import subprocess
 import tempfile
 import time
 import typing
+from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import yaml
 

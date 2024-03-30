@@ -18,9 +18,10 @@
 
 import logging
 import typing
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 

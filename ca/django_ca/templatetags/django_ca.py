@@ -13,7 +13,8 @@
 
 """Template tags used by the admin interface."""
 
-from typing import Any, Iterable, List, Union
+from collections.abc import Iterable
+from typing import Any, List, Union
 
 from cryptography import x509
 

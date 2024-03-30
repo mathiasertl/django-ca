@@ -18,7 +18,8 @@
 import importlib.metadata
 import os
 import sys
-from typing import Any, Iterator, List, Type
+from collections.abc import Iterator
+from typing import Any, List, Type
 
 import coverage
 

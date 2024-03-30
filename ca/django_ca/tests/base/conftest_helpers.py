@@ -17,8 +17,9 @@ import os
 import shutil
 import sys
 import typing
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import coverage
 import packaging

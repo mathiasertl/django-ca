@@ -13,8 +13,9 @@
 
 """Mocks used in the test suite."""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 from unittest import mock
 
 from django.db import models

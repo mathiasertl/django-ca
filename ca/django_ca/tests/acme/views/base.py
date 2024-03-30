@@ -16,9 +16,10 @@
 import abc
 import json
 import typing
+from collections.abc import Iterator
 from contextlib import contextmanager
 from http import HTTPStatus
-from typing import Any, Dict, Iterator, Optional, Tuple, Type, Union
+from typing import Any, Dict, Optional, Tuple, Type, Union
 from unittest import mock
 
 import acme

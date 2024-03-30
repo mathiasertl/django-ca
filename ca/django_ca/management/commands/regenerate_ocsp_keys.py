@@ -16,8 +16,9 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+from collections.abc import Iterable
 from datetime import timedelta
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 from pydantic import ValidationError
 

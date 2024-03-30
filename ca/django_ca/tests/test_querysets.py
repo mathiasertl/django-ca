@@ -13,8 +13,9 @@
 
 """Test querysets."""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from django.db import models
 from django.test import TestCase, TransactionTestCase, override_settings

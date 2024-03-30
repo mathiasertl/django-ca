@@ -16,9 +16,10 @@
 import argparse
 import os
 import sys
+from collections.abc import Iterator
 from datetime import timedelta
 from io import StringIO
-from typing import Any, Iterator, List
+from typing import Any, List
 from unittest import mock
 
 from cryptography import x509

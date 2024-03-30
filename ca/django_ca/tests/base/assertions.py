@@ -16,9 +16,10 @@
 import io
 import re
 import typing
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import AnyStr, Iterable, Iterator, List, Optional, Tuple, Type, Union
+from typing import AnyStr, List, Optional, Tuple, Type, Union
 from unittest.mock import Mock
 
 from cryptography import x509

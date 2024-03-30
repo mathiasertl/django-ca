@@ -15,9 +15,10 @@
 
 import typing
 import warnings
+from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta
 from threading import local
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 

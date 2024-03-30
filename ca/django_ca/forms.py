@@ -14,8 +14,9 @@
 """Specialized Django forms for the admin interface."""
 
 import typing
+from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes

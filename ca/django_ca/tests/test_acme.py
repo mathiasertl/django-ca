@@ -14,9 +14,10 @@
 """Test some common ACME functionality."""
 
 import typing
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from importlib import reload
-from typing import Any, Dict, Iterable, Iterator, Optional
+from typing import Any, Dict, Optional
 from unittest import mock
 
 import acme

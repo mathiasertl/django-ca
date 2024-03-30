@@ -18,9 +18,10 @@ import itertools
 import os
 import typing
 import unittest
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
-from typing import Iterable, List, Tuple, Type
+from typing import List, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes

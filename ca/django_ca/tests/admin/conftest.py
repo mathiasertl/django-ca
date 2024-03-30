@@ -13,7 +13,7 @@
 
 """Extra fixtures for tests for the admin interface."""
 
-from typing import Iterator
+from collections.abc import Iterator
 
 from django.test import Client
 from django.urls import reverse

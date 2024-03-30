@@ -23,9 +23,10 @@ import abc
 import logging
 import secrets
 import typing
+from collections.abc import Iterable
 from datetime import datetime, timezone as tz
 from http import HTTPStatus
-from typing import Dict, Generic, Iterable, List, Optional, Set, Type, TypeVar, Union, cast
+from typing import Dict, Generic, List, Optional, Set, Type, TypeVar, Union, cast
 
 import acme.jws
 import josepy as jose

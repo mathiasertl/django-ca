@@ -16,8 +16,9 @@
 import argparse
 import os
 import typing
+from collections.abc import Iterable, Sequence
 from datetime import timedelta
-from typing import Dict, Iterable, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Union
 
 from tabulate import tabulate
 

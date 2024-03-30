@@ -14,7 +14,8 @@
 """Test the regenerate_ocsp_keys management command."""
 
 import typing
-from typing import Any, Iterable, Optional, Tuple, Type
+from collections.abc import Iterable
+from typing import Any, Optional, Tuple, Type
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa

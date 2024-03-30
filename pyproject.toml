@@ -429,6 +429,7 @@ extend-select = [
     "G",  # flake8-logging-format
     "DJ",  # flake8-django
     "PL",  # pylint
+    "UP",  # pyupgrade
     "RUF",  # ruff specific checks
 ]
 

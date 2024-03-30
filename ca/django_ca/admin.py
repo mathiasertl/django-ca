@@ -21,9 +21,10 @@ import functools
 import json
 import logging
 import typing
+from collections.abc import Iterator
 from datetime import date, datetime, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -123,7 +124,7 @@ FieldSets = Union[
 ]
 QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
 
-EXTENSION_FIELDS = tuple((key for key in CERTIFICATE_EXTENSIONS if key != "subject_alternative_name"))
+EXTENSION_FIELDS = tuple(key for key in CERTIFICATE_EXTENSIONS if key != "subject_alternative_name")
 
 
 @admin.register(Watcher)

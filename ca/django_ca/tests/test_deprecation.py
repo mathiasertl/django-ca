@@ -14,7 +14,8 @@
 """Test :py:mod:`django_ca.deprecation`."""
 
 import contextlib
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 from django.test import TestCase
 

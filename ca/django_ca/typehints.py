@@ -17,8 +17,9 @@ import argparse
 import ipaddress
 import sys
 import typing
+from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -35,7 +36,7 @@ if typing.TYPE_CHECKING:
     from django_ca import models
 
 if sys.version_info[:2] < (3, 9):  # pragma: only py<3.9
-    from typing_extensions import Annotated as Annotated  # noqa: PLC0414
+    from typing import Annotated as Annotated  # noqa: PLC0414
 else:  # pragma: only py>=3.9
     from typing import Annotated as Annotated  # noqa: PLC0414
 
@@ -82,84 +83,52 @@ ParsableSubject = Union[
 ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
-SerializedExtension = typing.TypedDict(
-    "SerializedExtension",
-    {
-        "critical": bool,
-        # Value should be a generic TypeVar, but this is not yet supported in mypy:
-        #   https://github.com/python/mypy/issues/3863
-        "value": Any,
-    },
-)
-SerializedObjectIdentifier = typing.TypedDict(
-    "SerializedObjectIdentifier",
-    {
-        "oid": str,
-        "value": str,
-    },
-)
+class SerializedExtension(typing.TypedDict):
+    critical: bool
+    value: Any
+class SerializedObjectIdentifier(typing.TypedDict):
+    oid: str
+    value: str
 SerializedName = List[SerializedObjectIdentifier]
 
 
 # Looser variants of the above for incoming arguments
-ParsableNoticeReference = typing.TypedDict(
-    "ParsableNoticeReference", {"organization": str, "notice_numbers": Iterable[int]}, total=False
-)
-ParsableUserNotice = typing.TypedDict(
-    "ParsableUserNotice",
-    {"notice_reference": Union[x509.NoticeReference, ParsableNoticeReference], "explicit_text": str},
-    total=False,
-)
+class ParsableNoticeReference(typing.TypedDict, total=False):
+    organization: str
+    notice_numbers: Iterable[int]
+class ParsableUserNotice(typing.TypedDict, total=False):
+    notice_reference: Union[x509.NoticeReference, ParsableNoticeReference]
+    explicit_text: str
 
 # Parsable arguments
-ParsableDistributionPoint = typing.TypedDict(
-    "ParsableDistributionPoint",
-    {
-        "full_name": Optional[ParsableGeneralNameList],
-        "relative_name": Union[SerializedName, x509.RelativeDistinguishedName],
-        "crl_issuer": ParsableGeneralNameList,
-        "reasons": Iterable[Union[str, x509.ReasonFlags]],
-    },
-    total=False,
-)
+class ParsableDistributionPoint(typing.TypedDict, total=False):
+    full_name: Optional[ParsableGeneralNameList]
+    relative_name: Union[SerializedName, x509.RelativeDistinguishedName]
+    crl_issuer: ParsableGeneralNameList
+    reasons: Iterable[Union[str, x509.ReasonFlags]]
 ParsablePolicyQualifier = Union[str, x509.UserNotice, ParsableUserNotice]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
-ParsablePolicyInformation = typing.TypedDict(
-    "ParsablePolicyInformation",
-    {
-        "policy_identifier": ParsablePolicyIdentifier,
-        "policy_qualifiers": Optional[typing.Sequence[ParsablePolicyQualifier]],
-    },
-    total=False,
-)
+class ParsablePolicyInformation(typing.TypedDict, total=False):
+    policy_identifier: ParsablePolicyIdentifier
+    policy_qualifiers: Optional[typing.Sequence[ParsablePolicyQualifier]]
 
 PolicyQualifier = Union[str, x509.UserNotice]
 
-ParsableExtension = typing.TypedDict(
-    "ParsableExtension",
-    {
-        "critical": bool,
-        # Value should be a generic TypeVar, but this is not yet supported in mypy:
-        #   https://github.com/python/mypy/issues/3863
-        "value": Any,
-    },
-    total=False,
-)
+class ParsableExtension(typing.TypedDict, total=False):
+    critical: bool
+    value: Any
 
 
-BasicConstraintsBase = typing.TypedDict("BasicConstraintsBase", {"ca": bool})
-ParsableAuthorityKeyIdentifierDict = typing.TypedDict(
-    "ParsableAuthorityKeyIdentifierDict",
-    {
-        "key_identifier": Optional[bytes],
-        "authority_cert_issuer": Iterable[str],
-        "authority_cert_serial_number": Optional[int],
-    },
-    total=False,
-)
+class BasicConstraintsBase(typing.TypedDict):
+    ca: bool
+class ParsableAuthorityKeyIdentifierDict(typing.TypedDict, total=False):
+    key_identifier: Optional[bytes]
+    authority_cert_issuer: Iterable[str]
+    authority_cert_serial_number: Optional[int]
 
 
-SerializedNullExtension = typing.TypedDict("SerializedNullExtension", {"critical": bool})
+class SerializedNullExtension(typing.TypedDict):
+    critical: bool
 
 ############
 # Literals #
@@ -300,26 +269,23 @@ SignedCertificateTimestampTypeVar = typing.TypeVar(
 # Serialized Pydantic models #
 ##############################
 
-SerializedPydanticNameAttribute = typing.TypedDict(
-    "SerializedPydanticNameAttribute", {"oid": str, "value": str}
-)
+class SerializedPydanticNameAttribute(typing.TypedDict):
+    oid: str
+    value: str
 SerializedPydanticName = List[SerializedPydanticNameAttribute]
 
-SerializedPydanticExtension = typing.TypedDict(
-    "SerializedPydanticExtension", {"type": str, "critical": bool, "value": Any}
-)
+class SerializedPydanticExtension(typing.TypedDict):
+    type: str
+    critical: bool
+    value: Any
 
-SerializedProfile = typing.TypedDict(
-    "SerializedProfile",
-    {
-        "name": str,
-        "description": str,
-        "subject": Optional[SerializedPydanticName],
-        "algorithm": Optional[HashAlgorithms],
-        "extensions": List[SerializedPydanticExtension],
-        "clear_extensions": List[str],
-    },
-)
+class SerializedProfile(typing.TypedDict):
+    name: str
+    description: str
+    subject: Optional[SerializedPydanticName]
+    algorithm: Optional[HashAlgorithms]
+    extensions: List[SerializedPydanticExtension]
+    clear_extensions: List[str]
 
 
 #####################
@@ -327,23 +293,13 @@ SerializedProfile = typing.TypedDict(
 #####################
 # Collect JSON-serializable versions of cryptography values. Typehints in this section start with
 # "Serialized...".
-SerializedAuthorityInformationAccess = typing.TypedDict(
-    "SerializedAuthorityInformationAccess",
-    {
-        "issuers": List[str],
-        "ocsp": List[str],
-    },
-    total=False,
-)
-SerializedAuthorityKeyIdentifier = typing.TypedDict(
-    "SerializedAuthorityKeyIdentifier",
-    {
-        "key_identifier": str,
-        "authority_cert_issuer": List[str],
-        "authority_cert_serial_number": int,
-    },
-    total=False,
-)
+class SerializedAuthorityInformationAccess(typing.TypedDict, total=False):
+    issuers: List[str]
+    ocsp: List[str]
+class SerializedAuthorityKeyIdentifier(typing.TypedDict, total=False):
+    key_identifier: str
+    authority_cert_issuer: List[str]
+    authority_cert_serial_number: int
 
 
 class SerializedBasicConstraints(BasicConstraintsBase, total=False):
@@ -356,64 +312,40 @@ class SerializedBasicConstraints(BasicConstraintsBase, total=False):
     path_length: Optional[int]
 
 
-SerializedDistributionPoint = typing.TypedDict(
-    "SerializedDistributionPoint",
-    {
-        "full_name": List[str],
-        "relative_name": SerializedName,
-        "crl_issuer": List[str],
-        "reasons": List[str],
-    },
-    total=False,
-)
-SerializedDistributionPoints = typing.TypedDict(
-    "SerializedDistributionPoints",
-    {
-        "critical": bool,
-        "value": List[SerializedDistributionPoint],
-    },
-)
+class SerializedDistributionPoint(typing.TypedDict, total=False):
+    full_name: List[str]
+    relative_name: SerializedName
+    crl_issuer: List[str]
+    reasons: List[str]
+class SerializedDistributionPoints(typing.TypedDict):
+    critical: bool
+    value: List[SerializedDistributionPoint]
 
-SerializedNameConstraints = typing.TypedDict(
-    "SerializedNameConstraints",
-    {
-        "permitted": List[str],
-        "excluded": List[str],
-    },
-    total=False,
-)
-SerializedPolicyConstraints = typing.TypedDict(
-    "SerializedPolicyConstraints",
-    {
-        "inhibit_policy_mapping": int,
-        "require_explicit_policy": int,
-    },
-    total=False,
-)
+class SerializedNameConstraints(typing.TypedDict, total=False):
+    permitted: List[str]
+    excluded: List[str]
+class SerializedPolicyConstraints(typing.TypedDict, total=False):
+    inhibit_policy_mapping: int
+    require_explicit_policy: int
 
 # PolicyInformation serialization
-SerializedNoticeReference = typing.TypedDict(
-    "SerializedNoticeReference", {"organization": str, "notice_numbers": List[int]}, total=False
-)
-SerializedUserNotice = typing.TypedDict(
-    "SerializedUserNotice", {"explicit_text": str, "notice_reference": SerializedNoticeReference}, total=False
-)
+class SerializedNoticeReference(typing.TypedDict, total=False):
+    organization: str
+    notice_numbers: List[int]
+class SerializedUserNotice(typing.TypedDict, total=False):
+    explicit_text: str
+    notice_reference: SerializedNoticeReference
 SerializedPolicyQualifier = Union[str, SerializedUserNotice]
 SerializedPolicyQualifiers = List[SerializedPolicyQualifier]
-SerializedPolicyInformation = typing.TypedDict(
-    "SerializedPolicyInformation",
-    {"policy_identifier": str, "policy_qualifiers": Optional[SerializedPolicyQualifiers]},
-)
+class SerializedPolicyInformation(typing.TypedDict):
+    policy_identifier: str
+    policy_qualifiers: Optional[SerializedPolicyQualifiers]
 
-SerializedSignedCertificateTimestamp = typing.TypedDict(
-    "SerializedSignedCertificateTimestamp",
-    {
-        "log_id": str,
-        "timestamp": str,
-        "type": str,
-        "version": str,
-    },
-)
+class SerializedSignedCertificateTimestamp(typing.TypedDict):
+    log_id: str
+    timestamp: str
+    type: str
+    version: str
 """A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 
 ###################
@@ -423,14 +355,9 @@ SerializedSignedCertificateTimestamp = typing.TypedDict(
 # start with "Parsable...".
 
 ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
-ParsableAuthorityInformationAccess = typing.TypedDict(
-    "ParsableAuthorityInformationAccess",
-    {
-        "ocsp": Optional[ParsableGeneralNameList],
-        "issuers": Optional[ParsableGeneralNameList],
-    },
-    total=False,
-)
+class ParsableAuthorityInformationAccess(typing.TypedDict, total=False):
+    ocsp: Optional[ParsableGeneralNameList]
+    issuers: Optional[ParsableGeneralNameList]
 
 
 class ParsableBasicConstraints(BasicConstraintsBase, total=False):
@@ -443,23 +370,13 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     path_length: Union[int, str]
 
 
-ParsableNameConstraints = typing.TypedDict(
-    "ParsableNameConstraints",
-    {
-        "permitted": ParsableGeneralNameList,
-        "excluded": ParsableGeneralNameList,
-    },
-    total=False,
-)
+class ParsableNameConstraints(typing.TypedDict, total=False):
+    permitted: ParsableGeneralNameList
+    excluded: ParsableGeneralNameList
 
-ParsablePolicyConstraints = typing.TypedDict(
-    "ParsablePolicyConstraints",
-    {
-        "require_explicit_policy": int,
-        "inhibit_policy_mapping": int,
-    },
-    total=False,
-)
+class ParsablePolicyConstraints(typing.TypedDict, total=False):
+    require_explicit_policy: int
+    inhibit_policy_mapping: int
 ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]
 ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 

@@ -16,12 +16,13 @@
 import importlib
 import io
 import types
+from collections.abc import Iterator
 
 # import typing
 from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
 from unittest import mock
 
 import dns.resolver

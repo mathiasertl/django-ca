@@ -16,8 +16,8 @@
 import argparse
 import os
 import pathlib
+from collections.abc import Sequence
 from types import ModuleType
-from typing import Sequence
 
 from django.core.management.utils import get_random_secret_key
 

@@ -15,10 +15,11 @@
 
 import json
 import typing
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from unittest import mock
 
 from cryptography import x509

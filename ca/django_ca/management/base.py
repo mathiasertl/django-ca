@@ -140,7 +140,7 @@ class BinaryCommand(
             try:
                 with open(path, "wb") as stream:
                     stream.write(data)
-            except IOError as ex:
+            except OSError as ex:
                 raise CommandError(ex) from ex
 
 
