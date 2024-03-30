@@ -15,10 +15,9 @@
 
 import binascii
 import ipaddress
-import typing
 from datetime import datetime
 from ipaddress import ip_address, ip_network
-from typing import Any, Optional, Union
+from typing import Annotated, Any, Optional, Union, cast
 
 import idna
 from pydantic import BeforeValidator, Discriminator, Tag, TypeAdapter, model_validator
@@ -31,7 +30,7 @@ from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import OIDType
-from django_ca.typehints import Annotated, GeneralNames, IPAddressType, OtherNames
+from django_ca.typehints import GeneralNames, IPAddressType, OtherNames
 from django_ca.utils import encode_dns, encode_url, validate_email
 
 ip_address_classes = (
@@ -174,7 +173,7 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
     def cryptography(self) -> x509.OtherName:
         """Convert to a :py:class:`~cg:cryptography.x509.OtherName` instance."""
         if self.type == "OctetString":
-            hex_value = typing.cast(str, self.value)  # asserted by the validator
+            hex_value = cast(str, self.value)  # asserted by the validator
             value = asn1crypto.core.OctetString(bytes(bytearray.fromhex(hex_value))).dump()
         elif asn1_cls := constants.OTHER_NAME_TYPES.get(self.type):
             value = asn1_cls(self.value).dump()

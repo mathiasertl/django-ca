@@ -62,9 +62,20 @@ directly.
 
 import abc
 import base64
-import typing
 from types import MappingProxyType
-from typing import Any, Literal, Optional, TypeVar, Union
+from typing import (  # noqa: UP035  # see typing.Type usage below
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    NoReturn,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from pydantic import (
     AfterValidator,
@@ -102,7 +113,6 @@ from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.type_aliases import NonEmptyOrderedSet
 from django_ca.typehints import (
     AlternativeNameTypeVar,
-    Annotated,
     CRLExtensionTypeTypeVar,
     ExtensionTypeTypeVar,
     InformationAccessTypeVar,
@@ -112,7 +122,9 @@ from django_ca.typehints import (
     SignedCertificateTimestampTypeVar,
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
+    from typing import Self
+
     from pydantic.main import IncEx
 
 ###############
@@ -126,7 +138,7 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
     type: str = Field(repr=False)
     critical: bool
     value: Any
-    requires_critical: typing.ClassVar[Optional[bool]] = None
+    requires_critical: ClassVar[Optional[bool]] = None
 
     @field_validator("critical", mode="after")
     @classmethod
@@ -152,7 +164,7 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
     def extension_type(self) -> ExtensionTypeTypeVar:
         """ExtensionType subclass for this extension."""
 
-    if typing.TYPE_CHECKING:
+    if TYPE_CHECKING:
         # pylint: disable=unused-argument,missing-function-docstring
 
         def model_dump(  # type: ignore[override]
@@ -178,8 +190,9 @@ class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABC
 
     _extension_type: type[ExtensionTypeTypeVar]
 
+    # TYPEHINT NOTE: mypy complains when using type instead of Type.
     @classmethod
-    def get_extension_type_class(cls) -> type[ExtensionTypeTypeVar]:
+    def get_extension_type_class(cls) -> Type[ExtensionTypeTypeVar]:  # noqa: UP006
         """Get the :py:class:`~cg:cryptography.x509.ExtensionType` class configured via ``_extension_type``.
 
         Pydantic models will have a ``ModelPrivateAttr`` in class methods, instead of the actual configured
@@ -188,7 +201,7 @@ class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABC
 
             https://github.com/python/mypy/issues/5144
         """
-        private_attr = typing.cast(ModelPrivateAttr, cls._extension_type)
+        private_attr = cast(ModelPrivateAttr, cls._extension_type)
         return private_attr.default  # type: ignore[no-any-return]
 
 
@@ -261,7 +274,7 @@ class InformationAccessBaseModel(BaseExtensionModel[InformationAccessTypeVar]):
     """Base model for extensions with a list of access descriptions."""
 
     _extension_type: type[InformationAccessTypeVar]
-    _acceptable_oids: typing.ClassVar[tuple[str, ...]]
+    _acceptable_oids: ClassVar[tuple[str, ...]]
 
     value: NonEmptyOrderedSet[list[AccessDescriptionModel]]
 
@@ -276,7 +289,7 @@ class InformationAccessBaseModel(BaseExtensionModel[InformationAccessTypeVar]):
 
     @model_validator(mode="after")
     # pylint: disable-next=missing-function-docstring
-    def check_consistency(self) -> "typing.Self":
+    def check_consistency(self) -> "Self":
         for desc in self.value:
             if desc.access_method not in self._acceptable_oids:
                 raise ValueError(f"{desc.access_method}: access_method not acceptable for this extension.")
@@ -297,7 +310,7 @@ class SignedCertificateTimestampBaseModel(ExtensionModel[SignedCertificateTimest
     value: NonEmptyOrderedSet[list[SignedCertificateTimestampModel]]
 
     @property
-    def extension_type(self) -> typing.NoReturn:  # pragma: no cover
+    def extension_type(self) -> NoReturn:  # pragma: no cover
         """Convert to the respective cryptography extension instance."""
         raise ValueError(f"{self._extension_type.__name__} cannot be loaded as cryptography instances.")
 
@@ -344,7 +357,7 @@ class AuthorityInformationAccessModel(InformationAccessBaseModel[x509.AuthorityI
     )
     type: Literal["authority_information_access"] = Field(default="authority_information_access", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]
-    requires_critical: typing.ClassVar[bool] = False  # MUST mark this extension as non-critical.
+    requires_critical: ClassVar[bool] = False  # MUST mark this extension as non-critical.
 
 
 class AuthorityKeyIdentifierModel(ExtensionModel[x509.AuthorityKeyIdentifier]):
@@ -367,7 +380,7 @@ class AuthorityKeyIdentifierModel(ExtensionModel[x509.AuthorityKeyIdentifier]):
     type: Literal["authority_key_identifier"] = Field(default="authority_key_identifier", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_KEY_IDENTIFIER]
     value: AuthorityKeyIdentifierValueModel
-    requires_critical: typing.ClassVar[bool] = False  # MUST mark this extension as non-critical.
+    requires_critical: ClassVar[bool] = False  # MUST mark this extension as non-critical.
 
     @property
     def extension_type(self) -> x509.AuthorityKeyIdentifier:
@@ -441,7 +454,7 @@ class CRLNumberModel(ExtensionModel[x509.CRLNumber]):
 
     type: Literal["crl_number"] = Field(default="crl_number", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CRL_NUMBER]
-    requires_critical: typing.ClassVar[bool] = False  # is a non-critical CRL extension
+    requires_critical: ClassVar[bool] = False  # is a non-critical CRL extension
 
     value: int = Field(ge=0)
 
@@ -510,7 +523,7 @@ class DeltaCRLIndicatorModel(ExtensionModel[x509.DeltaCRLIndicator]):
 
     type: Literal["delta_crl_indicator"] = Field(default="delta_crl_indicator", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.DELTA_CRL_INDICATOR]
-    requires_critical: typing.ClassVar[bool] = True  # is a critical CRL extension
+    requires_critical: ClassVar[bool] = True  # is a critical CRL extension
 
     value: int = Field(ge=0)
 
@@ -574,7 +587,7 @@ class FreshestCRLModel(CRLExtensionBaseModel[x509.FreshestCRL]):
     _extension_type = x509.FreshestCRL
     type: Literal["freshest_crl"] = Field(default="freshest_crl", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.FRESHEST_CRL]
-    requires_critical: typing.ClassVar[bool] = False  # MUST be marked as non-critical
+    requires_critical: ClassVar[bool] = False  # MUST be marked as non-critical
 
 
 class InhibitAnyPolicyModel(ExtensionModel[x509.InhibitAnyPolicy]):
@@ -589,7 +602,7 @@ class InhibitAnyPolicyModel(ExtensionModel[x509.InhibitAnyPolicy]):
     type: Literal["inhibit_any_policy"] = Field(default="inhibit_any_policy", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY]
     value: int = Field(ge=0)
-    requires_critical: typing.ClassVar[bool] = True  # MUST mark this extension as critical
+    requires_critical: ClassVar[bool] = True  # MUST mark this extension as critical
 
     @model_validator(mode="before")
     @classmethod
@@ -634,7 +647,7 @@ class IssuingDistributionPointModel(ExtensionModel[x509.IssuingDistributionPoint
     type: Literal["issuing_distribution_point"] = Field(default="issuing_distribution_point", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUING_DISTRIBUTION_POINT]
     value: IssuingDistributionPointValueModel
-    requires_critical: typing.ClassVar[bool] = True  # "is a critical CRL extension"
+    requires_critical: ClassVar[bool] = True  # "is a critical CRL extension"
 
     @property
     def extension_type(self) -> x509.IssuingDistributionPoint:
@@ -736,7 +749,7 @@ class NameConstraintsModel(ExtensionModel[x509.NameConstraints]):
     type: Literal["name_constraints"] = Field(default="name_constraints", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.NAME_CONSTRAINTS]
     value: NameConstraintsValueModel
-    requires_critical: typing.ClassVar[bool] = True  # MUST mark this extension as critical
+    requires_critical: ClassVar[bool] = True  # MUST mark this extension as critical
 
     @property
     def extension_type(self) -> x509.NameConstraints:
@@ -779,7 +792,7 @@ class PolicyConstraintsModel(ExtensionModel[x509.PolicyConstraints]):
     type: Literal["policy_constraints"] = Field(default="policy_constraints", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.POLICY_CONSTRAINTS]
     value: PolicyConstraintsValueModel
-    requires_critical: typing.ClassVar[bool] = True  # MUST mark this extension as critical
+    requires_critical: ClassVar[bool] = True  # MUST mark this extension as critical
 
     @property
     def extension_type(self) -> x509.PolicyConstraints:
@@ -802,7 +815,7 @@ class PrecertPoisonModel(NoValueExtensionModel[x509.PrecertPoison]):
     _extension_type = x509.PrecertPoison
     type: Literal["precert_poison"] = Field(default="precert_poison", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.PRECERT_POISON]
-    requires_critical: typing.ClassVar[bool] = True  # RFC 6962: "critical poison extension"
+    requires_critical: ClassVar[bool] = True  # RFC 6962: "critical poison extension"
 
 
 class PrecertificateSignedCertificateTimestampsModel(
@@ -908,7 +921,7 @@ class SubjectInformationAccessModel(InformationAccessBaseModel[x509.SubjectInfor
     _acceptable_oids = (SubjectInformationAccessOID.CA_REPOSITORY.dotted_string,)
     type: Literal["subject_information_access"] = Field(default="subject_information_access", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_INFORMATION_ACCESS]
-    requires_critical: typing.ClassVar[bool] = False  # MUST mark this extension as non-critical
+    requires_critical: ClassVar[bool] = False  # MUST mark this extension as non-critical
 
 
 class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
@@ -923,7 +936,7 @@ class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
     type: Literal["subject_key_identifier"] = Field(default="subject_key_identifier", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_KEY_IDENTIFIER]
     value: Base64Bytes
-    requires_critical: typing.ClassVar[bool] = False  # MUST mark this extension as non-critical
+    requires_critical: ClassVar[bool] = False  # MUST mark this extension as non-critical
 
     @model_validator(mode="before")
     @classmethod

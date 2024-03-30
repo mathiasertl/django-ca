@@ -15,14 +15,12 @@
 
 import argparse
 import ipaddress
-import typing
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime, timedelta
-from typing import Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, TypeVar, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.certificate_transparency import SignedCertificateTimestamp
 
 from django.core.management.base import CommandParser
 
@@ -31,17 +29,8 @@ from django.core.management.base import CommandParser
 # Module level imports to enable forward references. See also:
 #
 #   https://peps.python.org/pep-0484/#forward-references
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django_ca import models
-
-from typing import Annotated as Annotated  # noqa: PLC0414
-
-
-class SupportsLessThan(typing.Protocol):
-    """Protocol that specifies <, making something sortable."""
-
-    def __lt__(self, __other: Any) -> bool:  # pragma: nocover
-        ...
 
 
 # pylint: disable-next=invalid-name
@@ -49,7 +38,7 @@ JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]
 
 #: Hash algorithms that can be used for signing certificates.
 #: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
-AllowedHashTypes = typing.Union[
+AllowedHashTypes = Union[
     hashes.SHA224,
     hashes.SHA256,
     hashes.SHA384,
@@ -65,12 +54,12 @@ ExtensionDict = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 ParsableName = Union[str, Iterable[tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
-ParsableKeyType = typing.Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
+ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[
     str,
     # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001
-    typing.Mapping[x509.ObjectIdentifier, Union[str, Iterable[str]]],
-    typing.Mapping[str, Union[str, Iterable[str]]],
+    Mapping[x509.ObjectIdentifier, Union[str, Iterable[str]]],
+    Mapping[str, Union[str, Iterable[str]]],
     x509.Name,
     Iterable[tuple[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]]],
 ]
@@ -80,12 +69,9 @@ ParsableGeneralName = Union[x509.GeneralName, str]
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
 
-class SerializedExtension(typing.TypedDict):
-    critical: bool
-    value: Any
+class SerializedObjectIdentifier(TypedDict):
+    """Parsable version of an object identifier."""
 
-
-class SerializedObjectIdentifier(typing.TypedDict):
     oid: str
     value: str
 
@@ -94,18 +80,24 @@ SerializedName = list[SerializedObjectIdentifier]
 
 
 # Looser variants of the above for incoming arguments
-class ParsableNoticeReference(typing.TypedDict, total=False):
+class ParsableNoticeReference(TypedDict, total=False):
+    """Parsable version of a Notice Reference."""
+
     organization: str
     notice_numbers: Iterable[int]
 
 
-class ParsableUserNotice(typing.TypedDict, total=False):
+class ParsableUserNotice(TypedDict, total=False):
+    """Parsable version of a User Notice."""
+
     notice_reference: Union[x509.NoticeReference, ParsableNoticeReference]
     explicit_text: str
 
 
 # Parsable arguments
-class ParsableDistributionPoint(typing.TypedDict, total=False):
+class ParsableDistributionPoint(TypedDict, total=False):
+    """Parsable version of a Distribution Point."""
+
     full_name: Optional[ParsableGeneralNameList]
     relative_name: Union[SerializedName, x509.RelativeDistinguishedName]
     crl_issuer: ParsableGeneralNameList
@@ -116,31 +108,35 @@ ParsablePolicyQualifier = Union[str, x509.UserNotice, ParsableUserNotice]
 ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
 
 
-class ParsablePolicyInformation(typing.TypedDict, total=False):
+class ParsablePolicyInformation(TypedDict, total=False):
+    """Parsable version of the Policy Information extension."""
+
     policy_identifier: ParsablePolicyIdentifier
-    policy_qualifiers: Optional[typing.Sequence[ParsablePolicyQualifier]]
+    policy_qualifiers: Optional[Sequence[ParsablePolicyQualifier]]
 
 
 PolicyQualifier = Union[str, x509.UserNotice]
 
 
-class ParsableExtension(typing.TypedDict, total=False):
+class ParsableExtension(TypedDict, total=False):
+    """Base for all extensions."""
+
     critical: bool
     value: Any
 
 
-class BasicConstraintsBase(typing.TypedDict):
+class BasicConstraintsBase(TypedDict):
+    """Base for BasicConstraints extension."""
+
     ca: bool
 
 
-class ParsableAuthorityKeyIdentifierDict(typing.TypedDict, total=False):
+class ParsableAuthorityKeyIdentifierDict(TypedDict, total=False):
+    """Parsable version of the ParsableAuthorityKeyIdentifier extension."""
+
     key_identifier: Optional[bytes]
     authority_cert_issuer: Iterable[str]
     authority_cert_serial_number: Optional[int]
-
-
-class SerializedNullExtension(typing.TypedDict):
-    critical: bool
 
 
 ############
@@ -253,26 +249,24 @@ ActionsContainer = Union[CommandParser, ArgumentGroup]
 # TypeVars #
 ############
 # pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
-X509CertMixinTypeVar = typing.TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
+X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
 
-ExtensionTypeVar = typing.TypeVar("ExtensionTypeVar", bound=x509.Extension[x509.ExtensionType])
+ExtensionTypeVar = TypeVar("ExtensionTypeVar", bound=x509.Extension[x509.ExtensionType])
 
 # A TypeVar bound to :py:class:`~cg:cryptography.x509.ExtensionType`.
-ExtensionTypeTypeVar = typing.TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
+ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 
 
-AlternativeNameTypeVar = typing.TypeVar(
+AlternativeNameTypeVar = TypeVar(
     "AlternativeNameTypeVar", x509.SubjectAlternativeName, x509.IssuerAlternativeName
 )
-CRLExtensionTypeTypeVar = typing.TypeVar(
-    "CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL
-)
-InformationAccessTypeVar = typing.TypeVar(
+CRLExtensionTypeTypeVar = TypeVar("CRLExtensionTypeTypeVar", x509.CRLDistributionPoints, x509.FreshestCRL)
+InformationAccessTypeVar = TypeVar(
     "InformationAccessTypeVar", x509.AuthorityInformationAccess, x509.SubjectInformationAccess
 )
-NoValueExtensionTypeVar = typing.TypeVar("NoValueExtensionTypeVar", x509.OCSPNoCheck, x509.PrecertPoison)
+NoValueExtensionTypeVar = TypeVar("NoValueExtensionTypeVar", x509.OCSPNoCheck, x509.PrecertPoison)
 
-SignedCertificateTimestampTypeVar = typing.TypeVar(
+SignedCertificateTimestampTypeVar = TypeVar(
     "SignedCertificateTimestampTypeVar",
     x509.PrecertificateSignedCertificateTimestamps,
     x509.SignedCertificateTimestamps,
@@ -283,7 +277,9 @@ SignedCertificateTimestampTypeVar = typing.TypeVar(
 ##############################
 
 
-class SerializedPydanticNameAttribute(typing.TypedDict):
+class SerializedPydanticNameAttribute(TypedDict):
+    """Serialized version of a Pydantic name attribute."""
+
     oid: str
     value: str
 
@@ -291,13 +287,17 @@ class SerializedPydanticNameAttribute(typing.TypedDict):
 SerializedPydanticName = list[SerializedPydanticNameAttribute]
 
 
-class SerializedPydanticExtension(typing.TypedDict):
+class SerializedPydanticExtension(TypedDict):
+    """Serialized pydantic extension."""
+
     type: str
     critical: bool
     value: Any
 
 
-class SerializedProfile(typing.TypedDict):
+class SerializedProfile(TypedDict):
+    """Serialized profile."""
+
     name: str
     description: str
     subject: Optional[SerializedPydanticName]
@@ -311,56 +311,19 @@ class SerializedProfile(typing.TypedDict):
 #####################
 # Collect JSON-serializable versions of cryptography values. Typehints in this section start with
 # "Serialized...".
-class SerializedAuthorityInformationAccess(typing.TypedDict, total=False):
-    issuers: list[str]
-    ocsp: list[str]
-
-
-class SerializedAuthorityKeyIdentifier(typing.TypedDict, total=False):
-    key_identifier: str
-    authority_cert_issuer: list[str]
-    authority_cert_serial_number: int
-
-
-class SerializedBasicConstraints(BasicConstraintsBase, total=False):
-    """Serialized representation of a BasicConstraints extension.
-
-    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-    has a ``"path_length"`` value that is either ``None`` or an int.
-    """
-
-    path_length: Optional[int]
-
-
-class SerializedDistributionPoint(typing.TypedDict, total=False):
-    full_name: list[str]
-    relative_name: SerializedName
-    crl_issuer: list[str]
-    reasons: list[str]
-
-
-class SerializedDistributionPoints(typing.TypedDict):
-    critical: bool
-    value: list[SerializedDistributionPoint]
-
-
-class SerializedNameConstraints(typing.TypedDict, total=False):
-    permitted: list[str]
-    excluded: list[str]
-
-
-class SerializedPolicyConstraints(typing.TypedDict, total=False):
-    inhibit_policy_mapping: int
-    require_explicit_policy: int
 
 
 # PolicyInformation serialization
-class SerializedNoticeReference(typing.TypedDict, total=False):
+class SerializedNoticeReference(TypedDict, total=False):
+    """Serialized variant of a Notice Reference."""
+
     organization: str
     notice_numbers: list[int]
 
 
-class SerializedUserNotice(typing.TypedDict, total=False):
+class SerializedUserNotice(TypedDict, total=False):
+    """Serialized variant of a User Notice."""
+
     explicit_text: str
     notice_reference: SerializedNoticeReference
 
@@ -369,19 +332,12 @@ SerializedPolicyQualifier = Union[str, SerializedUserNotice]
 SerializedPolicyQualifiers = list[SerializedPolicyQualifier]
 
 
-class SerializedPolicyInformation(typing.TypedDict):
+class SerializedPolicyInformation(TypedDict):
+    """Serialized variant of a PolicyInformation extension."""
+
     policy_identifier: str
     policy_qualifiers: Optional[SerializedPolicyQualifiers]
 
-
-class SerializedSignedCertificateTimestamp(typing.TypedDict):
-    log_id: str
-    timestamp: str
-    type: str
-    version: str
-
-
-"""A dictionary with four keys: log_id, timestamp, type, version, values are all str."""
 
 ###################
 # Parsable values #
@@ -392,7 +348,9 @@ class SerializedSignedCertificateTimestamp(typing.TypedDict):
 ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
 
 
-class ParsableAuthorityInformationAccess(typing.TypedDict, total=False):
+class ParsableAuthorityInformationAccess(TypedDict, total=False):
+    """Parsable Authority Information Access extension."""
+
     ocsp: Optional[ParsableGeneralNameList]
     issuers: Optional[ParsableGeneralNameList]
 
@@ -407,17 +365,20 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     path_length: Union[int, str]
 
 
-class ParsableNameConstraints(typing.TypedDict, total=False):
+class ParsableNameConstraints(TypedDict, total=False):
+    """Parsable NameConstraints extension."""
+
     permitted: ParsableGeneralNameList
     excluded: ParsableGeneralNameList
 
 
-class ParsablePolicyConstraints(typing.TypedDict, total=False):
+class ParsablePolicyConstraints(TypedDict, total=False):
+    """Parsable PolicyConstriants extension."""
+
     require_explicit_policy: int
     inhibit_policy_mapping: int
 
 
-ParsableSignedCertificateTimestamp = Union[SerializedSignedCertificateTimestamp, SignedCertificateTimestamp]
 ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 
 

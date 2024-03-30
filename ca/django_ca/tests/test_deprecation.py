@@ -34,7 +34,7 @@ from django_ca.deprecation import (
 @pytest.mark.parametrize(
     "cls", (RemovedInDjangoCA200Warning, RemovedInDjangoCA210Warning, RemovedInDjangoCA220Warning)
 )
-def test_deprecation_warnings(cls: PendingDeprecationWarning) -> None:
+def test_deprecation_warnings(cls: DeprecationWarningType) -> None:
     """Test versions in deprecation warnings."""
     assert cls.__name__ == f"RemovedInDjangoCA{cls.version.replace('.', '')}0Warning"
 

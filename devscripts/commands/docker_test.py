@@ -38,7 +38,10 @@ class Command(DevCommand):
     help_text = "Build the Docker image using various base images."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        image_metavar = f"default|python:{{{config.PYTHON_RELEASES[0]}-{config.PYTHON_RELEASES[-1]}}}-alpine{{{config.ALPINE_RELEASES[0]}-{config.ALPINE_RELEASES[-1]}}}"
+        image_metavar = (
+            f"default|python:{{{config.PYTHON_RELEASES[0]}-{config.PYTHON_RELEASES[-1]}}}-"
+            f"alpine{{{config.ALPINE_RELEASES[0]}-{config.ALPINE_RELEASES[-1]}}}"
+        )
 
         parser.add_argument(
             "-i",

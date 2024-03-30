@@ -13,8 +13,8 @@
 
 """Shared typehints for tests."""
 
-import typing
-from typing import Any, Callable, ContextManager, Protocol
+from contextlib import AbstractContextManager
+from typing import TYPE_CHECKING, Any, Callable, Protocol, TypedDict, TypeVar
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
@@ -23,7 +23,7 @@ from django.db import DEFAULT_DB_ALIAS
 
 from django_ca.models import DjangoCAModel
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractUser as User
     from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 else:
@@ -32,13 +32,13 @@ else:
 
     User = get_user_model()
 
-DjangoCAModelTypeVar = typing.TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
+DjangoCAModelTypeVar = TypeVar("DjangoCAModelTypeVar", bound=DjangoCAModel)
 
 
 CertFixtureData = dict[str, Any]
 
 
-class _OcspFixtureData(typing.TypedDict):
+class _OcspFixtureData(TypedDict):
     name: str
     filename: str
 
@@ -56,23 +56,23 @@ class OcspFixtureData(_OcspFixtureData, total=False):
     nonce: str
 
 
-class FixtureData(typing.TypedDict):
+class FixtureData(TypedDict):
     """Fixture data loaded/stored from JSON."""
 
     certs: dict[str, CertFixtureData]
 
 
-class KeyDict(typing.TypedDict):
+class KeyDict(TypedDict):
     parsed: CertificateIssuerPrivateKeyTypes
 
 
-class PubDict(typing.TypedDict):
+class PubDict(TypedDict):
     pem: str
     parsed: x509.Certificate
     der: bytes
 
 
-class CsrDict(typing.TypedDict):
+class CsrDict(TypedDict):
     parsed: x509.CertificateSigningRequest
 
 
@@ -81,7 +81,7 @@ class CaptureOnCommitCallbacks(Protocol):
 
     def __call__(
         self, using: str = DEFAULT_DB_ALIAS, execute: bool = False
-    ) -> ContextManager[list[Callable[..., Any]]]:  # pragma: no cover
+    ) -> AbstractContextManager[list[Callable[..., Any]]]:  # pragma: no cover
         ...
 
 

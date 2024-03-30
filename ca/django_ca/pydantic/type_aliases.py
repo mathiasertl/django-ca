@@ -13,13 +13,12 @@
 
 """Reusable type aliases for Pydantic models."""
 
-from typing import Any, TypeVar
+from typing import Annotated, Any, TypeVar
 
 from pydantic import AfterValidator, BeforeValidator, Field
 
 from django_ca import ca_settings
 from django_ca.pydantic import validators
-from django_ca.typehints import Annotated
 
 PrivateKeySize = Annotated[
     int, Field(ge=ca_settings.CA_MIN_KEY_SIZE), AfterValidator(validators.is_power_two_validator)

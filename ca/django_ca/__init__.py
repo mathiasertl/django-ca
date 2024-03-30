@@ -13,7 +13,7 @@
 
 """django-ca root module."""
 
-from typing import Any, Tuple, Union
+from typing import Any, Union
 
 VersionTuple = Union[tuple[int, int, int], tuple[int, int, int, str, int]]
 

@@ -17,7 +17,7 @@
 """handle signal when reloading settings, so that ca_settings is also reloaded."""
 
 import importlib
-from typing import Any, Type
+from typing import Any
 
 from django.core.signals import setting_changed
 

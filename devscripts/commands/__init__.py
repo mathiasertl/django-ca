@@ -20,16 +20,15 @@ import pathlib
 import pkgutil
 import subprocess
 import sys
-import typing
 from collections.abc import Sequence
-from typing import Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import django
 
 from devscripts import config, utils
 from devscripts.out import err, info
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     import docker
     from docker.client import DockerClient
     from docker.models.images import Image

@@ -14,9 +14,8 @@
 """Some extensions use a more complex datastructure, so attributes are represented as nested models."""
 
 import base64
-import typing
 from datetime import datetime
-from typing import Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, NoReturn, Optional, Union
 
 from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
 
@@ -30,7 +29,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import NonEmptyOrderedSet, OIDType
-from django_ca.typehints import Annotated, DistributionPointReasons, LogEntryTypes
+from django_ca.typehints import DistributionPointReasons, LogEntryTypes
 
 _NOTICE_REFERENCE_DESCRIPTION = (
     "A NoticeReferenceModel consists of an optional *organization* and an optional list of *notice_numbers*."
@@ -397,7 +396,7 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
         return data  # pragma: no cover
 
     @property
-    def cryptography(self) -> typing.NoReturn:  # # pragma: no cover
+    def cryptography(self) -> NoReturn:  # # pragma: no cover
         """Will always raise an exception for this class."""
         raise ValueError("SignedCertificateTimestamps cannot be loaded as cryptography instances.")
 

@@ -14,8 +14,7 @@
 """Model for x509.Name."""
 
 import base64
-import typing
-from typing import Any
+from typing import Annotated, Any, cast
 
 from pydantic import BeforeValidator, ConfigDict, Field, model_validator
 
@@ -27,7 +26,6 @@ from django_ca import constants
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 from django_ca.pydantic.type_aliases import OIDType
-from django_ca.typehints import Annotated
 from django_ca.utils import MULTIPLE_OIDS
 
 _NAME_ATTRIBUTE_OID_DESCRIPTION = (
@@ -78,7 +76,7 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
     def parse_cryptography(cls, data: Any) -> Any:
         """Validator to handle x500 unique identifiers."""
         if isinstance(data, x509.NameAttribute) and data.oid == NameOID.X500_UNIQUE_IDENTIFIER:
-            value = typing.cast(bytes, data.value)
+            value = cast(bytes, data.value)
             return {"oid": data.oid.dotted_string, "value": base64.b64encode(value).decode("ascii")}
         return data
 
