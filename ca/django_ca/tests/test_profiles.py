@@ -27,7 +27,7 @@ import pytest
 
 from django_ca import ca_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
-from django_ca.deprecation import RemovedInDjangoCA128Warning
+from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
@@ -601,9 +601,9 @@ def test_deprecated_subject_value() -> None:
     value = "/C=AT/L=Vienna/ST=Vienna"
     msg = (
         rf"^{value}: Support for passing a value of type .* is deprecated and will be removed in "
-        "django-ca 1.28.0.$"
+        "django-ca 2.0.$"
     )
-    with pytest.warns(RemovedInDjangoCA128Warning, match=msg):
+    with pytest.warns(RemovedInDjangoCA200Warning, match=msg):
         prof = Profile("test", value)  # type: ignore[arg-type]  # what we test
 
     assert prof.subject == x509.Name(

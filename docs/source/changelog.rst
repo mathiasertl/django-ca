@@ -4,6 +4,14 @@ ChangeLog
 
 .. _changelog-head:
 
+.. _changelog-1.29.0:
+
+************
+1.29.0 (TBR)
+************
+
+* Removed support for the ``cn_in_san`` parameter in profiles.
+
 .. _changelog-1.28.0:
 
 *******************
