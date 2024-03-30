@@ -311,9 +311,10 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
 
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
-        with self.mock_challenge(content=b"wrong answer"), self.assertLogs(
-            "django_ca.tasks", "DEBUG"
-        ) as logcm:
+        with (
+            self.mock_challenge(content=b"wrong answer"),
+            self.assertLogs("django_ca.tasks", "DEBUG") as logcm,
+        ):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
         self.assertEqual(
@@ -328,9 +329,10 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
         self.chall.save()
 
-        with self.mock_challenge(call_count=0, content=b"foo", token="foo"), self.assertLogs(
-            "django_ca.tasks", "DEBUG"
-        ) as logcm:
+        with (
+            self.mock_challenge(call_count=0, content=b"foo", token="foo"),
+            self.assertLogs("django_ca.tasks", "DEBUG") as logcm,
+        ):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
         self.assertEqual(
@@ -467,9 +469,10 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
 
     def test_nxdomain(self) -> None:
         """Test a ACME validation where the domain does not exist."""
-        with mock.patch("dns.resolver.resolve", side_effect=dns.resolver.NXDOMAIN) as rmcm, self.assertLogs(
-            level="DEBUG"
-        ) as logcm:
+        with (
+            mock.patch("dns.resolver.resolve", side_effect=dns.resolver.NXDOMAIN) as rmcm,
+            self.assertLogs(level="DEBUG") as logcm,
+        ):
             tasks.acme_validate_challenge(self.chall.pk)
         rmcm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
         self.assertInvalid()

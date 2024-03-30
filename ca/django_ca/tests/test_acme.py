@@ -170,9 +170,10 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
             self.assertTrue(validation.validate_dns_01(self.chall))
         with self.mock_response(self.domain, [b"data"], [self.chall.expected]), self.assertLogMessages():
             self.assertTrue(validation.validate_dns_01(self.chall))
-        with self.mock_response(
-            self.domain, [b"data"], [b"multiple", self.chall.expected]
-        ), self.assertLogMessages():
+        with (
+            self.mock_response(self.domain, [b"data"], [b"multiple", self.chall.expected]),
+            self.assertLogMessages(),
+        ):
             self.assertTrue(validation.validate_dns_01(self.chall))
 
     def test_precomputed(self) -> None:
@@ -194,8 +195,9 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
             self.assertTrue(validation.validate_dns_01(chall))
         with self.mock_response(self.domain, [b"data"], [expected]), self.assertLogMessages(challenge=chall):
             self.assertTrue(validation.validate_dns_01(chall))
-        with self.mock_response(self.domain, [b"data"], [b"foo", expected]), self.assertLogMessages(
-            challenge=chall
+        with (
+            self.mock_response(self.domain, [b"data"], [b"foo", expected]),
+            self.assertLogMessages(challenge=chall),
         ):
             self.assertTrue(validation.validate_dns_01(chall))
 
@@ -218,8 +220,11 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
     def test_nxdomain(self) -> None:
         """Test validating a domain where the record simply does not exist."""
-        with self.resolve(side_effect=resolver.NXDOMAIN) as resolve, self.assertLogMessages(
-            f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist."
+        with (
+            self.resolve(side_effect=resolver.NXDOMAIN) as resolve,
+            self.assertLogMessages(
+                f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist."
+            ),
         ):
             self.assertFalse(validation.validate_dns_01(self.chall))
         resolve.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)

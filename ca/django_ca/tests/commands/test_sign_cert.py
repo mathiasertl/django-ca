@@ -580,9 +580,10 @@ def test_encrypted_ca_with_ca_settings(
 
 def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing with a CA that is not protected with a password, but giving a password."""
-    with assert_command_error(
-        r"^Password was given but private key is not encrypted\.$"
-    ), assert_create_cert_signals(False, False):
+    with (
+        assert_command_error(r"^Password was given but private key is not encrypted\.$"),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_root, rfc4514_subject, password=b"there-is-no-password", stdin=csr)
     assert Certificate.objects.exists() is False
 
@@ -592,18 +593,20 @@ def test_encrypted_ca_with_no_password(
 ) -> None:
     """Test signing with a CA that is protected with a password, but not giving a password."""
     settings.CA_PASSWORDS = {}
-    with assert_command_error(
-        r"^Password was not given but private key is encrypted$"
-    ), assert_create_cert_signals(False, False):
+    with (
+        assert_command_error(r"^Password was not given but private key is encrypted$"),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_pwd, rfc4514_subject, stdin=csr)
     assert Certificate.objects.exists() is False
 
 
 def test_encrypted_ca_with_wrong_password(usable_pwd: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test that passing the wrong password raises an error."""
-    with assert_command_error(
-        r"^Could not decrypt private key - bad password\?$"
-    ), assert_create_cert_signals(False, False):
+    with (
+        assert_command_error(r"^Could not decrypt private key - bad password\?$"),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_pwd, rfc4514_subject, stdin=csr, password=b"wrong")
     assert Certificate.objects.exists() is False
 
@@ -614,9 +617,10 @@ def test_unparsable_private_key(usable_root: CertificateAuthority, rfc4514_subje
     with open(path, "wb") as stream:
         stream.write(b"bogus")
 
-    with assert_command_error(
-        r"^Could not decrypt private key - bad password\?$"
-    ), assert_create_cert_signals(False, False):
+    with (
+        assert_command_error(r"^Could not decrypt private key - bad password\?$"),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_root, rfc4514_subject, stdin=csr)
 
 
@@ -688,9 +692,12 @@ def test_expiry_too_late(usable_root: CertificateAuthority, rfc4514_subject: str
     time_left = (usable_root.expires - timezone.now()).days
     expires = timedelta(days=time_left + 3)
 
-    with assert_command_error(
-        rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
-    ), assert_create_cert_signals(False, False):
+    with (
+        assert_command_error(
+            rf"^Certificate would outlive CA, maximum expiry for this CA is {time_left} days\.$"
+        ),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_root, rfc4514_subject, expires=expires, stdin=csr)
 
 
@@ -698,8 +705,9 @@ def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing with a revoked CA."""
     root.revoke()
 
-    with assert_command_error(r"^Certificate Authority is revoked\.$"), assert_create_cert_signals(
-        False, False
+    with (
+        assert_command_error(r"^Certificate Authority is revoked\.$"),
+        assert_create_cert_signals(False, False),
     ):
         sign_cert(root, rfc4514_subject, stdin=csr)
 
@@ -713,10 +721,13 @@ def test_invalid_algorithm(usable_ed448: CertificateAuthority, rfc4514_subject: 
 def test_no_cn_or_san(usable_root: CertificateAuthority, hostname: str) -> None:
     """Test signing a cert that has neither CN nor SAN."""
     subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, hostname)])
-    with assert_command_error(
-        r"^Must give at least a Common Name in --subject or one or more "
-        r"--subject-alternative-name/--name arguments\.$"
-    ), assert_create_cert_signals(False, False):
+    with (
+        assert_command_error(
+            r"^Must give at least a Common Name in --subject or one or more "
+            r"--subject-alternative-name/--name arguments\.$"
+        ),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_root, subject.rfc4514_string())
 
 

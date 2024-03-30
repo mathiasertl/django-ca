@@ -551,16 +551,19 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
         # poor-mans version of override_tmpcadir, as we cannot import it here. Doing so would import
         # CERT_DATA, from the test-suite, which loads the files which we want to generate here in the first
         # place.
-        with tempfile.TemporaryDirectory() as tmpdir, override_settings(
-            CA_DIR=tmpdir,
-            STORAGES={
-                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-                "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-                "django-ca": {
-                    "BACKEND": "django.core.files.storage.FileSystemStorage",
-                    "OPTIONS": {"location": tmpdir},
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            override_settings(
+                CA_DIR=tmpdir,
+                STORAGES={
+                    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+                    "django-ca": {
+                        "BACKEND": "django.core.files.storage.FileSystemStorage",
+                        "OPTIONS": {"location": tmpdir},
+                    },
                 },
-            },
+            ),
         ):
             ca_instances = create_cas(dest, now, delay, data)
             create_certs(dest, ca_instances, now, delay, data)

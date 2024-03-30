@@ -686,9 +686,11 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test resign function throwing a random exception."""
         msg = "foobar"
         msg_re = rf"^{msg}$"
-        with assert_create_cert_signals(False, False), patch(
-            "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)
-        ), assert_command_error(msg_re):
+        with (
+            assert_create_cert_signals(False, False),
+            patch("django_ca.managers.CertificateManager.create_cert", side_effect=Exception(msg)),
+            assert_command_error(msg_re),
+        ):
             cmd("resign_cert", self.cert.serial)
 
     @override_tmpcadir()

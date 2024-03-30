@@ -532,10 +532,13 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         """Test that we log an error when the private key is of an unsupported type."""
         data = base64.b64encode(req1).decode("utf-8")
 
-        with self.assertLogs() as logcm, self.patch(
-            "cryptography.hazmat.primitives.serialization.load_der_private_key",
-            spec_set=True,
-            return_value="wrong",  # usually would be an unsupported key type
+        with (
+            self.assertLogs() as logcm,
+            self.patch(
+                "cryptography.hazmat.primitives.serialization.load_der_private_key",
+                spec_set=True,
+                return_value="wrong",  # usually would be an unsupported key type
+            ),
         ):
             response = self.client.get(reverse("get", kwargs={"data": data}))
         ocsp_response = ocsp.load_der_ocsp_response(response.content)

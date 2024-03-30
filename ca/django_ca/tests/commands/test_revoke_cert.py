@@ -100,9 +100,11 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         self.assertPostRevoke(post, cert)
         self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
 
-        with assert_command_error(rf"^{self.cert.serial}: Certificate is already revoked\.$"), mock_signal(
-            pre_revoke_cert
-        ) as pre, mock_signal(post_revoke_cert) as post:
+        with (
+            assert_command_error(rf"^{self.cert.serial}: Certificate is already revoked\.$"),
+            mock_signal(pre_revoke_cert) as pre,
+            mock_signal(post_revoke_cert) as post,
+        ):
             cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
         self.assertFalse(pre.called)
         self.assertFalse(post.called)

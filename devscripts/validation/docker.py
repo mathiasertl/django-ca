@@ -146,9 +146,12 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
         tut.write_template("localsettings.yaml.jinja")
         tut.write_template("nginx.conf.jinja")
 
-        with tut.run("start-dependencies.yaml"), tut.run("start-django-ca.yaml"), tut.run(
-            "start-nginx.yaml"
-        ), tut.run("setup-cas.yaml"):
+        with (
+            tut.run("start-dependencies.yaml"),
+            tut.run("start-django-ca.yaml"),
+            tut.run("start-nginx.yaml"),
+            tut.run("setup-cas.yaml"),
+        ):
             errors += _test_connectivity(standalone_src)
 
             print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")

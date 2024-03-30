@@ -783,9 +783,10 @@ def test_intermediate_check(ca_name: str) -> None:
     assert path_length_1_none.path_length is None
     assert path_length_1_none.max_path_length == 0
     assert path_length_1_none.allows_intermediate_ca is False
-    with assert_command_error(
-        r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(name="wrong", parent=path_length_1_none)
 
     with assert_create_ca_signals() as (pre, post):
@@ -797,9 +798,10 @@ def test_intermediate_check(ca_name: str) -> None:
     assert path_length_1_three.path_length == 3
     assert path_length_1_three.max_path_length == 0
     assert path_length_1_three.allows_intermediate_ca is False
-    with assert_command_error(
-        r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^Parent CA cannot create intermediate CA due to path length restrictions\.$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(name="wrong", parent=path_length_1_none)
 
     with assert_create_ca_signals() as (pre, post):
@@ -888,9 +890,10 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     child_password = b"childpassword"
     parent = CertificateAuthority.objects.get(name=f"{ca_name}-parent")  # Get again, key is cached
 
-    with assert_command_error(
-        r"^Password was not given but private key is encrypted$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^Password was not given but private key is encrypted$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(name=f"{ca_name}-child", parent=parent, password=password)
     assert CertificateAuthority.objects.filter(name=f"{ca_name}-child").exists() is False
 
@@ -1054,8 +1057,9 @@ def test_invalid_public_key_parameters(ca_name: str) -> None:
 
 def test_root_ca_crl_url(ca_name: str) -> None:
     """Test that you cannot create a CA with a CRL URL."""
-    with assert_command_error(r"^CRLs cannot be used to revoke root CAs\.$"), assert_create_ca_signals(
-        False, False
+    with (
+        assert_command_error(r"^CRLs cannot be used to revoke root CAs\.$"),
+        assert_create_ca_signals(False, False),
     ):
         init_ca(name=ca_name, crl_full_name="https://example.com")
 
@@ -1063,34 +1067,38 @@ def test_root_ca_crl_url(ca_name: str) -> None:
 def test_root_ca_ocsp_responder(ca_name: str) -> None:
     """Test that you cannot create a root CA with a OCSP responder."""
     aia = authority_information_access(ocsp=[uri("http://example.com")])
-    with assert_command_error(
-        r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^URI:http://example.com: OCSP responder cannot be added to root CAs\.$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(name=ca_name, authority_information_access=aia.value)
 
 
 def test_root_ca_issuer(ca_name: str) -> None:
     """Test that you cannot create a root CA with a CA issuer field."""
     aia = authority_information_access(ca_issuers=[uri("http://example.com")])
-    with assert_command_error(
-        r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^URI:http://example.com: CA issuer cannot be added to root CAs\.$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(name=ca_name, authority_information_access=aia.value)
 
 
 def test_small_key_size(ca_name: str) -> None:
     """Test creating a key with a key size that is too small."""
-    with assert_command_error(
-        r"^key_size: Input should be greater than or equal to 1024$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^key_size: Input should be greater than or equal to 1024$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(ca_name, key_size=256)
 
 
 def test_key_not_power_of_two(ca_name: str) -> None:
     """Test creating a key with invalid key size."""
-    with assert_command_error(
-        r"^key_size: Value error, 2049: Must be a power of two$"
-    ), assert_create_ca_signals(False, False):
+    with (
+        assert_command_error(r"^key_size: Value error, 2049: Must be a power of two$"),
+        assert_create_ca_signals(False, False),
+    ):
         init_ca(ca_name, key_size=2049)
 
 

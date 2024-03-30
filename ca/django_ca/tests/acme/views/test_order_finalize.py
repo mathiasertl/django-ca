@@ -174,8 +174,9 @@ class AcmeOrderFinalizeViewTestCase(
         # attach to type: https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
         type(csr_mock).is_signature_valid = mock.PropertyMock(return_value=False)
 
-        with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
-            "django_ca.acme.views.parse_acme_csr", return_value=csr_mock
+        with (
+            self.patch("django_ca.acme.views.run_task") as mockcm,
+            self.patch("django_ca.acme.views.parse_acme_csr", return_value=csr_mock),
         ):
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
@@ -349,9 +350,11 @@ class AcmeOrderFinalizeViewTestCase(
     @override_tmpcadir()
     def test_unparsable_csr(self) -> None:
         """Test passing a completely unparsable CSR."""
-        with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
-            "django_ca.acme.views.AcmeOrderFinalizeView.message_cls.encode", side_effect=[b"foo"]
-        ), self.assertLogs():
+        with (
+            self.patch("django_ca.acme.views.run_task") as mockcm,
+            self.patch("django_ca.acme.views.AcmeOrderFinalizeView.message_cls.encode", side_effect=[b"foo"]),
+            self.assertLogs(),
+        ):
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()
         self.assertBadCSR(resp, "Unable to parse CSR.")
@@ -361,8 +364,9 @@ class AcmeOrderFinalizeViewTestCase(
         """Test passing a completely unparsable CSR."""
         # It's difficult to create a CSR with an invalid version, so we just mock the parsing function raising
         # the exception instead.
-        with self.patch("django_ca.acme.views.run_task") as mockcm, self.patch(
-            "django_ca.acme.views.parse_acme_csr", side_effect=x509.InvalidVersion("foo", 42)
+        with (
+            self.patch("django_ca.acme.views.run_task") as mockcm,
+            self.patch("django_ca.acme.views.parse_acme_csr", side_effect=x509.InvalidVersion("foo", 42)),
         ):
             resp = self.acme(self.url, self.message, kid=self.kid)
         mockcm.assert_not_called()

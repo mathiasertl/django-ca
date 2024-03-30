@@ -100,9 +100,10 @@ class Command(DevCommand):
             env = dict(os.environ, DOCKER_BUILDKIT="1")
 
             try:
-                with subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env
-                ) as proc, open(logpath, "bw") as stream:
+                with (
+                    subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env) as proc,
+                    open(logpath, "bw") as stream,
+                ):
                     while True:
                         byte = proc.stdout.read(1)  # type: ignore[union-attr]  # not None due to arguments
                         if byte:

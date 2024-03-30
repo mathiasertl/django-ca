@@ -188,8 +188,10 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
 
         # Try with cert scope (fails because of wrong scope
-        with self.dumped(ca) as paths, self.crl(ca, scope="user") as (crl_path, crl), self.assertRaises(
-            AssertionError
+        with (
+            self.dumped(ca) as paths,
+            self.crl(ca, scope="user") as (crl_path, crl),
+            self.assertRaises(AssertionError),
         ):
             self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
 
@@ -264,9 +266,12 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
             self.verify("-CAfile {0} -untrusted {1} {2}", *paths)
 
             # Try validation with CRLs
-            with self.crl(root, scope="ca") as (crl1_path, crl1), self.crl(child, scope="ca") as (
-                crl2_path,
-                crl2,
+            with (
+                self.crl(root, scope="ca") as (crl1_path, crl1),
+                self.crl(child, scope="ca") as (
+                    crl2_path,
+                    crl2,
+                ),
             ):
                 self.verify(
                     "-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl=[crl1_path, crl2_path]
@@ -278,10 +283,14 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                         "-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl=[crl1_path, crl3_path]
                     )
 
-                with self.sign_cert(grandchild) as cert, self.crl(child, scope="ca") as (
-                    crl4_path,
-                    crl4,
-                ), self.crl(grandchild, scope="user") as (crl6_path, crl6):
+                with (
+                    self.sign_cert(grandchild) as cert,
+                    self.crl(child, scope="ca") as (
+                        crl4_path,
+                        crl4,
+                    ),
+                    self.crl(grandchild, scope="user") as (crl6_path, crl6),
+                ):
                     self.verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
                     self.verify(
                         "-CAfile {0} -crl_check_all {cert}",
@@ -338,12 +347,16 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                 )
 
             # Changing the default hostname setting should not change the validation result
-            with self.settings(CA_DEFAULT_HOSTNAME="example.net"), self.crl(root, scope="ca") as (
-                crl_path,
-                crl,
-            ), self.crl(child, scope="ca") as (
-                crl2_path,
-                crl2,
+            with (
+                self.settings(CA_DEFAULT_HOSTNAME="example.net"),
+                self.crl(root, scope="ca") as (
+                    crl_path,
+                    crl,
+                ),
+                self.crl(child, scope="ca") as (
+                    crl2_path,
+                    crl2,
+                ),
             ):
                 # Known but not easily fixable issue: If CA_DEFAULT_HOSTNAME is changed, CRLs will get wrong
                 # full name and validation fails.
@@ -358,12 +371,16 @@ class CRLValidationTestCase(TestCaseMixin, TestCase):
                 )
 
             # Again, global CRLs do not validate
-            with self.settings(CA_DEFAULT_HOSTNAME="example.net"), self.crl(root, scope="ca") as (
-                crl_path,
-                crl,
-            ), self.crl(child) as (
-                crl2_path,
-                crl2,
+            with (
+                self.settings(CA_DEFAULT_HOSTNAME="example.net"),
+                self.crl(root, scope="ca") as (
+                    crl_path,
+                    crl,
+                ),
+                self.crl(child) as (
+                    crl2_path,
+                    crl2,
+                ),
             ):
                 self.assertFullName(crl, None)
                 self.verify(
