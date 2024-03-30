@@ -51,7 +51,6 @@ from django_ca.utils import (
     parse_encoding,
     parse_expires,
     parse_general_name,
-    parse_hash_algorithm,
     parse_key_curve,
     parse_name_x509,
     parse_serialized_name_attributes,
@@ -569,30 +568,6 @@ class ParseGeneralNameTest(TestCase):
 def test_format_general_name(general_name: x509.GeneralName, expected: str) -> None:
     """Test :py:func:`django_ca.utils.format_general_name`."""
     assert format_general_name(general_name) == expected
-
-
-class ParseHashAlgorithm(TestCase):
-    """Test :py:func:`django_ca.utils.parse_hash_algorithm`."""
-
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertIsInstance(parse_hash_algorithm(), hashes.SHA512)
-        self.assertIsInstance(parse_hash_algorithm(hashes.SHA512), hashes.SHA512)
-        self.assertIsInstance(parse_hash_algorithm(hashes.SHA512()), hashes.SHA512)
-        self.assertIsInstance(parse_hash_algorithm("SHA512"), hashes.SHA512)
-
-        with self.assertRaisesRegex(ValueError, "^Unknown hash algorithm: foo$"):
-            parse_hash_algorithm("foo")
-
-        with self.assertRaisesRegex(ValueError, "^Unknown type passed: bool$"):
-            parse_hash_algorithm(False)  # type: ignore[arg-type]
-
-    def test_disallowed_type(self) -> None:
-        """Test passing types that are not valid as signature hash algorithms."""
-        with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
-            parse_hash_algorithm(hashes.SM3)  # type: ignore[arg-type]
-        with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
-            parse_hash_algorithm(hashes.SM3())  # type: ignore[arg-type]
 
 
 class SerializeName(TestCase):

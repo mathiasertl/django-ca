@@ -68,7 +68,6 @@ ExtensionDict = Dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 ParsableName = Union[str, Iterable[Tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
-ParsableHash = Optional[Union[str, AllowedHashTypes]]
 ParsableKeyType = typing.Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[
     str,

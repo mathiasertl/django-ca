@@ -20,7 +20,7 @@ import typing
 import warnings
 from datetime import datetime, timedelta, timezone as tz
 from ipaddress import ip_address, ip_network
-from typing import Iterator, List, Optional, Tuple, Type, Union
+from typing import Iterator, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import idna
@@ -44,7 +44,6 @@ from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
     ParsableGeneralName,
-    ParsableHash,
     ParsableKeyType,
     ParsableName,
     SerializedName,
@@ -927,73 +926,6 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
             return x509.DNSName(encode_dns(name))
         except idna.IDNAError as e:
             raise ValueError(f"Could not parse DNS name: {name}") from e
-
-
-def parse_hash_algorithm(value: Union[Type[AllowedHashTypes], ParsableHash] = None) -> AllowedHashTypes:
-    """Parse a hash algorithm value.
-
-    .. deprecated:: 1.25.0
-
-       This function will be removed in ``django-ca==1.27.0``. Use standard hash algorithm names instead.
-
-    The most common use case is to pass a str naming a class in
-    :py:mod:`~cg:cryptography.hazmat.primitives.hashes`.
-    For convenience, passing ``None`` will return the value of
-    :ref:`settings-ca-default-signature-hash-algorithm`, and passing an
-    :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` will return that
-    instance unchanged.
-
-    Example usage::
-
-        >>> parse_hash_algorithm()  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
-        >>> parse_hash_algorithm('SHA512')  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
-        >>> parse_hash_algorithm(' SHA512 ')  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
-        >>> parse_hash_algorithm(hashes.SHA512)  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
-        >>> parse_hash_algorithm(hashes.SHA512())  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.hashes.SHA512 object at ...>
-        >>> parse_hash_algorithm('Wrong')  # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-            ...
-        ValueError: Unknown hash algorithm: Wrong
-
-    Parameters
-    ----------
-    value : str or :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-        The value to parse, the function description on how possible values are used.
-
-    Returns
-    -------
-    algorithm
-        A :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance.
-
-    Raises
-    ------
-    ValueError
-        If an unknown object is passed or if ``value`` does not name a known algorithm
-    """
-    if value is None:
-        return ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
-    if isinstance(value, type) and issubclass(value, hashes.HashAlgorithm):
-        if value in constants.HASH_ALGORITHM_NAMES:
-            return typing.cast(AllowedHashTypes, value())
-        raise ValueError(f"{value.__name__}: Algorithm is not allowed for signing")
-    if isinstance(value, hashes.HashAlgorithm):
-        if type(value) in constants.HASH_ALGORITHM_NAMES:
-            return typing.cast(AllowedHashTypes, value)
-        name = type(value).__name__
-        raise ValueError(f"{name}: Algorithm is not allowed for signing")
-    if isinstance(value, str):
-        try:
-            algo: Type[AllowedHashTypes] = getattr(hashes, value.strip())
-            return algo()
-        except AttributeError as e:
-            raise ValueError(f"Unknown hash algorithm: {value}") from e
-
-    raise ValueError(f"Unknown type passed: {type(value).__name__}")
 
 
 def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
