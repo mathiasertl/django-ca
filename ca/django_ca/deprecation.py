@@ -27,12 +27,6 @@ from cryptography import x509
 F = typing.TypeVar("F", bound=typing.Callable[..., Any])
 
 
-class RemovedInDjangoCA129Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==1.29."""
-
-    version = "1.29"
-
-
 class RemovedInDjangoCA200Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in django-ca==2.0."""
 
@@ -54,7 +48,6 @@ class RemovedInDjangoCA220Warning(PendingDeprecationWarning):
 RemovedInNextVersionWarning = RemovedInDjangoCA200Warning
 
 DeprecationWarningType = Union[
-    Type[RemovedInDjangoCA129Warning],
     Type[RemovedInDjangoCA200Warning],
     Type[RemovedInDjangoCA210Warning],
     Type[RemovedInDjangoCA220Warning],

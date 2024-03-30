@@ -39,7 +39,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.constants import NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA129Warning, RemovedInDjangoCA200Warning
+from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -122,33 +122,6 @@ def encode_dns(name: str) -> str:
     if name.startswith("."):
         return f".{idna.encode(name[1:]).decode('utf-8')}"
     return idna.encode(name).decode("utf-8")
-
-
-def format_name(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
-    """Convert a x509 name or relative name into the canonical form for distinguished names.
-
-    .. deprecated:: 1.27.0
-
-       This function is deprecated in 1.27.0 and will be removed in 1.29.0.
-    """
-    warnings.warn(
-        "This function is deprecated and will be removed in 1.29.0.",
-        category=RemovedInDjangoCA129Warning,
-        stacklevel=2,
-    )
-
-    def _format_value(val: str) -> str:
-        # If val contains no unsafe chars, return it unchanged
-        if UNSAFE_NAME_CHARS.search(val) is None:
-            return val
-        return '"' + val.replace('"', r"\"").replace(r"\\", r"\\\\") + '"'
-
-    items = [
-        (constants.NAME_OID_SHORTCUTS.get(s.oid, constants.NAME_OID_NAMES[s.oid]), s.value) for s in subject
-    ]
-
-    values = "/".join([f"{k}={_format_value(v)}" for k, v in items])  # type: ignore[arg-type]
-    return f"/{values}"
 
 
 def parse_name_rfc4514(value: str) -> x509.Name:

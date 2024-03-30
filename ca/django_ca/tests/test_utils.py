@@ -36,7 +36,6 @@ from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings, constants, utils
-from django_ca.deprecation import RemovedInDjangoCA129Warning
 from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.utils import dns, doctest_module, uri
@@ -44,7 +43,6 @@ from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
     format_general_name,
-    format_name,
     generate_private_key,
     get_cert_builder,
     get_storage,
@@ -595,85 +593,6 @@ class ParseHashAlgorithm(TestCase):
             parse_hash_algorithm(hashes.SM3)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, "^SM3: Algorithm is not allowed for signing$"):
             parse_hash_algorithm(hashes.SM3())  # type: ignore[arg-type]
-
-
-class FormatNameTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.format_name`."""
-
-    def assertFormatParse(self, value: str) -> None:  # pylint: disable=invalid-name
-        """Test formatting and then parsing again the given value as common name."""
-        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, value)])
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
-        ):
-            self.assertEqual(name, x509_name(format_name(name)))
-
-        # Same, but with a different value in front
-        name = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                x509.NameAttribute(NameOID.COMMON_NAME, value),
-            ]
-        )
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
-        ):
-            self.assertEqual(name, x509_name(format_name(name)))
-
-        # Same, but with a different value at the end
-        name = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COMMON_NAME, value),
-                x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
-            ]
-        )
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
-        ):
-            self.assertEqual(name, x509_name(format_name(name)))
-
-        # Same, but with values both before and after the value in question
-        name = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                x509.NameAttribute(NameOID.COMMON_NAME, value),
-                x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
-            ]
-        )
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
-        ):
-            self.assertEqual(name, x509_name(format_name(name)))
-
-    def test_x509(self) -> None:
-        """Test passing a x509.Name."""
-        subject = "/C=AT/ST=Vienna/L=Vienna/O=O/OU=OU/CN=example.com/emailAddress=user@example.com"
-        name = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "O"),
-                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "OU"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
-            ]
-        )
-        with self.assertWarnsRegex(
-            RemovedInDjangoCA129Warning, r"^This function is deprecated and will be removed in 1\.29\.0\.$"
-        ):
-            self.assertEqual(format_name(name), subject)
-
-    def test_escaping(self) -> None:
-        """Test various edge cases when quoting/unquoting strings."""
-        self.assertFormatParse("with/slash")
-        self.assertFormatParse('with"double-quote')
-        self.assertFormatParse("with'single-quote")
-        self.assertFormatParse("both'single\"double-quotes")
-        self.assertFormatParse("everything: slash/quote'double\"and\\backslash")
-        self.assertFormatParse('no single-quote: slash/double"quote')
-        self.assertFormatParse('no single-quote but with backslash: slash/double"quote\\backslash')
-        self.assertFormatParse("multiple\\\\backslash")
 
 
 class SerializeName(TestCase):
