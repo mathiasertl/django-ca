@@ -166,8 +166,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"oid": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
             {"oid": NameOID.STATE_OR_PROVINCE_NAME.dotted_string, "value": "test-stateOrProvinceName"},
             {"oid": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
-            # pragma: only cg<42: Replace "2.5.4.97" with NameOID.ORGANIZATION_IDENTIIFER
-            {"oid": "2.5.4.97", "value": "test-organizationIdentifier"},
+            {"oid": NameOID.ORGANIZATION_IDENTIFIER.dotted_string, "value": "test-organizationIdentifier"},
         ]
 
         self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})

@@ -27,69 +27,69 @@ def noop(pragma: str) -> None:  # pylint: disable=unused-argument
 
 
 # NOTE: You can also use "django" or "cryptography" as software version
-if VERSION > (3, 8):  # pragma: only py>3.8
-    noop("py>3.8")
-else:  # pragma: only py<=3.8
-    noop("py<=3.8")
+if VERSION > (3, 11):  # pragma: only py>3.11
+    noop("py>3.11")
+else:  # pragma: only py<=3.11
+    noop("py<=3.11")
 
-if VERSION >= (3, 8):  # pragma: only py>=3.8
-    noop("py>=3.8")
-else:  # pragma: only py<3.8
-    noop("py<3.8")
+if VERSION >= (3, 11):  # pragma: only py>=3.11
+    noop("py>=3.11")
+else:  # pragma: only py<3.11
+    noop("py<3.11")
 
-if VERSION == (3, 8):  # pragma: only py==3.8
-    noop("py==3.8")
-else:  # pragma: py!=3.8
-    noop("py!=3.8")
+if VERSION == (3, 11):  # pragma: only py==3.11
+    noop("py==3.11")
+else:  # pragma: py!=3.11
+    noop("py!=3.11")
 
-if VERSION <= (3, 8):  # pragma: only py<=3.8
-    noop("py<=3.8")
-else:  # pragma: only py>3.8
-    noop("py>3.8")
+if VERSION <= (3, 11):  # pragma: only py<=3.11
+    noop("py<=3.11")
+else:  # pragma: only py>3.11
+    noop("py>3.11")
 
-if VERSION < (3, 8):  # pragma: only py<3.8
-    noop("py<3.8")
-else:  # pragma: only py>=3.8
-    noop("py>=3.8")
+if VERSION < (3, 11):  # pragma: only py<3.11
+    noop("py<3.11")
+else:  # pragma: only py>=3.11
+    noop("py>=3.11")
 
 
 # Test previous version
-if VERSION > (3, 8):  # pragma: py>3.8 branch
-    noop("py>3.8 branch")
+if VERSION > (3, 11):  # pragma: py>3.11 branch
+    noop("py>3.11 branch")
 
-if VERSION >= (3, 8):  # pragma: py>=3.8 branch
-    noop("py>=3.8 branch")
+if VERSION >= (3, 11):  # pragma: py>=3.11 branch
+    noop("py>=3.11 branch")
 
-if VERSION == (3, 8):  # pragma: only py==3.8
-    noop("py==3.8 branch")
+if VERSION == (3, 11):  # pragma: only py==3.11
+    noop("py==3.11 branch")
 
-if VERSION != (3, 8):  # pragma: py!=3.8
-    noop("py!=3.8 branch")
+if VERSION != (3, 11):  # pragma: py!=3.11
+    noop("py!=3.11 branch")
 
-if VERSION <= (3, 8):  # pragma: py<=3.8 branch
-    noop("py<=3.8 branch")
+if VERSION <= (3, 11):  # pragma: py<=3.11 branch
+    noop("py<=3.11 branch")
 
-if VERSION < (3, 8):  # pragma: py<3.8 branch
-    noop("py<=3.8 branch")
+if VERSION < (3, 11):  # pragma: py<3.11 branch
+    noop("py<=3.11 branch")
 
 # Test current version
-if VERSION > (3, 9):  # pragma: py>3.9 branch
-    noop("py>3.9 branch")
+if VERSION > (3, 12):  # pragma: py>3.12 branch
+    noop("py>3.12 branch")
 
-if VERSION >= (3, 9):  # pragma: py>=3.9 branch
-    noop("py>=3.9 branch")
+if VERSION >= (3, 12):  # pragma: py>=3.12 branch
+    noop("py>=3.12 branch")
 
-if VERSION == (3, 9):  # pragma: only py==3.9
-    noop("py==3.9 branch")
+if VERSION == (3, 12):  # pragma: only py==3.12
+    noop("py==3.12 branch")
 
-if VERSION != (3, 9):  # pragma: py!=3.9
-    noop("py!=3.9 branch")
+if VERSION != (3, 12):  # pragma: py!=3.12
+    noop("py!=3.12 branch")
 
-if VERSION <= (3, 9):  # pragma: py<=3.9 branch
-    noop("py<=3.9 branch")
+if VERSION <= (3, 12):  # pragma: py<=3.12 branch
+    noop("py<=3.12 branch")
 
-if VERSION < (3, 9):  # pragma: py<3.9 branch
-    noop("py<=3.9 branch")
+if VERSION < (3, 12):  # pragma: py<3.12 branch
+    noop("py<=3.12 branch")
 
 # Test next version
 if VERSION > (3, 10):  # pragma: py>3.10 branch

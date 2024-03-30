@@ -14,7 +14,6 @@
 """Collection of constants used by django-ca."""
 
 import enum
-import typing
 from collections import defaultdict
 from types import MappingProxyType
 
@@ -38,19 +37,18 @@ from cryptography.x509.oid import (
 from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
-if typing.TYPE_CHECKING:
-    from django_ca.typehints import (
-        AccessMethods,
-        AllowedHashTypes,
-        EllipticCurves,
-        GeneralNames,
-        HashAlgorithms,
-        KeyUsages,
-        OtherNames,
-        ParsableKeyType,
-    )
+from django_ca.typehints import (
+    AccessMethods,
+    AllowedHashTypes,
+    EllipticCurves,
+    GeneralNames,
+    HashAlgorithms,
+    KeyUsages,
+    OtherNames,
+    ParsableKeyType,
+)
 
-ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = MappingProxyType(
+ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = MappingProxyType(
     {
         "ocsp": AuthorityInformationAccessOID.OCSP,
         "ca_issuers": AuthorityInformationAccessOID.CA_ISSUERS,
@@ -61,7 +59,7 @@ ACCESS_METHOD_TYPES: "MappingProxyType[AccessMethods, x509.ObjectIdentifier]" = 
 DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
-ELLIPTIC_CURVE_TYPES: "MappingProxyType[EllipticCurves, type[ec.EllipticCurve]]" = MappingProxyType(
+ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurves, type[ec.EllipticCurve]] = MappingProxyType(
     {
         "sect571r1": ec.SECT571R1,
         "sect409r1": ec.SECT409R1,
@@ -304,7 +302,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 )
 
 #: Map for types of general names.
-GENERAL_NAME_TYPES: "MappingProxyType[GeneralNames, type[x509.GeneralName]]" = MappingProxyType(
+GENERAL_NAME_TYPES: MappingProxyType[GeneralNames, type[x509.GeneralName]] = MappingProxyType(
     {
         "email": x509.RFC822Name,
         "URI": x509.UniformResourceIdentifier,
@@ -315,12 +313,12 @@ GENERAL_NAME_TYPES: "MappingProxyType[GeneralNames, type[x509.GeneralName]]" = M
         "otherName": x509.OtherName,
     }
 )
-GENERAL_NAME_NAMES: "MappingProxyType[type[x509.GeneralName], GeneralNames]" = MappingProxyType(
+GENERAL_NAME_NAMES: MappingProxyType[type[x509.GeneralName], GeneralNames] = MappingProxyType(
     {v: k for k, v in GENERAL_NAME_TYPES.items()}
 )
 
 #: Map of hash algorithm types in cryptography to standard hash algorithm names.
-HASH_ALGORITHM_NAMES: "MappingProxyType[type[AllowedHashTypes], HashAlgorithms]" = MappingProxyType(
+HASH_ALGORITHM_NAMES: MappingProxyType[type[AllowedHashTypes], HashAlgorithms] = MappingProxyType(
     {
         hashes.SHA224: "SHA-224",
         hashes.SHA256: "SHA-256",
@@ -330,24 +328,16 @@ HASH_ALGORITHM_NAMES: "MappingProxyType[type[AllowedHashTypes], HashAlgorithms]"
         hashes.SHA3_256: "SHA3/256",
         hashes.SHA3_384: "SHA3/384",
         hashes.SHA3_512: "SHA3/512",
-        # cryptography does not support these hash algorithms for signatures
-        # hashes.SHA512_224: "SHA-512/224",
-        # hashes.SHA512_256: "SHA-512/256",
-        # hashes.SM3: "SM3",
-        # hashes.SHAKE128: "SHAKE128",
-        # hashes.SHAKE256: "SHAKE256",
-        # hashes.BLAKE2b: "BLAKE2b",  # https://datatracker.ietf.org/doc/html/rfc7693.html
-        # hashes.BLAKE2s: "BLAKE2s",  # https://datatracker.ietf.org/doc/html/rfc7693.html
     }
 )
 
 #: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
-HASH_ALGORITHM_TYPES: "MappingProxyType[HashAlgorithms, type[AllowedHashTypes]]" = MappingProxyType(
+HASH_ALGORITHM_TYPES: MappingProxyType[HashAlgorithms, type[AllowedHashTypes]] = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
 )
 
 #: Map of `kwargs` for :py:class:`~cg:cryptography.x509.KeyUsage` to names in RFC 5280.
-KEY_USAGE_NAMES: "MappingProxyType[KeyUsages, str]" = MappingProxyType(
+KEY_USAGE_NAMES: MappingProxyType[KeyUsages, str] = MappingProxyType(
     {
         "crl_sign": "cRLSign",
         "data_encipherment": "dataEncipherment",
@@ -468,7 +458,7 @@ NAME_OID_TYPES = MappingProxyType(
 )
 
 #: Names supported for parsing :py:class:`~cg:cryptography.x509.OtherName` values.
-OTHER_NAME_TYPES: "MappingProxyType[OtherNames, asn1crypto.core.Primitive]" = MappingProxyType(
+OTHER_NAME_TYPES: MappingProxyType[OtherNames, asn1crypto.core.Primitive] = MappingProxyType(
     {
         "UTF8String": asn1crypto.core.UTF8String,
         "UNIVERSALSTRING": asn1crypto.core.UniversalString,
@@ -483,12 +473,12 @@ OTHER_NAME_TYPES: "MappingProxyType[OtherNames, asn1crypto.core.Primitive]" = Ma
 )
 
 # Inverse of OTHER_NAME_TYPES
-OTHER_NAME_NAMES: "MappingProxyType[asn1crypto.core.Primitive, OtherNames]" = MappingProxyType(
+OTHER_NAME_NAMES: MappingProxyType[asn1crypto.core.Primitive, OtherNames] = MappingProxyType(
     {v: k for k, v in OTHER_NAME_TYPES.items()}
 )
 
 #: Aliases for parsing :py:class:`~cg:cryptography.x509.OtherName` values.
-OTHER_NAME_ALIASES: "MappingProxyType[str, OtherNames]" = MappingProxyType(
+OTHER_NAME_ALIASES: MappingProxyType[str, OtherNames] = MappingProxyType(
     {
         "UTF8": "UTF8String",
         "UNIV": "UNIVERSALSTRING",

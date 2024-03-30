@@ -474,34 +474,18 @@ qualname_overrides = {
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
-    "MappingProxyType": "python:types.MappingProxyType",
+    "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
+    "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
+    # Django documents these classes  under re-exported path names:
+    "django.http.request.HttpRequest": "django:django.http.HttpRequest",
+    "django.http.response.HttpResponse": "django:django.http.HttpResponse",
     "django.db.models.base.Model": "django.db.models.Model",
     "django.dispatch.dispatcher.Signal": "django.dispatch.Signal",
     "django.core.files.storage.base.Storage": "django.core.files.storage.FileSystemStorage",
-    "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
-    "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
-    # x509.GeneralName fixes a build error with the typehints in constants.GENERAL_NAME_TYPES. The error seems
-    # to disappear once the typehint is unquoted, which is possible with Python 3.9. It's likely that this
-    # override can be removed once support for Python 3.8 is dropped.
-    "x509.GeneralName": "cg:cryptography.x509.GeneralName",  # pragma: only py<3.9
-    # Django documents HttpRequest and HttpResponse under re-exported path names:
-    "django.http.request.HttpRequest": "django:django.http.HttpRequest",
-    "django.http.response.HttpResponse": "django:django.http.HttpResponse",
 }
 
 # Ignore (not so important) classes where the documented name does not match the documented name.
 nitpick_ignore = [
-    # When literals are used in typehints, Sphinx does not find the reference to the literal and errors with:
-    #
-    #   docstring of django_ca.constants....:1:py:class reference target not found: <name-of-literal>
-    #
-    # Note that the above message does *not* contain the full class path, just the variable name and also
-    # claims a type of "class", when "attr" would be correct. The full path can be "fixed" with
-    # `qualname_overrides` above, but that does not fix the error. Setting "reftype" to "attr" in
-    # `resolve_canonical_names()` below also works, but you still get the same error.
-    ("py:class", "OtherNames"),
-    ("py:class", "KeyUsages"),
-    ("py:class", "GeneralNames"),
     # TypeVars for classes that make no sense in documenting.
     ("py:class", "django_ca.key_backends.base.CreatePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.StorePrivateKeyOptionsTypeVar"),
