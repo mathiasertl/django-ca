@@ -7,11 +7,11 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["4.2", "5.0"]
-cryptography = ["41", "42"]
-acme = ["2.7", "2.8", "2.9"]
+cryptography = ["42"]
+acme = ["2.9"]
 pydantic = ["2.5", "2.6"]
 
 # https://alpinelinux.org/releases/
@@ -94,7 +94,6 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -109,12 +108,12 @@ classifiers = [
 dynamic = ["version", "readme"]
 
 # Dependency information
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "Django>=4.2",
-    "acme>=2.7",
+    "acme>=2.9",
     "asn1crypto>=1.5",
-    "cryptography>=41",
+    "cryptography>=42",
     "django-object-actions>=4.0.0",
     "dnspython>=2.3",
     "idna>=3.2",

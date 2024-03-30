@@ -11,6 +11,7 @@ ChangeLog
 ************
 
 * Removed support for the ``cn_in_san`` parameter in profiles.
+* Dropped support for ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
 
 .. _changelog-1.28.0:
 
@@ -25,7 +26,7 @@ ChangeLog
    * **Docker Compose users:** The PostgreSQL version was updated to PostgreSQL 16. See
      :ref:`postgresql_update` for update instructions.
 
-* Add support for ``Django~=5.0``, ``cryptography~=42``, ``acme==2.8.0`` and ``acme==2.9.0``.
+* Add support for ``Django~=5.0.0``, ``cryptography~=42.0``, ``acme==2.8.0`` and ``acme==2.9.0``.
 * **Docker Compose:** The PostgreSQL version was updated to PostgreSQL 16. See :ref:`postgresql_update` for
   update instructions.
 * ``pydantic>=2.5`` is now a required dependency.
