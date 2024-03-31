@@ -2,7 +2,7 @@
 Update
 ######
 
-Each :doc:`installation guide <install>` includes backup and update instructions matching the installation
+Each :doc:`installation guide </install>` includes backup and update instructions matching the installation
 method used.
 
 This document lists special update instructions when you update to a certain version.
@@ -118,8 +118,8 @@ Switch to ``USE_TZ=True`` by default
 The `USE_TZ <https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-USE_TZ>`_ was set to ``True`` in
 ``django-ca==1.24.0``. This affects you if you if:
 
-* use the full Django project (so you :doc:`installed from source <quickstart_from_source>`, use
-  :doc:`docker <docker>` or :doc:`docker compose <quickstart_docker_compose>`)
+* use the full Django project (so you :doc:`installed from source </quickstart/from_source>`, use
+  :doc:`docker </quickstart/docker>` or :doc:`docker compose </quickstart/docker_compose>`)
 * **AND** use a database *other then* PostgreSQL (so e.g. MySQL or SQLite3).
 
 If *both* conditions are true for you, you should convert timestamps stored in the database to UTC. If you

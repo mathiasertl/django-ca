@@ -20,8 +20,8 @@
 Docker
 ******
 
-* Base the :doc:`Docker image </docker>` on ``python:3-alpine`` (instead of ``python:3``), yielding a much
-  smaller image (~965MB -> ~235MB).
+* Base the :doc:`Docker image </quickstart/docker>` on ``python:3-alpine`` (instead of ``python:3``), yielding
+  a much smaller image (~965MB -> ~235MB).
 * Run complete test-suite in a separate build stage when building the image.
 * Provide ``uwsgi.ini`` for fast deployments with the uWSGI protocol.
 * Add support for passing additional parameters to uWSGI using the ``DJANGO_CA_UWSGI_PARAMS`` environment

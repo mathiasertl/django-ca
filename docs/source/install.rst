@@ -5,12 +5,12 @@ Installation
 There are multiple ways of installing **django-ca**. Each supported installation method has its own quickstart
 guide:
 
-* :doc:`quickstart_docker_compose`: By far the easiest, fastest and most reliable way.
-* :doc:`quickstart_as_app`: If you want to integrate django-ca into your existing Django project.
-* :doc:`quickstart_from_source`: If you want to install the project from source (or want to use it as a
+* :doc:`quickstart/docker_compose`: By far the easiest, fastest and most reliable way.
+* :doc:`quickstart/as_app`: If you want to integrate django-ca into your existing Django project.
+* :doc:`quickstart/from_source`: If you want to install the project from source (or want to use it as a
   template for a totally different platform).
-* :doc:`docker`: If you already have web server, database etc. set up or as a template for orchestration
-  platforms such as Docker Swarm.
+* :doc:`quickstart/docker`: If you already have web server, database etc. set up or as a template for
+  orchestration platforms such as Docker Swarm.
 
 .. _http-explanation:
 

@@ -11,7 +11,7 @@ instructions here as a template.
 
 .. NOTE::
 
-   If you just want to get a CA up and running quickly, why not try :doc:`quickstart_docker_compose`?
+   If you just want to get a CA up and running quickly, why not try :doc:`/quickstart/docker_compose`?
 
 This tutorial will give you a CA with
 
@@ -41,7 +41,7 @@ for how to install the software on your own.
 .. NOTE::
 
    Starting dependencies as Docker containers serves us well for this guide, but makes the guide technically
-   almost identical to just using :doc:`docker-compose <quickstart_docker_compose>`. If you do not already
+   almost identical to just using :doc:`docker-compose </quickstart/docker_compose>`. If you do not already
    have all the software already set up or want to integrate django-ca into an unsupported orchestration setup
    like Docker Swarm or Kubernetes, you probably really want to just use docker-compose!
 
@@ -52,7 +52,7 @@ On Debian/Ubuntu, simply do:
    user@host:~$ sudo apt update
    user@host:~$ sudo apt install docker.io
 
-.. include:: include/docker-regular-user.rst
+.. include:: /include/docker-regular-user.rst
 
 .. _docker-configuration:
 
@@ -73,11 +73,11 @@ instance. Generate a sufficiently long secret key and set it as ``SECRET_KEY`` b
 To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
 and add at least these settings (and adjust to your configuration):
 
-.. template-include:: yaml include/quickstart_with_docker/localsettings.yaml.jinja
+.. template-include:: yaml /include/quickstart_with_docker/localsettings.yaml.jinja
    :caption: localsettings.yaml
    :context: quickstart-with-docker
 
-Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
+Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
 for more YAML configuration examples.
 
 Note that you can pass simple configuration variables also via environment variables prefixed with
@@ -93,7 +93,7 @@ NGINX configuration
 
 NGINX requires a configuration file, so you first need to create it. A minimal example would be:
 
-.. template-include:: nginx include/quickstart_with_docker/nginx.conf.jinja
+.. template-include:: nginx /include/quickstart_with_docker/nginx.conf.jinja
    :caption: nginx.conf
    :context: quickstart-with-docker
 
@@ -125,7 +125,7 @@ the services this way.
 Create a Docker network and start PostgreSQL and Redis:
 
 .. console-include::
-   :include: include/quickstart_with_docker/start-dependencies.yaml
+   :include: /include/quickstart_with_docker/start-dependencies.yaml
    :context: quickstart-with-docker
 
 Start django-ca
@@ -135,7 +135,7 @@ django-ca (usually) consists of two containers (using the same image): A uWSGI s
 You thus need to start two containers with slightly different configuration:
 
 .. console-include::
-   :include: include/quickstart_with_docker/start-django-ca.yaml
+   :include: /include/quickstart_with_docker/start-django-ca.yaml
    :context: quickstart-with-docker
 
 Start NGINX
@@ -145,7 +145,7 @@ NGINX unfortunately will crash if you haven't started django-ca first (due to th
 container not resolving yet). So you have to start NGINX *after* the frontend container:
 
 .. console-include::
-   :include: include/quickstart_with_docker/start-nginx.yaml
+   :include: /include/quickstart_with_docker/start-nginx.yaml
    :context: quickstart-with-docker
 
 You are now able to view the admin interface at http://ca.example.com. You cannot log in yet, as you haven't
@@ -157,7 +157,7 @@ Create admin user and set up CAs
 It's finally time to create a user for the admin interface and some certificate authorities.
 
 .. console-include::
-   :include: include/quickstart_with_docker/setup-cas.yaml
+   :include: /include/quickstart_with_docker/setup-cas.yaml
    :context: quickstart-with-docker
 
 ***********
@@ -181,7 +181,7 @@ If you want to build the container by yourself, simply clone `the repository fro
 Update
 ******
 
-.. include:: include/update_intro.rst
+.. include:: /include/update_intro.rst
 
 Docker does not support updating containers very well on its own. Upgrading them means stopping and removing
 the old container and starting a new one with the same options:

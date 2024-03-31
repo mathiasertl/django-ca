@@ -5,7 +5,7 @@ Quickstart from source
 This guide provides instructions for running your own certificate authority by installing django-ca from
 source. This method requires a lot of manual configuration and a lot of expert knowledge, but is a good choice
 if you use an exotic system or other options do not work for you for some reason. If you're looking for a
-faster and easier option, you might consider using :doc:`docker-compose <quickstart_docker_compose>`.
+faster and easier option, you might consider using :doc:`docker-compose </quickstart/docker_compose>`.
 
 .. NOTE::
 
@@ -19,14 +19,14 @@ This tutorial will give you a CA with
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
 .. jinja:: requirements-from-source
-   :file: include/guide-requirements.rst.jinja
+   :file: /include/guide-requirements.rst.jinja
    :header_update_levels:
 
 Required software
 =================
 
 .. jinja:: full-requirements-from-source
-   :file: include/guide-full-requirements.rst.jinja
+   :file: /include/guide-full-requirements.rst.jinja
    :header_update_levels:
 
 On Debian/Ubuntu, simply do:
@@ -72,7 +72,7 @@ You can clone django-ca from git or download an archive `from GitHub
 during an update:
 
 .. jinja::
-   :file: include/guide-get-source.rst.jinja
+   :file: /include/guide-get-source.rst.jinja
 
 Create a virtualenv
 ===================
@@ -155,7 +155,7 @@ Configuration
 **django-ca** will load configuration from all ``*.yaml`` files in ``/etc/django-ca/`` in alphabetical order.
 These files can contain any `Django setting <https://docs.djangoproject.com/en/4.0/ref/settings/>`_, `Celery
 setting <https://docs.celeryproject.org/en/stable/userguide/configuration.html>`_ or :doc:`django-ca setting
-<settings>`.
+</settings>`.
 
 If you (mostly) followed the above examples, you can symlink :file:`conf/source/00-settings.yaml` to
 ``/etc/django-ca`` and just override a few settings in :file:`/etc/django-ca/10-localsettings.yaml`. To create
@@ -168,11 +168,11 @@ the symlink:
 And then simply create a minimal :file:`/etc/django-ca/10-localsettings.yaml` - but you can override any other
 setting here as well:
 
-.. template-include:: yaml include/quickstart_from_source/localsettings.yaml.jinja
+.. template-include:: yaml /include/quickstart_from_source/localsettings.yaml.jinja
    :caption: /etc/django-ca/10-localsettings.yaml
    :context: quickstart-from-source
 
-Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
+Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
 for more YAML configuration examples.
 
 .. _systemd-configuration:
@@ -229,7 +229,7 @@ Because we :ref:`created a shortcut above <from-source-add-manage-py-shortcut>` 
 ``django-ca`` to use **django-ca** from the command line.
 
 .. jinja:: manage-from-source
-   :file: include/create-user.rst.jinja
+   :file: /include/create-user.rst.jinja
 
 Setup NGINX
 ===========
@@ -243,7 +243,7 @@ A web server is required for the admin interface, certificate revocation status 
    misconfiguration might make it impossible to retrieve a certificate!
 
 In this setup, we'll create certificates using the CA we created above. If you want to use Let's Encrypt
-certificates instead, you can have a look at our :doc:`quickstart_docker_compose` for an example.
+certificates instead, you can have a look at our :doc:`/quickstart/docker_compose` for an example.
 
 Create a private/public key pair for NGINX to use:
 
@@ -273,20 +273,20 @@ have set ``$HOSTNAME``:
    root@host:~# systemctl restart nginx
 
 .. jinja:: guide-source-where-to-go
-   :file: include/guide-where-to-go.rst.jinja
+   :file: /include/guide-where-to-go.rst.jinja
    :header_update_levels:
 
 ******
 Update
 ******
 
-.. include:: include/update_intro.rst
+.. include:: /include/update_intro.rst
 
 Downloading the new release works the same as before, but you have to remove the old symlink before creating
 the new one:
 
 .. jinja::
-   :file: include/guide-update-source.rst.jinja
+   :file: /include/guide-update-source.rst.jinja
 
 Update the database schema and static files:
 

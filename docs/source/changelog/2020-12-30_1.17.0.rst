@@ -17,7 +17,7 @@
 Docker (Compose)
 ****************
 
-* Add thorough :doc:`/quickstart_docker_compose`.
+* Add thorough :doc:`/quickstart/docker_compose`.
 * Collect static files on startup instead of during build. The latter causes problems with image updates.
 * Make :command:`manage.py` available as the ``manage`` shortcut.
 * Add several security related headers to the admin interface (CSP, etc).

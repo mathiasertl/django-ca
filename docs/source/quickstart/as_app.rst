@@ -91,7 +91,7 @@ Finally, invoke the regular :command:`manage.py` commands when you add new apps:
    user@host:~$ python manage.py migrate
    user@host:~$ python manage.py collectstatic
 
-After that, **django-ca** should show up in your admin interface (see :doc:`web_interface`) and provide
+After that, **django-ca** should show up in your admin interface (see :doc:`/web_interface`) and provide
 various :command:`manage.py` commands (see :doc:`/cli/intro`).
 
 Create admin user and set up CAs
@@ -111,7 +111,7 @@ commands <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_.
 Update
 ******
 
-.. include:: include/update_intro.rst
+.. include:: /include/update_intro.rst
 
 You can update django-ca like any other Django app:
 

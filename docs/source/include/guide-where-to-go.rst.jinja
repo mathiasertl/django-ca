@@ -21,14 +21,14 @@ certificates.{% if guide == "from-source" %} The :command:`manage.py` script is 
 The :command:`manage.py` script can be invoked via ``{{ manage }}``, for example:
 
 .. console-include::
-   :include: include/quickstart_with_docker_compose/list_cas.yaml
+   :include: /include/quickstart_with_docker_compose/list_cas.yaml
    :context: quickstart-with-docker-compose
    :path: ~/ca/
 
 To sign a certificate from the command line, simply invoke the ``sign_cert`` command.
 
 .. console-include::
-   :include: include/quickstart_with_docker_compose/sign_cert.yaml
+   :include: /include/quickstart_with_docker_compose/sign_cert.yaml
    :context: quickstart-with-docker-compose
    :path: ~/ca/
 
@@ -36,7 +36,7 @@ To pass data from stdin, for example to sign a certificate non-interactively by 
 you need to pass the ``-T`` parameter to :command:`docker-compose exec`:
 
 .. console-include::
-   :include: include/quickstart_with_docker_compose/sign_cert_stdin.yaml
+   :include: /include/quickstart_with_docker_compose/sign_cert_stdin.yaml
    :context: quickstart-with-docker-compose
    :path: ~/ca/
 
@@ -61,9 +61,9 @@ instructions for Debian/Ubuntu <https://ubuntu.com/server/docs/security-trust-st
 Use ACME with certbot
 =====================
 
-If you enabled :doc:`ACMEv2 support <acme>`, all you need to do is enable ACMEv2 for the intermediate CA using
-the admin interface (or using ``{{ manage|default("manage.py") }} edit_ca``). After that, you can retrieve a
-certificate using a simple certbot command:
+If you enabled :doc:`ACMEv2 support </acme>`, all you need to do is enable ACMEv2 for the intermediate CA
+using the admin interface (or using ``{{ manage|default("manage.py") }} edit_ca``). After that, you can
+retrieve a certificate using a simple certbot command:
 
 .. code-block:: console
 

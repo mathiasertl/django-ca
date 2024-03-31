@@ -21,10 +21,10 @@ Welcome to django-ca's documentation!
    :maxdepth: 1
    :caption: Quickstart
 
-   ... as Django app <quickstart_as_app>
-   ... from source <quickstart_from_source>
-   ... with Docker <docker>
-   ... with Docker Compose <quickstart_docker_compose>
+   ... as Django app <quickstart/as_app>
+   ... from source <quickstart/from_source>
+   ... with Docker <quickstart/docker>
+   ... with Docker Compose <quickstart/docker_compose>
 
 .. toctree::
    :maxdepth: 1

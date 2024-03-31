@@ -16,7 +16,7 @@ This tutorial will give you a CA with
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
 .. jinja:: requirements-in-docker-compose
-   :file: include/guide-requirements.rst.jinja
+   :file: /include/guide-requirements.rst.jinja
    :header_update_levels:
 
 Required software
@@ -35,7 +35,7 @@ For a different OS, please read `Install Docker <https://docs.docker.com/engine/
 docker compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 <https://certbot.eff.org/docs/install.html>`_.
 
-.. include:: include/docker-regular-user.rst
+.. include:: /include/docker-regular-user.rst
 
 ************************
 Get initial certificates
@@ -96,7 +96,7 @@ are different from system to system. We need to add a `docker-compose override f
 into the container.  Simply add a file called :file:`docker-compose.override.yml` next to your main
 configuration file:
 
-.. template-include:: yaml include/quickstart_with_docker_compose/docker-compose.override.yml.jinja
+.. template-include:: yaml /include/quickstart_with_docker_compose/docker-compose.override.yml.jinja
    :caption: docker-compose.override.yml
    :context: quickstart-with-docker-compose
 
@@ -112,7 +112,7 @@ structure is required). Simply create a file called :file:`.env` next to :file:`
 
 For a quick start, there are only a few variables you need to specify:
 
-.. template-include:: bash include/quickstart_with_docker_compose/.env.jinja
+.. template-include:: bash /include/quickstart_with_docker_compose/.env.jinja
    :caption: .env
    :context: quickstart-with-docker-compose
 
@@ -123,7 +123,7 @@ The TLS configuration also requires that you generate a DH parameter file, used 
 generate it with:
 
 .. console-include::
-   :include: include/quickstart_with_docker_compose/dhparam.yaml
+   :include: /include/quickstart_with_docker_compose/dhparam.yaml
    :context: quickstart-with-docker-compose
    :path: ~/ca/
 
@@ -133,7 +133,7 @@ Customization
 Although the defaults are fine for most scenarios, **django-ca** and Django itself support a wide range of
 settings to customize your installation. Django has its settings documented under `Settings
 <https://docs.djangoproject.com/en/4.0/ref/settings/>`_, django-ca settings are documented under :doc:`custom
-settings <settings>`.
+settings </settings>`.
 
 Just like when using the plain Docker container, you can configure django-ca using either environment
 variables (set in e.g. ``docker-compose.override.yml``) or using an extra YAML configuration file. For more
@@ -169,7 +169,7 @@ To add a configuration file, first add a volume mapping in your ``docker-compose
    :language: yaml
    :caption: localsettings.yaml (example)
 
-Please see :doc:`settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
+Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
 for more YAML configuration examples.
 
 Configuration using environment variables
@@ -208,7 +208,7 @@ Now, you can start **django-ca** for the first time. Inside the folder with all 
 **docker compose** (and verify that everything is running):
 
 .. console-include::
-   :include: include/quickstart_with_docker_compose/docker-compose-up.yaml
+   :include: /include/quickstart_with_docker_compose/docker-compose-up.yaml
    :context: quickstart-with-docker-compose
    :path: ~/ca/
 
@@ -221,7 +221,7 @@ Verify setup
 You can run the deployment checks for your setup, which should not return any issues:
 
 .. console-include::
-   :include: include/quickstart_with_docker_compose/verify-setup.yaml
+   :include: /include/quickstart_with_docker_compose/verify-setup.yaml
    :context: quickstart-with-docker-compose
    :path: ~/ca/
 
@@ -232,12 +232,12 @@ Create admin user and set up CAs
 Inside the backend container, ``manage`` is an alias for ``manage.py``.
 
 .. jinja:: manage-in-docker-compose
-   :file: include/create-user.rst.jinja
+   :file: /include/create-user.rst.jinja
 
 .. _docker-compose-use-ca:
 
 .. jinja:: guide-docker-compose-where-to-go
-   :file: include/guide-where-to-go.rst.jinja
+   :file: /include/guide-where-to-go.rst.jinja
    :header_update_levels:
 
 .. _docker-compose-backup:
@@ -288,7 +288,7 @@ Here is an example that should work for the ``backend`` container.:
 Update
 ******
 
-.. include:: include/update_intro.rst
+.. include:: /include/update_intro.rst
 
 .. WARNING::
 

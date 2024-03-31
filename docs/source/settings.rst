@@ -9,15 +9,15 @@ and **django-ca** provides some of its own settings.
 How to configure
 ****************
 
-If you use django-ca :doc:`as a Django app </quickstart_as_app>`, set settings normally using your
+If you use django-ca :doc:`as a Django app </quickstart/as_app>`, set settings normally using your
 :file:`settings.py` file (or whatever custom mechanism you have devised).
 
-If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart_from_source>`, or
-use :doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`), do *not* update the
-:file:`settings.py` file included with django-ca. Instead, use `YAML <https://en.wikipedia.org/wiki/YAML>`_
-files that django-ca loads (in alphabetical order) from a preconfigured directory. Please see the respective
-installation instructions for how to override settings, and see :ref:`settings-yaml-configuration` for format
-instructions.
+If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart/from_source>`, or
+use :doc:`Docker </quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`), do *not* update
+the :file:`settings.py` file included with django-ca. Instead, use
+`YAML <https://en.wikipedia.org/wiki/YAML>`_ files that django-ca loads (in alphabetical order) from a
+preconfigured directory. Please see the respective installation instructions for how to override settings, and
+see :ref:`settings-yaml-configuration` for format instructions.
 
 The django-ca project also lets you override simple string-like settings via environment variables. The
 environment variable name is the same as the setting but prefixed with ``DJANGO_CA_``. For example to set the
@@ -31,18 +31,19 @@ The django-ca project also recognizes some environment variables to better integ
 Required Django settings
 ************************
 
-If you use django-ca :doc:`as a Django app </quickstart_as_app>` the only required settings are the settings
+If you use django-ca :doc:`as a Django app </quickstart/as_app>` the only required settings are the settings
 any Django project requires anyway, most importantly ``DATABASES``, ``SECRET_KEY``, ``ALLOWED_HOSTS`` and
 ``STATIC_ROOT``.
 
-If you :doc:`install from source </quickstart_from_source>`, you only have to set the ``DATABASES`` and
+If you :doc:`install from source </quickstart/from_source>`, you only have to set the ``DATABASES`` and
 ``SECRET_KEY`` settings. The ``CA_DEFAULT_HOSTNAME`` also configures the ``ALLOWED_HOSTS`` setting if not set
 otherwise. Please see the `section on configuration <from-source-configuration>`_ for more information.
 
-If you use :doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`, there isn't really
-any standard Django setting you need to configure, as safe defaults are used. A safe value for ``SECRETS_KEY``
-is generated automatically, ``ALLOWED_HOSTS`` is set via ``CA_DEFAULT_HOSTNAME`` and the ``DATABASES`` setting
-is automatically populated with environment variables also used by the PostgreSQL/MySQL containers.
+If you use :doc:`Docker </quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`, there
+isn't really any standard Django setting you need to configure, as safe defaults are used. A safe value for
+``SECRETS_KEY`` is generated automatically, ``ALLOWED_HOSTS`` is set via ``CA_DEFAULT_HOSTNAME`` and the
+``DATABASES`` setting is automatically populated with environment variables also used by the PostgreSQL/MySQL
+containers.
 
 ******************
 django-ca settings
@@ -271,7 +272,7 @@ CA_DEFAULT_SUBJECT
 
    .. Describe here the syntax of this value. Profiles describe how the value is used.
 
-   The default subject for :doc:`profiles` that don't define their own subject. You can use this setting to
+   The default subject for :doc:`/profiles` that don't define their own subject. You can use this setting to
    define a default subject for all profiles without having to define the subject in every profile.
 
    Please see :ref:`profiles-subject` for how this value used when signing certificates.
@@ -306,7 +307,7 @@ CA_DEFAULT_SUBJECT
 CA_ENABLE_REST_API
    Default: ``False``
 
-   Set to ``True`` to enable the :doc:`experimental REST API <rest_api>`.
+   Set to ``True`` to enable the :doc:`experimental REST API </rest_api>`.
 
 .. _settings-ca-file-storage:
 
@@ -358,10 +359,10 @@ CA_KEY_BACKENDS
    The default ``StoragesBackend`` uses a storage alias called ``"django-ca"`` by default, so it implies that
    the `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ setting has a "django-ca"
    alias defined. If you use the full project (e.g. installed with :doc:`from source
-   </quickstart_from_source>`, :doc:`with Docker </docker>` or :doc:`Docker Compose
-   <quickstart_docker_compose>`), this will be the file system directory set by :ref:`settings-ca-dir`, unless
-   you define your own storage backend. If you use django-ca :doc:`as Django app <quickstart_as_app>`, you
-   have to define this storage alias.
+   </quickstart/from_source>`, :doc:`with Docker </quickstart/docker>` or :doc:`Docker Compose
+   </quickstart/docker_compose>`), this will be the file system directory set by :ref:`settings-ca-dir`,
+   unless you define your own storage backend. If you use django-ca :doc:`as Django app </quickstart/as_app>`,
+   you have to define this storage alias.
 
 .. _settings-ca-min-key-size:
 
@@ -381,7 +382,7 @@ CA_NOTIFICATION_DAYS
 CA_OCSP_URLS
    Default: ``{}``
 
-   Configuration for OCSP responders. See :doc:`ocsp` for more information.
+   Configuration for OCSP responders. See :doc:`/ocsp` for more information.
 
 .. _settings-ca-ocsp-responder-certificate-renewal:
 
@@ -424,7 +425,7 @@ CA_PASSWORDS
 CA_PROFILES
    Default: ``{}``
 
-   Add new profiles or change existing ones.  Please see :doc:`profiles` for more information on profiles.
+   Add new profiles or change existing ones.  Please see :doc:`/profiles` for more information on profiles.
 
 .. _settings-ca-use-celery:
 
@@ -578,9 +579,9 @@ SECRET_KEY_FILE
 Global environment variables
 ****************************
 
-If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart_from_source>` or use
-:doc:`Docker </docker>` or :doc:`docker-compose </quickstart_docker_compose>`), you can also make use of some
-environment variables set by other systems.
+If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart/from_source>` or use
+:doc:`Docker </quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`), you can also make
+use of some environment variables set by other systems.
 
 Configuration directory
 =======================
@@ -692,7 +693,7 @@ SystemD
 
 The django-ca project also recognizes some environment variables set by SystemD.
 
-The SystemD services included in our :doc:`quickstart guide <quickstart_from_source>` already set this
+The SystemD services included in our :doc:`quickstart guide </quickstart/from_source>` already set this
 variable and further examples assume that you did not modify it. It is documented here for completeness.
 
 CONFIGURATION_DIRECTORY
@@ -706,9 +707,9 @@ CONFIGURATION_DIRECTORY
 YAML configuration
 ******************
 
-The Django project you use if you :doc:`install from source </quickstart_from_source>`, use :doc:`Docker
-</docker>` or :doc:`docker-compose </quickstart_docker_compose>` loads YAML files from a directory. This
-enables you to configure django-ca with a normal configuration file format without having to know Python.
+The Django project you use if you :doc:`install from source </quickstart/from_source>`, use :doc:`Docker
+</quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>` loads YAML files from a directory.
+This enables you to configure django-ca with a normal configuration file format without having to know Python.
 
 .. seealso:: https://en.wikipedia.org/wiki/YAML - Wikipedia has an overview of the YAML syntax.
 

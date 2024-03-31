@@ -17,7 +17,7 @@ web server under that URL, you do not have to configure anything to run an OCSP 
 OCSP with docker compose
 ========================
 
-If you use the :doc:`docker compose <quickstart_docker_compose>`, the setup already provides OCSP services
+If you use the :doc:`docker compose <quickstart/docker_compose>`, the setup already provides OCSP services
 for all issued certificates.
 
 OCSP with other setups

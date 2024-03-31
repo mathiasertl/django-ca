@@ -403,7 +403,7 @@ jinja_contexts = {
     "manage-in-docker-compose": {
         "manage": "docker compose exec backend manage",
         "shared": True,
-        "console_include": "include/quickstart_with_docker_compose/setup-cas.yaml",
+        "console_include": "/include/quickstart_with_docker_compose/setup-cas.yaml",
         "context": "quickstart-with-docker-compose",
         "path": "~/ca/",
     },
