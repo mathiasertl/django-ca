@@ -3,4 +3,20 @@
 ############
 
 * Removed support for the ``cn_in_san`` parameter in profiles.
-* Dropped support for ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
+
+************
+Dependencies
+************
+
+* **BACKWARDS INCOMPATIBLE:** Dropped support for Python 3.8.
+* **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
+
+**********
+Python API
+**********
+
+* **BACKWARDS INCOMPATIBLE:** ``django_ca.utils.parse_hash_algorithm()`` was removed, it was deprecated since
+  ``django-ca==1.25.0`` in favor of using
+  :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>`.
+* **BACKWARDS INCOMPATIBLE:** ``django_ca.utils.format_name()`` was removed, it was deprecated since
+  ``django-ca==1.27.0`` in favor of using RFC 4514-formatted subjects.
