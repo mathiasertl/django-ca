@@ -32,6 +32,14 @@ Python API
   1.25.0. Use :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>` instead.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.format_name()``, deprecated since 1.27.0. Use RFC
   4514-formatted subjects instead.
+* **BACKWARDS INCOMPATIBLE:** Removed the `password` parameter to
+  :py:func:`~django_ca.models.CertificateAuthority.sign`. It was a left-over and only used in the signal.
+
+*******
+Signals
+*******
+
+* :py:attr:`django_ca.signals.pre_sign_cert` now receives `key_backend_options` instead of `password`.
 
 *******************
 Deprecation notices

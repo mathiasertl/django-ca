@@ -1079,7 +1079,6 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 algorithm=data["algorithm"],
                 expires=expires,
                 extensions=extensions.values(),
-                password=data["password"],
             )
 
             obj.profile = profile.name

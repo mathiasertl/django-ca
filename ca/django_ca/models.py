@@ -708,7 +708,6 @@ class CertificateAuthority(X509CertMixin):
         algorithm: Optional[AllowedHashTypes] = None,
         expires: Optional[datetime] = None,
         extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
-        password: Optional[Union[str, bytes]] = None,
     ) -> x509.Certificate:
         """Create a signed certificate.
 
@@ -733,8 +732,6 @@ class CertificateAuthority(X509CertMixin):
         extensions : list of :py:class:`~cg:cryptography.x509.Extension`, optional
             List of extensions to add to the certificates. The function will add some extensions unless
             provided here, see above for details.
-        password : str or bytes, optional
-            Password for loading the private key of the CA, if any.
         """
         if algorithm is None:
             algorithm = self.algorithm
@@ -789,7 +786,7 @@ class CertificateAuthority(X509CertMixin):
             algorithm=algorithm,
             subject=subject,
             extensions=extensions,
-            password=password,
+            key_backend_options=key_backend_options,
         )
 
         signed_cert = self.key_backend.sign_certificate(

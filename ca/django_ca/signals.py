@@ -73,8 +73,8 @@ subject : :class:`~cg:cryptography.x509.Name`
     The subject for the certificate.
 extensions : list of :py:class:`~cg:cryptography.x509.Extension`
     The extensions that will be added to the certificate.
-password : str or bytes, optional
-    The password used for accessing the private key of the certificate authority.
+key_backend_options : BaseModel
+    Options required for using the private key of the certificate authority.
 """
 
 
