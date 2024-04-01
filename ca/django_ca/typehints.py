@@ -272,9 +272,22 @@ SignedCertificateTimestampTypeVar = TypeVar(
     x509.SignedCertificateTimestamps,
 )
 
-##############################
-# Serialized Pydantic models #
-##############################
+#################################
+# Typehints for Pydantic models #
+#################################
+
+
+class ProfileExtensionValue(TypedDict, total=False):
+    """Typed dict as it occurs in profiles.
+
+    This TypedDict lacks a `type`, as the configuration uses a dictionary with the type as mapping key.
+
+    This TypedDict is more lenient than ``SerializedPydanticExtension``, as critical often has a default,
+    and `value` may not be set for extensions that don't have a value.
+    """
+
+    value: Optional[Any]
+    critical: Optional[bool]
 
 
 class SerializedPydanticNameAttribute(TypedDict):

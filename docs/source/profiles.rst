@@ -167,6 +167,8 @@ will give the certificate a subject of ``C=AT,ST=Vienna,CN=example.com``. If you
 
 you will get ``C=AT,ST=Styria,L=Graz,CN=graz.example.com`` as a subject.
 
+.. _profiles-extensions:
+
 Configure extensions
 ====================
 

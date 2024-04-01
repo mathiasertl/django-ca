@@ -18,7 +18,7 @@ import warnings
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta
 from threading import local
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 from pydantic import BaseModel
 
@@ -33,7 +33,7 @@ from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, HASH_ALGORIT
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.extensions import parse_extension
 from django_ca.extensions.utils import format_extensions, get_formatting_context
-from django_ca.pydantic.extensions import SignCertificateExtensionsList
+from django_ca.pydantic.extensions import CertificateExtensions, ExtensionModel, SignCertificateExtensionsList
 from django_ca.pydantic.name import NameModel
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
@@ -41,7 +41,7 @@ from django_ca.typehints import (
     Expires,
     ExtensionMapping,
     HashAlgorithms,
-    ParsableExtension,
+    ProfileExtensionValue,
     SerializedProfile,
     SerializedPydanticName,
 )
@@ -80,7 +80,7 @@ class Profile:
         subject: Optional[Union[typing.Literal[False], x509.Name]] = None,
         algorithm: Optional[HashAlgorithms] = None,
         extensions: Optional[
-            dict[str, Optional[Union[ParsableExtension, x509.Extension[x509.ExtensionType]]]]
+            dict[str, Optional[Union[ProfileExtensionValue, x509.Extension[x509.ExtensionType]]]]
         ] = None,
         expires: Optional[Union[int, timedelta]] = None,
         description: str = "",
@@ -136,9 +136,25 @@ class Profile:
             elif extension is None:
                 # None value explicitly deactivates/unsets an extension in the admin interface
                 self.extensions[EXTENSION_KEY_OIDS[key]] = None
-            else:
-                parsed_extension = parse_extension(key, extension)
+            elif isinstance(extension, dict):
+                try:
+                    parsed_model = cast(
+                        ExtensionModel[x509.ExtensionType],
+                        CertificateExtensions.validate_python({**extension, "type": key}),
+                    )
+                    parsed_extension = parsed_model.cryptography
+                except ValueError:
+                    # TYPEHINT NOTE: constructor already uses new format in typehints
+                    parsed_extension = parse_extension(key, extension)  # type: ignore[arg-type]
+                    warnings.warn(
+                        f"{name}: {key}: Deprecated extension format (value: {extension}).",
+                        RemovedInDjangoCA200Warning,
+                        stacklevel=2,
+                    )
+
                 self.extensions[parsed_extension.oid] = parsed_extension
+            else:
+                raise TypeError(f"Profile {name}, extension {key}: {extension}: Unsupported type")
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, (Profile, DefaultProfileProxy)):

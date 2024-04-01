@@ -32,7 +32,7 @@ from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
-from django_ca.tests.base.assertions import assert_extensions
+from django_ca.tests.base.assertions import assert_extensions, assert_removed_in_200
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.mocks import mock_signal
@@ -596,25 +596,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
             assert repr(profiles[name]) == f"<Profile: {name}>"
 
 
-def test_deprecated_subject_value() -> None:
-    """Test deprecated subject values."""
-    value = "/C=AT/L=Vienna/ST=Vienna"
-    msg = (
-        rf"^{value}: Support for passing a value of type .* is deprecated and will be removed in "
-        "django-ca 2.0.$"
-    )
-    with pytest.warns(RemovedInDjangoCA200Warning, match=msg):
-        prof = Profile("test", value)  # type: ignore[arg-type]  # what we test
-
-    assert prof.subject == x509.Name(
-        [
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
-        ]
-    )
-
-
 class GetProfileTestCase(TestCase):
     """Test the get_profile function."""
 
@@ -743,3 +724,42 @@ def test_serialize() -> None:
             },
         ],
     }
+
+
+def test_deprecated_extension_format() -> None:
+    """Test passing a deprecated extension format."""
+    key = EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+    value = {"value": [{"full_name": ["DNS:example.com"]}]}
+    warning = rf"^test: {key}: Deprecated extension format \(value: .*\)\."
+    with assert_removed_in_200(warning):
+        # TYPEHINT NOTE: extension format will change anyway, not bothering here.
+        prof = Profile("test", extensions={key: value})  # type: ignore[dict-item]
+    assert prof.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
+        distribution_point(full_name=[dns("example.com")])
+    )
+
+
+def test_deprecated_subject_value() -> None:
+    """Test deprecated subject values."""
+    value = "/C=AT/L=Vienna/ST=Vienna"
+    msg = (
+        rf"^{value}: Support for passing a value of type .* is deprecated and will be removed in "
+        "django-ca 2.0.$"
+    )
+    with pytest.warns(RemovedInDjangoCA200Warning, match=msg):
+        prof = Profile("test", value)  # type: ignore[arg-type]  # what we test
+
+    assert prof.subject == x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
+        ]
+    )
+
+
+def test_invalid_extension_type() -> None:
+    """Test creating a profile with a completely invalid extension type."""
+    with pytest.raises(TypeError, match=r"^Profile test, extension key_usage: True: Unsupported type$"):
+        # TYPEHINT NOTE: This is what we're testing
+        Profile("test", extensions={EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True})  # type: ignore[dict-item]

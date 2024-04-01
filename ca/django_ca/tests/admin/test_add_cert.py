@@ -1303,7 +1303,10 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
     @override_tmpcadir(
         CA_PROFILES={
             "webserver": {
-                "extensions": {"subject_alternative_name": {"value": ["example.com"]}, "ocsp_no_check": None}
+                "extensions": {
+                    "subject_alternative_name": {"value": [{"type": "DNS", "value": "example.com"}]},
+                    "ocsp_no_check": None,
+                }
             }
         },
     )
@@ -1383,13 +1386,29 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 "extensions": {
                     "authority_information_access": {
                         "critical": False,
-                        "value": {
-                            "ocsp": [
-                                "http://profile.ocsp.example.com",
-                                "http://profile.ocsp-backup.example.com",
-                            ],
-                            "issuers": ["http://profile.issuers.example.com"],
-                        },
+                        "value": [
+                            {
+                                "access_method": "ocsp",
+                                "access_location": {
+                                    "type": "URI",
+                                    "value": "http://profile.ocsp.example.com",
+                                },
+                            },
+                            {
+                                "access_method": "ocsp",
+                                "access_location": {
+                                    "type": "URI",
+                                    "value": "http://profile.ocsp-backup.example.com",
+                                },
+                            },
+                            {
+                                "access_method": "ca_issuers",
+                                "access_location": {
+                                    "type": "URI",
+                                    "value": "http://profile.issuers.example.com",
+                                },
+                            },
+                        ],
                     },
                     "certificate_policies": {
                         "critical": True,
@@ -1404,8 +1423,10 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         "critical": True,
                         "value": [
                             {
-                                "full_name": ["http://crl.profile.example.com"],
-                                "crl_issuer": ["http://crl-issuer.profile.example.com"],
+                                "full_name": [{"type": "URI", "value": "http://crl.profile.example.com"}],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://crl-issuer.profile.example.com"}
+                                ],
                             },
                         ],
                     },
@@ -1417,20 +1438,27 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         "critical": False,
                         "value": [
                             {
-                                "full_name": ["http://freshest-crl.profile.example.com"],
-                                "crl_issuer": ["http://freshest-crl-issuer.profile.example.com"],
+                                "full_name": [
+                                    {"type": "URI", "value": "http://freshest-crl.profile.example.com"}
+                                ],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://freshest-crl-issuer.profile.example.com"}
+                                ],
                             }
                         ],
                     },
                     "issuer_alternative_name": {
                         "critical": True,
-                        "value": ["http://ian1.example.com", "http://ian2.example.com"],
+                        "value": [
+                            {"type": "URI", "value": "http://ian1.example.com"},
+                            {"type": "URI", "value": "http://ian2.example.com"},
+                        ],
                     },
                     "key_usage": {
                         "critical": True,
                         "value": ["key_agreement", "key_cert_sign"],
                     },
-                    "ocsp_no_check": {"critical": True, "value": True},
+                    "ocsp_no_check": {"critical": True},
                     "tls_feature": {"critical": True, "value": ["OCSPMustStaple"]},
                 }
             }
@@ -1523,12 +1551,16 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         "critical": True,
                         "value": [
                             {
-                                "full_name": ["http://crl.profile.example.com"],
-                                "crl_issuer": ["http://crl-issuer.profile.example.com"],
+                                "full_name": [{"type": "URI", "value": "http://crl.profile.example.com"}],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://crl-issuer.profile.example.com"}
+                                ],
                             },
                             {
-                                "full_name": ["http://crl2.profile.example.com"],
-                                "crl_issuer": ["http://crl-issuer2.profile.example.com"],
+                                "full_name": [{"type": "URI", "value": "http://crl2.profile.example.com"}],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://crl-issuer2.profile.example.com"}
+                                ],
                             },
                         ],
                     },
@@ -1536,8 +1568,12 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                         "critical": False,
                         "value": [
                             {
-                                "full_name": ["http://freshest-crl.profile.example.com"],
-                                "crl_issuer": ["http://freshest-crl-issuer.profile.example.com"],
+                                "full_name": [
+                                    {"type": "URI", "value": "http://freshest-crl.profile.example.com"}
+                                ],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://freshest-crl-issuer.profile.example.com"}
+                                ],
                             }
                         ],
                     },
