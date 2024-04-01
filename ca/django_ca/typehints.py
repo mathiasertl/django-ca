@@ -161,6 +161,46 @@ LogEntryTypes = Literal["precertificate", "x509_certificate"]
 #: Serialized access method for :py:class:`~cg:cryptography.x509.AccessDescription` instances.
 AccessMethods = Literal["ocsp", "ca_issuers", "ca_repository"]
 
+#: Extension keys for extensions that may occur in a certificate.
+CertificateExtensionKeys = Literal[
+    "authority_information_access",
+    "authority_key_identifier",
+    "basic_constraints",
+    "certificate_policies",
+    "crl_distribution_points",
+    "extended_key_usage",
+    "freshest_crl",
+    "issuer_alternative_name",
+    "key_usage",
+    "ms_certificate_template",
+    "ocsp_no_check",
+    "precert_poison",
+    "precertificate_signed_certificate_timestamps",
+    "signed_certificate_timestamps",
+    "subject_alternative_name",
+    "subject_information_access",
+    "subject_key_identifier",
+    "tls_feature",
+]
+
+#: Extension keys for all known x509 Extensions.
+#:
+#: This literal is a superset of :py:attr:`~django_ca.typehints.CertificateExtensionKeys` and includes
+#: extensions that may occur in certificate authorities or CRLs.
+ExtensionKeys = Union[
+    CertificateExtensionKeys,
+    Literal[
+        "crl_number",
+        "delta_crl_indicator",
+        "inhibit_any_policy",
+        "issuing_distribution_point",
+        "name_constraints",
+        "policy_constraints",
+        "policy_mappings",
+        "subject_directory_attributes",
+    ],
+]
+
 #: List of possible values for :py:class:`~cg:cryptography.x509.KeyUsage` instances.
 KeyUsages = Literal[
     "crl_sign",
@@ -303,7 +343,7 @@ SerializedPydanticName = list[SerializedPydanticNameAttribute]
 class SerializedPydanticExtension(TypedDict):
     """Serialized pydantic extension."""
 
-    type: str
+    type: CertificateExtensionKeys
     critical: bool
     value: Any
 
@@ -316,7 +356,7 @@ class SerializedProfile(TypedDict):
     subject: Optional[SerializedPydanticName]
     algorithm: Optional[HashAlgorithms]
     extensions: list[SerializedPydanticExtension]
-    clear_extensions: list[str]
+    clear_extensions: list[CertificateExtensionKeys]
 
 
 #####################

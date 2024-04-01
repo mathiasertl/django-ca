@@ -5,13 +5,14 @@
 .. automapping:: django_ca.constants.ACCESS_METHOD_TYPES
    :annotation:
 
+.. automapping:: django_ca.constants.CERTIFICATE_EXTENSION_KEYS
+   :no-value:
+
 .. automapping:: django_ca.constants.ELLIPTIC_CURVE_TYPES
    :annotation:
 
 .. automapping:: django_ca.constants.EXTENDED_KEY_USAGE_NAMES
    :no-value:
-
-   test
 
 .. automapping:: django_ca.constants.EXTENSION_DEFAULT_CRITICAL
    :no-value:

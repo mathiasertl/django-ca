@@ -29,7 +29,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.urls import reverse
 
 from django_ca import ca_settings, constants, typehints
-from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, HASH_ALGORITHM_NAMES
+from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, HASH_ALGORITHM_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.extensions import parse_extension
 from django_ca.extensions.utils import format_extensions, get_formatting_context
@@ -38,6 +38,7 @@ from django_ca.pydantic.name import NameModel
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
+    CertificateExtensionKeys,
     Expires,
     ExtensionMapping,
     HashAlgorithms,
@@ -80,7 +81,10 @@ class Profile:
         subject: Optional[Union[typing.Literal[False], x509.Name]] = None,
         algorithm: Optional[HashAlgorithms] = None,
         extensions: Optional[
-            dict[str, Optional[Union[ProfileExtensionValue, x509.Extension[x509.ExtensionType]]]]
+            dict[
+                CertificateExtensionKeys,
+                Optional[Union[ProfileExtensionValue, x509.Extension[x509.ExtensionType]]],
+            ]
         ] = None,
         expires: Optional[Union[int, timedelta]] = None,
         description: str = "",
@@ -399,7 +403,9 @@ class Profile:
             algorithm = HASH_ALGORITHM_NAMES[type(self.algorithm)]
 
         profile_extensions = [ext for ext in self.extensions.values() if ext is not None]
-        clear_extensions = [EXTENSION_KEYS[oid] for oid, ext in self.extensions.items() if ext is None]
+        clear_extensions = [
+            CERTIFICATE_EXTENSION_KEYS[oid] for oid, ext in self.extensions.items() if ext is None
+        ]
         extensions = SignCertificateExtensionsList.validate_python(profile_extensions)
 
         return {

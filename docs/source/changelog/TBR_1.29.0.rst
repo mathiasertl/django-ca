@@ -23,6 +23,11 @@ Dependencies
 Python API
 **********
 
+* Add literal typehints for extension keys under :py:attr:`~django_ca.typehints.ExtensionKeys` and
+  :py:attr:`~django_ca.typehints.CertificateExtensionKeys` to improve type hinting.
+* Add :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS`, a subset of
+  :py:attr:`~django_ca.constants.EXTENSION_KEYS`, for extensions all extensions that may occur in
+  end-entity certificates.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since
   1.25.0. Use :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>` instead.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.format_name()``, deprecated since 1.27.0. Use RFC

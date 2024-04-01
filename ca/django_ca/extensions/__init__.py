@@ -24,24 +24,6 @@ from django_ca.constants import EXTENSION_NAMES
 from django_ca.extensions.parse import parse_extension
 from django_ca.extensions.text import extension_as_text
 
-#: Tuple of extensions that can be set when creating a new certificate
-CERTIFICATE_EXTENSIONS = tuple(
-    sorted(
-        [
-            "authority_information_access",
-            "certificate_policies",
-            "crl_distribution_points",
-            "extended_key_usage",
-            "freshest_crl",
-            "issuer_alternative_name",
-            "key_usage",
-            "ocsp_no_check",
-            "subject_alternative_name",
-            "tls_feature",
-        ]
-    )
-)
-
 
 def get_extension_name(oid: x509.ObjectIdentifier) -> str:
     """Function to get the name of an extension from the extensions OID.

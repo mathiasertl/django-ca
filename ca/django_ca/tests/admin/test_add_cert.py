@@ -38,7 +38,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
 from django_ca import ca_settings
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS, ExtendedKeyUsageOID
+from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
@@ -817,7 +817,11 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         if oid in profile.extensions:
             model = model_class.model_validate(profile.extensions[oid])
             return model.model_dump()
-        return {"type": EXTENSION_KEYS[oid], "value": default, "critical": EXTENSION_DEFAULT_CRITICAL[oid]}
+        return {
+            "type": CERTIFICATE_EXTENSION_KEYS[oid],
+            "value": default,
+            "critical": EXTENSION_DEFAULT_CRITICAL[oid],
+        }
 
     def assertProfile(  # pylint: disable=invalid-name
         self,

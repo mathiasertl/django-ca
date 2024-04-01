@@ -40,7 +40,9 @@ from django.utils.translation import gettext_lazy as _
 from django_ca.typehints import (
     AccessMethods,
     AllowedHashTypes,
+    CertificateExtensionKeys,
     EllipticCurves,
+    ExtensionKeys,
     GeneralNames,
     HashAlgorithms,
     KeyUsages,
@@ -220,40 +222,59 @@ EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
     }
 )
 
-#: Map of ExtensionOIDs to keys that are usable as class attributes.
-EXTENSION_KEYS = MappingProxyType(
+#: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in an end entity certificate.
+CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKeys] = (
+    MappingProxyType(
+        {
+            ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "authority_information_access",
+            ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
+            ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
+            ExtensionOID.CERTIFICATE_POLICIES: "certificate_policies",
+            ExtensionOID.CRL_DISTRIBUTION_POINTS: "crl_distribution_points",
+            ExtensionOID.EXTENDED_KEY_USAGE: "extended_key_usage",
+            ExtensionOID.FRESHEST_CRL: "freshest_crl",
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME: "issuer_alternative_name",
+            ExtensionOID.KEY_USAGE: "key_usage",
+            ExtensionOID.MS_CERTIFICATE_TEMPLATE: "ms_certificate_template",
+            ExtensionOID.OCSP_NO_CHECK: "ocsp_no_check",  # RFC 2560 does not really define a spelling
+            ExtensionOID.PRECERT_POISON: "precert_poison",  # RFC 7633
+            ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
+            ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
+            ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
+            ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
+            ExtensionOID.TLS_FEATURE: "tls_feature",  # RFC 7633
+        }
+    )
+)
+
+#: Map of extension keys to ExtensionOIDs (the inverse of CERTIFICATE_EXTENSION_KEYS).
+CERTIFICATE_EXTENSION_KEY_OIDS: MappingProxyType[CertificateExtensionKeys, x509.ObjectIdentifier] = (
+    MappingProxyType({v: k for k, v in CERTIFICATE_EXTENSION_KEYS.items()})
+)
+
+#: Map of all :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that are known to cryptography.
+#:
+#: This value is a superset of :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS` and includes
+#: extensions that may occur in certificate authorities or CRLs.
+EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ExtensionKeys] = MappingProxyType(
     {
-        ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "authority_information_access",
-        ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
-        ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
-        ExtensionOID.CERTIFICATE_POLICIES: "certificate_policies",
-        ExtensionOID.CRL_DISTRIBUTION_POINTS: "crl_distribution_points",
+        **CERTIFICATE_EXTENSION_KEYS,
         ExtensionOID.CRL_NUMBER: "crl_number",  # CRL extension
         ExtensionOID.DELTA_CRL_INDICATOR: "delta_crl_indicator",  # CRL extension
-        ExtensionOID.EXTENDED_KEY_USAGE: "extended_key_usage",
-        ExtensionOID.FRESHEST_CRL: "freshest_crl",
         ExtensionOID.INHIBIT_ANY_POLICY: "inhibit_any_policy",  # CA only
-        ExtensionOID.ISSUER_ALTERNATIVE_NAME: "issuer_alternative_name",
         ExtensionOID.ISSUING_DISTRIBUTION_POINT: "issuing_distribution_point",  # CRL extension
-        ExtensionOID.KEY_USAGE: "key_usage",
         ExtensionOID.NAME_CONSTRAINTS: "name_constraints",  # CA only
-        ExtensionOID.MS_CERTIFICATE_TEMPLATE: "ms_certificate_template",
-        ExtensionOID.OCSP_NO_CHECK: "ocsp_no_check",  # RFC 2560 does not really define a spelling
         ExtensionOID.POLICY_CONSTRAINTS: "policy_constraints",  # CA only
         ExtensionOID.POLICY_MAPPINGS: "policy_mappings",  # CA only
-        ExtensionOID.PRECERT_POISON: "precert_poison",  # RFC 7633
-        ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
-        ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
-        ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
-        ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: "subject_directory_attributes",
-        ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
-        ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
-        ExtensionOID.TLS_FEATURE: "tls_feature",  # RFC 7633
+        ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: "subject_directory_attributes",  # only OID exists
     }
 )
 
 #: Map of extension keys to ExtensionOIDs (the inverse of EXTENSION_KEYS).
-EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in EXTENSION_KEYS.items()})
+EXTENSION_KEY_OIDS: MappingProxyType[ExtensionKeys, x509.ObjectIdentifier] = MappingProxyType(
+    {v: k for k, v in EXTENSION_KEYS.items()}
+)
 
 #: Map of ExtensionOIDs to human-readable names as they appear in the RFC where they are defined.
 EXTENSION_NAMES = MappingProxyType(

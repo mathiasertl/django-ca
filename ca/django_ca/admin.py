@@ -57,8 +57,8 @@ from django.utils.translation import gettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from django_ca import ca_settings, constants
-from django_ca.constants import EXTENSION_KEY_OIDS, EXTENSION_KEYS, ReasonFlags
-from django_ca.extensions import CERTIFICATE_EXTENSIONS, get_extension_name
+from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, ReasonFlags
+from django_ca.extensions import get_extension_name
 from django_ca.extensions.utils import certificate_policies_is_simple, extension_as_admin_html
 from django_ca.forms import (
     CertificateAuthorityForm,
@@ -82,10 +82,28 @@ from django_ca.pydantic.extensions import SignCertificateExtensionsList
 from django_ca.pydantic.name import NameModel
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
-from django_ca.typehints import CRLExtensionType, X509CertMixinTypeVar
+from django_ca.typehints import CertificateExtensionKeys, CRLExtensionType, X509CertMixinTypeVar
 from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for_display
 
 log = logging.getLogger(__name__)
+
+#: Tuple of extensions that can be set when creating a new certificate via the admin interface.
+CERTIFICATE_EXTENSIONS: tuple[CertificateExtensionKeys, ...] = tuple(
+    sorted(
+        [
+            "authority_information_access",
+            "certificate_policies",
+            "crl_distribution_points",
+            "extended_key_usage",
+            "freshest_crl",
+            "issuer_alternative_name",
+            "key_usage",
+            "ocsp_no_check",
+            "subject_alternative_name",
+            "tls_feature",
+        ]
+    )
+)
 
 if typing.TYPE_CHECKING:
     AcmeAccountAdminBase = admin.ModelAdmin[AcmeAccount]
@@ -768,7 +786,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             if ca.algorithm is not None:
                 hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(ca.algorithm)]
 
-            data.update({EXTENSION_KEYS[oid]: ext for oid, ext in ca.extensions_for_certificate.items()})
+            data.update(
+                {CERTIFICATE_EXTENSION_KEYS[oid]: ext for oid, ext in ca.extensions_for_certificate.items()}
+            )
 
             for key in CERTIFICATE_EXTENSIONS:
                 ext = profile.extensions.get(EXTENSION_KEY_OIDS[key])
@@ -1045,7 +1065,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                         )
                     continue
 
-                if EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
+                if CERTIFICATE_EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
 
                 # Add any extension from the profile currently not changeable in the web interface

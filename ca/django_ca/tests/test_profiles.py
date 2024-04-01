@@ -26,7 +26,7 @@ from django.test import TestCase, override_settings
 import pytest
 
 from django_ca import ca_settings
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, EXTENSION_KEYS
+from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_DEFAULT_CRITICAL
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
@@ -406,7 +406,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+        prof = Profile("example", extensions={CERTIFICATE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -429,7 +429,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile(
             "example",
             extensions={
-                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: authority_information_access(
+                CERTIFICATE_EXTENSION_KEYS[
+                    ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+                ]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
                     ca_issuers=[uri("http://issuer.example.com/issuer")],
                 )
@@ -473,7 +475,9 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile(
             "example",
             extensions={
-                EXTENSION_KEYS[ExtensionOID.AUTHORITY_INFORMATION_ACCESS]: authority_information_access(
+                CERTIFICATE_EXTENSION_KEYS[
+                    ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+                ]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
                     ca_issuers=[uri("http://issuer.example.com/issuer")],
                 )
@@ -564,7 +568,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test what happens when the SAN has nothing usable as CN."""
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", extensions={EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+        prof = Profile("example", extensions={CERTIFICATE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with mock_signal(pre_sign_cert) as pre:
@@ -706,8 +710,8 @@ def test_serialize() -> None:
         description=desc,
         subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
         extensions={
-            EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
-            EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
+            CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
+            CERTIFICATE_EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
         },
     )
     assert prof.serialize() == {
@@ -728,7 +732,7 @@ def test_serialize() -> None:
 
 def test_deprecated_extension_format() -> None:
     """Test passing a deprecated extension format."""
-    key = EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+    key = CERTIFICATE_EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
     value = {"value": [{"full_name": ["DNS:example.com"]}]}
     warning = rf"^test: {key}: Deprecated extension format \(value: .*\)\."
     with assert_removed_in_200(warning):
@@ -762,4 +766,4 @@ def test_invalid_extension_type() -> None:
     """Test creating a profile with a completely invalid extension type."""
     with pytest.raises(TypeError, match=r"^Profile test, extension key_usage: True: Unsupported type$"):
         # TYPEHINT NOTE: This is what we're testing
-        Profile("test", extensions={EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True})  # type: ignore[dict-item]
+        Profile("test", extensions={CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True})  # type: ignore[dict-item]
