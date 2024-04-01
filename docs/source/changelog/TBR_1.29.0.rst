@@ -15,8 +15,8 @@ Dependencies
 Python API
 **********
 
-* **BACKWARDS INCOMPATIBLE:** ``django_ca.utils.parse_hash_algorithm()`` was removed, it was deprecated since
-  ``django-ca==1.25.0`` in favor of using
-  :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>`.
-* **BACKWARDS INCOMPATIBLE:** ``django_ca.utils.format_name()`` was removed, it was deprecated since
-  ``django-ca==1.27.0`` in favor of using RFC 4514-formatted subjects.
+* **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since
+  ``django-ca==1.25.0``. Use :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>`
+  instead.
+* **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.format_name()``, deprecated since
+  ``django-ca==1.27.0``. Use RFC 4514-formatted subjects instead.
