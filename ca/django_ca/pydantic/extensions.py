@@ -662,11 +662,19 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
 
     >>> KeyUsageModel(value=["key_agreement", "key_encipherment"])
     KeyUsageModel(critical=True, value=['key_agreement', 'key_encipherment'])
+
+    For convenience, the model also accepts values as used in `RFC 5280`_ (full mapping in
+    :py:attr:`~django_ca.constants.KEY_USAGE_NAMES`):
+
+    >>> KeyUsageModel(value=["keyAgreement", "keyEncipherment"])
+    KeyUsageModel(critical=True, value=['key_agreement', 'key_encipherment'])
     """
 
     type: Literal["key_usage"] = Field(default="key_usage", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE]
-    value: NonEmptyOrderedSet[list[Literal[KeyUsages]]]
+    value: NonEmptyOrderedSet[
+        list[Annotated[Literal[KeyUsages], BeforeValidator(validators.key_usage_validator)]]
+    ]
 
     @model_validator(mode="before")
     @classmethod
@@ -1079,7 +1087,7 @@ SignCertificateExtensions = Annotated[
 ]
 
 #: Union type for all known extensions that may occur in any type of certificate.
-CertificateExtensions = Annotated[
+CertificateExtensionsType = Annotated[
     Annotated[
         Union[
             AuthorityInformationAccessModel,
@@ -1110,7 +1118,8 @@ CertificateExtensions = Annotated[
     BeforeValidator(validate_cryptograph_extensions),
 ]
 
+CertificateExtensions = TypeAdapter(CertificateExtensionsType)
 SignCertificateExtensionsList = TypeAdapter(list[SignCertificateExtensions])
-CertificateExtensionsList = TypeAdapter(list[CertificateExtensions])
+CertificateExtensionsList = TypeAdapter(list[CertificateExtensionsType])
 
 ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])

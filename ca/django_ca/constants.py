@@ -351,6 +351,10 @@ KEY_USAGE_NAMES: MappingProxyType[KeyUsages, str] = MappingProxyType(
     }
 )
 
+# Opposite of KEY_USAGE_NAMES
+KEY_USAGE_PARAMETERS: MappingProxyType[str, KeyUsages] = MappingProxyType(
+    {v: k for k, v in KEY_USAGE_NAMES.items()}
+)
 
 #: Map of LogEntryTypes to their serialized value.
 LOG_ENTRY_TYPE_KEYS = MappingProxyType(

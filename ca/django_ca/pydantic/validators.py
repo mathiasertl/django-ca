@@ -58,6 +58,13 @@ def name_oid_parser(value: Any) -> Any:
     return value
 
 
+def key_usage_validator(value: Any) -> str:
+    """Convert a human-readable key usage name to a valid parameter."""
+    if value in constants.KEY_USAGE_PARAMETERS:
+        return constants.KEY_USAGE_PARAMETERS[value]
+    return value
+
+
 def extended_key_usage_validator(value: str) -> str:
     """Convert human-readable ExtendedKeyUsage values into dotted strings."""
     if value in constants.EXTENDED_KEY_USAGE_OIDS:
