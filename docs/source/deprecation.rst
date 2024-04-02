@@ -55,9 +55,8 @@ Dependencies
 * Dropped support for Python 3.8.
 * Dropped support for ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
 
-**********
 Python API
-**********
+==========
 
 * Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since 1.25.0. Use
   :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>` instead.

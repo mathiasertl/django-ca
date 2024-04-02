@@ -35,6 +35,12 @@ Python API
 * **BACKWARDS INCOMPATIBLE:** Removed the `password` parameter to
   :py:func:`~django_ca.models.CertificateAuthority.sign`. It was a left-over and only used in the signal.
 
+*************
+Documentation
+*************
+
+* A detailed deprecation timeline is now available under :doc:`/deprecation`.
+
 *******
 Signals
 *******
@@ -44,6 +50,8 @@ Signals
 *******************
 Deprecation notices
 *******************
+
+Please see the :doc:`deprecation timeline </deprecation>` for a detailed timeline of deprecated features.
 
 * Support for the old extension format in profiles will be removed in 2.0.0.
 * ``django_ca.extensions.parse_extension()`` will be removed in 2.0.0. Use Pydantic models instead.

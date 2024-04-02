@@ -15,6 +15,7 @@ Welcome to django-ca's documentation!
    install
    update
    changelog
+   deprecation
    settings
 
 .. toctree::
