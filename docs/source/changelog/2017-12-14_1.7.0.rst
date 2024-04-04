@@ -3,7 +3,7 @@
 ##################
 
 * Django 2.0 is now fully supported. This release still supports Django 1.8, 1.10 and 1.11.
-* Add support for the :ref:`TLSFeature <extension-tls-feature>` extension.
+* Add support for the TLSFeature extension.
 * Do sanity checks on the ``pathlen`` attribute when creating Certificate Authorities.
 * Add sanity checks when creating CAs:
 

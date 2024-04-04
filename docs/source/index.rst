@@ -70,7 +70,6 @@ Welcome to django-ca's documentation!
    /dev/acme
    /dev/release
    ca_examples
-   extensions
 
 
 Indices and tables

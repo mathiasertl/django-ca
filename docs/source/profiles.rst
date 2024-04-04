@@ -47,6 +47,69 @@ You can use a profile when signing certificates:
       >>> prof = Profile(...)
       >>> Certificate.objects.create_cert(ca, csr, profile=prof)
 
+.. _profiles-predefined:
+
+**********************
+Preconfigured profiles
+**********************
+
+``client``
+==========
+
+Certificates with this profile can be used for TLS client authentication. Use it when the certificate should
+be used by a client to authenticate itself (not the server).
+
+It defines the following extensions and values:
+
+* KeyUsage: digital_signature
+* ExtendedKeyUsage: clientAuth
+
+``webserver``
+=============
+
+Certificates with this profile can be used for TLS server authentication. Use it when the certificate should
+be used by a server to provide TLS connections, e.g. HTTPS.
+
+.. NOTE::
+
+   The profile name is actually a misnomer, as it cannot be used just for web servers but any server. The
+   certificate could just as well be used by a mail server, MQTT server or anything else.
+
+It defines the following extensions:
+
+``server``
+==========
+
+Certificates with this profile can be used for both TLS client and server authentication. Use it when the
+certificate should be used by a daemon that both accepts and initiates TLS connections (an example would be a
+federated XMPP server).
+
+It defines the following extensions and values:
+
+* KeyUsage: digital_signature, key_agreement, key_encipherment
+* ExtendedKeyUsage: clientAuth, serverAuth
+
+``enduser``
+===========
+
+Certificates with this profile can be used by users to perform client authentication and sign code and emails.
+
+It defines the following extensions and values:
+
+* KeyUsage: data_encipherment, digital_signature, key_encipherment
+* ExtendedKeyUsage: clientAuth, codeSigning, emailProtection
+
+``ocsp``
+========
+
+Certificates with this profile can be used in an OCSP responder. Automatic creation of OCSP responder keys
+use this profile.
+
+It defines the following extensions and values:
+
+* KeyUsage: non_repudiation, digital_signature, key_encipherment
+* ExtendedKeyUsage: OCSPSigning
+* OCSPNoCheck
 
 ******************
 Configure profiles

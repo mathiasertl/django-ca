@@ -49,6 +49,7 @@ ocsp
 parsable
 pragma
 pragmas
+precert
 precertificate
 precomputed
 preconfigured
@@ -74,9 +75,11 @@ subfolder
 submodule
 subtree
 subtrees
+superset
 symlink
 themself
 tox
+tls
 typehints
 unencrypted
 unparsed
