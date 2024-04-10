@@ -70,37 +70,19 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
     The type of the `value` argument depends on the `type` value. String variants (``UTFString``, etc.)
     require a ``str``, boolean requires a ``bool`` value and so on:
 
-    >>> OtherNameModel(oid="1.2.3", type="BOOLEAN", value=True)
-    OtherNameModel(oid='1.2.3', type='BOOLEAN', value=True)
-    >>> OtherNameModel(oid="1.2.3", type="NULL", value=None)
-    OtherNameModel(oid='1.2.3', type='NULL', value=None)
+    .. pydantic-model:: othername
 
     For datetime variants (``UTCTIME`` and ``GENERALIZEDTIME``), you must pass a timezone-aware object:
 
-    >>> from datetime import timezone
-    >>> dt = datetime(2021, 10, 5, 22, 1, 4, tzinfo=timezone.utc)
-    >>> OtherNameModel(oid="1.2.3", type="UTCTIME", value=dt)  # doctest: +NORMALIZE_WHITESPACE
-    OtherNameModel(oid='1.2.3',
-        type='UTCTIME',
-        value=datetime.datetime(2021, 10, 5, 22, 1, 4, tzinfo=datetime.timezone.utc))
-    >>> OtherNameModel(oid="1.2.3", type="GENERALIZEDTIME", value=dt)  # doctest: +NORMALIZE_WHITESPACE
-    OtherNameModel(oid='1.2.3',
-        type='GENERALIZEDTIME',
-        value=datetime.datetime(2021, 10, 5, 22, 1, 4, tzinfo=datetime.timezone.utc))
+    .. pydantic-model:: othername_utctime
 
     For ``INTEGER``, you can pass an ``int`` or a ``str`` for a base 16 integer:
 
-    >>> OtherNameModel(oid="1.2.3", type="INTEGER", value=12)
-    OtherNameModel(oid='1.2.3', type='INTEGER', value=12)
-    >>> OtherNameModel(oid="1.2.3", type="INTEGER", value="0x123")  # 0x123 is 291 in decimal
-    OtherNameModel(oid='1.2.3', type='INTEGER', value=291)
+    .. pydantic-model:: othername_integer
 
     Finally, for an ``OctetString``, pass the raw bytes or as a hex-encoded string:
 
-    >>> OtherNameModel(oid="1.2.3", type="OctetString", value=b"\\x61\\x62\\x63")
-    OtherNameModel(oid='1.2.3', type='OctetString', value='616263')
-    >>> OtherNameModel(oid="1.2.3", type="OctetString", value="09CFF1A")
-    OtherNameModel(oid='1.2.3', type='OctetString', value='09CFF1A')
+    .. pydantic-model:: othername_octetstring
 
     As usual, the ``cryptography`` property will return the cryptography variant of the model:
 
@@ -189,25 +171,17 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
     This model takes a `type` named in :py:attr:`~django_ca.constants.GENERAL_NAME_TYPES` and a `value` that
     is usually a ``str``:
 
-    >>> GeneralNameModel(type="DNS", value="example.com")
-    GeneralNameModel(type='DNS', value='example.com')
+    .. pydantic-model:: general_name
 
     For directory names, you have to pass a :py:class:`~django_ca.pydantic.name.NameModel` instead:
 
-    >>> GeneralNameModel(
-    ...     type="dirName", value=[{"oid": "2.5.4.3", "value": "example.com"}]
-    ... )  # doctest: +NORMALIZE_WHITESPACE
-    GeneralNameModel(type='dirName',
-                     value=NameModel(root=[NameAttributeModel(oid='2.5.4.3', value='example.com')]))
+    .. pydantic-model:: general_name_name
 
     For :py:class:`~cg:cryptography.x509.OtherName` instances, pass a
     :py:class:`~django_ca.pydantic.general_name.OtherNameModel` instead:
 
-    >>> GeneralNameModel(
-    ...     type="otherName", value={"oid": "2.5.4.3", "type": "BOOLEAN", 'value': True}
-    ... )  # doctest: +NORMALIZE_WHITESPACE
-    GeneralNameModel(type='otherName',
-                     value=OtherNameModel(oid='2.5.4.3', type='BOOLEAN', value=True))
+    .. pydantic-model:: general_name_othername
+       :cryptography-prefix: othername
     """
 
     type: GeneralNames

@@ -1,7 +1,7 @@
 [tool.ruff]
 extend = "../../../pyproject.toml"
 
-line-length = 78
+line-length = 90
 
 [tool.ruff.lint]
 extend-ignore = [

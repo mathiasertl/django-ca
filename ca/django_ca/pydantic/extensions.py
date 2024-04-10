@@ -21,7 +21,7 @@ The `critical` parameter is a boolean value. It usually defaults to the recommen
 
 The `value` parameter represents the actual value of the extension, and its format is different for every
 extension. In trivial extensions (for example in the
-:py:class:`~django_ca.pydantic.extensions.InhibitAnyPolicyModel`), this is usually a basic type:
+:py:class:`~django_ca.pydantic.InhibitAnyPolicyModel`), this is usually a basic type:
 
     >>> InhibitAnyPolicyModel(value=1)
     InhibitAnyPolicyModel(critical=True, value=1)
@@ -326,28 +326,7 @@ class AuthorityInformationAccessModel(InformationAccessBaseModel[x509.AuthorityI
     The `value` is a list of :py:class:`~django_ca.pydantic.extension_attributes.AccessDescriptionModel`
     instances:
 
-    >>> ocsp = AccessDescriptionModel(
-    ...     access_method='ocsp',
-    ...     access_location={'type': 'URI', 'value': 'http://ocsp.example.com'}
-    ... )
-    >>> issuers = AccessDescriptionModel(
-    ...     access_method='ca_issuers',
-    ...     access_location={'type': 'URI', 'value': 'http://example.com'}
-    ... )
-    >>> AuthorityInformationAccessModel(value=[ocsp, issuers])  # doctest: +STRIP_WHITESPACE
-    AuthorityInformationAccessModel(
-        critical=False,
-        value=[
-            AccessDescriptionModel(
-                access_method='1.3.6.1.5.5.7.48.1',
-                access_location=GeneralNameModel(type='URI', value='http://ocsp.example.com')
-            ),
-            AccessDescriptionModel(
-                access_method='1.3.6.1.5.5.7.48.2',
-                access_location=GeneralNameModel(type='URI', value='http://example.com')
-            )
-        ]
-    )
+    .. pydantic-model:: authority_information_access
     """
 
     _extension_type = x509.AuthorityInformationAccess
@@ -366,14 +345,11 @@ class AuthorityKeyIdentifierModel(ExtensionModel[x509.AuthorityKeyIdentifier]):
     The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.AuthorityKeyIdentifierValueModel`
     instance:
 
-    >>> value = AuthorityKeyIdentifierValueModel(key_identifier=b"MTIz")
-    >>> AuthorityKeyIdentifierModel(value=value)  # doctest: +STRIP_WHITESPACE
-    AuthorityKeyIdentifierModel(
-        critical=False,
-        value=AuthorityKeyIdentifierValueModel(
-            key_identifier=b'123', authority_cert_issuer=None, authority_cert_serial_number=None
-        )
-    )
+    .. pydantic-model:: authority_key_identifier
+
+    A version with an authority certificate would look like this:
+
+    .. pydantic-model:: authority_key_identifier_auth_certificate
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -392,17 +368,13 @@ class BasicConstraintsModel(ExtensionModel[x509.BasicConstraints]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.BasicConstraints` extension.
 
     The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.BasicConstraintsValueModel`
-    instance. For example, for a certificate authority:
+    instance. For example, for end-entity certificates, `ca` is ``False`` and `path_length` is ``None``:
 
-    >>> value = BasicConstraintsValueModel(ca=True, path_length=0)
-    >>> BasicConstraintsModel(value=value)
-    BasicConstraintsModel(critical=True, value=BasicConstraintsValueModel(ca=True, path_length=0))
+    .. pydantic-model:: basic_constraints
 
-    For end-entity certificates, sets `ca` to ``False`` and `path_length` to ``None``:
+    For certificate authorities, `ca` is ``True``, and `path_length` may be a positive integer:
 
-    >>> value = BasicConstraintsValueModel(ca=False, path_length=None)
-    >>> BasicConstraintsModel(value=value)
-    BasicConstraintsModel(critical=True, value=BasicConstraintsValueModel(ca=False, path_length=None))
+    .. pydantic-model:: basic_constraints_ca
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -422,20 +394,7 @@ class CRLDistributionPointsModel(CRLExtensionBaseModel[x509.CRLDistributionPoint
     The `value` is a list of :py:class:`~django_ca.pydantic.extension_attributes.DistributionPointModel`
     instances:
 
-    >>> dpoint = DistributionPointModel(
-    ...     full_name=[{"type": "URI", "value": "https://ca.example.com/crl"}]
-    ... )
-    >>> CRLDistributionPointsModel(value=[dpoint])  # doctest: +STRIP_WHITESPACE
-    CRLDistributionPointsModel(
-        critical=False,
-        value=[DistributionPointModel(
-            full_name=[GeneralNameModel(type='URI', value='https://ca.example.com/crl')],
-            relative_name=None, crl_issuer=None, reasons=None
-        )]
-    )
-
-    Please refer to the ``DistributionPointModel`` documentation for full information on how to instantiate
-    this model.
+    .. pydantic-model:: crl_distribution_points
     """
 
     _extension_type = x509.CRLDistributionPoints
@@ -478,14 +437,7 @@ class CertificatePoliciesModel(ExtensionModel[x509.CertificatePolicies]):
     The `value` is a list of :py:class:`~django_ca.pydantic.extension_attributes.PolicyInformationModel`
     instances:
 
-    >>> policy = PolicyInformationModel(policy_identifier="2.5.29.32.0")
-    >>> CertificatePoliciesModel(value=[policy])  # doctest: +STRIP_WHITESPACE
-    CertificatePoliciesModel(
-        critical=False,
-        value=[
-            PolicyInformationModel(policy_identifier='2.5.29.32.0', policy_qualifiers=None)
-        ]
-    )
+    .. pydantic-model:: certificate_policies
     """
 
     model_config = ConfigDict(json_schema_extra={"description": "A CertificatePolicies extension."})
@@ -547,8 +499,7 @@ class ExtendedKeyUsageModel(ExtensionModel[x509.ExtendedKeyUsage]):
     The `value` is a list valid object identifiers as dotted strings. For convenience, any name from
     :py:attr:`~django_ca.constants.EXTENDED_KEY_USAGE_NAMES` can also be given:
 
-    >>> ExtendedKeyUsageModel(value=["clientAuth", "1.3.6.1.5.5.7.3.1"])
-    ExtendedKeyUsageModel(critical=False, value=['1.3.6.1.5.5.7.3.2', '1.3.6.1.5.5.7.3.1'])
+    .. pydantic-model:: extended_key_usage
     """
 
     type: Literal["extended_key_usage"] = Field(default="extended_key_usage", repr=False)
@@ -581,7 +532,7 @@ class ExtendedKeyUsageModel(ExtensionModel[x509.ExtendedKeyUsage]):
 class FreshestCRLModel(CRLExtensionBaseModel[x509.FreshestCRL]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.FreshestCRL` extension.
 
-    This model behaves exactly like :py:class:`~django_ca.pydantic.extensions.CRLDistributionPointsModel`.
+    This model behaves exactly like :py:class:`~django_ca.pydantic.CRLDistributionPointsModel`.
     """
 
     _extension_type = x509.FreshestCRL
@@ -595,8 +546,7 @@ class InhibitAnyPolicyModel(ExtensionModel[x509.InhibitAnyPolicy]):
 
     The `value` attribute is an integer:
 
-    >>> InhibitAnyPolicyModel(value=1)
-    InhibitAnyPolicyModel(critical=True, value=1)
+    .. pydantic-model:: inhibit_any_policy
     """
 
     type: Literal["inhibit_any_policy"] = Field(default="inhibit_any_policy", repr=False)
@@ -622,7 +572,7 @@ class InhibitAnyPolicyModel(ExtensionModel[x509.InhibitAnyPolicy]):
 class IssuerAlternativeNameModel(AlternativeNameBaseModel[x509.IssuerAlternativeName]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension.
 
-    This model behaves exactly like :py:class:`~django_ca.pydantic.extensions.SubjectAlternativeNameModel`.
+    This model behaves exactly like :py:class:`~django_ca.pydantic.SubjectAlternativeNameModel`.
     """
 
     _extension_type = x509.IssuerAlternativeName
@@ -658,16 +608,11 @@ class IssuingDistributionPointModel(ExtensionModel[x509.IssuingDistributionPoint
 class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.KeyUsage` extension.
 
-    All key usages default to ``False``, so you can skip giving any usages you don't care about:
-
-    >>> KeyUsageModel(value=["key_agreement", "key_encipherment"])
-    KeyUsageModel(critical=True, value=['key_agreement', 'key_encipherment'])
-
-    For convenience, the model also accepts values as used in `RFC 5280`_ (full mapping in
+    All key usages default to ``False``, so you can skip giving any usages you don't care about. For
+    convenience, the model also accepts values as used in `RFC 5280`_ (full mapping in
     :py:attr:`~django_ca.constants.KEY_USAGE_NAMES`):
 
-    >>> KeyUsageModel(value=["keyAgreement", "keyEncipherment"])
-    KeyUsageModel(critical=True, value=['key_agreement', 'key_encipherment'])
+    .. pydantic-model:: key_usage
     """
 
     type: Literal["key_usage"] = Field(default="key_usage", repr=False)
@@ -714,14 +659,9 @@ class MSCertificateTemplateModel(ExtensionModel[x509.MSCertificateTemplate]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.MSCertificateTemplate` extension.
 
     The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.MSCertificateTemplateValueModel`
-    instance:
+    instance, where `major_version` and `minor_version` are both optional:
 
-    >>> value = MSCertificateTemplateValueModel(template_id="1.2.3", major_version=1)
-    >>> MSCertificateTemplateModel(critical=True, value=value)  # doctest: +STRIP_WHITESPACE
-    MSCertificateTemplateModel(
-        critical=True,
-        value=MSCertificateTemplateValueModel(template_id='1.2.3', major_version=1, minor_version=None)
-    )
+    .. pydantic-model:: ms_certificate_template
 
     Note that this extension does not have a default defined for the `critical` parameter, so it is mandatory.
     """
@@ -740,17 +680,16 @@ class MSCertificateTemplateModel(ExtensionModel[x509.MSCertificateTemplate]):
 class NameConstraintsModel(ExtensionModel[x509.NameConstraints]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.NameConstraints` extension.
 
-    The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.NameConstraintsValueModel` instance:
+    The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.NameConstraintsValueModel` instance,
+    where at least one of `permitted_subtrees` and `excluded_subtrees` must be given. For example, a
+    certificate authority that can only sign certificates under ``.com`` would look like this:
 
-    >>> value = NameConstraintsValueModel(permitted_subtrees=[{"type": "DNS", "value": ".com"}])
-    >>> NameConstraintsModel(value=value) # doctest: +STRIP_WHITESPACE
-    NameConstraintsModel(
-        critical=True,
-        value=NameConstraintsValueModel(
-            permitted_subtrees=[GeneralNameModel(type='DNS', value='.com')],
-            excluded_subtrees=None
-        )
-    )
+    .. pydantic-model:: name_constraints
+
+    In this example, the certificate authority can sign certificates for ``.com``, except for
+    ``one.example.com`` and ``two.example.com``:
+
+    .. pydantic-model:: name_constraints_both
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -771,10 +710,7 @@ class OCSPNoCheckModel(NoValueExtensionModel[x509.OCSPNoCheck]):
     This extension does not have a value, and thus can be instantiated without any parameters (but ``None``
     is also accepted):
 
-    >>> OCSPNoCheckModel()
-    OCSPNoCheckModel(critical=False)
-    >>> OCSPNoCheckModel(value=None, critical=True)
-    OCSPNoCheckModel(critical=True)
+    .. pydantic-model:: ocsp_no_check
     """
 
     _extension_type = x509.OCSPNoCheck
@@ -786,14 +722,10 @@ class PolicyConstraintsModel(ExtensionModel[x509.PolicyConstraints]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.PolicyConstraints` extension.
 
     The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.PolicyConstraintsValueModel`
-    instance:
+    instance. Both `require_explicit_policy` and `inhibit_policy_mapping` are optional integers >= 0, but at
+    least one of them must be set:
 
-    >>> value = PolicyConstraintsValueModel(require_explicit_policy=0, inhibit_policy_mapping=1)
-    >>> PolicyConstraintsModel(value=value)  # doctest: +STRIP_WHITESPACE
-    PolicyConstraintsModel(
-        critical=True,
-        value=PolicyConstraintsValueModel(require_explicit_policy=0, inhibit_policy_mapping=1)
-    )
+    .. pydantic-model:: policy_constraints
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -814,10 +746,7 @@ class PrecertPoisonModel(NoValueExtensionModel[x509.PrecertPoison]):
     This extension does not have a value, and thus can be instantiated without any parameters (but ``None``
     is also accepted):
 
-    >>> PrecertPoisonModel()
-    PrecertPoisonModel(critical=True)
-    >>> PrecertPoisonModel(value=None, critical=True)
-    PrecertPoisonModel(critical=True)
+    .. pydantic-model:: precert_poison
     """
 
     _extension_type = x509.PrecertPoison
@@ -869,7 +798,7 @@ class SignedCertificateTimestampsModel(SignedCertificateTimestampBaseModel[x509.
     """Pydantic model for a :py:class:`~cg:cryptography.x509.SignedCertificateTimestamps` extension.
 
     This model behaves exactly like
-    :py:class:`~django_ca.pydantic.extensions.PrecertificateSignedCertificateTimestampsModel`.
+    :py:class:`~django_ca.pydantic.PrecertificateSignedCertificateTimestampsModel`.
     """
 
     _extension_type = x509.SignedCertificateTimestamps
@@ -885,16 +814,7 @@ class SubjectAlternativeNameModel(AlternativeNameBaseModel[x509.SubjectAlternati
     The `general_names` attribute is a list of :py:class:`~django_ca.pydantic.general_name.GeneralNameModel`
     instances:
 
-    >>> name1 = {"type": "DNS", "value": "example.com"}
-    >>> name2 = {"type": "DNS", "value": "example.net"}
-    >>> SubjectAlternativeNameModel(value=[name1, name2])  # doctest: +STRIP_WHITESPACE
-    SubjectAlternativeNameModel(
-        critical=False,
-        value=[
-            GeneralNameModel(type='DNS', value='example.com'),
-            GeneralNameModel(type='DNS', value='example.net')
-        ]
-    )
+    .. pydantic-model:: subject_alternative_name
     """
 
     _extension_type = x509.SubjectAlternativeName
@@ -905,24 +825,8 @@ class SubjectAlternativeNameModel(AlternativeNameBaseModel[x509.SubjectAlternati
 class SubjectInformationAccessModel(InformationAccessBaseModel[x509.SubjectInformationAccess]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.SubjectInformationAccess` extension.
 
-    This model behaves like the
-    :py:class:`~django_ca.pydantic.extensions.AuthorityInformationAccessModel`, except that the access
-    methods have to be `ca_repository`:
-
-    >>> access_description = AccessDescriptionModel(
-    ...     access_method='ca_repository',
-    ...     access_location={'type': 'URI', 'value': 'http://example.com'}
-    ... )
-    >>> SubjectInformationAccessModel(value=[access_description])  # doctest: +STRIP_WHITESPACE
-    SubjectInformationAccessModel(
-        critical=False,
-        value=[
-            AccessDescriptionModel(
-                access_method='1.3.6.1.5.5.7.48.5',
-                access_location=GeneralNameModel(type='URI', value='http://example.com')
-            )
-        ]
-    )
+    This model behaves like the :py:class:`~django_ca.pydantic.AuthorityInformationAccessModel`, except that
+    the access methods have to be `ca_repository`.
     """
 
     _extension_type = x509.SubjectInformationAccess
@@ -935,10 +839,9 @@ class SubjectInformationAccessModel(InformationAccessBaseModel[x509.SubjectInfor
 class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.SubjectKeyIdentifier` extension.
 
-    The `value` is a base64-encoded ``bytes`` instance:
+    The `value` is a base64-encoded for the model:
 
-    >>> SubjectKeyIdentifierModel(value=b"kA==")
-    SubjectKeyIdentifierModel(critical=False, value=b'\\x90')
+    .. pydantic-model:: subject_key_identifier
     """
 
     type: Literal["subject_key_identifier"] = Field(default="subject_key_identifier", repr=False)
@@ -965,13 +868,12 @@ class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):
 
     The `value` is a list of one or both of ``"status_request"`` and ``"status_request_v2"``.
 
-    >>> TLSFeatureModel(value=["status_request"])
-    TLSFeatureModel(critical=False, value=['status_request'])
+    .. pydantic-model:: tls_feature
 
     For convenience, the model also accepts keys named in :py:attr:`~django_ca.constants.TLS_FEATURE_NAMES`:
 
-    >>> TLSFeatureModel(value=["OCSPMustStaple"])
-    TLSFeatureModel(critical=False, value=['status_request'])
+    .. pydantic-model:: tls_feature_names
+       :cryptography-prefix: tls_feature
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -996,13 +898,10 @@ class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):
 class UnrecognizedExtensionModel(ExtensionModel[x509.UnrecognizedExtension]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.UnrecognizedExtension` extension.
 
-    The `value` a :py:class:`~django_ca.pydantic.extension_attributes.UnrecognizedExtensionValueModel` value:
+    The `value` a :py:class:`~django_ca.pydantic.extension_attributes.UnrecognizedExtensionValueModel` value,
+    the `value` is thus base64 encoded for the model:
 
-    >>> value = UnrecognizedExtensionValueModel(value=b"MTIz", oid="1.2.3")
-    >>> UnrecognizedExtensionModel(critical=True, value=value)  # doctest: +STRIP_WHITESPACE
-    UnrecognizedExtensionModel(
-        critical=True, value=UnrecognizedExtensionValueModel(oid='1.2.3', value=b'123')
-    )
+    .. pydantic-model:: unrecognized_extension
     """
 
     model_config = ConfigDict(from_attributes=True)

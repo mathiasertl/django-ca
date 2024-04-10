@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel
-
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPublicKeyTypes,
@@ -11,6 +9,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
 from django_ca.key_backends import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.typehints import ArgumentGroup, ParsableKeyType
+from pydantic import BaseModel
 
 if TYPE_CHECKING:  # protected by TYPE_CHECKING to avoid circular imports
     from django_ca.models import CertificateAuthority
@@ -23,9 +22,7 @@ UsePrivateKeyOptions = BaseModel
 
 
 class MyStoragesBackend(
-    KeyBackend[
-        CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions
-    ]
+    KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]
 ):
     """Custom key backend."""
 
@@ -55,9 +52,7 @@ class MyStoragesBackend(
 
     # If init_ca creates an intermediate CA, it might need a password to load
     # its private key
-    def add_use_parent_private_key_arguments(
-        self, group: ArgumentGroup
-    ) -> None:
+    def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_password_argument(
             group, opt="--parent-password", prompt="Password for parent CA: "
         )

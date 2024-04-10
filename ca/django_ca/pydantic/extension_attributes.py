@@ -43,14 +43,11 @@ class AccessDescriptionModel(CryptographyModel[x509.AccessDescription]):
     :py:attr:`~django_ca.constants.ACCESS_METHOD_TYPES`. The `access_location` is a
     :py:class:`~django_ca.pydantic.general_name.GeneralNameModel`:
 
-    >>> AccessDescriptionModel(
-    ...     access_method='ocsp',
-    ...     access_location={'type': 'URI', 'value': 'http://ocsp.example.com'}
-    ... )  # doctest: +STRIP_WHITESPACE
-    AccessDescriptionModel(
-        access_method='1.3.6.1.5.5.7.48.1',
-        access_location=GeneralNameModel(type='URI', value='http://ocsp.example.com')
-    )
+    .. pydantic-model:: access_description_ocsp
+
+    The syntax is identical for CA issuers:
+
+    .. pydantic-model:: access_description_ca_issuers
     """
 
     model_config = ConfigDict(from_attributes=True)

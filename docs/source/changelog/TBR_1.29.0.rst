@@ -23,6 +23,7 @@ Dependencies
 Python API
 **********
 
+* All Pydantic models are now exported under ``django_ca.pydantic``.
 * Add literal typehints for extension keys under :py:attr:`~django_ca.typehints.ExtensionKeys` and
   :py:attr:`~django_ca.typehints.CertificateExtensionKeys` to improve type hinting.
 * Add :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS`, a subset of
@@ -40,6 +41,8 @@ Documentation
 *************
 
 * A detailed deprecation timeline is now available under :doc:`/deprecation`.
+* Pydantic models wrapping cryptography classes are now documented using specialized extension, showing valid
+  values as Pydantic model and JSON, as well as the equivalent value as cryptography class.
 
 *******
 Signals

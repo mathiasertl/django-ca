@@ -267,7 +267,7 @@ Usage extension, use::
 Find how to specify the ``value`` key for the most important extensions below.
 
 Authority Information Access
-============================
+----------------------------
 
 The ``value`` is a ``dict`` with two optional keys: ``ocsp`` and ``issuers``. Both are a list of general
 names as described in :ref:`names_on_cli`.  Example::
@@ -282,7 +282,7 @@ the value for this extension (profiles are only used to fill the form, not when 
 certificate).
 
 Certificate Policies
-====================
+--------------------
 
 .. note::
 
@@ -318,7 +318,7 @@ Example::
    ]
 
 CRL Distribution Points
-=======================
+-----------------------
 
 The ``value`` is a list of dicts describing distribution points. Each distribution point has either a
 ``full_name`` or a ``relative_name`` key (they are mutually exclusive). ``full_name`` is a list of names as
@@ -348,7 +348,7 @@ If you create a certificate via the admin interface, selecting the profile will 
 extension (profiles are only used to fill the form, not when actually signing the certificate).
 
 Extended Key Usage
-==================
+------------------
 
 The ``value`` is a list of extended key usages as defined in `RFC 5280, section 4.2.1.12
 <https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_. Example::
@@ -356,12 +356,12 @@ The ``value`` is a list of extended key usages as defined in `RFC 5280, section 
    ["serverAuth", "clientAuth"]
 
 Freshest CRL
-============
+------------
 
 The syntax is the same as for the CRL Distribution Points extension.
 
 Key Usage
-=========
+---------
 
 The ``value`` is a list of key usages as defined in `RFC 5280, section 4.2.1.3
 <https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_. Example::
@@ -369,12 +369,12 @@ The ``value`` is a list of key usages as defined in `RFC 5280, section 4.2.1.3
    ["digitalSignature", "keyEncipherment"]
 
 OCSP No Check
-=============
+-------------
 
 The ``value`` is optional, as the extension has no value (besides being present).
 
 TLS Feature
-===========
+-----------
 
 The ``value`` is a list of features as defined in `RFC 7633
 <https://datatracker.ietf.org/doc/html/rfc7633.html` (so ``status_request`` and ``status_request_v2``). For

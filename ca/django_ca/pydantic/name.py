@@ -42,16 +42,14 @@ _NAME_ATTRIBUTE_VALUE_DESCRIPTION = (
 class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.NameAttribute`.
 
-    >>> from cryptography.x509.oid import NameOID
-    >>> NameAttributeModel(oid=NameOID.COMMON_NAME.dotted_string, value="example.com")
-    NameAttributeModel(oid='2.5.4.3', value='example.com')
+    For the `oid`, you can either use a dotted string or an alias from
+    :py:attr:`~django_ca.constants.NAME_OID_TYPES`:
+
+    .. pydantic-model:: name_attribute
 
     When processing a x500 unique identifier attribute, the value is expected to be base64 encoded:
 
-    >>> import base64
-    >>> value = base64.b64encode(b"example.com")
-    >>> NameAttributeModel(oid=NameOID.X500_UNIQUE_IDENTIFIER.dotted_string, value=value)
-    NameAttributeModel(oid='2.5.4.45', value='ZXhhbXBsZS5jb20=')
+    .. pydantic-model:: name_attribute_x500
     """
 
     model_config = ConfigDict(
@@ -97,11 +95,7 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
 
     @property
     def cryptography(self) -> x509.NameAttribute:
-        """The :py:class:`~cg:cryptography.x509.NameAttribute` instance for this model.
-
-        >>> NameAttributeModel(oid='2.5.4.3', value="example.com").cryptography
-        <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>
-        """
+        """The :py:class:`~cg:cryptography.x509.NameAttribute` instance for this model."""
         oid = x509.ObjectIdentifier(self.oid)
         if oid == NameOID.X500_UNIQUE_IDENTIFIER:
             value = base64.b64decode(self.value)
@@ -116,16 +110,7 @@ class NameModel(CryptographyRootModel[list[NameAttributeModel], x509.Name]):
     This model is a Pydantic :py:class:`~pydantic.root_model.RootModel` that takes a list of
     :py:class:`~django_ca.pydantic.name.NameAttributeModel` instances:
 
-    >>> NameModel(
-    ...     [
-    ...         {'oid': '2.5.4.6', 'value': 'AT'},
-    ...         {'oid': '2.5.4.3', 'value': 'example.com'}
-    ...     ]
-    ... ) # doctest: +STRIP_WHITESPACE
-    NameModel(root=[
-        NameAttributeModel(oid='2.5.4.6', value='AT'),
-        NameAttributeModel(oid='2.5.4.3', value='example.com')
-    ])
+    .. pydantic-model:: name
     """
 
     root: list[NameAttributeModel] = Field(

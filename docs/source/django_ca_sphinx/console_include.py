@@ -92,8 +92,8 @@ class ConsoleIncludeDirective(CodeBlock):
     Usage::
 
         .. console-include::
-        :include: commands.yaml
-        :context: optional-context
+           :include: commands.yaml
+           :context: optional-context
 
     The above will use commands from :file:`commands.yaml` and use ``optional-context`` for each command and
     display it as code-block with console syntax highlighting. The directive takes care of propper line
