@@ -18,7 +18,7 @@ django-ninja==1.1.0
 django-object-actions==4.2.0
 dnspython==2.6.1
 hiredis==2.3.2
-idna==3.6
+idna==3.7
 josepy==1.14.0
 kombu==5.3.6
 packaging==24.0
