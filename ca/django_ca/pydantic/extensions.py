@@ -114,6 +114,7 @@ from django_ca.pydantic.type_aliases import NonEmptyOrderedSet
 from django_ca.typehints import (
     AlternativeNameTypeVar,
     CRLExtensionTypeTypeVar,
+    ExtensionKeys,
     ExtensionTypeTypeVar,
     InformationAccessTypeVar,
     KeyUsages,
@@ -135,7 +136,7 @@ if TYPE_CHECKING:
 class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for all extension models."""
 
-    type: str = Field(repr=False)
+    type: Union[ExtensionKeys, Literal["unknown"]] = Field(repr=False)
     critical: bool
     value: Any
     requires_critical: ClassVar[Optional[bool]] = None
