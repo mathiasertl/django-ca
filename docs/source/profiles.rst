@@ -269,118 +269,117 @@ Find how to specify the ``value`` key for the most important extensions below.
 Authority Information Access
 ----------------------------
 
-The ``value`` is a ``dict`` with two optional keys: ``ocsp`` and ``issuers``. Both are a list of general
-names as described in :ref:`names_on_cli`.  Example::
+**Key:** ``authority_information_access``
 
-   {'ocsp': 'URI:http://ocsp.example.com'}
+.. include:: /include/profile-unusual-extension.rst
 
-It is unusual to specify this extension in a profile, as the values should come from the certificate
-authority. If you do specify it, it will be merged with values from the certificate authority if you create a
-certificate from the command line or via ACMEv2 (unless the profile specifies ``add_ocsp_url=False`` and/or
-``add_issuer_url=False``). If you create a certificate via the admin interface, selecting the profile will set
-the value for this extension (profiles are only used to fill the form, not when actually signing the
-certificate).
+The format is based on :py:class:`~django_ca.pydantic.AuthorityInformationAccessModel`. The `value` is a list
+of access descriptions. Each consists of an `access_method` and an `access_location`:
+
+
+.. pydantic-profile-extension:: authority_information_access
+   :yaml-text: `access_method` can also be an alias from :py:attr:`~django_ca.constants.ACCESS_METHOD_TYPES`.
+
+If you do specify the extension in a profile, its access descriptions will be merged with those from the
+certificate authority if you create a certificate from the command line or via ACMEv2 (unless the profile
+specifies ``add_ocsp_url=False`` and/or ``add_issuer_url=False``). If you create a certificate via the admin
+interface, selecting the profile will set the value for this extension (profiles are only used to fill the
+form, not when actually signing the certificate).
 
 Certificate Policies
 --------------------
 
-.. note::
+**Key:** ``certificate_policies``
 
-   Configuring a Certificate Policies extension in a profile is currently the `only` way to add this extension
-   to a certificate.
+.. include:: /include/profile-unusual-extension.rst
 
-The ``value`` is a list of dicts describing the policy information. Each dict has the mandatory
-``policy_identifier`` key that names an Object Identifier as dotted string. The ``policy_qualifiers`` object
-is optional and a list of policy qualifiers.
+The format is based on :py:class:`~django_ca.pydantic.CertificatePoliciesModel`. The `value` is a list of
+policy information objects. Each consists of a `policy_identifier` (a dotted string for an OID) and an
+optional list of `policy_qualifier` objects.
 
-A ``policy_qualifiers`` item is either a string, or a dict describing a user notice. A user notice is a dict
-with the optional ``explicit_text`` key with a string value and the optional ``notice_reference`` key
-describing a notice reference. A ``notice_reference`` is a dict with the optional ``organization`` key as a
-string, and the ``notice_numbers`` key as a list of integers.
+A `policy_qualifier` is a list of either strings (usually a certificate practice statement) or a user notice
+object. Please see the model information for these more exotic use cases.
 
-Example::
+.. pydantic-profile-extension:: certificate_policies
 
-   [
-      {"policy_identifier": "1.1.1"},
-      {
-         "policy_identifier": "1.3.3",
-         "policy_qualifiers": [
-             "A policy qualifier as a string",
-             {
-                 "explicit_text": "An explicit text",
-                 "notice_reference": {
-                     "organization": "some org",
-                     "notice_numbers": [1, 2, 3],
-                 }
-             },
-         ],
-      },
-   ]
+When issuing certificates via the command-line, not all of the possible values can be represented. You can
+set a full value either here or by setting the ``sign_certificate_policies`` model field of
+:py:class:`~django_ca.models.CertificateAuthority`.
 
 CRL Distribution Points
 -----------------------
 
-The ``value`` is a list of dicts describing distribution points. Each distribution point has either a
-``full_name`` or a ``relative_name`` key (they are mutually exclusive). ``full_name`` is a list of names as
-described in :ref:`names_on_cli`, ``relative_name`` is a string with a relative name, e.g.
-``CN=example.com``. A distribution point may also have a list of names in ``crl_issuers`` and a list of
-reasons in ``reasons`` as named in :py:class:`~cg:cryptography.x509.ReasonFlags`.
+**Key:** ``crl_distribution_points``
 
-Please note that in practice, the extension typically `only` uses a single ``full_name`` entry, all other
-values are not used::
+.. include:: /include/profile-unusual-extension.rst
 
-   [{'full_name': ['URI:http://crl.example.com']}]
+The format is based on :py:class:`~django_ca.pydantic.CRLDistributionPointsModel`. The `value` is a list of
+distribution point objects. In it's (by far) most common form, it has only a `full_name` with an URI where
+the CRL can be downloaded.
 
-Here is a full example::
+Other fields of a distribution point object are `relative_name` (an RDN), `crl_issuer` (a list of general
+names) and `reasons` (a set of reasons). At least one of `full_name` and `relative_name`, other values are
+optional. As with any name or RDN, the OID may also use an alias from
+:py:attr:`~django_ca.constants.NAME_OID_TYPES`.
 
-   [
-      {
-         'full_name': ['URI:http://crl1.example.com', 'URI:http://crl2.example.com'],
-         'crl_issuer': ['URI:http://crl-issuer.example.com'],
-         'reasons': ['key_compromise'],
-      }
-   ]
+This example sets two distribution points, a common one (only a full name) and one demonstrating all the other
+fields.
 
-It is unusual to specify this extension in a profile, as the values should come from the certificate
-authority. If you do specify it, it will be merged with values from the certificate authority if you create a
-certificate from the command line or via ACMEv2 (unless the profile specifies ``add_crl_url=False``).
-If you create a certificate via the admin interface, selecting the profile will set the value for this
-extension (profiles are only used to fill the form, not when actually signing the certificate).
+.. pydantic-profile-extension:: crl_distribution_points
+
+If you do specify the extension in a profile, the value from the certificate authority will take precedence
+over any value from the profile (unless the profile specifies ``add_crl_url=False``).
 
 Extended Key Usage
 ------------------
 
-The ``value`` is a list of extended key usages as defined in `RFC 5280, section 4.2.1.12
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_. Example::
+**Key:** ``extended_key_usage``
 
-   ["serverAuth", "clientAuth"]
+The `value` is a list of extended key usages as defined in `RFC 5280, section 4.2.1.12
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12>`_. Alternatively you can also pass any valid
+OID as dotted string. For example:
+
+.. pydantic-profile-extension:: extended_key_usage
+   :yaml-text: Values can be a dotted string or a name (e.g. ``"clientAuth"``).
 
 Freshest CRL
 ------------
+
+**Key:** ``freshest_crl``
+
+.. include:: /include/profile-unusual-extension.rst
 
 The syntax is the same as for the CRL Distribution Points extension.
 
 Key Usage
 ---------
 
-The ``value`` is a list of key usages as defined in `RFC 5280, section 4.2.1.3
-<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_. Example::
+**Key:** ``key_usage``
 
-   ["digitalSignature", "keyEncipherment"]
+The `value` is a list of key usages as defined in `RFC 5280, section 4.2.1.3
+<https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>`_. Example:
+
+.. pydantic-profile-extension:: key_usage
 
 OCSP No Check
 -------------
 
-The ``value`` is optional, as the extension has no value (besides being present).
+**Key:** ``ocsp_no_check``
+
+The `value` is optional, as the extension has no value (besides being present).
+
+.. pydantic-profile-extension:: ocsp_no_check
 
 TLS Feature
 -----------
 
-The ``value`` is a list of features as defined in `RFC 7633
-<https://datatracker.ietf.org/doc/html/rfc7633.html` (so ``status_request`` and ``status_request_v2``). For
-convenience, ``OCSPMustStaple`` and ``MultipleCertStatusRequest`` is also supported. Example::
+**Key:** ``tls_feature``
 
-   ["OCSPMustStaple"]
+The `value` is a list of features as defined in `RFC 7633
+<https://datatracker.ietf.org/doc/html/rfc7633.html>`_ (so ``status_request`` and ``status_request_v2``). For
+convenience, ``OCSPMustStaple`` and ``MultipleCertStatusRequest`` is also supported. Example:
+
+.. pydantic-profile-extension:: tls_feature
 
 
 The ``add_..._url`` settings
