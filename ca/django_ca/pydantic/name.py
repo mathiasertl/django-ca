@@ -26,7 +26,6 @@ from django_ca import constants
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 from django_ca.pydantic.type_aliases import OIDType
-from django_ca.utils import MULTIPLE_OIDS
 
 _NAME_ATTRIBUTE_OID_DESCRIPTION = (
     "A dotted string representing the OID or a known alias as described in "
@@ -142,7 +141,7 @@ class NameModel(CryptographyRootModel[list[NameAttributeModel], x509.Name]):
             oid = x509.ObjectIdentifier(attr.oid)
 
             # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
-            if oid in seen and oid not in MULTIPLE_OIDS:
+            if oid in seen and oid not in constants.MULTIPLE_OIDS:
                 name = constants.NAME_OID_NAMES.get(oid, oid.dotted_string)
                 raise ValueError(f"attribute of type {name} must not occur more then once in a name.")
             seen.add(oid)

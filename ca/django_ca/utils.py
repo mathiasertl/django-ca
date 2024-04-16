@@ -39,7 +39,7 @@ from django.core.files.storage import InvalidStorageError, Storage, get_storage_
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
-from django_ca.constants import NAME_OID_DISPLAY_NAMES
+from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.typehints import (
     AllowedHashTypes,
@@ -67,14 +67,6 @@ SAN_NAME_MAPPINGS = {
     x509.RegisteredID: "RID",
     x509.OtherName: "otherName",
 }
-
-# Sources for OIDs that can be duplicate:
-# * https://www.ibm.com/docs/en/ibm-mq/7.5?topic=certificates-distinguished-names - OU and DC
-# * multiple_ous cert from the test suite.
-#
-# WARNING: sync any updates here to ca_settings._check_name().
-#: OIDs that can occur multiple times in a certificate
-MULTIPLE_OIDS = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.STREET_ADDRESS)
 
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {k.upper(): v for k, v in constants.NAME_OID_TYPES.items()}
