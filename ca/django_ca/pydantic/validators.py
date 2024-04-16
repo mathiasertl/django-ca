@@ -13,6 +13,7 @@
 
 """Validators for Pydantic models."""
 
+import base64
 from typing import Any, Union
 from urllib.parse import urlsplit
 
@@ -27,6 +28,12 @@ def access_method_parser(value: Any) -> Any:
     """Convert access method type aliases to dotted string."""
     if oid := constants.ACCESS_METHOD_TYPES.get(value):
         return oid.dotted_string
+    return value
+
+
+def base64_encoded_str_validator(value: Any) -> bytes:
+    if isinstance(value, str):
+        return base64.b64decode(value.encode(encoding="ascii"))
     return value
 
 

@@ -2,6 +2,13 @@
 ``django_ca.pydantic`` - Pydantic models
 ########################################
 
+************
+Type aliases
+************
+
+.. automodule:: django_ca.pydantic.type_aliases
+   :members:
+
 ********************
 Cryptography classes
 ********************

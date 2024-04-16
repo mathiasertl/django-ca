@@ -13,19 +13,36 @@
 
 """Reusable type aliases for Pydantic models."""
 
+import base64
 from typing import Annotated, Any, TypeVar
 
-from pydantic import AfterValidator, BeforeValidator
+from pydantic import AfterValidator, BeforeValidator, PlainSerializer
 
-from django_ca.pydantic import validators
+from django_ca.pydantic.validators import (
+    base64_encoded_str_validator,
+    non_empty_validator,
+    oid_parser,
+    oid_validator,
+    unique_str_validator,
+)
+
+#: A bytes type that validates strings as base64-encoded strings and serializes as such when using JSON.
+#:
+#: This type differs from ``pydantic.Base64Bytes`` in that bytes are left untouched and strings are decoded
+#: `before` the inner validation logic, making this type suitable for strict type validation.
+Base64EncodedBytes = Annotated[
+    bytes,
+    BeforeValidator(base64_encoded_str_validator),
+    PlainSerializer(
+        lambda value: base64.b64encode(value).decode(encoding="ascii"), return_type=str, when_used="json"
+    ),
+]
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 
-OIDType = Annotated[str, BeforeValidator(validators.oid_parser), AfterValidator(validators.oid_validator)]
+OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
 
 # A list validated to be non-empty and have a unique set of elements.
 NonEmptyOrderedSet = Annotated[
-    NonEmptyOrderedSetTypeVar,
-    AfterValidator(validators.unique_str_validator),
-    AfterValidator(validators.non_empty_validator),
+    NonEmptyOrderedSetTypeVar, AfterValidator(unique_str_validator), AfterValidator(non_empty_validator)
 ]
