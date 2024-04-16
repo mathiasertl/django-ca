@@ -22,7 +22,6 @@ from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone as tz
 from ipaddress import ip_address, ip_network
 from typing import Optional, Union
-from urllib.parse import urlparse
 
 import idna
 
@@ -41,6 +40,7 @@ from django.utils import timezone
 from django_ca import ca_settings, constants
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
+from django_ca.pydantic.validators import dns_validator, email_validator, url_validator
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -70,50 +70,6 @@ SAN_NAME_MAPPINGS = {
 
 # uppercase values as keys for normalizing case
 NAME_CASE_MAPPINGS = {k.upper(): v for k, v in constants.NAME_OID_TYPES.items()}
-
-
-def encode_url(url: str) -> str:
-    """IDNA encoding for domains in URLs.
-
-    Examples::
-
-        >>> encode_url('https://example.com')
-        'https://example.com'
-        >>> encode_url('https://exämple.com/foobar')
-        'https://xn--exmple-cua.com/foobar'
-        >>> encode_url('https://exämple.com:8000/foobar')
-        'https://xn--exmple-cua.com:8000/foobar'
-    """
-    parsed = urlparse(url)
-    if parsed.hostname and parsed.port:
-        hostname = idna.encode(parsed.hostname).decode("utf-8")
-        # pylint: disable-next=protected-access  # no public API for this
-        parsed = parsed._replace(netloc=f"{hostname}:{parsed.port}")
-    else:
-        # pylint: disable-next=protected-access  # no public API for this
-        parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode("utf-8"))
-    return parsed.geturl()
-
-
-def encode_dns(name: str) -> str:
-    """IDNA encoding for domains.
-
-    Examples::
-
-        >>> encode_dns('example.com')
-        'example.com'
-        >>> encode_dns('exämple.com')
-        'xn--exmple-cua.com'
-        >>> encode_dns('.exämple.com')
-        '.xn--exmple-cua.com'
-        >>> encode_dns('*.exämple.com')
-        '*.xn--exmple-cua.com'
-    """
-    if name.startswith("*."):
-        return f"*.{idna.encode(name[2:]).decode('utf-8')}"
-    if name.startswith("."):
-        return f".{idna.encode(name[1:]).decode('utf-8')}"
-    return idna.encode(name).decode("utf-8")
 
 
 def parse_name_rfc4514(value: str) -> x509.Name:
@@ -441,33 +397,6 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
             continue
 
     return x509.Name(attributes)
-
-
-def validate_email(addr: str) -> str:
-    """Validate an email address.
-
-    This function raises ``ValueError`` if the email address is not valid.
-
-    >>> validate_email("user@example.com")
-    'user@example.com'
-    >>> validate_email("user@exämple.com")
-    'user@xn--exmple-cua.com'
-
-    """
-    if "@" not in addr:
-        raise ValueError(f"Invalid email address: {addr}")
-
-    node, domain = addr.rsplit("@", 1)
-
-    if not node:
-        raise ValueError(f"{addr}: node part is empty")
-
-    try:
-        domain = idna.encode(domain).decode("utf-8")
-    except idna.IDNAError as e:
-        raise ValueError(f"Invalid domain: {domain}") from e
-
-    return f"{node}@{domain}"
 
 
 def validate_hostname(hostname: str, allow_port: bool = False) -> str:
@@ -863,13 +792,13 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
     if typ is None:
         if re.match("[a-z0-9]{2,}://", name):  # Looks like a URI
             try:
-                return x509.UniformResourceIdentifier(encode_url(name))
+                return x509.UniformResourceIdentifier(url_validator(name))
             except idna.IDNAError:
                 pass
 
         if "@" in name:  # Looks like an Email address
             try:
-                return x509.RFC822Name(validate_email(name))
+                return x509.RFC822Name(email_validator(name))
             except ValueError:
                 pass
 
@@ -885,17 +814,17 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
 
         # Almost anything passes as DNS name, so this is our default fallback
         try:
-            return x509.DNSName(encode_dns(name))
+            return x509.DNSName(dns_validator(name))
         except idna.IDNAError as e:
             raise ValueError(f"Could not parse name: {name}") from e
 
     if typ == "uri":
         try:
-            return x509.UniformResourceIdentifier(encode_url(name))
+            return x509.UniformResourceIdentifier(url_validator(name))
         except idna.IDNAError as e:
             raise ValueError(f"Could not parse DNS name in URL: {name}") from e
     elif typ == "email":
-        return x509.RFC822Name(validate_email(name))  # validate_email already raises ValueError
+        return x509.RFC822Name(email_validator(name))  # validate_email already raises ValueError
     elif typ == "ip":
         try:
             return x509.IPAddress(ip_address(name))
@@ -916,7 +845,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
         return x509.DirectoryName(parse_name_rfc4514(name))
     else:
         try:
-            return x509.DNSName(encode_dns(name))
+            return x509.DNSName(dns_validator(name))
         except idna.IDNAError as e:
             raise ValueError(f"Could not parse DNS name: {name}") from e
 

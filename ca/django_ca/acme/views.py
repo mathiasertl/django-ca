@@ -78,8 +78,9 @@ from django_ca.models import (
     Certificate,
     CertificateAuthority,
 )
+from django_ca.pydantic.validators import email_validator
 from django_ca.tasks import acme_issue_certificate, acme_validate_challenge, run_task
-from django_ca.utils import check_name, int_to_hex, validate_email
+from django_ca.utils import check_name, int_to_hex
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
@@ -122,7 +123,7 @@ class ContactValidationMixin:
 
                 # Finally, verify that we're getting at least a valid domain.
                 try:
-                    validate_email(addr)
+                    email_validator(addr)
                 except ValueError as ex:
                     raise AcmeMalformed("invalidContact", f"{domain}: Not a valid email address.") from ex
             else:

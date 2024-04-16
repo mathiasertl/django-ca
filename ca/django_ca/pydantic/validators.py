@@ -14,6 +14,9 @@
 """Validators for Pydantic models."""
 
 from typing import Any, Union
+from urllib.parse import urlparse
+
+import idna
 
 from cryptography import x509
 
@@ -27,6 +30,61 @@ def access_method_parser(value: Any) -> Any:
     return value
 
 
+def dns_validator(name: str) -> str:
+    """IDNA encoding for domains.
+
+    Examples::
+
+        >>> dns_validator('example.com')
+        'example.com'
+        >>> dns_validator('exämple.com')
+        'xn--exmple-cua.com'
+        >>> dns_validator('.exämple.com')
+        '.xn--exmple-cua.com'
+        >>> dns_validator('*.exämple.com')
+        '*.xn--exmple-cua.com'
+    """
+    if name.startswith("*."):
+        return f"*.{idna.encode(name[2:]).decode('utf-8')}"
+    if name.startswith("."):
+        return f".{idna.encode(name[1:]).decode('utf-8')}"
+    return idna.encode(name).decode("utf-8")
+
+
+def email_validator(addr: str) -> str:
+    """Validate an email address.
+
+    This function raises ``ValueError`` if the email address is not valid.
+
+    >>> email_validator("user@example.com")
+    'user@example.com'
+    >>> email_validator("user@exämple.com")
+    'user@xn--exmple-cua.com'
+
+    """
+    if "@" not in addr:
+        raise ValueError(f"Invalid email address: {addr}")
+
+    node, domain = addr.rsplit("@", 1)
+
+    if not node:
+        raise ValueError(f"{addr}: node part is empty")
+
+    try:
+        domain = idna.encode(domain).decode("utf-8")
+    except idna.IDNAError as e:
+        raise ValueError(f"Invalid domain: {domain}") from e
+
+    return f"{node}@{domain}"
+
+
+def extended_key_usage_validator(value: str) -> str:
+    """Convert human-readable ExtendedKeyUsage values into dotted strings."""
+    if value in constants.EXTENDED_KEY_USAGE_OIDS:
+        return constants.EXTENDED_KEY_USAGE_OIDS[value].dotted_string
+    return value
+
+
 def is_power_two_validator(value: int) -> int:
     """Validate that a given integer is a power of two.
 
@@ -37,6 +95,27 @@ def is_power_two_validator(value: int) -> int:
     """
     if not (value != 0 and ((value & (value - 1)) == 0)):
         raise ValueError(f"{value}: Must be a power of two")
+    return value
+
+
+def key_usage_validator(value: Any) -> Any:
+    """Convert a human-readable key usage name to a valid parameter."""
+    if value in constants.KEY_USAGE_PARAMETERS:
+        return constants.KEY_USAGE_PARAMETERS[value]
+    return value
+
+
+def name_oid_parser(value: Any) -> Any:
+    """Convert human-readable NameOID values into dotted strings."""
+    if value in constants.NAME_OID_TYPES:
+        return constants.NAME_OID_TYPES[value].dotted_string
+    return value
+
+
+def non_empty_validator(value: list[str]) -> list[str]:
+    """Validate that the given list is not empty."""
+    if len(value) == 0:
+        raise ValueError("value must not be empty")
     return value
 
 
@@ -56,24 +135,14 @@ def oid_validator(value: str) -> str:
     return value
 
 
-def name_oid_parser(value: Any) -> Any:
-    """Convert human-readable NameOID values into dotted strings."""
-    if value in constants.NAME_OID_TYPES:
-        return constants.NAME_OID_TYPES[value].dotted_string
-    return value
-
-
-def key_usage_validator(value: Any) -> Any:
-    """Convert a human-readable key usage name to a valid parameter."""
-    if value in constants.KEY_USAGE_PARAMETERS:
-        return constants.KEY_USAGE_PARAMETERS[value]
-    return value
-
-
-def extended_key_usage_validator(value: str) -> str:
-    """Convert human-readable ExtendedKeyUsage values into dotted strings."""
-    if value in constants.EXTENDED_KEY_USAGE_OIDS:
-        return constants.EXTENDED_KEY_USAGE_OIDS[value].dotted_string
+def tls_feature_validator(value: Union[str, x509.TLSFeatureType]) -> str:
+    """Validate a :py:class:`~cryptography.x509.TLSFeatureType`."""
+    if isinstance(value, x509.TLSFeatureType):
+        return constants.TLS_FEATURE_KEYS[value]
+    if value == "OCSPMustStaple":
+        return "status_request"
+    if value == "MultipleCertStatusRequest":
+        return "status_request_v2"
     return value
 
 
@@ -85,19 +154,24 @@ def unique_str_validator(value: list[str]) -> list[str]:
     return value
 
 
-def non_empty_validator(value: list[str]) -> list[str]:
-    """Validate that the given list is not empty."""
-    if len(value) == 0:
-        raise ValueError("value must not be empty")
-    return value
+def url_validator(url: str) -> str:
+    """IDNA encoding for domains in URLs.
 
+    Examples::
 
-def tls_feature_validator(value: Union[str, x509.TLSFeatureType]) -> str:
-    """Validate a :py:class:`~cryptography.x509.TLSFeatureType`."""
-    if isinstance(value, x509.TLSFeatureType):
-        return constants.TLS_FEATURE_KEYS[value]
-    if value == "OCSPMustStaple":
-        return "status_request"
-    if value == "MultipleCertStatusRequest":
-        return "status_request_v2"
-    return value
+        >>> url_validator('https://example.com')
+        'https://example.com'
+        >>> url_validator('https://exämple.com/foobar')
+        'https://xn--exmple-cua.com/foobar'
+        >>> url_validator('https://exämple.com:8000/foobar')
+        'https://xn--exmple-cua.com:8000/foobar'
+    """
+    parsed = urlparse(url)
+    if parsed.hostname and parsed.port:
+        hostname = idna.encode(parsed.hostname).decode("utf-8")
+        # pylint: disable-next=protected-access  # no public API for this
+        parsed = parsed._replace(netloc=f"{hostname}:{parsed.port}")
+    else:
+        # pylint: disable-next=protected-access  # no public API for this
+        parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode("utf-8"))
+    return parsed.geturl()

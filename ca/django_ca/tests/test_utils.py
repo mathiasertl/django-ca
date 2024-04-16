@@ -57,7 +57,6 @@ from django_ca.utils import (
     read_file,
     serialize_name,
     split_str,
-    validate_email,
     validate_hostname,
     validate_private_key_parameters,
     validate_public_key_parameters,
@@ -311,30 +310,6 @@ class ParseNameX509TestCase(TestCase):
         with self.assertRaisesRegex(ValueError, rf"^Unknown x509 name field: {field}$") as e:
             parse_name_x509(f"/{field}=example.com")
         self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
-
-
-@pytest.mark.parametrize(
-    "email,validated",
-    [("user@example.com", "user@example.com"), ("user@exämple.com", "user@xn--exmple-cua.com")],
-)
-def test_validate_email(email: str, validated: str) -> None:
-    """Test :py:func:`django_ca.utils.validate_email`."""
-    assert validate_email(email) == validated
-
-
-@pytest.mark.parametrize(
-    "email,error",
-    [
-        ("user@example com", "^Invalid domain: example.com$"),
-        ("user", "^Invalid email address: user$"),
-        ("example.com", "^Invalid email address: example.com$"),
-        ("@example.com", "^@example.com: node part is empty$"),
-    ],
-)
-def test_validate_email_errors(email: str, error: str) -> None:
-    """Test errors for :py:func:`django_ca.utils.validate_email`."""
-    with pytest.raises(ValueError, match=error):
-        validate_email(email)
 
 
 class ValidateHostnameTestCase(TestCase):

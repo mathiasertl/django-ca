@@ -31,7 +31,6 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import OIDType
 from django_ca.typehints import GeneralNames, IPAddressType, OtherNames
-from django_ca.utils import encode_dns, encode_url, validate_email
 
 ip_address_classes = (
     ipaddress.IPv4Address,
@@ -224,14 +223,14 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
                 raise ValueError(f"{self.value}: Must be a str for type {self.type}")
 
             try:
-                self.value = encode_url(self.value)
+                self.value = validators.url_validator(self.value)
             except idna.IDNAError as ex:
                 raise ValueError(f"Could not parse DNS name in URL: {self.value}") from ex
         elif self.type == "email":
             if not isinstance(self.value, str):
                 raise ValueError(f"{self.value}: Must be a str for type {self.type}")
 
-            self.value = validate_email(self.value)
+            self.value = validators.email_validator(self.value)
         elif self.type == "IP":
             if isinstance(self.value, str):
                 try:
@@ -257,7 +256,7 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
             if not isinstance(self.value, str):
                 raise ValueError(f"{self.value}: Must be a str for type {self.type}")
 
-            self.value = encode_dns(self.value)
+            self.value = validators.dns_validator(self.value)
         elif self.type == "dirName":
             pass
         else:
