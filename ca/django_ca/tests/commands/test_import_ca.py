@@ -124,7 +124,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
 
     Note: freeze time because we verify the certificate here.
     """
-    password = b"testpassword"
+    password = b"test_password"
     key_path = CERT_DATA["root"]["key_path"]
     pem_path = CERT_DATA["root"]["pub_path"]
     ca = import_ca(ca_name, key_path, pem_path, password=password)
@@ -214,7 +214,7 @@ def test_key_backend_option(ca_name: str) -> None:
     """Test the --key-backend option."""
     key_path = CERT_DATA["root"]["key_path"]
     certificate_path = CERT_DATA["root"]["pub_path"]
-    out, err = cmd_e2e(["import_ca", ca_name, str(key_path), str(certificate_path), "--key-backend=default"])
+    cmd_e2e(["import_ca", ca_name, str(key_path), str(certificate_path), "--key-backend=default"])
 
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert ca.key_backend_alias == "default"
@@ -224,7 +224,7 @@ def test_secondary_key_backend(ca_name: str) -> None:
     """Use secondary key backend with a password."""
     key_path = CERT_DATA["root"]["key_path"]
     certificate_path = CERT_DATA["root"]["pub_path"]
-    out, err = cmd_e2e(
+    cmd_e2e(
         [
             "import_ca",
             ca_name,
@@ -240,7 +240,7 @@ def test_secondary_key_backend(ca_name: str) -> None:
     assert ca.key_backend_alias == "secondary"
     assert ca.key_backend_options["path"].startswith("secondary-ca-path")
     assert isinstance(ca.key_backend, StoragesBackend)
-    assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password="foobar"))  # type: ignore[attr-defined]
+    assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password=b"foobar"))  # type: ignore[attr-defined]
 
 
 def test_bogus_public_key(ca_name: str) -> None:

@@ -155,12 +155,12 @@ class TestCacheCRLs(TestCaseMixin, TestCase):
         """Test creating a CRL for a CA where we have no password."""
         msg = r"^Backend cannot be used for signing by this process\.$"
         with self.settings(CA_PASSWORDS={}), pytest.raises(ValueError, match=msg):
-            tasks.cache_crl(self.cas["pwd"].serial, {"password": None})
+            tasks.cache_crl(self.cas["pwd"].serial)
 
     def test_no_private_key(self) -> None:
         """Test creating a CRL for a CA where no private key is available."""
         with pytest.raises(ValueError, match=r"^Backend cannot be used for signing by this process\.$"):
-            tasks.cache_crl(self.cas["pwd"].serial, {"password": None})
+            tasks.cache_crl(self.cas["pwd"].serial)
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -176,7 +176,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
         """Test creating a single key."""
         storage = get_storage()
         for ca in self.cas.values():
-            tasks.generate_ocsp_key(ca.serial, {"password": CERT_DATA[ca.name].get("password")})
+            tasks.generate_ocsp_key(ca.serial)
             self.assertTrue(storage.exists(f"ocsp/{ca.serial}.key"))
             self.assertTrue(storage.exists(f"ocsp/{ca.serial}.pem"))
 
@@ -192,7 +192,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
 
     @override_tmpcadir()
     @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_repsonder_key_validity(self) -> None:
+    def test_responder_key_validity(self) -> None:
         """Test that the ocsp_responder_key_validity field works."""
         ca = self.cas["root"]
         qs = Certificate.objects.filter(profile="ocsp", ca=ca)
@@ -200,7 +200,7 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
         ca.save()
         assert qs.exists() is False
 
-        tasks.generate_ocsp_key(ca.serial, {"password": None})
+        tasks.generate_ocsp_key(ca.serial)
         cert = qs.get()
         assert cert.expires == TIMESTAMPS["everything_valid"] + timedelta(days=10)
 
@@ -208,8 +208,8 @@ class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_no_renewal_required(self) -> None:
         """Test that keys are not renewed and None is returned in this case."""
-        assert tasks.generate_ocsp_key(self.ca.serial, {"password": None}) is not None
-        assert tasks.generate_ocsp_key(self.ca.serial, {"password": None}) is None
+        assert tasks.generate_ocsp_key(self.ca.serial) is not None
+        assert tasks.generate_ocsp_key(self.ca.serial) is None
 
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):

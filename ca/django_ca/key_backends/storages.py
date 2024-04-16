@@ -44,6 +44,7 @@ from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size
 from django_ca.pydantic import validators
+from django_ca.pydantic.type_aliases import Base64EncodedBytes
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import generate_private_key, get_cert_builder
 
@@ -103,7 +104,7 @@ class UsePrivateKeyOptions(BaseModel):
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(frozen=True)
 
-    password: Optional[bytes]
+    password: Optional[Base64EncodedBytes] = Field(default=None, validate_default=True)
 
     @field_validator("password", mode="after")
     @classmethod
@@ -232,7 +233,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
-            {"password": options.get(f"{self.options_prefix}password")}, context={"ca": ca}
+            {"password": options.get(f"{self.options_prefix}password")}, context={"ca": ca}, strict=True
         )
 
     def get_use_parent_private_key_options(

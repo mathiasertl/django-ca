@@ -1010,7 +1010,7 @@ def test_non_default_key_backend_with_rsa_key(
     assert ca.key_backend_alias == "secondary"
     assert ca.key_backend_options["path"].startswith("secondary-ca-path")
 
-    key = secondary_backend.get_key(ca, UsePrivateKeyOptions(password=password))
+    key = secondary_backend.get_key(ca, UsePrivateKeyOptions(password=password.encode()))
     assert isinstance(key, RSAPrivateKey)
     assert key.key_size == 2048
 

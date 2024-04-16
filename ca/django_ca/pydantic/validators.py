@@ -31,7 +31,8 @@ def access_method_parser(value: Any) -> Any:
     return value
 
 
-def base64_encoded_str_validator(value: Any) -> bytes:
+def base64_encoded_str_validator(value: Any) -> Any:
+    """Decode a base64-encoded string to bytes."""
     if isinstance(value, str):
         return base64.b64decode(value.encode(encoding="ascii"))
     return value
