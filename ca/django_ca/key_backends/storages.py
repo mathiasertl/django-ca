@@ -16,9 +16,9 @@
 import typing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
@@ -43,12 +43,17 @@ from django_ca import ca_settings, constants
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import add_elliptic_curve, add_key_size
-from django_ca.pydantic.type_aliases import PrivateKeySize
+from django_ca.pydantic import validators
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import generate_private_key, get_cert_builder
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
+
+
+PrivateKeySize = Annotated[
+    int, Field(ge=ca_settings.CA_MIN_KEY_SIZE), AfterValidator(validators.is_power_two_validator)
+]
 
 
 class CreatePrivateKeyOptions(BaseModel):

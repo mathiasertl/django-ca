@@ -18,7 +18,6 @@ from typing import Any, Union
 from cryptography import x509
 
 from django_ca import constants
-from django_ca.utils import is_power2
 
 
 def access_method_parser(value: Any) -> Any:
@@ -29,8 +28,14 @@ def access_method_parser(value: Any) -> Any:
 
 
 def is_power_two_validator(value: int) -> int:
-    """Validate that a given integer is a power of two."""
-    if not is_power2(value):
+    """Validate that a given integer is a power of two.
+
+    .. NOTE::
+
+       This validator duplicates :py:func:`django_ca.utils.is_power2`. It is re-implemented here to avoid
+       importing :py:mod:`django_ca.utils` from this model.
+    """
+    if not (value != 0 and ((value & (value - 1)) == 0)):
         raise ValueError(f"{value}: Must be a power of two")
     return value
 

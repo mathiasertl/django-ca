@@ -15,14 +15,9 @@
 
 from typing import Annotated, Any, TypeVar
 
-from pydantic import AfterValidator, BeforeValidator, Field
+from pydantic import AfterValidator, BeforeValidator
 
-from django_ca import ca_settings
 from django_ca.pydantic import validators
-
-PrivateKeySize = Annotated[
-    int, Field(ge=ca_settings.CA_MIN_KEY_SIZE), AfterValidator(validators.is_power_two_validator)
-]
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 
