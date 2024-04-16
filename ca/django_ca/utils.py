@@ -262,7 +262,7 @@ def check_name(name: x509.Name) -> x509.Name:
     """Check if `name` is a valid x509 Name.
 
     This method raises ``ValueError`` if the CommonName contains an empty value or if any attribute not in
-    :py:attr:`~django_ca.utils.MULTIPLE_OIDS` occurs multiple times.
+    :py:attr:`~django_ca.constants.MULTIPLE_OIDS` occurs multiple times.
 
     The method returns the name unchanged for convenience.
     """

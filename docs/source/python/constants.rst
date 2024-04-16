@@ -29,6 +29,9 @@
 .. automapping:: django_ca.constants.KEY_USAGE_NAMES
    :no-value:
 
+.. autodata:: django_ca.constants.MULTIPLE_OIDS
+   :no-value:
+
 .. automapping:: django_ca.constants.NAME_OID_NAMES
    :no-value:
 
