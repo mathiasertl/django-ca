@@ -14,7 +14,7 @@
 """Validators for Pydantic models."""
 
 from typing import Any, Union
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
 import idna
 
@@ -44,11 +44,14 @@ def dns_validator(name: str) -> str:
         >>> dns_validator('*.exämple.com')
         '*.xn--exmple-cua.com'
     """
-    if name.startswith("*."):
-        return f"*.{idna.encode(name[2:]).decode('utf-8')}"
-    if name.startswith("."):
-        return f".{idna.encode(name[1:]).decode('utf-8')}"
-    return idna.encode(name).decode("utf-8")
+    try:
+        if name.startswith("*."):
+            return f"*.{idna.encode(name[2:]).decode('utf-8')}"
+        if name.startswith("."):
+            return f".{idna.encode(name[1:]).decode('utf-8')}"
+        return idna.encode(name).decode("utf-8")
+    except idna.IDNAError as ex:
+        raise ValueError(f"Invalid domain: {name}: {ex}") from ex
 
 
 def email_validator(addr: str) -> str:
@@ -72,8 +75,8 @@ def email_validator(addr: str) -> str:
 
     try:
         domain = idna.encode(domain).decode("utf-8")
-    except idna.IDNAError as e:
-        raise ValueError(f"Invalid domain: {domain}") from e
+    except idna.IDNAError as ex:
+        raise ValueError(f"Invalid domain: {domain}: {ex}") from ex
 
     return f"{node}@{domain}"
 
@@ -166,12 +169,35 @@ def url_validator(url: str) -> str:
         >>> url_validator('https://exämple.com:8000/foobar')
         'https://xn--exmple-cua.com:8000/foobar'
     """
-    parsed = urlparse(url)
+    try:
+        parsed = urlsplit(url)
+    except Exception as ex:
+        raise ValueError(f"Could not parse URL: {url}: {ex}") from ex
+
+    if not parsed.scheme or not parsed.netloc:
+        raise ValueError(f"URL requires scheme and network location: {url}")
+
+    try:
+        # Just reading the port may raise ValueError if it cannot be parsed as integer.
+        parsed.port  # noqa: B018
+    except ValueError as ex:
+        raise ValueError(f"Invalid port: {url}: {ex}") from ex
+
     if parsed.hostname and parsed.port:
-        hostname = idna.encode(parsed.hostname).decode("utf-8")
+        try:
+            hostname = idna.encode(parsed.hostname).decode("utf-8")
+        except idna.IDNAError as ex:
+            raise ValueError(f"Invalid domain: {parsed.hostname}: {ex}") from ex
+
         # pylint: disable-next=protected-access  # no public API for this
         parsed = parsed._replace(netloc=f"{hostname}:{parsed.port}")
     else:
+        try:
+            netloc = idna.encode(parsed.netloc).decode("utf-8")
+        except idna.IDNAError as ex:
+            raise ValueError(f"Invalid domain: {parsed.netloc}: {ex}") from ex
+
         # pylint: disable-next=protected-access  # no public API for this
-        parsed = parsed._replace(netloc=idna.encode(parsed.netloc).decode("utf-8"))
+        parsed = parsed._replace(netloc=netloc)
+
     return parsed.geturl()

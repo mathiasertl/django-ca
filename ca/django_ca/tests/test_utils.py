@@ -425,7 +425,7 @@ class ParseGeneralNameTest(TestCase):
 
         # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
         # wildcard in the outermost level
-        msg = r"^Could not parse name: %s$"
+        msg = r"^Invalid domain: %s: "
 
         with self.assertRaisesRegex(ValueError, msg % r"test\.\*\.example\.com"):
             parse_general_name("test.*.example.com")
@@ -496,10 +496,10 @@ class ParseGeneralNameTest(TestCase):
 
     def test_wrong_email(self) -> None:
         """Test using an invalid email."""
-        with self.assertRaisesRegex(ValueError, r"^Could not parse name: user@$"):
+        with self.assertRaisesRegex(ValueError, r"^Invalid domain: user@:"):
             parse_general_name("user@")
 
-        with self.assertRaisesRegex(ValueError, "^Invalid domain: $"):
+        with self.assertRaisesRegex(ValueError, "^Invalid domain: : Empty domain$"):
             parse_general_name("email:user@")
 
     def test_error(self) -> None:
@@ -509,11 +509,11 @@ class ParseGeneralNameTest(TestCase):
 
     def test_unparsable(self) -> None:
         """Test some unparsable domains."""
-        with self.assertRaisesRegex(ValueError, r"^Could not parse name: http://ex ample\.com$"):
+        with self.assertRaisesRegex(ValueError, r"^Invalid domain: http://ex ample\.com: "):
             parse_general_name("http://ex ample.com")
-        with self.assertRaisesRegex(ValueError, r"^Could not parse DNS name in URL: http://ex ample\.com$"):
+        with self.assertRaisesRegex(ValueError, r"^Invalid domain: ex ample\.com: "):
             parse_general_name("uri:http://ex ample.com")
-        with self.assertRaisesRegex(ValueError, r"^Could not parse DNS name: ex ample\.com"):
+        with self.assertRaisesRegex(ValueError, r"^Invalid domain: ex ample\.com: "):
             parse_general_name("dns:ex ample.com")
         with self.assertRaisesRegex(
             ValueError, r"^Cannot parse general name False: Must be of type str \(was: bool\)\.$"

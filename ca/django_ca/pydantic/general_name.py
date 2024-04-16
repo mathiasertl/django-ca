@@ -19,7 +19,6 @@ from datetime import datetime
 from ipaddress import ip_address, ip_network
 from typing import Annotated, Any, Optional, Union, cast
 
-import idna
 from pydantic import BeforeValidator, Discriminator, Tag, TypeAdapter, model_validator
 
 import asn1crypto.core
@@ -216,16 +215,13 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
         return data
 
     @model_validator(mode="after")
-    def validate_value(self) -> "GeneralNameModel":  # noqa: PLR0912
+    def validate_value(self) -> "GeneralNameModel":
         """Validator to make sure that `value` is of the right type."""
         if self.type == "URI":
             if not isinstance(self.value, str):
                 raise ValueError(f"{self.value}: Must be a str for type {self.type}")
 
-            try:
-                self.value = validators.url_validator(self.value)
-            except idna.IDNAError as ex:
-                raise ValueError(f"Could not parse DNS name in URL: {self.value}") from ex
+            self.value = validators.url_validator(self.value)
         elif self.type == "email":
             if not isinstance(self.value, str):
                 raise ValueError(f"{self.value}: Must be a str for type {self.type}")

@@ -14,6 +14,7 @@
 """Test GeneralNameModel."""
 
 import ipaddress
+import re
 from datetime import datetime, timezone as tz
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Any
@@ -196,7 +197,7 @@ def test_general_name(parameters: dict[str, Any], name: x509.GeneralName, discri
         (
             "URI",
             "https://-",
-            [("value_error", (), "Value error, Could not parse DNS name in URL: https://-")],
+            [("value_error", (), re.compile("^Value error, Invalid domain: -: "))],
         ),
         (
             "email",
