@@ -40,7 +40,12 @@ from django.utils import timezone
 from django_ca import ca_settings, constants
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
-from django_ca.pydantic.validators import dns_validator, email_validator, url_validator
+from django_ca.pydantic.validators import (
+    dns_validator,
+    email_validator,
+    is_power_two_validator,
+    url_validator,
+)
 from django_ca.typehints import (
     AllowedHashTypes,
     Expires,
@@ -200,17 +205,6 @@ def format_general_name(name: x509.GeneralName) -> str:
     else:
         value = name.value
     return f"{SAN_NAME_MAPPINGS[type(name)]}:{value}"
-
-
-def is_power2(num: int) -> bool:
-    """Return True if `num` is a power of 2.
-
-    >>> is_power2(4)
-    True
-    >>> is_power2(3)
-    False
-    """
-    return num != 0 and ((num & (num - 1)) == 0)
 
 
 def add_colons(value: str, pad: str = "0") -> str:
@@ -493,8 +487,10 @@ def validate_private_key_parameters(
             key_size = ca_settings.CA_DEFAULT_KEY_SIZE
         if not isinstance(key_size, int):
             raise ValueError(f"{key_size}: Key size must be an int.")
-        if is_power2(key_size) is False:
-            raise ValueError(f"{key_size}: Key size must be a power of two")
+        try:
+            is_power_two_validator(key_size)
+        except ValueError as ex:
+            raise ValueError(f"{key_size}: Key size must be a power of two") from ex
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
 

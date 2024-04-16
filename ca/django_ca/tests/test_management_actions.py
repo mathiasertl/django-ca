@@ -671,7 +671,7 @@ class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
     def test_no_power_two(self) -> None:
         """Test giving values that are not the power of two."""
         expected = """usage: {script} [-h] [--size SIZE]
-{script}: error: argument --size: %s: Must be a power of two (2048, 4096, ...).\n"""
+{script}: error: argument --size: %s: Must be a power of two\n"""
 
         assert_parser_error(self.parser, ["--size=2047"], expected % 2047)
         assert_parser_error(self.parser, ["--size=2049"], expected % 2049)

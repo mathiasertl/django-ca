@@ -46,7 +46,6 @@ from django_ca.utils import (
     generate_private_key,
     get_cert_builder,
     get_storage,
-    is_power2,
     merge_x509_names,
     parse_encoding,
     parse_expires,
@@ -575,25 +574,6 @@ class SerializeName(TestCase):
         self.assertEqual(
             serialize_name(name), [{"oid": "2.5.4.45", "value": "65:78:61:6D:70:6C:65:2E:63:6F:6D"}]
         )
-
-
-class Power2TestCase(TestCase):
-    """Test :py:func:`django_ca.utils.is_power2`."""
-
-    def test_true(self) -> None:
-        """Test some numbers that are power of two."""
-        for i in range(0, 20):
-            self.assertTrue(is_power2(2**i))
-
-    def test_false(self) -> None:
-        """Test some numbers that are not power of two."""
-        self.assertFalse(is_power2(0))
-        self.assertFalse(is_power2(3))
-        self.assertFalse(is_power2(5))
-
-        for i in range(2, 20):
-            self.assertFalse(is_power2((2**i) - 1))
-            self.assertFalse(is_power2((2**i) + 1))
 
 
 class ParseEllipticCurveTestCase(TestCase):

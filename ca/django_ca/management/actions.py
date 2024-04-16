@@ -33,8 +33,9 @@ from django_ca import ca_settings, constants
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.pydantic.validators import is_power_two_validator
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType, EllipticCurves
-from django_ca.utils import is_power2, parse_encoding, parse_general_name
+from django_ca.utils import parse_encoding, parse_general_name
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
 ParseType = typing.TypeVar("ParseType")  # pylint: disable=invalid-name
@@ -273,8 +274,10 @@ class KeySizeAction(SingleValueAction[str, int]):
         except ValueError as ex:
             raise argparse.ArgumentError(self, f"{value}: Must be an integer.") from ex
 
-        if not is_power2(key_size):
-            raise argparse.ArgumentError(self, f"{key_size}: Must be a power of two (2048, 4096, ...).")
+        try:
+            is_power_two_validator(key_size)
+        except ValueError as ex:
+            raise argparse.ArgumentError(self, str(ex)) from ex
 
         if key_size < ca_settings.CA_MIN_KEY_SIZE:
             raise argparse.ArgumentError(

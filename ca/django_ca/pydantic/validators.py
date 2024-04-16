@@ -89,13 +89,7 @@ def extended_key_usage_validator(value: str) -> str:
 
 
 def is_power_two_validator(value: int) -> int:
-    """Validate that a given integer is a power of two.
-
-    .. NOTE::
-
-       This validator duplicates :py:func:`django_ca.utils.is_power2`. It is re-implemented here to avoid
-       importing :py:mod:`django_ca.utils` from this model.
-    """
+    """Validate that a given integer is a power of two."""
     if not (value != 0 and ((value & (value - 1)) == 0)):
         raise ValueError(f"{value}: Must be a power of two")
     return value
