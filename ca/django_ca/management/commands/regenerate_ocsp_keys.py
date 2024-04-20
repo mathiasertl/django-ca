@@ -26,11 +26,12 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings, constants
+from django_ca import ca_settings
 from django_ca.management.actions import ExpiresAction
 from django_ca.management.base import BaseCommand, add_elliptic_curve, add_key_size
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority
+from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import generate_ocsp_key, run_task
 from django_ca.typehints import AllowedHashTypes, ParsableKeyType
 from django_ca.utils import add_colons, validate_private_key_parameters
@@ -77,7 +78,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(  # pylint: disable=too-many-locals
+    def handle(
         self,
         serials: Iterable[str],
         profile: Optional[str],
@@ -137,23 +138,19 @@ class Command(UsePrivateKeyMixin, BaseCommand):
 
             validate_private_key_parameters(ca_key_type, ca_key_size, ca_elliptic_curve)
 
-            algorithm_name: Optional[str] = None
-            if algorithm is not None:
-                algorithm_name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
-
-            elliptic_curve_name: Optional[str] = None
-            if ca_elliptic_curve is not None:
-                elliptic_curve_name = ca_elliptic_curve.name
+            parameters = GenerateOCSPKeyMessage(
+                serial=ca.serial,
+                profile=profile,
+                expires=expires,
+                key_type=ca_key_type,
+                key_size=ca_key_size,
+                elliptic_curve=ca_elliptic_curve,
+                algorithm=algorithm,
+                force=force,
+            )
 
             run_task(
                 generate_ocsp_key,
-                ca.serial,
-                key_backend_options.model_dump(mode="json"),
-                profile=profile,
-                expires=expires.total_seconds(),
-                algorithm=algorithm_name,
-                key_size=ca_key_size,
-                key_type=ca_key_type,
-                elliptic_curve=elliptic_curve_name,
-                force=force,
+                key_backend_options=key_backend_options.model_dump(mode="json"),
+                **parameters.model_dump(mode="json"),
             )

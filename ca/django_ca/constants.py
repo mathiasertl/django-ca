@@ -85,6 +85,10 @@ ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurves, type[ec.EllipticCurve]] =
     }
 )
 
+ELLIPTIC_CURVE_NAMES: MappingProxyType[type[ec.EllipticCurve], EllipticCurves] = MappingProxyType(
+    {v: k for k, v in ELLIPTIC_CURVE_TYPES.items()}
+)
+
 
 class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     """Extend the OIDs known to cryptography with what users needed over the years."""

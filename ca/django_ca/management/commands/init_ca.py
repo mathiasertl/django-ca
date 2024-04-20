@@ -35,6 +35,7 @@ from django_ca.management.actions import ExpiresAction, IntegerRangeAction, Name
 from django_ca.management.base import BaseSignCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
 from django_ca.models import CertificateAuthority
+from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import (
     AllowedHashTypes,
@@ -524,5 +525,12 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
 
         # Generate OCSP keys and cache CRLs
         serialized_key_backend_options = load_key_backend_options.model_dump(mode="json")
-        run_task(generate_ocsp_key, serial=ca.serial, key_backend_options=serialized_key_backend_options)
+
+        generate_csp_key_message = GenerateOCSPKeyMessage(serial=ca.serial)
+        run_task(
+            generate_ocsp_key,
+            key_backend_options=serialized_key_backend_options,
+            **generate_csp_key_message.model_dump(mode="json", exclude_unset=True),
+        )
+
         run_task(cache_crl, serial=ca.serial, key_backend_options=serialized_key_backend_options)

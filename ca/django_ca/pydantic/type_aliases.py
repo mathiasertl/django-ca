@@ -15,10 +15,16 @@
 
 import base64
 import re
+from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
-from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
+from pydantic import AfterValidator, BeforeValidator, Field, GetPydanticSchema, PlainSerializer
+from pydantic_core import core_schema
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+
+from django_ca import constants
 from django_ca.pydantic.validators import (
     base64_encoded_str_validator,
     int_to_hex_parser,
@@ -28,6 +34,32 @@ from django_ca.pydantic.validators import (
     oid_validator,
     unique_str_validator,
 )
+from django_ca.typehints import AllowedHashTypes
+
+T = TypeVar("T", bound=type[Any])
+
+
+def _get_cryptography_schema(
+    cls: type[T], type_mapping: dict[str, type[T]], name_mapping: dict[type[T], str]
+) -> GetPydanticSchema:
+    json_schema = core_schema.chain_schema(
+        [
+            core_schema.literal_schema(list(type_mapping)),
+            core_schema.no_info_plain_validator_function(
+                lambda value: type_mapping[value]()  # type: ignore[misc]  # False positive
+            ),
+        ]
+    )
+    return GetPydanticSchema(
+        lambda tp, handler: core_schema.json_or_python_schema(
+            json_schema=json_schema,
+            python_schema=core_schema.union_schema([core_schema.is_instance_schema(cls), json_schema]),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda instance: name_mapping[type(instance)], when_used="json"
+            ),
+        )
+    )
+
 
 #: A bytes type that validates strings as base64-encoded strings and serializes as such when using JSON.
 #:
@@ -38,6 +70,28 @@ Base64EncodedBytes = Annotated[
     BeforeValidator(base64_encoded_str_validator),
     PlainSerializer(
         lambda value: base64.b64encode(value).decode(encoding="ascii"), return_type=str, when_used="json"
+    ),
+]
+
+
+#: A type alias for :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instances.
+#:
+#: This type alias validates names from :py:attr:`~django_ca.constants.ELLIPTIC_CURVE_TYPES` and serializes
+#: to the canonical name in JSON. Models using this type alias can be used with strict schema validation.
+EllipticCurveTypeAlias = Annotated[
+    ec.EllipticCurve,
+    _get_cryptography_schema(
+        ec.EllipticCurve, constants.ELLIPTIC_CURVE_TYPES, constants.ELLIPTIC_CURVE_NAMES
+    ),
+]
+#: A type alias for :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instances.
+#:
+#: This type alias validates names from :py:attr:`~django_ca.constants.HASH_ALGORITHM_TYPES` and serializes
+#: to the canonical name in JSON. Models using this type alias can be used with strict schema validation.
+HashAlgorithmTypeAlias = Annotated[
+    AllowedHashTypes,
+    _get_cryptography_schema(
+        hashes.HashAlgorithm, constants.HASH_ALGORITHM_TYPES, constants.HASH_ALGORITHM_NAMES
     ),
 ]
 
@@ -57,6 +111,27 @@ Serial = Annotated[
     BeforeValidator(int_to_hex_parser),
     AfterValidator(str.upper),
     Field(min_length=1, max_length=40, pattern=re.compile("^[A-F0-9]+$")),
+]
+
+_timedelta_json_schema = core_schema.chain_schema(
+    [
+        core_schema.int_schema(),
+        core_schema.no_info_plain_validator_function(lambda value: timedelta(seconds=value)),
+    ]
+)
+TimedeltaInSeconds = Annotated[
+    int,
+    GetPydanticSchema(
+        lambda tp, handler: core_schema.json_or_python_schema(
+            json_schema=_timedelta_json_schema,
+            python_schema=core_schema.union_schema(
+                [core_schema.is_instance_schema(timedelta), _timedelta_json_schema]
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda instance: int(instance.total_seconds()), when_used="json"
+            ),
+        )
+    ),
 ]
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
