@@ -22,6 +22,7 @@ from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
 from django_ca.pydantic.validators import (
     base64_encoded_str_validator,
     int_to_hex_parser,
+    is_power_two_validator,
     non_empty_validator,
     oid_parser,
     oid_validator,
@@ -40,7 +41,17 @@ Base64EncodedBytes = Annotated[
     ),
 ]
 
-#: A certificate serial.
+#: A type alias for an integer that is a power of two, e.g. an RSA/DSA KeySize.
+#:
+#: Note that this type alias does not validate :ref:`settings-ca-min-key-size`, as validators in this module
+#: must not use any settings, as this would cause a circular import.
+PowerOfTwoTypeAlias = Annotated[int, AfterValidator(is_power_two_validator)]
+
+#: A certificate serial as a hex string, as they are stored in the database.
+#:
+#: This type will convert integers to hex and upper-case any lower-case strings. The minimum length is 1
+#: character, the maximum length is 40 (RFC 5280, section 4.1.2.2 specifies a maximum of 20 octets, which
+#: equals 40 characters in hex).
 Serial = Annotated[
     str,
     BeforeValidator(int_to_hex_parser),
