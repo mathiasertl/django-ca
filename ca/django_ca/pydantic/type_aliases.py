@@ -14,7 +14,6 @@
 """Reusable type aliases for Pydantic models."""
 
 import base64
-import re
 from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
@@ -110,7 +109,7 @@ Serial = Annotated[
     str,
     BeforeValidator(int_to_hex_parser),
     AfterValidator(str.upper),
-    Field(min_length=1, max_length=40, pattern=re.compile("^[A-F0-9]+$")),
+    Field(min_length=1, max_length=40, pattern="^[A-F0-9]+$"),
 ]
 
 _timedelta_json_schema = core_schema.chain_schema(

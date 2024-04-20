@@ -102,7 +102,7 @@ def cache_crls(
     serials: Optional[Iterable[str]] = None, key_backend_options: Optional[dict[str, dict[str, JSON]]] = None
 ) -> None:
     """Task to cache the CRLs for all CAs."""
-    if serials is None:  # pragma: no cover; just to make mypy happy
+    if serials is None:
         serials = []
     if key_backend_options is None:
         key_backend_options = {}
@@ -115,7 +115,7 @@ def cache_crls(
     for serial in serials:
         try:
             run_task(cache_crl, serial, key_backend_options=key_backend_options.get(serial, {}))
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in cache_crl()
             # are raised here directly.
@@ -181,17 +181,28 @@ def generate_ocsp_key(
 
 
 @shared_task
-def generate_ocsp_keys(**kwargs: Any) -> None:
+def generate_ocsp_keys(
+    serials: Optional[Iterable[str]] = None, key_backend_options: Optional[dict[str, dict[str, JSON]]] = None
+) -> None:
     """Task to generate an OCSP keys for all usable CAs."""
-    kwargs.setdefault("key_backend_options", {})
-    for serial in CertificateAuthority.objects.usable().values_list("serial", flat=True):
+    if serials is None:
+        serials = []
+    if key_backend_options is None:
+        key_backend_options = {}
+
+    if not serials:
+        serials = typing.cast(
+            Iterable[str], CertificateAuthority.objects.usable().values_list("serial", flat=True)
+        )
+
+    for serial in serials:
         try:
-            run_task(generate_ocsp_key, serial, **kwargs)
-        except Exception:
+            run_task(generate_ocsp_key, serial, key_backend_options=key_backend_options.get(serial, {}))
+        except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in
             # generate_ocsp_key() are raised here directly.
-            log.exception("Error caching CRL for %s", serial)
+            log.exception("Error creating OCSP responder key for %s", serial)
 
 
 @shared_task

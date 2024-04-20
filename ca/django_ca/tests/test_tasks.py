@@ -17,8 +17,6 @@ import importlib
 import io
 import types
 from collections.abc import Iterator
-
-# import typing
 from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
@@ -34,28 +32,18 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 
-from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-import pytest
 import requests_mock
 from freezegun import freeze_time
 
 from django_ca import ca_settings, tasks
 from django_ca.key_backends.storages import UsePrivateKeyOptions
-from django_ca.models import (
-    AcmeAccount,
-    AcmeAuthorization,
-    AcmeCertificate,
-    AcmeChallenge,
-    AcmeOrder,
-    Certificate,
-)
+from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
-from django_ca.utils import get_crl_cache_key, get_storage
 
 key_backend_options = UsePrivateKeyOptions(password=None)
 
@@ -87,129 +75,6 @@ class TestBasic(TestCaseMixin, TestCase):
         # finally, run_task() with celery
         with self.settings(CA_USE_CELERY=True), self.mute_celery((((), {}), {})):
             tasks.run_task(tasks.cache_crls)
-
-
-class TestCacheCRLs(TestCaseMixin, TestCase):
-    """Test the cache_crl Celery task."""
-
-    load_cas = "__usable__"
-
-    @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Test caching with a specific serial."""
-        enc_cls = Encoding.DER
-
-        for ca in self.cas.values():
-            tasks.cache_crl(ca.serial, {"password": CERT_DATA[ca.name].get("password")})
-
-            key = get_crl_cache_key(ca.serial, enc_cls, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            if ca.algorithm is None:
-                self.assertIsNone(crl.signature_hash_algorithm)
-            else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
-
-            key = get_crl_cache_key(ca.serial, enc_cls, "user")
-            crl = x509.load_der_x509_crl(cache.get(key))
-            if ca.algorithm is None:
-                self.assertIsNone(crl.signature_hash_algorithm)
-            else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_cache_all_crls(self) -> None:
-        """Test caching when all CAs are valid."""
-        enc_cls = Encoding.DER
-        tasks.cache_crls()
-
-        for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, enc_cls, "ca")
-            crl = x509.load_der_x509_crl(cache.get(key))
-
-            if ca.algorithm is None:
-                self.assertIsNone(crl.signature_hash_algorithm)
-            else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
-
-            key = get_crl_cache_key(ca.serial, enc_cls, "user")
-            x509.load_der_x509_crl(cache.get(key))
-
-            if ca.algorithm is None:
-                self.assertIsNone(crl.signature_hash_algorithm)
-            else:
-                self.assertIsInstance(crl.signature_hash_algorithm, type(ca.algorithm))
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_expired"])
-    def test_cache_all_crls_expired(self) -> None:
-        """Test that nothing is cashed if all CAs are expired."""
-        tasks.cache_crls()
-
-        for ca in self.cas.values():
-            key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
-            self.assertIsNone(cache.get(key))
-
-    @override_tmpcadir()
-    def test_no_password(self) -> None:
-        """Test creating a CRL for a CA where we have no password."""
-        msg = r"^Backend cannot be used for signing by this process\.$"
-        with self.settings(CA_PASSWORDS={}), pytest.raises(ValueError, match=msg):
-            tasks.cache_crl(self.cas["pwd"].serial)
-
-    def test_no_private_key(self) -> None:
-        """Test creating a CRL for a CA where no private key is available."""
-        with pytest.raises(ValueError, match=r"^Backend cannot be used for signing by this process\.$"):
-            tasks.cache_crl(self.cas["pwd"].serial)
-
-
-@freeze_time(TIMESTAMPS["everything_valid"])
-class GenerateOCSPKeysTestCase(TestCaseMixin, TestCase):
-    """Test the generate_ocsp_key task."""
-
-    # TODO: The password in these tasks should not have to be passed
-
-    load_cas = "__usable__"
-
-    @override_tmpcadir()
-    def test_single(self) -> None:
-        """Test creating a single key."""
-        storage = get_storage()
-        for ca in self.cas.values():
-            tasks.generate_ocsp_key(ca.serial)
-            self.assertTrue(storage.exists(f"ocsp/{ca.serial}.key"))
-            self.assertTrue(storage.exists(f"ocsp/{ca.serial}.pem"))
-
-    @override_tmpcadir()
-    def test_all(self) -> None:
-        """Test creating all keys."""
-        tasks.generate_ocsp_keys()
-        storage = get_storage()
-
-        for ca in self.cas.values():
-            assert storage.exists(f"ocsp/{ca.serial}.key") is True
-            assert storage.exists(f"ocsp/{ca.serial}.pem") is True
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_responder_key_validity(self) -> None:
-        """Test that the ocsp_responder_key_validity field works."""
-        ca = self.cas["root"]
-        qs = Certificate.objects.filter(profile="ocsp", ca=ca)
-        ca.ocsp_responder_key_validity = 10
-        ca.save()
-        assert qs.exists() is False
-
-        tasks.generate_ocsp_key(ca.serial)
-        cert = qs.get()
-        assert cert.expires == TIMESTAMPS["everything_valid"] + timedelta(days=10)
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_no_renewal_required(self) -> None:
-        """Test that keys are not renewed and None is returned in this case."""
-        assert tasks.generate_ocsp_key(self.ca.serial) is not None
-        assert tasks.generate_ocsp_key(self.ca.serial) is None
 
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):

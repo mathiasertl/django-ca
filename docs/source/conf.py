@@ -486,6 +486,7 @@ qualname_overrides = {
 
 # Ignore (not so important) classes where the documented name does not match the documented name.
 nitpick_ignore = [
+    ("py:class", "NoneType"),
     # TypeVars for classes that make no sense in documenting.
     ("py:class", "django_ca.key_backends.base.CreatePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.StorePrivateKeyOptionsTypeVar"),

@@ -343,6 +343,9 @@ GENERAL_NAME_NAMES: MappingProxyType[type[x509.GeneralName], GeneralNames] = Map
 )
 
 #: Map of hash algorithm types in cryptography to standard hash algorithm names.
+#:
+#: Keys are the types from :py:attr:`~django_ca.typehints.AllowedHashTypes`, values are the matching names
+#: from :py:attr:`~django_ca.typehints.HashAlgorithms`.
 HASH_ALGORITHM_NAMES: MappingProxyType[type[AllowedHashTypes], HashAlgorithms] = MappingProxyType(
     {
         hashes.SHA224: "SHA-224",
@@ -356,7 +359,8 @@ HASH_ALGORITHM_NAMES: MappingProxyType[type[AllowedHashTypes], HashAlgorithms] =
     }
 )
 
-#: Mapping of hash algorithm names to hash algorithm types (the inverse of HASH_ALGORITHM_NAMES).
+#: Map of hash algorithm names to hash algorithm types (the inverse of
+#: :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES`).
 HASH_ALGORITHM_TYPES: MappingProxyType[HashAlgorithms, type[AllowedHashTypes]] = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
 )

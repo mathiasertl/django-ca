@@ -85,6 +85,7 @@ unencrypted
 unparsed
 untrusted
 validator
+validators
 virtualenv
 whitespace
 yaml
