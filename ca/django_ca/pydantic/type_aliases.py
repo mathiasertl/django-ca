@@ -14,12 +14,14 @@
 """Reusable type aliases for Pydantic models."""
 
 import base64
+import re
 from typing import Annotated, Any, TypeVar
 
-from pydantic import AfterValidator, BeforeValidator, PlainSerializer
+from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
 
 from django_ca.pydantic.validators import (
     base64_encoded_str_validator,
+    int_to_hex_parser,
     non_empty_validator,
     oid_parser,
     oid_validator,
@@ -36,6 +38,14 @@ Base64EncodedBytes = Annotated[
     PlainSerializer(
         lambda value: base64.b64encode(value).decode(encoding="ascii"), return_type=str, when_used="json"
     ),
+]
+
+#: A certificate serial.
+Serial = Annotated[
+    str,
+    BeforeValidator(int_to_hex_parser),
+    AfterValidator(str.upper),
+    Field(min_length=1, max_length=40, pattern=re.compile("^[A-F0-9]+$")),
 ]
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])

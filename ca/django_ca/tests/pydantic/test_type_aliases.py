@@ -17,13 +17,19 @@ from pydantic import BaseModel
 
 import pytest
 
-from django_ca.pydantic.type_aliases import Base64EncodedBytes
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, Serial
 
 
 class JSONSerializableBytesModel(BaseModel):
-    """Test class to test type aliases."""
+    """Test class to test the Base64EncodedBytes type aliases."""
 
     value: Base64EncodedBytes
+
+
+class SerialModel(BaseModel):
+    """Test class to test the Serial type alias."""
+
+    value: Serial
 
 
 VALUES = (
@@ -49,3 +55,43 @@ def test_json_serializable_bytes(value: bytes, encoded: str) -> None:
     assert JSONSerializableBytesModel.model_validate({"value": encoded}, strict=True).value == value
     assert model.model_dump() == {"value": value}
     assert model.model_dump(mode="json") == {"value": encoded}
+
+
+@pytest.mark.parametrize(
+    "value,validated",
+    (
+        ("a", "A"),
+        ("abc", "ABC"),
+        ("0", "0"),
+        ("0123456789abcdef", "0123456789ABCDEF"),  # all characters, lowercased
+        ("0123456789ABCDEF", "0123456789ABCDEF"),  # all characters
+        ("a" * 40, "A" * 40),  # maximum length
+        (12345678, "BC614E"),
+    ),
+)
+def test_serial(value: str, validated: str) -> None:
+    """Test the Serial type alias."""
+    model = SerialModel(value=value)
+    assert model.value == validated
+    assert SerialModel.model_validate({"value": value}).value == validated
+    assert SerialModel.model_validate({"value": value}).value == validated
+    assert SerialModel.model_validate({"value": validated}).value == validated
+    assert SerialModel.model_validate({"value": validated}, strict=True).value == validated
+    assert model.model_dump() == {"value": validated}
+    assert model.model_dump(mode="json") == {"value": validated}
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        "",  # too short
+        True,  # invalid type
+        "1" * 41,  # too long
+        "x",  # invalid character
+        "abcxdef",  # invalid character
+    ),
+)
+def test_serial_errors(value: str) -> None:
+    """Test invalid values for the Serial type alias."""
+    with pytest.raises(ValueError):
+        SerialModel(value=value)

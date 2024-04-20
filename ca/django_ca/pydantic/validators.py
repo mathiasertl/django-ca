@@ -96,6 +96,13 @@ def extended_key_usage_validator(value: str) -> str:
     return value
 
 
+def int_to_hex_parser(value: Any) -> Any:
+    """Convert an integer to an upper-case hex-string."""
+    if isinstance(value, int) and not isinstance(value, bool):
+        return f"{value:X}"
+    return value
+
+
 def is_power_two_validator(value: int) -> int:
     """Validate that a given integer is a power of two."""
     if not (value != 0 and ((value & (value - 1)) == 0)):
