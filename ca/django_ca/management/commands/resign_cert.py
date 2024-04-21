@@ -107,7 +107,7 @@ default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
             ca = cert.ca
 
         profile_obj = self.get_profile(profile, cert)
-        self.test_options(ca=ca, expires=expires, profile=profile_obj, **options)
+        self.verify_certificate_authority(ca=ca, expires=expires, profile=profile_obj)
 
         # Get key backend options
         try:

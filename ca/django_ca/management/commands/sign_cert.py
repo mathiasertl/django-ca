@@ -26,7 +26,6 @@ from cryptography import x509
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
-from django.utils import timezone
 
 from django_ca import ca_settings, constants
 from django_ca.management.base import BaseSignCertCommand
@@ -110,10 +109,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
-        if ca.expires < timezone.now():
-            raise CommandError("Certificate Authority has expired.")
-        if ca.revoked:
-            raise CommandError("Certificate Authority is revoked.")
+        profile_obj = profiles[profile]
+        self.verify_certificate_authority(ca=ca, expires=expires, profile=profile_obj)
 
         # Get key backend options
         try:
@@ -129,9 +126,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         # Get/validate signature hash algorithm
         algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
-
-        profile_obj = profiles[profile]
-        self.test_options(ca=ca, expires=expires, profile=profile_obj, **options)
 
         # get list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]

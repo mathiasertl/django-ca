@@ -64,7 +64,6 @@ csr: bytes = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
 
 # All tests in this module require a valid time (so that the CA is valid)
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
-# @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
 
 
 def sign_cert(ca: CertificateAuthority, subject: str, **kwargs: Any) -> tuple[str, str]:
@@ -706,7 +705,7 @@ def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
     root.revoke()
 
     with (
-        assert_command_error(r"^Certificate Authority is revoked\.$"),
+        assert_command_error(r"^Certificate authority is revoked\.$"),
         assert_create_cert_signals(False, False),
     ):
         sign_cert(root, rfc4514_subject, stdin=csr)
@@ -741,7 +740,7 @@ def test_unusable_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 def test_expired_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing with an expired CA."""
-    msg = r"^Certificate Authority has expired\.$"
+    msg = r"^Certificate authority has expired\.$"
     with assert_command_error(msg), assert_create_cert_signals(False, False):
         sign_cert(root, rfc4514_subject, stdin=csr)
 

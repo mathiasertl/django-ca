@@ -582,14 +582,17 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             to remove a field from the subject.""",
         )
 
-    def test_options(  # pylint: disable=unused-argument
-        self,
-        ca: CertificateAuthority,
-        expires: Optional[timedelta],
-        profile: Profile,
-        **options: Any,
+    def verify_certificate_authority(
+        self, ca: CertificateAuthority, expires: Optional[timedelta], profile: Profile
     ) -> None:
-        """Additional tests for validity of some options."""
+        """Verify that the certificate authority can be used for signing."""
+        if ca.expires < timezone.now():
+            raise CommandError("Certificate authority has expired.")
+        if ca.revoked:
+            raise CommandError("Certificate authority is revoked.")
+        if not ca.enabled:
+            raise CommandError("Certificate authority is disabled.")
+
         parsed_expires = profile.get_expires(expires)
 
         if ca.expires < parsed_expires:

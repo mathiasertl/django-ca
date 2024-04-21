@@ -2,6 +2,13 @@
 1.29.0 (TBR)
 ############
 
+**********************
+Command-line utilities
+**********************
+
+* :command:`manage.py sign_cert` and :command:`manage.py resign_cert` now verify that the certificate
+  authority used for signing has expired, is revoked or disabled.
+
 ********
 Profiles
 ********

@@ -32,7 +32,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
 
-from freezegun import freeze_time
+import pytest
 
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.tests.base.assertions import assert_command_error, assert_create_cert_signals
@@ -56,13 +56,14 @@ from django_ca.tests.base.utils import (
     uri,
 )
 
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+
 
 def resign_cert(serial: str, **kwargs: Any) -> tuple[str, str]:
     """Execute the regenerate_ocsp_keys command."""
     return cmd("resign_cert", serial, **kwargs)
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 class ResignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
@@ -712,6 +713,32 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         msg_re = rf'^Profile "{self.cert.profile}" for original certificate is no longer defined, please set one via the command line\.$'  # NOQA: E501
         with assert_command_error(msg_re):
             cmd("resign_cert", self.cert.serial)
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
+def test_expired_certificate_authority(root_cert: Certificate) -> None:
+    """Test resigning with a CA that has expired."""
+    with assert_command_error(r"^Certificate authority has expired\.$"):
+        resign_cert(root_cert.serial)
+
+
+@pytest.mark.usefixtures("usable_root")
+def test_disabled_certificate_authority(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
+    """Test resigning with a CA that is disabled."""
+    assert usable_root == root_cert.ca
+    usable_root.enabled = False
+    usable_root.save()
+    with assert_command_error(r"^Certificate authority is disabled\.$"):
+        resign_cert(root_cert.serial)
+
+
+@pytest.mark.usefixtures("usable_root")
+def test_revoked_certificate_authority(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
+    """Test resigning with a CA that is revoked."""
+    assert usable_root == root_cert.ca
+    usable_root.revoke()
+    with assert_command_error(r"^Certificate authority is revoked\.$"):
+        resign_cert(root_cert.serial)
 
 
 def test_unusable_private_key(root_cert: Certificate) -> None:
