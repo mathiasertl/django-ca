@@ -13,22 +13,13 @@
 
 """Test the cache_crl task."""
 
-from collections.abc import Iterator
-
-from django.core.cache import cache
-
 import pytest
 
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl
 from django_ca.tests.tasks.conftest import assert_crls
 
-
-@pytest.fixture(autouse=True)
-def _cache() -> Iterator[None]:
-    # Clear cache for every test
-    yield
-    cache.clear()
+pytestmark = [pytest.mark.usefixtures("clear_cache")]
 
 
 def test_basic(usable_root: CertificateAuthority) -> None:

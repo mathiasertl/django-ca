@@ -164,6 +164,13 @@ def certificate_policies(
     )
 
 
+@pytest.fixture()
+def clear_cache() -> Iterator[None]:
+    """Fixture to clear the cache after the test."""
+    yield
+    cache.clear()
+
+
 @pytest.fixture(params=("ed448", "ed25519"))
 def ed_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for CAs with an Edwards-curve algorithm (ed448, ed25519)."""

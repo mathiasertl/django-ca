@@ -15,7 +15,6 @@
 
 import base64
 import logging
-from collections.abc import Iterator
 from unittest import mock
 
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -31,14 +30,7 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.tasks.conftest import assert_crls
 from django_ca.utils import get_crl_cache_key
 
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
-
-
-@pytest.fixture(autouse=True)
-def _cache() -> Iterator[None]:
-    # Clear cache for every test
-    yield
-    cache.clear()
+pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 def test_all_crls(usable_cas: list[CertificateAuthority]) -> None:
