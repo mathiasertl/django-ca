@@ -1348,7 +1348,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         cn = "test-only-ca.example.com"
         assert self.ca.sign_authority_information_access is not None
         assert self.ca.sign_crl_distribution_points is not None
-        self.ca.sign_certificate_policies = self.certificate_policies(
+        self.ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=x509.ObjectIdentifier("1.2.3"),
                 policy_qualifiers=[

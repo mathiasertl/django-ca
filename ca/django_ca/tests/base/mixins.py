@@ -16,7 +16,6 @@
 import copy
 import json
 import re
-import textwrap
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
@@ -37,7 +36,6 @@ from django.contrib.auth.models import User  # pylint: disable=imported-auth-use
 from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.files.storage import storages
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
@@ -46,14 +44,12 @@ from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from django_ca import ca_settings
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
-from django_ca.extensions import extension_as_text
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import certificate_policies
 
 if typing.TYPE_CHECKING:
     # Use SimpleTestCase as base class when type checking. This way mypy will know about attributes/methods
@@ -66,7 +62,7 @@ else:
     TestCaseProtocol = object
 
 
-class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-methods
+class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
 
     load_cas: Union[str, tuple[str, ...]] = tuple()
@@ -345,27 +341,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
             yield
         self.assertEqual(cmex.exception.message_dict, errors)
 
-    @property
-    def ca_certs(self) -> Iterator[tuple[str, Certificate]]:
-        """Yield loaded certificates for each certificate authority."""
-        for name, cert in self.certs.items():
-            if name in [
-                "root-cert",
-                "child-cert",
-                "ec-cert",
-                "dsa-cert",
-                "pwd-cert",
-                "ed448-cert",
-                "ed25519-cert",
-            ]:
-                yield name, cert
-
-    def certificate_policies(
-        self, *policies: x509.PolicyInformation, critical: bool = False
-    ) -> x509.Extension[x509.CertificatePolicies]:
-        """Shortcut for getting a Certificate Policy extension."""
-        return certificate_policies(*policies, critical=critical)
-
     def crl_distribution_points(
         self,
         full_name: Optional[Iterable[x509.GeneralName]] = None,
@@ -445,39 +420,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
 
         with freeze_time(timestamp) as frozen:
             yield frozen
-
-    def get_cert_context(self, name: str) -> dict[str, Any]:
-        """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
-        ctx: dict[str, Any] = {}
-
-        for key, value in sorted(CERT_DATA[name].items()):
-            # Handle cryptography extensions
-            if key == "extensions":
-                ctx["extensions"] = {ext["type"]: ext for ext in CERT_DATA[name].get("extensions", [])}
-            elif key == "precert_poison":
-                ctx["precert_poison"] = "* Precert Poison (critical):\n  Yes"
-            elif isinstance(value, x509.Extension):
-                if value.critical:
-                    ctx[f"{key}_critical"] = " (critical)"
-                else:
-                    ctx[f"{key}_critical"] = ""
-
-                ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "  ")
-            elif key == "path_length":
-                ctx[key] = value
-                ctx[f"{key}_text"] = "unlimited" if value is None else value
-            else:
-                ctx[key] = value
-
-        if parent := CERT_DATA[name].get("parent"):
-            ctx["parent_name"] = CERT_DATA[parent]["name"]
-            ctx["parent_serial"] = CERT_DATA[parent]["serial"]
-            ctx["parent_serial_colons"] = CERT_DATA[parent]["serial_colons"]
-
-        if CERT_DATA[name]["key_filename"] is not False:
-            storage = storages["django-ca"]
-            ctx["key_path"] = storage.path(CERT_DATA[name]["key_filename"])
-        return ctx
 
     @classmethod
     def load_ca(
@@ -585,13 +527,6 @@ class TestCaseMixin(TestCaseProtocol):  # pylint: disable=too-many-public-method
         for name, ca in self.cas.items():
             if CERT_DATA[name]["key_filename"]:
                 yield name, ca
-
-    @property
-    def usable_certs(self) -> Iterator[tuple[str, Certificate]]:
-        """Yield loaded generated certificates."""
-        for name, cert in self.certs.items():
-            if CERT_DATA[name]["cat"] == "generated":
-                yield name, cert
 
 
 class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):

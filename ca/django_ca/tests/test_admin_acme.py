@@ -14,9 +14,12 @@
 """Test cases for ModelAdmin classes for ACME models."""
 
 import typing
+from datetime import timedelta
 
 from django.test import TestCase
 from django.utils import timezone
+
+from freezegun import freeze_time
 
 from django_ca.models import (
     AcmeAccount,
@@ -27,6 +30,7 @@ from django_ca.models import (
     CertificateAuthority,
 )
 from django_ca.tests.admin.assertions import assert_changelist_response
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 from django_ca.tests.base.utils import override_tmpcadir
@@ -151,11 +155,17 @@ class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], TestCase):
         )
         assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=1"))
 
-        with self.freeze_time("everything_expired"):
-            assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=0"))
-            assert_changelist_response(
-                self.client.get(f"{self.changelist_url}?expired=1"), self.order1, self.order2
-            )
+    @override_tmpcadir()
+    @freeze_time(TIMESTAMPS["everything_expired"])
+    def test_expired_filter_with_everything_expired(self) -> None:
+        """Test the "expired" filter when everything is expired."""
+        self.client.force_login(self.user)
+        now = timezone.now()
+        AcmeOrder.objects.all().update(expires=now - timedelta(days=10))
+        assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=0"))
+        assert_changelist_response(
+            self.client.get(f"{self.changelist_url}?expired=1"), self.order1, self.order2
+        )
 
 
 class AcmeAuthorizationViewsTestCase(AcmeAdminTestCaseMixin[AcmeAuthorization], TestCase):

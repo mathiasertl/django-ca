@@ -1,0 +1,38 @@
+name: Tests with faked time
+on:
+  push:
+  pull_request:
+    types: [opened, reopened]
+  pull_request_target:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    name: libfaketime test
+    steps:
+      - name: Install APT dependencies
+        run: sudo apt-get install -y firefox faketime
+
+      - name: Acquire sources
+        uses: actions/checkout@v4.1.1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.0.0
+        with:
+          python-version: 3.12
+          architecture: x64
+
+      - name: Apply caching of dependencies
+        uses: actions/cache@v4.0.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements-*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -U pip setuptools wheel
+          pip install -r requirements.txt -r requirements/requirements-test.txt
+
+      - name: Run tests
+        run: faketime -f +100y pytest -v --cov-report term-missing --durations=20

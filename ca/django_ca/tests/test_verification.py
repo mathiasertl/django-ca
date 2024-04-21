@@ -14,6 +14,7 @@
 """Validate certificates using the openssl command line tool."""
 
 import os
+import re
 import shlex
 import subprocess
 import tempfile
@@ -25,367 +26,339 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 
-from django.test import TestCase
 from django.urls import reverse
 
-from freezegun import freeze_time
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import CreatePrivateKeyOptions
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import cmd, override_tmpcadir, uri
+from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.utils import (
+    cmd,
+    crl_distribution_points,
+    distribution_point,
+    override_tmpcadir,
+    uri,
+)
+
+pytestmark = [pytest.mark.usefixtures("tmpcadir"), pytest.mark.django_db]
 
 
-class CRLValidationTestCase(TestCaseMixin, TestCase):
-    """CRL validation tests."""
+def assert_full_name(
+    parsed_crl: x509.CertificateRevocationList, expected: Optional[list[x509.GeneralName]] = None
+) -> None:
+    """Assert that the full name of the Issuing Distribution Point of the CRL matches `expected`."""
+    idp = parsed_crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
+    assert idp.full_name == expected
 
-    def assertFullName(  # pylint: disable=invalid-name
-        self,
-        crl: x509.CertificateRevocationList,
-        expected: Optional[list[x509.GeneralName]] = None,
-    ) -> None:
-        """Assert that the full name of the CRL matches `expected`."""
-        idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
-        self.assertEqual(idp.full_name, expected)
 
-    def assertNoIssuingDistributionPoint(  # pylint: disable=invalid-name
-        self, crl: x509.CertificateRevocationList
-    ) -> None:
-        """Assert that the given CRL has *no* IssuingDistributionPoint extension."""
-        try:
-            idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint)
-            self.fail(f"CRL contains an IssuingDistributionPoint extension: {idp}")
-        except x509.ExtensionNotFound:
-            pass
+def assert_no_issuing_distribution_point(parsed_crl: x509.CertificateRevocationList) -> None:
+    """Assert that the given CRL has *no* IssuingDistributionPoint extension."""
+    try:
+        idp = parsed_crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint)
+        pytest.fail(f"CRL contains an IssuingDistributionPoint extension: {idp}")
+    except x509.ExtensionNotFound:
+        pass
 
-    def assertScope(  # pylint: disable=invalid-name
-        self,
-        crl: x509.CertificateRevocationList,
-        ca: bool = False,
-        user: bool = False,
-        attribute: bool = False,
-    ) -> None:
-        """Assert that the scope at `path` is `expected`."""
-        idp = crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
-        self.assertIs(idp.only_contains_ca_certs, ca, idp)
-        self.assertIs(idp.only_contains_user_certs, user)
-        self.assertIs(idp.only_contains_attribute_certs, attribute)
 
-    def init_ca(self, name: str, **kwargs: Any) -> CertificateAuthority:
-        """Create a CA."""
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
-        key_backend = key_backends["default"]
-        key_backend_options = CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=1024)
-        if kwargs.get("parent"):
-            kwargs["use_parent_private_key_options"] = key_backend.use_model(password=None)
-        return CertificateAuthority.objects.init(name, key_backend, key_backend_options, subject, **kwargs)
+def assert_scope(
+    parsed_crl: x509.CertificateRevocationList, ca: bool = False, user: bool = False, attribute: bool = False
+) -> None:
+    """Assert that the scope in the Issuing Distribution Point matches what we expect."""
+    idp = parsed_crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
+    assert idp.only_contains_ca_certs is ca, idp
+    assert idp.only_contains_user_certs is user, idp
+    assert idp.only_contains_attribute_certs is attribute, idp
 
-    @contextmanager
-    def crl(
-        self, ca: CertificateAuthority, **kwargs: Any
-    ) -> Iterator[tuple[str, x509.CertificateRevocationList]]:
-        """Dump CRL to a tmpdir, yield path to it."""
-        kwargs["ca"] = ca
-        with tempfile.TemporaryDirectory() as tempdir:
-            path = os.path.join(tempdir, f"{ca.name}.{kwargs.get('scope')}.crl")
-            cmd("dump_crl", path, **kwargs)
 
-            with open(path, "rb") as stream:
-                crl = x509.load_pem_x509_crl(stream.read())
+def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
+    """Create a CA."""
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
+    key_backend = key_backends["default"]
+    key_backend_options = CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=1024)
+    if kwargs.get("parent"):
+        kwargs["use_parent_private_key_options"] = key_backend.use_model(password=None)
+    return CertificateAuthority.objects.init(name, key_backend, key_backend_options, subject, **kwargs)
 
-            yield path, crl
 
-    @contextmanager
-    def dumped(self, *certificates: X509CertMixin) -> Iterator[list[str]]:
-        """Dump certificates to a tempdir, yield list of paths."""
-        with tempfile.TemporaryDirectory() as tempdir:
-            paths = []
-            for cert in certificates:
-                path = os.path.join(tempdir, f"{cert.serial}.pem")
-                paths.append(path)
-                with open(path, "w", encoding="ascii") as stream:
-                    stream.write(cert.pub.pem)
+@contextmanager
+def crl(ca: CertificateAuthority, **kwargs: Any) -> Iterator[tuple[str, x509.CertificateRevocationList]]:
+    """Dump CRL to a tmpdir, yield path to it."""
+    kwargs["ca"] = ca
+    with tempfile.TemporaryDirectory() as tempdir:
+        path = os.path.join(tempdir, f"{ca.name}.{kwargs.get('scope')}.crl")
+        cmd("dump_crl", path, **kwargs)
 
-            yield paths
+        with open(path, "rb") as stream:
+            loaded_crl = x509.load_pem_x509_crl(stream.read())
 
-    @contextmanager
-    def sign_cert(
-        self, ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any
-    ) -> Iterator[str]:
-        """Create a signed certificate in a temporary directory."""
-        stdin = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
-        # subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
-        subject = f"CN={hostname}"
+        yield path, loaded_crl
 
-        with tempfile.TemporaryDirectory() as tempdir:
-            out_path = os.path.join(tempdir, f"{hostname}.pem")
-            with freeze_time(TIMESTAMPS["everything_valid"]):
-                cmd(
-                    "sign_cert",
-                    ca=ca,
-                    subject_format="rfc4514",
-                    subject=subject,
-                    out=out_path,
-                    stdin=stdin,
-                    **kwargs,
-                )
-            yield out_path
 
-    def openssl(self, command: str, *args: str, code: int = 0, **kwargs: str) -> None:
-        """Run openssl."""
-        exp_stdout = kwargs.pop("stdout", False)
-        exp_stderr = kwargs.pop("stderr", False)
-        command = command.format(*args, **kwargs)
-        if kwargs.pop("verbose", False):
-            print(f"openssl {command}")
-        proc = subprocess.run(["openssl", *shlex.split(command)], capture_output=True, check=False)
-        stdout = proc.stdout.decode("utf-8")
-        stderr = proc.stderr.decode("utf-8")
-        self.assertEqual(proc.returncode, code, stderr)
-        if isinstance(exp_stdout, str):
-            self.assertRegex(stdout, exp_stdout)
-        if isinstance(exp_stderr, str):
-            self.assertRegex(stderr, exp_stderr)
+@contextmanager
+def dumped(*certificates: X509CertMixin) -> Iterator[list[str]]:
+    """Dump certificates to a tempdir, yield list of paths."""
+    with tempfile.TemporaryDirectory() as tempdir:
+        paths = []
+        for cert in certificates:
+            path = os.path.join(tempdir, f"{cert.serial}.pem")
+            paths.append(path)
+            with open(path, "w", encoding="ascii") as stream:
+                stream.write(cert.pub.pem)
 
-    def verify(
-        self,
-        command: str,
-        *args: str,
-        untrusted: Optional[Iterable[str]] = None,
-        crl: Optional[Iterable[str]] = None,
-        code: int = 0,
-        **kwargs: str,
-    ) -> None:
-        """Run openssl verify."""
-        if untrusted:
-            untrusted_args = " ".join(f"-untrusted {path}" for path in untrusted)
-            command = f"{untrusted_args} {command}"
-        if crl:
-            crlfile_args = " ".join(f"-CRLfile {path}" for path in crl)
-            command = f"{crlfile_args} {command}"
+        yield paths
 
-        self.openssl(f"verify {command}", *args, code=code, **kwargs)
 
-    @override_tmpcadir()
-    def test_root_ca(self) -> None:
-        """Try validating a root CA."""
-        name = "Root"
-        ca = self.init_ca(name)
+@contextmanager
+def sign_cert(ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any) -> Iterator[str]:
+    """Create a signed certificate in a temporary directory."""
+    stdin = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
+    subject = f"CN={hostname}"
 
-        # Very simple validation of the Root CRL
-        with self.dumped(ca) as paths:
-            self.verify("-CAfile {0} {0}", *paths)
+    with tempfile.TemporaryDirectory() as tempdir:
+        out_path = os.path.join(tempdir, f"{hostname}.pem")
+        cmd(
+            "sign_cert",
+            ca=ca,
+            subject_format="rfc4514",
+            subject=subject,
+            out=out_path,
+            stdin=stdin,
+            **kwargs,
+        )
+        yield out_path
+
+
+def openssl(command: str, *args: str, code: int = 0, **kwargs: str) -> None:
+    """Run openssl."""
+    exp_stdout = kwargs.pop("stdout", False)
+    exp_stderr = kwargs.pop("stderr", False)
+    command = command.format(*args, **kwargs)
+    if kwargs.pop("verbose", False):
+        print(f"openssl {command}")
+    proc = subprocess.run(["openssl", *shlex.split(command)], capture_output=True, check=False)
+    stdout = proc.stdout.decode("utf-8")
+    stderr = proc.stderr.decode("utf-8")
+    assert proc.returncode == code, stderr
+    if isinstance(exp_stdout, str):
+        assert re.search(exp_stdout, stdout) is not None, stdout
+    if isinstance(exp_stderr, str):
+        assert re.search(exp_stderr, stderr) is not None, stderr
+
+
+def verify(
+    command: str,
+    *args: str,
+    untrusted: Optional[Iterable[str]] = None,
+    crl_path: Optional[Iterable[str]] = None,
+    code: int = 0,
+    **kwargs: str,
+) -> None:
+    """Run openssl verify."""
+    if untrusted:
+        untrusted_args = " ".join(f"-untrusted {path}" for path in untrusted)
+        command = f"{untrusted_args} {command}"
+    if crl_path:
+        crlfile_args = " ".join(f"-CRLfile {path}" for path in crl_path)
+        command = f"{crlfile_args} {command}"
+
+    openssl(f"verify {command}", *args, code=code, **kwargs)
+
+
+def test_root_ca(ca_name: str) -> None:
+    """Try validating a root CA."""
+    ca = init_ca(ca_name)
+
+    # Very simple validation of the Root CRL
+    with dumped(ca) as paths:
+        verify("-CAfile {0} {0}", *paths)
+
+    # Create a CRL too and include it
+    with dumped(ca) as paths, crl(ca, scope="ca") as (crl_path, crl_parsed):
+        verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
+
+    # Try again with no scope
+    with dumped(ca) as paths, crl(ca) as (crl_path, crl_parsed):
+        verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
+
+    # Try with cert scope (fails because of wrong scope
+    with (
+        dumped(ca) as paths,
+        crl(ca, scope="user") as (crl_path, crl_parsed),
+        pytest.raises(AssertionError),
+    ):
+        verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
+
+
+def test_root_ca_cert(ca_name: str) -> None:
+    """Try validating a cert issued by the root CA."""
+    ca = init_ca(ca_name)
+
+    with dumped(ca) as paths, sign_cert(ca) as cert:
+        verify("-CAfile {0} {cert}", *paths, cert=cert)
 
         # Create a CRL too and include it
-        with self.dumped(ca) as paths, self.crl(ca, scope="ca") as (crl_path, crl):
-            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
+        with crl(ca, scope="user") as (crl_path, crl_parsed):
+            assert_scope(crl_parsed, user=True)
+            verify("-CAfile {0} -crl_check {cert}", *paths, crl_path=[crl_path], cert=cert)
 
-        # Try again with no scope
-        with self.dumped(ca) as paths, self.crl(ca) as (crl_path, crl):
-            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
+            # for crl_check_all, we also need the root CRL
+            with crl(ca, scope="ca") as (crl2_path, crl2):
+                assert_scope(crl2, ca=True)
+                verify("-CAfile {0} -crl_check_all {cert}", *paths, crl_path=[crl_path, crl2_path], cert=cert)
 
-        # Try with cert scope (fails because of wrong scope
-        with (
-            self.dumped(ca) as paths,
-            self.crl(ca, scope="user") as (crl_path, crl),
-            self.assertRaises(AssertionError),
-        ):
-            self.verify("-CAfile {0} -crl_check_all {0}", *paths, crl=[crl_path])
+        # Try a single CRL with a global scope
+        with crl(ca, scope=None) as (crl_global_path, crl_global):
+            assert_no_issuing_distribution_point(crl_global)
+            verify("-CAfile {0} -crl_check_all {cert}", *paths, crl_path=[crl_global_path], cert=cert)
 
-    @override_tmpcadir(CA_DEFAULT_HOSTNAME="")
-    def test_root_ca_cert(self) -> None:
-        """Try validating a cert issued by the root CA."""
-        name = "Root"
-        ca = self.init_ca(name)
 
-        with self.dumped(ca) as paths, self.sign_cert(ca) as cert:
-            self.verify("-CAfile {0} {cert}", *paths, cert=cert)
+def test_ca_default_hostname() -> None:
+    """Test that CA_DEFAULT_HOSTNAME does not lead to problems."""
+    ca = init_ca("root")
+    # Root CAs have no CRLDistributionPoints
+    assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in ca.extensions
 
-            # Create a CRL too and include it
-            with self.crl(ca, scope="user") as (crl_path, crl):
-                self.assertScope(crl, user=True)
-                self.verify("-CAfile {0} -crl_check {cert}", *paths, crl=[crl_path], cert=cert)
+    with dumped(ca) as paths, sign_cert(ca) as cert:
+        with crl(ca) as (crl_path, crl_parsed):  # test global CRL
+            assert_no_issuing_distribution_point(crl_parsed)
+            verify("-trusted {0} -crl_check {cert}", *paths, crl_path=[crl_path], cert=cert)
+            verify("-trusted {0} -crl_check_all {cert}", *paths, crl_path=[crl_path], cert=cert)
 
-                # for crl_check_all, we also need the root CRL
-                with self.crl(ca, scope="ca") as (crl2_path, crl2):
-                    self.assertScope(crl2, ca=True)
-                    self.verify(
-                        "-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_path, crl2_path], cert=cert
-                    )
+        with crl(ca, scope="user") as (crl_path, crl_parsed):  # test user-only CRL
+            assert_scope(crl_parsed, user=True)
+            verify("-trusted {0} -crl_check {cert}", *paths, crl_path=[crl_path], cert=cert)
+            # crl_check_all does not work,  b/c the scope  is only "user"
+            verify(
+                "-trusted {0} -crl_check_all {cert}",
+                *paths,
+                crl_path=[crl_path],
+                cert=cert,
+                code=2,
+                stderr="[dD]ifferent CRL scope",
+            )
 
-            # Try a single CRL with a global scope
-            with self.crl(ca, scope=None) as (crl_global_path, crl_global):
-                self.assertNoIssuingDistributionPoint(crl_global)
-                self.verify("-CAfile {0} -crl_check_all {cert}", *paths, crl=[crl_global_path], cert=cert)
 
-    @override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
-    def test_ca_default_hostname(self) -> None:
-        """Test that CA_DEFAULT_HOSTNAME does not lead to problems."""
-        ca = self.init_ca("root")
-        # Root CAs have no CRLDistributionPoints
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, ca.extensions)
+@override_tmpcadir(CA_DEFAULT_HOSTNAME="")
+def test_intermediate_ca(ca_name: str) -> None:
+    """Validate intermediate CA and its certs."""
+    root = init_ca(f"{ca_name}_root", path_length=2)
+    child = init_ca(f"{ca_name}_child", parent=root, path_length=1)
+    grandchild = init_ca(f"{ca_name}_grandchild", parent=child)
 
-        with self.dumped(ca) as paths, self.sign_cert(ca) as cert:
-            with self.crl(ca) as (crl_path, crl):  # test global CRL
-                self.assertNoIssuingDistributionPoint(crl)
-                self.verify("-trusted {0} -crl_check {cert}", *paths, crl=[crl_path], cert=cert)
-                self.verify("-trusted {0} -crl_check_all {cert}", *paths, crl=[crl_path], cert=cert)
+    #  Verify the state of the CAs themselves.
+    assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in root.extensions
+    assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in child.extensions
+    assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in grandchild.extensions
 
-            with self.crl(ca, scope="user") as (crl_path, crl):  # test user-only CRL
-                self.assertScope(crl, user=True)
-                self.verify("-trusted {0} -crl_check {cert}", *paths, crl=[crl_path], cert=cert)
-                # crl_check_all does not work,  b/c the scope  is only "user"
-                self.verify(
-                    "-trusted {0} -crl_check_all {cert}",
+    with dumped(root, child, grandchild) as paths:
+        untrusted = paths[1:]
+        # Simple validation of the CAs
+        verify("-CAfile {0} {1}", *paths)
+        verify("-CAfile {0} -untrusted {1} {2}", *paths)
+
+        # Try validation with CRLs
+        with crl(root, scope="ca") as (crl1_path, crl1), crl(child, scope="ca") as (crl2_path, crl2):
+            verify("-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl_path=[crl1_path, crl2_path])
+
+            with sign_cert(child) as cert, crl(child, scope="user") as (crl3_path, crl3):
+                verify("-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert)
+                verify(
+                    "-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl_path=[crl1_path, crl3_path]
+                )
+
+            with (
+                sign_cert(grandchild) as cert,
+                crl(child, scope="ca") as (crl4_path, crl4),
+                crl(grandchild, scope="user") as (crl6_path, crl6),
+            ):
+                verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
+                verify(
+                    "-CAfile {0} -crl_check_all {cert}",
                     *paths,
-                    crl=[crl_path],
+                    untrusted=untrusted,
+                    crl_path=[crl1_path, crl4_path, crl6_path],
                     cert=cert,
-                    code=2,
-                    stderr="[dD]ifferent CRL scope",
                 )
 
-    @override_tmpcadir(CA_DEFAULT_HOSTNAME="")
-    def test_intermediate_ca(self) -> None:
-        """Validate intermediate CA and its certs."""
-        root = self.init_ca("Root", path_length=2)
-        child = self.init_ca("Child", parent=root, path_length=1)
-        grandchild = self.init_ca("Grandchild", parent=child)
 
-        #  Verify the state of the CAs themselves.
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, child.extensions)
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, grandchild.extensions)
+@override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
+def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrapper) -> None:
+    """Test that a changing CA_DEFAULT_HOSTNAME does not lead to problems."""
+    root = init_ca(f"{ca_name}_root", path_length=2)
+    child = init_ca(f"{ca_name}_child", parent=root, path_length=1)
+    grandchild = init_ca(f"{ca_name}_grandchild", parent=child)
 
-        with self.dumped(root, child, grandchild) as paths:
-            untrusted = paths[1:]
-            # Simple validation of the CAs
-            self.verify("-CAfile {0} {1}", *paths)
-            self.verify("-CAfile {0} -untrusted {1} {2}", *paths)
+    child_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": root.serial})
+    grandchild_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": child.serial})
 
-            # Try validation with CRLs
-            with (
-                self.crl(root, scope="ca") as (crl1_path, crl1),
-                self.crl(child, scope="ca") as (
-                    crl2_path,
-                    crl2,
-                ),
-            ):
-                self.verify(
-                    "-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl=[crl1_path, crl2_path]
-                )
+    #  Verify the state of the CAs themselves.
+    assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in root.extensions
+    assert child.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
+        distribution_point([uri(f"http://example.com{child_ca_crl}")])
+    )
 
-                with self.sign_cert(child) as cert, self.crl(child, scope="user") as (crl3_path, crl3):
-                    self.verify("-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert)
-                    self.verify(
-                        "-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl=[crl1_path, crl3_path]
-                    )
+    assert grandchild.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
+        distribution_point([uri(f"http://example.com{grandchild_ca_crl}")]),
+    )
 
-                with (
-                    self.sign_cert(grandchild) as cert,
-                    self.crl(child, scope="ca") as (
-                        crl4_path,
-                        crl4,
-                    ),
-                    self.crl(grandchild, scope="user") as (crl6_path, crl6),
-                ):
-                    self.verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
-                    self.verify(
-                        "-CAfile {0} -crl_check_all {cert}",
-                        *paths,
-                        untrusted=untrusted,
-                        crl=[crl1_path, crl4_path, crl6_path],
-                        cert=cert,
-                    )
+    with (
+        dumped(root, child, grandchild) as paths,
+        crl(root, scope="ca") as (root_ca_crl_path, root_ca_crl_parsed),
+    ):
+        # Simple validation of the CAs
+        verify("-trusted {0} {1}", *paths)
+        verify("-trusted {0} -untrusted {1} {2}", *paths)
 
-    @override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
-    def test_intermediate_ca_default_hostname(self) -> None:
-        """Test that a changing CA_DEFAULT_HOSTNAME does not lead to problems."""
-        root = self.init_ca("Root", path_length=2)
-        child = self.init_ca("Child", parent=root, path_length=1)
-        grandchild = self.init_ca("Grandchild", parent=child)
+        with crl(child, scope="ca") as (child_ca_crl_path, child_ca_crl_parsed):
+            assert_full_name(child_ca_crl_parsed, [uri(f"http://example.com{grandchild_ca_crl}")])
+            verify(
+                "-trusted {0} -untrusted {1} -crl_check_all {2}",
+                *paths,
+                crl_path=[root_ca_crl_path, child_ca_crl_path],
+            )
 
-        child_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": root.serial})
-        grandchild_ca_crl = reverse("django_ca:ca-crl", kwargs={"serial": child.serial})
+        # Globally scoped CRLs do not validate, as the CRL will contain a different full name from the
+        # CRLdp extension
+        with crl(child) as (child_crl_path, child_crl_parsed):
+            # assert_full_name(crl, None)
+            # assert_full_name(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
+            verify(
+                "-trusted {0} -untrusted {1} -crl_check_all {2}",
+                *paths,
+                crl_path=[root_ca_crl_path, child_crl_path],
+                code=2,
+                stderr="[dD]ifferent CRL scope",
+            )
 
-        #  Verify the state of the CAs themselves.
-        self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, root.extensions)
-        self.assertEqual(
-            child.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri(f"http://example.com{child_ca_crl}")]),
-        )
-        self.assertEqual(
-            grandchild.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri(f"http://example.com{grandchild_ca_crl}")]),
-        )
+        # Changing the default hostname setting should not change the validation result
+        settings.CA_DEFAULT_HOSTNAME = "example.net"
+        with crl(root, scope="ca") as (crl_path, crl_parsed), crl(child, scope="ca") as (crl2_path, crl2):
+            # Known but not easily fixable issue: If CA_DEFAULT_HOSTNAME is changed, CRLs will get wrong
+            # full name and validation fails.
+            assert_full_name(crl_parsed, None)
+            # assert_full_name(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
+            verify(
+                "-trusted {0} -untrusted {1} -crl_check_all {2}",
+                *paths,
+                crl_path=[crl_path, crl2_path],
+                code=2,
+                stderr="[dD]ifferent CRL scope",
+            )
 
-        with self.dumped(root, child, grandchild) as paths, self.crl(root, scope="ca") as (crl_path, crl):
-            # Simple validation of the CAs
-            self.verify("-trusted {0} {1}", *paths)
-            self.verify("-trusted {0} -untrusted {1} {2}", *paths)
-
-            with self.crl(child, scope="ca") as (crl2_path, crl2):
-                self.assertFullName(crl, None)
-                self.assertFullName(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
-                self.verify(
-                    "-trusted {0} -untrusted {1} -crl_check_all {2}", *paths, crl=[crl_path, crl2_path]
-                )
-
-            # Globally scoped CRLs do not validate, as the CRL will contain a different full name from the
-            # CRLdp extension
-            with self.crl(child) as (crl2_path, crl2):
-                self.assertFullName(crl, None)
-                # self.assertFullName(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
-                self.verify(
-                    "-trusted {0} -untrusted {1} -crl_check_all {2}",
-                    *paths,
-                    crl=[crl_path, crl2_path],
-                    code=2,
-                    stderr="[dD]ifferent CRL scope",
-                )
-
-            # Changing the default hostname setting should not change the validation result
-            with (
-                self.settings(CA_DEFAULT_HOSTNAME="example.net"),
-                self.crl(root, scope="ca") as (
-                    crl_path,
-                    crl,
-                ),
-                self.crl(child, scope="ca") as (
-                    crl2_path,
-                    crl2,
-                ),
-            ):
-                # Known but not easily fixable issue: If CA_DEFAULT_HOSTNAME is changed, CRLs will get wrong
-                # full name and validation fails.
-                self.assertFullName(crl, None)
-                # self.assertFullName(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
-                self.verify(
-                    "-trusted {0} -untrusted {1} -crl_check_all {2}",
-                    *paths,
-                    crl=[crl_path, crl2_path],
-                    code=2,
-                    stderr="[dD]ifferent CRL scope",
-                )
-
-            # Again, global CRLs do not validate
-            with (
-                self.settings(CA_DEFAULT_HOSTNAME="example.net"),
-                self.crl(root, scope="ca") as (
-                    crl_path,
-                    crl,
-                ),
-                self.crl(child) as (
-                    crl2_path,
-                    crl2,
-                ),
-            ):
-                self.assertFullName(crl, None)
-                self.verify(
-                    "-trusted {0} -untrusted {1} -crl_check_all {2}",
-                    *paths,
-                    crl=[crl_path, crl2_path],
-                    code=2,
-                    stderr="[dD]ifferent CRL scope",
-                )
+        # Again, global CRLs do not validate
+        settings.CA_DEFAULT_HOSTNAME = "example.net"
+        with (
+            crl(root, scope="ca") as (crl_path, crl_parsed),
+            crl(child) as (crl2_path, crl_parsed_2),
+        ):
+            assert_full_name(crl_parsed, None)
+            verify(
+                "-trusted {0} -untrusted {1} -crl_check_all {2}",
+                *paths,
+                crl_path=[crl_path, crl2_path],
+                code=2,
+                stderr="[dD]ifferent CRL scope",
+            )

@@ -23,6 +23,7 @@ from django.test import Client, TestCase, override_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.assertions import assert_change_response
 from django_ca.tests.base.mixins import AdminTestCaseMixin, StandardAdminViewTestCaseMixin
+from django_ca.tests.base.utils import certificate_policies
 
 
 class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[CertificateAuthority], TestCase):
@@ -55,7 +56,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
         # used for that extension.
         self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.extensions)
 
-        ca.sign_certificate_policies = self.certificate_policies(
+        ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.ANY_POLICY,
                 policy_qualifiers=[

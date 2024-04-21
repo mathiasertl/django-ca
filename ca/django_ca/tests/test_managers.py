@@ -497,10 +497,8 @@ def test_default_with_not_yet_valid(root: CertificateAuthority, settings: Settin
 
 
 @override_settings(CA_DEFAULT_CA="")
-@pytest.mark.usefixtures("root")
-@pytest.mark.usefixtures("child")
-@pytest.mark.usefixtures("ed448")
-@pytest.mark.usefixtures("ed25519")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.usefixtures("root", "child", "ed448", "ed25519")
 def test_default_with_no_default_ca() -> None:
     """Test what is returned when **no** CA is configured as default."""
     ca = sorted(CertificateAuthority.objects.all(), key=lambda ca: (ca.expires, ca.serial))[-1]
@@ -508,8 +506,7 @@ def test_default_with_no_default_ca() -> None:
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
-@pytest.mark.usefixtures("root")
-@pytest.mark.usefixtures("child")
+@pytest.mark.usefixtures("root", "child")
 def test_default_with_expired_cas() -> None:
     """Test that exception is raised if no CA is currently valid."""
     with assert_improperly_configured(r"^No CA is currently usable\.$"):

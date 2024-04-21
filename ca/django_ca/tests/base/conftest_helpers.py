@@ -162,7 +162,10 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
         db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
     ) -> Iterator[CertificateAuthority]:
         data = CERT_DATA[name]
-        pub = request.getfixturevalue(f"{name}_pub")
+        ca_fixture_name = f"{name}_pub"
+        if data["cat"] == "sphinx-contrib":
+            ca_fixture_name = f"contrib_{ca_fixture_name}"
+        pub = request.getfixturevalue(ca_fixture_name)
 
         # Load any parent
         parent = None
@@ -170,8 +173,8 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
             parent = request.getfixturevalue(parent_name)
 
         kwargs = {
-            "sign_crl_distribution_points": data["sign_crl_distribution_points"],
-            "sign_authority_information_access": data["sign_authority_information_access"],
+            "sign_crl_distribution_points": data.get("sign_crl_distribution_points"),
+            "sign_authority_information_access": data.get("sign_authority_information_access"),
         }
 
         ca = load_ca(name, pub, parent, **kwargs)
@@ -204,8 +207,16 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
     def fixture(request: "SubRequest") -> Iterator[Certificate]:
         sanitized_name = name.replace("-", "_")
         data = CERT_DATA[name]
-        ca = request.getfixturevalue(data["ca"])
-        pub = request.getfixturevalue(f"{sanitized_name}_pub")
+
+        ca_fixture_name = data["ca"]
+        if data["cat"] == "sphinx-contrib":
+            ca_fixture_name = f"contrib_{ca_fixture_name}"
+        ca = request.getfixturevalue(ca_fixture_name)
+
+        pub_fixture_name = f"{sanitized_name}_pub"
+        if data["cat"] in ("contrib", "sphinx-contrib"):
+            pub_fixture_name = f"contrib_{pub_fixture_name}"
+        pub = request.getfixturevalue(pub_fixture_name)
         cert = load_cert(ca, None, pub, data.get("profile", ""))
 
         yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
@@ -219,8 +230,11 @@ def load_pub(name: str) -> x509.Certificate:
     if conf["cat"] == "sphinx-contrib":
         with open(conf["pub_path"], "rb") as stream:
             return x509.load_pem_x509_certificate(stream.read())
+    if conf["cat"] == "contrib":
+        with open(FIXTURES_DIR / "contrib" / f"{name}.pub", "rb") as stream:
+            return x509.load_der_x509_certificate(stream.read())
     else:
-        with open(os.path.join(FIXTURES_DIR, f"{name}.pub"), "rb") as stream:
+        with open(FIXTURES_DIR / f"{name}.pub", "rb") as stream:
             return x509.load_der_x509_certificate(stream.read())
 
 
@@ -290,6 +304,9 @@ def load_cert(
 usable_ca_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and conf.get("key_filename")
 ]
+contrib_ca_names = [
+    name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and conf["cat"] == "sphinx-contrib"
+]
 unusable_ca_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and name not in usable_ca_names
 ]
@@ -301,6 +318,11 @@ ca_cert_names = [
 ]
 usable_cert_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "cert" and conf["cat"] == "generated"
+]
+contrib_cert_names = [
+    name
+    for name, conf in CERT_DATA.items()
+    if conf["type"] == "cert" and conf["cat"] in ("contrib", "sphinx-contrib")
 ]
 unusable_cert_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "cert" and name not in usable_ca_names

@@ -19,15 +19,21 @@ from unittest import mock
 
 from cryptography import x509
 
-from django.conf import settings
-from django.test import TestCase
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
-from freezegun import freeze_time
-
+from django_ca.models import CertificateAuthority
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import cmd, issuer_alternative_name, override_tmpcadir, uri
+from django_ca.tests.base.utils import (
+    certificate_policies,
+    cmd,
+    get_cert_context,
+    issuer_alternative_name,
+    uri,
+)
 from django_ca.utils import format_general_name
+
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 expected = {
     "ec": """* Name: {name}
@@ -243,6 +249,104 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
+* Certificate authority has no children.
+* Maximum levels of sub-CAs (path length): {path_length_text}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
+
+ACMEv2 support:
+* Enabled: False
+
+Certificate extensions:
+* Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+* Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+* Key Usage{key_usage_critical}:
+{key_usage_text}
+* Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+Certificate extensions for signed certificates:
+* Authority Information Access:
+  CA Issuers:
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
+  OCSP:
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
+* CRL Distribution Points:
+  * DistributionPoint:
+    * Full Name:
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
+
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+
+{pub[pem]}""",
+    "root-no-key-backend-options": """* Name: {name}
+* Enabled: Yes
+* Subject:
+  * commonName (CN): {name}.example.com
+* Serial: {serial_colons}
+* Issuer:
+  * commonName (CN): {name}.example.com
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+
+Certificate Authority information:
+* Certificate authority is a root CA.
+* Certificate authority has no children.
+* Maximum levels of sub-CAs (path length): {path_length_text}
+
+Key storage options:
+* backend: default
+* No information available.
+
+ACMEv2 support:
+* Enabled: False
+
+Certificate extensions:
+* Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+* Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+* Key Usage{key_usage_critical}:
+{key_usage_text}
+* Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+Certificate extensions for signed certificates:
+* Authority Information Access:
+  CA Issuers:
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
+  OCSP:
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
+* CRL Distribution Points:
+  * DistributionPoint:
+    * Full Name:
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
+
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+
+{pub[pem]}""",
+    "root-with-children": """* Name: {name}
+* Enabled: Yes
+* Subject:
+  * commonName (CN): {name}.example.com
+* Serial: {serial_colons}
+* Issuer:
+  * commonName (CN): {name}.example.com
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+
+Certificate Authority information:
+* Certificate authority is a root CA.
 * Children:
   * {children[0][0]} ({children[0][1]})
 * Maximum levels of sub-CAs (path length): {path_length_text}
@@ -293,8 +397,7 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
+* Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
 
 Key storage options:
@@ -333,8 +436,7 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
+* Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
 
 Key storage options:
@@ -372,8 +474,7 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
+* Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
 
 Key storage options:
@@ -426,8 +527,7 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
+* Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
 
 Key storage options:
@@ -473,8 +573,7 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
+* Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
 
 Key storage options:
@@ -518,6 +617,46 @@ Digest:
   SHA-512: {sha512}
 
 {pub[pem]}""",
+    "root-no-sign-options": """* Name: {name}
+* Enabled: Yes
+* Subject:
+  * commonName (CN): {name}.example.com
+* Serial: {serial_colons}
+* Issuer:
+  * commonName (CN): {name}.example.com
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+
+Certificate Authority information:
+* Certificate authority is a root CA.
+* Certificate authority has no children.
+* Maximum levels of sub-CAs (path length): {path_length_text}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
+
+ACMEv2 support:
+* Enabled: False
+
+Certificate extensions:
+* Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+* Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+* Key Usage{key_usage_critical}:
+{key_usage_text}
+* Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+No certificate extensions for signed certificates.
+
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+
+{pub[pem]}""",
     "root-sign-options-only-issuer-alternative-name": """* Name: {name}
 * Enabled: Yes
 * Subject:
@@ -531,8 +670,7 @@ Digest:
 
 Certificate Authority information:
 * Certificate authority is a root CA.
-* Children:
-  * {children[0][0]} ({children[0][1]})
+* Certificate authority has no children.
 * Maximum levels of sub-CAs (path length): {path_length_text}
 
 Key storage options:
@@ -585,7 +723,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: globalsign.key
 
 ACMEv2 support:
 * Enabled: False
@@ -629,7 +767,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: digicert_ev_root.key
 
 ACMEv2 support:
 * Enabled: False
@@ -677,7 +815,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: comodo.key
 
 ACMEv2 support:
 * Enabled: False
@@ -719,7 +857,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: identrust_root_1.key
 
 ACMEv2 support:
 * Enabled: False
@@ -761,7 +899,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: globalsign_r2_root.key
 
 ACMEv2 support:
 * Enabled: False
@@ -811,7 +949,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: comodo_dv.key
 
 ACMEv2 support:
 * Enabled: False
@@ -863,7 +1001,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: rapidssl_g3.key
 
 ACMEv2 support:
 * Enabled: False
@@ -913,7 +1051,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: geotrust.key
 
 ACMEv2 support:
 * Enabled: False
@@ -959,7 +1097,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: comodo_ev.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1011,7 +1149,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: digicert_ha_intermediate.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1061,7 +1199,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: dst_root_x3.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1104,7 +1242,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: globalsign_dv.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1159,7 +1297,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: godaddy_g2_intermediate.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1213,7 +1351,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: godaddy_g2_root.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1255,7 +1393,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: google_g3.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1306,7 +1444,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: letsencrypt_x1.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1357,7 +1495,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: letsencrypt_x3.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1409,7 +1547,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: startssl_root.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1461,7 +1599,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: startssl_class2.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1513,7 +1651,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: startssl_class3.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1566,7 +1704,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: trustid_server_a52.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1620,7 +1758,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: digicert_global_root.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1665,7 +1803,7 @@ Certificate Authority information:
 
 Key storage options:
 * backend: default
-* No information available.
+* path: digicert_sha2.key
 
 ACMEv2 support:
 * Enabled: False
@@ -1700,160 +1838,165 @@ expected["dsa"] = expected["ec"]
 expected["pwd"] = expected["ec"]
 
 
-class ViewCATestCase(TestCaseMixin, TestCase):
-    """Main test class for this command."""
+def _wrap_hash(text: str, columns: int) -> str:
+    return "\n".join(textwrap.wrap(text, columns, subsequent_indent=" " * 11))
 
-    load_cas = "__all__"
 
-    def _wrap_hash(self, text: str, columns: int) -> str:
-        return "\n".join(textwrap.wrap(text, columns, subsequent_indent=" " * 11))
+def test_all_cas(ca: CertificateAuthority) -> None:
+    """Test viewing all CAs."""
+    stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
+    data = get_cert_context(ca.name)
+    assert stderr == ""
+    assert stdout == expected[ca.name].format(**data), ca.name
 
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_all_cas(self) -> None:
-        """Test viewing all CAs."""
-        for name, ca in sorted(self.cas.items(), key=lambda t: t[0]):
-            stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
-            data = self.get_cert_context(name)
-            self.assertMultiLineEqual(stdout, expected[name].format(**data), name)
-            assert stderr == ""
 
-    @override_tmpcadir(USE_TZ=True)
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_with_timezone_support(self) -> None:
-        """Test viewing certificate with USE_TZ=True."""
-        self.assertTrue(settings.USE_TZ)
+@pytest.mark.usefixtures("child")  # child fixture sets parent, so root has children
+def test_with_children(usable_root: CertificateAuthority) -> None:
+    """Test viewing a CA with children."""
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-with-children"].format(ca=usable_root, **data)
 
-        stdout, stderr = cmd("view_ca", self.ca.serial, wrap=False)
-        data = self.get_cert_context(self.ca.name)
-        self.assertMultiLineEqual(stdout, expected[self.ca.name].format(**data), self.ca.name)
-        self.assertEqual(stderr, "")
 
-    @override_tmpcadir(USE_TZ=False)
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_with_use_tz_is_false(self) -> None:
-        """Test viewing certificate without timezone support."""
-        self.assertFalse(settings.USE_TZ)
+def test_no_key_backend_options(usable_root: CertificateAuthority) -> None:
+    """Test viewing a CA with children."""
+    usable_root.key_backend_options = {}
+    usable_root.save()
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-no-key-backend-options"].format(ca=usable_root, **data)
 
-        stdout, stderr = cmd("view_ca", self.ca.serial, wrap=False)
-        data = self.get_cert_context(self.ca.name)
-        self.assertMultiLineEqual(stdout, expected[self.ca.name].format(**data), self.ca.name)
-        self.assertEqual(stderr, "")
 
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_properties(self) -> None:
-        """Test viewing of various optional properties."""
-        ca = self.cas["root"]
-        hostname = "ca.example.com"
-        ca.website = f"https://website.{hostname}"
-        ca.terms_of_service = f"{ca.website}/tos/"
-        ca.caa_identity = hostname
-        ca.acme_enabled = True
-        ca.acme_requires_contact = False
-        ca.save()
+def test_without_timezone_support(usable_child: CertificateAuthority, settings: SettingsWrapper) -> None:
+    """Test viewing certificate with USE_TZ=False."""
+    settings.USE_TZ = False
 
-        stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
-        self.assertEqual(stderr, "")
-        data = self.get_cert_context("root")
-        self.assertMultiLineEqual(stdout, expected["root-properties"].format(ca=ca, **data))
+    stdout, stderr = cmd("view_ca", usable_child.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context(usable_child.name)
+    assert stdout == expected[usable_child.name].format(**data)
 
-    @override_tmpcadir(CA_ENABLE_ACME=False)
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_acme_disabled(self) -> None:
-        """Test viewing when ACME is disabled."""
-        stdout, stderr = cmd("view_ca", self.cas["root"].serial, wrap=False)
-        self.assertEqual(stderr, "")
-        data = self.get_cert_context("root")
-        self.assertMultiLineEqual(stdout, expected["root-acme-disabled"].format(**data))
 
-    @override_tmpcadir()
-    def test_no_extensions(self) -> None:
-        """Test viewing a CA without extensions."""
-        stdout, stderr = cmd("view_ca", self.cas["root"].serial, extensions=False, wrap=False)
-        self.assertEqual(stderr, "")
-        data = self.get_cert_context("root")
-        self.assertMultiLineEqual(stdout, expected["root-no-extensions"].format(**data))
+def test_properties(usable_root: CertificateAuthority, hostname: str) -> None:
+    """Test viewing of various optional properties."""
+    usable_root.website = f"https://website.{hostname}"
+    usable_root.terms_of_service = f"{usable_root.website}/tos/"
+    usable_root.caa_identity = hostname
+    usable_root.acme_enabled = True
+    usable_root.acme_requires_contact = False
+    usable_root.save()
 
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_sign_options(self) -> None:
-        """Test options for signing certificates."""
-        ian_uri = uri("http://ian.example.com")
-        ca = self.cas["root"]
-        self.assertIsNotNone(ca.sign_authority_information_access)
-        ca.sign_certificate_policies = self.certificate_policies(
-            x509.PolicyInformation(
-                policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                policy_qualifiers=[
-                    "https://cps.example.com",
-                    x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
-                ],
-            )
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-properties"].format(ca=usable_root, **data)
+
+
+def test_acme_disabled(usable_root: CertificateAuthority, settings: SettingsWrapper) -> None:
+    """Test viewing when ACME is disabled."""
+    settings.CA_ENABLE_ACME = False
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-acme-disabled"].format(**data)
+
+
+def test_no_extensions(usable_root: CertificateAuthority) -> None:
+    """Test viewing a CA without extensions."""
+    stdout, stderr = cmd("view_ca", usable_root.serial, extensions=False, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-no-extensions"].format(**data)
+
+
+def test_sign_options(usable_root: CertificateAuthority) -> None:
+    """Test options for signing certificates."""
+    ian_uri = uri("http://ian.example.com")
+    assert usable_root.sign_authority_information_access is not None
+    usable_root.sign_certificate_policies = certificate_policies(
+        x509.PolicyInformation(
+            policy_identifier=x509.ObjectIdentifier("1.2.3"),
+            policy_qualifiers=[
+                "https://cps.example.com",
+                x509.UserNotice(notice_reference=None, explicit_text="explicit-text"),
+            ],
         )
-        self.assertIsNotNone(ca.sign_crl_distribution_points)
-        ca.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
-        ca.save()
+    )
+    assert usable_root.sign_crl_distribution_points is not None
+    usable_root.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
+    usable_root.save()
 
-        stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
-        self.assertEqual(stderr, "")
-        data = self.get_cert_context("root")
-        data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
-        self.assertMultiLineEqual(stdout, expected["root-sign-options"].format(**data))
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
+    assert stdout == expected["root-sign-options"].format(**data)
 
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_sign_options_only_issuer_alternative_name(self) -> None:
-        """Test options for signing certificates with only an Issuer Alternative Name.
 
-        This is necessary to check full branch coverage, otherwise Authority Information Access and CRL
-        Distribution Points is always set.
-        """
-        ian_uri = uri("http://ian.example.com")
-        ca = self.cas["root"]
-        ca.sign_authority_information_access = None
-        ca.sign_certificate_policies = None
-        ca.sign_crl_distribution_points = None
-        ca.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
-        ca.save()
+def test_no_sign_options(usable_root: CertificateAuthority) -> None:
+    """Test viewing a CA with no signing options."""
+    usable_root.sign_authority_information_access = None
+    usable_root.sign_certificate_policies = None
+    usable_root.sign_crl_distribution_points = None
+    usable_root.sign_issuer_alternative_name = None
+    usable_root.save()
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-no-sign-options"].format(ca=usable_root, **data)
 
-        stdout, stderr = cmd("view_ca", ca.serial, wrap=False)
-        self.assertEqual(stderr, "")
-        data = self.get_cert_context("root")
-        data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
-        self.assertMultiLineEqual(
-            stdout, expected["root-sign-options-only-issuer-alternative-name"].format(**data)
-        )
 
-    def test_wrap_digest(self) -> None:
-        """Test wrapping the digest."""
-        data = self.get_cert_context("root")
-        sha256 = data["sha256"]
-        sha512 = data["sha512"]
+def test_sign_options_only_issuer_alternative_name(usable_root: CertificateAuthority) -> None:
+    """Test options for signing certificates with only an Issuer Alternative Name.
 
-        with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((64, 0))) as shutil_mock:
-            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
+    This is necessary to check full branch coverage, otherwise Authority Information Access and CRL
+    Distribution Points is always set.
+    """
+    ian_uri = uri("http://ian.example.com")
+    usable_root.sign_authority_information_access = None
+    usable_root.sign_certificate_policies = None
+    usable_root.sign_crl_distribution_points = None
+    usable_root.sign_issuer_alternative_name = issuer_alternative_name(ian_uri)
+    usable_root.save()
 
-        # Django calls get_terminal_size as well, so the number of calls is unpredictable
-        shutil_mock.assert_called_with(fallback=(107, 100))
-        self.assertEqual(stderr, "")
+    stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    data["sign_issuer_alternative_name"] = format_general_name(ian_uri)
+    assert stdout == expected["root-sign-options-only-issuer-alternative-name"].format(**data)
 
-        data["sha256"] = self._wrap_hash(f"  SHA-256: {sha256}", 62)
-        data["sha512"] = self._wrap_hash(f"  SHA-512: {sha512}", 62)
-        self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))
 
-        # try with decreasing terminal size
-        with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((63, 0))) as shutil_mock:
-            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
-        self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))
+def test_wrap_digest(usable_root: CertificateAuthority) -> None:
+    """Test wrapping the digest."""
+    data = get_cert_context("root")
+    sha256 = data["sha256"]
+    sha512 = data["sha512"]
 
-        with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((62, 0))) as shutil_mock:
-            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
-        self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))
+    with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((64, 0))) as shutil_mock:
+        stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
 
-        # Get smaller, so we wrap another element in the colon'd hash
-        with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((61, 0))) as shutil_mock:
-            stdout, stderr = cmd("view_ca", self.cas["root"].serial, pem=False, extensions=False)
-        data["sha256"] = self._wrap_hash(f"  SHA-256: {sha256}", 59)
-        data["sha512"] = self._wrap_hash(f"  SHA-512: {sha512}", 59)
-        self.assertMultiLineEqual(stdout, expected["root-no-wrap"].format(**data))
+    # Django calls get_terminal_size as well, so the number of calls is unpredictable
+    shutil_mock.assert_called_with(fallback=(107, 100))
+    assert stderr == ""
+
+    data["sha256"] = _wrap_hash(f"  SHA-256: {sha256}", 62)
+    data["sha512"] = _wrap_hash(f"  SHA-512: {sha512}", 62)
+    assert stdout == expected["root-no-wrap"].format(**data)
+
+    # try with decreasing terminal size
+    with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((63, 0))) as shutil_mock:
+        stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
+    assert stdout == expected["root-no-wrap"].format(**data)
+
+    with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((62, 0))) as shutil_mock:
+        stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
+    assert stdout == expected["root-no-wrap"].format(**data)
+
+    # Get smaller, so we wrap another element in the colon'd hash
+    with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((61, 0))) as shutil_mock:
+        stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
+    data["sha256"] = _wrap_hash(f"  SHA-256: {sha256}", 59)
+    data["sha512"] = _wrap_hash(f"  SHA-512: {sha512}", 59)
+    assert stdout == expected["root-no-wrap"].format(**data)

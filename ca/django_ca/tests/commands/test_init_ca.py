@@ -437,6 +437,7 @@ def test_add_extensions_with_non_default_critical(hostname: str, ca_name: str) -
     )
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_add_extensions_with_formatting(
     hostname: str, ca_name: str, usable_root: CertificateAuthority
 ) -> None:
@@ -472,6 +473,7 @@ def test_add_extensions_with_formatting(
     )
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_add_extensions_with_formatting_without_uri(
     hostname: str, ca_name: str, usable_root: CertificateAuthority
 ) -> None:
@@ -514,6 +516,7 @@ def test_add_extensions_with_formatting_without_uri(
     )
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_sign_extensions(hostname: str, ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test adding extensions for signed certificates."""
     ca = init_ca_e2e(
@@ -829,6 +832,7 @@ def test_intermediate_check(ca_name: str) -> None:
     assert path_length_none_1.max_path_length == 1
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test that if we request an expiry after that of the parent, we override to that of the parent."""
     expires = usable_root.expires - timezone.now() + timedelta(days=10)
@@ -846,6 +850,7 @@ def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> No
     assert_authority_key_identifier(usable_root, child)
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_expires_override_with_use_tz_false(
     settings: SettingsWrapper, ca_name: str, usable_root: CertificateAuthority
 ) -> None:
@@ -907,6 +912,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     assert_signature([parent], child)
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_parent_password_with_ca_passwords(
     ca_name: str, usable_pwd: CertificateAuthority, settings: SettingsWrapper
 ) -> None:
@@ -963,6 +969,7 @@ def test_no_default_hostname(ca_name: str) -> None:
     assert ca.sign_issuer_alternative_name is None
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_multiple_ocsp_and_ca_issuers(hostname: str, ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test using multiple OCSP responders and CA issuers."""
     ocsp_uri_one = "http://ocsp.example.com/one"

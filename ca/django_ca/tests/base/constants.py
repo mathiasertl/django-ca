@@ -117,7 +117,7 @@ CERT_DATA["multiple_ous"] = {
     "cn": "",
     "key_filename": False,
     "csr_filename": False,
-    "pub_filename": os.path.join("contrib", "multiple_ous_and_no_ext.pub"),
+    "pub_filename": os.path.join("contrib", "multiple_ous.pub"),
     "key_type": "RSA",
     "cat": "contrib",
     "type": "cert",

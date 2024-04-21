@@ -21,6 +21,7 @@ import os
 import re
 import shutil
 import tempfile
+import textwrap
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
@@ -33,10 +34,12 @@ from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.conf import settings
+from django.core.files.storage import storages
 from django.core.management import ManagementUtility, call_command
 from django.test import override_settings
 from django.utils.crypto import get_random_string
 
+from django_ca.extensions import extension_as_text
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
@@ -255,6 +258,40 @@ def freshest_crl(
     return x509.Extension(
         oid=ExtensionOID.FRESHEST_CRL, critical=critical, value=x509.FreshestCRL(distribution_points)
     )
+
+
+def get_cert_context(name: str) -> dict[str, Any]:
+    """Get a dictionary suitable for testing output based on the dictionary in basic.certs."""
+    ctx: dict[str, Any] = {}
+
+    for key, value in sorted(CERT_DATA[name].items()):
+        # Handle cryptography extensions
+        if key == "extensions":
+            ctx["extensions"] = {ext["type"]: ext for ext in CERT_DATA[name].get("extensions", [])}
+        elif key == "precert_poison":
+            ctx["precert_poison"] = "* Precert Poison (critical):\n  Yes"
+        elif isinstance(value, x509.Extension):
+            if value.critical:
+                ctx[f"{key}_critical"] = " (critical)"
+            else:
+                ctx[f"{key}_critical"] = ""
+
+            ctx[f"{key}_text"] = textwrap.indent(extension_as_text(value.value), "  ")
+        elif key == "path_length":
+            ctx[key] = value
+            ctx[f"{key}_text"] = "unlimited" if value is None else value
+        else:
+            ctx[key] = value
+
+    if parent := CERT_DATA[name].get("parent"):
+        ctx["parent_name"] = CERT_DATA[parent]["name"]
+        ctx["parent_serial"] = CERT_DATA[parent]["serial"]
+        ctx["parent_serial_colons"] = CERT_DATA[parent]["serial_colons"]
+
+    if CERT_DATA[name]["key_filename"] is not False:
+        storage = storages["django-ca"]
+        ctx["key_path"] = storage.path(CERT_DATA[name]["key_filename"])
+    return ctx
 
 
 def get_idp(

@@ -33,13 +33,14 @@ from pytest_cov.plugin import CovPlugin
 
 from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings for untested modules
 from django_ca.tests.base.conftest_helpers import (
+    contrib_ca_names,
+    contrib_cert_names,
     generate_ca_fixture,
     generate_cert_fixture,
     generate_pub_fixture,
     generate_usable_ca_fixture,
     interesting_certificate_names,
     setup_pragmas,
-    unusable_cert_names,
     usable_ca_names,
     usable_cert_names,
 )
@@ -144,7 +145,14 @@ def user_client(user: "User", client: Client) -> Iterator[Client]:
 for _ca_name in usable_ca_names:
     globals()[_ca_name] = generate_ca_fixture(_ca_name)
     globals()[f"usable_{_ca_name}"] = generate_usable_ca_fixture(_ca_name)
-for _ca_name in usable_ca_names + usable_cert_names + unusable_cert_names:
+for _ca_name in contrib_ca_names:
+    globals()[f"contrib_{_ca_name}"] = generate_ca_fixture(_ca_name)
+for _ca_name in usable_ca_names + usable_cert_names:
     globals()[f"{_ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(_ca_name)
+for _ca_name in contrib_ca_names + contrib_cert_names:
+    globals()[f"contrib_{_ca_name.replace('-', '_')}_pub"] = generate_pub_fixture(_ca_name)
 for cert_name in usable_cert_names:
     globals()[cert_name.replace("-", "_")] = generate_cert_fixture(cert_name)
+for cert_name in contrib_cert_names:
+    # raise Exception(contrib_cert_names, cert_name.replace("-", "_"))
+    globals()[f"contrib_{cert_name.replace('-', '_')}"] = generate_cert_fixture(cert_name)

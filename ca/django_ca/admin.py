@@ -1120,6 +1120,7 @@ if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
 
         def queryset(self, request: HttpRequest, queryset: QuerySetTypeVar) -> QuerySetTypeVar:
             now = timezone.now()
+            print("###", now)
 
             if self.value() == "0":
                 return queryset.filter(expires__gt=now)

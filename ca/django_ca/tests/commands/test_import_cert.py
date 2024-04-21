@@ -15,9 +15,11 @@
 
 from typing import Any
 
+import pytest
+
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import cmd
 
 
@@ -30,6 +32,7 @@ def import_cert(name: str, **kwargs: Any) -> Certificate:
     return Certificate.objects.get(serial=CERT_DATA["root-cert"]["serial"])
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_basic(root: CertificateAuthority) -> None:
     """Import a standard certificate."""
     cert = import_cert("root-cert", ca=root)

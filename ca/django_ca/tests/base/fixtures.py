@@ -23,6 +23,7 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
+from django.core.cache import cache
 from django.core.files.storage import storages
 
 import pytest
@@ -34,13 +35,15 @@ from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.conftest_helpers import (
+    all_ca_names,
     all_cert_names,
-    ca_cert_names,
     precertificate_signed_certificate_timestamps_cert_names,
     signed_certificate_timestamp_cert_names,
     signed_certificate_timestamps_cert_names,
     usable_ca_names,
+    usable_cert_names,
 )
+from django_ca.tests.base.constants import CERT_DATA
 
 
 @pytest.fixture(params=all_cert_names)
@@ -206,8 +209,7 @@ def key_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
 def precertificate_signed_certificate_timestamps_pub(request: "SubRequest") -> Iterator[x509.Certificate]:
     """Parametrized fixture for certificates that have a PrecertSignedCertificateTimestamps extension."""
     name = request.param.replace("-", "_")
-
-    yield request.getfixturevalue(f"{name}_pub")
+    yield request.getfixturevalue(f"contrib_{name}_pub")
 
 
 @pytest.fixture()
@@ -231,8 +233,7 @@ def secondary_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
 def signed_certificate_timestamp_pub(request: "SubRequest") -> Iterator[x509.Certificate]:
     """Parametrized fixture for certificates that have any SCT extension."""
     name = request.param.replace("-", "_")
-
-    yield request.getfixturevalue(f"{name}_pub")
+    yield request.getfixturevalue(f"contrib_{name}_pub")
 
 
 @pytest.fixture(params=signed_certificate_timestamps_cert_names)
@@ -293,6 +294,15 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[Path]:
         settings.STORAGES = orig_storages
 
 
+@pytest.fixture(params=all_ca_names)
+def ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
+    """Parametrized fixture for all certificate authorities known to the test suite."""
+    fixture_name = request.param
+    if CERT_DATA[fixture_name]["cat"] in ("contrib", "sphinx-contrib"):
+        fixture_name = f"contrib_{fixture_name}"
+    yield request.getfixturevalue(fixture_name)
+
+
 @pytest.fixture(params=usable_ca_names)
 def usable_ca_name(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for the name of every usable CA."""
@@ -314,9 +324,15 @@ def usable_cas(request: "SubRequest") -> Iterator[list[CertificateAuthority]]:
     yield cas
 
 
-@pytest.fixture(params=ca_cert_names)
+@pytest.fixture(params=usable_cert_names)
 def usable_cert(request: "SubRequest") -> Iterator[Certificate]:
-    """Parametrized fixture for every ``{ca}-cert`` certificate."""
-    cert = request.getfixturevalue(request.param.replace("-", "_"))
+    """Parametrized fixture for every ``{ca}-cert`` certificate.
+
+    The name of the certificate can be retrieved from the non-standard `test_name` property of the
+    certificate.
+    """
+    name = request.param
+    cert = request.getfixturevalue(name.replace("-", "_"))
+    cert.test_name = name
     request.getfixturevalue(f"usable_{cert.ca.name}")
     yield cert
