@@ -11,8 +11,8 @@ python = ["3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["4.2", "5.0"]
 cryptography = ["42"]
-acme = ["2.9"]
-pydantic = ["2.5", "2.6"]
+acme = ["2.9", "2.10"]
+pydantic = ["2.5", "2.6", "2.7"]
 
 # https://alpinelinux.org/releases/
 alpine = [

@@ -6,10 +6,10 @@ types-docutils==0.20.0.20240406
 types-freezegun==1.1.10
 types-jinja2==2.11.9
 types-mysqlclient==2.2.0.20240311
-types-psycopg2==2.9.21.20240311
-types-pyOpenSSL==24.0.0.20240311
+types-psycopg2==2.9.21.20240417
+types-pyOpenSSL==24.0.0.20240417
 types-pyRFC3339==1.1.1.5
-types-redis==4.6.0.20240409
+types-redis==4.6.0.20240417
 types-requests==2.31.0.20240406
-types-setuptools==69.2.0.20240317
+types-setuptools==69.5.0.20240415
 types-tabulate==0.9.0.20240106

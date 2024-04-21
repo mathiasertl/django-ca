@@ -20,7 +20,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5.0.0
         with:
-          python-version: 3.12
+          python-version: "3.12"
           architecture: x64
 
       - name: Apply caching of dependencies
@@ -35,4 +35,4 @@ jobs:
           pip install -r requirements.txt -r requirements/requirements-test.txt
 
       - name: Run tests
-        run: faketime -f +100y pytest -v --cov-report term-missing --durations=20
+        run: faketime -f +100y pytest -v --no-selenium --cov-report term-missing --durations=20

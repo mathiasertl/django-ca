@@ -47,7 +47,7 @@ from django_ca.deprecation import crl_last_update, crl_next_update, revoked_cert
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 
@@ -408,16 +408,13 @@ class TestCaseMixin(TestCaseProtocol):
 
     @contextmanager
     def freeze_time(
-        self, timestamp: Union[str, datetime]
+        self, timestamp: Union[datetime]
     ) -> Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
         """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `TIMESTAMPS` dict (e.g. "everything-valid"), use that
         timestamp.
         """
-        if isinstance(timestamp, str):  # pragma: no branch
-            timestamp = TIMESTAMPS[timestamp]
-
         with freeze_time(timestamp) as frozen:
             yield frozen
 
@@ -594,15 +591,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     ) -> User:
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
-
-    @contextmanager
-    def freeze_time(
-        self, timestamp: Union[str, datetime]
-    ) -> Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
-        """Overridden to force a client login, otherwise the user session is expired."""
-        with super().freeze_time(timestamp) as frozen:
-            self.client.force_login(self.user)
-            yield frozen
 
     def get_changelist_view(self, data: Optional[dict[str, str]] = None) -> "HttpResponse":
         """Get the response to a changelist view for the given model."""

@@ -118,8 +118,9 @@ def check_github_action_versions(job: dict[str, Any]) -> int:
 
             if action == "actions/setup-python":
                 py_version = step_config["with"]["python-version"]
-                if py_version not in ("${{ matrix.python-version }}", config.PYTHON_RELEASES[-1]):
-                    errors += err(f"Outdated Python version: {py_version}")
+                newest_python = config.PYTHON_RELEASES[-1]
+                if py_version not in ("${{ matrix.python-version }}", newest_python):
+                    errors += err(f"Outdated Python version: {py_version} (newest: {newest_python})")
     return errors
 
 

@@ -82,6 +82,13 @@ def test_check_usable_no_path_configured(root: CertificateAuthority) -> None:
         root.check_usable(UsePrivateKeyOptions(password=None))
 
 
+def test_is_usable_no_path_configured(root: CertificateAuthority) -> None:
+    """Test is_usable() when no path is configured."""
+    root.key_backend_options = {}
+    root.save()
+    assert root.is_usable(UsePrivateKeyOptions(password=None)) is False
+
+
 def test_get_ocsp_key_size_with_invalid_key_type(usable_ec: CertificateAuthority) -> None:
     """Test getting key size for a non-RSA/DSA CA."""
     with pytest.raises(ValueError, match=r"^This function should only be called with RSA/DSA CAs\.$"):
