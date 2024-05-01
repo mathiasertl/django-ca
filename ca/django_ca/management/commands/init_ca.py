@@ -140,8 +140,21 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
 
     def add_create_private_key_arguments(self, parser: CommandParser) -> None:
         """Add general arguments for private keys."""
+        key_types: set[str] = set()
+
+        # Calculate all key types supported by any configured backend.
         for backend in key_backends:
-            # TODO: methods in backend should be called add_create_* for consistency
+            key_types |= set(backend.supported_key_types)
+
+        parser.add_argument(
+            "--key-type",
+            choices=key_types,
+            default=ca_settings.CA_DEFAULT_PRIVATE_KEY_TYPE,
+            help="Key type for the private key (default: %(default)s).",
+        )
+
+        # Add argument groups for backend-specific options.
+        for backend in key_backends:
             group = backend.add_create_private_key_group(parser)
             if group is not None:  # pragma: no branch  # all current backends add a group.
                 backend.add_create_private_key_arguments(group)
@@ -171,8 +184,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
 
-        key_backend_group = self.add_key_backend_option(parser)
-        self.add_key_type(key_backend_group, default=ca_settings.CA_DEFAULT_PRIVATE_KEY_TYPE)
+        self.add_key_backend_option(parser)
         self.add_create_private_key_arguments(parser)
 
         intermediate_group = parser.add_argument_group(
@@ -306,6 +318,10 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
+        # Make sure that selected private key options are supported by the selected key backend
+        if key_type not in key_backend.supported_key_types:
+            raise CommandError(f"{key_type}: Key type not supported by {key_backend.alias} key backend.")
+
         try:
             key_backend_options = key_backend.get_create_private_key_options(key_type, options)
             load_key_backend_options = key_backend.get_use_private_key_options(None, options)

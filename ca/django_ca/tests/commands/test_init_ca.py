@@ -35,6 +35,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
 from django_ca.constants import ExtendedKeyUsageOID
+from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
@@ -52,6 +53,7 @@ from django_ca.tests.base.assertions import (
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
+    DummyBackend,
     authority_information_access,
     basic_constraints,
     certificate_policies,
@@ -1089,6 +1091,19 @@ def test_root_ca_issuer(ca_name: str) -> None:
         assert_create_ca_signals(False, False),
     ):
         init_ca(name=ca_name, authority_information_access=aia.value)
+
+
+def test_key_type_not_supported_by_backend(settings: SettingsWrapper, ca_name: str) -> None:
+    """Test creating a key with a type that is not supported by the selected backend."""
+    settings.CA_KEY_BACKENDS = {
+        **settings.CA_KEY_BACKENDS,
+        "dummy": {
+            "BACKEND": f"{DummyBackend.__module__}.DummyBackend",
+            "OPTIONS": {},
+        },
+    }
+    with assert_command_error(r"^DSA: Key type not supported by dummy key backend\.$"):
+        init_ca(ca_name, key_backend=key_backends["dummy"], key_type="DSA")
 
 
 def test_small_key_size(ca_name: str) -> None:

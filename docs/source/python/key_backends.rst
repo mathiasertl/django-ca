@@ -117,6 +117,9 @@ validation::
         # Used internally:
         use_model = UsePrivateKeyOptions
 
+        # Supported private key parameters. This backend only supports RSA keys.
+        supported_key_types = ("RSA",)
+
         # values from the CA_KEY_BACKENDS setting
         storage_alias: str
 

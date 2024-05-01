@@ -13,17 +13,7 @@
 
 """Test key backend base class."""
 
-from datetime import datetime
-from typing import Any, Optional
 from unittest.mock import patch
-
-from pydantic import BaseModel
-
-from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.types import (
-    CertificateIssuerPrivateKeyTypes,
-    CertificateIssuerPublicKeyTypes,
-)
 
 import pytest
 from pytest_django.fixtures import SettingsWrapper
@@ -32,88 +22,9 @@ from django_ca import ca_settings
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_improperly_configured
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
+from django_ca.tests.base.utils import DummyBackend, DummyModel
 
 pytestmark = pytest.mark.usefixtures("clean_key_backends")  # every test gets clean key backends
-
-
-class DummyModel(BaseModel):
-    """Dummy model for the dummy backend."""
-
-
-class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):
-    """Backend with no actions whatsoever."""
-
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, DummyBackend)
-
-    def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
-        return None
-
-    def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
-        return None
-
-    def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: dict[str, Any]
-    ) -> DummyModel:
-        return DummyModel()
-
-    def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
-        return None
-
-    def get_use_parent_private_key_options(
-        self, ca: CertificateAuthority, options: dict[str, Any]
-    ) -> DummyModel:
-        return DummyModel()
-
-    def get_store_private_key_options(self, options: dict[str, Any]) -> DummyModel:
-        return DummyModel()
-
-    def create_private_key(
-        self, ca: CertificateAuthority, key_type: ParsableKeyType, options: DummyModel
-    ) -> tuple[CertificateIssuerPublicKeyTypes, DummyModel]:
-        return None, DummyModel()  # type: ignore[return-value]
-
-    def get_use_private_key_options(
-        self, ca: Optional[CertificateAuthority], options: dict[str, Any]
-    ) -> DummyModel:
-        return DummyModel()
-
-    def is_usable(
-        self, ca: "CertificateAuthority", use_private_key_options: Optional[DummyModel] = None
-    ) -> bool:
-        return True
-
-    def check_usable(self, ca: "CertificateAuthority", use_private_key_options: DummyModel) -> None:
-        return
-
-    def sign_certificate_revocation_list(
-        self,
-        ca: "CertificateAuthority",
-        use_private_key_options: DummyModel,
-        builder: x509.CertificateRevocationListBuilder,
-        algorithm: Optional[AllowedHashTypes],
-    ) -> x509.CertificateRevocationList:
-        return None  # type: ignore[return-value]
-
-    def sign_certificate(
-        self,
-        ca: "CertificateAuthority",
-        use_private_key_options: DummyModel,
-        public_key: CertificateIssuerPublicKeyTypes,
-        serial: int,
-        algorithm: Optional[AllowedHashTypes],
-        issuer: x509.Name,
-        subject: x509.Name,
-        expires: datetime,
-        extensions: list[x509.Extension[x509.ExtensionType]],
-    ) -> x509.Certificate:
-        return None  # type: ignore[return-value]
-
-    def store_private_key(
-        self, ca: "CertificateAuthority", key: CertificateIssuerPrivateKeyTypes, options: DummyModel
-    ) -> None:
-        return None
 
 
 def test_key_backends_getitem_with_default() -> None:
@@ -178,14 +89,15 @@ def test_key_backends_class_not_found(settings: SettingsWrapper) -> None:
 
 def test_key_backends_class_is_not_key_backend(settings: SettingsWrapper) -> None:
     """Test configuring a class that is not a KeyBackend subclass."""
+    backend_path = f"{DummyModel.__module__}.DummyModel"
     settings.CA_KEY_BACKENDS = {
         ca_settings.CA_DEFAULT_KEY_BACKEND: {
-            "BACKEND": f"{__name__}.DummyModel",
+            "BACKEND": backend_path,
             "OPTIONS": {},
         },
     }
 
-    with assert_improperly_configured(rf"^{__name__}.DummyModel: Class does not refer to a key backend\.$"):
+    with assert_improperly_configured(rf"^{backend_path}: Class does not refer to a key backend\.$"):
         key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
 
 
@@ -193,7 +105,7 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper, root: Certif
     """Test methods usually overwritten by StoragesBackend."""
     settings.CA_KEY_BACKENDS = {
         ca_settings.CA_DEFAULT_KEY_BACKEND: {
-            "BACKEND": f"{__name__}.DummyBackend",
+            "BACKEND": f"{DummyModel.__module__}.DummyBackend",
             "OPTIONS": {},
         },
     }

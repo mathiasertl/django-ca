@@ -149,6 +149,8 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     )
     use_model = UsePrivateKeyOptions
 
+    supported_key_types: tuple[ParsableKeyType, ...] = constants.PARSABLE_KEY_TYPES
+
     # Backend options
     storage_alias: str
 

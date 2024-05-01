@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import (
@@ -60,8 +60,11 @@ class MyStoragesBackend(
     # Transform arguments added above into a Pydantic model that contains all
     # information to create a private key. The keys for ``options``
     # correspond to the "destination" of the argparse arguments.
+    #
+    # Since `supported_key_types` defines  that this backend only supports RSA keys, we
+    # know that `key_type` will be "RSA" here.
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: dict[str, Any]
+        self, key_type: Literal["RSA"], options: dict[str, Any]
     ) -> CreatePrivateKeyOptions:
         return CreatePrivateKeyOptions(
             password=options["password"],

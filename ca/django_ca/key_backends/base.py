@@ -61,6 +61,12 @@ class KeyBackend(
     #: Alias under which this backend is configured under settings.KEY_BACKENDS.
     alias: str
 
+    #: Private key types supported by the key backend. This defines the choices for the ``--key-type``
+    #: argument and the `key_type` parameter in
+    #: :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options` is guaranteed to be
+    #: one of the named values.
+    supported_key_types: tuple[str, ...]
+
     #: Title used for the ArgumentGroup in :command:`manage.py init_ca`.
     title: typing.ClassVar[str]
 

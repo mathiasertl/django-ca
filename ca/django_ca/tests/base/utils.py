@@ -30,7 +30,13 @@ from io import BytesIO, StringIO
 from typing import Any, Optional, Union
 from unittest import mock
 
+from pydantic import BaseModel
+
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.types import (
+    CertificateIssuerPrivateKeyTypes,
+    CertificateIssuerPublicKeyTypes,
+)
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.conf import settings
@@ -40,9 +46,96 @@ from django.test import override_settings
 from django.utils.crypto import get_random_string
 
 from django_ca.extensions import extension_as_text
+from django_ca.key_backends import KeyBackend
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
+
+
+class DummyModel(BaseModel):
+    """Dummy model for the dummy backend."""
+
+
+class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: no cover
+    """Backend with no actions whatsoever."""
+
+    title = "dummy backend"
+    description = "dummy description"
+
+    # This backend only supports RSA and EC keys, but also the (invented) "STRANGE" key type.
+    supported_key_types = ("RSA", "EC", "STRANGE")
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, DummyBackend)
+
+    def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
+        return None
+
+    def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
+        return None
+
+    def get_create_private_key_options(
+        self, key_type: ParsableKeyType, options: dict[str, Any]
+    ) -> DummyModel:
+        return DummyModel()
+
+    def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
+        return None
+
+    def get_use_parent_private_key_options(
+        self, ca: CertificateAuthority, options: dict[str, Any]
+    ) -> DummyModel:
+        return DummyModel()
+
+    def get_store_private_key_options(self, options: dict[str, Any]) -> DummyModel:
+        return DummyModel()
+
+    def create_private_key(
+        self, ca: CertificateAuthority, key_type: ParsableKeyType, options: DummyModel
+    ) -> tuple[CertificateIssuerPublicKeyTypes, DummyModel]:
+        return None, DummyModel()  # type: ignore[return-value]
+
+    def get_use_private_key_options(
+        self, ca: Optional[CertificateAuthority], options: dict[str, Any]
+    ) -> DummyModel:
+        return DummyModel()
+
+    def is_usable(
+        self, ca: "CertificateAuthority", use_private_key_options: Optional[DummyModel] = None
+    ) -> bool:
+        return True
+
+    def check_usable(self, ca: "CertificateAuthority", use_private_key_options: DummyModel) -> None:
+        return
+
+    def sign_certificate_revocation_list(
+        self,
+        ca: "CertificateAuthority",
+        use_private_key_options: DummyModel,
+        builder: x509.CertificateRevocationListBuilder,
+        algorithm: Optional[AllowedHashTypes],
+    ) -> x509.CertificateRevocationList:
+        return None  # type: ignore[return-value]
+
+    def sign_certificate(
+        self,
+        ca: "CertificateAuthority",
+        use_private_key_options: DummyModel,
+        public_key: CertificateIssuerPublicKeyTypes,
+        serial: int,
+        algorithm: Optional[AllowedHashTypes],
+        issuer: x509.Name,
+        subject: x509.Name,
+        expires: datetime,
+        extensions: list[x509.Extension[x509.ExtensionType]],
+    ) -> x509.Certificate:
+        return None  # type: ignore[return-value]
+
+    def store_private_key(
+        self, ca: "CertificateAuthority", key: CertificateIssuerPrivateKeyTypes, options: DummyModel
+    ) -> None:
+        return None
 
 
 def authority_information_access(
