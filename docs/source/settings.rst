@@ -228,6 +228,16 @@ CA_DEFAULT_NAME_ORDER
    certificates subject and issuer field. On most applications, the order does not matter, but is relevant
    in LDAP applications.
 
+.. _settings-ca-default-private-key-type:
+
+CA_DEFAULT_PRIVATE_KEY_TYPE
+   Default: ``"RSA"``
+
+   The default key type to use when generating new certificate authorities.
+
+   Note that this setting is _not_ used when generating OCSP responder certificates, where the default private
+   key type is the same as the certificate authority.
+
 .. _settings-ca-default-profile:
 
 CA_DEFAULT_PROFILE

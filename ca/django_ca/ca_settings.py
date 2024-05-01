@@ -333,6 +333,8 @@ if isinstance(ACME_ORDER_VALIDITY, int):
 if CA_DEFAULT_EXPIRES <= timedelta():
     raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must have positive value")
 
+CA_DEFAULT_PRIVATE_KEY_TYPE: str = getattr(settings, "CA_DEFAULT_PRIVATE_KEY_TYPE", "RSA")
+
 if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
     raise ImproperlyConfigured(f"CA_DEFAULT_KEY_SIZE cannot be lower then {CA_MIN_KEY_SIZE}")
 

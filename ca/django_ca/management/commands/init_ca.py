@@ -172,7 +172,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         )
 
         key_backend_group = self.add_key_backend_option(parser)
-        self.add_key_type(key_backend_group)
+        self.add_key_type(key_backend_group, default=ca_settings.CA_DEFAULT_PRIVATE_KEY_TYPE)
         self.add_create_private_key_arguments(parser)
 
         intermediate_group = parser.add_argument_group(

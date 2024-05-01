@@ -362,7 +362,7 @@ class BaseCommand(
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
 
     def add_key_type(
-        self, parser: ActionsContainer, default: Optional[str] = "RSA", default_text: str = "%(default)s"
+        self, parser: ActionsContainer, default: Optional[str], default_text: str = "%(default)s"
     ) -> None:
         """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
         parser.add_argument(

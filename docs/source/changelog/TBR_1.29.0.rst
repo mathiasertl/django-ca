@@ -8,6 +8,8 @@ Command-line utilities
 
 * :command:`manage.py sign_cert` and :command:`manage.py resign_cert` now verify that the certificate
   authority used for signing has expired, is revoked or disabled.
+* :command:`manage.py init_ca` now use the new :ref:`settings-ca-default-private-key-type` setting as default
+  private key type.
 
 ********
 Profiles
