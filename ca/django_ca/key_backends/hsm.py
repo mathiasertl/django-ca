@@ -1,12 +1,11 @@
 """HSM backend for keys."""
 
 import asyncio
-import typing
 from datetime import datetime
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
-from python_x509_pkcs11 import KEYTYPES, PKCS11Session, get_keytypes_enum
+from pydantic import BaseModel, ConfigDict
+from python_x509_pkcs11 import PKCS11Session, get_keytypes_enum
 from python_x509_pkcs11.privatekeys import (
     PKCS11ECPrivateKey,
     PKCS11ED448PrivateKey,
@@ -22,28 +21,32 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPublicKeyTypes,
 )
 
+from django.core.management import CommandError
+
 from django_ca.key_backends.base import KeyBackend
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 from django_ca.utils import get_cert_builder
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
-ParsableHSMKeyType = typing.Literal[
-    "rsa_2048", "rsa_4096", "secp256r1", "ed25519", "ed448", "secp384r1", "secp521r1"
+PrivateKeyTypes = Union[
+    PKCS11RSAPrivateKey, PKCS11ED25519PrivateKey, PKCS11ED448PrivateKey, PKCS11ECPrivateKey
 ]
+KeyType = Literal["RSA", "EC", "Ed25519", "Ed448"]
+KeySize = Literal[2048, 4096]
+EllipticCurves = Literal["secp256r1", "secp384r1", "secp521r1"]
 
 
-# TODO: This should go to the library itself.
-async def _create_key_pair(key_label: str, hsm_key_type: str):
+async def _create_key_pair(key_label: str, hsm_key_type: str) -> tuple[str, bytes]:
     """Creates the new keypair in async way."""
-    k_type = get_keytypes_enum(hsm_key_type)
-    public_key, identifier = await PKCS11Session().create_keypair(key_label, key_type=k_type)
+    key_type = get_keytypes_enum(hsm_key_type)
+    public_key, identifier = await PKCS11Session().create_keypair(key_label, key_type=key_type)
     return public_key, identifier
 
 
 # TODO: This should be part of the library itself.
-def get_private_key(key_label: str, hsm_key_type: str):
+def get_private_key(key_label: str, hsm_key_type: str) -> PrivateKeyTypes:
     """Returns a private key of the given type."""
     if hsm_key_type in ["rsa_2048", "rsa_4096"]:
         return PKCS11RSAPrivateKey(key_label, hsm_key_type)
@@ -53,18 +56,36 @@ def get_private_key(key_label: str, hsm_key_type: str):
         return PKCS11ED448PrivateKey(key_label)
     elif hsm_key_type in ["secp256r1", "secp384r1", "secp521r1"]:
         return PKCS11ECPrivateKey(key_label, hsm_key_type)
+    raise ValueError("Unknown HSM key type.")
 
 
 def get_signing_algo(ca: "CertificateAuthority") -> Optional[AllowedHashTypes]:
     """Get the right algorithm for signing a certificate."""
     # FIXME: We should deal with algorithm in a better way.
-    hsm_key_type = ca.key_backend_options["hsm_key_type"]
-    if hsm_key_type == "rsa_2048":
+    key_type = ca.key_backend_options["key_type"]
+    key_size = ca.key_backend_options["key_size"]
+    if key_type == "RSA" and key_size == 2048:
         return hashes.SHA256()
-    elif hsm_key_type == "rsa_4096":
+    elif key_type == "RSA" and key_size == 4096:
         return hashes.SHA512()
     else:
         return None
+
+
+def get_hsm_key_type(
+    key_type: KeyType, key_size: Optional[KeySize], elliptic_curve: Optional[EllipticCurves]
+) -> str:
+    """Get the HSM version of the key type (encoding key size and elliptic curve)."""
+    if key_type == "RSA":
+        if key_size is None:
+            raise ValueError("Key size missing for RSA key.")
+        return f"rsa_{key_size}"
+    elif key_type == "EC":
+        if elliptic_curve is None:
+            raise ValueError("Elliptic curve missing for EC key.")
+        return elliptic_curve
+    else:
+        return key_type.lower()
 
 
 class CreatePrivateKeyOptions(BaseModel):
@@ -73,7 +94,9 @@ class CreatePrivateKeyOptions(BaseModel):
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    hsm_key_type: ParsableHSMKeyType
+    key_type: KeyType
+    key_size: Optional[KeySize]
+    elliptic_curve: Optional[EllipticCurves]
     key_label: str
 
 
@@ -83,17 +106,13 @@ class StorePrivateKeyOptions(BaseModel):
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(frozen=True)
 
-    hsm_key_type: ParsableHSMKeyType
     key_label: str
 
 
 class UsePrivateKeyOptions(BaseModel):
-    """Options for using a private key."""
+    """Options for using the private key."""
 
-    # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(frozen=True)
-
-    key_label: str
 
 
 class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):
@@ -120,88 +139,90 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
     description = "Use a HSM for private key storage."
     use_model = UsePrivateKeyOptions
 
+    default_key_size: KeySize = 4096
+    default_elliptic_curve: EllipticCurves = "secp521r1"
+
+    supported_key_types: tuple[KeyType, ...] = ("RSA", "EC", "Ed25519", "Ed448")
+    supported_elliptic_curves: tuple[EllipticCurves, ...] = ("secp256r1", "secp384r1", "secp521r1")
+
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, HSMBackend)
 
     def _add_key_label_argument(self, group: ArgumentGroup) -> None:
         group.add_argument(
-            f"--{self.argparse_prefix}key_label",
+            f"--{self.argparse_prefix}key-label",
             type=str,
             help="KEY_LABEL in HSM for CA.",
         )
 
-    def _add_key_type_argument(self, group: ArgumentGroup) -> None:
-        group.add_argument(
-            f"--{self.argparse_prefix}hsm_key_type",
-            type=str,
-            default="ed25519",
-            help="HSM Key type, default: %(default)s).",
-        )
-
     def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
-        self._add_key_type_argument(group)
         self._add_key_label_argument(group)
 
     def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
         group.add_argument(
-            f"--{self.argparse_prefix}parent_key_label",
+            f"--{self.argparse_prefix}parent-key-label",
             type=str,
             help="KEY_LABEL for the private key of the parent CA, if stored using the Django storage system.",
         )
 
     def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_key_label_argument(group)
-        self._add_key_type_argument(group)
 
     def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_key_label_argument(group)
 
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: dict[str, Any]
+        self,
+        key_type: ParsableKeyType,
+        key_size: Optional[int],
+        elliptic_curve: Optional[EllipticCurves],  # type: ignore[override]
+        options: dict[str, Any],
     ) -> CreatePrivateKeyOptions:
+        if key_type == "RSA":
+            if key_size is None:
+                key_size = self.default_key_size
+            elif key_size not in (2048, 4096):
+                raise CommandError(f"{key_size}: Unsupported key size.")
+        if key_type == "EC" and elliptic_curve is None:
+            elliptic_curve = self.default_elliptic_curve
+
+        key_label = options[f"{self.options_prefix}key_label"]
         return CreatePrivateKeyOptions(
-            hsm_key_type=options[f"{self.options_prefix}hsm_key_type"],
-            key_label=options[f"{self.options_prefix}key_label"],
+            key_type=key_type, key_size=key_size, elliptic_curve=elliptic_curve, key_label=key_label
         )
 
     def get_store_private_key_options(self, options: dict[str, Any]) -> StorePrivateKeyOptions:
         return StorePrivateKeyOptions(
-            hsm_key_type=options[f"{self.options_prefix}hsm_key_type"],
             key_label=options[f"{self.options_prefix}key_label"],
         )
 
     def get_use_private_key_options(
         self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions.model_validate(
-            {"key_label": options.get(f"{self.options_prefix}key_label")}, context={"ca": ca}
-        )
+        return UsePrivateKeyOptions()
 
     def get_use_parent_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions.model_validate(
-            {"key_label": options[f"{self.options_prefix}parent_key_label"]}, context={"ca": ca}
-        )
+        return UsePrivateKeyOptions()
 
     def create_private_key(
-        self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
+        self,
+        ca: "CertificateAuthority",
+        key_type: KeyType,  # type: ignore[override]  # backend doesn't support DSA, key_type is more specific
+        options: CreatePrivateKeyOptions,
     ) -> tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
-        hsm_key_type = options.hsm_key_type
+        hsm_key_type = get_hsm_key_type(options.key_type, options.key_size, options.elliptic_curve)
         try:
             asyncio.run(_create_key_pair(key_label=options.key_label, hsm_key_type=hsm_key_type))
-        except Exception as e:
-            raise e
+        except Exception as ex:
+            raise ex
 
         # Update model instance
-        ca.key_backend_options = {"key_label": options.key_label, "hsm_key_type": hsm_key_type}
-
-        use_private_key_options = UsePrivateKeyOptions.model_validate(
-            {"key_label": options.key_label}, context={"ca": ca}
-        )
+        ca.key_backend_options = options.model_dump(mode="json")
 
         key = get_private_key(key_label=options.key_label, hsm_key_type=hsm_key_type)
-        return key.public_key(), use_private_key_options
+        return key.public_key(), UsePrivateKeyOptions()
 
     def store_private_key(
         self,
@@ -216,10 +237,12 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
     ) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key."""
         key_label = ca.key_backend_options["key_label"]
-        hsm_key_type = ca.key_backend_options["hsm_key_type"]
-        key = get_private_key(key_label=key_label, hsm_key_type=hsm_key_type)
+        key_type = ca.key_backend_options["key_type"]
+        key_size = ca.key_backend_options["key_size"]
+        elliptic_curve = ca.key_backend_options["elliptic_curve"]
 
-        return key
+        hsm_key_type = get_hsm_key_type(key_type, key_size, elliptic_curve)
+        return get_private_key(key_label, hsm_key_type)
 
     def is_usable(
         self, ca: "CertificateAuthority", use_private_key_options: Optional[UsePrivateKeyOptions] = None
@@ -227,6 +250,8 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
         # If key_backend_options is not set or path is not set, it is certainly unusable.
         if not ca.key_backend_options or not ca.key_backend_options.get("key_label"):
             return False
+        if use_private_key_options is None:
+            return True
 
         try:
             self.get_key(ca, use_private_key_options)
