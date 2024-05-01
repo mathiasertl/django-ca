@@ -32,7 +32,7 @@ from django.utils.translation import gettext_lazy as _
 from django_ca import ca_settings, constants
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
-from django_ca.management.base import BaseSignCommand
+from django_ca.management.base import BaseSignCommand, add_key_size
 from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
@@ -152,6 +152,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             default=ca_settings.CA_DEFAULT_PRIVATE_KEY_TYPE,
             help="Key type for the private key (default: %(default)s).",
         )
+        add_key_size(parser)
 
         # Add argument groups for backend-specific options.
         for backend in key_backends:
@@ -267,6 +268,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         # private key storage options
         key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         key_type: ParsableKeyType,
+        key_size: Optional[int],
         algorithm: Optional[AllowedHashTypes],
         # Authority Information Access extension (MUST be non-critical)
         authority_information_access: Optional[x509.AuthorityInformationAccess],
@@ -323,7 +325,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             raise CommandError(f"{key_type}: Key type not supported by {key_backend.alias} key backend.")
 
         try:
-            key_backend_options = key_backend.get_create_private_key_options(key_type, options)
+            key_backend_options = key_backend.get_create_private_key_options(key_type, key_size, options)
             load_key_backend_options = key_backend.get_use_private_key_options(None, options)
 
             # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case

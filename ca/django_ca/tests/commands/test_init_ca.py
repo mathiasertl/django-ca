@@ -1012,7 +1012,7 @@ def test_non_default_key_backend_with_rsa_key(
         "--subject-format=rfc4514",
         "--key-backend=secondary",
         "--secondary-path=secondary-ca-path",
-        "--secondary-key-size=2048",
+        "--key-size=2048",
         "--path-length=1",
         f"--secondary-password={password}",
     )

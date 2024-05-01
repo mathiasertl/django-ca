@@ -63,10 +63,10 @@ def add_elliptic_curve(parser: ActionsContainer, prefix: str = "") -> None:
     )
 
 
-def add_key_size(parser: ActionsContainer, prefix: str = "") -> None:
+def add_key_size(parser: ActionsContainer) -> None:
     """Add --key-size option (2048, 4096, ...)."""
     parser.add_argument(
-        f"--{prefix}key-size",
+        "--key-size",
         action=actions.KeySizeAction,
         help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
     )
