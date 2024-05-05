@@ -42,9 +42,8 @@ from django.core.files.storage import storages
 from django_ca import ca_settings, constants
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
-from django_ca.management.base import add_elliptic_curve
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, PowerOfTwoTypeAlias
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias, PowerOfTwoTypeAlias
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, EllipticCurves, ParsableKeyType
 from django_ca.utils import generate_private_key, get_cert_builder
 
 if typing.TYPE_CHECKING:
@@ -61,7 +60,7 @@ class CreatePrivateKeyOptions(BaseModel):
     password: Optional[bytes]
     path: Path
     key_size: Optional[Annotated[PowerOfTwoTypeAlias, Field(ge=ca_settings.CA_MIN_KEY_SIZE)]] = None
-    elliptic_curve: Optional[ec.EllipticCurve] = None
+    elliptic_curve: Optional[EllipticCurveTypeAlias] = None
 
     @model_validator(mode="after")
     def validate_key_size(self) -> "CreatePrivateKeyOptions":
@@ -150,6 +149,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     use_model = UsePrivateKeyOptions
 
     supported_key_types: tuple[ParsableKeyType, ...] = constants.PARSABLE_KEY_TYPES
+    supported_elliptic_curves: tuple[EllipticCurves, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
 
     # Backend options
     storage_alias: str
@@ -182,7 +182,6 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def add_create_private_key_arguments(self, group: ArgumentGroup) -> None:
         self._add_path_argument(group)
-        add_elliptic_curve(group, prefix=self.argparse_prefix)
         group.add_argument(
             f"--{self.argparse_prefix}password",
             nargs="?",
@@ -209,14 +208,18 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self._add_password_argument(group)
 
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, key_size: Optional[int], options: dict[str, Any]
+        self,
+        key_type: ParsableKeyType,
+        key_size: Optional[int],
+        elliptic_curve: Optional[EllipticCurves],  # type: ignore[override]
+        options: dict[str, Any],
     ) -> CreatePrivateKeyOptions:
         return CreatePrivateKeyOptions(
             key_type=key_type,
             password=options[f"{self.options_prefix}password"],
             path=options[f"{self.options_prefix}path"],
             key_size=key_size,
-            elliptic_curve=options[f"{self.options_prefix}elliptic_curve"],
+            elliptic_curve=elliptic_curve,
         )
 
     def get_store_private_key_options(self, options: dict[str, Any]) -> StorePrivateKeyOptions:

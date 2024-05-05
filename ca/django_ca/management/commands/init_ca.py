@@ -141,10 +141,12 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
     def add_create_private_key_arguments(self, parser: CommandParser) -> None:
         """Add general arguments for private keys."""
         key_types: set[str] = set()
+        elliptic_curves: set[str] = set()
 
         # Calculate all key types supported by any configured backend.
         for backend in key_backends:
             key_types |= set(backend.supported_key_types)
+            elliptic_curves |= set(backend.supported_elliptic_curves)
 
         parser.add_argument(
             "--key-type",
@@ -153,6 +155,11 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             help="Key type for the private key (default: %(default)s).",
         )
         add_key_size(parser)
+        parser.add_argument(
+            "--elliptic-curve",
+            choices=sorted(elliptic_curves),
+            help=f"Elliptic Curve used for EC keys (default: {ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name}).",
+        )
 
         # Add argument groups for backend-specific options.
         for backend in key_backends:
@@ -269,6 +276,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         key_type: ParsableKeyType,
         key_size: Optional[int],
+        elliptic_curve: Optional[str],
         algorithm: Optional[AllowedHashTypes],
         # Authority Information Access extension (MUST be non-critical)
         authority_information_access: Optional[x509.AuthorityInformationAccess],
@@ -323,9 +331,19 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         # Make sure that selected private key options are supported by the selected key backend
         if key_type not in key_backend.supported_key_types:
             raise CommandError(f"{key_type}: Key type not supported by {key_backend.alias} key backend.")
+        if (
+            key_type == "EC"
+            and elliptic_curve is not None
+            and elliptic_curve not in key_backend.supported_elliptic_curves
+        ):
+            raise CommandError(
+                f"{elliptic_curve}: Elliptic curve not supported by {key_backend.alias} key backend."
+            )
 
         try:
-            key_backend_options = key_backend.get_create_private_key_options(key_type, key_size, options)
+            key_backend_options = key_backend.get_create_private_key_options(
+                key_type, key_size, elliptic_curve=elliptic_curve, options=options
+            )
             load_key_backend_options = key_backend.get_use_private_key_options(None, options)
 
             # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case

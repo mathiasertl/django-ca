@@ -1048,7 +1048,7 @@ def test_non_default_key_backend_with_ec_key(
         "--subject-format=rfc4514",
         "--key-backend=secondary",
         "--key-type=EC",
-        "--secondary-elliptic-curve=sect571r1",  # non default curve
+        "--elliptic-curve=sect571r1",  # non default curve
     )
     assert ca.key_backend_alias == "secondary"
 
@@ -1062,6 +1062,20 @@ def test_invalid_public_key_parameters(ca_name: str) -> None:
     msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
         init_ca(name=ca_name, key_type="Ed25519", algorithm=hashes.SHA256())
+
+
+def test_unsupported_elliptic_curve(ca_name: str, settings: SettingsWrapper) -> None:
+    """Test passing a valid elliptic curve that is not supported by the backend."""
+    settings.CA_KEY_BACKENDS = {
+        **settings.CA_KEY_BACKENDS,
+        "dummy": {
+            "BACKEND": f"{DummyBackend.__module__}.DummyBackend",
+            "OPTIONS": {},
+        },
+    }
+    with assert_command_error(r"^secp384r1: Elliptic curve not supported by dummy key backend\.$"):
+        # secp384r1 is not supported by secondary backend
+        init_ca(name=ca_name, key_type="EC", key_backend=key_backends["dummy"], elliptic_curve="secp384r1")
 
 
 def test_root_ca_crl_url(ca_name: str) -> None:

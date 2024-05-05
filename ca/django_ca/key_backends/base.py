@@ -67,6 +67,12 @@ class KeyBackend(
     #: one of the named values.
     supported_key_types: tuple[str, ...]
 
+    #: Elliptic curves supported by this backend for elliptic curve keys. This defines the choices for the
+    #: ``--elliptic-curve`` parameter and the `elliptic_curve` parameter in
+    #: :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options` is guaranteed to be
+    #: one of the named values if ``--key-type=EC`` is passed.
+    supported_elliptic_curves: tuple[str, ...]
+
     #: Title used for the ArgumentGroup in :command:`manage.py init_ca`.
     title: typing.ClassVar[str]
 
@@ -161,7 +167,11 @@ class KeyBackend(
 
     @abc.abstractmethod
     def get_create_private_key_options(
-        self, key_type: ParsableKeyType, options: dict[str, Any]
+        self,
+        key_type: ParsableKeyType,
+        key_size: Optional[int],
+        elliptic_curve: Optional[str],
+        options: dict[str, Any],
     ) -> CreatePrivateKeyOptionsTypeVar:
         """Get options to create private keys into a Pydantic model.
 
