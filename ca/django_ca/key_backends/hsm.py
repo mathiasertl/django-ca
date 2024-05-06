@@ -38,10 +38,18 @@ KeySize = Literal[2048, 4096]
 EllipticCurves = Literal["secp256r1", "secp384r1", "secp521r1"]
 
 
-async def _create_key_pair(key_label: str, hsm_key_type: str) -> tuple[str, bytes]:
+async def _create_key_pair(
+    key_label: str,
+    hsm_key_type: str,
+    pkcs11_module: Optional[str] = None,
+    pkcs11_token: Optional[str] = None,
+    pkcs11_pin: Optional[str] = None,
+    pkcs11_recreate_session: Optional[bool] = False,
+) -> tuple[str, bytes]:
     """Creates the new keypair in async way."""
     key_type = get_keytypes_enum(hsm_key_type)
-    public_key, identifier = await PKCS11Session().create_keypair(key_label, key_type=key_type)
+    pkcs11_session = PKCS11Session()
+    public_key, identifier = await pkcs11_session.create_keypair(key_label, key_type=key_type)
     return public_key, identifier
 
 
@@ -142,7 +150,7 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
     default_key_size: KeySize = 4096
     default_elliptic_curve: EllipticCurves = "secp521r1"
 
-    supported_key_types: tuple[KeyType, ...] = ("RSA", "EC", "Ed25519", "Ed448")
+    supported_key_types: tuple[KeyType, ...] = ("RSA", "EC", "Ed25519", "Ed448", "TEST")
     supported_elliptic_curves: tuple[EllipticCurves, ...] = ("secp256r1", "secp384r1", "secp521r1")
 
     def __eq__(self, other: Any) -> bool:
@@ -183,6 +191,10 @@ class HSMBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, Use
                 key_size = self.default_key_size
             elif key_size not in (2048, 4096):
                 raise CommandError(f"{key_size}: Unsupported key size.")
+
+            if options["algorithm"] not in ("a", "b"):
+                raise CommandError("Oh No!")
+
         if key_type == "EC" and elliptic_curve is None:
             elliptic_curve = self.default_elliptic_curve
 
