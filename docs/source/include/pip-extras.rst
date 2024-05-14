@@ -6,5 +6,5 @@ Extra         Description
 ``celery``    Adds `Celery <https://docs.celeryproject.org/>`_ support.
 ``mysql``     Adds MySQL support.
 ``postgres``  Adds PostgreSQL support using `Psycopg 3 <https://pypi.org/project/psycopg/>`_.
-``psycopg3``  **Deprecated.** Use ``postgres`` instead.
+``psycopg3``  **Deprecated.** Use ``postgres`` instead. It will be removed in ``django-ca==2.0``.
 ============= ===============================================================================================

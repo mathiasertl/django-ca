@@ -136,7 +136,7 @@ mysql = [
     "mysqlclient<2.2"
 ]
 postgres = ["psycopg[c,pool]>=3"]
-# remove psycopg3 in django-ca==2.0
+# remove psycopg3 in django-ca==2.0, also update docs/source/include/pip-extras.rst
 psycopg3 = ["psycopg[c,pool]>=3"]
 yaml = ["PyYAML>=6.0.0"]
 
