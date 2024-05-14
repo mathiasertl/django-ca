@@ -39,6 +39,11 @@ Settings
 * The ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` settings will be removed. Use
   :ref:`settings-ca-key-backends` instead (deprecated since 1.28.0).
 
+Packaging
+=========
+
+* The ``psycopg3`` extra will be removed.
+
 Python API
 ==========
 
