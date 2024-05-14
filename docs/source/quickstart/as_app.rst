@@ -17,6 +17,9 @@ Required software
 
 You do not need any special software besides Python |minimum-python| or later and a recent version of pip.
 
+If you want to use ACMEv2 or Celery, you need a cache that shares data between individual processes. From the
+backends included in Django, Memcached and Redis do this. This document configures Redis as a cache.
+
 It is strongly recommended that you run a `Celery task queue <https://docs.celeryproject.org/>`_. If you do,
 you need a message transport like RabbitMQ or Redis. Redis is used in the examples below, because it is
 easiest to set up and doubles as a cache.
@@ -83,6 +86,12 @@ You also need to include the URLs in your main :file:`urls.py`:
 
 .. literalinclude:: /include/quickstart_as_app/urls.py
    :language: python
+
+You can verify (some) aspects of the setup using Django system checks:
+
+.. code-block:: console
+
+   user@host:~$ python manage.py check --deploy
 
 Finally, invoke the regular :command:`manage.py` commands when you add new apps:
 
