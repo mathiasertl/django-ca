@@ -126,10 +126,6 @@ dependencies = [
 
 [project.optional-dependencies]
 api = ["django-ninja>=1.1"]
-redis = [
-    "hiredis>=2.0.0",
-    "redis>=4.3",
-]
 celery = ["celery>=5.3"]
 mysql = [
     # https://github.com/PyMySQL/mysqlclient/issues/620
@@ -138,6 +134,7 @@ mysql = [
 postgres = ["psycopg[c,pool]>=3"]
 # remove psycopg3 in django-ca==2.0, also update docs/source/include/pip-extras.rst
 psycopg3 = ["psycopg[c,pool]>=3"]
+redis = ["hiredis>=2.0.0", "redis>=4.3"]
 yaml = ["PyYAML>=6.0.0"]
 
 [project.urls]
