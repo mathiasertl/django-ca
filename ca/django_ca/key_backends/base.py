@@ -34,6 +34,7 @@ from django.core.management import CommandParser  # type: ignore[attr-defined]  
 from django.utils.module_loading import import_string
 
 from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 
 if typing.TYPE_CHECKING:
@@ -298,7 +299,7 @@ class KeyBackend(
         use_private_key_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
     ) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
-        return ca_settings.CA_DEFAULT_KEY_SIZE
+        return model_settings.CA_DEFAULT_KEY_SIZE
 
     def get_ocsp_key_elliptic_curve(
         self,
@@ -306,7 +307,7 @@ class KeyBackend(
         use_private_key_options: UsePrivateKeyOptionsTypeVar,  # pylint: disable=unused-argument
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
-        return ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+        return model_settings.CA_DEFAULT_ELLIPTIC_CURVE
 
 
 class KeyBackends:

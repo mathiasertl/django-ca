@@ -48,6 +48,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.key_backends.storages import UsePrivateKeyOptions
@@ -307,7 +308,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     def test_intermediate_ca_crl(self) -> None:
         """Test getting the CRL for an intermediate CA."""
         # Intermediate CAs have a DP in the CRL that has the CA url
-        full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{self.ca.serial}/")]
+        full_name = [uri(f"http://{model_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{self.ca.serial}/")]
         idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
 
         crl = self.ca.get_crl(key_backend_options, scope="ca").public_bytes(Encoding.PEM)
@@ -421,13 +422,6 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_cache_crls(self) -> None:
         """Test caching of CRLs."""
-        crl_profiles = self.crl_profiles
-        for config in crl_profiles.values():
-            config["encodings"] = [
-                "DER",
-                "PEM",
-            ]
-
         for name, ca in self.usable_cas:
             ca_private_key_options = UsePrivateKeyOptions(password=CERT_DATA[name].get("password"))
             der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
@@ -439,7 +433,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
                 ca_idp = get_idp(full_name=None, only_contains_ca_certs=True)
             else:
                 crl_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
-                full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")]
+                full_name = [uri(f"http://{model_settings.CA_DEFAULT_HOSTNAME}{crl_path}")]
                 ca_idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
 
             self.assertIsNone(cache.get(der_ca_key))
@@ -447,8 +441,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             self.assertIsNone(cache.get(der_user_key))
             self.assertIsNone(cache.get(pem_user_key))
 
-            with self.settings(CA_CRL_PROFILES=crl_profiles):
-                ca.cache_crls(ca_private_key_options)
+            ca.cache_crls(ca_private_key_options)
 
             der_user_crl = cache.get(der_user_key)
             pem_user_crl = cache.get(pem_user_key)
@@ -484,8 +477,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             )
 
             # cache again - which will force triggering a new computation
-            with self.settings(CA_CRL_PROFILES=crl_profiles):
-                ca.cache_crls(ca_private_key_options)
+            ca.cache_crls(ca_private_key_options)
 
             # Get CRLs from cache - we have a new CRLNumber
             der_user_crl = cache.get(der_user_key)
@@ -528,12 +520,9 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
 
             # clear caches and skip generation
             cache.clear()
-            crl_profiles["ca"]["OVERRIDES"][ca.serial]["skip"] = True
-            crl_profiles["user"]["OVERRIDES"][ca.serial]["skip"] = True
-
-            # set a wrong password, ensuring that any CRL generation would *never* work
-            crl_profiles["ca"]["OVERRIDES"][ca.serial]["password"] = b"wrong"
-            crl_profiles["user"]["OVERRIDES"][ca.serial]["password"] = b"wrong"
+            crl_profiles = {k: v.model_dump() for k, v in model_settings.CA_CRL_PROFILES.items()}
+            crl_profiles["ca"]["OVERRIDES"][ca.serial] = {"skip": True}
+            crl_profiles["user"]["OVERRIDES"][ca.serial] = {"skip": True}
 
             with self.settings(CA_CRL_PROFILES=crl_profiles):
                 ca.cache_crls(ca_private_key_options)
@@ -546,28 +535,44 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
     @override_tmpcadir()
     def test_cache_crls_algorithm(self) -> None:
         """Test passing an explicit hash algorithm."""
-        crl_profiles = self.crl_profiles
-        for config in crl_profiles.values():
-            config["encodings"] = ["DER", "PEM"]
-
         ca = self.cas["root"]
         der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
         pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
         der_ca_key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
         pem_ca_key = get_crl_cache_key(ca.serial, Encoding.PEM, "ca")
 
-        self.assertIsNone(cache.get(der_ca_key))
-        self.assertIsNone(cache.get(pem_ca_key))
-        self.assertIsNone(cache.get(der_user_key))
-        self.assertIsNone(cache.get(pem_user_key))
+        assert cache.get(der_ca_key) is None
+        assert cache.get(pem_ca_key) is None
+        assert cache.get(der_user_key) is None
+        assert cache.get(pem_user_key) is None
 
-        with self.settings(CA_CRL_PROFILES=crl_profiles):
+        ca.cache_crls(key_backend_options)
+
+        der_user_crl = cache.get(der_user_key)
+        pem_user_crl = cache.get(pem_user_key)
+        assert isinstance(der_user_crl, bytes)
+        assert isinstance(pem_user_crl, bytes)
+
+    @override_tmpcadir()
+    def test_cache_crls_with_overrides(self) -> None:
+        """Test CA overrides for CRL profiles."""
+        ca = self.cas["root"]
+        ca_crl_profile = model_settings.CA_CRL_PROFILES["user"].model_dump()
+        ca_crl_profile["OVERRIDES"] = {ca.serial: {"encodings": frozenset([Encoding.PEM])}}
+
+        der_user_key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
+        pem_user_key = get_crl_cache_key(ca.serial, Encoding.PEM, "user")
+
+        assert cache.get(der_user_key) is None
+        assert cache.get(pem_user_key) is None
+
+        with self.settings(CA_CRL_PROFILES={"user": ca_crl_profile}):
             ca.cache_crls(key_backend_options)
 
         der_user_crl = cache.get(der_user_key)
         pem_user_crl = cache.get(pem_user_key)
-        self.assertIsInstance(der_user_crl, bytes)
-        self.assertIsInstance(pem_user_crl, bytes)
+        assert der_user_crl is None  # now None since not specified in override
+        assert isinstance(pem_user_crl, bytes)
 
     def test_max_path_length(self) -> None:
         """Test getting the maximum path_length."""
@@ -610,7 +615,7 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
             self.assertIsInstance(key, ec.EllipticCurvePrivateKey)
 
             # Since the CA is not EC-based, it uses the default elliptic curve.
-            self.assertIsInstance(key.curve, ca_settings.CA_DEFAULT_ELLIPTIC_CURVE)
+            self.assertIsInstance(key.curve, type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE))
 
     @override_tmpcadir(CA_DEFAULT_ELLIPTIC_CURVE="secp192r1")
     def test_generate_ocsp_responder_certificate_for_rsa_ca_with_custom_curve(self) -> None:

@@ -23,7 +23,7 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.models import Certificate
 
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
         for cert in qs:
             days = (cert.expires - now).days
 
-            if days not in ca_settings.CA_NOTIFICATION_DAYS:
+            if days not in model_settings.CA_NOTIFICATION_DAYS:
                 continue
 
             timestamp = cert.expires.strftime("%Y-%m-%d")

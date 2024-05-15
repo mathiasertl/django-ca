@@ -30,6 +30,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
 from django_ca.management.base import BaseSignCommand, add_key_size
@@ -151,14 +152,15 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         parser.add_argument(
             "--key-type",
             choices=key_types,
-            default=ca_settings.CA_DEFAULT_PRIVATE_KEY_TYPE,
+            default=model_settings.CA_DEFAULT_PRIVATE_KEY_TYPE,
             help="Key type for the private key (default: %(default)s).",
         )
         add_key_size(parser)
+        default_elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         parser.add_argument(
             "--elliptic-curve",
             choices=sorted(elliptic_curves),
-            help=f"Elliptic Curve used for EC keys (default: {ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name}).",
+            help=f"Elliptic Curve used for EC keys (default: {default_elliptic_curve.name}).",
         )
 
         # Add argument groups for backend-specific options.
@@ -217,9 +219,9 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         group = parser.add_argument_group(
             "Default hostname",
             f"""The default hostname is used to compute default URLs for services like OCSP. The hostname is
-            usually configured in your settings (current setting: {ca_settings.CA_DEFAULT_HOSTNAME}), but you
-            can override that value here. The value must be just the hostname and optionally a port, *without*
-            a protocol, e.g.  "ca.example.com" or "ca.example.com:8000".""",
+            usually configured in your settings (current setting: {model_settings.CA_DEFAULT_HOSTNAME}), but
+            you can override that value here. The value must be just the hostname and optionally a port,
+            *without* a protocol, e.g.  "ca.example.com" or "ca.example.com:8000".""",
         )
         group = group.add_mutually_exclusive_group()
         group.add_argument(
@@ -517,7 +519,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         if options["default_hostname"] is not None:
             kwargs["default_hostname"] = options["default_hostname"]
 
-        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False b/c parser throws error already
+        if model_settings.CA_ENABLE_ACME:  # pragma: no branch; parser throws error already
             # These settings are only there if ACME is enabled
             for opt in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
                 if options[opt] is not None:
@@ -528,7 +530,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 kwargs["acme_profile"] = acme_profile
 
-        if ca_settings.CA_ENABLE_REST_API:  # pragma: no branch; never False b/c parser throws error already
+        if model_settings.CA_ENABLE_REST_API:  # pragma: no branch; parser throws error already
             if (api_enabled := options.get("api_enabled")) is not None:
                 kwargs["api_enabled"] = api_enabled
 

@@ -25,7 +25,6 @@ import re
 import typing
 from collections import OrderedDict
 from collections.abc import Iterable
-from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
 from typing import Optional, Union
 
@@ -55,6 +54,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
+from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.extensions import get_extension_name
@@ -89,14 +89,13 @@ from django_ca.querysets import (
     CertificateQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import AllowedHashTypes, Expires, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, CertificateRevocationListScopes, Expires, ParsableKeyType
 from django_ca.utils import (
     bytes_to_hex,
     generate_private_key,
     get_crl_cache_key,
     get_storage,
     int_to_hex,
-    parse_encoding,
     parse_expires,
     read_file,
     validate_private_key_parameters,
@@ -647,37 +646,32 @@ class CertificateAuthority(X509CertMixin):
 
            Support for passing a custom hash algorithm to this function was removed.
         """
-        for config in deepcopy(ca_settings.CA_CRL_PROFILES).values():
-            # create a copy of the overrides with the serials sanitized so that the user can use a
-            # case-insensitive string and can have colons (":").
-            overrides = {k.replace(":", "").upper(): v for k, v in config.get("OVERRIDES", {}).items()}
-            ca_override = overrides.get(self.serial, {})
+        for crl_profile in model_settings.CA_CRL_PROFILES.values():
+            # If there is an override for the current CA, create a new profile model with values updated from
+            # the override.
+            if crl_profile_override := crl_profile.OVERRIDES.get(self.serial):
+                if crl_profile_override.skip:
+                    continue
 
-            if ca_override.get("skip"):
-                continue
+                config = crl_profile.model_dump()
+                config.update(crl_profile_override.model_dump(exclude_unset=True))
+                crl_profile = CertificateRevocationListProfile.model_validate(config)
 
-            expires = ca_override.get("expires", config.get("expires", 86400))
-            scope = ca_override.get("scope", config.get("scope"))
-            full_name = ca_override.get("full_name", config.get("full_name"))
-            relative_name = ca_override.get("relative_name", config.get("relative_name"))
-            encodings = ca_override.get("encodings", config.get("encodings", ["DER"]))
+            expires = int(crl_profile.expires.total_seconds())
             crl = self.get_crl(
                 key_backend_options=key_backend_options,
                 expires=expires,
                 algorithm=self.algorithm,
-                scope=scope,
-                full_name=full_name,
-                relative_name=relative_name,
+                scope=crl_profile.scope,
             )
 
-            for encoding in encodings:
-                encoding = parse_encoding(encoding)
-                cache_key = get_crl_cache_key(self.serial, encoding, scope=scope)
+            for encoding in crl_profile.encodings:
+                cache_key = get_crl_cache_key(self.serial, encoding, scope=crl_profile.scope)
 
                 if expires >= 600:  # pragma: no branch
                     # for longer expiries we subtract a random value so that regular CRL regeneration is
                     # distributed a bit
-                    expires = expires - random.randint(1, 5) * 60
+                    expires -= random.randint(1, 5) * 60
 
                 encoded_crl = crl.public_bytes(encoding)
                 cache.set(cache_key, encoded_crl, expires)
@@ -885,7 +879,7 @@ class CertificateAuthority(X509CertMixin):
                 log.exception("Unknown error when reading existing OCSP responder certificate.")
             else:
                 responder_certificate_expires = not_valid_after(responder_certificate)
-                if responder_certificate_expires > now + ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL:
+                if responder_certificate_expires > now + model_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL:
                     log.info("%s: OCSP responder certificate is not yet scheduled for renewal.")
                     return None
 
@@ -1014,7 +1008,7 @@ class CertificateAuthority(X509CertMixin):
         key_backend_options: BaseModel,
         expires: int = 86400,
         algorithm: Optional[AllowedHashTypes] = None,
-        scope: Optional[typing.Literal["ca", "user", "attribute"]] = None,
+        scope: Optional[CertificateRevocationListScopes] = None,
         counter: Optional[str] = None,
         full_name: Optional[Iterable[x509.GeneralName]] = None,
         relative_name: Optional[x509.RelativeDistinguishedName] = None,
@@ -1090,10 +1084,10 @@ class CertificateAuthority(X509CertMixin):
         # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
         # See also:
         #       https://github.com/mathiasertl/django-ca/issues/64
-        elif scope == "ca" and ca_settings.CA_DEFAULT_HOSTNAME:
+        elif scope == "ca" and model_settings.CA_DEFAULT_HOSTNAME:
             crl_path = reverse("django_ca:ca-crl", kwargs={"serial": self.serial})
             parsed_full_name = [
-                x509.UniformResourceIdentifier(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
+                x509.UniformResourceIdentifier(f"http://{model_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
             ]
         elif scope in ("user", None) and self.sign_crl_distribution_points:
             full_names = []

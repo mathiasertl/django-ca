@@ -24,6 +24,7 @@ from cryptography.x509.oid import ExtensionOID
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
 from django_ca.models import CertificateAuthority
@@ -114,7 +115,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             ca.terms_of_service = options["tos"]
 
         # Set ACME options
-        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False b/c parser throws error already
+        if model_settings.CA_ENABLE_ACME:  # pragma: no branch; parser throws error already
             for param in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
                 if options[param] is not None:
                     setattr(ca, param, options[param])
@@ -124,7 +125,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 ca.acme_profile = acme_profile
 
-        if ca_settings.CA_ENABLE_REST_API:  # pragma: no branch; never False b/c parser throws error already
+        if model_settings.CA_ENABLE_REST_API:  # pragma: no branch; parser throws error already
             if (api_enabled := options.get("api_enabled")) is not None:
                 ca.api_enabled = api_enabled
 

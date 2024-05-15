@@ -8,6 +8,9 @@
 .. automapping:: django_ca.constants.CERTIFICATE_EXTENSION_KEYS
    :no-value:
 
+.. automapping:: django_ca.constants.CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
+   :no-value:
+
 .. automapping:: django_ca.constants.ELLIPTIC_CURVE_TYPES
    :annotation:
 

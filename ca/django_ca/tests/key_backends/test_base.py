@@ -19,6 +19,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_improperly_configured
@@ -112,7 +113,8 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper, root: Certif
 
     backend = key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
     assert backend.add_use_private_key_arguments(None) is None  # type: ignore[func-returns-value,arg-type]
-    assert backend.get_ocsp_key_size(root, DummyModel()) == ca_settings.CA_DEFAULT_KEY_SIZE
+    assert backend.get_ocsp_key_size(root, DummyModel()) == model_settings.CA_DEFAULT_KEY_SIZE
     assert isinstance(
-        backend.get_ocsp_key_elliptic_curve(root, DummyModel()), ca_settings.CA_DEFAULT_ELLIPTIC_CURVE
+        backend.get_ocsp_key_elliptic_curve(root, DummyModel()),
+        type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE),
     )

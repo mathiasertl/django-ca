@@ -33,6 +33,7 @@ from django.utils import timezone
 
 from django_ca import ca_settings
 from django_ca.acme.validation import validate_dns_01
+from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
 from django_ca.models import (
     AcmeAuthorization,
@@ -266,7 +267,7 @@ def sign_certificate(
 @transaction.atomic
 def acme_validate_challenge(challenge_pk: int) -> None:
     """Validate an ACME challenge."""
-    if not ca_settings.CA_ENABLE_ACME:
+    if not model_settings.CA_ENABLE_ACME:
         log.error("ACME is not enabled.")
         return
 
@@ -379,7 +380,7 @@ def acme_validate_challenge(challenge_pk: int) -> None:
 @transaction.atomic
 def acme_issue_certificate(acme_certificate_pk: int) -> None:
     """Actually issue an ACME certificate."""
-    if not ca_settings.CA_ENABLE_ACME:
+    if not model_settings.CA_ENABLE_ACME:
         log.error("ACME is not enabled.")
         return
 
@@ -438,7 +439,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 @transaction.atomic
 def acme_cleanup() -> None:
     """Cleanup expired ACME orders."""
-    if not ca_settings.CA_ENABLE_ACME:
+    if not model_settings.CA_ENABLE_ACME:
         # NOTE: Since this task does only cleanup, log message is only info.
         log.info("ACME is not enabled, not doing anything.")
         return

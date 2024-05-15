@@ -68,6 +68,7 @@ from django_ca.acme.responses import (
     AcmeResponseUnsupportedMediaType,
 )
 from django_ca.acme.utils import parse_acme_csr
+from django_ca.conf import model_settings
 from django_ca.constants import REASON_CODES
 from django_ca.models import (
     AcmeAccount,
@@ -146,7 +147,7 @@ class AcmeDirectory(View):
 
     def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
-        if not ca_settings.CA_ENABLE_ACME:
+        if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
         if serial is None:
@@ -300,7 +301,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
     def dispatch(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> "HttpResponseBase":
-        if not ca_settings.CA_ENABLE_ACME:
+        if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
         # COVERAGE NOTE: Checking just for safety here.
@@ -484,7 +485,7 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
     # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
     def dispatch(self, request: HttpRequest, serial: str) -> "HttpResponseBase":
-        if not ca_settings.CA_ENABLE_ACME:
+        if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
         # COVERAGE NOTE: Checking just for safety here.

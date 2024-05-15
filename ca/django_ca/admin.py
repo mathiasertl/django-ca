@@ -57,6 +57,7 @@ from django.utils.translation import gettext_lazy as _
 from django_object_actions import DjangoObjectActions
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, ReasonFlags
 from django_ca.extensions import get_extension_name
 from django_ca.extensions.utils import certificate_policies_is_simple, extension_as_admin_html
@@ -432,7 +433,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             fieldsets[1][1]["fields"] = tuple(detail_fields)
 
         api_index = 1
-        if ca_settings.CA_ENABLE_ACME:
+        if model_settings.CA_ENABLE_ACME:
             api_index = 2
             fieldsets.insert(
                 1,
@@ -449,7 +450,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
                 ),
             )
 
-        if ca_settings.CA_ENABLE_REST_API:
+        if model_settings.CA_ENABLE_REST_API:
             fieldsets.insert(api_index, (_("API"), {"fields": ["api_enabled"]}))
 
         return fieldsets
@@ -1102,7 +1103,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         )
 
 
-if ca_settings.CA_ENABLE_ACME:  # pragma: no branch
+if model_settings.CA_ENABLE_ACME:  # pragma: no branch
 
     class ExpiredListFilter(DefaultListFilter):
         """Filter for expired ACME orders."""

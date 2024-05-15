@@ -20,12 +20,14 @@ from pydantic import BaseModel
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding
 
 import pytest
 
 from django_ca import constants
 from django_ca.pydantic.type_aliases import (
     Base64EncodedBytes,
+    CertificateRevocationListEncodingTypeAlias,
     EllipticCurveTypeAlias,
     HashAlgorithmTypeAlias,
     Serial,
@@ -43,6 +45,12 @@ class HashAlgorithmTypeAliasModel(BaseModel):
     """Test HashAlgorithmTypeAlias."""
 
     value: HashAlgorithmTypeAlias
+
+
+class CertificateRevocationListEncodingTypeAliasModel(BaseModel):
+    """Test CertificateRevocationListEncodingTypeAlias."""
+
+    value: CertificateRevocationListEncodingTypeAlias
 
 
 class JSONSerializableBytesModel(BaseModel):
@@ -114,6 +122,54 @@ def test_hash_algorithm(name: str, hash_cls: type[hashes.HashAlgorithm]) -> None
     assert isinstance(
         HashAlgorithmTypeAliasModel.model_validate_json(model.model_dump_json()).value, hash_cls
     )
+
+
+@pytest.mark.xfail  # This currently works, unfortunately.
+@pytest.mark.parametrize("hash_obj", (hashes.SM3(), hashes.BLAKE2b(64), hashes.BLAKE2s(32)))
+def test_hash_algorithm_unsupported_types(hash_obj: hashes.HashAlgorithm) -> None:
+    """Test that unsupported hash algorithm instances throw an error."""
+    with pytest.raises(ValueError):
+        HashAlgorithmTypeAliasModel(value=hash_obj)
+
+
+@pytest.mark.parametrize("name,encoding", constants.CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES.items())
+def test_crl_encoding(name: str, encoding: Encoding) -> None:
+    """Test CertificateRevocationListEncoding."""
+    model = CertificateRevocationListEncodingTypeAliasModel(value=name)
+    assert model.value == encoding
+
+    model = CertificateRevocationListEncodingTypeAliasModel(value=encoding)
+    assert model.value == encoding
+
+    model = CertificateRevocationListEncodingTypeAliasModel.model_validate({"value": name})
+    assert model.value == encoding
+
+    model = CertificateRevocationListEncodingTypeAliasModel.model_validate({"value": name}, strict=True)
+    assert model.value == encoding
+
+    assert model.model_dump()["value"] == encoding
+    assert model.model_dump(mode="json") == {"value": name}
+
+    assert (
+        CertificateRevocationListEncodingTypeAliasModel.model_validate_json(model.model_dump_json()).value
+        == encoding
+    )
+
+
+@pytest.mark.parametrize("value", ("", "wrong", True))
+def test_crl_encoding_errors(value: str) -> None:
+    """Test invalid values for CertificateRevocationListEncodingTypeAliasModel."""
+    with pytest.raises(ValueError):
+        CertificateRevocationListEncodingTypeAliasModel(value=value)
+
+
+@pytest.mark.parametrize("value", (Encoding.OpenSSH, Encoding.Raw, Encoding.SMIME, Encoding.X962))
+def test_crl_encoding_unsupported_encodings(value: Encoding) -> None:
+    """Test unsupported encodings."""
+    with pytest.raises(ValueError, match=r"Input should be 'PEM' or 'DER'"):
+        CertificateRevocationListEncodingTypeAliasModel(value=value.name)
+    with pytest.raises(ValueError, match=r"Input should be 'PEM' or 'DER'"):
+        CertificateRevocationListEncodingTypeAliasModel(value=value)
 
 
 @pytest.mark.parametrize(

@@ -158,6 +158,7 @@ omit = [
     "*/migrations/*",
     "*/tests/tests*",
     "*/tests/**/test_*",
+    "ca/django_ca/mypy.py",
 ]
 
 [tool.doc8]
@@ -184,6 +185,7 @@ exclude = [
 plugins = [
     "mypy_django_plugin.main",
     "pydantic.mypy",
+    "django_ca.mypy",
 ]
 
 [[tool.mypy.overrides]]
@@ -331,6 +333,7 @@ disable = [
     "import-error",  # mypy: import
     "abstract-class-instantiated",  # mypy: abstract
     "not-an-iterable",
+    "no-name-in-module",  # mypy: attr-defined
 
     # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
     # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually

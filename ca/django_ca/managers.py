@@ -26,6 +26,7 @@ from django.db import models
 from django.urls import reverse
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.key_backends.base import KeyBackend
 from django_ca.modelfields import LazyCertificateSigningRequest
@@ -357,7 +358,7 @@ class CertificateAuthorityManager(
         serial = x509.random_serial_number()
 
         if default_hostname is None:
-            default_hostname = ca_settings.CA_DEFAULT_HOSTNAME
+            default_hostname = model_settings.CA_DEFAULT_HOSTNAME
 
         if acme_profile is None:
             acme_profile = ca_settings.CA_DEFAULT_PROFILE

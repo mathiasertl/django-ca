@@ -36,6 +36,7 @@ from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings, constants, utils
+from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.utils import dns, doctest_module, uri
@@ -374,7 +375,7 @@ class GeneratePrivateKeyTestCase(TestCase):
         """Test the default DSA key size."""
         key = generate_private_key(None, "DSA", None)
         self.assertIsInstance(key, dsa.DSAPrivateKey)
-        self.assertEqual(key.key_size, ca_settings.CA_DEFAULT_KEY_SIZE)
+        self.assertEqual(key.key_size, model_settings.CA_DEFAULT_KEY_SIZE)
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid key type."""
@@ -985,19 +986,22 @@ class ValidatePrivateKeyParametersTest(TestCase):
 
     def test_default_parameters(self) -> None:
         """Test that default values are returned."""
-        self.assertEqual(
-            (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("RSA", None, None)
+        assert validate_private_key_parameters("RSA", None, None) == (
+            model_settings.CA_DEFAULT_KEY_SIZE,
+            None,
         )
-        self.assertEqual(
-            (ca_settings.CA_DEFAULT_KEY_SIZE, None), validate_private_key_parameters("DSA", None, None)
+
+        assert validate_private_key_parameters("DSA", None, None) == (
+            model_settings.CA_DEFAULT_KEY_SIZE,
+            None,
         )
 
         key_size, elliptic_curve = validate_private_key_parameters("EC", None, None)
-        self.assertIsNone(key_size)
-        self.assertIsInstance(elliptic_curve, ca_settings.CA_DEFAULT_ELLIPTIC_CURVE)
+        assert key_size is None
+        assert isinstance(elliptic_curve, type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE))
 
-        self.assertEqual((None, None), validate_private_key_parameters("Ed25519", None, None))
-        self.assertEqual((None, None), validate_private_key_parameters("Ed448", None, None))
+        assert validate_private_key_parameters("Ed25519", None, None) == (None, None)
+        assert validate_private_key_parameters("Ed448", None, None) == (None, None)
 
     def test_valid_parameters(self) -> None:
         """Test valid parameters."""
@@ -1010,8 +1014,8 @@ class ValidatePrivateKeyParametersTest(TestCase):
 
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
-        key_size = ca_settings.CA_DEFAULT_KEY_SIZE
-        elliptic_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+        key_size = model_settings.CA_DEFAULT_KEY_SIZE
+        elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         with self.assertRaisesRegex(ValueError, "^FOOBAR: Unknown key type$"):
             validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[call-overload]
 

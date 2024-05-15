@@ -20,7 +20,7 @@ from typing import Any
 
 from django.core.management.base import CommandParser
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.management.base import BaseViewCommand
 from django_ca.models import CertificateAuthority
 from django_ca.utils import add_colons
@@ -82,7 +82,7 @@ class Command(BaseViewCommand):
         self.output_header(ca)
         self.output_ca_information(ca)
 
-        if ca_settings.CA_ENABLE_ACME:
+        if model_settings.CA_ENABLE_ACME:
             self.stdout.write("")
             self.stdout.write("ACMEv2 support:")
             self.stdout.write(f"* Enabled: {ca.acme_enabled}")

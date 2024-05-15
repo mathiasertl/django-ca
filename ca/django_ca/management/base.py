@@ -36,6 +36,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.management import actions, mixins
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority, X509CertMixin
@@ -55,7 +56,7 @@ if typing.TYPE_CHECKING:
 
 def add_elliptic_curve(parser: ActionsContainer, prefix: str = "") -> None:
     """Add --elliptic-curve option."""
-    default = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
+    default = model_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
     parser.add_argument(
         f"--{prefix}elliptic-curve",
         action=actions.EllipticCurveAction,
@@ -68,7 +69,7 @@ def add_key_size(parser: ActionsContainer) -> None:
     parser.add_argument(
         "--key-size",
         action=actions.KeySizeAction,
-        help=f"Key size for a RSA/DSA private key (default: {ca_settings.CA_DEFAULT_KEY_SIZE}).",
+        help=f"Key size for a RSA/DSA private key (default: {model_settings.CA_DEFAULT_KEY_SIZE}).",
     )
 
 
@@ -257,7 +258,7 @@ class BaseCommand(
 
         # Common help text for extensions that are usually configured automatically.
         default_hostname_suffix: "StrOrPromise" = ""
-        if ca_settings.CA_DEFAULT_HOSTNAME:  # pragma: no branch
+        if model_settings.CA_DEFAULT_HOSTNAME:  # pragma: no branch
             default_hostname_suffix = _(
                 " This extension is configured automatically using the CA_DEFAULT_HOSTNAME if not overridden "
                 "by options in this section."

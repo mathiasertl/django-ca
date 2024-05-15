@@ -40,9 +40,10 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias, PowerOfTwoTypeAlias
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias, PowerOfTwoInt
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, EllipticCurves, ParsableKeyType
 from django_ca.utils import generate_private_key, get_cert_builder
 
@@ -59,14 +60,14 @@ class CreatePrivateKeyOptions(BaseModel):
     key_type: ParsableKeyType
     password: Optional[bytes]
     path: Path
-    key_size: Optional[Annotated[PowerOfTwoTypeAlias, Field(ge=ca_settings.CA_MIN_KEY_SIZE)]] = None
+    key_size: Optional[Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)]] = None
     elliptic_curve: Optional[EllipticCurveTypeAlias] = None
 
     @model_validator(mode="after")
     def validate_key_size(self) -> "CreatePrivateKeyOptions":
         """Validate that the key size is not set for invalid key types."""
         if self.key_type in ("RSA", "DSA") and self.key_size is None:
-            self.key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+            self.key_size = model_settings.CA_DEFAULT_KEY_SIZE
         elif self.key_type not in ("RSA", "DSA") and self.key_size is not None:
             raise ValueError(f"Key size is not supported for {self.key_type} keys.")
         return self
@@ -75,7 +76,7 @@ class CreatePrivateKeyOptions(BaseModel):
     def validate_elliptic_curve(self) -> "CreatePrivateKeyOptions":
         """Validate that the elliptic curve is not set for invalid key types."""
         if self.key_type == "EC" and self.elliptic_curve is None:
-            self.elliptic_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+            self.elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         elif self.key_type != "EC" and self.elliptic_curve is not None:
             raise ValueError(f"Elliptic curves are not supported for {self.key_type} keys.")
         return self

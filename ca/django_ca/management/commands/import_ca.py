@@ -29,7 +29,8 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings, constants
+from django_ca import constants
+from django_ca.conf import model_settings
 from django_ca.constants import PRIVATE_KEY_TYPES, PUBLIC_KEY_TYPES
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import PasswordAction
@@ -169,7 +170,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             ca.ocsp_response_validity = ocsp_response_validity
 
         # Set ACME options
-        if ca_settings.CA_ENABLE_ACME:  # pragma: no branch; never False because parser throws error already
+        if model_settings.CA_ENABLE_ACME:  # pragma: no branch; parser throws error already
             for param in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
                 if options[param] is not None:
                     setattr(ca, param, options[param])
@@ -178,7 +179,7 @@ Note that the private key will be copied to the directory configured by the CA_D
                 ca.acme_profile = acme_profile
 
         # Set API options
-        if ca_settings.CA_ENABLE_REST_API:  # pragma: no branch; never False b/c parser throws error already
+        if model_settings.CA_ENABLE_REST_API:  # pragma: no branch; parser throws error already
             if (api_enabled := options.get("api_enabled")) is not None:
                 ca.api_enabled = api_enabled
 

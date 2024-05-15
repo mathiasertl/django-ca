@@ -30,6 +30,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
@@ -279,9 +280,9 @@ class KeySizeAction(SingleValueAction[str, int]):
         except ValueError as ex:
             raise argparse.ArgumentError(self, str(ex)) from ex
 
-        if key_size < ca_settings.CA_MIN_KEY_SIZE:
+        if key_size < model_settings.CA_MIN_KEY_SIZE:
             raise argparse.ArgumentError(
-                self, f"{key_size}: Must be at least {ca_settings.CA_MIN_KEY_SIZE} bits."
+                self, f"{key_size}: Must be at least {model_settings.CA_MIN_KEY_SIZE} bits."
             )
         return key_size
 

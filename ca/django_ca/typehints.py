@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, TypeVar, Un
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandParser
 
@@ -273,6 +274,11 @@ EllipticCurves = Literal[
     "brainpoolP384r1",
     "brainpoolP512r1",
 ]
+
+CertificateRevocationListScopes = Literal["ca", "user", "attribute"]
+CertificateRevocationListEncodings = Literal[Encoding.PEM, Encoding.DER]
+CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
+
 
 ################
 # Type aliases #

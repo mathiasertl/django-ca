@@ -17,10 +17,9 @@ import os
 import re
 import typing
 from datetime import timedelta
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -112,8 +111,6 @@ def _get_hash_algorithm(setting: str, default: "HashAlgorithms") -> "AllowedHash
     except KeyError as ex2:
         raise ImproperlyConfigured(f"{setting}: {raw_value}: Unknown hash algorithm.") from ex2
 
-
-CA_DEFAULT_KEY_SIZE: int = getattr(settings, "CA_DEFAULT_KEY_SIZE", 4096)
 
 CA_PROFILES: dict[str, dict[str, Any]] = {
     "client": {
@@ -221,19 +218,6 @@ CA_PROFILES: dict[str, dict[str, Any]] = {
     },
 }
 
-_CA_CRL_PROFILES: dict[str, dict[str, Any]] = {
-    "user": {
-        "expires": 86400,
-        "scope": "user",
-        "encodings": ["PEM", "DER"],
-    },
-    "ca": {
-        "expires": 86400,
-        "scope": "ca",
-        "encodings": ["PEM", "DER"],
-    },
-}
-
 # Get and sanitize default CA serial
 # NOTE: This effectively duplicates utils.sanitize_serial()
 CA_DEFAULT_CA = getattr(settings, "CA_DEFAULT_CA", "").replace(":", "").upper()
@@ -291,8 +275,6 @@ if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
 
 CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
-CA_NOTIFICATION_DAYS = getattr(settings, "CA_NOTIFICATION_DAYS", [14, 7, 3, 1])
-CA_CRL_PROFILES: dict[str, dict[str, Any]] = getattr(settings, "CA_CRL_PROFILES", _CA_CRL_PROFILES)
 
 # Load and process CA_PASSWORDS
 CA_PASSWORDS: dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
@@ -304,15 +286,10 @@ for _ca_passwords_key, _ca_passwords_value in CA_PASSWORDS.items():
 CA_PASSWORDS = {key.upper().replace(":", ""): value for key, value in CA_PASSWORDS.items()}
 
 # ACME settings
-CA_ENABLE_ACME = getattr(settings, "CA_ENABLE_ACME", True)
 ACME_ORDER_VALIDITY: timedelta = getattr(settings, "CA_ACME_ORDER_VALIDITY", timedelta(hours=1))
 ACME_ACCOUNT_REQUIRES_CONTACT = getattr(settings, "CA_ACME_ACCOUNT_REQUIRES_CONTACT", True)
 ACME_MAX_CERT_VALIDITY = getattr(settings, "CA_ACME_MAX_CERT_VALIDITY", timedelta(days=90))
 ACME_DEFAULT_CERT_VALIDITY = getattr(settings, "CA_ACME_DEFAULT_CERT_VALIDITY", timedelta(days=90))
-
-CA_MIN_KEY_SIZE = getattr(settings, "CA_MIN_KEY_SIZE", 2048)
-
-CA_DEFAULT_HOSTNAME: Optional[str] = getattr(settings, "CA_DEFAULT_HOSTNAME", None)
 
 CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm("CA_DEFAULT_SIGNATURE_HASH_ALGORITHM", "SHA-512")
 CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm(
@@ -333,17 +310,6 @@ if isinstance(ACME_ORDER_VALIDITY, int):
 if CA_DEFAULT_EXPIRES <= timedelta():
     raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must have positive value")
 
-CA_DEFAULT_PRIVATE_KEY_TYPE: str = getattr(settings, "CA_DEFAULT_PRIVATE_KEY_TYPE", "RSA")
-
-if CA_MIN_KEY_SIZE > CA_DEFAULT_KEY_SIZE:
-    raise ImproperlyConfigured(f"CA_DEFAULT_KEY_SIZE cannot be lower then {CA_MIN_KEY_SIZE}")
-
-
-_CA_DEFAULT_ELLIPTIC_CURVE = getattr(settings, "CA_DEFAULT_ELLIPTIC_CURVE", ec.SECP256R1.name)
-try:
-    CA_DEFAULT_ELLIPTIC_CURVE = constants.ELLIPTIC_CURVE_TYPES[_CA_DEFAULT_ELLIPTIC_CURVE]  # type: ignore[index]
-except KeyError as ex:
-    raise ImproperlyConfigured(f"{_CA_DEFAULT_ELLIPTIC_CURVE}: Unknown CA_DEFAULT_ELLIPTIC_CURVE.") from ex
 
 CA_DEFAULT_KEY_BACKEND: str = getattr(settings, "CA_DEFAULT_KEY_BACKEND", "default")
 CA_DEFAULT_STORAGE_ALIAS: str = getattr(settings, "CA_DEFAULT_STORAGE_ALIAS", "django-ca")
@@ -371,17 +337,6 @@ CA_FILE_STORAGE_KWARGS = getattr(
         "directory_permissions_mode": 0o700,
     },
 )
-
-CA_ENABLE_REST_API: bool = getattr(settings, "CA_ENABLE_REST_API", False)
-
-# CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL was added in 1.26.0
-CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Union[timedelta] = getattr(
-    settings, "CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL", timedelta(days=1)
-)
-if isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, int):
-    CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = timedelta(seconds=CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL)
-elif not isinstance(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta):
-    raise ImproperlyConfigured("CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int.")
 
 
 # Decide if we should use Celery or not

@@ -474,6 +474,8 @@ qualname_overrides = {
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
+    "cryptography.hazmat.primitives._serialization.Encoding.PEM": "cg:cryptography.hazmat.primitives.serialization.Encoding.PEM",  # noqa: E501
+    "cryptography.hazmat.primitives._serialization.Encoding.DER": "cg:cryptography.hazmat.primitives.serialization.Encoding.DER",  # noqa: E501
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
     # Django documents these classes  under re-exported path names:

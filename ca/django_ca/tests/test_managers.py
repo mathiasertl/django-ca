@@ -29,6 +29,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends.storages import CreatePrivateKeyOptions, StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
@@ -62,7 +63,7 @@ from django_ca.tests.base.utils import (
 
 def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: CertificateAuthority) -> None:
     """Test values extensions based on a parent CA."""
-    host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
+    host = model_settings.CA_DEFAULT_HOSTNAME  # shortcut
     url_kwargs = {"serial": parent.serial}
     expected_issuers = [uri(f"http://{host}{reverse('django_ca:issuer', kwargs=url_kwargs)}")]
     expected_ocsp = [uri(f"http://{host}{reverse('django_ca:ocsp-ca-post', kwargs=url_kwargs)}")]
@@ -255,7 +256,7 @@ def test_init_with_partial_authority_information_access(
     ca_name: str, subject: x509.Name, key_backend: StoragesBackend, usable_root: CertificateAuthority
 ) -> None:
     """Test passing a partial Authority Information Access extension."""
-    host = ca_settings.CA_DEFAULT_HOSTNAME  # shortcut
+    host = model_settings.CA_DEFAULT_HOSTNAME  # shortcut
     ca_issuer_path = reverse("django_ca:issuer", kwargs={"serial": usable_root.serial})
     ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": usable_root.serial})
 

@@ -33,7 +33,7 @@ from django.utils import timezone
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
@@ -130,7 +130,7 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
     stdout = io.StringIO()
     stderr = io.StringIO()
     if kwargs.get("key_type", "RSA") in ("RSA", "DSA"):
-        kwargs.setdefault("key_size", ca_settings.CA_MIN_KEY_SIZE)
+        kwargs.setdefault("key_size", model_settings.CA_MIN_KEY_SIZE)
 
     out, err = cmd(
         "init_ca",
@@ -1041,7 +1041,8 @@ def test_non_default_key_backend_with_ec_key(
     ca_name: str, rfc4514_subject: str, secondary_backend: StoragesBackend
 ) -> None:
     """Test creating an EC key with a non-default key backend."""
-    assert ca_settings.CA_DEFAULT_ELLIPTIC_CURVE != ec.SECT571R1  # make sure that curve is not default
+    # make sure that curve is not default
+    assert not isinstance(model_settings.CA_DEFAULT_ELLIPTIC_CURVE, ec.SECT571R1)
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,

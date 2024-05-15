@@ -13,7 +13,6 @@
 
 """Test basic views."""
 
-import copy
 from http import HTTPStatus
 
 from cryptography.hazmat.primitives import hashes
@@ -27,7 +26,7 @@ from django.urls import include, path, re_path, reverse
 import pytest
 from freezegun import freeze_time
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import get_idp, idp_full_name, override_tmpcadir, uri
@@ -197,7 +196,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
     def test_ca_crl_intermediate(self) -> None:
         """Test getting CRL for an intermediate CA."""
         child = self.cas["child"]
-        full_name = [uri(f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/")]
+        full_name = [uri(f"http://{model_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/")]
         idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
 
         response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
@@ -217,14 +216,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         with pytest.raises(ValueError, match=r"^Backend cannot be used for signing by this process.$"):
             self.client.get(reverse("default", kwargs={"serial": ca.serial}))
 
-        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
-        for config in profiles.values():
-            config.setdefault("OVERRIDES", {})
-            config["OVERRIDES"].setdefault(ca.serial, {})
-            config["OVERRIDES"][ca.serial]["password"] = CERT_DATA["pwd"]["password"]
-
-        with override_settings(CA_CRL_PROFILES=profiles):
-            ca.cache_crls(key_backend_options)  # cache CRLs for this CA
+        ca.cache_crls(key_backend_options)  # cache CRLs for this CA
 
         idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))

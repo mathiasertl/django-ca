@@ -1,4 +1,6 @@
 AllowedHashTypes
+DER
+PEM
 Parametrized
 Psycopg
 Pydantic

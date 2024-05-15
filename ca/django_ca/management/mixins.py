@@ -27,6 +27,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.key_backends import key_backends
 from django_ca.management import actions
@@ -187,7 +188,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_acme_group(self, parser: CommandParser) -> None:
         """Add arguments for ACMEv2 (if enabled)."""
-        if not ca_settings.CA_ENABLE_ACME:
+        if not model_settings.CA_ENABLE_ACME:
             return
 
         group = parser.add_argument_group("ACMEv2", "ACMEv2 configuration.")
@@ -265,7 +266,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_rest_api_group(self, parser: CommandParser) -> None:
         """Add arguments for the REST API (if enabled)."""
-        if not ca_settings.CA_ENABLE_REST_API:
+        if not model_settings.CA_ENABLE_REST_API:
             return
 
         group = parser.add_argument_group("API Access")

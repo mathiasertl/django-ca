@@ -68,6 +68,8 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         "SystemD",
         "dirName",
         "otherName",
+        "PEM",
+        "DER",
     }
 
     words: typing.ClassVar[set[str]] = (

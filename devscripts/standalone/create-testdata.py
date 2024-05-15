@@ -58,7 +58,7 @@ except ModuleNotFoundError as django_ex:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first
-from django_ca import ca_settings  # noqa: E402
+from django_ca.conf import model_settings  # noqa: E402
 from django_ca.key_backends import key_backends  # noqa: E402
 from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions  # noqa: E402
 from django_ca.models import Certificate, CertificateAuthority  # noqa: E402
@@ -138,7 +138,7 @@ if args.env != "frontend":
         "ecc.example.net",
         key_backend,
         CreatePrivateKeyOptions(
-            key_type="EC", password=None, path="ca", elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+            key_type="EC", password=None, path="ca", elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         ),
         subject=cn("ecc.example.net"),
         key_type="EC",
@@ -159,7 +159,7 @@ if args.env != "frontend":
             key_type="EC",
             password=None,
             path="ca/shared/",
-            elliptic_curve=ca_settings.CA_DEFAULT_ELLIPTIC_CURVE(),
+            elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE,
         ),
         subject=cn("child.ecc.example.net"),
         key_type="EC",

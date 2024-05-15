@@ -36,10 +36,24 @@ from ca.settings_utils import (
     load_settings_from_files,
     update_database_setting_from_environment,
 )
-from django_ca import ca_settings
+from django_ca import ca_settings, conf
+from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.mixins import TestCaseMixin
+
+
+@pytest.mark.parametrize("value", (True, False) * 5)
+def test_settings_module(settings: SettingsWrapper, value: bool) -> None:
+    """Test setting a value in the settings module."""
+    settings.CA_ENABLE_REST_API = value
+    assert conf.model_settings.CA_ENABLE_REST_API is value
+    assert model_settings.CA_ENABLE_REST_API is value
+
+
+def test_tab_completion() -> None:
+    """Test tab completion for ipython."""
+    assert "CA_ENABLE_REST_API" in dir(model_settings)
 
 
 def test_no_settings_files(tmp_path: Path) -> None:
@@ -362,7 +376,7 @@ class SettingsTestCase(TestCase):
     def test_ocsp_responder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
         with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL=600):
-            self.assertEqual(ca_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))
+            self.assertEqual(model_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))
 
     def test_ca_default_subject(self) -> None:
         """Test CA_DEFAULT_SUBJECT setting."""
@@ -408,7 +422,7 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
 
     def test_default_elliptic_curve(self) -> None:
         """Test invalid ``CA_DEFAULT_ELLIPTIC_CURVE``."""
-        with assert_improperly_configured(r"^foo: Unknown CA_DEFAULT_ELLIPTIC_CURVE.$"):
+        with assert_improperly_configured(r"CA_DEFAULT_ELLIPTIC_CURVE"):
             with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 
@@ -420,7 +434,7 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
 
     def test_min_default_key_size(self) -> None:
         """Test ``A_DEFAULT_KEY_SIZE``."""
-        with assert_improperly_configured("^CA_DEFAULT_KEY_SIZE cannot be lower then 1024$"):
+        with assert_improperly_configured("CA_DEFAULT_KEY_SIZE cannot be lower then 1024"):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
                 pass
 
@@ -567,8 +581,6 @@ class CaDefaultSubjectTestCase(TestCaseMixin, TestCase):
 
     def test_invalid_ocsp_responder_certificate_renewal(self) -> None:
         """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
-        with assert_improperly_configured(
-            r"^CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL must be a timedelta or int\.$"
-        ):
+        with assert_improperly_configured(r"Input should be a valid timedelta"):
             with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL="600"):
                 pass

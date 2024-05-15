@@ -38,6 +38,7 @@ from django.core.files.storage import InvalidStorageError, Storage, get_storage_
 from django.utils import timezone
 
 from django_ca import ca_settings, constants
+from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.pydantic.validators import (
@@ -484,21 +485,21 @@ def validate_private_key_parameters(
 
     if key_type in ("RSA", "DSA"):
         if key_size is None:
-            key_size = ca_settings.CA_DEFAULT_KEY_SIZE
+            key_size = model_settings.CA_DEFAULT_KEY_SIZE
         if not isinstance(key_size, int):
             raise ValueError(f"{key_size}: Key size must be an int.")
         try:
             is_power_two_validator(key_size)
         except ValueError as ex:
             raise ValueError(f"{key_size}: Key size must be a power of two") from ex
-        if key_size < ca_settings.CA_MIN_KEY_SIZE:
-            raise ValueError(f"{key_size}: Key size must be least {ca_settings.CA_MIN_KEY_SIZE} bits")
+        if key_size < model_settings.CA_MIN_KEY_SIZE:
+            raise ValueError(f"{key_size}: Key size must be least {model_settings.CA_MIN_KEY_SIZE} bits")
 
     if key_type == "EC":
         if key_size is not None:
             raise ValueError(f"Key size is not supported for {key_type} keys.")
         if elliptic_curve is None:
-            elliptic_curve = ca_settings.CA_DEFAULT_ELLIPTIC_CURVE()
+            elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         if not isinstance(elliptic_curve, ec.EllipticCurve):
             raise ValueError(f"{elliptic_curve}: Must be a subclass of ec.EllipticCurve")
 

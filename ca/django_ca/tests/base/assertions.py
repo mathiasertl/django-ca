@@ -36,6 +36,7 @@ from django.core.management import CommandError
 import pytest
 
 from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
@@ -84,7 +85,7 @@ def assert_ca_properties(
     parent_serial = parent_ca.serial
     issuer = parent_ca.subject
 
-    base_url = f"http://{ca_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
+    base_url = f"http://{model_settings.CA_DEFAULT_HOSTNAME}/django_ca/"
     assert ca.name == name
     assert ca.enabled is True
     assert ca.parent == parent

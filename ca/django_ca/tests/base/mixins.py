@@ -13,7 +13,6 @@
 
 """Collection of mixin classes for unittest.TestCase subclasses."""
 
-import copy
 import json
 import re
 import typing
@@ -42,7 +41,6 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
-from django_ca import ca_settings
 from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
@@ -358,20 +356,6 @@ class TestCaseMixin(TestCaseProtocol):
             critical=critical,
             value=x509.CRLDistributionPoints([dpoint]),
         )
-
-    @property
-    def crl_profiles(self) -> dict[str, dict[str, Any]]:
-        """Return a list of CRL profiles."""
-        profiles = copy.deepcopy(ca_settings.CA_CRL_PROFILES)
-        for config in profiles.values():
-            config.setdefault("OVERRIDES", {})
-
-            for data in [d for d in CERT_DATA.values() if d.get("type") == "ca"]:
-                config["OVERRIDES"][data["serial"]] = {}
-                if data.get("password"):
-                    config["OVERRIDES"][data["serial"]]["password"] = data["password"]
-
-        return profiles
 
     def freshest_crl(
         self,
