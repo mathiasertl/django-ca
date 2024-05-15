@@ -115,23 +115,22 @@ dependencies = [
     "asn1crypto>=1.5",
     "cryptography>=42",
     "django-object-actions>=4.0.0",
-    "dnspython>=2.3",
-    "idna>=3.2",
+    "dnspython>=2.5",
+    "idna>=3.4",
     "josepy>=1.13.0",
     "packaging",
     "pydantic>=2.5",
     "requests",
-    "typing-extensions>=4; python_version < '3.9'",
 ]
 
 [project.optional-dependencies]
 api = ["django-ninja>=1.1"]
 celery = ["celery>=5.3"]
 mysql = ["mysqlclient"]
-postgres = ["psycopg[c,pool]>=3"]
+postgres = ["psycopg[c,pool]>=3.1"]
 # remove psycopg3 in django-ca==2.0, also update docs/source/include/pip-extras.rst
-psycopg3 = ["psycopg[c,pool]>=3"]
-redis = ["hiredis>=2.0.0", "redis>=4.3"]
+psycopg3 = ["psycopg[c,pool]>=3.1"]
+redis = ["hiredis>=2.1.0", "redis>=4.6"]
 yaml = ["PyYAML>=6.0.0"]
 
 [project.urls]
