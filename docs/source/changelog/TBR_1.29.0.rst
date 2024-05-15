@@ -29,7 +29,7 @@ Dependencies
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Python 3.8.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
 * Increased minimum required versions to ``dnspython>=2.5``, ``hiredis>=2.1.0``, ``idna>=3.4``,
-  ``psycopg>=3.1`` and``redis>=4.6``.
+  ``psycopg>=3.1`` and ``redis>=4.6``.
 
 **********
 Python API
