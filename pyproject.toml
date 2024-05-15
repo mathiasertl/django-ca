@@ -127,10 +127,7 @@ dependencies = [
 [project.optional-dependencies]
 api = ["django-ninja>=1.1"]
 celery = ["celery>=5.3"]
-mysql = [
-    # https://github.com/PyMySQL/mysqlclient/issues/620
-    "mysqlclient<2.2"
-]
+mysql = ["mysqlclient"]
 postgres = ["psycopg[c,pool]>=3"]
 # remove psycopg3 in django-ca==2.0, also update docs/source/include/pip-extras.rst
 psycopg3 = ["psycopg[c,pool]>=3"]
