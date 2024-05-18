@@ -80,6 +80,7 @@ class SettingsModel(BaseModel):
             expires=timedelta(days=1), scope="ca", encodings=[Encoding.PEM, Encoding.DER]
         ),
     }
+    CA_DEFAULT_CA: Optional[Serial] = None
     CA_DEFAULT_ELLIPTIC_CURVE: EllipticCurveTypeAlias = ec.SECP256R1()
     CA_DEFAULT_HOSTNAME: Optional[str] = None
     CA_DEFAULT_KEY_SIZE: PowerOfTwoInt = 4096

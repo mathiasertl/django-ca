@@ -22,8 +22,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from django_ca import ca_settings
 from django_ca.acme.constants import Status
+from django_ca.conf import model_settings
 from django_ca.typehints import X509CertMixinTypeVar
 from django_ca.utils import sanitize_serial
 
@@ -129,23 +129,21 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
             When the CA named by :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` is either not found, disabled
             or not currently valid. Or, if the setting is not set, no CA is currently usable.
         """
-        if ca_settings.CA_DEFAULT_CA:
+        if (serial := model_settings.CA_DEFAULT_CA) is not None:
             now = timezone.now()
 
             try:
                 # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
-                ca = self.get(serial=ca_settings.CA_DEFAULT_CA)
+                ca = self.get(serial=serial)
             except self.model.DoesNotExist as ex:
-                raise ImproperlyConfigured(
-                    f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA}: CA not found."
-                ) from ex
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial}: CA not found.") from ex
 
             if ca.enabled is False:
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is disabled.")
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is disabled.")
             if ca.expires < now:
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is expired.")
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is expired.")
             if ca.valid_from > now:  # OK, how could this ever happen? ;-)
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {ca_settings.CA_DEFAULT_CA} is not yet valid.")
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is not yet valid.")
             return ca
 
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users

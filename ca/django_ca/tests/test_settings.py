@@ -419,23 +419,26 @@ def test_ca_default_subject(settings: SettingsWrapper) -> None:
     )
 
 
-class DefaultCATestCase(TestCase):
-    """Test the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` setting."""
+@pytest.mark.parametrize(
+    "value,parsed",
+    (
+        ("0a:bc", "ABC"),  # leading zero is stripped
+        ("0", "0"),  # single zero is *not* stripped
+        (0, "0"),
+        (107445593797734449393285726012835494904131403687, "12D206ED53306C95DE900C857B40BDA423D6BFA7"),
+        (528891388214294454525193873483541400360266179579, "5CA44F619C74689E8C02DDC42FBE51D3053B23FB"),
+    ),
+)
+def test_ca_default_ca(settings: SettingsWrapper, value: int, parsed: str) -> None:
+    """Test that a '0' serial is not stripped."""
+    settings.CA_DEFAULT_CA = value
+    assert model_settings.CA_DEFAULT_CA == parsed
 
-    def test_no_setting(self) -> None:
-        """Test empty setting."""
-        with self.settings(CA_DEFAULT_CA=""):
-            self.assertEqual(ca_settings.CA_DEFAULT_CA, "")
 
-    def test_unsanitized_setting(self) -> None:
-        """Test that values are sanitized properly."""
-        with self.settings(CA_DEFAULT_CA="0a:bc"):
-            self.assertEqual(ca_settings.CA_DEFAULT_CA, "ABC")
-
-    def test_serial_zero(self) -> None:
-        """Test that a '0' serial is not stripped."""
-        with self.settings(CA_DEFAULT_CA="0"):
-            self.assertEqual(ca_settings.CA_DEFAULT_CA, "0")
+def test_ca_default_ca_with_invalid_value(settings: SettingsWrapper) -> None:
+    """Test setting an invalid CA."""
+    with assert_improperly_configured(r"String should match pattern"):
+        settings.CA_DEFAULT_CA = "0a:bc:x"
 
 
 class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
@@ -503,12 +506,6 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         with mock.patch.dict("sys.modules", celery=None):
             msg = r"^CA_USE_CELERY set to True, but Celery is not installed$"
             with assert_improperly_configured(msg), self.settings(CA_USE_CELERY=True):
-                pass
-
-    def test_invalid_setting(self) -> None:
-        """Test setting an invalid CA."""
-        with assert_improperly_configured(r"^CA_DEFAULT_CA: ABCX: Serial contains invalid characters\.$"):
-            with self.settings(CA_DEFAULT_CA="0a:bc:x"):
                 pass
 
     def test_default_subject_with_duplicate_country(self) -> None:

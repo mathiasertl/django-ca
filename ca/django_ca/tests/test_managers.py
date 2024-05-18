@@ -22,7 +22,6 @@ from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.x509.oid import ExtensionOID, NameOID
 
-from django.test import override_settings
 from django.urls import reverse
 
 import pytest
@@ -497,11 +496,11 @@ def test_default_with_not_yet_valid(root: CertificateAuthority, settings: Settin
         CertificateAuthority.objects.default()
 
 
-@override_settings(CA_DEFAULT_CA="")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("root", "child", "ed448", "ed25519")
-def test_default_with_no_default_ca() -> None:
+def test_default_with_no_default_ca(settings: SettingsWrapper) -> None:
     """Test what is returned when **no** CA is configured as default."""
+    settings.CA_DEFAULT_CA = None
     ca = sorted(CertificateAuthority.objects.all(), key=lambda ca: (ca.expires, ca.serial))[-1]
     assert CertificateAuthority.objects.default() == ca
 

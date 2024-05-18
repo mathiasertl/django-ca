@@ -14,7 +14,6 @@
 """Keep track of internal settings for django-ca."""
 
 import os
-import re
 import typing
 from datetime import timedelta
 from typing import Any, Optional
@@ -217,14 +216,6 @@ CA_PROFILES: dict[str, dict[str, Any]] = {
         },
     },
 }
-
-# Get and sanitize default CA serial
-# NOTE: This effectively duplicates utils.sanitize_serial()
-CA_DEFAULT_CA = getattr(settings, "CA_DEFAULT_CA", "").replace(":", "").upper()
-if CA_DEFAULT_CA != "0":
-    CA_DEFAULT_CA = CA_DEFAULT_CA.lstrip("0")
-if re.search("[^0-9A-F]", CA_DEFAULT_CA):
-    raise ImproperlyConfigured(f"CA_DEFAULT_CA: {CA_DEFAULT_CA}: Serial contains invalid characters.")
 
 _CA_DEFAULT_SUBJECT = getattr(settings, "CA_DEFAULT_SUBJECT", None)
 CA_DEFAULT_SUBJECT: Optional[x509.Name] = _normalize_x509_name(_CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
