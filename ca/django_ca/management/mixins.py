@@ -315,7 +315,7 @@ class StorePrivateKeyMixin:
             action=KeyBackendAction,
             help="The key can be stored using different backends. Depending on the backend, you have to "
             "choose different options below for private keys. (default: "
-            f"{ca_settings.CA_DEFAULT_KEY_BACKEND}).",
+            f"{model_settings.CA_DEFAULT_KEY_BACKEND}).",
         )
         return group
 

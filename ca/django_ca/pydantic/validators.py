@@ -14,8 +14,9 @@
 """Validators for Pydantic models."""
 
 import base64
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, Callable, Literal, Union
+from typing import Any, Callable, Literal, TypeVar, Union
 from urllib.parse import urlsplit
 
 import idna
@@ -23,6 +24,8 @@ import idna
 from cryptography import x509
 
 from django_ca import constants
+
+T = TypeVar("T")
 
 
 def access_method_parser(value: Any) -> Any:
@@ -118,10 +121,22 @@ def key_usage_validator(value: Any) -> Any:
     return value
 
 
-def name_oid_parser(value: Any) -> Any:
+def name_oid_dotted_string_parser(value: Any) -> Any:
     """Convert human-readable NameOID values into dotted strings."""
     if value in constants.NAME_OID_TYPES:
         return constants.NAME_OID_TYPES[value].dotted_string
+    return value
+
+
+def name_oid_parser(value: Any) -> Any:
+    """Parse a NameOID string or dotted string to a x509 Object Identifier."""
+    if value in constants.NAME_OID_TYPES:
+        return constants.NAME_OID_TYPES[value]
+    if isinstance(value, str):
+        try:
+            return x509.ObjectIdentifier(value)
+        except ValueError as ex:
+            raise ValueError(f"{value}: Invalid object identifier") from ex
     return value
 
 
@@ -181,7 +196,7 @@ def tls_feature_validator(value: Union[str, x509.TLSFeatureType]) -> str:
     return value
 
 
-def unique_str_validator(value: list[str]) -> list[str]:
+def unique_validator(value: Sequence[T]) -> Sequence[T]:
     """Validate that every string in the list is unique."""
     for val in value:
         if value.count(val) > 1:

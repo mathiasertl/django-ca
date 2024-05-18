@@ -33,8 +33,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management import CommandParser  # type: ignore[attr-defined]  # false positive
 from django.utils.module_loading import import_string
 
-from django_ca import ca_settings
-from django_ca.conf import model_settings
+from django_ca.conf import KeyBackendConfigurationModel, model_settings
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
 
 if typing.TYPE_CHECKING:
@@ -92,7 +91,7 @@ class KeyBackend(
     def __init__(self, alias: str, **kwargs: Any) -> None:
         self.alias = alias
 
-        if self.alias != ca_settings.CA_DEFAULT_KEY_BACKEND:
+        if self.alias != model_settings.CA_DEFAULT_KEY_BACKEND:
             self.argparse_prefix = f"{alias.lower().replace('_', '-')}-"
             self.options_prefix = f"{alias.lower().replace('-', '_')}_"
 
@@ -329,7 +328,7 @@ class KeyBackends:
         return self._backends.backends[name]  # type: ignore[no-any-return]
 
     def __iter__(self) -> Iterator[KeyBackend[BaseModel, BaseModel, BaseModel]]:
-        for name in ca_settings.CA_KEY_BACKENDS:
+        for name in model_settings.CA_KEY_BACKENDS:
             yield self[name]
 
     def _reset(self) -> None:
@@ -338,12 +337,12 @@ class KeyBackends:
     def _get_key_backend(self, alias: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:
         """Get the key backend with the given alias."""
         try:
-            params = ca_settings.CA_KEY_BACKENDS[alias].copy()
+            configuration: KeyBackendConfigurationModel = model_settings.CA_KEY_BACKENDS[alias]
         except KeyError as ex:
             raise ValueError(f"{alias}: key backend is not configured.") from ex
 
-        backend = params.pop("BACKEND")
-        options = params.pop("OPTIONS", {})
+        backend = configuration.BACKEND
+        options = configuration.OPTIONS.copy()
         try:
             backend_cls = import_string(backend)
         except ImportError as ex:

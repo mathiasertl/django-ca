@@ -76,7 +76,7 @@ class SignCertificateMessage(BaseModel):
     )
     expires: Optional[datetime] = Field(
         description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
-        default_factory=lambda: datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES,
+        default_factory=lambda: datetime.now(tz=tz.utc) + model_settings.CA_DEFAULT_EXPIRES,
         json_schema_extra={"example": DATETIME_EXAMPLE},
     )
     extensions: Optional[list[SignCertificateExtensions]] = Field(

@@ -14,6 +14,7 @@
 """Reusable type aliases for Pydantic models."""
 
 import base64
+from collections.abc import Hashable
 from datetime import timedelta
 from typing import Annotated, Any, Callable, Optional, TypeVar, Union
 
@@ -34,7 +35,7 @@ from django_ca.pydantic.validators import (
     oid_parser,
     oid_validator,
     serial_validator,
-    unique_str_validator,
+    unique_validator,
 )
 from django_ca.typehints import AllowedHashTypes, CertificateRevocationListEncodings
 
@@ -173,7 +174,10 @@ NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any]
 
 OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
 
+UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])
+UniqueElementsTuple = Annotated[UniqueTupleTypeVar, AfterValidator(unique_validator)]
+
 # A list validated to be non-empty and have a unique set of elements.
 NonEmptyOrderedSet = Annotated[
-    NonEmptyOrderedSetTypeVar, AfterValidator(unique_str_validator), AfterValidator(non_empty_validator)
+    NonEmptyOrderedSetTypeVar, AfterValidator(unique_validator), AfterValidator(non_empty_validator)
 ]

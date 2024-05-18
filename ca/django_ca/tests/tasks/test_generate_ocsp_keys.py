@@ -22,7 +22,7 @@ from django.core.files.storage import storages
 import pytest
 from _pytest.logging import LogCaptureFixture
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_keys
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -33,7 +33,7 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 def test_generate_ocsp_keys_all(usable_cas: list[CertificateAuthority]) -> None:
     """Test creating all keys at once."""
     generate_ocsp_keys()
-    storage = storages[ca_settings.CA_DEFAULT_STORAGE_ALIAS]
+    storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
 
     for ca in usable_cas:
         assert storage.exists(f"ocsp/{ca.serial}.key") is True
@@ -54,7 +54,7 @@ def test_generate_ocsp_keys_with_error(caplog: LogCaptureFixture) -> None:
 def test_with_invalid_password(usable_pwd: CertificateAuthority) -> None:
     """Test passing an invalid password."""
     password = base64.b64encode(b"wrong").decode()
-    storage = storages[ca_settings.CA_DEFAULT_STORAGE_ALIAS]
+    storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
     generate_ocsp_keys([usable_pwd.serial], {usable_pwd.serial: {"password": password}})
     assert storage.exists(f"ocsp/{usable_pwd.serial}.key") is False
     assert storage.exists(f"ocsp/{usable_pwd.serial}.pem") is False

@@ -38,7 +38,7 @@ from ca.settings_utils import (
     update_database_setting_from_environment,
 )
 from django_ca import ca_settings, conf
-from django_ca.conf import model_settings
+from django_ca.conf import KeyBackendConfigurationModel, model_settings
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -313,18 +313,58 @@ def test_load_secret_key_with_no_secret_key_file() -> None:
         load_secret_key(None, None)
 
 
+def test_ca_default_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+    """Test error when CA_DEFAULT_KEY_BACKEND refers to a backend that is *not* configured."""
+    assert "other-backend" not in model_settings.CA_KEY_BACKENDS
+    with assert_improperly_configured(r"The default key backend is not configured\."):
+        settings.CA_DEFAULT_KEY_BACKEND = "other-backend"
+
+
+def test_ca_default_name_order(settings: SettingsWrapper) -> None:
+    """Test variant values that can be used for a default name."""
+    settings.CA_DEFAULT_NAME_ORDER = ("dnQualifier", "2.5.4.6", NameOID.COMMON_NAME)
+    assert model_settings.CA_DEFAULT_NAME_ORDER == (
+        NameOID.DN_QUALIFIER,
+        NameOID.COUNTRY_NAME,
+        NameOID.COMMON_NAME,
+    )
+
+
+@pytest.mark.parametrize(
+    "value,msg",
+    (
+        (True, r"Input should be a valid tuple"),
+        (("invalid-oid",), "invalid-oid: Invalid object identifier"),
+    ),
+)
+def test_ca_default_name_order_with_invalid_value(settings: SettingsWrapper, value: Any, msg: str) -> None:
+    """Test invalid values for a default name order."""
+    with assert_improperly_configured(msg):
+        settings.CA_DEFAULT_NAME_ORDER = value
+
+
+def test_ca_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+    """Test that the default key backend is configured."""
+    # Note: setting value to None (=removing the value) does not currently call settings_changed, so our
+    # settings module is not reloaded.
+    settings.CA_KEY_BACKENDS = {}
+    assert model_settings.CA_KEY_BACKENDS == {
+        "default": KeyBackendConfigurationModel(
+            BACKEND="django_ca.key_backends.storages.StoragesBackend", OPTIONS={"storage_alias": "django-ca"}
+        )
+    }
+
+
 def test_ca_passwords(settings: SettingsWrapper) -> None:
     """Test type coercion and sanitization of keys."""
-    settings.CA_PASSWORDS = {
-        "AA:BB:CC": "secret-str",
-        "11:22:33": b"secret-bytes",
-    }
-    assert ca_settings.CA_PASSWORDS == {"112233": b"secret-bytes", "AABBCC": b"secret-str"}
+    settings.CA_PASSWORDS = {"AA:BB:CC": "secret-str", "01:23:45": b"secret-bytes"}
+    # leading 0 in second serial are stripped, as they never end up in the database in the first place
+    assert model_settings.CA_PASSWORDS == {"AABBCC": b"secret-str", "12345": b"secret-bytes"}
 
 
 def test_ca_passwords_with_invalid_type(settings: SettingsWrapper) -> None:
     """Test setting an invalid password type."""
-    with assert_improperly_configured(r"CA_PASSWORDS: None: value must be bytes or str\."):
+    with assert_improperly_configured(r"Input should be a valid bytes"):
         settings.CA_PASSWORDS = {"AA:BB:CC": None}
 
 
@@ -465,6 +505,15 @@ def test_ca_default_dsa_signature_hash_algorithm_with_invalid_value(settings: Se
         settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = "foo"
 
 
+def test_ca_default_expires_with_invalid_value(settings: SettingsWrapper) -> None:
+    """Test invalid ``CA_DEFAULT_EXPIRES``."""
+    with assert_improperly_configured(r"Input should be a valid timedelta, invalid digit in duration"):
+        settings.CA_DEFAULT_EXPIRES = "foo"
+
+    with assert_improperly_configured(r"Input should be greater than or equal to 1 day"):
+        settings.CA_DEFAULT_EXPIRES = timedelta(days=-3)
+
+
 class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
     """Test various invalid configurations."""
 
@@ -480,28 +529,10 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
             with self.settings(CA_DEFAULT_ELLIPTIC_CURVE="foo"):
                 pass
 
-    def test_default_name_order(self) -> None:
-        """Test invalid values for a default name order."""
-        with assert_improperly_configured(r"^CA_DEFAULT_NAME_ORDER: setting must be a tuple\.$"):
-            with self.settings(CA_DEFAULT_NAME_ORDER=True):
-                pass
-
     def test_min_default_key_size(self) -> None:
         """Test ``A_DEFAULT_KEY_SIZE``."""
         with assert_improperly_configured("CA_DEFAULT_KEY_SIZE cannot be lower then 1024"):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
-                pass
-
-    def test_default_expires(self) -> None:
-        """Test invalid ``CA_DEFAULT_EXPIRES``."""
-        with assert_improperly_configured(r"^CA_DEFAULT_EXPIRES: foo: Must be int or timedelta$"):
-            with self.settings(CA_DEFAULT_EXPIRES="foo"):
-                pass
-
-        with assert_improperly_configured(
-            r"^CA_DEFAULT_EXPIRES: -3 days, 0:00:00: Must have positive value$"
-        ):
-            with self.settings(CA_DEFAULT_EXPIRES=timedelta(days=-3)):
                 pass
 
     def test_use_celery(self) -> None:

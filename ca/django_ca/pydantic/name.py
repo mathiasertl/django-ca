@@ -58,7 +58,7 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
         },
     )
 
-    oid: Annotated[OIDType, BeforeValidator(validators.name_oid_parser)] = Field(
+    oid: Annotated[OIDType, BeforeValidator(validators.name_oid_dotted_string_parser)] = Field(
         title="Object identifier",
         description=_NAME_ATTRIBUTE_OID_DESCRIPTION,
         json_schema_extra={"example": NameOID.COMMON_NAME.dotted_string},

@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import CreatePrivateKeyOptions, StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
@@ -46,16 +46,16 @@ def test_private_key_options_with_invalid_key_size(key_size: int) -> None:
 def test_invalid_storages_alias(settings: SettingsWrapper) -> None:
     """Test configuring an invalid storage alias."""
     settings.CA_KEY_BACKENDS = {
-        ca_settings.CA_DEFAULT_KEY_BACKEND: {
+        model_settings.CA_DEFAULT_KEY_BACKEND: {
             "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "invalid"},
         },
     }
     with pytest.raises(
         ValueError,
-        match=rf"^{ca_settings.CA_DEFAULT_KEY_BACKEND}: invalid: Storage alias is not configured\.$",
+        match=rf"^{model_settings.CA_DEFAULT_KEY_BACKEND}: invalid: Storage alias is not configured\.$",
     ):
-        key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND]
+        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
 
 
 def test_eq(settings: SettingsWrapper) -> None:
@@ -92,7 +92,7 @@ def test_is_usable_no_path_configured(root: CertificateAuthority) -> None:
 def test_get_ocsp_key_size_with_invalid_key_type(usable_ec: CertificateAuthority) -> None:
     """Test getting key size for a non-RSA/DSA CA."""
     with pytest.raises(ValueError, match=r"^This function should only be called with RSA/DSA CAs\.$"):
-        key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND].get_ocsp_key_size(
+        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND].get_ocsp_key_size(
             usable_ec, UsePrivateKeyOptions(password=None)
         )
 
@@ -102,6 +102,6 @@ def test_get_ocsp_key_elliptic_curve_invalid_key_type(usable_root: CertificateAu
     with pytest.raises(
         ValueError, match=r"^This function should only be called with EllipticCurve-based CAs\.$"
     ):
-        key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND].get_ocsp_key_elliptic_curve(
+        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND].get_ocsp_key_elliptic_curve(
             usable_root, UsePrivateKeyOptions(password=None)
         )

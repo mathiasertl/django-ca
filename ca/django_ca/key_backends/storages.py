@@ -39,7 +39,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
@@ -107,7 +107,7 @@ class UsePrivateKeyOptions(BaseModel):
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
             if ca is not None:
-                if settings_password := ca_settings.CA_PASSWORDS.get(ca.serial):
+                if settings_password := model_settings.CA_PASSWORDS.get(ca.serial):
                     return settings_password
 
         return password

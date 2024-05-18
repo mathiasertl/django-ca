@@ -29,6 +29,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.urls import reverse
 
 from django_ca import ca_settings, constants, typehints
+from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, HASH_ALGORITHM_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.extensions import parse_extension
@@ -122,7 +123,7 @@ class Profile:
             except KeyError as ex:
                 raise ValueError(f"{algorithm}: Unknown hash algorithm.") from ex
 
-        self.expires = expires or ca_settings.CA_DEFAULT_EXPIRES
+        self.expires = expires or model_settings.CA_DEFAULT_EXPIRES
         self.add_crl_url = add_crl_url
         self.add_issuer_url = add_issuer_url
         self.add_ocsp_url = add_ocsp_url

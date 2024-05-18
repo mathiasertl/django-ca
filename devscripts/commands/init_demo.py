@@ -35,6 +35,7 @@ from devscripts.commands import DevCommand
 from devscripts.out import bold
 
 if typing.TYPE_CHECKING:
+    from django_ca.conf import SettingsProxy
     from django_ca.models import CertificateAuthority
     from django_ca.tests.base.typehints import CertFixtureData, FixtureData
 
@@ -131,7 +132,11 @@ class Command(DevCommand):
             print(f"  * {bold(cmd)}")
 
     def save_fixture_data(  # pylint: disable=too-many-locals
-        self, ca_dir: str, ca_settings: types.ModuleType, fixture_data: "FixtureData"
+        self,
+        ca_dir: str,
+        ca_settings: types.ModuleType,
+        model_settings: "SettingsProxy",
+        fixture_data: "FixtureData",
     ) -> dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""
         # pylint: disable=import-outside-toplevel  # see handle() imports
@@ -152,7 +157,7 @@ class Command(DevCommand):
                 name = cert_data["name"]
                 cert = CertificateAuthority(
                     name=name,
-                    key_backend_alias=ca_settings.CA_DEFAULT_KEY_BACKEND,
+                    key_backend_alias=model_settings.CA_DEFAULT_KEY_BACKEND,
                     key_backend_options={"path": f"{name}.key"},
                 )
                 loaded_cas[cert.name] = cert
@@ -219,6 +224,7 @@ class Command(DevCommand):
         from django.core.management import call_command as manage
 
         from django_ca import ca_settings
+        from django_ca.conf import model_settings
         from django_ca.key_backends.storages import UsePrivateKeyOptions
 
         # pylint: enable=import-outside-toplevel
@@ -255,8 +261,8 @@ class Command(DevCommand):
         self.ok()
 
         print("Saving fixture data to database.", end="")
-        loaded_cas = self.save_fixture_data(settings.CA_DIR, ca_settings, fixture_data)
+        loaded_cas = self.save_fixture_data(settings.CA_DIR, ca_settings, model_settings, fixture_data)
         self.ok()
 
-        ca_storage = storages[ca_settings.CA_DEFAULT_STORAGE_ALIAS]
+        ca_storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
         self.output_info(settings.CA_DIR, ca_storage, loaded_cas, fixture_data["certs"], args.base_url)

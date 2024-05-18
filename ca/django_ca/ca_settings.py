@@ -14,7 +14,6 @@
 """Keep track of internal settings for django-ca."""
 
 import os
-from datetime import timedelta
 from typing import Any, Optional
 
 from cryptography import x509
@@ -207,28 +206,6 @@ CA_PROFILES: dict[str, dict[str, Any]] = {
 _CA_DEFAULT_SUBJECT = getattr(settings, "CA_DEFAULT_SUBJECT", None)
 CA_DEFAULT_SUBJECT: Optional[x509.Name] = _normalize_x509_name(_CA_DEFAULT_SUBJECT, "CA_DEFAULT_SUBJECT")
 
-_CA_DEFAULT_NAME_ORDER = (
-    x509.NameOID.DN_QUALIFIER,
-    x509.NameOID.COUNTRY_NAME,
-    x509.NameOID.POSTAL_CODE,
-    x509.NameOID.STATE_OR_PROVINCE_NAME,
-    x509.NameOID.LOCALITY_NAME,
-    x509.NameOID.DOMAIN_COMPONENT,
-    x509.NameOID.ORGANIZATION_NAME,
-    x509.NameOID.ORGANIZATIONAL_UNIT_NAME,
-    x509.NameOID.TITLE,
-    x509.NameOID.COMMON_NAME,
-    x509.NameOID.USER_ID,
-    x509.NameOID.EMAIL_ADDRESS,
-    x509.NameOID.SERIAL_NUMBER,
-)
-CA_DEFAULT_NAME_ORDER: tuple[x509.ObjectIdentifier, ...] = getattr(
-    settings, "CA_DEFAULT_NAME_ORDER", _CA_DEFAULT_NAME_ORDER
-)
-if not isinstance(CA_DEFAULT_NAME_ORDER, (list, tuple)):
-    raise ImproperlyConfigured("CA_DEFAULT_NAME_ORDER: setting must be a tuple.")
-CA_DEFAULT_NAME_ORDER = tuple(_normalize_name_oid(name_oid) for name_oid in CA_DEFAULT_NAME_ORDER)
-
 # Add ability just override/add some profiles
 CA_DEFAULT_PROFILE = getattr(settings, "CA_DEFAULT_PROFILE", "webserver")
 
@@ -251,36 +228,6 @@ for profile_name, profile in CA_PROFILES.items():
 
 if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
-
-# Load and process CA_PASSWORDS
-CA_PASSWORDS: dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})
-for _ca_passwords_key, _ca_passwords_value in CA_PASSWORDS.items():
-    if isinstance(_ca_passwords_value, str):
-        CA_PASSWORDS[_ca_passwords_key] = _ca_passwords_value.encode("utf-8")
-    elif not isinstance(_ca_passwords_value, bytes):
-        raise ImproperlyConfigured(f"CA_PASSWORDS: {_ca_passwords_value}: value must be bytes or str.")
-CA_PASSWORDS = {key.upper().replace(":", ""): value for key, value in CA_PASSWORDS.items()}
-
-CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
-if isinstance(CA_DEFAULT_EXPIRES, int):
-    CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
-elif not isinstance(CA_DEFAULT_EXPIRES, timedelta):
-    raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must be int or timedelta")
-if CA_DEFAULT_EXPIRES <= timedelta():
-    raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must have positive value")
-
-CA_DEFAULT_KEY_BACKEND: str = getattr(settings, "CA_DEFAULT_KEY_BACKEND", "default")
-CA_DEFAULT_STORAGE_ALIAS: str = getattr(settings, "CA_DEFAULT_STORAGE_ALIAS", "django-ca")
-CA_KEY_BACKENDS: dict[str, dict[str, Any]] = getattr(
-    settings,
-    "CA_KEY_BACKENDS",
-    {
-        CA_DEFAULT_KEY_BACKEND: {
-            "BACKEND": constants.DEFAULT_STORAGE_BACKEND,
-            "OPTIONS": {"storage_alias": CA_DEFAULT_STORAGE_ALIAS},
-        }
-    },
-)
 
 # Old file storage settings
 # pragma: only django-ca<2.0: CA_FILE_* settings can be removed in django-ca==2.0

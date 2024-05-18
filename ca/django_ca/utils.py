@@ -369,12 +369,12 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
         <Name(C=AT,O=Example Org,OU=Example Org Unit,CN=example.com)>
     """
     attributes: list[x509.NameAttribute] = []
-    if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
+    if any(name_attr.oid not in model_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
         raise ValueError(f"{format_name_rfc4514(base)}: Unsortable name")
-    if any(name_attr.oid not in ca_settings.CA_DEFAULT_NAME_ORDER for name_attr in update):
+    if any(name_attr.oid not in model_settings.CA_DEFAULT_NAME_ORDER for name_attr in update):
         raise ValueError(f"{format_name_rfc4514(update)}: Unsortable name")
 
-    for oid in ca_settings.CA_DEFAULT_NAME_ORDER:
+    for oid in model_settings.CA_DEFAULT_NAME_ORDER:
         update_attributes = update.get_attributes_for_oid(oid)
         if update_attributes:
             if oid in MULTIPLE_OIDS:
@@ -885,7 +885,7 @@ def parse_expires(expires: Expires = None) -> datetime:
         # of the parent CA.
         return expires.replace(second=0, microsecond=0).astimezone(tz.utc)
 
-    return now + ca_settings.CA_DEFAULT_EXPIRES
+    return now + model_settings.CA_DEFAULT_EXPIRES
 
 
 def parse_key_curve(value: str) -> ec.EllipticCurve:
@@ -965,7 +965,7 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
 def get_storage() -> Storage:
     """Get the django-ca storage class."""
     try:
-        return storages[ca_settings.CA_DEFAULT_STORAGE_ALIAS]
+        return storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
     except InvalidStorageError:
         warnings.warn(
             "Support for CA_FILE_STORAGE is deprecated and will be removed in django-ca==2.0.",

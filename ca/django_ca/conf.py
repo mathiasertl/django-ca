@@ -20,6 +20,7 @@ from typing import Annotated, Any, Optional
 from annotated_types import Ge, Le, MinLen
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -27,14 +28,16 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.conf import settings as _settings
 from django.core.exceptions import ImproperlyConfigured
 
+from django_ca import constants
 from django_ca.pydantic.type_aliases import (
     CertificateRevocationListEncodingTypeAlias,
     EllipticCurveTypeAlias,
     HashAlgorithmTypeAlias,
     PowerOfTwoInt,
     Serial,
+    UniqueElementsTuple,
 )
-from django_ca.pydantic.validators import timedelta_as_number_parser
+from django_ca.pydantic.validators import name_oid_parser, timedelta_as_number_parser
 from django_ca.typehints import CertificateRevocationListScopes, ParsableKeyType
 
 CRLEncodings = Annotated[frozenset[CertificateRevocationListEncodingTypeAlias], MinLen(1)]
@@ -59,10 +62,17 @@ class CertificateRevocationListProfile(BaseModel):
     OVERRIDES: dict[Serial, CertificateRevocationListProfileOverride] = Field(default_factory=dict)
 
 
+class KeyBackendConfigurationModel(BaseModel):
+    """Base model for a key backend configuration."""
+
+    BACKEND: str
+    OPTIONS: dict[str, Any] = Field(default_factory=dict)
+
+
 class SettingsModel(BaseModel):
     """Pydantic model defining available settings."""
 
-    model_config = ConfigDict(from_attributes=True, frozen=True)
+    model_config = ConfigDict(from_attributes=True, frozen=True, arbitrary_types_allowed=True)
 
     CA_ACME_ORDER_VALIDITY: Annotated[TimedeltaAsDays, Ge(timedelta(seconds=60)), Le(timedelta(days=1))] = (
         timedelta(hours=1)
@@ -85,17 +95,55 @@ class SettingsModel(BaseModel):
     CA_DEFAULT_CA: Optional[Serial] = None
     CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA256()
     CA_DEFAULT_ELLIPTIC_CURVE: EllipticCurveTypeAlias = ec.SECP256R1()
+    CA_DEFAULT_EXPIRES: Annotated[TimedeltaAsDays, Ge(timedelta(days=1))] = timedelta(days=365)
     CA_DEFAULT_HOSTNAME: Optional[str] = None
+    CA_DEFAULT_KEY_BACKEND: str = "default"
     CA_DEFAULT_KEY_SIZE: PowerOfTwoInt = 4096
+    CA_DEFAULT_NAME_ORDER: UniqueElementsTuple[
+        tuple[Annotated[x509.ObjectIdentifier, BeforeValidator(name_oid_parser)], ...]
+    ] = (
+        x509.NameOID.DN_QUALIFIER,
+        x509.NameOID.COUNTRY_NAME,
+        x509.NameOID.POSTAL_CODE,
+        x509.NameOID.STATE_OR_PROVINCE_NAME,
+        x509.NameOID.LOCALITY_NAME,
+        x509.NameOID.DOMAIN_COMPONENT,
+        x509.NameOID.ORGANIZATION_NAME,
+        x509.NameOID.ORGANIZATIONAL_UNIT_NAME,
+        x509.NameOID.TITLE,
+        x509.NameOID.COMMON_NAME,
+        x509.NameOID.USER_ID,
+        x509.NameOID.EMAIL_ADDRESS,
+        x509.NameOID.SERIAL_NUMBER,
+    )
     CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = "RSA"
     CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA512()
+    CA_DEFAULT_STORAGE_ALIAS: str = "django-ca"
     CA_ENABLE_ACME: bool = True
     CA_ENABLE_REST_API: bool = False
+    CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
     CA_MIN_KEY_SIZE: PowerOfTwoInt = 2048
     CA_NOTIFICATION_DAYS: tuple[int, ...] = (14, 7, 3, 1)
 
     # The minimum value comes from the fact that the renewal task only runs every hour by default.
     CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = timedelta(days=1)
+
+    CA_PASSWORDS: dict[Serial, bytes] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def check_ca_key_backends(self) -> "SettingsModel":
+        """Set the default key backend if not set, and validate that the default key backend is configured."""
+        if not self.CA_KEY_BACKENDS:
+            # pylint: disable-next=unsupported-assignment-operation  # pylint this this is a Field()
+            self.CA_KEY_BACKENDS[self.CA_DEFAULT_KEY_BACKEND] = KeyBackendConfigurationModel(
+                BACKEND=constants.DEFAULT_STORAGE_BACKEND,
+                OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
+            )
+
+        # pylint: disable-next=unsupported-membership-test  # pylint this this is a Field()
+        elif self.CA_DEFAULT_KEY_BACKEND not in self.CA_KEY_BACKENDS:
+            raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
+        return self
 
     @model_validator(mode="after")
     def check_min_key_size(self) -> "SettingsModel":

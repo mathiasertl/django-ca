@@ -734,7 +734,7 @@ class CertificateAuthority(X509CertMixin):
         algorithm = validate_public_key_parameters(self.key_type, algorithm)
 
         if expires is None:
-            expires = timezone.now() + ca_settings.CA_DEFAULT_EXPIRES
+            expires = timezone.now() + model_settings.CA_DEFAULT_EXPIRES
             expires = expires.replace(second=0, microsecond=0)
         if extensions is None:
             extensions = []

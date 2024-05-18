@@ -28,6 +28,8 @@ Settings
 django-ca specific settings where moved to a Pydantic model, providing better and more consistent setting
 validation on start up and more type safety at runtime.
 
+* ``CA_DEFAULT_EXPIRES``, the default expiry time for certificates created *without* ACMEv2, now has a default
+  value of 365 days.
 * ``ACME_ACCOUNT_REQUIRES_CONTACT`` was removed. This setting never had any effect, it is configured for each
   CA individually.
 

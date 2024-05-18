@@ -35,7 +35,8 @@ from django.urls import reverse
 import pytest
 from _pytest.fixtures import SubRequest
 
-from django_ca import ca_settings, constants
+from django_ca import constants
+from django_ca.conf import model_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
 from django_ca.tests.base.utils import crl_distribution_points, distribution_point, uri
@@ -276,7 +277,7 @@ def load_ca(
 
     ca = CertificateAuthority(
         name=name,
-        key_backend_alias=ca_settings.CA_DEFAULT_KEY_BACKEND,
+        key_backend_alias=model_settings.CA_DEFAULT_KEY_BACKEND,
         key_backend_options={"path": f"{name}.key"},
         parent=parent,
         **kwargs,

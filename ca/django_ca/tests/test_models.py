@@ -47,7 +47,6 @@ from django.utils import timezone
 import pytest
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import not_valid_after, not_valid_before
@@ -898,7 +897,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             cert = self.ca.sign(key_backend_options, csr, subject=subject)
 
         self.assertBasicCert(cert)
-        self.assertEqual(not_valid_after(cert), now + ca_settings.CA_DEFAULT_EXPIRES)
+        self.assertEqual(not_valid_after(cert), now + model_settings.CA_DEFAULT_EXPIRES)
         self.assertEqual(cert.subject, subject)
         self.assertIsInstance(cert.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertExtensionDict(
@@ -917,7 +916,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         cn = "example.com"
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
         algorithm = hashes.SHA256()
-        expires = datetime.now(tz=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+        expires = datetime.now(tz=tz.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
         with self.assertSignCertSignals():
             cert = self.ca.sign(

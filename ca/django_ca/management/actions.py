@@ -29,7 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
 from django_ca.key_backends import KeyBackend, key_backends
@@ -245,8 +245,8 @@ class KeyBackendAction(SingleValueAction[str, KeyBackend[BaseModel, BaseModel, B
     """Action for configuring the key backend to use for a new certificate authority."""
 
     def __init__(self, **kwargs: Any) -> None:
-        kwargs.setdefault("choices", list(ca_settings.CA_KEY_BACKENDS))
-        kwargs.setdefault("default", key_backends[ca_settings.CA_DEFAULT_KEY_BACKEND])
+        kwargs.setdefault("choices", list(model_settings.CA_KEY_BACKENDS))
+        kwargs.setdefault("default", key_backends[model_settings.CA_DEFAULT_KEY_BACKEND])
         super().__init__(**kwargs)
 
     def parse_value(self, value: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:

@@ -36,7 +36,7 @@ import pytest
 from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import ca_settings, constants, utils
+from django_ca import constants, utils
 from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
@@ -606,7 +606,7 @@ class ParseExpiresTestCase(TestCase):
     def test_no_args(self) -> None:
         """Test invocation with no args."""
         self.assertEqual(
-            parse_expires(), datetime(2023, 4, 30, 12, 30, tzinfo=tz.utc) + ca_settings.CA_DEFAULT_EXPIRES
+            parse_expires(), datetime(2023, 4, 30, 12, 30, tzinfo=tz.utc) + model_settings.CA_DEFAULT_EXPIRES
         )
 
     def test_int(self) -> None:

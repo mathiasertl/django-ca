@@ -540,7 +540,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         general_group.add_argument(
             "--expires",
             action=actions.ExpiresAction,
-            help=f"Sign the certificate for DAYS days (default: {ca_settings.CA_DEFAULT_EXPIRES})",
+            help=f"Sign the certificate for DAYS days (default: {model_settings.CA_DEFAULT_EXPIRES})",
         )
         general_group.add_argument(
             "--watch",
