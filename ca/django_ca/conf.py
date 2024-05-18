@@ -17,8 +17,8 @@ from collections.abc import Iterable
 from datetime import timedelta
 from typing import Annotated, Any, Optional
 
-from annotated_types import MinLen
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from annotated_types import Ge, Le, MinLen
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -32,9 +32,11 @@ from django_ca.pydantic.type_aliases import (
     PowerOfTwoInt,
     Serial,
 )
+from django_ca.pydantic.validators import timedelta_as_number_parser
 from django_ca.typehints import CertificateRevocationListScopes, ParsableKeyType
 
 CRLEncodings = Annotated[frozenset[CertificateRevocationListEncodingTypeAlias], MinLen(1)]
+TimedeltaAsDays = Annotated[timedelta, BeforeValidator(timedelta_as_number_parser("days"))]
 
 
 class CertificateRevocationListProfileOverride(BaseModel):
@@ -60,6 +62,16 @@ class SettingsModel(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
+    CA_ACME_ORDER_VALIDITY: Annotated[TimedeltaAsDays, Ge(timedelta(seconds=60)), Le(timedelta(days=1))] = (
+        timedelta(hours=1)
+    )
+    CA_ACME_DEFAULT_CERT_VALIDITY: Annotated[
+        TimedeltaAsDays, Ge(timedelta(days=1)), Le(timedelta(days=365))
+    ] = timedelta(days=90)
+    CA_ACME_MAX_CERT_VALIDITY: Annotated[TimedeltaAsDays, Ge(timedelta(days=1)), Le(timedelta(days=365))] = (
+        timedelta(days=90)
+    )
+
     CA_CRL_PROFILES: dict[str, CertificateRevocationListProfile] = {
         "user": CertificateRevocationListProfile(
             expires=timedelta(days=1), scope="user", encodings=[Encoding.PEM, Encoding.DER]
@@ -76,7 +88,9 @@ class SettingsModel(BaseModel):
     CA_ENABLE_REST_API: bool = False
     CA_MIN_KEY_SIZE: PowerOfTwoInt = 2048
     CA_NOTIFICATION_DAYS: tuple[int, ...] = (14, 7, 3, 1)
-    CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: timedelta = timedelta(days=1)
+
+    # The minimum value comes from the fact that the renewal task only runs every hour by default.
+    CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = timedelta(days=1)
 
     @model_validator(mode="after")
     def check_min_key_size(self) -> "SettingsModel":

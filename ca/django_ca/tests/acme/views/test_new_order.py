@@ -29,8 +29,8 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.acme.messages import NewOrder
+from django_ca.conf import model_settings
 from django_ca.models import AcmeAuthorization, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -56,7 +56,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
             resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
 
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {
@@ -109,7 +109,7 @@ class AcmeNewOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[NewOrder], TestC
             resp = self.acme(self.url, msg, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.CREATED, resp.content)
 
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {

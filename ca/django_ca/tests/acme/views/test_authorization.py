@@ -26,7 +26,7 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.models import AcmeAuthorization, AcmeChallenge, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -89,7 +89,7 @@ class AcmeAuthorizationViewTestCase(
             ],
         )
 
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp_data,
             {
@@ -140,7 +140,7 @@ class AcmeAuthorizationViewTestCase(
             ],
         )
 
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp_data,
             {
@@ -170,7 +170,7 @@ class AcmeAuthorizationViewTestCase(
         challenges = self.authz.challenges.filter(status=AcmeChallenge.STATUS_VALID)
         self.assertEqual(len(challenges), 0)
 
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {

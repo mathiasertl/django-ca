@@ -417,7 +417,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         if timezone.is_naive(expires):
             expires = timezone.make_aware(expires)
     else:
-        expires = datetime.now(tz=tz.utc) + ca_settings.ACME_DEFAULT_CERT_VALIDITY
+        expires = datetime.now(tz=tz.utc) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
 
     csr = acme_cert.parse_csr()
 

@@ -327,69 +327,96 @@ def test_ca_passwords_with_invalid_type(settings: SettingsWrapper) -> None:
         settings.CA_PASSWORDS = {"AA:BB:CC": None}
 
 
-class SettingsTestCase(TestCase):
-    """Test some standard settings."""
+def test_ca_profiles_with_removed_profile(settings: SettingsWrapper) -> None:
+    """Test removing a profile by setting it to None."""
+    assert "client" in ca_settings.CA_PROFILES  # initial assumption
+    settings.CA_PROFILES = {"client": None}
+    assert "client" not in ca_settings.CA_PROFILES
 
-    def test_none_profiles(self) -> None:
-        """Test removing a profile by setting it to None."""
-        self.assertIn("client", ca_settings.CA_PROFILES)
 
-        with self.settings(CA_PROFILES={"client": None}):
-            self.assertNotIn("client", ca_settings.CA_PROFILES)
+def test_ca_profile_update_description(settings: SettingsWrapper) -> None:
+    """Test adding a profile in settings."""
+    desc = "test description"
+    settings.CA_PROFILES = {"client": {"desc": desc}}
+    assert ca_settings.CA_PROFILES["client"]["desc"] == desc
 
-    def test_ca_profile_update(self) -> None:
-        """Test adding a profile in settings."""
-        desc = "test description"
-        with self.settings(CA_PROFILES={"client": {"desc": desc}}):
-            self.assertEqual(ca_settings.CA_PROFILES["client"]["desc"], desc)
 
-    def test_acme_order_validity(self) -> None:
-        """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
-        with self.settings(CA_ACME_ORDER_VALIDITY=1):
-            self.assertEqual(ca_settings.ACME_ORDER_VALIDITY, timedelta(days=1))
+def test_ca_acme_order_validity_as_int(settings: SettingsWrapper) -> None:
+    """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
+    settings.CA_ACME_ORDER_VALIDITY = 1
+    assert model_settings.CA_ACME_ORDER_VALIDITY == timedelta(days=1)
 
-    def test_acme_default_validity(self) -> None:
-        """Test that CA_DEFAULT_CERT_VALIDITY can be set to an int."""
-        with self.settings(CA_ACME_DEFAULT_CERT_VALIDITY=1):
-            self.assertEqual(ca_settings.ACME_DEFAULT_CERT_VALIDITY, timedelta(days=1))
 
-    def test_acme_max_validity(self) -> None:
-        """Test that CA_MAX_CERT_VALIDITY can be set to an int."""
-        with self.settings(CA_ACME_MAX_CERT_VALIDITY=1):
-            self.assertEqual(ca_settings.ACME_MAX_CERT_VALIDITY, timedelta(days=1))
+@pytest.mark.parametrize(
+    "value,message",
+    (
+        (timedelta(seconds=59), "Input should be greater than or equal to 1 minute"),
+        (timedelta(days=2), "Input should be less than or equal to 1 day"),
+    ),
+)
+def test_ca_acme_order_validity_limits(settings: SettingsWrapper, value: timedelta, message: str) -> None:
+    """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
+    with assert_improperly_configured(message):
+        settings.CA_ACME_ORDER_VALIDITY = value
 
-    def test_use_celery(self) -> None:
-        """Test CA_USE_CELERY setting."""
-        with self.settings(CA_USE_CELERY=False):
-            self.assertFalse(ca_settings.CA_USE_CELERY)
-        with self.settings(CA_USE_CELERY=True):
-            self.assertTrue(ca_settings.CA_USE_CELERY)
-        with self.settings(CA_USE_CELERY=None):
-            self.assertTrue(ca_settings.CA_USE_CELERY)
 
-        # mock a missing Celery installation
-        with mock.patch.dict("sys.modules", celery=None), self.settings(CA_USE_CELERY=None):
-            self.assertFalse(ca_settings.CA_USE_CELERY)
-        with mock.patch.dict("sys.modules", celery=None), self.settings(CA_USE_CELERY=False):
-            self.assertFalse(ca_settings.CA_USE_CELERY)
+@pytest.mark.parametrize("setting", ("CA_ACME_DEFAULT_CERT_VALIDITY", "CA_ACME_MAX_CERT_VALIDITY"))
+def test_timedelta_settings_as_int(settings: SettingsWrapper, setting: str) -> None:
+    """Test that CA_DEFAULT_CERT_VALIDITY can be set to an int."""
+    setattr(settings, setting, 1)
+    assert getattr(model_settings, setting) == timedelta(days=1)
 
-    def test_ocsp_responder_certificate_renewal(self) -> None:
-        """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
-        with self.settings(CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL=600):
-            self.assertEqual(model_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL, timedelta(seconds=600))
 
-    def test_ca_default_subject(self) -> None:
-        """Test CA_DEFAULT_SUBJECT setting."""
-        with self.settings(CA_DEFAULT_SUBJECT=(("C", "AT"), ("ST", "Vienna"))):
-            self.assertEqual(
-                ca_settings.CA_DEFAULT_SUBJECT,
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
-                    ]
-                ),
-            )
+@pytest.mark.parametrize("setting", ("CA_ACME_DEFAULT_CERT_VALIDITY", "CA_ACME_MAX_CERT_VALIDITY"))
+@pytest.mark.parametrize(
+    "value,message",
+    (
+        (timedelta(seconds=1), "Input should be greater than or equal to 1 day"),
+        (timedelta(days=366), "Input should be less than or equal to 365 days"),
+    ),
+)
+def test_ca_acme_cert_validity_limits(
+    settings: SettingsWrapper, setting: str, value: timedelta, message: str
+) -> None:
+    """Test limits for CA_ACME_DEFAULT_CERT_VALIDITY and CA_ACME_MAX_CERT_VALIDITY."""
+    with assert_improperly_configured(message):
+        setattr(settings, setting, value)
+
+
+def test_use_celery(settings: SettingsWrapper) -> None:
+    """Test CA_USE_CELERY setting."""
+    settings.CA_USE_CELERY = False
+    assert ca_settings.CA_USE_CELERY is False
+    settings.CA_USE_CELERY = True
+    assert ca_settings.CA_USE_CELERY is True
+    settings.CA_USE_CELERY = None
+    assert ca_settings.CA_USE_CELERY is True  # because Celery is installed
+
+    # mock a missing Celery installation
+    with mock.patch.dict("sys.modules", celery=None):
+        settings.CA_USE_CELERY = None
+        assert ca_settings.CA_USE_CELERY is False
+
+    with mock.patch.dict("sys.modules", celery=None):
+        settings.CA_USE_CELERY = False
+        assert ca_settings.CA_USE_CELERY is False
+
+
+def test_ocsp_responder_certificate_renewal(settings: SettingsWrapper) -> None:
+    """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
+    settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = 7200
+    assert model_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL == timedelta(seconds=7200)
+
+
+def test_ca_default_subject(settings: SettingsWrapper) -> None:
+    """Test CA_DEFAULT_SUBJECT setting."""
+    settings.CA_DEFAULT_SUBJECT = (("C", "AT"), ("ST", "Vienna"))
+    assert ca_settings.CA_DEFAULT_SUBJECT == x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
+        ]
+    )
 
 
 class DefaultCATestCase(TestCase):

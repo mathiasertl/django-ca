@@ -23,8 +23,8 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
 from django_ca.acme.errors import AcmeUnauthorized
+from django_ca.conf import model_settings
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -56,7 +56,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {
@@ -84,7 +84,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {
@@ -112,7 +112,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {
@@ -139,7 +139,7 @@ class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         resp = self.acme(self.url, self.message, kid=self.kid)
         self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
         self.assertAcmeResponse(resp)
-        expires = timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
         self.assertEqual(
             resp.json(),
             {

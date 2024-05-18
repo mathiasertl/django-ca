@@ -48,7 +48,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
-from django_ca import ca_settings
 from django_ca.acme.errors import AcmeBadCSR, AcmeException, AcmeForbidden, AcmeMalformed, AcmeUnauthorized
 from django_ca.acme.messages import CertificateRequest, NewOrder
 from django_ca.acme.responses import (
@@ -708,7 +707,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
 
         if not_before and not_before < now:
             raise AcmeMalformed(message="Certificate cannot be valid before now.")
-        if not_after and not_after > now + ca_settings.ACME_MAX_CERT_VALIDITY:
+        if not_after and not_after > now + model_settings.CA_ACME_MAX_CERT_VALIDITY:
             raise AcmeMalformed(message="Certificate cannot be valid that long.")
         if not_before and not_after and not_before > not_after:
             raise AcmeMalformed(message="notBefore must be before notAfter.")

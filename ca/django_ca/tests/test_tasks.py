@@ -39,6 +39,7 @@ import requests_mock
 from freezegun import freeze_time
 
 from django_ca import ca_settings, tasks
+from django_ca.conf import model_settings
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -425,7 +426,9 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
-        self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertEqual(
+            self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        )
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
         self.assertEqual(self.acme_cert.cert.profile, ca_settings.CA_DEFAULT_PROFILE)
 
@@ -451,7 +454,9 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
         )
-        self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertEqual(
+            self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        )
         self.assertIn(self.acme_cert.cert.cn, [self.hostname, hostname2])
 
     @override_tmpcadir()
@@ -504,7 +509,9 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
-        self.assertEqual(self.acme_cert.cert.expires, timezone.now() + ca_settings.ACME_DEFAULT_CERT_VALIDITY)
+        self.assertEqual(
+            self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        )
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
         self.assertEqual(self.acme_cert.cert.profile, "client")
 

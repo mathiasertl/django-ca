@@ -115,7 +115,7 @@ def acme_slug() -> str:
 
 def acme_order_expires() -> datetime:
     """Default function for the expiry of an ACME order."""
-    return timezone.now() + ca_settings.ACME_ORDER_VALIDITY
+    return timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
 
 
 def acme_token() -> str:

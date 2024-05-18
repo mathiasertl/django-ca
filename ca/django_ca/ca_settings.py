@@ -285,11 +285,6 @@ for _ca_passwords_key, _ca_passwords_value in CA_PASSWORDS.items():
         raise ImproperlyConfigured(f"CA_PASSWORDS: {_ca_passwords_value}: value must be bytes or str.")
 CA_PASSWORDS = {key.upper().replace(":", ""): value for key, value in CA_PASSWORDS.items()}
 
-# ACME settings
-ACME_ORDER_VALIDITY: timedelta = getattr(settings, "CA_ACME_ORDER_VALIDITY", timedelta(hours=1))
-ACME_MAX_CERT_VALIDITY = getattr(settings, "CA_ACME_MAX_CERT_VALIDITY", timedelta(days=90))
-ACME_DEFAULT_CERT_VALIDITY = getattr(settings, "CA_ACME_DEFAULT_CERT_VALIDITY", timedelta(days=90))
-
 CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm("CA_DEFAULT_SIGNATURE_HASH_ALGORITHM", "SHA-512")
 CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm(
     "CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256"
@@ -300,15 +295,8 @@ if isinstance(CA_DEFAULT_EXPIRES, int):
     CA_DEFAULT_EXPIRES = timedelta(days=CA_DEFAULT_EXPIRES)
 elif not isinstance(CA_DEFAULT_EXPIRES, timedelta):
     raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must be int or timedelta")
-if isinstance(ACME_MAX_CERT_VALIDITY, int):
-    ACME_MAX_CERT_VALIDITY = timedelta(days=ACME_MAX_CERT_VALIDITY)
-if isinstance(ACME_DEFAULT_CERT_VALIDITY, int):
-    ACME_DEFAULT_CERT_VALIDITY = timedelta(days=ACME_DEFAULT_CERT_VALIDITY)
-if isinstance(ACME_ORDER_VALIDITY, int):
-    ACME_ORDER_VALIDITY = timedelta(days=ACME_ORDER_VALIDITY)
 if CA_DEFAULT_EXPIRES <= timedelta():
     raise ImproperlyConfigured(f"CA_DEFAULT_EXPIRES: {CA_DEFAULT_EXPIRES}: Must have positive value")
-
 
 CA_DEFAULT_KEY_BACKEND: str = getattr(settings, "CA_DEFAULT_KEY_BACKEND", "default")
 CA_DEFAULT_STORAGE_ALIAS: str = getattr(settings, "CA_DEFAULT_STORAGE_ALIAS", "django-ca")
@@ -323,7 +311,6 @@ CA_KEY_BACKENDS: dict[str, dict[str, Any]] = getattr(
     },
 )
 
-
 # Old file storage settings
 # pragma: only django-ca<2.0: CA_FILE_* settings can be removed in django-ca==2.0
 CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
@@ -336,7 +323,6 @@ CA_FILE_STORAGE_KWARGS = getattr(
         "directory_permissions_mode": 0o700,
     },
 )
-
 
 # Decide if we should use Celery or not
 CA_USE_CELERY = getattr(settings, "CA_USE_CELERY", None)

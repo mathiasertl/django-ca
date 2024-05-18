@@ -14,7 +14,8 @@
 """Validators for Pydantic models."""
 
 import base64
-from typing import Any, Union
+from datetime import timedelta
+from typing import Any, Callable, Literal, Union
 from urllib.parse import urlsplit
 
 import idna
@@ -145,6 +146,20 @@ def oid_validator(value: str) -> str:
     except ValueError as ex:
         raise ValueError(f"{value}: Invalid object identifier") from ex
     return value
+
+
+def timedelta_as_number_parser(unit: Literal["seconds", "hours", "days"] = "seconds") -> Callable[[Any], Any]:
+    """Validator for timedeltas.
+
+    .. WARNING:: This validator differs in that it has to be called with a unit for timedeltas.
+    """
+
+    def validator(value: Any) -> Any:
+        if isinstance(value, (float, int)):
+            return timedelta(**{unit: value})  # type: ignore[misc]  # mypy complains that unit is not a str
+        return value
+
+    return validator
 
 
 def tls_feature_validator(value: Union[str, x509.TLSFeatureType]) -> str:

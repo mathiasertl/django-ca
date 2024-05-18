@@ -17,7 +17,7 @@ from django.test import TestCase, override_settings
 
 from freezegun import freeze_time
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.assertions import assert_command_error, assert_removed_in_200
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -46,7 +46,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(self.cert.created, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(
-            acme_order.expires, TIMESTAMPS["everything_valid_naive"] + ca_settings.ACME_ORDER_VALIDITY
+            acme_order.expires, TIMESTAMPS["everything_valid_naive"] + model_settings.CA_ACME_ORDER_VALIDITY
         )
         self.assertIsNone(acme_challenge.validated)
 
@@ -64,7 +64,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
             self.assertEqual(self.cert.created, TIMESTAMPS["everything_valid"])
             self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid"])
             self.assertEqual(
-                acme_order.expires, TIMESTAMPS["everything_valid"] + ca_settings.ACME_ORDER_VALIDITY
+                acme_order.expires, TIMESTAMPS["everything_valid"] + model_settings.CA_ACME_ORDER_VALIDITY
             )
             self.assertIsNone(self.ca.revoked_date)
             self.assertIsNone(self.ca.compromised)
@@ -97,7 +97,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(self.cert.compromised, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid_naive"])
         self.assertEqual(
-            acme_order.expires, TIMESTAMPS["everything_valid_naive"] + ca_settings.ACME_ORDER_VALIDITY
+            acme_order.expires, TIMESTAMPS["everything_valid_naive"] + model_settings.CA_ACME_ORDER_VALIDITY
         )
         self.assertEqual(acme_order.not_before, now)
         self.assertEqual(acme_order.not_after, now)
@@ -121,7 +121,7 @@ class ConvertTimestampsTestCase(TestCaseMixin, TestCase):
             self.assertEqual(self.cert.compromised, TIMESTAMPS["everything_valid"])
             self.assertEqual(acme_account.created, TIMESTAMPS["everything_valid"])
             self.assertEqual(
-                acme_order.expires, TIMESTAMPS["everything_valid"] + ca_settings.ACME_ORDER_VALIDITY
+                acme_order.expires, TIMESTAMPS["everything_valid"] + model_settings.CA_ACME_ORDER_VALIDITY
             )
             self.assertEqual(acme_order.not_before, TIMESTAMPS["everything_valid"])
             self.assertEqual(acme_order.not_after, TIMESTAMPS["everything_valid"])
