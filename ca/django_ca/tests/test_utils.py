@@ -21,6 +21,7 @@ import unittest
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -637,29 +638,28 @@ class ParseExpiresTestCase(TestCase):
             parse_expires(datetime(2023, 4, 30))
 
 
-class ParseEncodingTestCase(TestCase):
+@pytest.mark.parametrize(
+    "value,expected",
+    (
+        ("PEM", Encoding.PEM),
+        ("DER", Encoding.DER),
+        ("ASN1", Encoding.DER),
+        ("OpenSSH", Encoding.OpenSSH),
+        (Encoding.PEM, Encoding.PEM),
+    ),
+)
+def test_parse_encoding(value: Any, expected: Encoding) -> None:
     """Test :py:func:`django_ca.utils.parse_encoding`."""
+    assert parse_encoding(value) == expected
 
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertEqual(parse_encoding(), Encoding.PEM)
-        self.assertEqual(parse_encoding("PEM"), Encoding.PEM)
-        self.assertEqual(parse_encoding(Encoding.PEM), Encoding.PEM)
 
-        self.assertEqual(parse_encoding("DER"), Encoding.DER)
-        self.assertEqual(parse_encoding("ASN1"), Encoding.DER)
-        self.assertEqual(parse_encoding(Encoding.DER), Encoding.DER)
+def test_parse_encoding_with_invalid_values() -> None:
+    """Test some error cases."""
+    with pytest.raises(ValueError, match="^Unknown encoding: foo$"):
+        parse_encoding("foo")
 
-        self.assertEqual(parse_encoding("OpenSSH"), Encoding.OpenSSH)
-        self.assertEqual(parse_encoding(Encoding.OpenSSH), Encoding.OpenSSH)
-
-    def test_error(self) -> None:
-        """Test some error cases."""
-        with self.assertRaisesRegex(ValueError, "^Unknown encoding: foo$"):
-            parse_encoding("foo")
-
-        with self.assertRaisesRegex(ValueError, "^Unknown type passed: bool$"):
-            parse_encoding(True)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="^Unknown type passed: bool$"):
+        parse_encoding(True)  # type: ignore[arg-type]  # what we're testing
 
 
 class AddColonsTestCase(TestCase):

@@ -19,7 +19,6 @@ from datetime import timedelta
 from typing import Any, Optional
 
 from cryptography import x509
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.conf import global_settings, settings
@@ -264,8 +263,6 @@ for profile_name, profile in CA_PROFILES.items():
 
 if CA_DEFAULT_PROFILE not in CA_PROFILES:
     raise ImproperlyConfigured(f"{CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
-
-CA_DEFAULT_ENCODING: Encoding = getattr(settings, "CA_DEFAULT_ENCODING", Encoding.PEM)
 
 # Load and process CA_PASSWORDS
 CA_PASSWORDS: dict[str, bytes] = getattr(settings, "CA_PASSWORDS", {})

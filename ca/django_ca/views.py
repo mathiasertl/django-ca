@@ -116,7 +116,6 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                     "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
                 )
 
-            encoding = parse_encoding(self.type)
             key_backend_options = self.get_key_backend_options(ca)
             crl = ca.get_crl(
                 key_backend_options,
@@ -124,7 +123,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                 scope=self.scope,
                 include_issuing_distribution_point=self.include_issuing_distribution_point,
             )
-            crl = crl.public_bytes(encoding)
+            crl = crl.public_bytes(self.type)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type

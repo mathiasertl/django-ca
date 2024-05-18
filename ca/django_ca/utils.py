@@ -838,7 +838,7 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
     return x509.DNSName(dns_validator(name))  # validator may raise ValueError itself
 
 
-def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
+def parse_encoding(value: Union[str, Encoding]) -> Encoding:
     """Parse a value to a valid encoding.
 
     This function accepts either a member of
@@ -846,15 +846,11 @@ def parse_encoding(value: Optional[Union[str, Encoding]] = None) -> Encoding:
     no value is passed, it will assume ``PEM`` as a default value. Note that ``"ASN1"`` is treated as an alias
     for ``"DER"``.
 
-        >>> parse_encoding()
-        <Encoding.PEM: 'PEM'>
         >>> parse_encoding('DER')
         <Encoding.DER: 'DER'>
         >>> parse_encoding(Encoding.PEM)
         <Encoding.PEM: 'PEM'>
     """
-    if value is None:
-        return ca_settings.CA_DEFAULT_ENCODING
     if isinstance(value, Encoding):
         return value
     if isinstance(value, str):
