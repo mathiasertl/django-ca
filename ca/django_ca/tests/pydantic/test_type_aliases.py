@@ -202,9 +202,10 @@ def test_json_serializable_bytes(value: bytes, encoded: str) -> None:
     (
         ("a", "A"),
         ("abc", "ABC"),
-        ("0", "0"),
-        ("0123456789abcdef", "0123456789ABCDEF"),  # all characters, lowercased
-        ("0123456789ABCDEF", "0123456789ABCDEF"),  # all characters
+        ("0", "0"),  # single zero is not stripped
+        ("1234567890abcdef", "1234567890ABCDEF"),  # all characters, lowercased
+        ("1234567890ABCDEF", "1234567890ABCDEF"),  # all characters
+        ("0abc", "ABC"),  # leading zero is stripped
         ("a" * 40, "A" * 40),  # maximum length
         (12345678, "BC614E"),
     ),

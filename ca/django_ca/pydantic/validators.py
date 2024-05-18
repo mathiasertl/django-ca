@@ -148,6 +148,14 @@ def oid_validator(value: str) -> str:
     return value
 
 
+def serial_validator(value: str) -> str:
+    """Validator for serials."""
+    value = value.replace(":", "").upper()
+    if value != "0":
+        value = value.lstrip("0")
+    return value
+
+
 def timedelta_as_number_parser(unit: Literal["seconds", "hours", "days"] = "seconds") -> Callable[[Any], Any]:
     """Validator for timedeltas.
 

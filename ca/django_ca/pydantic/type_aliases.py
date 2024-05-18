@@ -33,6 +33,7 @@ from django_ca.pydantic.validators import (
     non_empty_validator,
     oid_parser,
     oid_validator,
+    serial_validator,
     unique_str_validator,
 )
 from django_ca.typehints import AllowedHashTypes, CertificateRevocationListEncodings
@@ -143,8 +144,7 @@ PowerOfTwoInt = Annotated[int, AfterValidator(is_power_two_validator)]
 Serial = Annotated[
     str,
     BeforeValidator(int_to_hex_parser),
-    AfterValidator(lambda value: value.replace(":", "")),
-    AfterValidator(str.upper),
+    AfterValidator(serial_validator),
     Field(min_length=1, max_length=40, pattern="^[A-F0-9]+$"),
 ]
 
