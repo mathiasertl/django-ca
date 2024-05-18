@@ -460,11 +460,6 @@ CA_ENABLE_ACME
    Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
    either via the admin interface or via :doc:`the command-line interface </cli/cas>`.
 
-CA_ACME_ACCOUNT_REQUIRES_CONTACT
-   Default: ``True``
-
-   Set to false to allow creating ACMEv2 accounts without an email address.
-
 CA_ACME_DEFAULT_CERT_VALIDITY
    Default: ``timedelta(days=90)``
 

@@ -21,6 +21,16 @@ Profiles
 * **BACKWARDS INCOMPATIBLE:** Removed support for the ``cn_in_san`` parameter in profiles (deprecated since
   1.28.0).
 
+********
+Settings
+********
+
+django-ca specific settings where moved to a Pydantic model, providing better and more consistent setting
+validation on start up and more type safety at runtime.
+
+* ``ACME_ACCOUNT_REQUIRES_CONTACT`` was removed. This setting never had any effect, it is configured for each
+  CA individually.
+
 ************
 Dependencies
 ************
