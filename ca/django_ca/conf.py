@@ -20,6 +20,7 @@ from typing import Annotated, Any, Optional
 from annotated_types import Ge, Le, MinLen
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -29,6 +30,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django_ca.pydantic.type_aliases import (
     CertificateRevocationListEncodingTypeAlias,
     EllipticCurveTypeAlias,
+    HashAlgorithmTypeAlias,
     PowerOfTwoInt,
     Serial,
 )
@@ -81,10 +83,12 @@ class SettingsModel(BaseModel):
         ),
     }
     CA_DEFAULT_CA: Optional[Serial] = None
+    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA256()
     CA_DEFAULT_ELLIPTIC_CURVE: EllipticCurveTypeAlias = ec.SECP256R1()
     CA_DEFAULT_HOSTNAME: Optional[str] = None
     CA_DEFAULT_KEY_SIZE: PowerOfTwoInt = 4096
     CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = "RSA"
+    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA512()
     CA_ENABLE_ACME: bool = True
     CA_ENABLE_REST_API: bool = False
     CA_MIN_KEY_SIZE: PowerOfTwoInt = 2048

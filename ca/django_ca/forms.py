@@ -29,6 +29,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import ca_settings, constants, fields
+from django_ca.conf import model_settings
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.querysets import CertificateAuthorityQuerySet
 from django_ca.widgets import ProfileWidget
@@ -131,7 +132,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     algorithm = forms.ChoiceField(
         required=False,
         label=_("Signature hash algorithm"),
-        initial=constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)],
+        initial=constants.HASH_ALGORITHM_NAMES[type(model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)],
         choices=HASH_ALGORITHM_CHOICES,
         help_text=_(
             "SHA-512 is fine for RSA/EC-based certificate authorities, choose None for Ed448/Ed25519-based "

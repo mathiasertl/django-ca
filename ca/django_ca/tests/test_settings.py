@@ -17,6 +17,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 from cryptography import x509
@@ -441,6 +442,29 @@ def test_ca_default_ca_with_invalid_value(settings: SettingsWrapper) -> None:
         settings.CA_DEFAULT_CA = "0a:bc:x"
 
 
+@pytest.mark.parametrize("value,expected", (("SHA-224", hashes.SHA224), ("SHA3/384", hashes.SHA3_384)))
+def test_ca_default_signature_hash_algorithm(
+    settings: SettingsWrapper, value: Any, expected: type[hashes.HashAlgorithm]
+) -> None:
+    """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
+    settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = value
+    assert isinstance(model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, expected)
+
+
+def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: SettingsWrapper) -> None:
+    """Test invalid ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
+    msg = r"Input should be an instance of HashAlgorithm"
+    with assert_improperly_configured(msg):
+        settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = "foo"
+
+
+def test_ca_default_dsa_signature_hash_algorithm_with_invalid_value(settings: SettingsWrapper) -> None:
+    """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
+    msg = r"Input should be an instance of HashAlgorithm"
+    with assert_improperly_configured(msg):
+        settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = "foo"
+
+
 class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
     """Test various invalid configurations."""
 
@@ -466,23 +490,6 @@ class ImproperlyConfiguredTestCase(TestCaseMixin, TestCase):
         """Test ``A_DEFAULT_KEY_SIZE``."""
         with assert_improperly_configured("CA_DEFAULT_KEY_SIZE cannot be lower then 1024"):
             with self.settings(CA_MIN_KEY_SIZE=1024, CA_DEFAULT_KEY_SIZE=512):
-                pass
-
-    def test_default_signature_hash_algorithm(self) -> None:
-        """Test invalid ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
-        with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="SHA-224"):
-            self.assertIsInstance(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, hashes.SHA224)
-
-        msg = r"^CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: foo: Unknown hash algorithm\.$"
-        with assert_improperly_configured(msg):
-            with self.settings(CA_DEFAULT_SIGNATURE_HASH_ALGORITHM="foo"):
-                pass
-
-    def test_default_dsa_signature_hash_algorithm(self) -> None:
-        """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
-        msg = r"^CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: foo: Unknown hash algorithm\.$"
-        with assert_improperly_configured(msg):
-            with self.settings(CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM="foo"):
                 pass
 
     def test_default_expires(self) -> None:

@@ -176,9 +176,9 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
 
     def add_arguments(self, parser: CommandParser) -> None:
         # Load all supported key backend classes so that they can add command-line arguments.
-        default = constants.HASH_ALGORITHM_NAMES[type(ca_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
+        default = constants.HASH_ALGORITHM_NAMES[type(model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
         dsa_default = constants.HASH_ALGORITHM_NAMES[
-            type(ca_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
+            type(model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
         ]
 
         general_group = self.add_general_args(parser)

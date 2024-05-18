@@ -14,7 +14,6 @@
 """Keep track of internal settings for django-ca."""
 
 import os
-import typing
 from datetime import timedelta
 from typing import Any, Optional
 
@@ -28,9 +27,6 @@ from django.utils.translation import gettext_lazy as _
 # IMPORTANT: Do **not** import anything but django_ca.constants/deprecation here, or you risk circular
 # imports.
 from django_ca import constants
-
-if typing.TYPE_CHECKING:
-    from django_ca.typehints import AllowedHashTypes, HashAlgorithms
 
 
 def _check_name(name: x509.Name, hint: str) -> None:
@@ -100,14 +96,6 @@ def _normalize_name_oid(value: Any) -> x509.ObjectIdentifier:
                 raise ImproperlyConfigured(f"{kex.args[0]}: Unknown attribute type.") from vex
 
     raise ImproperlyConfigured(f"{value}: Must be a x509.ObjectIdentifier or str.")
-
-
-def _get_hash_algorithm(setting: str, default: "HashAlgorithms") -> "AllowedHashTypes":
-    raw_value: "HashAlgorithms" = getattr(settings, setting, default)
-    try:
-        return constants.HASH_ALGORITHM_TYPES[raw_value]()
-    except KeyError as ex2:
-        raise ImproperlyConfigured(f"{setting}: {raw_value}: Unknown hash algorithm.") from ex2
 
 
 CA_PROFILES: dict[str, dict[str, Any]] = {
@@ -272,11 +260,6 @@ for _ca_passwords_key, _ca_passwords_value in CA_PASSWORDS.items():
     elif not isinstance(_ca_passwords_value, bytes):
         raise ImproperlyConfigured(f"CA_PASSWORDS: {_ca_passwords_value}: value must be bytes or str.")
 CA_PASSWORDS = {key.upper().replace(":", ""): value for key, value in CA_PASSWORDS.items()}
-
-CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm("CA_DEFAULT_SIGNATURE_HASH_ALGORITHM", "SHA-512")
-CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = _get_hash_algorithm(
-    "CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM", "SHA-256"
-)
 
 CA_DEFAULT_EXPIRES: timedelta = getattr(settings, "CA_DEFAULT_EXPIRES", timedelta(days=730))
 if isinstance(CA_DEFAULT_EXPIRES, int):
