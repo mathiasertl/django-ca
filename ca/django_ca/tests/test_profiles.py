@@ -675,7 +675,7 @@ def test_init_none_extension() -> None:
 
 def test_init_no_subject() -> None:
     """Test with no default subject."""
-    # doesn't really occur in the wild, because ca_settings updates CA_PROFILES with the default
+    # doesn't really occur in the wild, because model_settings updates CA_PROFILES with the default
     # subject. But it still seems sensible to support this
     default_subject = (("CN", "testcase"),)
 

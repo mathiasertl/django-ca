@@ -132,11 +132,7 @@ class Command(DevCommand):
             print(f"  * {bold(cmd)}")
 
     def save_fixture_data(  # pylint: disable=too-many-locals
-        self,
-        ca_dir: str,
-        ca_settings: types.ModuleType,
-        model_settings: "SettingsProxy",
-        fixture_data: "FixtureData",
+        self, ca_dir: str, model_settings: "SettingsProxy", fixture_data: "FixtureData"
     ) -> dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""
         # pylint: disable=import-outside-toplevel  # see handle() imports
@@ -171,7 +167,7 @@ class Command(DevCommand):
                 csr_parsed = load_der_x509_csr(csr)
                 csr_pem = csr_parsed.public_bytes(Encoding.PEM).decode("ascii")
 
-                profile = cert_data.get("profile", ca_settings.CA_DEFAULT_PROFILE)
+                profile = cert_data.get("profile", model_settings.CA_DEFAULT_PROFILE)
                 cert = Certificate(ca=loaded_cas[cert_data["ca"]], csr=csr_pem, profile=profile)
 
             pub_path = os.path.join(ca_dir, cert_data["pub_filename"])
@@ -223,7 +219,6 @@ class Command(DevCommand):
         from django.conf import settings
         from django.core.management import call_command as manage
 
-        from django_ca import ca_settings
         from django_ca.conf import model_settings
         from django_ca.key_backends.storages import UsePrivateKeyOptions
 
@@ -261,7 +256,7 @@ class Command(DevCommand):
         self.ok()
 
         print("Saving fixture data to database.", end="")
-        loaded_cas = self.save_fixture_data(settings.CA_DIR, ca_settings, model_settings, fixture_data)
+        loaded_cas = self.save_fixture_data(settings.CA_DIR, model_settings, fixture_data)
         self.ok()
 
         ca_storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]

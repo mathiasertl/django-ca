@@ -16,6 +16,7 @@
 import copy
 from collections.abc import Iterable
 from datetime import timedelta
+from importlib.util import find_spec
 from typing import Annotated, Any, Optional, cast
 
 from annotated_types import Ge, Le, MinLen
@@ -245,6 +246,7 @@ class SettingsModel(BaseModel):
     CA_PROFILES: dict[str, dict[str, Any]] = Field(
         default_factory=lambda: copy.deepcopy(_DEFAULT_CA_PROFILES)
     )
+    CA_USE_CELERY: Annotated[bool, Field(default_factory=lambda: find_spec("celery") is not None)]
 
     @classmethod
     def _check_name(cls, name: x509.Name, hint: str) -> None:
@@ -332,6 +334,20 @@ class SettingsModel(BaseModel):
                 else:
                     profiles[name] = config
             return profiles
+        return value
+
+    @field_validator("CA_USE_CELERY", mode="before")
+    @classmethod
+    def validate_ca_use_celery(cls, value: Any) -> Any:
+        """Validate that CA_USE_CELERY is not set if Celery is not installed, set if the value is not set."""
+        spec = find_spec("celery")
+        if value is True and spec is None:
+            raise ValueError("CA_USE_CELERY set to True, but Celery is not installed")
+
+        if value is None:
+            # NOTE: The validator is only called if CA_USE_CELERY is explicitly set. The default value if the
+            # field is **not** set at all is set in the default_factory of the model fields Field() function.
+            return spec is not None
         return value
 
     @model_validator(mode="after")

@@ -225,8 +225,8 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         self.assertCRL(response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm)
 
     @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
-    def test_password_with_ca_settings(self) -> None:
-        """Test getting a CRL with a password with CA_SETTINGS."""
+    def test_password_with_ca_password_setting(self) -> None:
+        """Test getting a CRL with a password with CA_PASSWORDS."""
         ca = self.cas["pwd"]
 
         # getting CRL from view directly works due to CA_PASSWORDS having a password

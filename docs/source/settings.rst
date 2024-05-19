@@ -460,12 +460,14 @@ CA_ENABLE_ACME
    Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
    either via the admin interface or via :doc:`the command-line interface </cli/cas>`.
 
+.. _CA_ACME_DEFAULT_CERT_VALIDITY:
+
 CA_ACME_DEFAULT_CERT_VALIDITY
    Default: ``timedelta(days=90)``
 
    A ``timedelta`` representing the default validity time any certificate issued via ACME is valid.
 
-.. _settings-acme-max-cert-validity:
+.. _CA_ACME_MAX_CERT_VALIDITY:
 
 CA_ACME_MAX_CERT_VALIDITY
    Default: ``timedelta(days=90)``
@@ -474,7 +476,7 @@ CA_ACME_MAX_CERT_VALIDITY
    protocol allows for clients to request a non-default validity time, but certbot currently does not expose
    this feature.
 
-.. _settings-acme-order-validity:
+.. _CA_ACME_ORDER_VALIDITY:
 
 CA_ACME_ORDER_VALIDITY
    Default: ``1``

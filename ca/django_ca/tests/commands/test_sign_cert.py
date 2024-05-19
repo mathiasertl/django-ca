@@ -566,7 +566,7 @@ def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> N
     assert_signature([pwd], cert)
 
 
-def test_encrypted_ca_with_ca_settings(
+def test_encrypted_ca_with_settings(
     usable_pwd: CertificateAuthority, rfc4514_subject: str, settings: SettingsWrapper
 ) -> None:
     """Sign a certificate with an encrypted CA, with the password in CA_PASSWORDS."""

@@ -879,7 +879,7 @@ class MergeX509NamesTestCase(TestCase):
 
     def test_full_merge(self) -> None:
         """Test a basic merge."""
-        # Order here matches the order from ca_settings.CA_DEFAULT_NAME_ORDER
+        # Order here matches the order from model_settings.CA_DEFAULT_NAME_ORDER
         expected = [self.cc1, self.org1, self.ou1, self.common_name1, self.email1]
 
         self.assertMerged([self.cc1, self.org1, self.ou1], [self.common_name1, self.email1], expected)

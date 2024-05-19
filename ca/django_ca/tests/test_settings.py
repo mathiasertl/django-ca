@@ -12,7 +12,7 @@
 # <http://www.gnu.org/licenses/>.
 
 
-"""Test cases for the ``ca_settings`` module."""
+"""Test cases for ``conf.model_settings``."""
 
 import os
 from datetime import timedelta
@@ -25,7 +25,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ImproperlyConfigured
-from django.test import TestCase
+from django.core.signals import setting_changed
 
 import pytest
 from pytest_django.fixtures import SettingsWrapper
@@ -37,11 +37,10 @@ from ca.settings_utils import (
     load_settings_from_files,
     update_database_setting_from_environment,
 )
-from django_ca import ca_settings, conf
+from django_ca import conf
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
-from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cn, country, state
 
 
@@ -619,32 +618,46 @@ def test_ca_profiles_with_invalid_values(settings: SettingsWrapper, value: Any, 
         settings.CA_PROFILES = value
 
 
-def test_use_celery(settings: SettingsWrapper) -> None:
+def test_ca_use_celery(settings: SettingsWrapper) -> None:
     """Test CA_USE_CELERY setting."""
     settings.CA_USE_CELERY = False
-    assert ca_settings.CA_USE_CELERY is False
+    assert model_settings.CA_USE_CELERY is False
     settings.CA_USE_CELERY = True
-    assert ca_settings.CA_USE_CELERY is True
+    assert model_settings.CA_USE_CELERY is True
+
     settings.CA_USE_CELERY = None
-    assert ca_settings.CA_USE_CELERY is True  # because Celery is installed
+    assert model_settings.CA_USE_CELERY is True  # because Celery is installed
 
-    # mock a missing Celery installation
+
+def test_ca_use_celery_is_not_set(settings: SettingsWrapper) -> None:
+    """Test CA_USE_CELERY if it is NOT set in settings."""
+    # NOTE: deleting a setting does not currently trigger the settings_changed signal, so we trigger it
+    # manually
+    # pylint: disable=protected-access  # for settings.
+    delattr(settings, "CA_USE_CELERY")
+    setting_changed.send(sender=settings._wrapped.__class__, setting="CA_USE_CELERY", value=None, enter=True)
+    assert model_settings.CA_USE_CELERY is True  # because Celery is installed
+
+    # Trigger signal again just to be sure
+    settings.CA_USE_CELERY = True
+    setting_changed.send(sender=settings._wrapped.__class__, setting="CA_USE_CELERY", value=None, enter=False)
+
+
+@pytest.mark.parametrize("value", (False, None))
+def test_ca_use_celery_is_falsy_with_celery_not_installed(settings: SettingsWrapper, value: Any) -> None:
+    """Test behavior for CA_USE_CELERY if celery is not installed."""
     with mock.patch.dict("sys.modules", celery=None):
-        settings.CA_USE_CELERY = None
-        assert ca_settings.CA_USE_CELERY is False
-
-    with mock.patch.dict("sys.modules", celery=None):
-        settings.CA_USE_CELERY = False
-        assert ca_settings.CA_USE_CELERY is False
+        settings.CA_USE_CELERY = value
+        assert model_settings.CA_USE_CELERY is False
 
 
-def test_ca_use_celery_with_celery_not_installed(settings: SettingsWrapper) -> None:
+def test_ca_use_celery_is_true_with_celery_not_installed(settings: SettingsWrapper) -> None:
     """Test that CA_USE_CELERY=True and a missing Celery installation throws an error."""
     # Setting sys.modules['celery'] (modules cache) to None will cause the next import of that module
     # to trigger an import error:
     #   https://medium.com/python-pandemonium/how-to-test-your-imports-1461c1113be1
     #   https://docs.python.org/3.8/reference/import.html#the-module-cache
-    msg = r"^CA_USE_CELERY set to True, but Celery is not installed$"
+    msg = r"Value error, CA_USE_CELERY set to True, but Celery is not installed"
     with mock.patch.dict("sys.modules", celery=None):
         with assert_improperly_configured(msg):
             settings.CA_USE_CELERY = True

@@ -445,7 +445,7 @@ NAME_OID_NAMES = MappingProxyType(
 # * https://www.ibm.com/docs/en/ibm-mq/7.5?topic=certificates-distinguished-names - OU and DC
 # * multiple_ous cert from the test suite.
 #
-# WARNING: sync any updates here to ca_settings._check_name().
+# WARNING: sync any updates here to model_settings.SettingsModel._check_name().
 #: OIDs that can occur multiple times in a certificate
 MULTIPLE_OIDS = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.STREET_ADDRESS)
 

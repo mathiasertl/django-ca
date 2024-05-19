@@ -21,9 +21,8 @@ import typing
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
-from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
@@ -78,34 +77,6 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
             ca.extensions[ExtensionOID.KEY_USAGE],
         ]
         assert_extensions(ca, root_extensions)
-
-
-class OverrideSettingsFuncTestCase(TestCase):
-    """Test function override."""
-
-    @override_settings(CA_MIN_KEY_SIZE=256)
-    def test_basic(self) -> None:
-        """Test that we see the overwritten key size."""
-        self.assertEqual(model_settings.CA_MIN_KEY_SIZE, 256)
-
-
-@override_settings(CA_MIN_KEY_SIZE=512)
-class OverrideSettingsClassOnlyTestCase(TestCaseMixin, TestCase):
-    """Test that override_settings also updates ca_settings."""
-
-    def test_basic(self) -> None:
-        """Test that we see the overwritten key size."""
-        self.assertEqual(model_settings.CA_MIN_KEY_SIZE, 512)
-
-    @override_settings(CA_MIN_KEY_SIZE=256)
-    def test_double(self) -> None:
-        """Test multiple layers of override_settings."""
-        self.assertEqual(model_settings.CA_MIN_KEY_SIZE, 256)
-
-        with self.settings(CA_MIN_KEY_SIZE=1024):
-            self.assertEqual(model_settings.CA_MIN_KEY_SIZE, 1024)
-
-        self.assertEqual(model_settings.CA_MIN_KEY_SIZE, 256)
 
 
 class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):

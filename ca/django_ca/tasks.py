@@ -31,7 +31,6 @@ from cryptography.x509.oid import ExtensionOID
 from django.db import transaction
 from django.utils import timezone
 
-from django_ca import ca_settings
 from django_ca.acme.validation import validate_dns_01
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
@@ -79,7 +78,7 @@ def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
-    if ca_settings.CA_USE_CELERY is True and eager is False:
+    if model_settings.CA_USE_CELERY is True and eager is False:
         return task.delay(*args, **kwargs)
 
     return task(*args, **kwargs)

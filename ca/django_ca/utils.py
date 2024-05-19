@@ -974,8 +974,8 @@ def get_storage() -> Storage:
             RemovedInDjangoCA200Warning,
             stacklevel=2,
         )
-        CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
-        CA_FILE_STORAGE_KWARGS = getattr(
+        ca_file_storage = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
+        ca_file_storage_kwargs = getattr(
             settings,
             "CA_FILE_STORAGE_KWARGS",
             {
@@ -984,8 +984,8 @@ def get_storage() -> Storage:
                 "directory_permissions_mode": 0o700,
             },
         )
-        ca_storage_cls = get_storage_class(CA_FILE_STORAGE)
-        return ca_storage_cls(**CA_FILE_STORAGE_KWARGS)
+        ca_storage_cls = get_storage_class(ca_file_storage)
+        return ca_storage_cls(**ca_file_storage_kwargs)
 
 
 def file_exists(path: str) -> bool:

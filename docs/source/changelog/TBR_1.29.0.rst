@@ -28,10 +28,21 @@ Settings
 django-ca specific settings where moved to a Pydantic model, providing better and more consistent setting
 validation on start up and more type safety at runtime.
 
-* ``CA_DEFAULT_EXPIRES``, the default expiry time for certificates created *without* ACMEv2, now has a default
-  value of 365 days.
-* ``ACME_ACCOUNT_REQUIRES_CONTACT`` was removed. This setting never had any effect, it is configured for each
-  CA individually.
+* :ref:`settings-ca-default-expires`, the default expiry time for certificates created *without* ACMEv2, now
+  has a default value of 365 days. The minimum value is now also one day (instead of just a positive value).
+* Consistently parse serials in :ref:`settings-ca-default-ca` :ref:`settings-ca-passwords` and
+  :ref:`settings-ca-crl-profiles` overrides so that colons (``":"``) and leading zeros (as added by command
+  line tools to beautify serials) are stripped.
+
+Many settings now have more strictly enforced limits, meant to catch configuration mistakes earlier:
+
+* :ref:`settings-ca-min-key-size` and :ref:`settings-ca-default-key-size` now enforce a minimum key size of
+  1024 bit. Cryptography already enforces this limit, so this just catches a mistake earlier.
+* :ref:`CA_ACME_ORDER_VALIDITY` now has a minimum value of 60 seconds and a maximum value of one day.
+* :ref:`CA_ACME_DEFAULT_CERT_VALIDITY` and :ref:`CA_ACME_MAX_CERT_VALIDITY` now have a minimum value of
+  one day and a maximum value of 365 days.
+* :ref:`settings-ca-ocsp-responder-certificate-renewal` now has a minimum value of two hours (the task to
+  renew certificates runs every hour, so any lower value will cause problems).
 
 ************
 Dependencies

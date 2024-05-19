@@ -14,16 +14,15 @@
 # Register the setting_changed signal here. This should not be done in base.py, because then a test module
 # that does not import base.py would not have the signal registered.
 
-"""handle signal when reloading settings, so that ca_settings is also reloaded."""
+"""handle signal when reloading settings, so that model_settings is also reloaded."""
 
-import importlib
 from typing import Any
 
 from django.core.signals import setting_changed
 
 import pytest
 
-from django_ca import ca_settings, conf, profiles
+from django_ca import conf, profiles
 
 # Register assertion helpers for better output in our helpers. See also:
 #   https://docs.pytest.org/en/latest/how-to/writing_plugins.html#assertion-rewriting
@@ -35,18 +34,17 @@ pytest.register_assert_rewrite(
 )
 
 
-def reload_ca_settings(  # pylint: disable=unused-argument
+def reload_settings(  # pylint: disable=unused-argument
     sender: type[Any], setting: str, **kwargs: Any
 ) -> None:
-    """Reload ca_settings module if the settings are changed."""
+    """Reload ``django_ca.conf.model_settings`` if the settings are changed."""
     # WARNING:
     # * Do NOT reload any other modules here, as isinstance() no longer returns True for instances from
     #   reloaded modules
     # * Do NOT set module level attributes, as other modules will not see the new instance
 
-    importlib.reload(ca_settings)
     conf.model_settings.reload()
     profiles.profiles._reset()  # pylint: disable=protected-access
 
 
-setting_changed.connect(reload_ca_settings)
+setting_changed.connect(reload_settings)
