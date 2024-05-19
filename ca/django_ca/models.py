@@ -52,7 +52,7 @@ from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
@@ -130,7 +130,7 @@ def acme_token() -> str:
 
 def default_profile() -> str:
     """Return the default profile (used as default for model fields)."""
-    return ca_settings.CA_DEFAULT_PROFILE
+    return model_settings.CA_DEFAULT_PROFILE
 
 
 def validate_past(value: datetime) -> None:

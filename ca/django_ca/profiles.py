@@ -28,7 +28,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 
 from django.urls import reverse
 
-from django_ca import ca_settings, constants, typehints
+from django_ca import constants, typehints
 from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, HASH_ALGORITHM_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
@@ -103,7 +103,7 @@ class Profile:
             extensions = {}
 
         if subject is None:
-            self.subject: Optional[x509.Name] = ca_settings.CA_DEFAULT_SUBJECT
+            self.subject: Optional[x509.Name] = model_settings.CA_DEFAULT_SUBJECT
         elif subject is False:
             self.subject = None
         elif isinstance(subject, x509.Name):
@@ -544,7 +544,7 @@ class Profile:
             if common_name is not None:
                 common_name_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
 
-                if subject is None:
+                if subject is None:  # pragma: no cover
                     return common_name_name
                 return merge_x509_names(subject, common_name_name)
 
@@ -563,8 +563,8 @@ def get_profile(name: Optional[str] = None) -> Profile:
         :ref:`CA_DEFAULT_PROFILE <settings-ca-default-profile>` is used.
     """
     if name is None:
-        name = ca_settings.CA_DEFAULT_PROFILE
-    return Profile(name, **ca_settings.CA_PROFILES[name])
+        name = model_settings.CA_DEFAULT_PROFILE
+    return Profile(name, **model_settings.CA_PROFILES[name])
 
 
 class Profiles:
@@ -575,7 +575,7 @@ class Profiles:
 
     def __getitem__(self, name: Optional[str]) -> Profile:
         if name is None:
-            name = ca_settings.CA_DEFAULT_PROFILE
+            name = model_settings.CA_DEFAULT_PROFILE
 
         try:
             return typing.cast(Profile, self._profiles.profiles[name])
@@ -588,7 +588,7 @@ class Profiles:
         return typing.cast(Profile, self._profiles.profiles[name])
 
     def __iter__(self) -> Iterator[Profile]:
-        for name in ca_settings.CA_PROFILES:
+        for name in model_settings.CA_PROFILES:
             yield self[name]
 
     def _reset(self) -> None:
@@ -605,12 +605,12 @@ class DefaultProfileProxy:
     """
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(profiles[ca_settings.CA_DEFAULT_PROFILE], name)
+        return getattr(profiles[model_settings.CA_DEFAULT_PROFILE], name)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, (DefaultProfileProxy, Profile)):
             return False
-        return profiles[ca_settings.CA_DEFAULT_PROFILE] == other
+        return profiles[model_settings.CA_DEFAULT_PROFILE] == other
 
     def __repr__(self) -> str:
         return f"<DefaultProfile: {self.name}>"

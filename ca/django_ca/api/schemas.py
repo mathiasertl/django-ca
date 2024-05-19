@@ -20,7 +20,7 @@ from typing import Optional
 from ninja import Field, ModelSchema, Schema
 from pydantic import field_serializer
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder, X509CertMixin
 from django_ca.pydantic.base import DATETIME_EXAMPLE
@@ -207,7 +207,7 @@ class CertificateFilterSchema(Schema):
     profile: Optional[str] = Field(
         description="Only return certificates generated with the given profile.",
         default=None,
-        json_schema_extra={"enum": list(sorted(ca_settings.CA_PROFILES))},
+        json_schema_extra={"enum": list(sorted(model_settings.CA_PROFILES))},
     )
     revoked: bool = Field(default=False, description="Include revoked certificates.")
 

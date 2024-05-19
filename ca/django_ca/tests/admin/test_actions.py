@@ -34,7 +34,7 @@ from django.urls import reverse
 from django_webtest import DjangoWebtestResponse, WebTestMixin
 from freezegun import freeze_time
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, X509CertMixin
 from django_ca.pydantic.general_name import GeneralNameModelList
@@ -488,7 +488,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         form.submit().follow()
 
         resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).get()
-        self.assertEqual(resigned.profile, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertEqual(resigned.profile, model_settings.CA_DEFAULT_PROFILE)
 
     @override_tmpcadir()
     def test_webtest_basic(self) -> None:

@@ -38,7 +38,7 @@ from django.utils import timezone
 import requests_mock
 from freezegun import freeze_time
 
-from django_ca import ca_settings, tasks
+from django_ca import tasks
 from django_ca.conf import model_settings
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
@@ -430,7 +430,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
         )
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
-        self.assertEqual(self.acme_cert.cert.profile, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertEqual(self.acme_cert.cert.profile, model_settings.CA_DEFAULT_PROFILE)
 
     @override_settings(USE_TZ=False)
     def test_basic_without_timezone_support(self) -> None:

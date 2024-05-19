@@ -23,7 +23,7 @@ from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin
@@ -121,7 +121,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                     setattr(ca, param, options[param])
 
             if acme_profile := options["acme_profile"]:
-                if acme_profile not in ca_settings.CA_PROFILES:
+                if acme_profile not in model_settings.CA_PROFILES:
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 ca.acme_profile = acme_profile
 

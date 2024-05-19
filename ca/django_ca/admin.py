@@ -56,7 +56,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_object_actions import DjangoObjectActions
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, ReasonFlags
 from django_ca.extensions import get_extension_name
@@ -747,7 +747,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             if resign_obj.profile:
                 profile_name = resign_obj.profile
             else:
-                profile_name = ca_settings.CA_DEFAULT_PROFILE
+                profile_name = model_settings.CA_DEFAULT_PROFILE
 
             data = {
                 "ca": resign_obj.ca,
@@ -780,7 +780,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             if ca is None:  # pragma: no cover
                 raise ImproperlyConfigured("Cannot determine default CA.")
 
-            profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
+            profile = profiles[model_settings.CA_DEFAULT_PROFILE]
             data["ca"] = ca
             data["subject"] = profile.subject
 

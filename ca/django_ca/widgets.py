@@ -25,7 +25,8 @@ from django import forms
 from django.forms import widgets
 from django.utils.translation import gettext as _
 
-from django_ca import ca_settings, constants
+from django_ca import constants
+from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.extensions.utils import certificate_policies_is_simple
 from django_ca.pydantic.general_name import GeneralNameModelList
@@ -273,8 +274,8 @@ class ProfileWidget(widgets.Select):
 
     def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
-        ctx["desc"] = ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get(
-            "description", ca_settings.CA_PROFILES[ca_settings.CA_DEFAULT_PROFILE].get("desc", "")
+        ctx["desc"] = model_settings.CA_PROFILES[model_settings.CA_DEFAULT_PROFILE].get(
+            "description", model_settings.CA_PROFILES[model_settings.CA_DEFAULT_PROFILE].get("desc", "")
         )
         return ctx
 

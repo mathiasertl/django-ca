@@ -26,7 +26,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.management.actions import ExpiresAction
 from django_ca.management.base import BaseCommand, add_elliptic_curve, add_key_size
 from django_ca.management.mixins import UsePrivateKeyMixin
@@ -96,7 +96,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         # Check if the profile exists. Note that this shouldn't really happen, since valid parameters match
         # existing profiles. The only case is when the user removes the "ocsp" profile, which is the
         # default.
-        if profile not in ca_settings.CA_PROFILES:
+        if profile not in model_settings.CA_PROFILES:
             raise CommandError(f"{profile}: Undefined profile.")
 
         if not serials:

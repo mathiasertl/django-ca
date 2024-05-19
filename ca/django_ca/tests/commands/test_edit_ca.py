@@ -22,7 +22,7 @@ from django.test import TestCase
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.mixins import TestCaseMixin
@@ -127,7 +127,7 @@ def test_acme_arguments(root: CertificateAuthority) -> None:
     # Test initial state
     assert root.acme_enabled is False
     assert root.acme_registration
-    assert root.acme_profile == ca_settings.CA_DEFAULT_PROFILE
+    assert root.acme_profile == model_settings.CA_DEFAULT_PROFILE
     assert root.acme_requires_contact
 
     # change all settings
@@ -188,7 +188,7 @@ def test_invalid_acme_profile(root: CertificateAuthority) -> None:
     """Test setting an invalid ACME profile."""
     with assert_command_error(r"^unknown-profile: Profile is not defined\.$"):
         edit_ca(root, acme_profile="unknown-profile")
-    assert root.acme_profile == ca_settings.CA_DEFAULT_PROFILE
+    assert root.acme_profile == model_settings.CA_DEFAULT_PROFILE
 
 
 def test_acme_disabled(settings: SettingsWrapper, root: CertificateAuthority) -> None:

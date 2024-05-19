@@ -29,7 +29,7 @@ from django.core.management.base import CommandError, CommandParser
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
@@ -526,7 +526,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                     kwargs[opt] = options[opt]
 
             if acme_profile := options["acme_profile"]:
-                if acme_profile not in ca_settings.CA_PROFILES:
+                if acme_profile not in model_settings.CA_PROFILES:
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 kwargs["acme_profile"] = acme_profile
 

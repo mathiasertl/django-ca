@@ -32,7 +32,7 @@ from django.utils import timezone
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import (
     assert_authority_key_identifier,
@@ -254,7 +254,7 @@ def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuth
     cert = Certificate.objects.get()
     assert_post_issue_cert(post, cert)
     assert_signature([usable_root], cert)
-    assert cert.pub.loaded.subject == ca_settings.CA_DEFAULT_SUBJECT
+    assert cert.pub.loaded.subject == model_settings.CA_DEFAULT_SUBJECT
     assert_authority_key_identifier(usable_root, cert)
     assert stdout == f"Please paste the CSR:\n{cert.pub.pem}"
     assert cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == san
@@ -633,8 +633,7 @@ def test_unsortable_subject_with_no_profile_subject(
     merged) and the passed subject already contains a CommonName (as it would have to be added in the
     "correct" location from the SubjectAlternativeName extension).
     """
-    settings.CA_PROFILES = {}
-    settings.CA_DEFAULT_SUBJECT = tuple()
+    settings.CA_PROFILES = {model_settings.CA_DEFAULT_PROFILE: {"subject": False}}
     with assert_create_cert_signals() as (pre, post):
         stdout, stderr = sign_cert(
             usable_root,

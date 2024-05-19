@@ -26,7 +26,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
-from django_ca import ca_settings
 from django_ca.conf import model_settings
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.key_backends import key_backends
@@ -223,7 +222,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         group.add_argument(
             "--acme-profile",
             metavar="PROFILE",
-            choices=list(ca_settings.CA_PROFILES),
+            choices=list(model_settings.CA_PROFILES),
             help="Profile used when issuing certificates.",
         )
 

@@ -27,7 +27,6 @@ from django.urls import reverse
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import ca_settings
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends.storages import CreatePrivateKeyOptions, StoragesBackend, UsePrivateKeyOptions
@@ -525,7 +524,7 @@ def test_default_with_unknown_ca_configured(settings: SettingsWrapper) -> None:
 def test_create_cert(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test creating the most basic cert possible."""
     csr = CERT_DATA["root-cert"]["csr"]["parsed"]
-    profile = profiles[ca_settings.CA_DEFAULT_PROFILE]
+    profile = profiles[model_settings.CA_DEFAULT_PROFILE]
     with assert_create_cert_signals():
         cert = Certificate.objects.create_cert(usable_root, key_backend_options, csr, subject=subject)
     assert cert.subject == subject

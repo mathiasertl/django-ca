@@ -43,7 +43,6 @@ from django.conf import settings
 from freezegun import freeze_time
 
 from devscripts import config
-from django_ca import ca_settings
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
@@ -344,7 +343,7 @@ def create_certs(
         _copy_cert(dest, cert, data[name], key_path, csr_path)
 
     # create a cert for every profile
-    for profile in ca_settings.CA_PROFILES:
+    for profile in model_settings.CA_PROFILES:
         name = f"profile-{profile}"
         ca = CertificateAuthority.objects.get(name=data[name]["ca"])
 

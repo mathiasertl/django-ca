@@ -35,7 +35,7 @@ from django.core.management.base import (
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.management import actions, mixins
 from django_ca.management.mixins import UsePrivateKeyMixin
@@ -377,7 +377,7 @@ class BaseCommand(
         """Add profile-related options."""
         group = parser.add_argument_group("profiles", help_text)
         group = group.add_mutually_exclusive_group()
-        for name, profile in ca_settings.CA_PROFILES.items():
+        for name, profile in model_settings.CA_PROFILES.items():
             group.add_argument(
                 f"--{name}",
                 action="store_const",

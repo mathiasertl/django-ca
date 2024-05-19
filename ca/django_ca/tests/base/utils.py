@@ -37,7 +37,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.conf import settings
 from django.core.files.storage import storages
@@ -320,6 +320,16 @@ def cmd_e2e(
     return stdout.getvalue(), stderr.getvalue()
 
 
+def cn(value: str) -> x509.NameAttribute:
+    """Shortcut for creating a common name attr."""
+    return x509.NameAttribute(NameOID.COMMON_NAME, value)
+
+
+def country(value: str) -> x509.NameAttribute:
+    """Shortcut for creating a country attr."""
+    return x509.NameAttribute(NameOID.COUNTRY_NAME, value)
+
+
 def crl_distribution_points(
     *distribution_points: x509.DistributionPoint, critical: bool = False
 ) -> x509.Extension[x509.CRLDistributionPoints]:
@@ -504,6 +514,11 @@ def subject_key_identifier(
 
     ski = x509.SubjectKeyIdentifier.from_public_key(cert.public_key())
     return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
+
+
+def state(value: str) -> x509.NameAttribute:
+    """Return a state name attr."""
+    return x509.NameAttribute(oid=NameOID.STATE_OR_PROVINCE_NAME, value=value)
 
 
 def tls_feature(*features: x509.TLSFeatureType, critical: bool = False) -> x509.Extension[x509.TLSFeature]:

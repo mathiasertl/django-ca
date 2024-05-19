@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption,
 
 import pytest
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
@@ -113,7 +113,7 @@ def test_basic(usable_ca_name: str) -> None:
 
     assert ca.acme_enabled is False
     assert ca.acme_registration is True
-    assert ca.acme_profile == ca_settings.CA_DEFAULT_PROFILE
+    assert ca.acme_profile == model_settings.CA_DEFAULT_PROFILE
     assert ca.acme_requires_contact is True
     assert ca.api_enabled is False
 

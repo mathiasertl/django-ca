@@ -27,7 +27,8 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings, constants
+from django_ca import constants
+from django_ca.conf import model_settings
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
@@ -38,7 +39,7 @@ class Command(BaseSignCertCommand):
     """Implement the :command:`manage.py sign_cert` command."""
 
     help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
-default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
+default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
 
     add_extensions_help = """Values for more complex x509 extensions. This is for advanced usage only, the
 profiles already set the correct values for the most common use cases. See

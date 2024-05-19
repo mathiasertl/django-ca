@@ -28,7 +28,7 @@ from django.forms.models import ModelFormOptions
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from django_ca import ca_settings, constants, fields
+from django_ca import constants, fields
 from django_ca.conf import model_settings
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.querysets import CertificateAuthorityQuerySet
@@ -53,7 +53,7 @@ def _initial_expires() -> datetime:
 
 
 def _profile_choices() -> Iterable[tuple[str, str]]:
-    return sorted([(p, p) for p in ca_settings.CA_PROFILES], key=lambda e: e[0])
+    return sorted([(p, p) for p in model_settings.CA_PROFILES], key=lambda e: e[0])
 
 
 class X509CertMixinAdminForm(X509CertMixinModelForm):
@@ -96,7 +96,7 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
         required=True,
         widget=ProfileWidget,
         help_text=_("Profile used when issuing certificates via ACMEv2."),
-        initial=ca_settings.CA_DEFAULT_PROFILE,
+        initial=model_settings.CA_DEFAULT_PROFILE,
         choices=_profile_choices,
     )
     sign_certificate_policies = fields.CertificatePoliciesField(required=False)
@@ -126,7 +126,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         required=False,
         widget=ProfileWidget,
         help_text=_("Select a suitable profile or manually select X509 extensions below."),
-        initial=ca_settings.CA_DEFAULT_PROFILE,
+        initial=model_settings.CA_DEFAULT_PROFILE,
         choices=_profile_choices,
     )
     algorithm = forms.ChoiceField(

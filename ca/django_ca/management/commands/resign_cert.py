@@ -26,7 +26,8 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import ca_settings, constants
+from django_ca import constants
+from django_ca.conf import model_settings
 from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
@@ -38,7 +39,7 @@ class Command(BaseSignCertCommand):
     """Implement the :command:`manage.py resign_cert` command."""
 
     help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
-default profile, currently {ca_settings.CA_DEFAULT_PROFILE}."""
+default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
 
     add_extensions_help = "Override certificate extensions."
     subject_help = "Override subject for new certificate."

@@ -14,6 +14,7 @@
 """Reusable utility functions used throughout django-ca."""
 
 import binascii
+import os
 import re
 import shlex
 import typing
@@ -34,10 +35,11 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
+from django.conf import global_settings, settings
 from django.core.files.storage import InvalidStorageError, Storage, get_storage_class, storages
 from django.utils import timezone
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
 from django_ca.deprecation import RemovedInDjangoCA200Warning
@@ -972,8 +974,18 @@ def get_storage() -> Storage:
             RemovedInDjangoCA200Warning,
             stacklevel=2,
         )
-        ca_storage_cls = get_storage_class(ca_settings.CA_FILE_STORAGE)
-        return ca_storage_cls(**ca_settings.CA_FILE_STORAGE_KWARGS)
+        CA_FILE_STORAGE = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
+        CA_FILE_STORAGE_KWARGS = getattr(
+            settings,
+            "CA_FILE_STORAGE_KWARGS",
+            {
+                "location": getattr(settings, "CA_DIR", os.path.join(settings.BASE_DIR, "files")),
+                "file_permissions_mode": 0o600,
+                "directory_permissions_mode": 0o700,
+            },
+        )
+        ca_storage_cls = get_storage_class(CA_FILE_STORAGE)
+        return ca_storage_cls(**CA_FILE_STORAGE_KWARGS)
 
 
 def file_exists(path: str) -> bool:

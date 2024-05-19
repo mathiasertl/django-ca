@@ -25,7 +25,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 from django.db import models
 from django.urls import reverse
 
-from django_ca import ca_settings, constants
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.key_backends.base import KeyBackend
@@ -361,8 +361,8 @@ class CertificateAuthorityManager(
             default_hostname = model_settings.CA_DEFAULT_HOSTNAME
 
         if acme_profile is None:
-            acme_profile = ca_settings.CA_DEFAULT_PROFILE
-        elif acme_profile not in ca_settings.CA_PROFILES:
+            acme_profile = model_settings.CA_DEFAULT_PROFILE
+        elif acme_profile not in model_settings.CA_PROFILES:
             raise ValueError(f"{acme_profile}: Profile is not defined.")
 
         if parent:

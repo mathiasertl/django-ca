@@ -25,7 +25,7 @@ from django.test import TestCase, override_settings
 
 import pytest
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_DEFAULT_CRITICAL
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.key_backends.storages import UsePrivateKeyOptions
@@ -591,12 +591,12 @@ class ProfileTestCase(TestCaseMixin, TestCase):
 
     def test_str(self) -> None:
         """Test str()."""
-        for name in ca_settings.CA_PROFILES:
+        for name in model_settings.CA_PROFILES:
             assert str(profiles[name]) == f"<Profile: {name}>"
 
     def test_repr(self) -> None:
         """Test repr()."""
-        for name in ca_settings.CA_PROFILES:
+        for name in model_settings.CA_PROFILES:
             assert repr(profiles[name]) == f"<Profile: {name}>"
 
 
@@ -605,12 +605,12 @@ class GetProfileTestCase(TestCase):
 
     def test_basic(self) -> None:
         """Basic tests."""
-        for name in ca_settings.CA_PROFILES:
+        for name in model_settings.CA_PROFILES:
             prof = get_profile(name)
             self.assertEqual(name, prof.name)
 
         prof = get_profile()
-        self.assertEqual(prof.name, ca_settings.CA_DEFAULT_PROFILE)
+        self.assertEqual(prof.name, model_settings.CA_DEFAULT_PROFILE)
 
 
 class ProfilesTestCase(TestCase):
@@ -618,12 +618,12 @@ class ProfilesTestCase(TestCase):
 
     def test_basic(self) -> None:
         """Some basic tests."""
-        for name in ca_settings.CA_PROFILES:
+        for name in model_settings.CA_PROFILES:
             prof = profiles[name]
             self.assertEqual(prof.name, name)
 
         # Run a second time, b/c accessor also caches stuff sometimes
-        for name in ca_settings.CA_PROFILES:
+        for name in model_settings.CA_PROFILES:
             prof = profiles[name]
             self.assertEqual(prof.name, name)
 
@@ -633,18 +633,18 @@ class ProfilesTestCase(TestCase):
 
     def test_default_proxy(self) -> None:
         """Test using the default proxy."""
-        self.assertEqual(profile.name, ca_settings.CA_DEFAULT_PROFILE)
-        self.assertEqual(str(profile), f"<DefaultProfile: {ca_settings.CA_DEFAULT_PROFILE}>")
-        self.assertEqual(repr(profile), f"<DefaultProfile: {ca_settings.CA_DEFAULT_PROFILE}>")
+        self.assertEqual(profile.name, model_settings.CA_DEFAULT_PROFILE)
+        self.assertEqual(str(profile), f"<DefaultProfile: {model_settings.CA_DEFAULT_PROFILE}>")
+        self.assertEqual(repr(profile), f"<DefaultProfile: {model_settings.CA_DEFAULT_PROFILE}>")
 
         self.assertEqual(profile, profile)
-        self.assertEqual(profile, profiles[ca_settings.CA_DEFAULT_PROFILE])
+        self.assertEqual(profile, profiles[model_settings.CA_DEFAULT_PROFILE])
 
 
 def test_eq() -> None:
     """Test profile equality."""
     prof = None
-    for name in ca_settings.CA_PROFILES:
+    for name in model_settings.CA_PROFILES:
         assert prof != profiles[name]
         prof = profiles[name]
         assert prof == prof  # noqa: PLR0124  # this is what we're testing
@@ -655,7 +655,7 @@ def test_eq() -> None:
 def test_eq_default_proxy() -> None:
     """Test equality for the default proxy."""
     assert profile == profile  # noqa: PLR0124  # what we're testing
-    assert profile == profiles[ca_settings.CA_DEFAULT_PROFILE]  # proxy is equal to default profile
+    assert profile == profiles[model_settings.CA_DEFAULT_PROFILE]  # proxy is equal to default profile
     assert profile != ["not-equal"]  # we are not equal to arbitrary stuff
 
 

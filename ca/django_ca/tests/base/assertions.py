@@ -35,7 +35,6 @@ from django.core.management import CommandError
 
 import pytest
 
-from django_ca import ca_settings
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import (
@@ -93,7 +92,7 @@ def assert_ca_properties(
 
     # Test ACME properties
     assert ca.acme_enabled is acme_enabled
-    assert ca.acme_profile == acme_profile or ca_settings.CA_DEFAULT_PROFILE
+    assert ca.acme_profile == acme_profile or model_settings.CA_DEFAULT_PROFILE
     assert ca.acme_requires_contact is acme_requires_contact
 
     # Test certificate properties

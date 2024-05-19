@@ -20,7 +20,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from cryptography import x509
 
-from django_ca import ca_settings
 from django_ca.conf import model_settings
 from django_ca.constants import HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
@@ -85,8 +84,8 @@ class SignCertificateMessage(BaseModel):
     )
     profile: str = Field(
         description="Issue the certificate with the given profile.",
-        default=ca_settings.CA_DEFAULT_PROFILE,
-        json_schema_extra={"enum": list(sorted(ca_settings.CA_PROFILES))},
+        default=model_settings.CA_DEFAULT_PROFILE,
+        json_schema_extra={"enum": list(sorted(model_settings.CA_PROFILES))},
     )
     subject: NameModel = Field(description="The subject as list of name attributes.")
 

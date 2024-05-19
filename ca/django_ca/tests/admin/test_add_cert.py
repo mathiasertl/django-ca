@@ -37,7 +37,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
-from django_ca import ca_settings
+from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.fields import CertificateSigningRequestField
 from django_ca.models import Certificate, CertificateAuthority
@@ -893,12 +893,13 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
 
         # test that the default profile is preselected
         self.assertEqual(
-            [ca_settings.CA_DEFAULT_PROFILE], [o.get_attribute("value") for o in select.all_selected_options]
+            [model_settings.CA_DEFAULT_PROFILE],
+            [o.get_attribute("value") for o in select.all_selected_options],
         )
 
         # assert that the values from the default profile are preloaded
         self.assertProfile(
-            ca_settings.CA_DEFAULT_PROFILE,
+            model_settings.CA_DEFAULT_PROFILE,
             ku_select,
             ku_critical,
             eku_select,
@@ -937,7 +938,7 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
                 tf_critical.click()
 
             # select empty element in profile select, then select profile again
-            select.select_by_value(ca_settings.CA_DEFAULT_PROFILE)
+            select.select_by_value(model_settings.CA_DEFAULT_PROFILE)
             self.clear_form(ku_select, ku_critical, eku_select, eku_critical, tf_select, tf_critical)
             option.click()
 

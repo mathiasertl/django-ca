@@ -30,7 +30,8 @@ from django.test import TestCase
 import pytest
 from pytest_django.asserts import assertInHTML
 
-from django_ca import ca_settings, fields
+from django_ca import fields
+from django_ca.conf import model_settings
 from django_ca.constants import KEY_USAGE_NAMES, REVOCATION_REASONS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
@@ -406,7 +407,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
 
         key_usage_choices = {v: k for k, v in KEY_USAGE_NAMES.items()}
 
-        for profile in ca_settings.CA_PROFILES.values():
+        for profile in model_settings.CA_PROFILES.values():
             choices = profile["extensions"]["key_usage"]["value"]
             choices = [key_usage_choices[choice] for choice in choices]
 
