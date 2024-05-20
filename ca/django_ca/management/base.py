@@ -379,11 +379,7 @@ class BaseCommand(
         group = group.add_mutually_exclusive_group()
         for name, profile in model_settings.CA_PROFILES.items():
             group.add_argument(
-                f"--{name}",
-                action="store_const",
-                const=name,
-                dest="profile",
-                help=profile.get("description", ""),
+                f"--{name}", action="store_const", const=name, dest="profile", help=str(profile.description)
             )
 
 

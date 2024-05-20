@@ -274,9 +274,7 @@ class ProfileWidget(widgets.Select):
 
     def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
-        ctx["desc"] = model_settings.CA_PROFILES[model_settings.CA_DEFAULT_PROFILE].get(
-            "description", model_settings.CA_PROFILES[model_settings.CA_DEFAULT_PROFILE].get("desc", "")
-        )
+        ctx["desc"] = model_settings.CA_PROFILES[model_settings.CA_DEFAULT_PROFILE].description
         return ctx
 
     class Media:

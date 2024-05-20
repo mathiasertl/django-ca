@@ -173,9 +173,6 @@ Option                          Default   Description
                                           :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>`.
 ``extensions``                  ``{}``    A dictionary of extensions to add. Please see below for more
                                           details.
-``issuer_name``                 ``None``  Set an alternative issuer name from the CA. Note that this will
-                                          usually break any certificate validation, so this is definitely for
-                                          experts only.
 ``subject``                               The default subject to use, overrides :ref:`CA_DEFAULT_SUBJECT
                                           <settings-ca-default-subject>`.
 =============================== ========= ====================================================================

@@ -13,12 +13,11 @@
 
 """Module for handling certificate profiles."""
 
-import typing
 import warnings
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta
 from threading import local
-from typing import Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union, cast
 
 from pydantic import BaseModel
 
@@ -49,7 +48,7 @@ from django_ca.typehints import (
 )
 from django_ca.utils import merge_x509_names, parse_expires, x509_name
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 # Skip doctests in pytest(-doctestplus), as test_profiles manually loads these tests with extra context.
@@ -79,7 +78,7 @@ class Profile:
     def __init__(  # noqa: PLR0913
         self,
         name: str,
-        subject: Optional[Union[typing.Literal[False], x509.Name]] = None,
+        subject: Optional[Union[Literal[False], x509.Name]] = None,
         algorithm: Optional[HashAlgorithms] = None,
         extensions: Optional[
             dict[
@@ -327,7 +326,7 @@ class Profile:
         ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
-        public_key = typing.cast(CertificateIssuerPublicKeyTypes, csr.public_key())
+        public_key = cast(CertificateIssuerPublicKeyTypes, csr.public_key())
         # COVERAGE NOTE: unable to create CSR other types
         if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
@@ -397,7 +396,7 @@ class Profile:
         algorithm = subject = None
         if self.subject is not None:
             # TYPEHINT NOTE: mypy thinks that model_dump() returns List[NameAttributeModel]
-            subject = typing.cast(
+            subject = cast(
                 SerializedPydanticName, NameModel.model_validate(self.subject).model_dump(mode="json")
             )
         if self.algorithm is not None:
@@ -430,14 +429,14 @@ class Profile:
         # If there is no extension from the CA there is nothing to merge.
         if oid not in ca_extensions:
             return
-        ca_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], ca_extensions[oid])
+        ca_aia_ext = cast(x509.Extension[x509.AuthorityInformationAccess], ca_extensions[oid])
         critical = ca_aia_ext.critical
 
         has_issuer = has_ocsp = False
         access_descriptions: list[x509.AccessDescription] = []
 
         if oid in extensions:
-            cert_aia_ext = typing.cast(x509.Extension[x509.AuthorityInformationAccess], extensions[oid])
+            cert_aia_ext = cast(x509.Extension[x509.AuthorityInformationAccess], extensions[oid])
             access_descriptions = list(cert_aia_ext.value)
             has_ocsp = any(
                 ad.access_method == AuthorityInformationAccessOID.OCSP for ad in access_descriptions
@@ -531,9 +530,8 @@ class Profile:
             return subject
 
         if ExtensionOID.SUBJECT_ALTERNATIVE_NAME in extensions:
-            san_ext = typing.cast(
-                x509.Extension[x509.SubjectAlternativeName],
-                extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
+            san_ext = cast(
+                x509.Extension[x509.SubjectAlternativeName], extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
             )
             cn_types = (x509.DNSName, x509.IPAddress)
             common_name = next(
@@ -564,7 +562,7 @@ def get_profile(name: Optional[str] = None) -> Profile:
     """
     if name is None:
         name = model_settings.CA_DEFAULT_PROFILE
-    return Profile(name, **model_settings.CA_PROFILES[name])
+    return Profile(name=name, **model_settings.CA_PROFILES[name].model_dump())
 
 
 class Profiles:
@@ -578,14 +576,14 @@ class Profiles:
             name = model_settings.CA_DEFAULT_PROFILE
 
         try:
-            return typing.cast(Profile, self._profiles.profiles[name])
+            return cast(Profile, self._profiles.profiles[name])
         except AttributeError:
             self._profiles.profiles = {}
         except KeyError:
             pass
 
         self._profiles.profiles[name] = get_profile(name)
-        return typing.cast(Profile, self._profiles.profiles[name])
+        return cast(Profile, self._profiles.profiles[name])
 
     def __iter__(self) -> Iterator[Profile]:
         for name in model_settings.CA_PROFILES:

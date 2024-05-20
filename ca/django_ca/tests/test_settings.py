@@ -483,7 +483,7 @@ def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x50
 
 
 @pytest.mark.parametrize(
-    "value,msg", (((("CN", ""),), r"^CA_DEFAULT_SUBJECT: CommonName must not be an empty value\.$"),)
+    "value,msg", (((("CN", ""),), r"<Name\(CN=\)>: CommonName must not be an empty value\."),)
 )
 def test_ca_default_subject_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:
     """Test the check for empty common names."""
@@ -519,7 +519,7 @@ def test_ca_default_subject_with_deprecated_values(
         ([(True, "foo")], r"True: Must be a x509.ObjectIdentifier or str\."),
         ([("CN", True)], r"True: Item values must be strings\."),
         (["foo"], r"foo: Items must be a x509.NameAttribute, list or tuple\."),
-        ((("C", "AT"), ("C", "DE")), r'CA_DEFAULT_SUBJECT contains multiple "countryName" fields\.'),
+        ((("C", "AT"), ("C", "DE")), r'<Name\(C=AT,C=DE\)>: Contains multiple "countryName" fields\.'),
     ),
 )
 def test_ca_default_subject_with_deprecated_invalid_values(
@@ -577,8 +577,8 @@ def test_ca_profiles_with_removed_profile(settings: SettingsWrapper) -> None:
 def test_ca_profiles_update_description(settings: SettingsWrapper) -> None:
     """Test adding a profile in settings."""
     desc = "test description"
-    settings.CA_PROFILES = {"client": {"desc": desc}}
-    assert model_settings.CA_PROFILES["client"]["desc"] == desc
+    settings.CA_PROFILES = {"client": {"description": desc}}
+    assert model_settings.CA_PROFILES["client"].description == desc
 
 
 @pytest.mark.parametrize(
@@ -595,13 +595,13 @@ def test_ca_profiles_override_subject(settings: SettingsWrapper, subject: Any, e
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES."""
     assert model_settings.CA_DEFAULT_SUBJECT != expected  # would defeat purpose of test
     settings.CA_PROFILES = {"client": {"subject": subject}}
-    assert model_settings.CA_PROFILES["client"]["subject"] == expected
+    assert model_settings.CA_PROFILES["client"].subject == expected
 
 
 def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsWrapper) -> None:
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES with deprecated values."""
     settings.CA_PROFILES = {"client": {"subject": [("C", "AT")]}}
-    assert model_settings.CA_PROFILES["client"]["subject"] == x509.Name([country("AT")])
+    assert model_settings.CA_PROFILES["client"].subject == x509.Name([country("AT")])
 
 
 @pytest.mark.parametrize(
