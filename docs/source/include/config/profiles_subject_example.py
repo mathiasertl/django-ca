@@ -2,8 +2,8 @@ CA_PROFILES = {
     "example": {
         "description": "Profile defining a custom subject.",
         "subject": (
-            ("C", "AT"),
-            ("ST", "Vienna"),
+            {"oid": "C", "value": "AT"},
+            {"oid": "ST", "value": "Vienna"},
         ),
         # ... other options
     }

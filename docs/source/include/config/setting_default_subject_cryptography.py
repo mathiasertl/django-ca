@@ -2,9 +2,9 @@ from cryptography import x509
 from cryptography.x509.oid import NameOID
 
 CA_DEFAULT_SUBJECT = (
-    ("countryName", "AT"),
-    ("2.5.4.8", "Vienna"),  # dottet string for "stateOrProvinceName"
-    (NameOID.ORGANIZATION_NAME, "orgName"),
+    {"oid": "countryName", "value": "AT"},
+    {"oid": "2.5.4.8", "value": "Vienna"},  # dottet string for "stateOrProvinceName"
+    {"oid": NameOID.ORGANIZATION_NAME, "value": "orgName"},
     x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="orgUnitName"),
 )
 

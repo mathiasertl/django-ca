@@ -28,6 +28,8 @@ Settings
 django-ca specific settings where moved to a Pydantic model, providing better and more consistent setting
 validation on start up and more type safety at runtime.
 
+* :ref:`settings-ca-default-subject` and subjects in profiles now support the same (more verbose) format
+  as exposed via the API. Support for the old format will be removed in ``django-ca==2.2``.
 * :ref:`settings-ca-default-expires`, the default expiry time for certificates created *without* ACMEv2, now
   has a default value of 365 days. The minimum value is now also one day (instead of just a positive value).
 * Consistently parse serials in :ref:`settings-ca-default-ca` :ref:`settings-ca-passwords` and
@@ -94,4 +96,6 @@ Deprecation notices
 Please see the :doc:`deprecation timeline </deprecation>` for a detailed timeline of deprecated features.
 
 * Support for the old extension format in profiles will be removed in 2.0.0.
+* Support for the old subject format in :ref:`settings-ca-default-subject` and subjects in profiles will be
+  removed in 2.2.0.
 * ``django_ca.extensions.parse_extension()`` will be removed in 2.0.0. Use Pydantic models instead.

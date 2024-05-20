@@ -677,7 +677,7 @@ def test_init_no_subject() -> None:
     """Test with no default subject."""
     # doesn't really occur in the wild, because model_settings updates CA_PROFILES with the default
     # subject. But it still seems sensible to support this
-    default_subject = (("CN", "testcase"),)
+    default_subject = ({"oid": "CN", "value": "testcase"},)
 
     with override_settings(CA_DEFAULT_SUBJECT=default_subject):
         prof = Profile("test")

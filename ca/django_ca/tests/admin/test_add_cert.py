@@ -958,7 +958,11 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
 class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
     """Test the Subject input field."""
 
-    @override_tmpcadir(CA_PROFILES={"webserver": {"subject": [["C", "AT"], ["ST", "Vienna"]]}})
+    @override_tmpcadir(
+        CA_PROFILES={
+            "webserver": {"subject": [{"oid": "C", "value": "AT"}, {"oid": "ST", "value": "Vienna"}]}
+        }
+    )
     def test_subject_field(self) -> None:
         """Test core functionality of the subject field."""
         self.initialize()
@@ -1156,8 +1160,20 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         CA_DEFAULT_PROFILE="webserver",
         CA_DEFAULT_SUBJECT=[],
         CA_PROFILES={
-            "webserver": {"subject": [["C", "AT"], ["ST", "Vienna"], ["OU", "webserver"]]},
-            "client": {"subject": [["C", "AT"], ["ST", "Vienna"], ["OU", "client"]]},
+            "webserver": {
+                "subject": [
+                    {"oid": "C", "value": "AT"},
+                    {"oid": "ST", "value": "Vienna"},
+                    {"oid": "OU", "value": "webserver"},
+                ]
+            },
+            "client": {
+                "subject": [
+                    {"oid": "C", "value": "AT"},
+                    {"oid": "ST", "value": "Vienna"},
+                    {"oid": "OU", "value": "client"},
+                ]
+            },
             "no-subject": {},
         },
     )

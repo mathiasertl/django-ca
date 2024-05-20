@@ -39,7 +39,7 @@ from ca.settings_utils import (
 )
 from django_ca import conf
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
-from django_ca.tests.base.assertions import assert_improperly_configured
+from django_ca.tests.base.assertions import assert_improperly_configured, assert_removed_in_220
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.utils import cn, country, state
 
@@ -507,8 +507,10 @@ def test_ca_default_subject_with_deprecated_values(
     settings: SettingsWrapper, value: Any, expected: x509.Name
 ) -> None:
     """Test CA_DEFAULT_SUBJECT with deprecated lists."""
-    settings.CA_DEFAULT_SUBJECT = value
-    assert model_settings.CA_DEFAULT_SUBJECT == expected
+    msg = r"Support for two-element tuples as subject is deprecated and will be removed in django-ca 2\.2\."
+    with assert_removed_in_220(msg):
+        settings.CA_DEFAULT_SUBJECT = value
+        assert model_settings.CA_DEFAULT_SUBJECT == expected
 
 
 @pytest.mark.parametrize(
@@ -600,7 +602,7 @@ def test_ca_profiles_override_subject(settings: SettingsWrapper, subject: Any, e
 
 def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsWrapper) -> None:
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES with deprecated values."""
-    settings.CA_PROFILES = {"client": {"subject": [("C", "AT")]}}
+    settings.CA_PROFILES = {"client": {"subject": [{"oid": "C", "value": "AT"}]}}
     assert model_settings.CA_PROFILES["client"].subject == x509.Name([country("AT")])
 
 

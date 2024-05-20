@@ -280,6 +280,12 @@ CA_DEFAULT_STORAGE_ALIAS
 CA_DEFAULT_SUBJECT
    Default: ``None``
 
+   .. versionchanged:: 1.29.0
+
+      Before 1.29.0, this value (and subjects in profiles) was a tuple ``tuple`` consisting of two-tuples
+      naming the attribute type and value. Starting with 1.29.0, the new format as described below is
+      supported, the old format will be removed in 2.2.0.
+
    .. Describe here the syntax of this value. Profiles describe how the value is used.
 
    The default subject for :doc:`/profiles` that don't define their own subject. You can use this setting to
@@ -290,9 +296,7 @@ CA_DEFAULT_SUBJECT
    Note that signing via the command-line or ACMEv2, the subject attributes of a certificate will be sorted
    according to :ref:`settings-ca-default-name-order`, regardless of the order given here.
 
-   In its most trivial form, this value is a ``tuple`` consisting of two-tuples naming the attribute type and
-   value. Attribute types must be one of the values in :py:attr:`~django_ca.constants.NAME_OID_TYPES` or a
-   dotted string for an arbitrary object identifier:
+   The value is a list or tuple of key/value mappings defining a name attribute:
 
    .. tab:: Python
 
@@ -307,7 +311,7 @@ CA_DEFAULT_SUBJECT
    If you use Python as a configuration format, the value can also be a :py:class:`x509.Name
    <cg:cryptography.x509.Name>` instance.  For convenience, you can also give :py:class:`x509.NameAttribute
    <cg:cryptography.x509.NameAttribute>` instances in the tuple defined above, or use an
-   :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as key:
+   :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as ``"oid"`` key:
 
    .. literalinclude:: /include/config/setting_default_subject_cryptography.py
       :language: python

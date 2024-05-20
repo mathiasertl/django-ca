@@ -1,6 +1,6 @@
 CA_DEFAULT_SUBJECT = (
-    ("countryName", "AT"),
-    ("2.5.4.8", "Vienna"),  # dottet string for "stateOrProvinceName"
-    ("organizationName", "orgName"),
-    ("organizationalUnitName", "orgUnitName"),
+    {"oid": "countryName", "value": "AT"},
+    {"oid": "2.5.4.8", "value": "Vienna"},  # dottet string for "stateOrProvinceName"
+    {"oid": "organizationName", "value": "orgName"},
+    {"oid": "organizationalUnitName", "value": "orgUnitName"},
 )

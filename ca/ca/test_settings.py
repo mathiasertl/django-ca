@@ -199,11 +199,11 @@ CA_KEY_BACKENDS = {
 
 # Custom settings
 CA_DEFAULT_SUBJECT = (
-    ("C", "AT"),
-    ("ST", "Vienna"),
-    ("L", "Vienna"),
-    ("O", "Django CA"),
-    ("OU", "Django CA Testsuite"),
+    {"oid": "C", "value": "AT"},
+    {"oid": "ST", "value": "Vienna"},
+    {"oid": "L", "value": "Vienna"},
+    {"oid": "O", "value": "Django CA"},
+    {"oid": "OU", "value": "Django CA Testsuite"},
 )
 CA_MIN_KEY_SIZE = 1024
 CA_DEFAULT_KEY_SIZE = 1024

@@ -12,6 +12,12 @@ Command-line
 
 * Remove support for subjects in OpenSSL-style format (default switched in 2.0.0, deprecated since 1.27.0).
 
+Settings
+========
+
+* Support for the old subject format in :ref:`settings-ca-default-subject` and subjects in profiles will be
+  removed in 2.2.0 (deprecated since 1.29.0).
+
 ***********
 2.1.0 (TBR)
 ***********

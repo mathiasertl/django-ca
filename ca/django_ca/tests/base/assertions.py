@@ -39,6 +39,7 @@ from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
+    RemovedInDjangoCA220Warning,
     crl_last_update,
     crl_next_update,
     revoked_certificate_revocation_date,
@@ -425,4 +426,11 @@ def assert_system_exit(code: int) -> Iterator[None]:
 def assert_removed_in_200(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
     """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
     with pytest.warns(RemovedInDjangoCA200Warning, match=match):
+        yield
+
+
+@contextmanager
+def assert_removed_in_220(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
+    """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
+    with pytest.warns(RemovedInDjangoCA220Warning, match=match):
         yield

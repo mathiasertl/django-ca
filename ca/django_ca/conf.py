@@ -14,6 +14,7 @@
 """Application configuration for django-ca."""
 
 import copy
+import warnings
 from collections.abc import Iterable
 from datetime import timedelta
 from importlib.util import find_spec
@@ -34,6 +35,7 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
+from django_ca.deprecation import RemovedInDjangoCA220Warning
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.type_aliases import (
     CertificateRevocationListEncodingTypeAlias,
@@ -220,7 +222,14 @@ def _subject_validator(value: Any) -> Any:
     try:
         return NameModel(value).cryptography
     except ValueError:
-        return _parse_deprecated_name_value(value)
+        parsed_value = _parse_deprecated_name_value(value)
+        warnings.warn(
+            f"{value}: Support for two-element tuples as subject is deprecated and will be removed in "
+            f"django-ca 2.2.",
+            RemovedInDjangoCA220Warning,
+            stacklevel=2,
+        )
+        return parsed_value
 
 
 Subject = Annotated[x509.Name, BeforeValidator(_subject_validator)]

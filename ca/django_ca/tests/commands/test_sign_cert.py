@@ -162,7 +162,7 @@ def test_subject_sort_with_profile_subject(
     clear otherwise.
     """
     settings.CA_PROFILES = {}
-    settings.CA_DEFAULT_SUBJECT = (("ST", "Vienna"),)
+    settings.CA_DEFAULT_SUBJECT = ({"oid": "ST", "value": "Vienna"},)
     subject = f"CN={hostname},C=DE"  # not the default order
     cmdline = ["sign_cert", f"--subject={subject}", "--subject-format=rfc4514", f"--ca={usable_root.serial}"]
 
@@ -238,13 +238,13 @@ def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuth
     # first, we only pass an subjectAltName, meaning that even the CommonName is used.
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = (
-        ("C", "AT"),
-        ("ST", "Vienna"),
-        ("L", "Vienna"),
-        ("O", "MyOrg"),
-        ("OU", "MyOrgUnit"),
-        ("CN", "CommonName"),
-        ("emailAddress", "user@example.com"),
+        {"oid": "C", "value": "AT"},
+        {"oid": "ST", "value": "Vienna"},
+        {"oid": "L", "value": "Vienna"},
+        {"oid": "O", "value": "MyOrg"},
+        {"oid": "OU", "value": "MyOrgUnit"},
+        {"oid": "CN", "value": "CommonName"},
+        {"oid": "emailAddress", "value": "user@example.com"},
     )
     san = subject_alternative_name(dns(hostname))
     with assert_create_cert_signals() as (pre, post):
@@ -663,7 +663,7 @@ def test_unsortable_subject_with_profile_subject(
     error.
     """
     settings.CA_PROFILES = {}
-    settings.CA_DEFAULT_SUBJECT = (("C", "AT"),)
+    settings.CA_DEFAULT_SUBJECT = ({"oid": "C", "value": "AT"},)
     subject = f"inn=weird,CN={hostname}"
     with assert_command_error(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(False, False):
         sign_cert(usable_root, subject, stdin=csr)
