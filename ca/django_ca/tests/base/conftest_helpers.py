@@ -295,7 +295,8 @@ def load_cert(
     profile: str = "",
 ) -> Certificate:
     """Load a certificate from with the given CA/CSR and public key."""
-    cert = Certificate(ca=ca, csr=csr, profile=profile)
+    # TYPEHINT NOTE: django-stubs 5.0.0 no longer detects csr as optional field
+    cert = Certificate(ca=ca, csr=csr, profile=profile)  # type: ignore[misc]
     cert.update_certificate(pub)  # calculates serial etc
     cert.save()
     return cert

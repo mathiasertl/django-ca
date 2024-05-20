@@ -21,7 +21,7 @@
 import os
 import time
 
-domain = "_acme_challenge.%s" % os.environ["CERTBOT_DOMAIN"]
+domain = f"_acme_challenge.{os.environ['CERTBOT_DOMAIN']}"
 validation = os.environ["CERTBOT_VALIDATION"]
 path = os.path.join(os.environ["DNSMASQ_CONF_DIR"], "acme-validation.conf")
 

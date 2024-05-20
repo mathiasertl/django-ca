@@ -9,6 +9,6 @@ pip>=23
 
 tox>=4.14.2
 # pytest-xdist allows running tests in parallel ("pytest -n 3")
-pytest-xdist==3.5.0
+pytest-xdist==3.6.1
 
 wheel-inspect

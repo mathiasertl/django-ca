@@ -30,7 +30,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
 )
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.management import CommandParser  # type: ignore[attr-defined]  # false positive
+from django.core.management import CommandParser
 from django.utils.module_loading import import_string
 
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
@@ -108,7 +108,7 @@ class KeyBackend(
 
         Return ``None`` if you don't need to create such a group.
         """
-        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not type-hinted
+        return parser.add_argument_group(
             f"{self.alias}: {self.title}",
             f"The backend used with --key-backend={self.alias}. {self.description}",
         )
@@ -130,7 +130,7 @@ class KeyBackend(
 
         Return ``None`` if you don't need to create such a group.
         """
-        return parser.add_argument_group(  # type: ignore[no-any-return]  # function is not type-hinted
+        return parser.add_argument_group(
             f"{self.alias} key storage",
             f"Arguments for using private keys stored with the {self.alias} backend.",
         )

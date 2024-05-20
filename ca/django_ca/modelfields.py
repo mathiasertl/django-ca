@@ -356,8 +356,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
         if value is None:
             return value
 
-        # TYPE NOTE: django-stubs seems to not have the function in the super-class
-        parsed_json: JSON = super().from_db_value(value, expression, connection)  # type: ignore[misc]
+        parsed_json: JSON = super().from_db_value(value, expression, connection)
 
         if isinstance(parsed_json, dict) and "type" in parsed_json:
             return self.model_class.model_validate(parsed_json, strict=True).cryptography

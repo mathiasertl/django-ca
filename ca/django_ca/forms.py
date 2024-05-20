@@ -178,7 +178,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         super().__init__(*args, **kwargs)
 
         # Set choices, so we can filter out CAs where the private key does not exist locally
-        field = typing.cast(forms.ModelChoiceField, self.fields["ca"])
+        field = typing.cast("forms.ModelChoiceField[CertificateAuthority]", self.fields["ca"])
         qs = typing.cast(CertificateAuthorityQuerySet, field.queryset)
         # NOTE: field.initial is set in admin
         field.choices = [

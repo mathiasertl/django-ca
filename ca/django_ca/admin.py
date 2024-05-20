@@ -24,7 +24,7 @@ import typing
 from collections.abc import Iterator
 from datetime import date, datetime, timezone as tz
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -85,6 +85,9 @@ from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import CertificateExtensionKeys, CRLExtensionType, X509CertMixinTypeVar
 from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for_display
+
+if TYPE_CHECKING:
+    from django.contrib.admin.filters import _ListFilterChoices
 
 log = logging.getLogger(__name__)
 
@@ -497,7 +500,7 @@ class DefaultListFilter(admin.SimpleListFilter):  # pylint: disable=abstract-met
 
     parameter_name: str
 
-    def choices(self, changelist: ChangeList) -> Iterator[dict[str, Any]]:
+    def choices(self, changelist: ChangeList) -> Iterator["_ListFilterChoices"]:
         for lookup, title in self.lookup_choices:
             yield {
                 "selected": self.value() == lookup,

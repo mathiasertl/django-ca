@@ -632,18 +632,18 @@ class CertificateAuthorityTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestC
         """Test regenerating an OCSP responder certificate that is due to expire soon."""
         with freeze_time(TIMESTAMPS["everything_valid"]) as frozen_time:
             # TYPEHINT NOTE: We know that the certificate was not yet generated here
-            _, _, ocsp_responder_certificate = self.ca.generate_ocsp_key(  # type: ignore[misc]
-                key_backend_options
-            )
+            ocsp_responder_key_data = self.ca.generate_ocsp_key(key_backend_options)
+            assert ocsp_responder_key_data is not None
+            _, _, ocsp_responder_certificate = ocsp_responder_key_data
 
             # OCSP key is not immediately regenerated
             assert self.ca.generate_ocsp_key(key_backend_options) is None
             assert self.ca.ocsp_responder_certificate == ocsp_responder_certificate.pub.loaded
 
             frozen_time.tick(delta=timedelta(days=2))
-            _, _, updated_ocsp_responder_certificate = self.ca.generate_ocsp_key(  # type: ignore[misc]
-                key_backend_options
-            )
+            updated_ocsp_responder_key_data = self.ca.generate_ocsp_key(key_backend_options)
+            assert updated_ocsp_responder_key_data is not None
+            _, _, updated_ocsp_responder_certificate = updated_ocsp_responder_key_data
             assert updated_ocsp_responder_certificate.expires > ocsp_responder_certificate.expires
 
     @override_tmpcadir()

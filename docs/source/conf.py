@@ -365,8 +365,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "cg": ("https://cryptography.io/en/stable/", None),
     "django": (
-        "https://docs.djangoproject.com/en/%s/" % config.DJANGO[-1],
-        "https://docs.djangoproject.com/en/%s/_objects/" % config.DJANGO[-1],
+        f"https://docs.djangoproject.com/en/{config.DJANGO[-1]}/",
+        f"https://docs.djangoproject.com/en/{config.DJANGO[-1]}/_objects/",
     ),
     "acme": ("https://acme-python.readthedocs.io/en/stable/", None),
     "josepy": ("https://josepy.readthedocs.io/en/stable/", None),
