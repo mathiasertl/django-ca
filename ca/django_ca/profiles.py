@@ -27,9 +27,14 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 
 from django.urls import reverse
 
-from django_ca import constants, typehints
+from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_KEY_OIDS, HASH_ALGORITHM_NAMES
+from django_ca.constants import (
+    CERTIFICATE_EXTENSION_KEYS,
+    CONFIGURABLE_EXTENSION_KEYS,
+    EXTENSION_KEY_OIDS,
+    HASH_ALGORITHM_NAMES,
+)
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.extensions import parse_extension
 from django_ca.extensions.utils import format_extensions, get_formatting_context
@@ -38,9 +43,10 @@ from django_ca.pydantic.name import NameModel
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
-    CertificateExtensionKeys,
+    ConfigurableExtensionKeys,
+    ConfigurableExtensions,
+    ConfigurableExtensionsDict,
     Expires,
-    ExtensionMapping,
     HashAlgorithms,
     ProfileExtensionValue,
     SerializedProfile,
@@ -73,7 +79,7 @@ class Profile:
     """
 
     algorithm: Optional[AllowedHashTypes] = None
-    extensions: dict[x509.ObjectIdentifier, Optional[x509.Extension[x509.ExtensionType]]]
+    extensions: dict[x509.ObjectIdentifier, Optional[ConfigurableExtensions]]
 
     def __init__(  # noqa: PLR0913
         self,
@@ -81,10 +87,7 @@ class Profile:
         subject: Optional[Union[Literal[False], x509.Name]] = None,
         algorithm: Optional[HashAlgorithms] = None,
         extensions: Optional[
-            dict[
-                CertificateExtensionKeys,
-                Optional[Union[ProfileExtensionValue, x509.Extension[x509.ExtensionType]]],
-            ]
+            dict[ConfigurableExtensionKeys, Optional[Union[ProfileExtensionValue, ConfigurableExtensions]]]
         ] = None,
         expires: Optional[Union[int, timedelta]] = None,
         description: str = "",
@@ -156,7 +159,9 @@ class Profile:
                         stacklevel=2,
                     )
 
-                self.extensions[parsed_extension.oid] = parsed_extension
+                if parsed_extension.oid not in CONFIGURABLE_EXTENSION_KEYS:
+                    raise ValueError(f"{parsed_extension}: Extension cannot be passed to a profile.")
+                self.extensions[parsed_extension.oid] = cast(ConfigurableExtensions, parsed_extension)
             else:
                 raise TypeError(f"Profile {name}, extension {key}: {extension}: Unsupported type")
 
@@ -184,7 +189,7 @@ class Profile:
     def __str__(self) -> str:
         return repr(self)
 
-    def _get_extensions(self, extensions: typehints.ExtensionDict) -> None:
+    def _get_extensions(self, extensions: ConfigurableExtensionsDict) -> None:
         for oid, ext in self.extensions.items():
             if ext is None:
                 extensions.pop(oid, None)
@@ -200,7 +205,7 @@ class Profile:
         subject: Optional[x509.Name] = None,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
-        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        extensions: Optional[Iterable[ConfigurableExtensions]] = None,
         add_crl_url: Optional[bool] = None,
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
@@ -247,7 +252,7 @@ class Profile:
             Override when this certificate will expire.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Override the hash algorithm used when signing the certificate.
-        extensions : list or of :py:class:`~cg:cryptography.x509.Extension`
+        extensions : list of :py:class:`~cg:cryptography.x509.Extension`
             List of additional extensions to set for the certificate. Note that values from the CA might
             update the passed extensions: For example, if you pass an
             :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension, *add_issuer_alternative_name*
@@ -284,21 +289,18 @@ class Profile:
             add_issuer_alternative_name = self.add_issuer_alternative_name
 
         if extensions is None:
-            cert_extensions: typehints.ExtensionDict = {}
+            configurable_cert_extensions: ConfigurableExtensionsDict = {}
         else:
-            cert_extensions = {ext.oid: ext for ext in extensions}
+            # Ensure that the function did *not* get any extension not meant to be in a certificate or that
+            # should not be configurable by the user.
+            for extension in extensions:
+                if extension.oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
+                    raise ValueError(f"{extension}: Cannot be added to a certificate.")
+
+            configurable_cert_extensions = {ext.oid: ext for ext in extensions}
 
         # Get extensions from profile
-        self._get_extensions(cert_extensions)
-
-        self._update_from_ca(
-            ca,
-            cert_extensions,
-            add_crl_url=add_crl_url,
-            add_ocsp_url=add_ocsp_url,
-            add_issuer_url=add_issuer_url,
-            add_issuer_alternative_name=add_issuer_alternative_name,
-        )
+        self._get_extensions(configurable_cert_extensions)
 
         if self.subject is not None:
             if subject is not None:
@@ -307,7 +309,7 @@ class Profile:
                 subject = self.subject
 
         # Add first DNSName/IPAddress from subjectAlternativeName as commonName if not present in the subject
-        subject = self._update_cn_from_san(subject, cert_extensions)
+        subject = self._update_cn_from_san(subject, configurable_cert_extensions)
 
         if subject is None:
             raise ValueError("Cannot determine subject for certificate.")
@@ -321,7 +323,7 @@ class Profile:
         # Make sure that expires is a fixed timestamp
         expires = self.get_expires(expires)
 
-        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not cert_extensions.get(
+        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not configurable_cert_extensions.get(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
@@ -331,29 +333,24 @@ class Profile:
         if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
 
-        # Add the SubjectKeyIdentifier extension
-        cert_extensions.setdefault(
-            ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-            x509.Extension(
-                oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                critical=False,
-                value=x509.SubjectKeyIdentifier.from_public_key(public_key),
-            ),
-        )
-
-        # Set the BasicConstraints extension (we do not allow the user to pass this extension)
-        cert_extensions[ExtensionOID.BASIC_CONSTRAINTS] = x509.Extension(
-            oid=ExtensionOID.BASIC_CONSTRAINTS,
-            critical=True,
-            value=x509.BasicConstraints(ca=False, path_length=None),
+        self._update_from_ca(
+            ca,
+            configurable_cert_extensions,
+            add_crl_url=add_crl_url,
+            add_ocsp_url=add_ocsp_url,
+            add_issuer_url=add_issuer_url,
+            add_issuer_alternative_name=add_issuer_alternative_name,
         )
 
         serial = x509.random_serial_number()
         signer_serial = ca.pub.loaded.serial_number
         context = self._get_formatting_context(serial, signer_serial)
-        format_extensions(cert_extensions, context)
+        format_extensions(configurable_cert_extensions, context)
 
-        extensions = list(cert_extensions.values())
+        # Add mandatory end-entity certificate extensions
+        certificate_extensions = ca.get_end_entity_certificate_extensions(public_key) + list(
+            configurable_cert_extensions.values()
+        )
 
         pre_sign_cert.send(
             sender=self.__class__,
@@ -362,7 +359,7 @@ class Profile:
             expires=expires,
             algorithm=algorithm,
             subject=subject,
-            extensions=extensions,
+            extensions=certificate_extensions,
             password=key_backend_options,
         )
 
@@ -375,7 +372,7 @@ class Profile:
             issuer=ca.subject,
             subject=subject,
             expires=expires,
-            extensions=extensions,
+            extensions=certificate_extensions,
         )
 
     def _get_formatting_context(self, serial: int, signer_serial: int) -> dict[str, Union[str, int]]:
@@ -419,8 +416,8 @@ class Profile:
 
     def _update_authority_information_access(
         self,
-        extensions: ExtensionMapping,
-        ca_extensions: ExtensionMapping,
+        extensions: ConfigurableExtensionsDict,
+        ca_extensions: ConfigurableExtensionsDict,
         add_issuer_url: bool,
         add_ocsp_url: bool,
     ) -> None:
@@ -471,7 +468,7 @@ class Profile:
             )
 
     def _add_crl_distribution_points(
-        self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
+        self, extensions: ConfigurableExtensionsDict, ca_extensions: ConfigurableExtensionsDict
     ) -> None:
         """Add the CRLDistribution Points extension with the endpoint from the Certificate Authority."""
         if ExtensionOID.CRL_DISTRIBUTION_POINTS not in ca_extensions:
@@ -481,7 +478,7 @@ class Profile:
         extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] = ca_extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS]
 
     def _update_issuer_alternative_name(
-        self, extensions: ExtensionMapping, ca_extensions: ExtensionMapping
+        self, extensions: ConfigurableExtensionsDict, ca_extensions: ConfigurableExtensionsDict
     ) -> None:
         oid = ExtensionOID.ISSUER_ALTERNATIVE_NAME
         if oid in ca_extensions and oid not in extensions:
@@ -490,7 +487,7 @@ class Profile:
     def _update_from_ca(
         self,
         ca: "CertificateAuthority",
-        extensions: ExtensionMapping,
+        extensions: ConfigurableExtensionsDict,
         add_crl_url: bool,
         add_ocsp_url: bool,
         add_issuer_url: bool,
@@ -506,12 +503,6 @@ class Profile:
         """
         ca_extensions = ca.extensions_for_certificate
 
-        # client can set its own AuthorityKeyIdentifier extension (currently used for the alt-extensions
-        # certificate when creating fixtures).
-        extensions.setdefault(
-            ExtensionOID.AUTHORITY_KEY_IDENTIFIER, ca.get_authority_key_identifier_extension()
-        )
-
         if add_crl_url is True:
             self._add_crl_distribution_points(extensions, ca_extensions)
 
@@ -523,7 +514,7 @@ class Profile:
             self._update_issuer_alternative_name(extensions, ca_extensions)
 
     def _update_cn_from_san(
-        self, subject: Optional[x509.Name], extensions: ExtensionMapping
+        self, subject: Optional[x509.Name], extensions: ConfigurableExtensionsDict
     ) -> Optional[x509.Name]:
         # If we already have a common name, return the subject unchanged
         if subject is not None and subject.get_attributes_for_oid(NameOID.COMMON_NAME):

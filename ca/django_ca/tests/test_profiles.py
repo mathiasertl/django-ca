@@ -26,7 +26,11 @@ from django.test import TestCase, override_settings
 import pytest
 
 from django_ca.conf import model_settings
-from django_ca.constants import CERTIFICATE_EXTENSION_KEYS, EXTENSION_DEFAULT_CRITICAL
+from django_ca.constants import (
+    CERTIFICATE_EXTENSION_KEYS,
+    CONFIGURABLE_EXTENSION_KEYS,
+    EXTENSION_DEFAULT_CRITICAL,
+)
 from django_ca.deprecation import RemovedInDjangoCA200Warning
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
@@ -406,7 +410,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-        prof = Profile("example", extensions={CERTIFICATE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+        prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         with mock_signal(pre_sign_cert) as pre:
             cert = self.create_cert(
                 prof,
@@ -429,7 +433,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile(
             "example",
             extensions={
-                CERTIFICATE_EXTENSION_KEYS[
+                CONFIGURABLE_EXTENSION_KEYS[
                     ExtensionOID.AUTHORITY_INFORMATION_ACCESS
                 ]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
@@ -475,7 +479,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         prof = Profile(
             "example",
             extensions={
-                CERTIFICATE_EXTENSION_KEYS[
+                CONFIGURABLE_EXTENSION_KEYS[
                     ExtensionOID.AUTHORITY_INFORMATION_ACCESS
                 ]: authority_information_access(
                     ocsp=[uri("http://ocsp.example.com/profile")],
@@ -568,7 +572,7 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         """Test what happens when the SAN has nothing usable as CN."""
         ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
         csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", extensions={CERTIFICATE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+        prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
         san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
         with mock_signal(pre_sign_cert) as pre:
@@ -710,8 +714,8 @@ def test_serialize() -> None:
         description=desc,
         subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
         extensions={
-            CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
-            CERTIFICATE_EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
+            CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
+            CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
         },
     )
     assert prof.serialize() == {

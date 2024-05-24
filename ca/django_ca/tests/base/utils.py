@@ -23,7 +23,7 @@ import shutil
 import tempfile
 import textwrap
 import typing
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO, StringIO
@@ -133,7 +133,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: list[x509.Extension[x509.ExtensionType]],
+        extensions: Sequence[x509.Extension[x509.ExtensionType]],
     ) -> x509.Certificate:
         return None  # type: ignore[return-value]
 

@@ -32,7 +32,7 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.typehints import AllowedHashTypes, ExtensionMapping, SubjectFormats
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtensions, SubjectFormats
 
 
 class Command(BaseSignCertCommand):
@@ -137,60 +137,66 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             parsed_subject = self.parse_x509_name(subject, subject_format)
 
         # Process any extensions given via the command-line
-        extensions: ExtensionMapping = {}
+        extensions: list[ConfigurableExtensions] = []
 
         if authority_information_access is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 authority_information_access,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             )
         if certificate_policies is not None:
-            self._add_extension(extensions, certificate_policies, certificate_policies_critical)
+            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
         if crl_full_names is not None:
             distribution_point = x509.DistributionPoint(
                 full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
             )
-            self._add_extension(
+            self.add_extension(
                 extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
             )
         if extended_key_usage is not None:
-            self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
+            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         if issuer_alternative_name is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 issuer_alternative_name,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
         if key_usage is not None:
-            self._add_extension(extensions, key_usage, key_usage_critical)
+            self.add_extension(extensions, key_usage, key_usage_critical)
         if ocsp_no_check is True:
-            self._add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
+            self.add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
         if subject_alternative_name is not None:
-            self._add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
+            self.add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
         if tls_feature is not None:
-            self._add_extension(extensions, tls_feature, tls_feature_critical)
+            self.add_extension(extensions, tls_feature, tls_feature_critical)
 
         # Copy over extensions from the original certificate (if not passed via the command-line)
         for oid, extension in cert.extensions.items():
             # These extensions are handled by the manager itself based on the CA:
-            if oid in (
-                ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
-                ExtensionOID.CRL_DISTRIBUTION_POINTS,
-            ):
+            if oid in (ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ExtensionOID.CRL_DISTRIBUTION_POINTS):
+                continue
+
+            # Extensions that are not configurable cannot be copied, as they would be rejected by the
+            # profile.
+            if oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
                 continue
 
             # Add extensions not already added via the command line
-            if oid not in extensions:
-                extensions[oid] = extension
+            if next((ext for ext in extensions if ext.oid == oid), None) is None:
+                # TYPEHINT NOTE: Extensions from the original certificate may in fact be any extension, as
+                # an imported certificate could add custom ones.
+                extensions.append(extension)  # type: ignore[arg-type]
 
         # Verify that we have either a Common Name in the subject or a Subject Alternative Name extension
         # NOTE: This can only happen here in two edge cases:
         #   * Pass a subject without common name AND a certificate does *not* have a subject alternative name.
         #   * An imported certificate that has neither Common Name nor subject alternative name.
         common_names = parsed_subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        if not common_names and ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in extensions:
+        has_subject_alternative_name = next(
+            (ext for ext in extensions if ext.oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME), None
+        )
+        if not common_names and has_subject_alternative_name is None:
             raise CommandError(
                 "Must give at least a Common Name in --subject or one or more "
                 "--subject-alternative-name/--name arguments."
@@ -205,7 +211,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
                 expires=expires,
                 subject=parsed_subject,
                 algorithm=algorithm,
-                extensions=extensions.values(),
+                extensions=extensions,
             )
         except Exception as ex:
             raise CommandError(ex) from ex

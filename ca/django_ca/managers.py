@@ -35,8 +35,9 @@ from django_ca.profiles import Profile, profiles
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca
 from django_ca.typehints import (
     AllowedHashTypes,
+    ConfigurableExtensions,
     Expires,
-    ExtensionMapping,
+    ExtensionDict,
     ParsableKeyType,
     X509CertMixinTypeVar,
 )
@@ -136,7 +137,7 @@ class CertificateAuthorityManager(
     def _handle_authority_information_access(
         self,
         hostname: Optional[str],
-        extensions: ExtensionMapping,
+        extensions: ExtensionDict,
     ) -> None:
         """Add an Authority Information Access extension with a URI based on `hostname` to `extensions`.
 
@@ -182,7 +183,7 @@ class CertificateAuthorityManager(
             value=x509.AuthorityInformationAccess(access_descriptions),
         )
 
-    def _handle_crl_distribution_point(self, hostname: Optional[str], extensions: ExtensionMapping) -> None:
+    def _handle_crl_distribution_point(self, hostname: Optional[str], extensions: ExtensionDict) -> None:
         """Add CRL Distribution Point extension with a URI based on `hostname` to `extensions`.
 
         The extension is only added if it is not already set in `extensions`.
@@ -571,7 +572,7 @@ class CertificateManager(
         subject: Optional[x509.Name] = None,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
-        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        extensions: Optional[Iterable[ConfigurableExtensions]] = None,
         add_crl_url: Optional[bool] = None,
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,

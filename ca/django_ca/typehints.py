@@ -50,8 +50,6 @@ AllowedHashTypes = Union[
     hashes.SHA3_512,
 ]
 
-ExtensionDict = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
-
 ParsableName = Union[str, Iterable[tuple[str, str]]]
 
 Expires = Optional[Union[int, datetime, timedelta]]
@@ -162,11 +160,9 @@ LogEntryTypes = Literal["precertificate", "x509_certificate"]
 #: Serialized access method for :py:class:`~cg:cryptography.x509.AccessDescription` instances.
 AccessMethods = Literal["ocsp", "ca_issuers", "ca_repository"]
 
-#: Extension keys for extensions that may occur in a certificate.
-CertificateExtensionKeys = Literal[
+#: Extension keys for extensions that may be configured by the user when issuing certificates.
+ConfigurableExtensionKeys = Literal[
     "authority_information_access",
-    "authority_key_identifier",
-    "basic_constraints",
     "certificate_policies",
     "crl_distribution_points",
     "extended_key_usage",
@@ -180,13 +176,26 @@ CertificateExtensionKeys = Literal[
     "signed_certificate_timestamps",
     "subject_alternative_name",
     "subject_information_access",
-    "subject_key_identifier",
     "tls_feature",
+]
+
+#: Extension keys for extensions that may occur in a certificate.
+#:
+#: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and adds the keys
+#: for extensions that are either derived from the issuer or the certificates public key or that must not
+#: be configured by a user.
+CertificateExtensionKeys = Union[
+    ConfigurableExtensionKeys,
+    Literal[
+        "authority_key_identifier",  # derived from the issuer
+        "basic_constraints",  # must not be configured by a user
+        "subject_key_identifier",  # derived from the certificates public key
+    ],
 ]
 
 #: Extension keys for all known x509 Extensions.
 #:
-#: This literal is a superset of :py:attr:`~django_ca.typehints.CertificateExtensionKeys` and includes
+#: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and includes
 #: extensions that may occur in certificate authorities or CRLs.
 ExtensionKeys = Union[
     CertificateExtensionKeys,
@@ -283,13 +292,54 @@ CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 ################
 # Type aliases #
 ################
-ExtensionMapping = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
+ConfigurableExtensionTypes = Union[
+    x509.AuthorityInformationAccess,
+    x509.CertificatePolicies,
+    x509.CRLDistributionPoints,
+    x509.ExtendedKeyUsage,
+    x509.FreshestCRL,
+    x509.IssuerAlternativeName,
+    x509.KeyUsage,
+    x509.MSCertificateTemplate,
+    x509.OCSPNoCheck,
+    x509.SubjectAlternativeName,
+    x509.TLSFeature,
+]
+ConfigurableExtensions = Union[
+    x509.Extension[x509.AuthorityInformationAccess],
+    x509.Extension[x509.CertificatePolicies],
+    x509.Extension[x509.CRLDistributionPoints],
+    x509.Extension[x509.ExtendedKeyUsage],
+    x509.Extension[x509.FreshestCRL],
+    x509.Extension[x509.IssuerAlternativeName],
+    x509.Extension[x509.KeyUsage],
+    x509.Extension[x509.MSCertificateTemplate],
+    x509.Extension[x509.OCSPNoCheck],
+    x509.Extension[x509.SubjectAlternativeName],
+    x509.Extension[x509.TLSFeature],
+]
+
+CertificateExtensionTypes = Union[
+    ConfigurableExtensions,
+    x509.Extension[x509.AuthorityKeyIdentifier],
+    x509.Extension[x509.BasicConstraints],
+    x509.Extension[x509.PrecertPoison],
+    x509.Extension[x509.PrecertificateSignedCertificateTimestamps],
+    x509.Extension[x509.SignedCertificateTimestamps],
+    x509.Extension[x509.SubjectInformationAccess],
+    x509.Extension[x509.SubjectKeyIdentifier],
+]
+
+ConfigurableExtensionsDict = dict[x509.ObjectIdentifier, ConfigurableExtensions]
+CertificateExtensionsDict = dict[x509.ObjectIdentifier, CertificateExtensionTypes]
+ExtensionDict = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 
 # Type aliases for protected subclass returned by add_argument_group().
 ArgumentGroup = argparse._ArgumentGroup  # pylint: disable=protected-access
 
 # An CommandParser (subclass of argparse.ArgumentParser) or an argument group added by add_argument_group().
 ActionsContainer = Union[CommandParser, ArgumentGroup]
+
 
 ############
 # TypeVars #

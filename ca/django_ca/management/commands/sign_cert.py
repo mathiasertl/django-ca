@@ -32,7 +32,11 @@ from django_ca.conf import model_settings
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
-from django_ca.typehints import AllowedHashTypes, ExtensionMapping, SubjectFormats
+from django_ca.typehints import (
+    AllowedHashTypes,
+    ConfigurableExtensions,
+    SubjectFormats,
+)
 
 
 class Command(BaseSignCertCommand):
@@ -132,39 +136,39 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # Process any extensions given via the command-line
-        extensions: ExtensionMapping = {}
+        extensions: list[ConfigurableExtensions] = []
 
         if authority_information_access is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 authority_information_access,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             )
         if certificate_policies is not None:
-            self._add_extension(extensions, certificate_policies, certificate_policies_critical)
+            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
         if crl_full_names is not None:
             distribution_point = x509.DistributionPoint(
                 full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
             )
-            self._add_extension(
+            self.add_extension(
                 extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
             )
         if extended_key_usage is not None:
-            self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
+            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         if issuer_alternative_name is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 issuer_alternative_name,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
         if key_usage is not None:
-            self._add_extension(extensions, key_usage, key_usage_critical)
+            self.add_extension(extensions, key_usage, key_usage_critical)
         if ocsp_no_check is True:
-            self._add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
+            self.add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
         if subject_alternative_name is not None:
-            self._add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
+            self.add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
         if tls_feature is not None:
-            self._add_extension(extensions, tls_feature, tls_feature_critical)
+            self.add_extension(extensions, tls_feature, tls_feature_critical)
 
         # Parse the subject
         parsed_subject = None
@@ -174,7 +178,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         cname = None
         if parsed_subject is not None:
             cname = parsed_subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        if not cname and ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in extensions:
+        if not cname and subject_alternative_name is None:
             raise CommandError(
                 "Must give at least a Common Name in --subject or one or more "
                 "--subject-alternative-name/--name arguments."
@@ -205,7 +209,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr,
                 profile=profile_obj,
                 expires=expires,
-                extensions=extensions.values(),
+                extensions=extensions,
                 subject=parsed_subject,
                 algorithm=algorithm,
             )

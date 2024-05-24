@@ -24,7 +24,7 @@ import typing
 from collections.abc import Iterator
 from datetime import date, datetime, timezone as tz
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -83,7 +83,12 @@ from django_ca.pydantic.extensions import SignCertificateExtensionsList
 from django_ca.pydantic.name import NameModel
 from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
-from django_ca.typehints import CertificateExtensionKeys, CRLExtensionType, X509CertMixinTypeVar
+from django_ca.typehints import (
+    CertificateExtensionKeys,
+    ConfigurableExtensionsDict,
+    CRLExtensionType,
+    X509CertMixinTypeVar,
+)
 from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for_display
 
 if TYPE_CHECKING:
@@ -1041,7 +1046,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             expires = datetime.combine(data["expires"], datetime.min.time()).replace(tzinfo=tz.utc)
 
             # Set Subject Alternative Name from form
-            extensions: dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
+            extensions: ConfigurableExtensionsDict = {}
 
             # Update extensions handled through the form
             for key in CERTIFICATE_EXTENSIONS:
@@ -1060,13 +1065,19 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     oid in (ExtensionOID.CRL_DISTRIBUTION_POINTS, ExtensionOID.FRESHEST_CRL)
                     and oid in extensions
                 ):
-                    profile_ext = typing.cast(Union[x509.CRLDistributionPoints, x509.FreshestCRL], ext.value)
+                    profile_ext = typing.cast(CRLExtensionType, ext.value)
+
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
                         form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[oid])
                         distribution_points = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
-                        extensions[oid] = x509.Extension(
-                            oid=form_ext.oid, critical=form_ext.critical, value=distribution_points
+                        extension = x509.Extension(
+                            oid=oid, critical=form_ext.critical, value=distribution_points
                         )
+
+                        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B],
+                        # which is currently treated as incompatible by mypy for unknown reasons.
+                        extensions[oid] = extension  # type: ignore[assignment]
+
                     continue
 
                 if CERTIFICATE_EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS:  # already handled in form
@@ -1082,7 +1093,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 subject=data["subject"],
                 algorithm=data["algorithm"],
                 expires=expires,
-                extensions=extensions.values(),
+                extensions=list(extensions.values()),
             )
 
             obj.profile = profile.name

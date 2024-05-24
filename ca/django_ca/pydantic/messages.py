@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from cryptography import x509
 
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
@@ -32,7 +33,7 @@ from django_ca.pydantic.type_aliases import (
     Serial,
     TimedeltaInSeconds,
 )
-from django_ca.typehints import AllowedHashTypes, HashAlgorithms, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtensions, HashAlgorithms, ParsableKeyType
 
 
 class GenerateOCSPKeyMessage(BaseModel):
@@ -99,8 +100,14 @@ class SignCertificateMessage(BaseModel):
         """Get CSR encoded in this message."""
         return x509.load_pem_x509_csr(self.csr)
 
-    def get_extensions(self) -> list[x509.Extension[x509.ExtensionType]]:
+    def get_extensions(self) -> list[ConfigurableExtensions]:
         """Get extensions encoded in this message."""
         if self.extensions is None:
             return []
-        return [ext.cryptography for ext in self.extensions]
+        extensions = [ext.cryptography for ext in self.extensions]
+
+        # Double check that we only have extensions that are configurable by the user.
+        if any(ext for ext in extensions if ext.oid not in constants.CONFIGURABLE_EXTENSION_KEYS):
+            raise ValueError("Passed extension that cannot be set for a certificate.")
+
+        return extensions

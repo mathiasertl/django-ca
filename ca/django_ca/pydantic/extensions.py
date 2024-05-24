@@ -977,6 +977,7 @@ SignCertificateExtensions = Annotated[
             FreshestCRLModel,
             IssuerAlternativeNameModel,
             KeyUsageModel,
+            MSCertificateTemplateModel,
             OCSPNoCheckModel,
             SubjectAlternativeNameModel,
             TLSFeatureModel,

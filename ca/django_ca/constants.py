@@ -44,6 +44,7 @@ from django_ca.typehints import (
     CertificateExtensionKeys,
     CertificateRevocationListEncodingNames,
     CertificateRevocationListEncodings,
+    ConfigurableExtensionKeys,
     EllipticCurves,
     ExtensionKeys,
     GeneralNames,
@@ -237,13 +238,10 @@ EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
     }
 )
 
-#: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in an end entity certificate.
-CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKeys] = (
+CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ConfigurableExtensionKeys] = (
     MappingProxyType(
         {
             ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "authority_information_access",
-            ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
-            ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
             ExtensionOID.CERTIFICATE_POLICIES: "certificate_policies",
             ExtensionOID.CRL_DISTRIBUTION_POINTS: "crl_distribution_points",
             ExtensionOID.EXTENDED_KEY_USAGE: "extended_key_usage",
@@ -252,13 +250,24 @@ CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateE
             ExtensionOID.KEY_USAGE: "key_usage",
             ExtensionOID.MS_CERTIFICATE_TEMPLATE: "ms_certificate_template",
             ExtensionOID.OCSP_NO_CHECK: "ocsp_no_check",  # RFC 2560 does not really define a spelling
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
+            ExtensionOID.TLS_FEATURE: "tls_feature",  # RFC 7633
+        }
+    )
+)
+
+#: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in an end entity certificate.
+CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKeys] = (
+    MappingProxyType(
+        {
+            **CONFIGURABLE_EXTENSION_KEYS,
+            ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
+            ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
             ExtensionOID.PRECERT_POISON: "precert_poison",  # RFC 7633
             ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
             ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
             ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
             ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
-            ExtensionOID.TLS_FEATURE: "tls_feature",  # RFC 7633
         }
     )
 )

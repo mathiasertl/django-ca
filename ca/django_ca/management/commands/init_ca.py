@@ -38,13 +38,7 @@ from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePr
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
-from django_ca.typehints import (
-    AllowedHashTypes,
-    ArgumentGroup,
-    ExtensionMapping,
-    ParsableKeyType,
-    SubjectFormats,
-)
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType, SubjectFormats
 from django_ca.utils import format_general_name, parse_general_name
 
 
@@ -268,6 +262,16 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
 
         self.add_certificate_authority_sign_extension_groups(parser)
 
+    def add_extension(
+        self,
+        # TYPEHINT NOTE: extensions needs to be more general here as we also add CA-only extensions
+        extensions: list[x509.Extension[x509.ExtensionType]],  # type: ignore[override]
+        value: x509.ExtensionType,
+        critical: bool,
+    ) -> None:
+        """Shortcut for adding the given extension value to the list of extensions."""
+        extensions.append(x509.Extension(oid=value.oid, critical=critical, value=value))
+
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
@@ -418,57 +422,55 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         if not common_name:
             raise CommandError("Subject must contain a common name (CN=...).")
 
-        extensions: ExtensionMapping = {
-            ExtensionOID.KEY_USAGE: x509.Extension(
-                oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage
-            )
-        }
+        extensions: list[x509.Extension[x509.ExtensionType]] = [
+            x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
+        ]
 
         # Add the Authority Information Access extension
         if authority_information_access is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 authority_information_access,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             )
         # Add the Certificate Policies extension
         if certificate_policies is not None:
-            self._add_extension(extensions, certificate_policies, certificate_policies_critical)
+            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
         # Add the CRL Distribution Points extension
         if crl_full_names is not None:
             distribution_point = x509.DistributionPoint(
                 full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
             )
-            self._add_extension(
+            self.add_extension(
                 extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
             )
         # Add the Extended Key Usage extension
         if extended_key_usage is not None:
-            self._add_extension(extensions, extended_key_usage, extended_key_usage_critical)
+            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
         # Add the inhibitAnyPolicy extension
         if inhibit_any_policy is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY],
             )
         # Add the Issuer Alternative Name extension
         if issuer_alternative_name is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 issuer_alternative_name,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
         # Add the NameConstraints extension
         if permit_name or exclude_name:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 x509.NameConstraints(excluded_subtrees=exclude_name, permitted_subtrees=permit_name),
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.NAME_CONSTRAINTS],
             )
         # Add the Policy Constraints extension
         if require_explicit_policy is not None or inhibit_policy_mapping is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 x509.PolicyConstraints(
                     require_explicit_policy=require_explicit_policy,
@@ -478,7 +480,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             )
         # Add the Subject Alternative Name extension
         if subject_alternative_name is not None:
-            self._add_extension(
+            self.add_extension(
                 extensions,
                 subject_alternative_name,
                 subject_alternative_name_critical,
@@ -546,7 +548,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 use_parent_private_key_options=signer_key_backend_options,
                 path_length=path_length,
                 key_type=key_type,
-                extensions=extensions.values(),
+                extensions=extensions,
                 caa=caa,
                 website=website,
                 terms_of_service=tos,

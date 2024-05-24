@@ -23,8 +23,7 @@ import logging
 import random
 import re
 import typing
-from collections import OrderedDict
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableSequence
 from datetime import datetime, timedelta, timezone as tz
 from typing import Optional, Union
 
@@ -89,7 +88,15 @@ from django_ca.querysets import (
     CertificateQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.typehints import AllowedHashTypes, CertificateRevocationListScopes, Expires, ParsableKeyType
+from django_ca.typehints import (
+    AllowedHashTypes,
+    CertificateExtensionTypes,
+    CertificateRevocationListScopes,
+    ConfigurableExtensions,
+    ConfigurableExtensionsDict,
+    Expires,
+    ParsableKeyType,
+)
 from django_ca.utils import (
     bytes_to_hex,
     generate_private_key,
@@ -676,12 +683,27 @@ class CertificateAuthority(X509CertMixin):
                 encoded_crl = crl.public_bytes(encoding)
                 cache.set(cache_key, encoded_crl, expires)
 
+    def get_end_entity_certificate_extensions(
+        self, public_key: CertificateIssuerPublicKeyTypes
+    ) -> list[CertificateExtensionTypes]:
+        return [
+            self.get_authority_key_identifier_extension(),
+            x509.Extension(
+                oid=ExtensionOID.BASIC_CONSTRAINTS,
+                critical=True,
+                value=x509.BasicConstraints(ca=False, path_length=None),
+            ),
+            x509.Extension(
+                oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+                value=x509.SubjectKeyIdentifier.from_public_key(public_key),
+                critical=False,  # MUST be non-critical (RFC 5280, section 4.2.1.2)
+            ),
+        ]
+
     @property
-    def extensions_for_certificate(
-        self,
-    ) -> dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]:
+    def extensions_for_certificate(self) -> ConfigurableExtensionsDict:
         """Get a list of extensions to use for the certificate."""
-        extensions: dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]] = {}
+        extensions: ConfigurableExtensionsDict = {}
 
         if self.sign_authority_information_access is not None:
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = self.sign_authority_information_access
@@ -701,7 +723,7 @@ class CertificateAuthority(X509CertMixin):
         subject: x509.Name,
         algorithm: Optional[AllowedHashTypes] = None,
         expires: Optional[datetime] = None,
-        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        extensions: Optional[list[ConfigurableExtensions]] = None,
     ) -> x509.Certificate:
         """Create a signed certificate.
 
@@ -729,15 +751,20 @@ class CertificateAuthority(X509CertMixin):
         """
         if algorithm is None:
             algorithm = self.algorithm
-
-        # Ensure that parameters used to generate the public key are valid.
-        algorithm = validate_public_key_parameters(self.key_type, algorithm)
-
         if expires is None:
             expires = timezone.now() + model_settings.CA_DEFAULT_EXPIRES
             expires = expires.replace(second=0, microsecond=0)
         if extensions is None:
             extensions = []
+
+        # Ensure that parameters used to generate the public key are valid.
+        algorithm = validate_public_key_parameters(self.key_type, algorithm)
+
+        # Ensure that the function did *not* get any extension not meant to be in a certificate or that should
+        # not be configurable by the user.
+        for extension in extensions:
+            if extension.oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
+                raise ValueError(f"{extension}: Extension must not be provided by the end user.")
 
         # Load (and check) the public key
         public_key = typing.cast(CertificateIssuerPublicKeyTypes, csr.public_key())
@@ -745,33 +772,9 @@ class CertificateAuthority(X509CertMixin):
         if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
 
-        exts = OrderedDict([(ext.oid, ext) for ext in extensions])
+        # Add mandatory end-entity certificate extensions
+        certificate_extensions = self.get_end_entity_certificate_extensions(public_key) + extensions
 
-        # Add BasicConstraints extension if not already set.
-        if ExtensionOID.BASIC_CONSTRAINTS not in exts:
-            exts[ExtensionOID.BASIC_CONSTRAINTS] = x509.Extension(
-                oid=ExtensionOID.BASIC_CONSTRAINTS,
-                critical=True,
-                value=x509.BasicConstraints(ca=False, path_length=None),
-            )
-
-        # Make sure that the "ca" value of the Basic Constraints extension is False. If it were True, the
-        # certificate would be usable as a CA and we want to make sure that his does not happen here.
-        basic_constraints = typing.cast(x509.BasicConstraints, exts[ExtensionOID.BASIC_CONSTRAINTS].value)
-        if basic_constraints.ca is True:
-            raise ValueError("This function cannot be used to create a Certificate Authority.")
-
-        # Add Subject- and AuthorityKeyIdentifier extensions if not already set.
-        if ExtensionOID.SUBJECT_KEY_IDENTIFIER not in exts:
-            exts[ExtensionOID.SUBJECT_KEY_IDENTIFIER] = x509.Extension(
-                oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-                value=x509.SubjectKeyIdentifier.from_public_key(public_key),
-                critical=False,  # MUST be non-critical (RFC 5280, section 4.2.1.2)
-            )
-        if ExtensionOID.AUTHORITY_KEY_IDENTIFIER not in exts:
-            exts[ExtensionOID.AUTHORITY_KEY_IDENTIFIER] = self.get_authority_key_identifier_extension()
-
-        extensions = list(exts.values())
         pre_sign_cert.send(
             sender=self.__class__,
             ca=self,
@@ -779,7 +782,7 @@ class CertificateAuthority(X509CertMixin):
             expires=expires,
             algorithm=algorithm,
             subject=subject,
-            extensions=extensions,
+            extensions=certificate_extensions,
             key_backend_options=key_backend_options,
         )
 
@@ -792,7 +795,7 @@ class CertificateAuthority(X509CertMixin):
             issuer=self.subject,
             subject=subject,
             expires=expires,
-            extensions=extensions,
+            extensions=certificate_extensions,
         )
 
         post_sign_cert.send(sender=self.__class__, ca=self, cert=signed_cert)

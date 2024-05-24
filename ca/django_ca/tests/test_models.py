@@ -927,44 +927,39 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         self.assertEqual(not_valid_after(cert), expires)
         self.assertIsInstance(cert.signature_hash_algorithm, hashes.SHA256)
 
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_non_default_extensions(self) -> None:
-        """Pass non-default extensions."""
-        cn = "example.com"
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)])
-        aki = x509.Extension(
+
+@pytest.mark.parametrize(
+    "extension",
+    (
+        basic_constraints(ca=True),
+        x509.Extension(
             oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
             critical=True,
             value=x509.AuthorityKeyIdentifier(
                 key_identifier=b"1", authority_cert_issuer=None, authority_cert_serial_number=None
             ),
-        )
-        ski = x509.Extension(
+        ),
+        x509.Extension(
             oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
             critical=True,
             value=x509.SubjectKeyIdentifier(digest=b"1"),
+        ),
+        x509.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison()),
+    ),
+)
+def test_certificate_authority_sign_with_invalid_extensions(
+    root: CertificateAuthority, subject: x509.Name, extension: x509.Extension[x509.ExtensionType]
+) -> None:
+    """Test error when passing extensions that may not be passed to this function."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    msg = rf"{extension.oid.dotted_string}.* Extension must not be provided by the end user\."
+    with pytest.raises(ValueError, match=msg):
+        root.sign(
+            key_backend_options,
+            csr,
+            subject=subject,
+            extensions=[extension],  # type: ignore[list-item]  # what we're testing
         )
-
-        with self.assertSignCertSignals():
-            cert = self.ca.sign(
-                key_backend_options,
-                csr,
-                subject=subject,
-                extensions=[basic_constraints(critical=False), ski, aki],
-            )
-
-        self.assertBasicCert(cert)
-        self.assertExtensionDict(cert, [ski, basic_constraints(critical=False), aki])
-
-    def test_create_ca(self) -> None:
-        """Try passing a BasicConstraints extension that allows creating a CA."""
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
-        msg = r"^This function cannot be used to create a Certificate Authority\.$"
-        with self.assertSignCertSignals(pre=False, post=False), self.assertRaisesRegex(ValueError, msg):
-            self.ca.sign(key_backend_options, csr, subject=subject, extensions=[basic_constraints(ca=True)])
 
 
 class CertificateTests(TestCaseMixin, X509CertMixinTestCaseMixin, TestCase):

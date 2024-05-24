@@ -14,6 +14,7 @@
 """Storages."""
 
 import typing
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, Optional
@@ -382,7 +383,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: list[x509.Extension[x509.ExtensionType]],
+        extensions: Sequence[x509.Extension[x509.ExtensionType]],
     ) -> x509.Certificate:
         builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)

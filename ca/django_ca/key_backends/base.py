@@ -15,7 +15,7 @@
 
 import abc
 import typing
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from datetime import datetime
 from threading import local
 from typing import Any, Optional
@@ -278,7 +278,8 @@ class KeyBackend(
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: list[x509.Extension[x509.ExtensionType]],
+        # NOTE: Allows any extension, as the function is also used for creating certificate authorities.
+        extensions: Sequence[x509.Extension[x509.ExtensionType]],
     ) -> x509.Certificate:
         """Sign a certificate."""
 
