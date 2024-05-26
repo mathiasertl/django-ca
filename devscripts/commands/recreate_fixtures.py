@@ -126,6 +126,26 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
             "path_length": 1,
             "max_path_length": 1,
             "algorithm": None,
+            "extensions": {
+                "inhibit_any_policy": x509.Extension(
+                    oid=ExtensionOID.INHIBIT_ANY_POLICY,
+                    critical=True,  # required by RFC 5280
+                    value=x509.InhibitAnyPolicy(skip_certs=1),
+                ),
+                "name_constraints": x509.Extension(
+                    oid=ExtensionOID.NAME_CONSTRAINTS,
+                    critical=True,  # required by RFC 5280
+                    value=x509.NameConstraints(
+                        permitted_subtrees=[x509.DNSName(".org")],
+                        excluded_subtrees=[x509.DNSName(".net")],
+                    ),
+                ),
+                "policy_constraints": x509.Extension(
+                    oid=ExtensionOID.POLICY_CONSTRAINTS,
+                    critical=True,  # required by RFC 5280
+                    value=x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=2),
+                ),
+            },
         },
         "ed448": {
             "type": "ca",
@@ -133,6 +153,24 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
             "path_length": 1,
             "max_path_length": 1,
             "algorithm": None,
+            "extensions": {
+                # "authority_key_identifier": x509.Extension(
+                #     oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+                #     critical=True,  # not usually critical
+                #     value=x509.AuthorityKeyIdentifier(
+                #         key_identifier=b"0",
+                #         authority_cert_issuer=[x509.DNSName("example.com")],
+                #         authority_cert_serial_number=1,
+                #     ),
+                # ),
+                "name_constraints": x509.Extension(
+                    oid=ExtensionOID.NAME_CONSTRAINTS,
+                    critical=True,  # required by RFC 5280
+                    value=x509.NameConstraints(
+                        permitted_subtrees=[x509.DNSName(".org")], excluded_subtrees=None
+                    ),
+                ),
+            },
         },
         "root-cert": {
             "ca": "root",
@@ -317,11 +355,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
                         ]
                     ),
                 ),
-                "inhibit_any_policy": x509.Extension(
-                    oid=ExtensionOID.INHIBIT_ANY_POLICY,
-                    critical=True,  # required by RFC 5280
-                    value=x509.InhibitAnyPolicy(skip_certs=1),
-                ),
                 "issuer_alternative_name": x509.Extension(
                     oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME,
                     critical=False,
@@ -344,24 +377,11 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
                         decipher_only=False,
                     ),
                 ),
-                "name_constraints": x509.Extension(
-                    oid=ExtensionOID.NAME_CONSTRAINTS,
-                    critical=True,
-                    value=x509.NameConstraints(
-                        permitted_subtrees=[x509.DNSName(".org")],
-                        excluded_subtrees=[x509.DNSName(".net")],
-                    ),
-                ),
-                "policy_constraints": x509.Extension(
-                    oid=ExtensionOID.POLICY_CONSTRAINTS,
-                    critical=True,  # required by RFC 5280
-                    value=x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=2),
+                "ocsp_no_check": x509.Extension(
+                    oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=x509.OCSPNoCheck()
                 ),
                 "precert_poison": x509.Extension(
                     oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison()
-                ),
-                "ocsp_no_check": x509.Extension(
-                    oid=ExtensionOID.OCSP_NO_CHECK, critical=False, value=x509.OCSPNoCheck()
                 ),
                 "subject_alternative_name": x509.Extension(
                     oid=ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
@@ -396,15 +416,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
                 {"oid": NameOID.EMAIL_ADDRESS.dotted_string, "value": "user@example.com"},
             ],
             "extensions": {
-                "authority_key_identifier": x509.Extension(
-                    oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
-                    critical=True,  # not usually critical
-                    value=x509.AuthorityKeyIdentifier(
-                        key_identifier=b"0",
-                        authority_cert_issuer=[x509.DNSName("example.com")],
-                        authority_cert_serial_number=1,
-                    ),
-                ),
                 "crl_distribution_points": x509.Extension(
                     oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
                     critical=True,  # not usually critical
@@ -468,13 +479,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
                         crl_sign=False,
                         encipher_only=True,
                         decipher_only=False,
-                    ),
-                ),
-                "name_constraints": x509.Extension(
-                    oid=ExtensionOID.NAME_CONSTRAINTS,
-                    critical=True,
-                    value=x509.NameConstraints(
-                        permitted_subtrees=[x509.DNSName(".org")], excluded_subtrees=None
                     ),
                 ),
                 "ocsp_no_check": x509.Extension(

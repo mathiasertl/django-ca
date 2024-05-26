@@ -528,19 +528,14 @@ Certificate extensions:
 {extended_key_usage_text}
 * Freshest CRL{freshest_crl_critical}:
 {freshest_crl_text}
-* Inhibit anyPolicy{inhibit_any_policy_critical}:
-  1
 * Issuer Alternative Name{issuer_alternative_name_critical}:
 {issuer_alternative_name_text}
 * Key Usage{key_usage_critical}:
 {key_usage_text}
-* Name Constraints{name_constraints_critical}:
-{name_constraints_text}
 * OCSP No Check{ocsp_no_check_critical}:
   Yes
-* Policy Constraints{policy_constraints_critical}:
-{policy_constraints_text}
-{precert_poison}
+* Precert Poison (critical):
+  Yes
 * Subject Alternative Name{subject_alternative_name_critical}:
 {subject_alternative_name_text}
 * Subject Key Identifier{subject_key_identifier_critical}:
@@ -583,8 +578,6 @@ Certificate extensions:
 {issuer_alternative_name_text}
 * Key Usage{key_usage_critical}:
 {key_usage_text}
-* Name Constraints{name_constraints_critical}:
-{name_constraints_text}
 * OCSP No Check{ocsp_no_check_critical}:
   Yes
 * Subject Alternative Name{subject_alternative_name_critical}:

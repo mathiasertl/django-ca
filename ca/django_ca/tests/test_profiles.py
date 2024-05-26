@@ -221,37 +221,6 @@ class ProfileTestCase(TestCaseMixin, TestCase):
         self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.extensions)
 
     @override_tmpcadir()
-    def test_override_ski(self) -> None:
-        """Test overriding the subject key identifier."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        ski = x509.Extension(
-            oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER,
-            critical=False,
-            value=x509.SubjectKeyIdentifier(b"custom value"),
-        )
-
-        prof = Profile("example")
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=False,
-                extensions=[ski],
-            )
-        self.assertEqual(pre.call_count, 1)
-        assert_extensions(
-            cert,
-            [ca.get_authority_key_identifier_extension(), basic_constraints(), ski],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
     def test_add_distribution_point_with_ca_crldp(self) -> None:
         """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
         prof = Profile("example")

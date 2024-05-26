@@ -47,7 +47,6 @@ from django_ca.typehints import (
     ArgumentGroup,
     ConfigurableExtensions,
     ConfigurableExtensionTypes,
-    ExtensionDict,
     SubjectFormats,
 )
 from django_ca.utils import add_colons, format_name_rfc4514, name_for_display, parse_name_rfc4514, x509_name
@@ -391,10 +390,6 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     This class can add options for all x509 extensions.
     """
 
-    def _add_extension(self, extensions: ExtensionDict, value: x509.ExtensionType, critical: bool) -> None:
-        """Add an extension to the passed extension dictionary."""
-        extensions[value.oid] = x509.Extension(oid=value.oid, critical=critical, value=value)
-
     def add_extension(
         self,
         extensions: list[ConfigurableExtensions],
@@ -403,8 +398,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
     ) -> None:
         """Shortcut for adding the given extension value to the list of extensions."""
         extensions.append(
-            # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B], which is
-            # currently treated as incompatible by mypy for unknown reasons.
+            # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
             x509.Extension(oid=value.oid, critical=critical, value=value)  # type: ignore[arg-type]
         )
 

@@ -23,7 +23,7 @@ import logging
 import random
 import re
 import typing
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from typing import Optional, Union
 

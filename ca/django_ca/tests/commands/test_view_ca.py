@@ -113,8 +113,18 @@ Certificate extensions:
 {authority_key_identifier_text}
 * Basic Constraints{basic_constraints_critical}:
 {basic_constraints_text}
+* Inhibit anyPolicy (critical):
+  1
 * Key Usage{key_usage_critical}:
 {key_usage_text}
+* Name Constraints (critical):
+  Permitted:
+    * DNS:.org
+  Excluded:
+    * DNS:.net
+* Policy Constraints (critical):
+  * InhibitPolicyMapping: 2
+  * RequireExplicitPolicy: 1
 * Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -164,6 +174,9 @@ Certificate extensions:
 {basic_constraints_text}
 * Key Usage{key_usage_critical}:
 {key_usage_text}
+* Name Constraints (critical):
+  Permitted:
+    * DNS:.org
 * Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 
@@ -1233,7 +1246,7 @@ Digest:
   * commonName (CN): GlobalSign Root CA
 * Valid from: {valid_from_str}
 * Valid until: {valid_until_str}
-* Status: Valid
+* Status: Expired
 
 Certificate Authority information:
 * Certificate authority is a root CA.

@@ -297,6 +297,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 path_length=data[name]["path_length"],
                 parent=parent,
                 use_parent_private_key_options=use_parent_private_key_options,
+                extensions=data[name].get("extensions", {}).values(),
             )
 
         ca_instances.append(ca)

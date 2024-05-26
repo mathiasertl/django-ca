@@ -24,7 +24,7 @@ import typing
 from collections.abc import Iterator
 from datetime import date, datetime, timezone as tz
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -1074,8 +1074,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                             oid=oid, critical=form_ext.critical, value=distribution_points
                         )
 
-                        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B],
-                        # which is currently treated as incompatible by mypy for unknown reasons.
+                        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
                         extensions[oid] = extension  # type: ignore[assignment]
 
                     continue

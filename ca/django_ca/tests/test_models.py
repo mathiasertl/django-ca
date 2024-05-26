@@ -944,7 +944,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             critical=True,
             value=x509.SubjectKeyIdentifier(digest=b"1"),
         ),
-        x509.Extension(oid=ExtensionOID.PRECERT_POISON, critical=True, value=x509.PrecertPoison()),
+        x509.Extension(oid=ExtensionOID.INHIBIT_ANY_POLICY, critical=True, value=x509.InhibitAnyPolicy(1)),
     ),
 )
 def test_certificate_authority_sign_with_invalid_extensions(

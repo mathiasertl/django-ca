@@ -52,9 +52,16 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
         },
         "ed25519": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['ed25519']['path_length']}",
+            ExtensionOID.INHIBIT_ANY_POLICY: "skip certs: 1",
+            ExtensionOID.NAME_CONSTRAINTS: """Permitted: <ul><li>DNS:.org</li></ul>
+                    Excluded: <ul><li>DNS:.net</li></ul>""",
+            ExtensionOID.POLICY_CONSTRAINTS: """<ul>
+                    <li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 1</li>
+                </ul>""",
         },
         "ed448": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['ed448']['path_length']}",
+            ExtensionOID.NAME_CONSTRAINTS: "Permitted: <ul><li>DNS:.org</li></ul>",
         },
         "trustid_server_a52": {
             ExtensionOID.CERTIFICATE_POLICIES: """<ul>
@@ -229,31 +236,15 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
         # Generated certificates #
         ##########################
         "all-extensions": {
-            ExtensionOID.INHIBIT_ANY_POLICY: "skip certs: 1",
-            ExtensionOID.NAME_CONSTRAINTS: """Permitted: <ul><li>DNS:.org</li></ul>
-                Excluded: <ul><li>DNS:.net</li></ul>""",
             ExtensionOID.EXTENDED_KEY_USAGE: """<ul>
                 <li>clientAuth</li><li>codeSigning</li><li>emailProtection</li><li>serverAuth</li>
             </ul>""",
             ExtensionOID.OCSP_NO_CHECK: "Yes",
-            ExtensionOID.POLICY_CONSTRAINTS: """<ul>
-                <li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 1</li>
-            </ul>""",
             ExtensionOID.PRECERT_POISON: "Yes",
             ExtensionOID.TLS_FEATURE: "<ul><li>status_request_v2 (MultipleCertStatusRequest)</li>"
             "<li>status_request (OCSPMustStaple)</li></ul>",
         },
         "alt-extensions": {
-            ExtensionOID.AUTHORITY_KEY_IDENTIFIER: """
-<ul>
-  <li>Key ID: <span class="django-ca-serial">30</span></li>
-  <li>Authority certificate issuer:
-    <ul><li>DNS:example.com</li></ul>
-  </li>
-  <li>Authority certificate issuer:
-    <span class="django-ca-serial">01</span>
-  </li>
-</ul>""",
             ExtensionOID.CRL_DISTRIBUTION_POINTS: """
 DistributionPoint:
 <ul><li>Full Name: URI:https://example.com</li></ul>
@@ -267,7 +258,6 @@ DistributionPoint:
             ExtensionOID.EXTENDED_KEY_USAGE: """<ul>
                 <li>clientAuth</li><li>codeSigning</li><li>emailProtection</li><li>serverAuth</li>
             </ul>""",
-            ExtensionOID.NAME_CONSTRAINTS: "Permitted: <ul><li>DNS:.org</li></ul>",
             ExtensionOID.OCSP_NO_CHECK: "Yes",
             ExtensionOID.TLS_FEATURE: "<ul><li>status_request (OCSPMustStaple)</li></ul>",
         },

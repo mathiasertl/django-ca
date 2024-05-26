@@ -110,4 +110,5 @@ class SignCertificateMessage(BaseModel):
         if any(ext for ext in extensions if ext.oid not in constants.CONFIGURABLE_EXTENSION_KEYS):
             raise ValueError("Passed extension that cannot be set for a certificate.")
 
-        return extensions
+        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
+        return extensions  # type: ignore[return-value]

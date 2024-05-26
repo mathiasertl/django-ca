@@ -302,6 +302,7 @@ ConfigurableExtensionTypes = Union[
     x509.KeyUsage,
     x509.MSCertificateTemplate,
     x509.OCSPNoCheck,
+    x509.PrecertPoison,
     x509.SubjectAlternativeName,
     x509.TLSFeature,
 ]
@@ -315,6 +316,7 @@ ConfigurableExtensions = Union[
     x509.Extension[x509.KeyUsage],
     x509.Extension[x509.MSCertificateTemplate],
     x509.Extension[x509.OCSPNoCheck],
+    x509.Extension[x509.PrecertPoison],
     x509.Extension[x509.SubjectAlternativeName],
     x509.Extension[x509.TLSFeature],
 ]
@@ -323,7 +325,6 @@ CertificateExtensionTypes = Union[
     ConfigurableExtensions,
     x509.Extension[x509.AuthorityKeyIdentifier],
     x509.Extension[x509.BasicConstraints],
-    x509.Extension[x509.PrecertPoison],
     x509.Extension[x509.PrecertificateSignedCertificateTimestamps],
     x509.Extension[x509.SignedCertificateTimestamps],
     x509.Extension[x509.SubjectInformationAccess],
