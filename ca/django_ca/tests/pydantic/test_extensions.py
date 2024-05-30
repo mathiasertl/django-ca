@@ -14,7 +14,7 @@
 """Test Pydantic models for extensions."""
 
 import re
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, get_args
 
 from pydantic import ValidationError
 
@@ -45,12 +45,15 @@ from django_ca.pydantic.extensions import (
     AuthorityInformationAccessModel,
     AuthorityKeyIdentifierModel,
     BasicConstraintsModel,
-    CertificateExtensionsList,
+    CertificateExtensionModel,
+    CertificateExtensionModelList,
     CertificatePoliciesModel,
+    ConfigurableExtensionModel,
     CRLDistributionPointsModel,
     CRLNumberModel,
     DeltaCRLIndicatorModel,
     ExtendedKeyUsageModel,
+    ExtensionModel,
     ExtensionModelTypeVar,
     FreshestCRLModel,
     InhibitAnyPolicyModel,
@@ -1488,7 +1491,7 @@ def test_unrecognized_extension(
 
 def test_certificate_extension_list_type_adapter() -> None:
     """Test type adapter for lists of extensions."""
-    assert CertificateExtensionsList.validate_python([]) == []
+    assert CertificateExtensionModelList.validate_python([]) == []
     basic_constraints_model = BasicConstraintsModel(value=BasicConstraintsValueModel(ca=True, path_length=0))
     input_list = [
         basic_constraints_model.cryptography,
@@ -1508,7 +1511,21 @@ def test_certificate_extension_list_type_adapter() -> None:
             critical=True, value=UnrecognizedExtensionValueModel(oid="1.2.3", value=b"kA==")
         ),
     ]
-    assert CertificateExtensionsList.validate_python(input_list) == expected_list
+    assert CertificateExtensionModelList.validate_python(input_list) == expected_list
+
+
+def test_configurable_extension_models_completeness() -> None:
+    """Test ConfigurableExtensionModel for completeness."""
+    models: tuple[ExtensionModel[Any]] = get_args(get_args(ConfigurableExtensionModel)[0])
+    model_types = [model.model_fields["type"].default for model in models]
+    assert sorted(model_types) == sorted(constants.CONFIGURABLE_EXTENSION_KEY_OIDS)
+
+
+def test_certificate_extension_models_completeness() -> None:
+    """Test CertificateExtensionModel for completeness."""
+    models: tuple[ExtensionModel[Any]] = get_args(get_args(CertificateExtensionModel)[0])
+    model_types = [model.model_fields["type"].default for model in models]
+    assert sorted(model_types) == sorted([*constants.CERTIFICATE_EXTENSION_KEY_OIDS, "unknown"])
 
 
 def test_extension_model_oids() -> None:
@@ -1522,10 +1539,10 @@ def test_fixture_certs(any_cert: str) -> None:
     """Test Pydantic models with fixture data."""
     public_key = CERT_DATA[any_cert]["pub"]["parsed"]
     serialized_extensions = CERT_DATA[any_cert][("extensions")]
-    expected = CertificateExtensionsList.validate_python(
+    expected = CertificateExtensionModelList.validate_python(
         serialized_extensions, context={"validate_required_critical": False}
     )
-    actual = CertificateExtensionsList.validate_python(
+    actual = CertificateExtensionModelList.validate_python(
         list(public_key.extensions), context={"validate_required_critical": False}
     )
     assert expected == actual

@@ -35,7 +35,7 @@ from django_ca.profiles import Profile, profiles
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca
 from django_ca.typehints import (
     AllowedHashTypes,
-    ConfigurableExtensions,
+    ConfigurableExtension,
     Expires,
     ExtensionDict,
     ParsableKeyType,
@@ -572,7 +572,7 @@ class CertificateManager(
         subject: Optional[x509.Name] = None,
         expires: Expires = None,
         algorithm: Optional[AllowedHashTypes] = None,
-        extensions: Optional[Iterable[ConfigurableExtensions]] = None,
+        extensions: Optional[Iterable[ConfigurableExtension]] = None,
         add_crl_url: Optional[bool] = None,
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,

@@ -32,7 +32,7 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtensions, SubjectFormats
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtension, SubjectFormats
 
 
 class Command(BaseSignCertCommand):
@@ -137,7 +137,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             parsed_subject = self.parse_x509_name(subject, subject_format)
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtensions] = []
+        extensions: list[ConfigurableExtension] = []
 
         if authority_information_access is not None:
             self.add_extension(

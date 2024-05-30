@@ -45,8 +45,8 @@ from django_ca.typehints import (
     ActionsContainer,
     AllowedHashTypes,
     ArgumentGroup,
-    ConfigurableExtensions,
-    ConfigurableExtensionTypes,
+    ConfigurableExtension,
+    ConfigurableExtensionType,
     SubjectFormats,
 )
 from django_ca.utils import add_colons, format_name_rfc4514, name_for_display, parse_name_rfc4514, x509_name
@@ -392,8 +392,8 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
 
     def add_extension(
         self,
-        extensions: list[ConfigurableExtensions],
-        value: ConfigurableExtensionTypes,
+        extensions: list[ConfigurableExtension],
+        value: ConfigurableExtensionType,
         critical: bool,
     ) -> None:
         """Shortcut for adding the given extension value to the list of extensions."""

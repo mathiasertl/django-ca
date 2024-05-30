@@ -54,6 +54,101 @@ def get_subclasses(cls: type[SuperclassTypeVar]) -> set[type[SuperclassTypeVar]]
     return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in get_subclasses(c)])
 
 
+def test_certificate_extension_keys_typehints() -> None:
+    """Test that END_ENTITY_CERTIFICATE_EXTENSION_KEYS has matching keys and values."""
+    configurable, end_entity, added = get_args(typehints.CertificateExtensionKeys)
+    expected = sorted([*get_args(configurable), *get_args(end_entity), *get_args(added)])
+
+    # "unknown" does not exist in constants, as there is no OID to map to, obviously.
+    expected.remove("unknown")
+
+    # Values of END_ENTITY_CERTIFICATE_EXTENSION_KEYS match exactly the Literal -> did not forget any value.
+    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS.values()) == expected
+
+    # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
+    extension_types = [
+        et for et in get_args(typehints.CertificateExtensionType) if et != x509.UnrecognizedExtension
+    ]
+    expected = sorted((ext.oid for ext in extension_types), key=oid_sorter)
+    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS, key=oid_sorter) == expected
+
+
+def test_configurable_extension_keys_typehints() -> None:
+    """Test that CONFIGURABLE_EXTENSION_KEYS has matching keys and values."""
+    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS.values()) == sorted(
+        get_args(typehints.ConfigurableExtensionKeys)
+    )
+
+    # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
+    expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionType)), key=oid_sorter)
+    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS, key=oid_sorter) == expected
+
+
+def test_elliptic_curves() -> None:
+    """Test that ``utils.ELLIPTIC_CURVE_TYPES`` covers all known elliptic curves.
+
+    The point of this test is that it fails if a new cryptography version adds new curves, thus allowing
+    us to detect if the constant becomes out of date.
+    """
+    # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
+    #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
+    subclasses = get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
+    assert constants.ELLIPTIC_CURVE_TYPES == {e.name: e for e in subclasses}
+
+
+def test_end_entity_certificate_extension_keys_typehints() -> None:
+    """Test that END_ENTITY_CERTIFICATE_EXTENSION_KEYS has matching keys and values."""
+    configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKeys)
+    expected = sorted(get_args(configurable_keys) + get_args(added_keys))
+
+    # Values of END_ENTITY_CERTIFICATE_EXTENSION_KEYS match exactly the Literal -> did not forget any value.
+    assert sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS.values()) == expected
+
+    # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
+    expected = sorted(
+        (ext.oid for ext in get_args(typehints.EndEntityCertificateExtensionType)), key=oid_sorter
+    )
+    assert sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS, key=oid_sorter) == expected
+
+
+def test_extended_key_usage_human_readable_names() -> None:
+    """Test completeness of the ``EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES`` constant."""
+    assert KNOWN_EXTENDED_KEY_USAGE_OIDS == sorted(
+        constants.EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES, key=oid_sorter
+    )
+
+
+def test_extended_key_usage_oids() -> None:
+    """Test ExtendedKeyUsageOID for duplicates."""
+    assert KNOWN_EXTENDED_KEY_USAGE_OIDS == sorted(set(KNOWN_EXTENDED_KEY_USAGE_OIDS), key=oid_sorter)
+
+
+def test_extended_key_usage_names() -> None:
+    """Test completeness of ``EXTENDED_KEY_USAGE_NAMES`` constant."""
+    assert KNOWN_EXTENDED_KEY_USAGE_OIDS == sorted(constants.EXTENDED_KEY_USAGE_NAMES, key=oid_sorter)
+
+
+def test_extension_critical_help() -> None:
+    """Test completeness of EXTENSION_CRITICAL_HELP."""
+    assert KNOWN_EXTENSION_OIDS == sorted(constants.EXTENSION_CRITICAL_HELP, key=oid_sorter)
+
+
+def test_extension_default_critical() -> None:
+    """Test completeness of EXTENSION_DEFAULT_CRITICAL."""
+    known_oids = [oid for oid in KNOWN_EXTENSION_OIDS if oid != ExtensionOID.MS_CERTIFICATE_TEMPLATE]
+    assert sorted(known_oids, key=oid_sorter) == sorted(constants.EXTENSION_DEFAULT_CRITICAL, key=oid_sorter)
+
+
+def test_extension_keys() -> None:
+    """Test completeness of the ``KNOWN_EXTENSION_OIDS`` constant."""
+    assert KNOWN_EXTENSION_OIDS == sorted(constants.EXTENSION_KEYS, key=oid_sorter)
+
+
+def test_extension_names_completeness() -> None:
+    """Test completeness of EXTENSION_NAMES."""
+    assert KNOWN_EXTENSION_OIDS == sorted(constants.EXTENSION_NAMES, key=oid_sorter)
+
+
 def test_general_name_types() -> None:
     """Test :py:attr:`~django_ca.constants.GENERAL_NAME_TYPES` for completeness."""
     subclasses = get_subclasses(x509.GeneralName)  # type: ignore[type-var, type-abstract]
@@ -93,48 +188,7 @@ def test_hash_algorithm_names() -> None:
     assert sorted(constants.HASH_ALGORITHM_NAMES.values()) == sorted(get_args(HashAlgorithms))
 
 
-def test_reason_flags_completeness() -> None:
-    """Test that our list completely mirrors the cryptography list."""
-    actual = sorted([(k, v.value) for k, v in constants.ReasonFlags.__members__.items()])
-    expected = sorted([(k, v.value) for k, v in x509.ReasonFlags.__members__.items()])
-    assert actual == expected
-
-
-def test_elliptic_curves() -> None:
-    """Test that ``utils.ELLIPTIC_CURVE_TYPES`` covers all known elliptic curves.
-
-    The point of this test is that it fails if a new cryptography version adds new curves, thus allowing
-    us to detect if the constant becomes out of date.
-    """
-    # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
-    #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
-    subclasses = get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
-    assert constants.ELLIPTIC_CURVE_TYPES == {e.name: e for e in subclasses}
-
-
-def test_extended_key_usage_oids() -> None:
-    """Test ExtendedKeyUsageOID for duplicates."""
-    assert KNOWN_EXTENDED_KEY_USAGE_OIDS == sorted(set(KNOWN_EXTENDED_KEY_USAGE_OIDS), key=oid_sorter)
-
-
-def test_extended_key_usage_names() -> None:
-    """Test completeness of ``EXTENDED_KEY_USAGE_NAMES`` constant."""
-    assert KNOWN_EXTENDED_KEY_USAGE_OIDS == sorted(constants.EXTENDED_KEY_USAGE_NAMES, key=oid_sorter)
-
-
-def test_extended_key_usage_human_readable_names() -> None:
-    """Test completeness of the ``EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES`` constant."""
-    assert KNOWN_EXTENDED_KEY_USAGE_OIDS == sorted(
-        constants.EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES, key=oid_sorter
-    )
-
-
-def test_extension_keys() -> None:
-    """Test completeness of the ``KNOWN_EXTENSION_OIDS`` constant."""
-    assert KNOWN_EXTENSION_OIDS == sorted(constants.EXTENSION_KEYS, key=oid_sorter)
-
-
-def test_nameoid() -> None:
+def test_name_oid_names_completeness() -> None:
     """Test that we support all NameOID instances."""
     known_oids = [v for v in vars(x509.NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
     organization_id = x509.ObjectIdentifier("2.5.4.97")
@@ -143,39 +197,8 @@ def test_nameoid() -> None:
     assert sorted(known_oids, key=oid_sorter) == sorted(constants.NAME_OID_NAMES, key=oid_sorter)
 
 
-def test_oid_to_extension_names() -> None:
-    """Test completeness of EXTENSION_NAMES."""
-    assert KNOWN_EXTENSION_OIDS == sorted(constants.EXTENSION_NAMES, key=oid_sorter)
-
-
-def test_oid_default_critical() -> None:
-    """Test completeness of EXTENSION_DEFAULT_CRITICAL."""
-    known_oids = [oid for oid in KNOWN_EXTENSION_OIDS if oid != ExtensionOID.MS_CERTIFICATE_TEMPLATE]
-    assert sorted(known_oids, key=oid_sorter) == sorted(constants.EXTENSION_DEFAULT_CRITICAL, key=oid_sorter)
-
-
-def test_oid_critical_help() -> None:
-    """Test completeness of EXTENSION_CRITICAL_HELP."""
-    assert KNOWN_EXTENSION_OIDS == sorted(constants.EXTENSION_CRITICAL_HELP, key=oid_sorter)
-
-
-def test_configurable_extension_keys_completeness() -> None:
-    """Test that CONFIGURABLE_EXTENSION_KEYS has matching keys and values."""
-    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS.values()) == sorted(
-        get_args(typehints.ConfigurableExtensionKeys)
-    )
-
-    # check that all keys (=Object identifiers) occur in ConfigurableExtensionTypes
-    expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionTypes)), key=oid_sorter)
-    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS, key=oid_sorter) == expected
-
-
-def test_certificate_extension_keys_completeness() -> None:
-    """Test that CERTIFICATE_EXTENSION_KEYS has matching keys and values."""
-    configurable_keys, added_keys = get_args(typehints.CertificateExtensionKeys)
-    expected = sorted(get_args(configurable_keys) + get_args(added_keys))
-    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS.values()) == expected
-
-    # check that all keys (=Object identifiers) occur in ConfigurableExtensionTypes
-    expected = sorted((ext.oid for ext in get_args(typehints.CertificateExtensionTypes)), key=oid_sorter)
-    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS, key=oid_sorter) == expected
+def test_reason_flags_completeness() -> None:
+    """Test that our list completely mirrors the cryptography list."""
+    actual = sorted([(k, v.value) for k, v in constants.ReasonFlags.__members__.items()])
+    expected = sorted([(k, v.value) for k, v in x509.ReasonFlags.__members__.items()])
+    assert actual == expected

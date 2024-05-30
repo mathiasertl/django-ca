@@ -26,8 +26,8 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.constants import (
-    CERTIFICATE_EXTENSION_KEYS,
     CONFIGURABLE_EXTENSION_KEYS,
+    END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     EXTENSION_DEFAULT_CRITICAL,
 )
 from django_ca.deprecation import RemovedInDjangoCA200Warning
@@ -48,6 +48,7 @@ from django_ca.tests.base.utils import (
     distribution_point,
     dns,
     issuer_alternative_name,
+    key_usage,
     ocsp_no_check,
     state,
     subject_alternative_name,
@@ -79,13 +80,13 @@ def create_cert(
     return cert
 
 
-def test_doctests_module(doctest_globs: dict[str, Any]) -> None:
+def test_doctests_module(doctest_globs: dict[str, Any]) -> None:  # pylint: disable=redefined-outer-name
     """Run doctests for this module."""
     failures, _tests = doctest_module("django_ca.profiles", globs=doctest_globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
-def test_doctest_documentation(doctest_globs: dict[str, Any]) -> None:
+def test_doctest_documentation(doctest_globs: dict[str, Any]) -> None:  # pylint: disable=redefined-outer-name
     """Test python/profiles.rst."""
     failures, _tests = doctest.testfile("../../../docs/source/python/profiles.rst", globs=doctest_globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
@@ -198,7 +199,7 @@ def test_init_expires() -> None:
 
 def test_init_with_deprecated_extension_format() -> None:
     """Test passing a deprecated extension format."""
-    key = CERTIFICATE_EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+    key = END_ENTITY_CERTIFICATE_EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
     value = {"value": [{"full_name": ["DNS:example.com"]}]}
     warning = rf"^test: {key}: Deprecated extension format \(value: .*\)\."
     with assert_removed_in_200(warning):
@@ -230,9 +231,16 @@ def test_init_with_deprecated_subject_value() -> None:
 
 def test_init_with_unsupported_extension() -> None:
     """Test creating a profile with an extension that should not be in a profile."""
-    with pytest.raises(ValueError, match=r"Extension cannot be used in a profile\.$"):
+    with pytest.raises(ValueError, match=r"^inhibit_any_policy: Extension cannot be used in a profile\.$"):
         # TYPEHINT NOTE: This is what we're testing.
         Profile("test", extensions={"inhibit_any_policy": None})  # type: ignore[dict-item]
+
+
+def test_init_with_non_matching_extension() -> None:
+    """Test creating a profile with an extension that should not be in a profile."""
+    with pytest.raises(ValueError, match=r"^ocsp_no_check: .*Extension does not match key\.$"):
+        # TYPEHINT NOTE: This is what we're testing.
+        Profile("test", extensions={"ocsp_no_check": key_usage(key_agreement=True)})
 
 
 def test_init_with_invalid_extension_type() -> None:
@@ -243,7 +251,7 @@ def test_init_with_invalid_extension_type() -> None:
             "test",
             extensions={
                 # TYPEHINT NOTE: This is what we're testing.
-                CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True  # type: ignore[dict-item]
+                END_ENTITY_CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True  # type: ignore[dict-item]
             },
         )
 
@@ -713,14 +721,14 @@ def test_create_cert_with_unsupported_extension(root: CertificateAuthority) -> N
 def test_serialize() -> None:
     """Test profile serialization."""
     desc = "foo bar"
-    key_usage = ["digital_signature"]
+    key_usage_items = ["digital_signature"]
     prof = Profile(
         "test",
         algorithm="SHA-512",
         description=desc,
         subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
         extensions={
-            CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage},
+            CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage_items},
             CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
         },
     )

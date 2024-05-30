@@ -176,12 +176,12 @@ ConfigurableExtensionKeys = Literal[
     "tls_feature",
 ]
 
-#: Extension keys for extensions that may occur in a certificate.
+#: Extension keys for extensions that may occur in an end entity certificate.
 #:
 #: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and adds the keys
 #: for extensions that are either derived from the issuer or the certificates public key or that must not
 #: be configured by a user.
-CertificateExtensionKeys = Union[
+EndEntityCertificateExtensionKeys = Union[
     ConfigurableExtensionKeys,
     Literal[
         "authority_key_identifier",  # derived from the issuer
@@ -190,6 +190,20 @@ CertificateExtensionKeys = Union[
         "signed_certificate_timestamps",  # added by the CA
         "subject_information_access",
         "subject_key_identifier",  # derived from the certificates public key
+    ],
+]
+
+#: Extension keys for extensions that may occur in any certificate.
+#:
+#: This literal includes keys from :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionKeys` and adds
+#: the keys for extensions only occur in certificate authorities.
+CertificateExtensionKeys = Union[
+    EndEntityCertificateExtensionKeys,
+    Literal[
+        "inhibit_any_policy",
+        "name_constraints",
+        "policy_constraints",
+        "unknown",
     ],
 ]
 
@@ -202,10 +216,7 @@ ExtensionKeys = Union[
     Literal[
         "crl_number",
         "delta_crl_indicator",
-        "inhibit_any_policy",
         "issuing_distribution_point",
-        "name_constraints",
-        "policy_constraints",
         "policy_mappings",
         "subject_directory_attributes",
     ],
@@ -292,7 +303,8 @@ CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 ################
 # Type aliases #
 ################
-ConfigurableExtensionTypes = Union[
+#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
+ConfigurableExtensionType = Union[
     x509.AuthorityInformationAccess,
     x509.CertificatePolicies,
     x509.CRLDistributionPoints,
@@ -306,8 +318,13 @@ ConfigurableExtensionTypes = Union[
     x509.SubjectAlternativeName,
     x509.TLSFeature,
 ]
-CertificateExtensionTypes = Union[
-    ConfigurableExtensionTypes,
+#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
+#:
+#: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension types
+#: that are either derived from the issuer or the certificates public key or that must not be configured by
+#: the user.
+EndEntityCertificateExtensionType = Union[
+    ConfigurableExtensionType,
     x509.AuthorityKeyIdentifier,
     x509.BasicConstraints,
     x509.PrecertificateSignedCertificateTimestamps,
@@ -315,7 +332,20 @@ CertificateExtensionTypes = Union[
     x509.SubjectInformationAccess,
     x509.SubjectKeyIdentifier,
 ]
-ConfigurableExtensions = Union[
+
+#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in anty certificate.
+#:
+#: This union is based on :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionType` and adds extension
+#: types that may appear in certificate authorities.
+CertificateExtensionType = Union[
+    EndEntityCertificateExtensionType,
+    x509.InhibitAnyPolicy,
+    x509.NameConstraints,
+    x509.PolicyConstraints,
+    x509.UnrecognizedExtension,
+]
+
+ConfigurableExtension = Union[
     x509.Extension[x509.AuthorityInformationAccess],
     x509.Extension[x509.CertificatePolicies],
     x509.Extension[x509.CRLDistributionPoints],
@@ -330,8 +360,8 @@ ConfigurableExtensions = Union[
     x509.Extension[x509.TLSFeature],
 ]
 
-CertificateExtensions = Union[
-    ConfigurableExtensions,
+EndEntityCertificateExtension = Union[
+    ConfigurableExtension,
     x509.Extension[x509.AuthorityKeyIdentifier],
     x509.Extension[x509.BasicConstraints],
     x509.Extension[x509.PrecertificateSignedCertificateTimestamps],
@@ -339,9 +369,17 @@ CertificateExtensions = Union[
     x509.Extension[x509.SubjectInformationAccess],
     x509.Extension[x509.SubjectKeyIdentifier],
 ]
+CertificateExtension = Union[
+    EndEntityCertificateExtension,
+    x509.Extension[x509.InhibitAnyPolicy],
+    x509.Extension[x509.NameConstraints],
+    x509.Extension[x509.PolicyConstraints],
+    x509.Extension[x509.UnrecognizedExtension],
+]
 
-ConfigurableExtensionsDict = dict[x509.ObjectIdentifier, ConfigurableExtensions]
-CertificateExtensionsDict = dict[x509.ObjectIdentifier, CertificateExtensions]
+ConfigurableExtensionDict = dict[x509.ObjectIdentifier, ConfigurableExtension]
+EndEntityCertificateExtensionDict = dict[x509.ObjectIdentifier, EndEntityCertificateExtension]
+CertificateExtensionDict = dict[x509.ObjectIdentifier, CertificateExtension]
 ExtensionDict = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 
 # Type aliases for protected subclass returned by add_argument_group().
@@ -409,7 +447,7 @@ SerializedPydanticName = list[SerializedPydanticNameAttribute]
 class SerializedPydanticExtension(TypedDict):
     """Serialized pydantic extension."""
 
-    type: CertificateExtensionKeys
+    type: EndEntityCertificateExtensionKeys
     critical: bool
     value: Any
 
@@ -422,7 +460,7 @@ class SerializedProfile(TypedDict):
     subject: Optional[SerializedPydanticName]
     algorithm: Optional[HashAlgorithms]
     extensions: list[SerializedPydanticExtension]
-    clear_extensions: list[CertificateExtensionKeys]
+    clear_extensions: list[EndEntityCertificateExtensionKeys]
 
 
 #####################

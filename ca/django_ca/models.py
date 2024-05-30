@@ -90,10 +90,10 @@ from django_ca.querysets import (
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
-    CertificateExtensions,
     CertificateRevocationListScopes,
-    ConfigurableExtensions,
-    ConfigurableExtensionsDict,
+    ConfigurableExtension,
+    ConfigurableExtensionDict,
+    EndEntityCertificateExtension,
     Expires,
     ParsableKeyType,
 )
@@ -685,7 +685,8 @@ class CertificateAuthority(X509CertMixin):
 
     def get_end_entity_certificate_extensions(
         self, public_key: CertificateIssuerPublicKeyTypes
-    ) -> list[CertificateExtensions]:
+    ) -> list[EndEntityCertificateExtension]:
+        """Get extensions that are unconditionally added to every end entity certificates."""
         return [
             self.get_authority_key_identifier_extension(),
             x509.Extension(
@@ -701,9 +702,9 @@ class CertificateAuthority(X509CertMixin):
         ]
 
     @property
-    def extensions_for_certificate(self) -> ConfigurableExtensionsDict:
+    def extensions_for_certificate(self) -> ConfigurableExtensionDict:
         """Get a list of extensions to use for the certificate."""
-        extensions: ConfigurableExtensionsDict = {}
+        extensions: ConfigurableExtensionDict = {}
 
         if self.sign_authority_information_access is not None:
             extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] = self.sign_authority_information_access
@@ -723,7 +724,7 @@ class CertificateAuthority(X509CertMixin):
         subject: x509.Name,
         algorithm: Optional[AllowedHashTypes] = None,
         expires: Optional[datetime] = None,
-        extensions: Optional[list[ConfigurableExtensions]] = None,
+        extensions: Optional[list[ConfigurableExtension]] = None,
     ) -> x509.Certificate:
         """Create a signed certificate.
 

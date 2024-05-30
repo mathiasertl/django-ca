@@ -14,6 +14,9 @@
 .. automapping:: django_ca.constants.ELLIPTIC_CURVE_TYPES
    :annotation:
 
+.. automapping:: django_ca.constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS
+   :no-value:
+
 .. automapping:: django_ca.constants.EXTENDED_KEY_USAGE_NAMES
    :no-value:
 

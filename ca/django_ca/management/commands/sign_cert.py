@@ -34,7 +34,7 @@ from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
 from django_ca.typehints import (
     AllowedHashTypes,
-    ConfigurableExtensions,
+    ConfigurableExtension,
     SubjectFormats,
 )
 
@@ -136,7 +136,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtensions] = []
+        extensions: list[ConfigurableExtension] = []
 
         if authority_information_access is not None:
             self.add_extension(

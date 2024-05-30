@@ -955,7 +955,7 @@ EXTENSION_MODELS: "MappingProxyType[x509.ObjectIdentifier, type[ExtensionModel[A
 )
 
 
-def validate_cryptograph_extensions(v: Any, info: ValidationInfo) -> Any:
+def validate_cryptography_extensions(v: Any, info: ValidationInfo) -> Any:
     """Parse a cryptography extension into a Pydantic model."""
     if isinstance(v, x509.Extension):
         if isinstance(v.value, x509.UnrecognizedExtension):
@@ -967,7 +967,7 @@ def validate_cryptograph_extensions(v: Any, info: ValidationInfo) -> Any:
 
 
 #: Union type for extensions that may occur as input when signing a certificate.
-SignCertificateExtensions = Annotated[
+ConfigurableExtensionModel = Annotated[
     Annotated[
         Union[
             AuthorityInformationAccessModel,
@@ -979,16 +979,17 @@ SignCertificateExtensions = Annotated[
             KeyUsageModel,
             MSCertificateTemplateModel,
             OCSPNoCheckModel,
+            PrecertPoisonModel,
             SubjectAlternativeNameModel,
             TLSFeatureModel,
         ],
         Field(discriminator="type"),
     ],
-    BeforeValidator(validate_cryptograph_extensions),
+    BeforeValidator(validate_cryptography_extensions),
 ]
 
 #: Union type for all known extensions that may occur in any type of certificate.
-CertificateExtensionsType = Annotated[
+CertificateExtensionModel = Annotated[
     Annotated[
         Union[
             AuthorityInformationAccessModel,
@@ -1016,11 +1017,11 @@ CertificateExtensionsType = Annotated[
         ],
         Field(discriminator="type"),
     ],
-    BeforeValidator(validate_cryptograph_extensions),
+    BeforeValidator(validate_cryptography_extensions),
 ]
 
-CertificateExtensions = TypeAdapter(CertificateExtensionsType)
-SignCertificateExtensionsList = TypeAdapter(list[SignCertificateExtensions])
-CertificateExtensionsList = TypeAdapter(list[CertificateExtensionsType])
+ConfigurableExtensionModelList = TypeAdapter(list[ConfigurableExtensionModel])
+CertificateExtension = TypeAdapter(CertificateExtensionModel)
+CertificateExtensionModelList = TypeAdapter(list[CertificateExtensionModel])
 
 ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])

@@ -46,6 +46,7 @@ from django_ca.typehints import (
     CertificateRevocationListEncodings,
     ConfigurableExtensionKeys,
     EllipticCurves,
+    EndEntityCertificateExtensionKeys,
     ExtensionKeys,
     GeneralNames,
     HashAlgorithms,
@@ -259,39 +260,52 @@ CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, Configurabl
 CONFIGURABLE_EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in CONFIGURABLE_EXTENSION_KEYS.items()})
 
 #: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in an end entity certificate.
+END_ENTITY_CERTIFICATE_EXTENSION_KEYS: MappingProxyType[
+    x509.ObjectIdentifier, EndEntityCertificateExtensionKeys
+] = MappingProxyType(
+    {
+        **CONFIGURABLE_EXTENSION_KEYS,
+        ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
+        ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
+        ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
+        ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
+        ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
+        ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
+    }
+)
+
+#: Map of extension keys to ExtensionOIDs (the inverse of END_ENTITY_CERTIFICATE_EXTENSION_KEYS).
+END_ENTITY_CERTIFICATE_EXTENSION_KEY_OIDS: MappingProxyType[
+    EndEntityCertificateExtensionKeys, x509.ObjectIdentifier
+] = MappingProxyType({v: k for k, v in END_ENTITY_CERTIFICATE_EXTENSION_KEYS.items()})
+
+#: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in any certificate.
+#:
+#: This value is based on :py:attr:`~django_ca.constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS` and adds
+#: extensions that occur only in certificate authorities.
 CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKeys] = (
     MappingProxyType(
         {
-            **CONFIGURABLE_EXTENSION_KEYS,
-            ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
-            ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
-            ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
-            ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
-            ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
-            ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
+            **END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
+            ExtensionOID.INHIBIT_ANY_POLICY: "inhibit_any_policy",  # CA only
+            ExtensionOID.NAME_CONSTRAINTS: "name_constraints",  # CA only
+            ExtensionOID.POLICY_CONSTRAINTS: "policy_constraints",  # CA only
         }
     )
 )
-
-#: Map of extension keys to ExtensionOIDs (the inverse of CERTIFICATE_EXTENSION_KEYS).
-CERTIFICATE_EXTENSION_KEY_OIDS: MappingProxyType[CertificateExtensionKeys, x509.ObjectIdentifier] = (
-    MappingProxyType({v: k for k, v in CERTIFICATE_EXTENSION_KEYS.items()})
-)
+CERTIFICATE_EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in CERTIFICATE_EXTENSION_KEYS.items()})
 
 #: Map of all :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that are known to cryptography.
 #:
-#: This value is a superset of :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS` and includes
-#: extensions that may occur in certificate authorities or CRLs.
+#: This value is based on :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS` and adds extensions for
+#: CRLs and object identifiers where no corresponding cryptography class exists.
 EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ExtensionKeys] = MappingProxyType(
     {
         **CERTIFICATE_EXTENSION_KEYS,
         ExtensionOID.CRL_NUMBER: "crl_number",  # CRL extension
         ExtensionOID.DELTA_CRL_INDICATOR: "delta_crl_indicator",  # CRL extension
-        ExtensionOID.INHIBIT_ANY_POLICY: "inhibit_any_policy",  # CA only
         ExtensionOID.ISSUING_DISTRIBUTION_POINT: "issuing_distribution_point",  # CRL extension
-        ExtensionOID.NAME_CONSTRAINTS: "name_constraints",  # CA only
-        ExtensionOID.POLICY_CONSTRAINTS: "policy_constraints",  # CA only
-        ExtensionOID.POLICY_MAPPINGS: "policy_mappings",  # CA only
+        ExtensionOID.POLICY_MAPPINGS: "policy_mappings",  # only OID exists
         ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: "subject_directory_attributes",  # only OID exists
     }
 )

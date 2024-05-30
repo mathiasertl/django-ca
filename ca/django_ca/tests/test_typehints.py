@@ -21,26 +21,27 @@ from django_ca import constants, typehints
 
 
 def test_configurable_extension_keys() -> None:
-    """Test that ConfigurableExtensionKeys matches ConfigurableExtensionTypes."""
+    """Test that ConfigurableExtensionKeys matches ConfigurableExtensionType."""
     keys = get_args(typehints.ConfigurableExtensionKeys)
-    expected = tuple(ext.oid for ext in get_args(typehints.ConfigurableExtensionTypes))
+    expected = tuple(ext.oid for ext in get_args(typehints.ConfigurableExtensionType))
     assert tuple(constants.CONFIGURABLE_EXTENSION_KEY_OIDS[v] for v in keys) == expected
 
 
-def test_certificate_extension_keys() -> None:
-    """Test CertificateExtensionKeys matches CertificateExtensions."""
-    configurable_keys, added_keys = get_args(typehints.CertificateExtensionKeys)
+def test_end_entity_certificate_extension_keys() -> None:
+    """Test EndEntityCertificateExtensionKeys matches EndEntityCertificateExtension."""
+    configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKeys)
     keys = get_args(configurable_keys) + get_args(added_keys)
 
-    expected = tuple(get_args(ext)[0].oid for ext in get_args(typehints.CertificateExtensions))
-    assert tuple(constants.CERTIFICATE_EXTENSION_KEY_OIDS[v] for v in keys) == expected
+    expected = tuple(get_args(ext)[0].oid for ext in get_args(typehints.EndEntityCertificateExtension))
+    assert tuple(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEY_OIDS[v] for v in keys) == expected
 
 
 @pytest.mark.parametrize(
     "extension_types,extensions",
     (
-        (typehints.ConfigurableExtensionTypes, typehints.ConfigurableExtensions),
-        (typehints.CertificateExtensionTypes, typehints.CertificateExtensions),
+        (typehints.ConfigurableExtensionType, typehints.ConfigurableExtension),
+        (typehints.EndEntityCertificateExtensionType, typehints.EndEntityCertificateExtension),
+        (typehints.CertificateExtensionType, typehints.CertificateExtension),
     ),
 )
 def test_extension_types_equality(extension_types: Any, extensions: Any) -> None:

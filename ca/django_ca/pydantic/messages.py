@@ -23,7 +23,7 @@ from cryptography import x509
 from django_ca.conf import model_settings
 from django_ca.constants import HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
-from django_ca.pydantic.extensions import SignCertificateExtensions
+from django_ca.pydantic.extensions import ConfigurableExtensionModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import (
     EllipticCurveTypeAlias,
@@ -32,7 +32,7 @@ from django_ca.pydantic.type_aliases import (
     Serial,
     TimedeltaInSeconds,
 )
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtensions, HashAlgorithms, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtension, HashAlgorithms, ParsableKeyType
 
 
 class GenerateOCSPKeyMessage(BaseModel):
@@ -78,7 +78,7 @@ class SignCertificateMessage(BaseModel):
         default_factory=lambda: datetime.now(tz=tz.utc) + model_settings.CA_DEFAULT_EXPIRES,
         json_schema_extra={"example": DATETIME_EXAMPLE},
     )
-    extensions: Optional[list[SignCertificateExtensions]] = Field(
+    extensions: Optional[list[ConfigurableExtensionModel]] = Field(
         default_factory=list,
         description="**Optional** additional extensions to add to the certificate.",
     )
@@ -99,11 +99,11 @@ class SignCertificateMessage(BaseModel):
         """Get CSR encoded in this message."""
         return x509.load_pem_x509_csr(self.csr)
 
-    def get_extensions(self) -> list[ConfigurableExtensions]:
+    def get_extensions(self) -> list[ConfigurableExtension]:
         """Get extensions encoded in this message."""
         if self.extensions is None:
             return []
         extensions = [ext.cryptography for ext in self.extensions]
 
         # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
-        return extensions  # type: ignore[return-value]
+        return extensions
