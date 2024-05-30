@@ -57,9 +57,6 @@ from django_ca.utils import merge_x509_names, parse_expires, x509_name
 if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
-# Skip doctests in pytest(-doctestplus), as test_profiles manually loads these tests with extra context.
-__doctest_skip__ = ["*"]
-
 
 class Profile:
     """A certificate profile defining properties and extensions of a certificate.
@@ -158,12 +155,14 @@ class Profile:
                         RemovedInDjangoCA200Warning,
                         stacklevel=2,
                     )
-
-                if parsed_extension.oid not in CONFIGURABLE_EXTENSION_KEYS:
-                    raise ValueError(f"{parsed_extension}: Extension cannot be passed to a profile.")
                 self.extensions[parsed_extension.oid] = cast(ConfigurableExtensions, parsed_extension)
             else:
                 raise TypeError(f"Profile {name}, extension {key}: {extension}: Unsupported type")
+
+        # Ensure that only configurable extensions are used.
+        for oid in self.extensions.keys():
+            if oid not in CONFIGURABLE_EXTENSION_KEYS:
+                raise ValueError(f"{oid}: Extension cannot be used in a profile.")
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, (Profile, DefaultProfileProxy)):
@@ -295,7 +294,7 @@ class Profile:
             # should not be configurable by the user.
             for extension in extensions:
                 if extension.oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
-                    raise ValueError(f"{extension}: Cannot be added to a certificate.")
+                    raise ValueError(f"{extension}: Extension cannot be set when creating a certificate.")
 
             configurable_cert_extensions = {ext.oid: ext for ext in extensions}
 

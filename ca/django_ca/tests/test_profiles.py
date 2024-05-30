@@ -24,6 +24,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.test import TestCase, override_settings
 
 import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.constants import (
@@ -43,12 +44,15 @@ from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
+    cn,
+    country,
     crl_distribution_points,
     distribution_point,
     dns,
     issuer_alternative_name,
     ocsp_no_check,
     override_tmpcadir,
+    state,
     subject_alternative_name,
     subject_key_identifier,
     uri,
@@ -81,7 +85,7 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         from django_ca import profiles as profiles_mod
 
         failures, _tests = doctest.testmod(profiles_mod, globs=self.get_globs())
-        self.assertEqual(failures, 0, f"{failures} doctests failed, see above for output.")
+        assert failures == 0, f"{failures} doctests failed, see above for output."
 
     @override_tmpcadir()
     def test_docs(self) -> None:
@@ -89,529 +93,59 @@ class DocumentationTestCase(TestCaseMixin, TestCase):
         failures, _tests = doctest.testfile(
             "../../../docs/source/python/profiles.rst", globs=self.get_globs()
         )
-        self.assertEqual(failures, 0, f"{failures} doctests failed, see above for output.")
+        assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
-class ProfileTestCase(TestCaseMixin, TestCase):
-    """Main tests for the profile class."""
+def create_cert(
+    prof: Profile, ca: CertificateAuthority, csr: x509.CertificateSigningRequest, *args: Any, **kwargs: Any
+) -> Certificate:
+    """Shortcut to create a cert with the given profile."""
+    cert = Certificate(ca=ca)
+    cert.update_certificate(prof.create_cert(ca, key_backend_options, csr, *args, **kwargs))
+    return cert
 
-    def create_cert(
-        self,
-        prof: Profile,
-        ca: CertificateAuthority,
-        csr: x509.CertificateSigningRequest,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Certificate:
-        """Shortcut to create a cert with the given profile."""
-        cert = Certificate(ca=ca)
-        cert.update_certificate(prof.create_cert(ca, key_backend_options, csr, *args, **kwargs))
-        return cert
 
-    @override_tmpcadir()
-    def test_create_cert_minimal(self) -> None:
-        """Create a certificate with minimal parameters."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+def test_get_profile() -> None:
+    """Test the get_profile function()."""
+    for name in model_settings.CA_PROFILES:
+        prof = get_profile(name)
+        assert name == prof.name
 
-        prof = Profile("example")
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject, add_issuer_alternative_name=False)
-        self.assertEqual(pre.call_count, 1)
-        assert_extensions(cert, [ca.get_authority_key_identifier_extension()])
+    prof = get_profile()
+    assert prof.name == model_settings.CA_DEFAULT_PROFILE
 
-    @override_tmpcadir()
-    def test_alternative_values(self) -> None:
-        """Test overriding most values."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        ca.sign_issuer_alternative_name = issuer_alternative_name(uri("https://example.com"))
-        ca.save()
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
-        subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
-        prof = Profile("example", subject=False)
+def test_profiles_dict_key_access() -> None:
+    """Some basic tests for the profiles proxy."""
+    for name in model_settings.CA_PROFILES:
+        prof = profiles[name]
+        assert prof.name == name
 
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=x509.Name([country_name]),
-                algorithm=hashes.SHA256(),
-                expires=timedelta(days=30),
-                extensions=[subject_alternative_name(dns(self.hostname))],
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.cn, self.hostname)
-        self.assertEqual(cert.subject, subject)
-        assert_extensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                ca.sign_issuer_alternative_name,
-                subject_alternative_name(dns(self.hostname)),
-            ],
-        )
+    # Run a second time, b/c accessor also caches stuff sometimes
+    for name in model_settings.CA_PROFILES:
+        prof = profiles[name]
+        assert prof.name == name
 
-    @override_tmpcadir()
-    def test_overrides(self) -> None:
-        """Test other overrides."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
-        expected_subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
-        prof = Profile(
-            "example",
-            subject=x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")]),
-            add_crl_url=False,
-            add_ocsp_url=False,
-            add_issuer_url=False,
-            add_issuer_alternative_name=False,
-        )
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject)
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, expected_subject)
-        self.assertEqual(cert.ca, ca)
+def test_profiles_with_none_key() -> None:
+    """Test the ``None`` key."""
+    assert profiles[None] == profile
 
-        assert_extensions(
-            cert,
-            [
-                subject_key_identifier(cert),
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-            ],
-            expect_defaults=False,
-        )
 
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=True,
-                add_ocsp_url=True,
-                add_issuer_url=True,
-                add_issuer_alternative_name=True,
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertEqual(cert.subject, expected_subject)
-        self.assertEqual(cert.ca, ca)
-        assert_extensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-            ],
-        )
+def test_default_proxy() -> None:
+    """Test using the default proxy."""
+    assert profile.name == model_settings.CA_DEFAULT_PROFILE
+    assert str(profile) == f"<DefaultProfile: {model_settings.CA_DEFAULT_PROFILE}>"
+    assert repr(profile) == f"<DefaultProfile: {model_settings.CA_DEFAULT_PROFILE}>"
 
-    @override_tmpcadir()
-    def test_none_extension(self) -> None:
-        """Test passing an extension that is removed by the profile."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", extensions={"ocsp_no_check": None})
+    assert profile == profiles[model_settings.CA_DEFAULT_PROFILE]
 
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(prof, ca, csr, subject=self.subject, extensions=[ocsp_no_check()])
-        self.assertEqual(pre.call_count, 1)
-        self.assertNotIn(ExtensionOID.OCSP_NO_CHECK, cert.extensions)
 
-    @override_tmpcadir()
-    def test_add_distribution_point_with_ca_crldp(self) -> None:
-        """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
-        prof = Profile("example")
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        # Add CRL Distribution Points extension to CA
-        crl_url = "https://crl.ca.example.com"
-        ca.sign_crl_distribution_points = crl_distribution_points(distribution_point([uri(crl_url)]))
-        ca.save()
-
-        added_crldp = self.crl_distribution_points([uri(crl_url)])
-
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=True,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=False,
-                extensions=[added_crldp],
-            )
-        self.assertEqual(pre.call_count, 1)
-        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
-
-        assert_extensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                added_crldp,
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
-    def test_with_algorithm(self) -> None:
-        """Test a profile that manually overrides the algorithm."""
-        root = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        prof = Profile("example", algorithm="SHA-512")
-
-        # Make sure that algorithm does not match what is the default profile above, so that we can test it
-        self.assertIsInstance(root.algorithm, hashes.SHA256)
-
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                root,
-                csr,
-                subject=self.subject,
-                add_crl_url=True,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=False,
-            )
-        self.assertEqual(pre.call_count, 1)
-        self.assertIsInstance(cert.algorithm, hashes.SHA512)
-
-    @override_tmpcadir()
-    def test_issuer_alternative_name_override(self) -> None:
-        """Pass a custom Issuer Alternative Name which overwrites the CA value."""
-        prof = Profile("example")
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        # Add CRL url to CA
-        ca.sign_issuer_alternative_name = issuer_alternative_name(uri("https://ian.ca.example.com"))
-        ca.save()
-
-        added_ian_uri = uri("https://ian.cert.example.com")
-
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=False,
-                add_issuer_url=False,
-                add_issuer_alternative_name=True,
-                extensions=[issuer_alternative_name(added_ian_uri)],
-            )
-        self.assertEqual(pre.call_count, 1)
-        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
-
-        assert_extensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                issuer_alternative_name(added_ian_uri),
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
-    def test_merge_authority_information_access_existing_values(self) -> None:
-        """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
-        prof = Profile("example")
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        # Set Authority Information Access extesion
-        ca.sign_authority_information_access = authority_information_access(
-            ca_issuers=[uri("https://issuer.ca.example.com")], ocsp=[uri("https://ocsp.ca.example.com")]
-        )
-        ca.save()
-
-        cert_issuers = uri("https://issuer.cert.example.com")
-        cert_issuers2 = uri("https://issuer2.cert.example.com")
-        cert_ocsp = uri("https://ocsp.cert.example.com")
-
-        added_aia = authority_information_access(ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp])
-
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_crl_url=False,
-                add_ocsp_url=True,
-                add_issuer_url=True,
-                add_issuer_alternative_name=False,
-                extensions=[added_aia],
-            )
-        self.assertEqual(pre.call_count, 1)
-
-        ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
-
-        assert_extensions(
-            cert,
-            [
-                ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
-                authority_information_access(
-                    ca_issuers=[cert_issuers, cert_issuers2],
-                    ocsp=[cert_ocsp],
-                ),
-            ],
-            expect_defaults=False,
-        )
-
-    @override_tmpcadir()
-    def test_extension_as_cryptography(self) -> None:
-        """Test with a profile that has cryptography extensions."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_issuer_alternative_name=False,
-                extensions=[ocsp_no_check()],
-            )
-        self.assertEqual(pre.call_count, 1)
-        assert_extensions(
-            cert,
-            [ca.get_authority_key_identifier_extension(), basic_constraints(), ocsp_no_check()],
-        )
-
-    @override_tmpcadir()
-    def test_extension_overrides(self) -> None:
-        """Test that all extensions can be overwritten when creating a new certificate."""
-        # Profile with extensions (will be overwritten by the command line).
-        prof = Profile(
-            "example",
-            extensions={
-                CONFIGURABLE_EXTENSION_KEYS[
-                    ExtensionOID.AUTHORITY_INFORMATION_ACCESS
-                ]: authority_information_access(
-                    ocsp=[uri("http://ocsp.example.com/profile")],
-                    ca_issuers=[uri("http://issuer.example.com/issuer")],
-                )
-            },
-        )
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-
-        ca.sign_authority_information_access = authority_information_access(
-            ca_issuers=[uri("http://issuer.example.com/issuer")], ocsp=[uri("http://ocsp.example.com/ca")]
-        )
-        ca.save()
-
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        expected_authority_information_access = authority_information_access(
-            ocsp=[uri("http://ocsp.example.com/expected")],
-            ca_issuers=[uri("http://issuer.example.com/expected")],
-        )
-
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_issuer_alternative_name=False,
-                add_issuer_url=True,
-                add_ocsp_url=True,
-                extensions=[expected_authority_information_access],
-            )
-        self.assertEqual(pre.call_count, 1)
-
-        extensions = cert.extensions
-        self.assertEqual(
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS], expected_authority_information_access
-        )
-
-    @override_tmpcadir()
-    def test_partial_authority_information_access_override(self) -> None:
-        """Test partial overwriting of the Authority Information Access extension."""
-        prof = Profile(
-            "example",
-            extensions={
-                CONFIGURABLE_EXTENSION_KEYS[
-                    ExtensionOID.AUTHORITY_INFORMATION_ACCESS
-                ]: authority_information_access(
-                    ocsp=[uri("http://ocsp.example.com/profile")],
-                    ca_issuers=[uri("http://issuer.example.com/issuer")],
-                )
-            },
-        )
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        self.assertIsNotNone(ca.sign_authority_information_access)
-        ca_issuers_url = next(
-            ad
-            for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
-            if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
-        ).access_location
-        ca_ocsp_url = next(
-            ad
-            for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
-            if ad.access_method == AuthorityInformationAccessOID.OCSP
-        ).access_location
-        ca.save()
-
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        # Only pass an OCSP responder
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_issuer_alternative_name=False,
-                add_issuer_url=True,
-                add_ocsp_url=True,
-                extensions=[
-                    authority_information_access(
-                        ocsp=[uri("http://ocsp.example.com/expected")],
-                    )
-                ],
-            )
-        self.assertEqual(pre.call_count, 1)
-
-        extensions = cert.extensions
-        self.assertEqual(
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            authority_information_access(
-                ocsp=[uri("http://ocsp.example.com/expected")], ca_issuers=[ca_issuers_url]
-            ),
-        )
-
-        # Only pass an CA issuer
-        with mock_signal(pre_sign_cert) as pre:
-            cert = self.create_cert(
-                prof,
-                ca,
-                csr,
-                subject=self.subject,
-                add_issuer_alternative_name=False,
-                add_issuer_url=True,
-                add_ocsp_url=True,
-                extensions=[
-                    authority_information_access(
-                        ca_issuers=[uri("http://issuer.example.com/expected")],
-                    )
-                ],
-            )
-        self.assertEqual(pre.call_count, 1)
-
-        extensions = cert.extensions
-        self.assertEqual(
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            authority_information_access(
-                ocsp=[ca_ocsp_url], ca_issuers=[uri("http://issuer.example.com/expected")]
-            ),
-        )
-
-    @override_tmpcadir()
-    def test_no_cn_no_san(self) -> None:
-        """Test creating a cert with no cn in san."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-
-        prof = Profile("example")
-        msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
-        with mock_signal(pre_sign_cert) as pre, self.assertRaisesRegex(ValueError, msg):
-            self.create_cert(prof, ca, csr, subject=None)
-        self.assertEqual(pre.call_count, 0)
-
-    @override_tmpcadir()
-    def test_no_valid_cn_in_san(self) -> None:
-        """Test what happens when the SAN has nothing usable as CN."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
-        san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
-
-        with mock_signal(pre_sign_cert) as pre:
-            self.create_cert(prof, ca, csr, extensions=[san])
-        self.assertEqual(pre.call_count, 1)
-
-    def test_unknown_signature_hash_algorithm(self) -> None:
-        """Test passing an unknown hash algorithm."""
-        with self.assertRaisesRegex(ValueError, r"^foo: Unknown hash algorithm\.$"):
-            Profile("wrong-algorithm", algorithm="foo")  # type: ignore[arg-type]
-
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=None)
-    def test_no_valid_subject(self) -> None:
-        """Test case where no subject at all could be determined."""
-        ca = self.load_ca(name="root", parsed=CERT_DATA["root"]["pub"]["parsed"])
-        csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-        prof = Profile("test")
-        with self.assertRaisesRegex(ValueError, r"^Cannot determine subject for certificate\.$"):
-            self.create_cert(prof, ca, csr)
-
-    def test_str(self) -> None:
-        """Test str()."""
-        for name in model_settings.CA_PROFILES:
-            assert str(profiles[name]) == f"<Profile: {name}>"
-
-    def test_repr(self) -> None:
-        """Test repr()."""
-        for name in model_settings.CA_PROFILES:
-            assert repr(profiles[name]) == f"<Profile: {name}>"
-
-
-class GetProfileTestCase(TestCase):
-    """Test the get_profile function."""
-
-    def test_basic(self) -> None:
-        """Basic tests."""
-        for name in model_settings.CA_PROFILES:
-            prof = get_profile(name)
-            self.assertEqual(name, prof.name)
-
-        prof = get_profile()
-        self.assertEqual(prof.name, model_settings.CA_DEFAULT_PROFILE)
-
-
-class ProfilesTestCase(TestCase):
-    """Tests the ``profiles`` proxy."""
-
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        for name in model_settings.CA_PROFILES:
-            prof = profiles[name]
-            self.assertEqual(prof.name, name)
-
-        # Run a second time, b/c accessor also caches stuff sometimes
-        for name in model_settings.CA_PROFILES:
-            prof = profiles[name]
-            self.assertEqual(prof.name, name)
-
-    def test_none(self) -> None:
-        """Test the ``None`` key."""
-        self.assertEqual(profiles[None], profile)
-
-    def test_default_proxy(self) -> None:
-        """Test using the default proxy."""
-        self.assertEqual(profile.name, model_settings.CA_DEFAULT_PROFILE)
-        self.assertEqual(str(profile), f"<DefaultProfile: {model_settings.CA_DEFAULT_PROFILE}>")
-        self.assertEqual(repr(profile), f"<DefaultProfile: {model_settings.CA_DEFAULT_PROFILE}>")
-
-        self.assertEqual(profile, profile)
-        self.assertEqual(profile, profiles[model_settings.CA_DEFAULT_PROFILE])
+def test_default_proxy_eq() -> None:
+    """Test equality for the default proxy."""
+    assert profile == profile  # noqa: PLR0124  # what we're testing
+    assert profile == profiles[model_settings.CA_DEFAULT_PROFILE]  # proxy is equal to default profile
+    assert profile != ["not-equal"]  # we are not equal to arbitrary stuff
 
 
 def test_eq() -> None:
@@ -625,11 +159,16 @@ def test_eq() -> None:
         assert prof != -1
 
 
-def test_eq_default_proxy() -> None:
-    """Test equality for the default proxy."""
-    assert profile == profile  # noqa: PLR0124  # what we're testing
-    assert profile == profiles[model_settings.CA_DEFAULT_PROFILE]  # proxy is equal to default profile
-    assert profile != ["not-equal"]  # we are not equal to arbitrary stuff
+def test_str() -> None:
+    """Test str()."""
+    for name in model_settings.CA_PROFILES:
+        assert str(profiles[name]) == f"<Profile: {name}>"
+
+
+def test_repr() -> None:
+    """Test repr()."""
+    for name in model_settings.CA_PROFILES:
+        assert repr(profiles[name]) == f"<Profile: {name}>"
 
 
 def test_init_django_ca_values(subject: x509.Name) -> None:
@@ -673,6 +212,521 @@ def test_init_expires() -> None:
     assert prof.expires == exp
 
 
+def test_init_with_deprecated_extension_format() -> None:
+    """Test passing a deprecated extension format."""
+    key = CERTIFICATE_EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
+    value = {"value": [{"full_name": ["DNS:example.com"]}]}
+    warning = rf"^test: {key}: Deprecated extension format \(value: .*\)\."
+    with assert_removed_in_200(warning):
+        # TYPEHINT NOTE: extension format will change anyway, not bothering here.
+        prof = Profile("test", extensions={key: value})  # type: ignore[dict-item]
+    assert prof.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
+        distribution_point(full_name=[dns("example.com")])
+    )
+
+
+def test_init_with_deprecated_subject_value() -> None:
+    """Test deprecated subject values."""
+    value = "/C=AT/L=Vienna/ST=Vienna"
+    msg = (
+        rf"^{value}: Support for passing a value of type .* is deprecated and will be removed in "
+        "django-ca 2.0.$"
+    )
+    with pytest.warns(RemovedInDjangoCA200Warning, match=msg):
+        prof = Profile("test", value)  # type: ignore[arg-type]  # what we test
+
+    assert prof.subject == x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
+        ]
+    )
+
+
+def test_init_with_unsupported_extension() -> None:
+    """Test creating a profile with an extension that should not be in a profile."""
+    with pytest.raises(ValueError, match=r"Extension cannot be used in a profile\.$"):
+        # TYPEHINT NOTE: This is what we're testing.
+        Profile("test", extensions={"inhibit_any_policy": None})  # type: ignore[dict-item]
+
+
+def test_init_with_invalid_extension_type() -> None:
+    """Test creating a profile with a completely invalid extension type."""
+    with pytest.raises(TypeError, match=r"^Profile test, extension key_usage: True: Unsupported type$"):
+        # TYPEHINT NOTE: This is what we're testing
+        Profile(
+            "test",
+            extensions={
+                # TYPEHINT NOTE: This is what we're testing.
+                CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True  # type: ignore[dict-item]
+            },
+        )
+
+
+def test_create_cert(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Create a certificate with minimal parameters."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    prof = Profile("example")
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(prof, usable_root, csr, subject=subject, add_issuer_alternative_name=False)
+    assert pre.call_count == 1
+    assert_extensions(cert, [usable_root.get_authority_key_identifier_extension()])
+
+
+def test_create_cert_with_alternative_values(usable_root: CertificateAuthority, hostname: str) -> None:
+    """Test overriding most values."""
+    usable_root.sign_issuer_alternative_name = issuer_alternative_name(uri("https://example.com"))
+    usable_root.save()
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
+    subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
+
+    prof = Profile("example", subject=False)
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=x509.Name([country_name]),
+            algorithm=hashes.SHA256(),
+            expires=timedelta(days=30),
+            extensions=[subject_alternative_name(dns(hostname))],
+        )
+    assert pre.call_count == 1
+    assert cert.cn == hostname
+    assert cert.subject == subject
+    assert_extensions(
+        cert,
+        [
+            usable_root.get_authority_key_identifier_extension(),
+            usable_root.sign_issuer_alternative_name,
+            subject_alternative_name(dns(hostname)),
+        ],
+    )
+
+
+def test_create_cert_with_overrides(usable_root: CertificateAuthority, hostname: str) -> None:
+    """Test other overrides."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    san_francisco = x509.NameAttribute(oid=NameOID.LOCALITY_NAME, value="San Francisco")
+    subject = x509.Name([country("US"), state("California"), cn(hostname)])
+    expected_subject = x509.Name([country("US"), state("California"), san_francisco, cn(hostname)])
+
+    prof = Profile(
+        "example",
+        subject=x509.Name([country("DE"), san_francisco]),
+        add_crl_url=False,
+        add_ocsp_url=False,
+        add_issuer_url=False,
+        add_issuer_alternative_name=False,
+    )
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(prof, usable_root, csr, subject=subject)
+    assert pre.call_count == 1
+    assert cert.subject == expected_subject
+    assert cert.ca == usable_root
+
+    assert_extensions(
+        cert,
+        [
+            subject_key_identifier(cert),
+            usable_root.get_authority_key_identifier_extension(),
+            basic_constraints(),
+        ],
+        expect_defaults=False,
+    )
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_crl_url=True,
+            add_ocsp_url=True,
+            add_issuer_url=True,
+            add_issuer_alternative_name=True,
+        )
+    assert pre.call_count == 1
+    assert cert.subject == expected_subject
+    assert cert.ca == usable_root
+    assert_extensions(
+        cert,
+        [
+            usable_root.get_authority_key_identifier_extension(),
+            basic_constraints(),
+        ],
+    )
+
+
+@override_tmpcadir()
+def test_create_cert_with_none_extension(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test passing an extension that is removed by the profile."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    prof = Profile("example", extensions={"ocsp_no_check": None})
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(prof, usable_root, csr, subject=subject, extensions=[ocsp_no_check()])
+    assert pre.call_count == 1
+    assert ExtensionOID.OCSP_NO_CHECK not in cert.extensions
+
+
+def test_create_cert_with_add_distribution_point_with_ca_crldp(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
+    prof = Profile("example")
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    # Add CRL Distribution Points extension to CA
+    crl_url = "https://crl.ca.example.com"
+    usable_root.sign_crl_distribution_points = crl_distribution_points(distribution_point([uri(crl_url)]))
+    usable_root.save()
+
+    added_crldp = crl_distribution_points(distribution_point([uri(crl_url)]))
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_crl_url=True,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+            add_issuer_alternative_name=False,
+            extensions=[added_crldp],
+        )
+    assert pre.call_count == 1
+    ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+    assert_extensions(
+        cert,
+        [
+            usable_root.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+            added_crldp,
+        ],
+        expect_defaults=False,
+    )
+
+
+def test_create_cert_with_with_algorithm(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test a profile that manually overrides the algorithm."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    prof = Profile("example", algorithm="SHA-512")
+
+    # Make sure that algorithm does not match what is the default profile above, so that we can test it
+    assert isinstance(usable_root.algorithm, hashes.SHA256)
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_crl_url=True,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+            add_issuer_alternative_name=False,
+        )
+    assert pre.call_count == 1
+    assert isinstance(cert.algorithm, hashes.SHA512)
+
+
+def test_create_cert_with_issuer_alternative_name_override(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Pass a custom Issuer Alternative Name which overwrites the CA value."""
+    prof = Profile("example")
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    # Add CRL url to CA
+    usable_root.sign_issuer_alternative_name = issuer_alternative_name(uri("https://ian.ca.example.com"))
+    usable_root.save()
+
+    added_ian_uri = uri("https://ian.cert.example.com")
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_crl_url=False,
+            add_ocsp_url=False,
+            add_issuer_url=False,
+            add_issuer_alternative_name=True,
+            extensions=[issuer_alternative_name(added_ian_uri)],
+        )
+    assert pre.call_count == 1
+    ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+    assert_extensions(
+        cert,
+        [
+            usable_root.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+            issuer_alternative_name(added_ian_uri),
+        ],
+        expect_defaults=False,
+    )
+
+
+def test_create_cert_with_merge_authority_information_access_existing_values(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
+    prof = Profile("example")
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    # Set Authority Information Access extesion
+    usable_root.sign_authority_information_access = authority_information_access(
+        ca_issuers=[uri("https://issuer.ca.example.com")], ocsp=[uri("https://ocsp.ca.example.com")]
+    )
+    usable_root.save()
+
+    cert_issuers = uri("https://issuer.cert.example.com")
+    cert_issuers2 = uri("https://issuer2.cert.example.com")
+    cert_ocsp = uri("https://ocsp.cert.example.com")
+
+    added_aia = authority_information_access(ca_issuers=[cert_issuers, cert_issuers2], ocsp=[cert_ocsp])
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_crl_url=False,
+            add_ocsp_url=True,
+            add_issuer_url=True,
+            add_issuer_alternative_name=False,
+            extensions=[added_aia],
+        )
+    assert pre.call_count == 1
+
+    ski = x509.SubjectKeyIdentifier.from_public_key(cert.pub.loaded.public_key())
+
+    assert_extensions(
+        cert,
+        [
+            usable_root.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski),
+            authority_information_access(
+                ca_issuers=[cert_issuers, cert_issuers2],
+                ocsp=[cert_ocsp],
+            ),
+        ],
+        expect_defaults=False,
+    )
+
+
+def test_create_cert_with_extension_as_cryptography(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Test with a profile that has cryptography extensions."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_issuer_alternative_name=False,
+            extensions=[ocsp_no_check()],
+        )
+    assert pre.call_count == 1
+    assert_extensions(
+        cert,
+        [usable_root.get_authority_key_identifier_extension(), basic_constraints(), ocsp_no_check()],
+    )
+
+
+def test_create_cert_with_extension_overrides(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test that all extensions can be overwritten when creating a new certificate."""
+    # Profile with extensions (will be overwritten by the command line).
+    prof = Profile(
+        "example",
+        extensions={
+            CONFIGURABLE_EXTENSION_KEYS[
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+            ]: authority_information_access(
+                ocsp=[uri("http://ocsp.example.com/profile")],
+                ca_issuers=[uri("http://issuer.example.com/issuer")],
+            )
+        },
+    )
+
+    usable_root.sign_authority_information_access = authority_information_access(
+        ca_issuers=[uri("http://issuer.example.com/issuer")], ocsp=[uri("http://ocsp.example.com/ca")]
+    )
+    usable_root.save()
+
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    expected_authority_information_access = authority_information_access(
+        ocsp=[uri("http://ocsp.example.com/expected")],
+        ca_issuers=[uri("http://issuer.example.com/expected")],
+    )
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_issuer_alternative_name=False,
+            add_issuer_url=True,
+            add_ocsp_url=True,
+            extensions=[expected_authority_information_access],
+        )
+    assert pre.call_count == 1
+
+    extensions = cert.extensions
+    assert extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == expected_authority_information_access
+
+
+def test_create_cert_with_partial_authority_information_access_override(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Test partial overwriting of the Authority Information Access extension."""
+    prof = Profile(
+        "example",
+        extensions={
+            CONFIGURABLE_EXTENSION_KEYS[
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+            ]: authority_information_access(
+                ocsp=[uri("http://ocsp.example.com/profile")],
+                ca_issuers=[uri("http://issuer.example.com/issuer")],
+            )
+        },
+    )
+    assert usable_root.sign_authority_information_access is not None
+    ca_issuers_url = next(
+        ad
+        for ad in usable_root.sign_authority_information_access.value  # type: ignore[union-attr]
+        if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+    ).access_location
+    ca_ocsp_url = next(
+        ad
+        for ad in usable_root.sign_authority_information_access.value  # type: ignore[union-attr]
+        if ad.access_method == AuthorityInformationAccessOID.OCSP
+    ).access_location
+    usable_root.save()
+
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    # Only pass an OCSP responder
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_issuer_alternative_name=False,
+            add_issuer_url=True,
+            add_ocsp_url=True,
+            extensions=[
+                authority_information_access(
+                    ocsp=[uri("http://ocsp.example.com/expected")],
+                )
+            ],
+        )
+    assert pre.call_count == 1
+
+    extensions = cert.extensions
+    assert extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == authority_information_access(
+        ocsp=[uri("http://ocsp.example.com/expected")], ca_issuers=[ca_issuers_url]
+    )
+
+    # Only pass an CA issuer
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(
+            prof,
+            usable_root,
+            csr,
+            subject=subject,
+            add_issuer_alternative_name=False,
+            add_issuer_url=True,
+            add_ocsp_url=True,
+            extensions=[
+                authority_information_access(
+                    ca_issuers=[uri("http://issuer.example.com/expected")],
+                )
+            ],
+        )
+    assert pre.call_count == 1
+
+    extensions = cert.extensions
+    assert extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == authority_information_access(
+        ocsp=[ca_ocsp_url], ca_issuers=[uri("http://issuer.example.com/expected")]
+    )
+
+
+def test_create_cert_with_no_cn_no_san(usable_root: CertificateAuthority) -> None:
+    """Test creating a cert with no cn in san."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    prof = Profile("example")
+    msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
+    with mock_signal(pre_sign_cert) as pre, pytest.raises(ValueError, match=msg):
+        create_cert(prof, usable_root, csr, subject=None)
+    assert pre.call_count == 0
+    assert Certificate.objects.filter(ca=usable_root).count() == 0
+
+
+def test_create_cert_with_no_valid_cn_in_san(usable_root: CertificateAuthority) -> None:
+    """Test what happens when the SAN has nothing usable as CN."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+    san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
+
+    with mock_signal(pre_sign_cert) as pre:
+        cert = create_cert(prof, usable_root, csr, extensions=[san])
+    assert pre.call_count == 1
+    assert cert.subject == model_settings.CA_DEFAULT_SUBJECT
+
+
+def test_create_cert_with_unknown_signature_hash_algorithm() -> None:
+    """Test passing an unknown hash algorithm."""
+    with pytest.raises(ValueError, match=r"^foo: Unknown hash algorithm\.$"):
+        Profile("wrong-algorithm", algorithm="foo")  # type: ignore[arg-type]
+
+
+def test_create_cert_with_no_valid_subject(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+    """Test case where no subject at all could be determined."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    settings.CA_DEFAULT_SUBJECT = None
+    prof = Profile("test")
+    with pytest.raises(ValueError, match=r"^Cannot determine subject for certificate\.$"):
+        create_cert(prof, root, csr)
+
+
+def test_create_cert_with_unsupported_extension(root: CertificateAuthority) -> None:
+    """Test creating a certificate with an unsupported extension."""
+    prof = Profile("test")
+    with pytest.raises(ValueError, match=r"Extension cannot be set when creating a certificate\.$"):
+        prof.create_cert(
+            root,
+            key_backend_options,
+            CERT_DATA["root-cert"]["csr"]["parsed"],
+            extensions=[
+                # TYPEHINT NOTE: This is what we're testing.
+                basic_constraints(ca=False)  # type: ignore[dict-item]
+            ],
+        )
+
+
 def test_serialize() -> None:
     """Test profile serialization."""
     desc = "foo bar"
@@ -701,42 +755,3 @@ def test_serialize() -> None:
             },
         ],
     }
-
-
-def test_deprecated_extension_format() -> None:
-    """Test passing a deprecated extension format."""
-    key = CERTIFICATE_EXTENSION_KEYS[ExtensionOID.CRL_DISTRIBUTION_POINTS]
-    value = {"value": [{"full_name": ["DNS:example.com"]}]}
-    warning = rf"^test: {key}: Deprecated extension format \(value: .*\)\."
-    with assert_removed_in_200(warning):
-        # TYPEHINT NOTE: extension format will change anyway, not bothering here.
-        prof = Profile("test", extensions={key: value})  # type: ignore[dict-item]
-    assert prof.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
-        distribution_point(full_name=[dns("example.com")])
-    )
-
-
-def test_deprecated_subject_value() -> None:
-    """Test deprecated subject values."""
-    value = "/C=AT/L=Vienna/ST=Vienna"
-    msg = (
-        rf"^{value}: Support for passing a value of type .* is deprecated and will be removed in "
-        "django-ca 2.0.$"
-    )
-    with pytest.warns(RemovedInDjangoCA200Warning, match=msg):
-        prof = Profile("test", value)  # type: ignore[arg-type]  # what we test
-
-    assert prof.subject == x509.Name(
-        [
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
-        ]
-    )
-
-
-def test_invalid_extension_type() -> None:
-    """Test creating a profile with a completely invalid extension type."""
-    with pytest.raises(TypeError, match=r"^Profile test, extension key_usage: True: Unsupported type$"):
-        # TYPEHINT NOTE: This is what we're testing
-        Profile("test", extensions={CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True})  # type: ignore[dict-item]
