@@ -256,6 +256,7 @@ CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, Configurabl
         }
     )
 )
+CONFIGURABLE_EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in CONFIGURABLE_EXTENSION_KEYS.items()})
 
 #: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in an end entity certificate.
 CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKeys] = (

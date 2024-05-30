@@ -90,7 +90,7 @@ from django_ca.querysets import (
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
-    CertificateExtensionTypes,
+    CertificateExtensions,
     CertificateRevocationListScopes,
     ConfigurableExtensions,
     ConfigurableExtensionsDict,
@@ -685,7 +685,7 @@ class CertificateAuthority(X509CertMixin):
 
     def get_end_entity_certificate_extensions(
         self, public_key: CertificateIssuerPublicKeyTypes
-    ) -> list[CertificateExtensionTypes]:
+    ) -> list[CertificateExtensions]:
         return [
             self.get_authority_key_identifier_extension(),
             x509.Extension(

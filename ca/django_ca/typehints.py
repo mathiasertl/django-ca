@@ -172,10 +172,7 @@ ConfigurableExtensionKeys = Literal[
     "ms_certificate_template",
     "ocsp_no_check",
     "precert_poison",
-    "precertificate_signed_certificate_timestamps",
-    "signed_certificate_timestamps",
     "subject_alternative_name",
-    "subject_information_access",
     "tls_feature",
 ]
 
@@ -189,6 +186,9 @@ CertificateExtensionKeys = Union[
     Literal[
         "authority_key_identifier",  # derived from the issuer
         "basic_constraints",  # must not be configured by a user
+        "precertificate_signed_certificate_timestamps",  # added by the CA
+        "signed_certificate_timestamps",  # added by the CA
+        "subject_information_access",
         "subject_key_identifier",  # derived from the certificates public key
     ],
 ]
@@ -306,6 +306,15 @@ ConfigurableExtensionTypes = Union[
     x509.SubjectAlternativeName,
     x509.TLSFeature,
 ]
+CertificateExtensionTypes = Union[
+    ConfigurableExtensionTypes,
+    x509.AuthorityKeyIdentifier,
+    x509.BasicConstraints,
+    x509.PrecertificateSignedCertificateTimestamps,
+    x509.SignedCertificateTimestamps,
+    x509.SubjectInformationAccess,
+    x509.SubjectKeyIdentifier,
+]
 ConfigurableExtensions = Union[
     x509.Extension[x509.AuthorityInformationAccess],
     x509.Extension[x509.CertificatePolicies],
@@ -321,7 +330,7 @@ ConfigurableExtensions = Union[
     x509.Extension[x509.TLSFeature],
 ]
 
-CertificateExtensionTypes = Union[
+CertificateExtensions = Union[
     ConfigurableExtensions,
     x509.Extension[x509.AuthorityKeyIdentifier],
     x509.Extension[x509.BasicConstraints],
@@ -332,7 +341,7 @@ CertificateExtensionTypes = Union[
 ]
 
 ConfigurableExtensionsDict = dict[x509.ObjectIdentifier, ConfigurableExtensions]
-CertificateExtensionsDict = dict[x509.ObjectIdentifier, CertificateExtensionTypes]
+CertificateExtensionsDict = dict[x509.ObjectIdentifier, CertificateExtensions]
 ExtensionDict = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 
 # Type aliases for protected subclass returned by add_argument_group().
