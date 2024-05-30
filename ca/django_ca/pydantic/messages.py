@@ -20,7 +20,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from cryptography import x509
 
-from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
@@ -105,10 +104,6 @@ class SignCertificateMessage(BaseModel):
         if self.extensions is None:
             return []
         extensions = [ext.cryptography for ext in self.extensions]
-
-        # Double check that we only have extensions that are configurable by the user.
-        if any(ext for ext in extensions if ext.oid not in constants.CONFIGURABLE_EXTENSION_KEYS):
-            raise ValueError("Passed extension that cannot be set for a certificate.")
 
         # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
         return extensions  # type: ignore[return-value]

@@ -13,12 +13,9 @@
 
 """Utility functions used in testing."""
 
-import doctest
-import importlib
 import inspect
 import ipaddress
 import os
-import re
 import shutil
 import tempfile
 import textwrap
@@ -559,61 +556,6 @@ def mock_slug() -> Iterator[str]:
     slug = get_random_string(length=12)
     with mock.patch("django_ca.models.get_random_string", return_value=slug):
         yield slug
-
-
-STRIP_WHITESPACE = doctest.register_optionflag("STRIP_WHITESPACE")
-
-
-class OutputChecker(doctest.OutputChecker):
-    """Custom output checker to enable the STRIP_WHITESPACE option."""
-
-    def check_output(self, want: str, got: str, optionflags: int) -> bool:
-        if optionflags & STRIP_WHITESPACE:
-            want = re.sub(r"\s*", "", want)
-            got = re.sub(r"\s*", "", got)
-        return super().check_output(want, got, optionflags)
-
-
-def doctest_module(
-    module: str,
-    name: Optional[str] = None,
-    globs: Optional[dict[str, str]] = None,
-    verbose: Optional[bool] = False,
-    report: bool = False,
-    optionflags: int = 0,
-    extraglobs: Optional[dict[str, str]] = None,
-    raise_on_error: bool = False,
-    exclude_empty: bool = False,
-) -> doctest.TestResults:
-    """Shortcut for running doctests in the given Python module.
-
-    This function uses a custom OutputChecker to enable the ``STRIP_WHITESPACE`` doctest option. This option
-    will remove all whitespace (including newlines) from the both actual and expected output. It is used for
-    formatting actual output with newlines to improve readability.
-
-    This function is otherwise based on ``doctest.testmod``. It differs in that it will interpret `module`
-    as module path if a ``str`` and import the module. The `report` and `verbose` flags also default to
-    ``False``, as this provides cleaner output in modules with a lot of doctests.
-    """
-    finder = doctest.DocTestFinder(exclude_empty=exclude_empty)
-    checker = OutputChecker()
-
-    if raise_on_error:  # pragma: no cover  # only used for debugging
-        runner: doctest.DocTestRunner = doctest.DebugRunner(
-            verbose=verbose, optionflags=optionflags, checker=checker
-        )
-    else:
-        runner = doctest.DocTestRunner(verbose=verbose, optionflags=optionflags, checker=checker)
-
-    mod = importlib.import_module(module)
-
-    for test in finder.find(mod, name, globs=globs, extraglobs=extraglobs):
-        runner.run(test)
-
-    if report:  # pragma: no cover  # only used for debugging
-        runner.summarize()
-
-    return doctest.TestResults(runner.failures, runner.tries)
 
 
 class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in line with parent class

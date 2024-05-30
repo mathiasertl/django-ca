@@ -40,7 +40,8 @@ from django_ca import constants, utils
 from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
-from django_ca.tests.base.utils import dns, doctest_module, uri
+from django_ca.tests.base.doctest import doctest_module
+from django_ca.tests.base.utils import dns, uri
 from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,

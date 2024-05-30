@@ -16,7 +16,7 @@
 import pytest
 
 from django_ca.pydantic.validators import dns_validator, email_validator, url_validator
-from django_ca.tests.base.utils import doctest_module
+from django_ca.tests.base.doctest import doctest_module
 
 
 def test_doctests() -> None:

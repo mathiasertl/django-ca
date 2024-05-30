@@ -22,12 +22,12 @@ from cryptography.x509.oid import NameOID
 import pytest
 
 from django_ca.pydantic.name import NameAttributeModel, NameModel
-from django_ca.tests.base.utils import doctest_module
+from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.pydantic.base import ExpectedErrors, assert_cryptography_model, assert_validation_errors
 
 
 def test_doctests() -> None:
-    """Load doctests."""
+    """Run doctests for this module."""
     failures, _tests = doctest_module("django_ca.pydantic.name")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 

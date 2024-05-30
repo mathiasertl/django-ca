@@ -406,14 +406,11 @@ class TestCaseMixin(TestCaseProtocol):
     def load_ca(
         cls,
         name: str,
-        parsed: Optional[x509.Certificate] = None,
         enabled: bool = True,
         parent: Optional[CertificateAuthority] = None,
         **kwargs: Any,
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
-        if parsed is None:
-            parsed = CERT_DATA[name]["pub"]["parsed"]
         if parent is None and CERT_DATA[name].get("parent"):
             parent = CertificateAuthority.objects.get(name=CERT_DATA[name]["parent"])
 
@@ -435,7 +432,7 @@ class TestCaseMixin(TestCaseProtocol):
             key_backend_options=key_backend_options,
             **kwargs,
         )
-        ca.update_certificate(parsed)  # calculates serial etc
+        ca.update_certificate(CERT_DATA[name]["pub"]["parsed"])  # calculates serial etc
         ca.full_clean()
         ca.save()
         return ca

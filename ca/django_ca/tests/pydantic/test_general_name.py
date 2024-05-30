@@ -29,7 +29,8 @@ import pytest
 from django_ca import constants
 from django_ca.pydantic.general_name import GeneralNameModel, OtherNameModel
 from django_ca.pydantic.name import NameModel
-from django_ca.tests.base.utils import dns, doctest_module, ip, uri
+from django_ca.tests.base.doctest import doctest_module
+from django_ca.tests.base.utils import dns, ip, uri
 from django_ca.tests.pydantic.base import ExpectedErrors, assert_cryptography_model, assert_validation_errors
 
 

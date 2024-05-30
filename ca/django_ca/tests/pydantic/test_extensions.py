@@ -71,7 +71,8 @@ from django_ca.pydantic.extensions import (
     UnrecognizedExtensionModel,
 )
 from django_ca.tests.base.constants import CERT_DATA
-from django_ca.tests.base.utils import dns, doctest_module, key_usage
+from django_ca.tests.base.doctest import doctest_module
+from django_ca.tests.base.utils import dns, key_usage
 from django_ca.tests.pydantic.base import (
     ExpectedErrors,
     assert_cryptography_model,

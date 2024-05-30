@@ -21,8 +21,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
-from django.test import TestCase, override_settings
-
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
@@ -39,7 +37,7 @@ from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
 from django_ca.tests.base.assertions import assert_extensions, assert_removed_in_200
 from django_ca.tests.base.constants import CERT_DATA
-from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -51,7 +49,6 @@ from django_ca.tests.base.utils import (
     dns,
     issuer_alternative_name,
     ocsp_no_check,
-    override_tmpcadir,
     state,
     subject_alternative_name,
     subject_key_identifier,
@@ -61,39 +58,16 @@ from django_ca.tests.base.utils import (
 key_backend_options = UsePrivateKeyOptions(password=None)
 
 
-class DocumentationTestCase(TestCaseMixin, TestCase):
-    """Test sphinx docs."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca = self.load_ca(name=CERT_DATA["root"]["name"], parsed=CERT_DATA["root"]["pub"]["parsed"])
-
-    def get_globs(self) -> dict[str, Any]:
-        """Get globals for doctests."""
-        return {
-            "Profile": Profile,
-            "get_profile": get_profile,
-            "ca": self.ca,
-            "ca_serial": self.ca.serial,
-            "csr": CERT_DATA["root-cert"]["csr"]["parsed"],
-        }
-
-    @override_tmpcadir()
-    def test_module(self) -> None:
-        """Test doctests from main module."""
-        # pylint: disable=import-outside-toplevel; we need the top-level module
-        from django_ca import profiles as profiles_mod
-
-        failures, _tests = doctest.testmod(profiles_mod, globs=self.get_globs())
-        assert failures == 0, f"{failures} doctests failed, see above for output."
-
-    @override_tmpcadir()
-    def test_docs(self) -> None:
-        """Test python/profiles.rst."""
-        failures, _tests = doctest.testfile(
-            "../../../docs/source/python/profiles.rst", globs=self.get_globs()
-        )
-        assert failures == 0, f"{failures} doctests failed, see above for output."
+@pytest.fixture()
+def doctest_globs(usable_root: CertificateAuthority) -> dict[str, Any]:
+    """Fixture for context used in doctests."""
+    return {
+        "Profile": Profile,
+        "get_profile": get_profile,
+        "ca": usable_root,
+        "ca_serial": usable_root.serial,
+        "csr": CERT_DATA["root-cert"]["csr"]["parsed"],
+    }
 
 
 def create_cert(
@@ -103,6 +77,18 @@ def create_cert(
     cert = Certificate(ca=ca)
     cert.update_certificate(prof.create_cert(ca, key_backend_options, csr, *args, **kwargs))
     return cert
+
+
+def test_doctests_module(doctest_globs: dict[str, Any]) -> None:
+    """Run doctests for this module."""
+    failures, _tests = doctest_module("django_ca.profiles", globs=doctest_globs)
+    assert failures == 0, f"{failures} doctests failed, see above for output."
+
+
+def test_doctest_documentation(doctest_globs: dict[str, Any]) -> None:
+    """Test python/profiles.rst."""
+    failures, _tests = doctest.testfile("../../../docs/source/python/profiles.rst", globs=doctest_globs)
+    assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 def test_get_profile() -> None:
@@ -185,15 +171,13 @@ def test_init_none_extension() -> None:
     assert prof.serialize()["clear_extensions"] == ["ocsp_no_check"]
 
 
-def test_init_no_subject() -> None:
+def test_init_no_subject(settings: SettingsWrapper) -> None:
     """Test with no default subject."""
     # doesn't really occur in the wild, because model_settings updates CA_PROFILES with the default
     # subject. But it still seems sensible to support this
-    default_subject = ({"oid": "CN", "value": "testcase"},)
-
-    with override_settings(CA_DEFAULT_SUBJECT=default_subject):
-        prof = Profile("test")
-    assert prof.subject == x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "testcase")])
+    settings.CA_DEFAULT_SUBJECT = ({"oid": "CN", "value": "testcase"},)
+    prof = Profile("test")
+    assert prof.subject == x509.Name([cn("testcase")])
 
 
 def test_init_x509_subject(subject: x509.Name) -> None:
@@ -362,7 +346,6 @@ def test_create_cert_with_overrides(usable_root: CertificateAuthority, hostname:
     )
 
 
-@override_tmpcadir()
 def test_create_cert_with_none_extension(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test passing an extension that is removed by the profile."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
@@ -614,12 +597,12 @@ def test_create_cert_with_partial_authority_information_access_override(
     assert usable_root.sign_authority_information_access is not None
     ca_issuers_url = next(
         ad
-        for ad in usable_root.sign_authority_information_access.value  # type: ignore[union-attr]
+        for ad in usable_root.sign_authority_information_access.value
         if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
     ).access_location
     ca_ocsp_url = next(
         ad
-        for ad in usable_root.sign_authority_information_access.value  # type: ignore[union-attr]
+        for ad in usable_root.sign_authority_information_access.value
         if ad.access_method == AuthorityInformationAccessOID.OCSP
     ).access_location
     usable_root.save()
@@ -722,7 +705,7 @@ def test_create_cert_with_unsupported_extension(root: CertificateAuthority) -> N
             CERT_DATA["root-cert"]["csr"]["parsed"],
             extensions=[
                 # TYPEHINT NOTE: This is what we're testing.
-                basic_constraints(ca=False)  # type: ignore[dict-item]
+                basic_constraints(ca=False)  # type: ignore[list-item]
             ],
         )
 

@@ -94,7 +94,7 @@ def format_general_names(value: Iterable[x509.GeneralName]) -> list[str]:
 
 
 @register.filter
-def as_hex(value: Union[int, bytes]) -> str:
+def as_hex(value: Union[int, bytes]) -> str:  # pragma: no cover  # only used in very exotic extensions
     """Takes a bytes value and returns its hex representation."""
     if isinstance(value, int):
         return add_colons(int_to_hex(value))

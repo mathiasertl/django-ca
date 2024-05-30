@@ -123,4 +123,41 @@ Utility functions
 
 .. automodule:: django_ca.tests.base.utils
    :members:
+
+
+********
+Doctests
+********
+
+:py:mod:`django_ca.tests.base.doctest` provides helper functions for testing doctests.
+
+Functions in this module use a custom OutputChecker to enable the ``STRIP_WHITESPACE`` doctest option. This
+option will remove all whitespace (including newlines) from the both actual and expected output. It can be
+used for formatting actual output with newlines to improve readability. For example::
+
+    >>> from cryptography import x509
+    >>> from cryptography.x509.oid import ExtensionOID
+    >>> x509.Extension(
+    ...     oid=ExtensionOID.BASIC_CONSTRAINTS,
+    ...     critical=True,
+    ...     value=x509.BasicConstraints(ca=False, path_length=None)
+    ... )  # doctest: +STRIP_WHITESPACE
+    <Extension(
+        oid=<ObjectIdentifier(oid=2.5.29.19, name=basicConstraints)>,
+        critical=True,
+        value=<BasicConstraints(ca=False, path_length=None)>
+    )>
+
+Out[4]: <Extension(oid=<ObjectIdentifier(oid=2.5.29.19, name=basicConstraints)>, critical=True, value=<BasicConstraints(ca=False, path_length=None)>)>
+
+
+Use :py:func:`django_ca.tests.base.doctest.doctest_module` to test a Python module::
+
+    def test_doctests() -> None:
+        """Run doctests for this module."""
+        failures, _tests = doctest_module("django_ca.pydantic.name")
+        assert failures == 0, f"{failures} doctests failed, see above for output."
+
+.. automodule:: django_ca.tests.base.doctest
+   :members:
    :exclude-members: OutputChecker
