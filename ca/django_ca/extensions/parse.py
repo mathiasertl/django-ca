@@ -26,6 +26,8 @@ from django_ca.constants import (
     TLS_FEATURE_NAMES,
 )
 from django_ca.typehints import (
+    CertificateExtension,
+    CertificateExtensionType,
     ParsableAuthorityInformationAccess,
     ParsableAuthorityKeyIdentifier,
     ParsableBasicConstraints,
@@ -294,8 +296,8 @@ def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509
 
 
 def parse_extension(  # noqa: PLR0912  # there's just many extensions
-    key: str, value: Union[x509.Extension[x509.ExtensionType], x509.ExtensionType, ParsableExtension]
-) -> x509.Extension[x509.ExtensionType]:
+    key: str, value: Union[CertificateExtension, CertificateExtensionType, ParsableExtension]
+) -> CertificateExtension:
     """Parse a serialized extension into a cryptography object.
 
     This function is used by :doc:`profiles` to parse configured extensions into standard cryptography
@@ -321,10 +323,15 @@ def parse_extension(  # noqa: PLR0912  # there's just many extensions
         return value
 
     if isinstance(value, x509.ExtensionType):
-        return x509.Extension(oid=value.oid, critical=EXTENSION_DEFAULT_CRITICAL[value.oid], value=value)
+        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
+        return x509.Extension(  # type: ignore[return-value]
+            oid=value.oid,
+            critical=EXTENSION_DEFAULT_CRITICAL[value.oid],
+            value=value,
+        )
 
     if key == "authority_key_identifier":
-        parsed: x509.ExtensionType = _parse_authority_key_identifier(value["value"])
+        parsed: CertificateExtensionType = _parse_authority_key_identifier(value["value"])
     elif key == "authority_information_access":
         parsed = _parse_authority_information_access(value["value"])
     elif key == "basic_constraints":
@@ -364,4 +371,5 @@ def parse_extension(  # noqa: PLR0912  # there's just many extensions
         raise ValueError(f"{key}: Unknown extension key.")
 
     critical = value.get("critical", EXTENSION_DEFAULT_CRITICAL[parsed.oid])
-    return x509.Extension(oid=parsed.oid, critical=critical, value=parsed)
+    # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
+    return x509.Extension(oid=parsed.oid, critical=critical, value=parsed)  # type: ignore[return-value]

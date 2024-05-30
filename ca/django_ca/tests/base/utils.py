@@ -47,7 +47,7 @@ from django_ca.key_backends import KeyBackend
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
 
 
 class DummyModel(BaseModel):
@@ -130,7 +130,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: Sequence[x509.Extension[x509.ExtensionType]],
+        extensions: Sequence[CertificateExtension],
     ) -> x509.Certificate:
         return None  # type: ignore[return-value]
 

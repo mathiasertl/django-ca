@@ -90,6 +90,7 @@ from django_ca.querysets import (
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
+    CertificateExtension,
     CertificateRevocationListScopes,
     ConfigurableExtension,
     ConfigurableExtensionDict,
@@ -273,7 +274,7 @@ class X509CertMixin(DjangoCAModel):
         return typing.cast(AllowedHashTypes, self.pub.loaded.signature_hash_algorithm)
 
     @cached_property
-    def extensions(self) -> dict[x509.ObjectIdentifier, "x509.Extension[x509.ExtensionType]"]:
+    def extensions(self) -> dict[x509.ObjectIdentifier, CertificateExtension]:
         """All extensions of this certificate in a `dict`.
 
         The key is the OID for the respective extension, allowing easy to look up a particular extension.
@@ -281,7 +282,7 @@ class X509CertMixin(DjangoCAModel):
         return {e.oid: e for e in self.pub.loaded.extensions}
 
     @cached_property
-    def sorted_extensions(self) -> list["x509.Extension[x509.ExtensionType]"]:
+    def sorted_extensions(self) -> list[CertificateExtension]:
         """List of extensions sorted by their human-readable name.
 
         This property is used for display purposes, where a reproducible output is desired.

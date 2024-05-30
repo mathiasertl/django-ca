@@ -741,7 +741,7 @@ def test_serialize() -> None:
         "extensions": [
             {
                 "type": "key_usage",
-                "value": key_usage,
+                "value": key_usage_items,
                 "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
             },
         ],

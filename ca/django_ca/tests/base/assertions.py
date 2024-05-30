@@ -66,7 +66,7 @@ def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509Cert
     """
     actual = cert.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER].value
     expected = issuer.extensions[ExtensionOID.SUBJECT_KEY_IDENTIFIER].value
-    assert actual.key_identifier == expected.key_identifier  # type: ignore[attr-defined]
+    assert actual.key_identifier == expected.key_identifier  # type: ignore[union-attr]
 
 
 def assert_ca_properties(

@@ -34,7 +34,7 @@ from django.core.management import CommandParser
 from django.utils.module_loading import import_string
 
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType
+from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -279,7 +279,7 @@ class KeyBackend(
         subject: x509.Name,
         expires: datetime,
         # NOTE: Allows any extension, as the function is also used for creating certificate authorities.
-        extensions: Sequence[x509.Extension[x509.ExtensionType]],
+        extensions: Sequence[CertificateExtension],
     ) -> x509.Certificate:
         """Sign a certificate."""
 

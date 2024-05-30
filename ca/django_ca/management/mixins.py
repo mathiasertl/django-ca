@@ -20,7 +20,6 @@ from typing import NoReturn, Optional
 
 from pydantic import ValidationError
 
-from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.exceptions import ImproperlyConfigured
@@ -32,7 +31,13 @@ from django_ca.key_backends import key_backends
 from django_ca.management import actions
 from django_ca.management.actions import IntegerRangeAction, KeyBackendAction
 from django_ca.models import CertificateAuthority, X509CertMixin
-from django_ca.typehints import ActionsContainer, AllowedHashTypes, ArgumentGroup, ParsableKeyType
+from django_ca.typehints import (
+    ActionsContainer,
+    AllowedHashTypes,
+    ArgumentGroup,
+    CertificateExtension,
+    ParsableKeyType,
+)
 from django_ca.utils import add_colons, validate_public_key_parameters
 
 if typing.TYPE_CHECKING:
@@ -122,7 +127,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
         except ValueError as ex:
             raise CommandError(*ex.args) from ex
 
-    def print_extension(self, ext: x509.Extension[x509.ExtensionType]) -> None:
+    def print_extension(self, ext: CertificateExtension) -> None:
         """Print extension to stdout."""
         ext_name = get_extension_name(ext.oid)
         if ext.critical:

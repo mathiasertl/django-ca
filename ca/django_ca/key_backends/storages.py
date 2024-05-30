@@ -45,7 +45,13 @@ from django_ca.conf import model_settings
 from django_ca.key_backends.base import KeyBackend
 from django_ca.management.actions import PasswordAction
 from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias, PowerOfTwoInt
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, EllipticCurves, ParsableKeyType
+from django_ca.typehints import (
+    AllowedHashTypes,
+    ArgumentGroup,
+    CertificateExtension,
+    EllipticCurves,
+    ParsableKeyType,
+)
 from django_ca.utils import generate_private_key, get_cert_builder
 
 if typing.TYPE_CHECKING:
@@ -383,7 +389,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         issuer: x509.Name,
         subject: x509.Name,
         expires: datetime,
-        extensions: Sequence[x509.Extension[x509.ExtensionType]],
+        extensions: Sequence[CertificateExtension],
     ) -> x509.Certificate:
         builder = get_cert_builder(expires, serial=serial)
         builder = builder.public_key(public_key)

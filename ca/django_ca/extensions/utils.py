@@ -26,6 +26,7 @@ from django.urls import reverse
 
 from django_ca.constants import KEY_USAGE_NAMES
 from django_ca.typehints import (
+    CertificateExtension,
     CertificateExtensionDict,
     ConfigurableExtensionDict,
     EndEntityCertificateExtensionDict,
@@ -34,7 +35,7 @@ from django_ca.utils import add_colons, bytes_to_hex, int_to_hex
 
 
 def extension_as_admin_html(
-    extension: x509.Extension[x509.ExtensionType], extra_context: Optional[dict[str, Any]] = None
+    extension: CertificateExtension, extra_context: Optional[dict[str, Any]] = None
 ) -> str:
     """Convert an extension to HTML code suitable for the admin interface."""
     template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"

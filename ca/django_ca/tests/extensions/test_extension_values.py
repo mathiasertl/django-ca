@@ -14,7 +14,7 @@
 """Test various extension values for serialization, parsing and text representation."""
 
 import typing
-from typing import Any
+from typing import Any, cast
 
 from cryptography import x509
 from cryptography.x509 import TLSFeatureType
@@ -29,6 +29,8 @@ from django_ca.extensions.utils import extension_as_admin_html
 from django_ca.tests.base.mixins import TestCaseMixin, TestCaseProtocol
 from django_ca.tests.base.utils import dns, rdn, uri
 from django_ca.typehints import (
+    CertificateExtension,
+    CertificateExtensionType,
     CRLExtensionType,
     ParsableDistributionPoint,
     ParsablePolicyInformation,
@@ -39,7 +41,7 @@ from django_ca.typehints import (
 class _ExtensionExampleDict(typing.TypedDict):
     admin_html: str
     serialized: Any
-    extension_type: x509.ExtensionType
+    extension_type: CertificateExtensionType
     text: "str"
 
 
@@ -47,7 +49,7 @@ class ExtensionExampleDict(_ExtensionExampleDict, total=False):
     """Value used to define generic test cases."""
 
     serialized_alternatives: list[Any]
-    extension_type_alternatives: list[x509.ExtensionType]
+    extension_type_alternatives: list[CertificateExtensionType]
 
 
 TestValues = dict[str, ExtensionExampleDict]
@@ -60,7 +62,7 @@ class ExtensionTestCaseMixin(TestCaseProtocol):
     test_values: TestValues
 
     # pylint: disable-next=invalid-name  # unittest standard
-    def assertParsed(self, serialized: Any, extension_type: x509.ExtensionType, name: str) -> None:
+    def assertParsed(self, serialized: Any, extension_type: CertificateExtensionType, name: str) -> None:
         """Assert that the given `serialized` value parses to the given `extension_type`."""
         oid = extension_type.oid
         ext = x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type)
@@ -70,7 +72,7 @@ class ExtensionTestCaseMixin(TestCaseProtocol):
         self.assertEqual(
             parse_extension(self.ext_class_key, {"value": serialized, "critical": True}), ext, name
         )
-        ext = x509.Extension(oid=oid, critical=False, value=extension_type)
+        ext = cast(CertificateExtension, x509.Extension(oid=oid, critical=False, value=extension_type))
         self.assertEqual(
             parse_extension(self.ext_class_key, {"value": serialized, "critical": False}), ext, name
         )
@@ -83,7 +85,10 @@ class ExtensionTestCaseMixin(TestCaseProtocol):
         for name, config in self.test_values.items():
             extension_type = config["extension_type"]
             oid = extension_type.oid
-            ext = x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type)
+            ext = cast(
+                CertificateExtension,
+                x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type),
+            )
 
             expected = f'\n<div class="django-ca-extension-value">{config["admin_html"]}</div>'
             actual = extension_as_admin_html(ext)
