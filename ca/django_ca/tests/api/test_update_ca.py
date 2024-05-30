@@ -185,7 +185,7 @@ def test_update(
                 ),
             )
         elif field == "sign_certificate_policies":
-            assert actual, certificate_policies(
+            assert actual == certificate_policies(
                 x509.PolicyInformation(
                     policy_identifier=x509.ObjectIdentifier("1.1.1"), policy_qualifiers=None
                 )
@@ -193,7 +193,7 @@ def test_update(
         elif field == "sign_crl_distribution_points":
             assert actual == crl_distribution_points(distribution_point([uri("http://crl.example.com")]))
         elif field == "sign_issuer_alternative_name":
-            assert actual, issuer_alternative_name(dns("example.com"))
+            assert actual == issuer_alternative_name(dns("example.com"))
         elif expected is True:
             assert actual is True
         elif expected is False:
