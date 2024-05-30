@@ -333,7 +333,7 @@ EndEntityCertificateExtensionType = Union[
     x509.SubjectKeyIdentifier,
 ]
 
-#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in anty certificate.
+#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in any certificate.
 #:
 #: This union is based on :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionType` and adds extension
 #: types that may appear in certificate authorities.
@@ -380,7 +380,6 @@ CertificateExtension = Union[
 ConfigurableExtensionDict = dict[x509.ObjectIdentifier, ConfigurableExtension]
 EndEntityCertificateExtensionDict = dict[x509.ObjectIdentifier, EndEntityCertificateExtension]
 CertificateExtensionDict = dict[x509.ObjectIdentifier, CertificateExtension]
-ExtensionDict = dict[x509.ObjectIdentifier, x509.Extension[x509.ExtensionType]]
 
 # Type aliases for protected subclass returned by add_argument_group().
 ArgumentGroup = argparse._ArgumentGroup  # pylint: disable=protected-access

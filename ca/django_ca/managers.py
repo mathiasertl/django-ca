@@ -35,9 +35,10 @@ from django_ca.profiles import Profile, profiles
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca
 from django_ca.typehints import (
     AllowedHashTypes,
+    CertificateExtension,
+    CertificateExtensionDict,
     ConfigurableExtension,
     Expires,
-    ExtensionDict,
     ParsableKeyType,
     X509CertMixinTypeVar,
 )
@@ -137,7 +138,7 @@ class CertificateAuthorityManager(
     def _handle_authority_information_access(
         self,
         hostname: Optional[str],
-        extensions: ExtensionDict,
+        extensions: CertificateExtensionDict,
     ) -> None:
         """Add an Authority Information Access extension with a URI based on `hostname` to `extensions`.
 
@@ -183,7 +184,9 @@ class CertificateAuthorityManager(
             value=x509.AuthorityInformationAccess(access_descriptions),
         )
 
-    def _handle_crl_distribution_point(self, hostname: Optional[str], extensions: ExtensionDict) -> None:
+    def _handle_crl_distribution_point(
+        self, hostname: Optional[str], extensions: CertificateExtensionDict
+    ) -> None:
         """Add CRL Distribution Point extension with a URI based on `hostname` to `extensions`.
 
         The extension is only added if it is not already set in `extensions`.
@@ -215,7 +218,7 @@ class CertificateAuthorityManager(
         default_hostname: Optional[Union[bool, str]] = None,
         path_length: Optional[int] = None,
         key_type: ParsableKeyType = "RSA",
-        extensions: Optional[Iterable[x509.Extension[x509.ExtensionType]]] = None,
+        extensions: Optional[Iterable[CertificateExtension]] = None,
         caa: str = "",
         website: str = "",
         terms_of_service: str = "",
@@ -347,7 +350,7 @@ class CertificateAuthorityManager(
         if openssh_ca:
             extensions.extend([SshHostCaExtension(), SshUserCaExtension()])
 
-        extensions_dict = {ext.oid: ext for ext in extensions}
+        extensions_dict: CertificateExtensionDict = {ext.oid: ext for ext in extensions}
 
         if ExtensionOID.KEY_USAGE not in extensions_dict:
             extensions_dict[ExtensionOID.KEY_USAGE] = x509.Extension(

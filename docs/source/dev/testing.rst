@@ -148,9 +148,6 @@ used for formatting actual output with newlines to improve readability. For exam
         value=<BasicConstraints(ca=False, path_length=None)>
     )>
 
-Out[4]: <Extension(oid=<ObjectIdentifier(oid=2.5.29.19, name=basicConstraints)>, critical=True, value=<BasicConstraints(ca=False, path_length=None)>)>
-
-
 Use :py:func:`django_ca.tests.base.doctest.doctest_module` to test a Python module::
 
     def test_doctests() -> None:

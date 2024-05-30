@@ -38,7 +38,14 @@ from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePr
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, ParsableKeyType, SubjectFormats
+from django_ca.typehints import (
+    AllowedHashTypes,
+    ArgumentGroup,
+    CertificateExtension,
+    CertificateExtensionType,
+    ParsableKeyType,
+    SubjectFormats,
+)
 from django_ca.utils import format_general_name, parse_general_name
 
 
@@ -265,12 +272,14 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
     def add_extension(
         self,
         # TYPEHINT NOTE: extensions needs to be more general here as we also add CA-only extensions
-        extensions: list[x509.Extension[x509.ExtensionType]],  # type: ignore[override]
-        value: x509.ExtensionType,
+        extensions: list[CertificateExtension],  # type: ignore[override]
+        value: CertificateExtensionType,
         critical: bool,
     ) -> None:
         """Shortcut for adding the given extension value to the list of extensions."""
-        extensions.append(x509.Extension(oid=value.oid, critical=critical, value=value))
+        extension = x509.Extension(oid=value.oid, critical=critical, value=value)
+        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
+        extensions.append(extension)  # type: ignore[arg-type]
 
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
         self,
@@ -422,7 +431,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         if not common_name:
             raise CommandError("Subject must contain a common name (CN=...).")
 
-        extensions: list[x509.Extension[x509.ExtensionType]] = [
+        extensions: list[CertificateExtension] = [
             x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
         ]
 

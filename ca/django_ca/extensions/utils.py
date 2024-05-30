@@ -25,7 +25,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from django_ca.constants import KEY_USAGE_NAMES
-from django_ca.typehints import ConfigurableExtensionDict, EndEntityCertificateExtensionDict, ExtensionDict
+from django_ca.typehints import (
+    CertificateExtensionDict,
+    ConfigurableExtensionDict,
+    EndEntityCertificateExtensionDict,
+)
 from django_ca.utils import add_colons, bytes_to_hex, int_to_hex
 
 
@@ -119,7 +123,7 @@ def format_extensions(
     # NOTE: dicts are invariant in mypy, so the type of the dict when calling this function needs to *exactly*
     #   match. That's why we typehint an essentially redundant union for extensions so that any of the types
     #   can be used.
-    extensions: Union[ConfigurableExtensionDict, EndEntityCertificateExtensionDict, ExtensionDict],
+    extensions: Union[ConfigurableExtensionDict, EndEntityCertificateExtensionDict, CertificateExtensionDict],
     context: dict[str, Union[str, int]],
 ) -> None:
     """Format extensions based on the given context."""

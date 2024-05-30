@@ -57,6 +57,7 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
+from django_ca.typehints import CertificateExtension
 
 
 def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: CertificateAuthority) -> None:
@@ -231,7 +232,7 @@ def test_init_with_no_default_hostname(
 @pytest.mark.django_db
 def test_init_with_extra_extensions(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test creating a CA with extra extensions."""
-    extensions: list[x509.Extension[x509.ExtensionType]] = [
+    extensions: list[CertificateExtension] = [
         tls_feature(x509.TLSFeatureType.status_request),
         ocsp_no_check(),
         name_constraints(permitted=[dns(".com")]),
@@ -259,7 +260,7 @@ def test_init_with_partial_authority_information_access(
     ocsp_path = reverse("django_ca:ocsp-ca-post", kwargs={"serial": usable_root.serial})
 
     # Pass no OCSP URIs
-    passed_extensions: list[x509.Extension[x509.ExtensionType]] = [
+    passed_extensions: list[CertificateExtension] = [
         authority_information_access(ca_issuers=[uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")]),
     ]
     with assert_create_ca_signals():
@@ -300,7 +301,7 @@ def test_init_with_formatting(
     ca_name: str, subject: x509.Name, key_backend: StoragesBackend, usable_root: CertificateAuthority
 ) -> None:
     """Test passing extensions that are formatted."""
-    passed_extensions: list[x509.Extension[x509.ExtensionType]] = [
+    passed_extensions: list[CertificateExtension] = [
         authority_information_access(
             [uri("https://example.com/ca-issuer/{CA_ISSUER_PATH}")],
             [uri("https://example.com/ocsp/{OCSP_PATH}")],
@@ -340,7 +341,7 @@ def test_init_with_formatting_with_no_uri(
     """Test passing extensions with values that cannot be formatted."""
     aia = authority_information_access([dns("ca-issuer.example.com")], [dns("ocsp.example.com")])
     crldp = crl_distribution_points(distribution_point([dns("crl.example.com")]))
-    passed_extensions: list[x509.Extension[x509.ExtensionType]] = [aia, crldp]
+    passed_extensions: list[CertificateExtension] = [aia, crldp]
 
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
@@ -364,7 +365,7 @@ def test_init_with_formatting_with_rdn_in_crldp(
     crldp = crl_distribution_points(
         distribution_point(relative_name=rdn([(NameOID.COMMON_NAME, "example.com")]))
     )
-    passed_extensions: list[x509.Extension[x509.ExtensionType]] = [crldp]
+    passed_extensions: list[CertificateExtension] = [crldp]
 
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
