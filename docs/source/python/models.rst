@@ -33,6 +33,7 @@ Creating CAs
 Use ``CertificateAuthority.objects.init()`` to create new certificate authorities. The method has many options
 but is designed to provide defaults that work in most cases::
 
+   >>> from datetime import datetime, timedelta, timezone
    >>> from cryptography.x509.oid import NameOID
    >>> from django_ca.key_backends import key_backends
    >>> from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
@@ -41,12 +42,14 @@ but is designed to provide defaults that work in most cases::
    >>> key_backend_options = CreatePrivateKeyOptions(
    ...     key_type="RSA", key_size=1024, password=None, path="ca"
    ... )
+   >>> expires = datetime.now(tz=timezone.utc) + timedelta(days=365 * 10)
    >>> ca = CertificateAuthority.objects.init(
    ...     name='ca',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
-   ...     path_length=1  # so we can create one level of intermediate CAs
+   ...     expires=expires,
+   ...     path_length=1,  # so we can create one level of intermediate CAs
    ... )
    >>> ca
    <CertificateAuthority: ca>
@@ -60,6 +63,7 @@ intermediate CA, simply pass the parent::
    ...     key_backend_options=key_backend_options,
    ...     use_parent_private_key_options=UsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
+   ...     expires=expires,
    ...     parent=ca
    ... )
    >>> child.parent
@@ -76,6 +80,7 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
+   ...     expires=expires,
    ...     parent=ca,  # some extensions are only valid for intermediate CAs
    ...     use_parent_private_key_options=UsePrivateKeyOptions(password=None),
    ...
@@ -162,6 +167,7 @@ always be added later (but of course, only new certificates will have the change
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "add-extensions")]),
+   ...     expires=expires,
    ...     sign_authority_information_access=authority_information_access,
    ...     sign_certificate_policies=certificate_policies,
    ...     sign_crl_distribution_points=crl_distribution_points,
@@ -182,6 +188,7 @@ There are some more parameters to configure how the CA will be signed::
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
+   ...     expires=expires,
    ...     algorithm=hashes.SHA256(),  # SHA512 would be the default
    ...     path_length=3,  # three levels of intermediate CAs allowed,
    ...     key_type='EC',  # create a private key using Elliptic Curve cryptography

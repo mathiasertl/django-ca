@@ -24,6 +24,7 @@
 import argparse
 import os
 import sys
+from datetime import datetime, timedelta, timezone as tz
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -127,12 +128,14 @@ if args.env != "frontend":
     print("* User for admin interface: user / nopass")
     User.objects.create_superuser(username="user", password="nopass")
     key_backend = key_backends["default"]
+    expires = datetime.now(tz=tz.utc) + timedelta(days=365)
 
     rsa_root = CertificateAuthority.objects.init(
         "rsa.example.com",
         key_backend,
         CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=2048),
         subject=cn("rsa.example.com"),
+        expires=expires,
     )
     ec_root = CertificateAuthority.objects.init(
         "ecc.example.net",
@@ -141,6 +144,7 @@ if args.env != "frontend":
             key_type="EC", password=None, path="ca", elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         ),
         subject=cn("ecc.example.net"),
+        expires=expires,
         key_type="EC",
     )
 
@@ -149,6 +153,7 @@ if args.env != "frontend":
         key_backend,
         CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca/shared/"),
         subject=cn("child.rsa.example.com"),
+        expires=expires,
         parent=rsa_root,
         use_parent_private_key_options=UsePrivateKeyOptions(password=None),
     )
@@ -162,6 +167,7 @@ if args.env != "frontend":
             elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE,
         ),
         subject=cn("child.ecc.example.net"),
+        expires=expires,
         key_type="EC",
         parent=ec_root,
         use_parent_private_key_options=UsePrivateKeyOptions(password=None),

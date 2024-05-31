@@ -51,7 +51,6 @@ from django_ca.pydantic.validators import (
 )
 from django_ca.typehints import (
     AllowedHashTypes,
-    Expires,
     ParsableGeneralName,
     ParsableKeyType,
     ParsableName,
@@ -867,11 +866,16 @@ def parse_encoding(value: Union[str, Encoding]) -> Encoding:
     raise ValueError(f"Unknown type passed: {type(value).__name__}")
 
 
-def parse_expires(expires: Expires = None) -> datetime:
+def parse_expires(expires: Optional[Union[int, datetime, timedelta]] = None) -> datetime:
     """Parse a value specifying an expiry into a concrete datetime.
 
     This function always returns a timezone-aware datetime object with UTC as a timezone.
     """
+    warnings.warn(
+        "parse_expires() is deprecated and will be removed in django-ca 2.0.",
+        RemovedInDjangoCA200Warning,
+        stacklevel=2,
+    )
     now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
 
     if isinstance(expires, int):

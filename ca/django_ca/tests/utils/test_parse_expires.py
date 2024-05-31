@@ -14,10 +14,12 @@
 """Test :py:func:`~django_ca.utils.parse_expires`."""
 
 from datetime import datetime, timedelta, timezone as tz
+from typing import Any
 
 import pytest
 
 from django_ca.conf import model_settings
+from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.utils import parse_expires
 
 pytestmark = [pytest.mark.freeze_time("2023-04-30 12:30:50.12")]
@@ -25,37 +27,41 @@ pytestmark = [pytest.mark.freeze_time("2023-04-30 12:30:50.12")]
 
 def test_no_args() -> None:
     """Test invocation with no args."""
-    assert parse_expires() == datetime(2023, 4, 30, 12, 30, tzinfo=tz.utc) + model_settings.CA_DEFAULT_EXPIRES
+    with assert_removed_in_200(r"^parse_expires\(\) is deprecated and will be removed in django-ca 2\.0\.$"):
+        assert (
+            parse_expires()
+            == datetime(2023, 4, 30, 12, 30, tzinfo=tz.utc) + model_settings.CA_DEFAULT_EXPIRES
+        )
 
 
-def test_int() -> None:
+@pytest.mark.parametrize(
+    "value,expected",
+    (
+        (10, datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)),
+        (timedelta(days=10), datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)),
+        (datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc), datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)),
+    ),
+)
+def test_with_argument(value: Any, expected: datetime) -> None:
     """Test invocation with no args."""
-    assert parse_expires(10) == datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)
-
-
-def test_timedelta() -> None:
-    """Test invocation with no args."""
-    assert parse_expires(timedelta(days=10)) == datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)
-
-
-def test_datetime() -> None:
-    """Test invocation with no args."""
-    expires = datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)
-    parsed = parse_expires(expires)
-    assert parsed == expires
-    assert parsed.tzinfo == tz.utc
+    with assert_removed_in_200(r"^parse_expires\(\) is deprecated and will be removed in django-ca 2\.0\.$"):
+        assert parse_expires(value) == expected
 
 
 def test_datetime_with_non_local_timezone() -> None:
     """Test parsing a tz-aware datetime object with a custom timezone."""
     tzinfo = tz(timedelta(hours=2), name="Europe/Vienna")
     expires = datetime(2023, 5, 10, 12, 30, tzinfo=tzinfo)
-    parsed = parse_expires(expires)
+    with assert_removed_in_200(r"^parse_expires\(\) is deprecated and will be removed in django-ca 2\.0\.$"):
+        parsed = parse_expires(expires)
     assert parsed == expires
     assert parsed.tzinfo == tz.utc
 
 
 def test_naive_datetime() -> None:
     """Test ValueError when parsing a naive datetime."""
-    with pytest.raises(ValueError, match=r"^expires must not be a naive datetime$"):
+    with (
+        assert_removed_in_200(r"^parse_expires\(\) is deprecated and will be removed in django-ca 2\.0\.$"),
+        pytest.raises(ValueError, match=r"^expires must not be a naive datetime$"),
+    ):
         parse_expires(datetime(2023, 4, 30))

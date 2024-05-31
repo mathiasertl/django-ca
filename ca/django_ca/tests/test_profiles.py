@@ -36,7 +36,7 @@ from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
 from django_ca.tests.base.assertions import assert_extensions, assert_removed_in_200
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
@@ -56,6 +56,7 @@ from django_ca.tests.base.utils import (
     uri,
 )
 
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 key_backend_options = UsePrivateKeyOptions(password=None)
 
 
@@ -189,12 +190,17 @@ def test_init_x509_subject(subject: x509.Name) -> None:
 
 def test_init_expires() -> None:
     """Test the `expire` parameter."""
-    prof = Profile("example", expires=30)
-    assert prof.expires == timedelta(days=30)
-
     exp = timedelta(hours=3)
     prof = Profile("example", expires=exp)
     assert prof.expires == exp
+
+
+def test_init_expires_with_deprecated_type() -> None:
+    """Test the `expire` parameter."""
+    msg = r"^Passing int for expires is deprecated and will be removed in django ca 2\.0\.$"
+    with assert_removed_in_200(msg):
+        prof = Profile("example", expires=30)  # type: ignore[arg-type]
+    assert prof.expires == timedelta(days=30)
 
 
 def test_init_with_deprecated_extension_format() -> None:
@@ -686,6 +692,20 @@ def test_create_cert_with_no_valid_cn_in_san(usable_root: CertificateAuthority) 
         cert = create_cert(prof, usable_root, csr, extensions=[san])
     assert pre.call_count == 1
     assert cert.subject == model_settings.CA_DEFAULT_SUBJECT
+
+
+def test_create_cert_with_deprecated_expires_type(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Create a certificate with an int for expires (which is deprecated)."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    msg = r"^Passing int for expires is deprecated and will be removed in django ca 2\.0\.$"
+
+    prof = Profile("example")
+    with mock_signal(pre_sign_cert) as pre, assert_removed_in_200(msg):
+        cert = create_cert(prof, usable_root, csr, subject=subject, expires=3)
+    assert pre.call_count == 1
+    assert cert.expires == TIMESTAMPS["everything_valid"] + timedelta(days=3)
 
 
 def test_create_cert_with_unknown_signature_hash_algorithm() -> None:

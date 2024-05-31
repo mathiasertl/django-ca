@@ -20,6 +20,7 @@ import subprocess
 import tempfile
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Optional
 
 from cryptography import x509
@@ -76,6 +77,7 @@ def assert_scope(
 def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
     """Create a CA."""
     subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
+    kwargs.setdefault("expires", datetime.now(tz=tz.utc) + timedelta(days=365 * 2))
     key_backend = key_backends["default"]
     key_backend_options = CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=1024)
     if kwargs.get("parent"):
@@ -215,9 +217,9 @@ def test_root_ca_cert(ca_name: str) -> None:
             verify("-CAfile {0} -crl_check_all {cert}", *paths, crl_path=[crl_global_path], cert=cert)
 
 
-def test_ca_default_hostname() -> None:
+def test_ca_default_hostname(ca_name: str) -> None:
     """Test that CA_DEFAULT_HOSTNAME does not lead to problems."""
-    ca = init_ca("root")
+    ca = init_ca(ca_name)
     # Root CAs have no CRLDistributionPoints
     assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in ca.extensions
 

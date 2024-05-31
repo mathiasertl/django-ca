@@ -599,7 +599,9 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         if not ca.enabled:
             raise CommandError("Certificate authority is disabled.")
 
-        parsed_expires = profile.get_expires(expires)
+        if expires is None:
+            expires = profile.expires
+        parsed_expires = datetime.now(tz=tz.utc).replace(second=0, microsecond=0) + expires
 
         if ca.expires < parsed_expires:
             max_days = (ca.expires - timezone.now()).days

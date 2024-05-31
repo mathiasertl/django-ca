@@ -42,7 +42,7 @@ retrieve and manipulate CAs::
 To create a new CA, you have to :py:meth:`~django_ca.managers.CertificateAuthorityManager.init`, this example
 creates a minimal CA using the file system storage backend::
 
-   >>> from datetime import datetime
+   >>> from datetime import datetime, timedelta, timezone
    >>> from django_ca.key_backends import key_backends
    >>> from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
    >>> from django_ca.models import CertificateAuthority
@@ -51,11 +51,13 @@ creates a minimal CA using the file system storage backend::
    >>> key_backend_options = CreatePrivateKeyOptions(
    ...     key_type="RSA", key_size=1024, password=None, path="ca"
    ... )
+   >>> expires = datetime.now(tz=timezone.utc) + timedelta(days=365 * 10)
    >>> CertificateAuthority.objects.init(
    ...     name="ca-two",
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")])
+   ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")]),
+   ...     expires=expires,
    ... )
    <CertificateAuthority: ca-two>
 

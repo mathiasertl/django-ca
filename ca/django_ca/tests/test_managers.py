@@ -13,8 +13,9 @@
 
 """TestCases for various model managers."""
 
+from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -40,6 +41,7 @@ from django_ca.tests.base.assertions import (
     assert_create_cert_signals,
     assert_extensions,
     assert_improperly_configured,
+    assert_removed_in_200,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
@@ -82,8 +84,9 @@ parent_key_backend_options = UsePrivateKeyOptions(password=None)
 @pytest.mark.django_db
 def test_init(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create the most basic possible CA."""
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with assert_create_ca_signals():
-        ca = CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject)
+        ca = CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject, expires)
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
 
@@ -95,9 +98,10 @@ def test_init(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) ->
 @pytest.mark.django_db
 def test_init_with_dsa(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a DSA-based CA."""
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
-            ca_name, key_backend, key_backend_options, subject, key_type="DSA"
+            ca_name, key_backend, key_backend_options, subject, expires, key_type="DSA"
         )
     assert_ca_properties(ca, ca_name, private_key_type=dsa.DSAPrivateKey)
     assert_certificate(ca, subject, algorithm=hashes.SHA256)
@@ -110,8 +114,11 @@ def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: Stora
         password=b"password", path=Path("ca"), key_type="RSA", key_size=1024
     )
     test_parent_key_backend_options = UsePrivateKeyOptions(password=b"password")
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with assert_create_ca_signals():
-        ca = CertificateAuthority.objects.init(ca_name, key_backend, test_key_backend_options, subject)
+        ca = CertificateAuthority.objects.init(
+            ca_name, key_backend, test_key_backend_options, subject, expires
+        )
     assert_ca_properties(ca, ca_name, password=b"password")
     assert_certificate(ca, subject)
 
@@ -133,6 +140,7 @@ def test_init_intermediate(
             key_backend,
             key_backend_options,
             subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
         )
@@ -151,6 +159,7 @@ def test_init_grandchild(
             key_backend,
             key_backend_options,
             subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_child,
             use_parent_private_key_options=parent_key_backend_options,
         )
@@ -163,8 +172,9 @@ def test_init_grandchild(
 def test_openssh_ca(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test OpenSSH CA support."""
     ca_key_backend_options = CreatePrivateKeyOptions(key_type="Ed25519", password=None, path="ca")
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     ca = CertificateAuthority.objects.init(
-        ca_name, key_backend, ca_key_backend_options, key_type="Ed25519", subject=subject, openssh_ca=True
+        ca_name, key_backend, ca_key_backend_options, subject, expires, key_type="Ed25519", openssh_ca=True
     )
 
     assert ca.name == ca_name
@@ -195,8 +205,9 @@ def test_openssh_ca_for_intermediate(
             ca_name,
             key_backend,
             ca_key_backend_options,
-            key_type="Ed25519",
             subject=subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            key_type="Ed25519",
             parent=root,
             use_parent_private_key_options=parent_key_backend_options,
             openssh_ca=True,
@@ -214,6 +225,7 @@ def test_init_with_no_default_hostname(
             key_backend,
             key_backend_options,
             subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_child,
             use_parent_private_key_options=parent_key_backend_options,
             default_hostname=False,
@@ -240,9 +252,10 @@ def test_init_with_extra_extensions(ca_name: str, subject: x509.Name, key_backen
         x509.Extension(oid=ExtensionOID.INHIBIT_ANY_POLICY, critical=False, value=x509.InhibitAnyPolicy(3)),
     ]
 
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
-            ca_name, key_backend, key_backend_options, subject, extensions=extensions
+            ca_name, key_backend, key_backend_options, subject, expires, extensions=extensions
         )
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
@@ -269,6 +282,7 @@ def test_init_with_partial_authority_information_access(
             key_backend,
             key_backend_options,
             subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -287,6 +301,7 @@ def test_init_with_partial_authority_information_access(
             key_backend,
             key_backend_options,
             subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -315,6 +330,7 @@ def test_init_with_formatting(
             key_backend,
             key_backend_options,
             subject,
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -349,6 +365,7 @@ def test_init_with_formatting_with_no_uri(
             key_backend,
             key_backend_options,
             subject,
+            datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -373,6 +390,7 @@ def test_init_with_formatting_with_rdn_in_crldp(
             key_backend,
             key_backend_options,
             subject,
+            datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -385,9 +403,10 @@ def test_init_with_formatting_with_rdn_in_crldp(
 @pytest.mark.django_db
 def test_init_with_no_extensions(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test passing no extensions."""
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with assert_create_ca_signals():
         ca = CertificateAuthority.objects.init(
-            ca_name, key_backend, key_backend_options, subject, extensions=None
+            ca_name, key_backend, key_backend_options, subject, expires, extensions=None
         )
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
@@ -403,6 +422,7 @@ def test_init_with_acme_parameters(ca_name: str, subject: x509.Name, key_backend
             key_backend,
             key_backend_options,
             subject,
+            datetime.now(tz=tz.utc) + timedelta(days=10),
             acme_enabled=True,
             acme_profile="client",
             acme_requires_contact=False,
@@ -420,17 +440,69 @@ def test_init_with_api_parameters(ca_name: str, subject: x509.Name, key_backend:
             key_backend,
             key_backend_options,
             subject,
+            datetime.now(tz=tz.utc) + timedelta(days=10),
             api_enabled=True,
         )
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
 
 
-def test_init_with_unknown_profile(subject: x509.Name, key_backend: StoragesBackend) -> None:
+@pytest.mark.django_db
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.parametrize(
+    "expires,expected",
+    (
+        (3, TIMESTAMPS["everything_valid"] + timedelta(days=3)),
+        (timedelta(days=3), TIMESTAMPS["everything_valid"] + timedelta(days=3)),
+    ),
+)
+def test_init_with_deprecated_expires(
+    ca_name: str,
+    subject: x509.Name,
+    key_backend: StoragesBackend,
+    expires: Union[int, timedelta],
+    expected: datetime,
+) -> None:
+    """Test a deprecated expired type."""
+    name = type(expires).__name__
+    msg = rf"^Passing {name} for expires is deprecated and will be removed in django ca 2.0.$"
+    with assert_create_ca_signals(), assert_removed_in_200(msg):
+        ca = CertificateAuthority.objects.init(
+            ca_name,
+            key_backend,
+            key_backend_options,
+            subject,
+            expires=expires,  # type: ignore[arg-type]  # what we're testing
+            api_enabled=True,
+        )
+    assert ca.expires == expected
+
+
+def test_init_with_expires_is_none(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
+    """Test init with an expired as None."""
+    with pytest.raises(TypeError, match=r"^None: expires must be a datetime\."):
+        CertificateAuthority.objects.init(
+            ca_name,
+            key_backend,
+            key_backend_options,
+            subject,
+            expires=None,  # type: ignore[arg-type]  # what we're testing
+        )
+
+
+def test_init_with_naive_expires(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
+    """Test init with a naive expired."""
+    expires = datetime(2024, 5, 31)
+    with pytest.raises(ValueError, match=r"^expires must not be a naive datetime\."):
+        CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject, expires=expires)
+
+
+def test_init_with_unknown_profile(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a CA with a profile that doesn't exist."""
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with pytest.raises(ValueError, match=r"^foobar: Profile is not defined\.$"):
         CertificateAuthority.objects.init(
-            "error", key_backend, key_backend_options, subject, acme_profile="foobar"
+            ca_name, key_backend, key_backend_options, subject, expires, acme_profile="foobar"
         )
 
 
@@ -443,19 +515,23 @@ def test_init_with_unknown_extension_type(subject: x509.Name, key_backend: Stora
             key_backend,
             key_backend_options,
             subject,
-            extensions=[True],  # type: ignore[list-item]
+            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            extensions=[True],  # type: ignore[list-item]  # what we are testing
         )
     assert CertificateAuthority.objects.count() == 0
 
 
 @pytest.mark.django_db
 def test_init_with_parent_with_no_use_parent_private_key_options(
-    root: CertificateAuthority, subject: x509.Name, key_backend: StoragesBackend
+    ca_name: str, root: CertificateAuthority, subject: x509.Name, key_backend: StoragesBackend
 ) -> None:
     """Test that use_parent_private_key_options is a mandatory option when parent is passed."""
     match = r"^use_parent_private_key_options is required when parent is passed\.$"
+    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     with pytest.raises(ValueError, match=match):
-        CertificateAuthority.objects.init("error", key_backend, key_backend_options, subject, parent=root)
+        CertificateAuthority.objects.init(
+            ca_name, key_backend, key_backend_options, subject, expires, parent=root
+        )
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])

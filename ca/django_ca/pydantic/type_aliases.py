@@ -156,7 +156,7 @@ _timedelta_json_schema = core_schema.chain_schema(
     ]
 )
 TimedeltaInSeconds = Annotated[
-    int,
+    timedelta,
     GetPydanticSchema(
         lambda tp, handler: core_schema.json_or_python_schema(
             json_schema=_timedelta_json_schema,

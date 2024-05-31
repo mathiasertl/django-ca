@@ -16,7 +16,6 @@
 import argparse
 import ipaddress
 from collections.abc import Iterable, Mapping, Sequence
-from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, TypeVar, Union
 
 from cryptography import x509
@@ -52,7 +51,6 @@ AllowedHashTypes = Union[
 
 ParsableName = Union[str, Iterable[tuple[str, str]]]
 
-Expires = Optional[Union[int, datetime, timedelta]]
 ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[
     str,

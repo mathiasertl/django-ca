@@ -95,7 +95,6 @@ from django_ca.typehints import (
     ConfigurableExtension,
     ConfigurableExtensionDict,
     EndEntityCertificateExtension,
-    Expires,
     ParsableKeyType,
 )
 from django_ca.utils import (
@@ -104,7 +103,6 @@ from django_ca.utils import (
     get_crl_cache_key,
     get_storage,
     int_to_hex,
-    parse_expires,
     read_file,
     validate_private_key_parameters,
     validate_public_key_parameters,
@@ -804,11 +802,11 @@ class CertificateAuthority(X509CertMixin):
 
         return signed_cert
 
-    def generate_ocsp_key(  # pylint: disable=too-many-locals  # noqa: PLR0912
+    def generate_ocsp_key(  # pylint: disable=too-many-locals
         self,
         key_backend_options: BaseModel,
         profile: str = "ocsp",
-        expires: Expires = None,
+        expires: Optional[Union[datetime, timedelta]] = None,
         algorithm: Optional[AllowedHashTypes] = None,
         key_size: Optional[int] = None,
         key_type: Optional[ParsableKeyType] = None,
@@ -890,8 +888,6 @@ class CertificateAuthority(X509CertMixin):
 
         if expires is None:
             expires = now + timedelta(days=self.ocsp_responder_key_validity)
-        else:
-            expires = parse_expires(expires)
 
         safe_serial = self.serial.replace(":", "")
 
