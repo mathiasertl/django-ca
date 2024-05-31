@@ -28,7 +28,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
-from cryptography.x509.oid import NameOID, ObjectIdentifier
+from cryptography.x509.oid import NameOID
 
 from django.test import TestCase, override_settings
 
@@ -41,7 +41,7 @@ from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.doctest import doctest_module
-from django_ca.tests.base.utils import dns, uri
+from django_ca.tests.base.utils import dns
 from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
@@ -51,10 +51,7 @@ from django_ca.utils import (
     get_storage,
     merge_x509_names,
     parse_encoding,
-    parse_expires,
-    parse_general_name,
     parse_key_curve,
-    parse_name_x509,
     parse_serialized_name_attributes,
     read_file,
     serialize_name,
@@ -123,195 +120,6 @@ def test_parse_serialized_name_attributes(
         {"oid": attr[0].dotted_string, "value": attr[1]} for attr in attributes
     ]
     assert parse_serialized_name_attributes(serialized) == expected
-
-
-class ParseNameX509TestCase(TestCase):
-    """Test :py:func:`django_ca.utils.parse_name_x509`."""
-
-    def assertSubject(  # pylint: disable=invalid-name
-        self, actual: str, expected: Iterable[tuple[ObjectIdentifier, str]]
-    ) -> None:
-        """Test that the given subject matches."""
-        self.assertEqual(
-            parse_name_x509(actual), tuple(x509.NameAttribute(oid, value) for oid, value in expected)
-        )
-
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertSubject("/CN=example.com", [(NameOID.COMMON_NAME, "example.com")])
-
-        # leading or trailing spaces are always ok.
-        self.assertSubject(" /CN = example.com ", [(NameOID.COMMON_NAME, "example.com")])
-
-        # emailAddress is special because of the case
-        self.assertSubject("/emailAddress=user@example.com", [(NameOID.EMAIL_ADDRESS, "user@example.com")])
-
-    def test_multiple(self) -> None:
-        """Test subject with multiple tokens."""
-        self.assertSubject(
-            "/C=AT/OU=foo/CN=example.com",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        )
-        self.assertSubject(
-            "/C=AT/OU=foo/OU=bar/CN=example.com",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        )
-
-    def test_case(self) -> None:
-        """Test that case doesn't matter."""
-        self.assertSubject(
-            "/c=AT/ou=foo/cn=example.com/eMAIladdreSS=user@example.com",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.COMMON_NAME, "example.com"),
-                (NameOID.EMAIL_ADDRESS, "user@example.com"),
-            ],
-        )
-
-    def test_emtpy(self) -> None:
-        """Test empty subjects."""
-        self.assertSubject("", [])
-        self.assertSubject("   ", [])
-
-    def test_multiple_slashes(self) -> None:
-        """Test that we ignore multiple slashes."""
-        self.assertSubject("/C=AT/O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")])
-        self.assertSubject("//C=AT/O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")])
-        self.assertSubject("/C=AT//O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")])
-        self.assertSubject(
-            "/C=AT///O=GNU", [(NameOID.COUNTRY_NAME, "AT"), (NameOID.ORGANIZATION_NAME, "GNU")]
-        )
-
-    def test_empty_field(self) -> None:
-        """Test empty fields."""
-        self.assertSubject(
-            "/C=AT/O=GNU/OU=foo",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATION_NAME, "GNU"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-            ],
-        )
-        self.assertSubject(
-            "/C=AT/O=/OU=foo",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATION_NAME, ""),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-            ],
-        )
-        self.assertSubject(
-            "/C=AT/O=GNU/OU=",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATION_NAME, "GNU"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, ""),
-            ],
-        )
-        self.assertSubject(
-            "/O=/OU=",
-            [
-                (NameOID.ORGANIZATION_NAME, ""),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, ""),
-            ],
-        )
-
-    def test_no_slash_at_start(self) -> None:
-        """Test that no slash at start is okay."""
-        self.assertSubject("CN=example.com", [(NameOID.COMMON_NAME, "example.com")])
-
-    def test_multiple_ous(self) -> None:
-        """Test multiple OUs."""
-        self.assertSubject(
-            "/C=AT/OU=foo/OU=bar/CN=example.com",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        )
-        self.assertSubject(
-            "/OU=foo/OU=bar",
-            [(NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"), (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar")],
-        )
-        self.assertSubject(
-            "/C=AT/O=bla/OU=foo/OU=bar/CN=example.com/",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATION_NAME, "bla"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        )
-        self.assertSubject(
-            "/C=AT/O=bla/OU=foo/OU=bar/OU=hugo/CN=example.com/",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATION_NAME, "bla"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "hugo"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        )
-        self.assertSubject(
-            "/C=AT/DC=com/DC=example/CN=example.com",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.DOMAIN_COMPONENT, "com"),
-                (NameOID.DOMAIN_COMPONENT, "example"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        )
-
-    def test_exotic_name_oids(self) -> None:
-        """Test parsing a few of the more exotic names."""
-        self.assertSubject(
-            "/DC=foo/serialNumber=serial/title=phd",
-            [(NameOID.DOMAIN_COMPONENT, "foo"), (NameOID.SERIAL_NUMBER, "serial"), (NameOID.TITLE, "phd")],
-        )
-        self.assertSubject(
-            "/C=AT/DC=foo/serialNumber=serial/CN=example.com/uid=123/title=phd",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.DOMAIN_COMPONENT, "foo"),
-                (NameOID.SERIAL_NUMBER, "serial"),
-                (NameOID.COMMON_NAME, "example.com"),
-                (NameOID.USER_ID, "123"),
-                (NameOID.TITLE, "phd"),
-            ],
-        )
-
-    def test_aliases(self) -> None:
-        """Test aliases (commonName vs. CN etc)."""
-        self.assertSubject(
-            "commonName=example.com/surname=Ertl/userid=0",
-            (
-                (NameOID.COMMON_NAME, "example.com"),
-                (NameOID.SURNAME, "Ertl"),
-                (NameOID.USER_ID, "0"),
-            ),
-        )
-
-    def test_unknown(self) -> None:
-        """Test unknown field."""
-        field = "ABC"
-
-        with self.assertRaisesRegex(ValueError, rf"^Unknown x509 name field: {field}$") as e:
-            parse_name_x509(f"/{field}=example.com")
-        self.assertEqual(e.exception.args, (f"Unknown x509 name field: {field}",))
 
 
 class ValidateHostnameTestCase(TestCase):
@@ -383,144 +191,6 @@ class GeneratePrivateKeyTestCase(TestCase):
         """Test passing an invalid key type."""
         with self.assertRaisesRegex(ValueError, r"^FOO: Unknown key type\.$"):
             generate_private_key(16, "FOO", None)  # type: ignore[call-overload]
-
-
-class ParseGeneralNameTest(TestCase):
-    """Test :py:func:`django_ca.utils.parse_general_name`."""
-
-    def test_ipv4(self) -> None:
-        """Test parsing an IPv4 address."""
-        self.assertEqual(parse_general_name("1.2.3.4"), x509.IPAddress(ipaddress.ip_address("1.2.3.4")))
-        self.assertEqual(parse_general_name("ip:1.2.3.4"), x509.IPAddress(ipaddress.ip_address("1.2.3.4")))
-
-    def test_ipv4_network(self) -> None:
-        """Test parsing an IPv4 network."""
-        self.assertEqual(parse_general_name("1.2.3.0/24"), x509.IPAddress(ipaddress.ip_network("1.2.3.0/24")))
-        self.assertEqual(
-            parse_general_name("ip:1.2.3.0/24"), x509.IPAddress(ipaddress.ip_network("1.2.3.0/24"))
-        )
-
-    def test_ipv6(self) -> None:
-        """Test parsing an IPv6 address."""
-        self.assertEqual(parse_general_name("fd00::32"), x509.IPAddress(ipaddress.ip_address("fd00::32")))
-        self.assertEqual(parse_general_name("ip:fd00::32"), x509.IPAddress(ipaddress.ip_address("fd00::32")))
-
-    def test_ipv6_network(self) -> None:
-        """Test parsing an IPv6 network,."""
-        self.assertEqual(parse_general_name("fd00::0/32"), x509.IPAddress(ipaddress.ip_network("fd00::0/32")))
-        self.assertEqual(
-            parse_general_name("ip:fd00::0/32"), x509.IPAddress(ipaddress.ip_network("fd00::0/32"))
-        )
-
-    def test_domain(self) -> None:
-        """Test parsing a domain."""
-        self.assertEqual(parse_general_name("DNS:example.com"), dns("example.com"))
-        self.assertEqual(parse_general_name("DNS:.example.com"), dns(".example.com"))
-
-        self.assertEqual(parse_general_name("example.com"), dns("example.com"))
-        self.assertEqual(parse_general_name(".example.com"), dns(".example.com"))
-
-    def test_wildcard_domain(self) -> None:
-        """Test parsing a wildcard domain."""
-        self.assertEqual(parse_general_name("*.example.com"), dns("*.example.com"))
-        self.assertEqual(parse_general_name("DNS:*.example.com"), dns("*.example.com"))
-
-        # Wildcard subdomains are allowed in DNS entries, however RFC 2595 limits their use to a single
-        # wildcard in the outermost level
-        msg = r"^Invalid domain: %s: "
-
-        with self.assertRaisesRegex(ValueError, msg % r"test\.\*\.example\.com"):
-            parse_general_name("test.*.example.com")
-        with self.assertRaisesRegex(ValueError, msg % r"\*\.\*\.example\.com"):
-            parse_general_name("*.*.example.com")
-        with self.assertRaisesRegex(ValueError, msg % r"example\.com\.\*"):
-            parse_general_name("example.com.*")
-
-    def test_dirname(self) -> None:
-        """Test parsing a dirname."""
-        self.assertEqual(
-            parse_general_name("dirname:CN=example.com"),
-            x509.DirectoryName(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                    ]
-                )
-            ),
-        )
-        self.assertEqual(
-            parse_general_name("dirname:C=AT,CN=example.com"),
-            x509.DirectoryName(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                    ]
-                )
-            ),
-        )
-
-    def test_uri(self) -> None:
-        """Test parsing a URI."""
-        url = "https://example.com"
-        self.assertEqual(parse_general_name(url), uri(url))
-        self.assertEqual(parse_general_name(f"uri:{url}"), uri(url))
-
-    def test_rid(self) -> None:
-        """Test parsing a Registered ID."""
-        self.assertEqual(parse_general_name("rid:2.5.4.3"), x509.RegisteredID(NameOID.COMMON_NAME))
-
-    def test_unicode_domains(self) -> None:
-        """Test some unicode domains."""
-        self.assertEqual(
-            parse_general_name("https://exämple.com/test"),
-            uri("https://xn--exmple-cua.com/test"),
-        )
-        self.assertEqual(
-            parse_general_name("https://exämple.com:8000/test"),
-            uri("https://xn--exmple-cua.com:8000/test"),
-        )
-        self.assertEqual(
-            parse_general_name("https://exämple.com:8000/test"),
-            uri("https://xn--exmple-cua.com:8000/test"),
-        )
-        self.assertEqual(
-            parse_general_name("uri:https://exämple.com:8000/test"),
-            uri("https://xn--exmple-cua.com:8000/test"),
-        )
-
-        self.assertEqual(parse_general_name("exämple.com"), dns("xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name(".exämple.com"), dns(".xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("*.exämple.com"), dns("*.xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("dns:exämple.com"), dns("xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("dns:.exämple.com"), dns(".xn--exmple-cua.com"))
-        self.assertEqual(parse_general_name("dns:*.exämple.com"), dns("*.xn--exmple-cua.com"))
-
-    def test_wrong_email(self) -> None:
-        """Test using an invalid email."""
-        with self.assertRaisesRegex(ValueError, r"^Invalid domain: user@:"):
-            parse_general_name("user@")
-
-        with self.assertRaisesRegex(ValueError, "^Invalid domain: : Empty domain$"):
-            parse_general_name("email:user@")
-
-    def test_error(self) -> None:
-        """Try parsing an unparsable IP address (b/c it has a network)."""
-        with self.assertRaisesRegex(ValueError, r"^Could not parse IP address\.$"):
-            parse_general_name("ip:1.2.3.4/24")
-
-    def test_unparsable(self) -> None:
-        """Test some unparsable domains."""
-        with self.assertRaisesRegex(ValueError, r"^Invalid domain: http://ex ample\.com: "):
-            parse_general_name("http://ex ample.com")
-        with self.assertRaisesRegex(ValueError, r"^Invalid domain: ex ample\.com: "):
-            parse_general_name("uri:http://ex ample.com")
-        with self.assertRaisesRegex(ValueError, r"^Invalid domain: ex ample\.com: "):
-            parse_general_name("dns:ex ample.com")
-        with self.assertRaisesRegex(
-            ValueError, r"^Cannot parse general name False: Must be of type str \(was: bool\)\.$"
-        ):
-            parse_general_name(False)  # type: ignore[arg-type]  # what we test
 
 
 @pytest.mark.parametrize(
@@ -598,45 +268,6 @@ class ParseEllipticCurveTestCase(TestCase):
 
         with self.assertRaisesRegex(ValueError, "^ECDH: Not a known Elliptic Curve$"):
             parse_key_curve("ECDH")  # present in the module, but *not* an EllipticCurve
-
-
-@freeze_time("2023-04-30 12:30:50.12")
-class ParseExpiresTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.parse_expires."""
-
-    def test_no_args(self) -> None:
-        """Test invocation with no args."""
-        self.assertEqual(
-            parse_expires(), datetime(2023, 4, 30, 12, 30, tzinfo=tz.utc) + model_settings.CA_DEFAULT_EXPIRES
-        )
-
-    def test_int(self) -> None:
-        """Test invocation with no args."""
-        self.assertEqual(parse_expires(10), datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc))
-
-    def test_timedelta(self) -> None:
-        """Test invocation with no args."""
-        self.assertEqual(parse_expires(timedelta(days=10)), datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc))
-
-    def test_datetime(self) -> None:
-        """Test invocation with no args."""
-        expires = datetime(2023, 5, 10, 12, 30, tzinfo=tz.utc)
-        parsed = parse_expires(expires)
-        self.assertEqual(parsed, expires)
-        self.assertEqual(parsed.tzinfo, tz.utc)
-
-    def test_datetime_with_non_local_timezone(self) -> None:
-        """Test parsing a tz-aware datetime object with a custom timezone."""
-        tzinfo = tz(timedelta(hours=2), name="Europe/Vienna")
-        expires = datetime(2023, 5, 10, 12, 30, tzinfo=tzinfo)
-        parsed = parse_expires(expires)
-        self.assertEqual(parsed, expires)
-        self.assertEqual(parsed.tzinfo, tz.utc)
-
-    def test_naive_datetime(self) -> None:
-        """Test ValueError when parsing a naive datetime."""
-        with self.assertRaisesRegex(ValueError, r"^expires must not be a naive datetime$"):
-            parse_expires(datetime(2023, 4, 30))
 
 
 @pytest.mark.parametrize(

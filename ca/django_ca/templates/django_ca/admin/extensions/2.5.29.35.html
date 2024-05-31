@@ -15,8 +15,8 @@
   </li>
   {% endif %}
 
-  {% if value.authority_cert_serial_number %}
-  <li>{% trans "Authority certificate issuer:" %}
+  {% if value.authority_cert_serial_number is not None %}
+  <li>{% trans "Authority certificate serial number:" %}
     <span class="django-ca-serial">{{ value.authority_cert_serial_number|as_hex }}</span>
   </li>
   {% endif %}

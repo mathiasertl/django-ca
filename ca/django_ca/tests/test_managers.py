@@ -501,7 +501,7 @@ def test_default_with_not_yet_valid(root: CertificateAuthority, settings: Settin
 def test_default_with_no_default_ca(settings: SettingsWrapper) -> None:
     """Test what is returned when **no** CA is configured as default."""
     settings.CA_DEFAULT_CA = None
-    ca = sorted(CertificateAuthority.objects.all(), key=lambda ca: (ca.expires, ca.serial))[-1]
+    ca = sorted(CertificateAuthority.objects.all(), key=lambda obj: (obj.expires, obj.serial))[-1]
     assert CertificateAuthority.objects.default() == ca
 
 
