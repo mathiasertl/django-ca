@@ -241,8 +241,12 @@ class CertificateAuthorityManager(
 
         .. versionchanged:: 1.29.0
 
-           * The `expires` parameter is now mandatory and must be a timezone-aware datetime. Support for
-             ``timedelta`` or ``int`` is deprecated. Passing ``None`` will raise ``ValueError``.
+           * The `expires` parameter is now mandatory, passing ``None`` will raise ``ValueError``.
+
+        .. deprecated:: 1.29.0
+
+           * Support for passing an ``int`` or ``timedelta`` for `expires` has been deprecated and will be
+             removed in django-ca 2.0.
 
         .. versionchanged:: 1.28.0
 

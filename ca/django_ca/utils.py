@@ -42,7 +42,7 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA200Warning
+from django_ca.deprecation import RemovedInDjangoCA200Warning, deprecate_type
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
@@ -839,18 +839,21 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
     return x509.DNSName(dns_validator(name))  # validator may raise ValueError itself
 
 
-def parse_encoding(value: Union[str, Encoding]) -> Encoding:
+@deprecate_type("value", Encoding, RemovedInDjangoCA200Warning)
+def parse_encoding(value: str) -> Encoding:
     """Parse a value to a valid encoding.
 
-    This function accepts either a member of
-    :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding` or a string describing a member. If
-    no value is passed, it will assume ``PEM`` as a default value. Note that ``"ASN1"`` is treated as an alias
-    for ``"DER"``.
+    .. deprecated:: 1.29.0
 
-        >>> parse_encoding('DER')
-        <Encoding.DER: 'DER'>
-        >>> parse_encoding(Encoding.PEM)
+       The ability to pass an Encoding directly has been deprecated and will be removed in django-ca 2.0.
+
+    The passed `value` is a string describing the encoding, either ``"PEM"`` or ``"DER"``. ``"ASN1"`` is an
+    alias for ``"DER"``.
+
+        >>> parse_encoding("PEM")
         <Encoding.PEM: 'PEM'>
+        >>> parse_encoding("ASN1")
+        <Encoding.DER: 'DER'>
     """
     if isinstance(value, Encoding):
         return value

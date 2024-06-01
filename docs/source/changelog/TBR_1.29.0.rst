@@ -29,7 +29,7 @@ django-ca specific settings where moved to a Pydantic model, providing better an
 validation on start up and more type safety at runtime.
 
 * :ref:`settings-ca-default-subject` and subjects in profiles now support the same (more verbose) format
-  as exposed via the API. Support for the old format will be removed in ``django-ca==2.2``.
+  as exposed via the API. Support for the old format will be removed in 2.2.0.
 * :ref:`settings-ca-default-expires`, the default expiry time for certificates created *without* ACMEv2, now
   has a default value of 365 days. The minimum value is now also one day (instead of just a positive value).
 * Consistently parse serials in :ref:`settings-ca-default-ca` :ref:`settings-ca-passwords` and
@@ -60,12 +60,6 @@ Dependencies
 Python API
 **********
 
-* All Pydantic models are now exported under ``django_ca.pydantic``.
-* Add literal typehints for extension keys under :py:attr:`~django_ca.typehints.ExtensionKeys` and
-  :py:attr:`~django_ca.typehints.CertificateExtensionKeys` to improve type hinting.
-* Add :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS`, a subset of
-  :py:attr:`~django_ca.constants.EXTENSION_KEYS`, for extensions all extensions that may occur in
-  end-entity certificates.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since
   1.25.0. Use :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>` instead.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.format_name()``, deprecated since 1.27.0. Use RFC
@@ -74,6 +68,24 @@ Python API
   ``django_ca.pydantic.validators.is_power_two_validator`` instead.
 * **BACKWARDS INCOMPATIBLE:** Removed the `password` parameter to
   :py:func:`~django_ca.models.CertificateAuthority.sign`. It was a left-over and only used in the signal.
+* :py:func:`django_ca.managers.CertificateAuthorityManager.init`:
+
+  * **BACKWARDS INCOMPATIBLE:** The `expires` parameter is now mandatory, and should be a timezone-aware
+    datetime. Support for passing ``int`` or ``timedelta`` will be removed in 2.0.0.
+  * The `extensions` parameter no longer accepts extensions that are not valid for certificates.
+
+* :py:func:`django_ca.managers.CertificateManager.create_cert`:
+
+  * **BACKWARDS INCOMPATIBLE:** The `expires` parameter is now mandatory, and should be a timedelta or
+    timezone-aware datetime. Support for passing an ``int`` will be removed in 2.0.0.
+  * The `extensions` parameter no longer accepts extensions that are not valid for end entity certificates.
+
+* All Pydantic models are now exported under ``django_ca.pydantic``.
+* Add literal typehints for extension keys under :py:attr:`~django_ca.typehints.ExtensionKeys` and
+  :py:attr:`~django_ca.typehints.CertificateExtensionKeys` to improve type hinting.
+* Add :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS`, a subset of
+  :py:attr:`~django_ca.constants.EXTENSION_KEYS`, for extensions all extensions that may occur in
+  end-entity certificates.
 
 *************
 Documentation

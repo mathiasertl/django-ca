@@ -102,7 +102,10 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
-        encoding = parse_encoding(request.GET.get("encoding", self.type))
+        if get_encoding := request.GET.get("encoding"):
+            encoding = parse_encoding(get_encoding)
+        else:
+            encoding = self.type
 
         ca = self.get_object()
 

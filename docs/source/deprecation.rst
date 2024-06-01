@@ -53,6 +53,9 @@ Packaging
 Python API
 ==========
 
+* :py:func:`django_ca.managers.CertificateAuthorityManager.init` will stop accepting ``int`` or ``timedelta``
+  for `expires`.
+* :py:func:`django_ca.managers.CertificateManager.create_cert` will stop accepting ``int`` for `expires`.
 * ``django_ca.extensions.parse_extension()`` will be removed. Use Pydantic models instead (deprecated since
   1.29.0).
 
@@ -68,6 +71,16 @@ Dependencies
 
 Python API
 ==========
+
+* :py:func:`django_ca.managers.CertificateAuthorityManager.init`:
+
+  * The `expires` parameter is now mandatory, and should be a timezone-aware datetime.
+  * The `extensions` parameter no longer accepts extensions that are not valid for certificates.
+
+* :py:func:`django_ca.managers.CertificateManager.create_cert`:
+
+  * The `expires` parameter is now mandatory, and should be a timezone-aware datetime or a timedelta.
+  * The `extensions` parameter no longer accepts extensions that are not valid for end entity certificates.
 
 * Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since 1.25.0. Use
   :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>` instead.

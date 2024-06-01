@@ -277,12 +277,19 @@ class ParseEllipticCurveTestCase(TestCase):
         ("DER", Encoding.DER),
         ("ASN1", Encoding.DER),
         ("OpenSSH", Encoding.OpenSSH),
-        (Encoding.PEM, Encoding.PEM),
     ),
 )
 def test_parse_encoding(value: Any, expected: Encoding) -> None:
     """Test :py:func:`django_ca.utils.parse_encoding`."""
     assert parse_encoding(value) == expected
+
+
+@pytest.mark.parametrize("value", (Encoding.PEM, Encoding.DER))
+def test_parse_encoding_with_deprecated_values(value: Encoding) -> None:
+    """Test parsing encodings with raw Encodings."""
+    message = r"^Passing Encoding for value is deprecated and will be removed in django ca 2\.0\.$"
+    with assert_removed_in_200(message):
+        assert parse_encoding(value) == value  # type: ignore[arg-type]  # what we test
 
 
 def test_parse_encoding_with_invalid_values() -> None:
