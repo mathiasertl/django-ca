@@ -36,7 +36,6 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsag
 import django
 
 from django_ca.constants import EXTENSION_KEYS
-from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.tests.base.typehints import CsrDict, KeyDict, PubDict
 from django_ca.utils import add_colons
 
@@ -385,8 +384,8 @@ for _name, _cert_data in CERT_DATA.items():
     # Data derived from public key
     _cert_data["issuer"] = _cert.issuer
     _cert_data["serial_colons"] = add_colons(_cert_data["serial"])
-    _valid_from = not_valid_before(_cert)
-    _valid_until = not_valid_after(_cert)
+    _valid_from = _cert.not_valid_before_utc
+    _valid_until = _cert.not_valid_after_utc
     _cert_data["valid_from"] = _valid_from
     _cert_data["valid_until"] = _valid_until
     _cert_data["valid_from_str"] = _cert_data["valid_from"].isoformat(" ")
@@ -411,8 +410,8 @@ TIMESTAMPS["ca_certs_valid"] = TIMESTAMPS["base"] + timedelta(days=7)
 TIMESTAMPS["profile_certs_valid"] = TIMESTAMPS["base"] + timedelta(days=12)
 
 # When creating fixtures, latest valid_from of any generated cert is 20 days, we need to be after that
-_root_cert = CERT_DATA["root-cert"]["pub"]["parsed"]
-_time_base = not_valid_before(_root_cert)
+_root_cert: x509.Certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
+_time_base = _root_cert.not_valid_before_utc
 
 TIMESTAMPS["everything_valid"] = TIMESTAMPS["base"] + timedelta(days=23)
 TIMESTAMPS["everything_valid_naive"] = TIMESTAMPS["everything_valid"].astimezone(tz.utc).replace(tzinfo=None)

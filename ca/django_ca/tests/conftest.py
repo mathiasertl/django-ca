@@ -28,7 +28,6 @@ from django.test import Client
 import pytest
 from _pytest.config import Config as PytestConfig
 from _pytest.config.argparsing import Parser
-from _pytest.python import Metafunc
 from pytest_cov.plugin import CovPlugin
 
 from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings for untested modules
@@ -39,7 +38,6 @@ from django_ca.tests.base.conftest_helpers import (
     generate_cert_fixture,
     generate_pub_fixture,
     generate_usable_ca_fixture,
-    interesting_certificate_names,
     setup_pragmas,
     usable_ca_names,
     usable_cert_names,

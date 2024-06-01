@@ -49,7 +49,6 @@ from freezegun import freeze_time
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.deprecation import not_valid_after, not_valid_before
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
@@ -874,7 +873,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
         """Basic assertions about the certificate."""
         now = datetime.now(tz=tz.utc)
         self.assertEqual(cert.issuer, self.ca.subject)
-        self.assertEqual(not_valid_before(cert), now)
+        self.assertEqual(cert.not_valid_before_utc, now)
         self.assertEqual(cert.version, x509.Version.v3)
         self.assertIsInstance(cert.public_key(), rsa.RSAPublicKey)
 
@@ -898,7 +897,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             cert = self.ca.sign(key_backend_options, csr, subject=subject)
 
         self.assertBasicCert(cert)
-        self.assertEqual(not_valid_after(cert), now + model_settings.CA_DEFAULT_EXPIRES)
+        self.assertEqual(cert.not_valid_after_utc, now + model_settings.CA_DEFAULT_EXPIRES)
         self.assertEqual(cert.subject, subject)
         self.assertIsInstance(cert.signature_hash_algorithm, type(self.ca.algorithm))
         self.assertExtensionDict(
@@ -925,7 +924,7 @@ class CertificateAuthoritySignTests(TestCaseMixin, X509CertMixinTestCaseMixin, T
             )
 
         self.assertBasicCert(cert)
-        self.assertEqual(not_valid_after(cert), expires)
+        self.assertEqual(cert.not_valid_after_utc, expires)
         self.assertIsInstance(cert.signature_hash_algorithm, hashes.SHA256)
 
 

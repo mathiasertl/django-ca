@@ -37,12 +37,7 @@ import pytest
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.deprecation import (
-    RemovedInDjangoCA200Warning,
-    RemovedInDjangoCA220Warning,
-    crl_last_update,
-    crl_next_update,
-)
+from django_ca.deprecation import RemovedInDjangoCA200Warning, RemovedInDjangoCA220Warning
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca, pre_sign_cert
@@ -240,8 +235,8 @@ def assert_crl(  # noqa: PLR0913
     assert isinstance(parsed_crl.signature_hash_algorithm, type(algorithm))
     assert parsed_crl.is_signature_valid(public_key) is True
     assert parsed_crl.issuer == signer.pub.loaded.subject
-    assert crl_last_update(parsed_crl) == last_update
-    assert crl_next_update(parsed_crl) == expires_timestamp.replace(microsecond=0)
+    assert parsed_crl.last_update_utc == last_update
+    assert parsed_crl.next_update_utc == expires_timestamp.replace(microsecond=0)
     assert list(parsed_crl.extensions) == extensions
 
     entries = {e.serial_number: e for e in parsed_crl}

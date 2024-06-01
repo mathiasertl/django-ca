@@ -26,7 +26,7 @@ import typing
 import warnings
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 from pydantic import BaseModel
 
@@ -109,13 +109,12 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
             )
         return ca.key_backend.get_use_private_key_options(ca, {"password": self.password})
 
-    def fetch_crl(
-        self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings
-    ) -> x509.CertificateRevocationList:
+    def fetch_crl(self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings) -> bytes:
+        """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
         cache_key = get_crl_cache_key(ca.serial, encoding=encoding, scope=self.scope)
 
-        crl = cache.get(cache_key)
-        if crl is None:
+        encoded_crl: Optional[bytes] = cache.get(cache_key)
+        if encoded_crl is None:
             # Catch this case early so that we can give a better error message
             if self.include_issuing_distribution_point is True and ca.parent is None and self.scope is None:
                 raise ValueError(
@@ -129,14 +128,15 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                 scope=self.scope,
                 include_issuing_distribution_point=self.include_issuing_distribution_point,
             )
-            crl = crl.public_bytes(encoding)
-            cache.set(cache_key, crl, self.expires)
-        return crl
+            encoded_crl = crl.public_bytes(encoding)
+            cache.set(cache_key, encoded_crl, self.expires)
+        return encoded_crl
 
-    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:  # pylint: disable=unused-argument
         # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
-            encoding = parse_encoding(get_encoding)
+            # TYPEHINT NOTE: type is verified in next line
+            encoding = cast(CertificateRevocationListEncodings, parse_encoding(get_encoding))
             if encoding not in constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES:
                 return HttpResponseBadRequest(
                     f"{get_encoding}: Invalid encoding requested.", content_type="text/plain"
@@ -147,7 +147,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         ca = self.get_object()
         try:
             crl = self.fetch_crl(ca, encoding)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             log.exception("Error generating a CRL")
             return HttpResponseServerError("Error while retrieving the CRL.", content_type="text/plain")
 

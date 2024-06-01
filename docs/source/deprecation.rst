@@ -85,7 +85,7 @@ Python API
 
 * :py:func:`django_ca.managers.CertificateManager.create_cert`:
 
-  * The `expires` parameter is now mandatory, and should be a timezone-aware datetime or a timedelta.
+  * The `expires` parameter is now mandatory, and should be a timezone-aware datetime or a ``timedelta``.
   * The `extensions` parameter no longer accepts extensions that are not valid for end entity certificates.
 
 * Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since 1.25.0. Use

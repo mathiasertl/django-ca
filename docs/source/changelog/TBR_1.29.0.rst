@@ -80,7 +80,7 @@ Python API
 
 * :py:func:`django_ca.managers.CertificateManager.create_cert`:
 
-  * **BACKWARDS INCOMPATIBLE:** The `expires` parameter is now mandatory, and should be a timedelta or
+  * **BACKWARDS INCOMPATIBLE:** The `expires` parameter is now mandatory, and should be a ``timedelta`` or
     timezone-aware datetime. Support for passing an ``int`` will be removed in 2.0.0.
   * The `extensions` parameter no longer accepts extensions that are not valid for end entity certificates.
 
