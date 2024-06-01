@@ -275,6 +275,28 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
             response.content, encoding=Encoding.DER, expires=600, idp=None, algorithm=self.ca.algorithm
         )
 
+    @override_tmpcadir()
+    def test_force_encoding(self) -> None:
+        """Test that forcing a different encoding."""
+        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
+        response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}), {"encoding": "PEM"})
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "text/plain"
+        self.assertCRL(
+            response.content, encoding=Encoding.PEM, expires=600, idp=idp, algorithm=self.ca.algorithm
+        )
+
+    @override_tmpcadir()
+    def test_invalid_encoding(self) -> None:
+        """Test that forcing a different encoding."""
+        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
+        response = self.client.get(
+            reverse("default", kwargs={"serial": self.ca.serial}), {"encoding": "X962"}
+        )
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert response["Content-Type"] == "text/plain"
+        assert response.content == b"X962: Invalid encoding requested."
+
 
 @override_settings(ROOT_URLCONF=__name__)
 @freeze_time("2019-04-14 12:26:00")

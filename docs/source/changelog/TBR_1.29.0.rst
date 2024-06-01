@@ -2,6 +2,8 @@
 1.29.0 (TBR)
 ############
 
+* Fix the `encoding` GET parameter when retrieving certificate revocation lists.
+
 **********************
 Command-line utilities
 **********************

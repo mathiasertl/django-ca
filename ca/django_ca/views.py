@@ -43,7 +43,7 @@ from cryptography.x509 import (
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpRequest, HttpResponse, HttpResponseServerError
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -51,6 +51,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import constants
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.typehints import CertificateRevocationListEncodings
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     assumed to be unencrypted."""
 
     # parameters for the CRL itself
-    type = Encoding.DER
+    type: CertificateRevocationListEncodings = Encoding.DER
     """Encoding for CRL."""
 
     scope: Optional[typing.Literal["ca", "user", "attribute"]] = "user"
@@ -104,6 +105,10 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
             encoding = parse_encoding(get_encoding)
+            if encoding not in constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES:
+                return HttpResponseBadRequest(
+                    f"{get_encoding}: Invalid encoding requested.", content_type="text/plain"
+                )
         else:
             encoding = self.type
 
@@ -126,14 +131,14 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                 scope=self.scope,
                 include_issuing_distribution_point=self.include_issuing_distribution_point,
             )
-            crl = crl.public_bytes(self.type)
+            crl = crl.public_bytes(encoding)
             cache.set(cache_key, crl, self.expires)
 
         content_type = self.content_type
         if content_type is None:
-            if self.type == Encoding.DER:
+            if encoding == Encoding.DER:
                 content_type = "application/pkix-crl"
-            elif self.type == Encoding.PEM:
+            elif encoding == Encoding.PEM:
                 content_type = "text/plain"
             else:  # pragma: no cover
                 # DER/PEM are all known encoding types, so this shouldn't happen
