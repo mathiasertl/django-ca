@@ -42,7 +42,6 @@ from django_ca.deprecation import (
     RemovedInDjangoCA220Warning,
     crl_last_update,
     crl_next_update,
-    revoked_certificate_revocation_date,
 )
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
@@ -182,7 +181,7 @@ def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[
             assert post_sig.called is post
 
 
-def assert_crl(
+def assert_crl(  # noqa: PLR0913
     crl: bytes,
     expected: Optional[typing.Sequence[X509CertMixin]] = None,
     signer: Optional[CertificateAuthority] = None,
@@ -193,6 +192,7 @@ def assert_crl(
     extensions: Optional[list["x509.Extension[x509.ExtensionType]"]] = None,
     crl_number: int = 0,
     entry_extensions: Optional[tuple[list[x509.Extension[x509.ExtensionType]]]] = None,
+    last_update: Optional[datetime] = None,
 ) -> None:
     """Test the given CRL.
 
@@ -217,6 +217,8 @@ def assert_crl(
 
     if idp is not None:  # pragma: no branch
         extensions.append(idp)
+    if last_update is None:
+        last_update = now.replace(microsecond=0)
     extensions.append(signer.get_authority_key_identifier_extension())
     extensions.append(
         x509.Extension(
@@ -228,6 +230,8 @@ def assert_crl(
         parsed_crl = x509.load_pem_x509_crl(crl)
     else:
         parsed_crl = x509.load_der_x509_crl(crl)
+    if algorithm is None:
+        algorithm = signer.algorithm
 
     public_key = signer.pub.loaded.public_key()
     if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
@@ -236,14 +240,13 @@ def assert_crl(
     assert isinstance(parsed_crl.signature_hash_algorithm, type(algorithm))
     assert parsed_crl.is_signature_valid(public_key) is True
     assert parsed_crl.issuer == signer.pub.loaded.subject
-    assert crl_last_update(parsed_crl) == now.replace(microsecond=0)
+    assert crl_last_update(parsed_crl) == last_update
     assert crl_next_update(parsed_crl) == expires_timestamp.replace(microsecond=0)
     assert list(parsed_crl.extensions) == extensions
 
     entries = {e.serial_number: e for e in parsed_crl}
     assert sorted(entries) == sorted(c.pub.loaded.serial_number for c in expected)
     for i, entry in enumerate(entries.values()):
-        assert revoked_certificate_revocation_date(entry) == now
         if entry_extensions:
             assert list(entry.extensions) == entry_extensions[i]
         else:

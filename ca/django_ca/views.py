@@ -23,6 +23,7 @@ import base64
 import binascii
 import logging
 import typing
+import warnings
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, Optional, Union
@@ -50,6 +51,7 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import constants
+from django_ca.deprecation import RemovedInDjangoCA210Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import CertificateRevocationListEncodings
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
@@ -99,22 +101,18 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         If a custom CA backend needs transient parameters (e.g. passwords), a view overriding this method
         must be implemented.
         """
+        if self.password is not None:  # pragma: no cover
+            warnings.warn(
+                "Configuring a password in views is deprecated, use the CA_PASSWORDS setting instead.",
+                RemovedInDjangoCA210Warning,
+                stacklevel=2,
+            )
         return ca.key_backend.get_use_private_key_options(ca, {"password": self.password})
 
-    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
-        if get_encoding := request.GET.get("encoding"):
-            encoding = parse_encoding(get_encoding)
-            if encoding not in constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES:
-                return HttpResponseBadRequest(
-                    f"{get_encoding}: Invalid encoding requested.", content_type="text/plain"
-                )
-        else:
-            encoding = self.type
-
-        ca = self.get_object()
-
-        cache_key = get_crl_cache_key(serial, encoding=encoding, scope=self.scope)
+    def fetch_crl(
+        self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings
+    ) -> x509.CertificateRevocationList:
+        cache_key = get_crl_cache_key(ca.serial, encoding=encoding, scope=self.scope)
 
         crl = cache.get(cache_key)
         if crl is None:
@@ -133,6 +131,25 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
             )
             crl = crl.public_bytes(encoding)
             cache.set(cache_key, crl, self.expires)
+        return crl
+
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
+        # pylint: disable=missing-function-docstring; standard Django view function
+        if get_encoding := request.GET.get("encoding"):
+            encoding = parse_encoding(get_encoding)
+            if encoding not in constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES:
+                return HttpResponseBadRequest(
+                    f"{get_encoding}: Invalid encoding requested.", content_type="text/plain"
+                )
+        else:
+            encoding = self.type
+
+        ca = self.get_object()
+        try:
+            crl = self.fetch_crl(ca, encoding)
+        except Exception:
+            log.exception("Error generating a CRL")
+            return HttpResponseServerError("Error while retrieving the CRL.", content_type="text/plain")
 
         content_type = self.content_type
         if content_type is None:

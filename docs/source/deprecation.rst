@@ -22,6 +22,12 @@ Settings
 2.1.0 (TBR)
 ***********
 
+Views
+=====
+
+* Configuring a password in a certificate revocation list view will be removed. Use the ``CA_PASSWORDS``
+  setting instead (deprecated since 1.29.0).
+
 ***********
 2.0.0 (TBR)
 ***********

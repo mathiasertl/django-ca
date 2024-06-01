@@ -109,12 +109,6 @@ def pytest_collection_modifyitems(config: "PytestConfig", items: list[Any]) -> N
                 item.add_marker(skip_selenium)
 
 
-def pytest_generate_tests(metafunc: "Metafunc") -> None:
-    """Pytest hook used for parametrizing fixtures."""
-    if "interesting_cert" in metafunc.fixturenames:
-        metafunc.parametrize("interesting_cert", interesting_certificate_names, indirect=True)
-
-
 @pytest.fixture()
 def user(
     # PYLINT NOTE: usefixtures() does not (yet?) work with fixtures as of pytest==7.4.3

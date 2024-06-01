@@ -3,6 +3,8 @@
 ############
 
 * Fix the `encoding` GET parameter when retrieving certificate revocation lists.
+* Configuring a password in a certificate revocation list view is deprecated. Use the ``CA_PASSWORDS`` setting
+  instead. The feature will be removed in 2.1.0.
 
 **********************
 Command-line utilities
@@ -113,3 +115,5 @@ Please see the :doc:`deprecation timeline </deprecation>` for a detailed timelin
 * Support for the old subject format in :ref:`settings-ca-default-subject` and subjects in profiles will be
   removed in 2.2.0.
 * ``django_ca.extensions.parse_extension()`` will be removed in 2.0.0. Use Pydantic models instead.
+* Configuring passwords in certificate revocation list views will be removed in 2.1.0. Use the
+  ``CA_PASSWORDS`` setting instead.

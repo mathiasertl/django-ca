@@ -37,6 +37,7 @@ from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.conftest_helpers import (
     all_ca_names,
     all_cert_names,
+    interesting_certificate_names,
     precertificate_signed_certificate_timestamps_cert_names,
     signed_certificate_timestamp_cert_names,
     signed_certificate_timestamps_cert_names,
@@ -189,11 +190,11 @@ def hostname(ca_name: str) -> Iterator[str]:
     yield f"{ca_name.replace('_', '-')}.example.com"
 
 
-@pytest.fixture()
+@pytest.fixture(params=interesting_certificate_names)
 def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
     """Parametrized fixture for "interesting" certificates.
 
-    A function using this fixture will be called once for each interesting certificate.
+    A function using this fixture will be called once for each certificate with unusual extensions.
     """
     yield request.getfixturevalue(request.param.replace("-", "_"))
 

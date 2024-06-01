@@ -13,24 +13,25 @@
 
 """Test basic views."""
 
+from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
-from django.test import TestCase
-from django.test.utils import override_settings
+from django.test import Client
 from django.urls import include, path, re_path, reverse
 
 import pytest
-from freezegun import freeze_time
+from freezegun.api import FrozenDateTimeFactory
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_crl
-from django_ca.tests.base.constants import CERT_DATA
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import get_idp, idp_full_name, override_tmpcadir, uri
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.utils import get_idp, idp_full_name
 from django_ca.views import CertificateRevocationListView
 
 app_name = "django_ca"
@@ -67,254 +68,223 @@ urlpatterns = [
 ]
 
 
-class GenericCRLViewTestsMixin(TestCaseMixin):
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.usefixtures("clear_cache")
+@pytest.mark.urls(__name__)
+class TestCertificateRevocationListView:
     """Mixin with test cases for CertificateRevocationListView.
 
     Why is this a separate mixin: https://github.com/spulec/freezegun/issues/485
     """
 
-    load_cas = (
-        "root",
-        "child",
-        "pwd",
-    )
-    load_certs = ("child-cert",)
-
-    @override_tmpcadir()
-    def test_basic(self) -> None:
+    def test_basic_response(
+        self,
+        client: Client,
+        freezer: FrozenDateTimeFactory,
+        usable_child: CertificateAuthority,
+        child_cert: Certificate,
+    ) -> None:
         """Basic test."""
         # test the default view
-        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
+        url = reverse("default", kwargs={"serial": usable_child.serial})
+        idp = get_idp(full_name=idp_full_name(usable_child), only_contains_user_certs=True)
+        response = client.get(url)
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
         assert_crl(
-            response.content,
-            encoding=Encoding.DER,
-            expires=600,
-            idp=idp,
-            algorithm=self.ca.algorithm,
+            response.content, expected=[], encoding=Encoding.DER, signer=usable_child, expires=600, idp=idp
         )
 
         # revoke a certificate
-        self.cert.revoke()
+        child_cert.revoke()
+
+        # Advance time so that we see that the cached CRL now expires sooner.
+        last_update = datetime.now(tz=tz.utc)
+        freezer.tick(timedelta(seconds=10))
 
         # fetch again - we should see a cached response
-        response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
+        response = client.get(url)
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
         assert_crl(
             response.content,
+            expected=[],  # still an empty response, because it was cached
             encoding=Encoding.DER,
-            expires=600,
+            signer=usable_child,
+            expires=590,  # time advanced by ten seconds above
             idp=idp,
-            algorithm=self.ca.algorithm,
+            last_update=last_update,
         )
 
         # clear the cache and fetch again
         cache.clear()
-        response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
+        response = client.get(url)
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
         assert_crl(
             response.content,
-            expected=[self.cert],
+            expected=[child_cert],  # now includes certificate
             encoding=Encoding.DER,
-            expires=600,
+            signer=usable_child,
+            expires=600,  # again 600
             idp=idp,
-            crl_number=1,
-            algorithm=self.ca.algorithm,
+            crl_number=1,  # regenerated
         )
 
-    @override_tmpcadir()
-    def test_full_scope(self) -> None:
+    def test_full_scope_with_child_ca(self, client: Client, usable_child: CertificateAuthority) -> None:
         """Test getting CRL with full scope."""
-        full_name = self.ca.sign_crl_distribution_points.value[0].full_name  # type: ignore[union-attr]
+        full_name = usable_child.sign_crl_distribution_points.value[0].full_name  # type: ignore[union-attr]
         idp = get_idp(full_name=full_name)
-        self.ca.save()
 
-        response = self.client.get(reverse("full", kwargs={"serial": self.ca.serial}))
+        response = client.get(reverse("full", kwargs={"serial": usable_child.serial}))
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-crl"
+        assert_crl(response.content, expected=[], encoding=Encoding.DER, expires=600, idp=idp)
+
+    def test_full_scope_with_root_ca(
+        self,
+        client: Client,
+        usable_root: CertificateAuthority,
+        child: CertificateAuthority,
+        root_cert: Certificate,
+    ) -> None:
+        """Test getting CRL with full scope and a revoked CA and cert."""
+        assert child.parent == usable_root  # test assumption
+        assert root_cert.ca == usable_root  # test assumption
+
+        response = client.get(reverse("full", kwargs={"serial": usable_root.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
         assert_crl(
-            response.content,
-            encoding=Encoding.DER,
-            expires=600,
-            idp=idp,
-            algorithm=self.ca.algorithm,
+            response.content, expected=[], encoding=Encoding.DER, expires=600, signer=usable_root, idp=None
         )
 
-        # If scope is None, CRLs for a root CA should *not* include the IssuingDistributionPoint extension:
-        response = self.client.get(reverse("full", kwargs={"serial": self.cas["root"].serial}))
-        assert response.status_code == HTTPStatus.OK
-        assert response["Content-Type"] == "application/pkix-crl"
-        assert_crl(
-            response.content,
-            encoding=Encoding.DER,
-            expires=600,
-            signer=self.cas["root"],
-            idp=None,
-            algorithm=self.ca.algorithm,
-        )
-
-    @override_tmpcadir()
-    def test_ca_crl(self) -> None:
-        """Test getting a CA CRL."""
-        root = self.cas["root"]
-        child = self.cas["child"]
-        idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
-
-        response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
-        assert response.status_code == HTTPStatus.OK
-        assert response["Content-Type"] == "text/plain"
-        assert_crl(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
-
+    def test_full_scope_with_root_ca_with_revoked_entities(
+        self,
+        client: Client,
+        usable_root: CertificateAuthority,
+        child: CertificateAuthority,
+        root_cert: Certificate,
+    ) -> None:
+        """Test getting CRL with full scope and a revoked CA and cert."""
+        assert child.parent == usable_root  # test assumption
+        assert root_cert.ca == usable_root  # test assumption
         child.revoke()
-        child.save()
+        root_cert.revoke()
 
-        # fetch again - we should see a cached response
-        response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
+        response = client.get(reverse("full", kwargs={"serial": usable_root.serial}))
         assert response.status_code == HTTPStatus.OK
-        assert response["Content-Type"] == "text/plain"
-        assert_crl(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
-
-        # clear the cache and fetch again
-        cache.clear()
-        response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
-        assert response.status_code == HTTPStatus.OK
-        assert response["Content-Type"] == "text/plain"
+        assert response["Content-Type"] == "application/pkix-crl"
+        # full scope includes both CAs and certs:
         assert_crl(
             response.content,
-            expected=[child],
+            expected=[child, root_cert],
+            encoding=Encoding.DER,
             expires=600,
-            idp=idp,
-            crl_number=1,
-            signer=root,
-            algorithm=root.algorithm,
+            signer=usable_root,
+            idp=None,
         )
 
-    @override_tmpcadir()
-    def test_ca_crl_intermediate(self) -> None:
-        """Test getting CRL for an intermediate CA."""
-        child = self.cas["child"]
-        full_name = [uri(f"http://{model_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{child.serial}/")]
-        idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
+    def test_ca_crl(
+        self, client: Client, usable_root: CertificateAuthority, child: CertificateAuthority
+    ) -> None:
+        """Test getting a CA CRL."""
+        idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
+        child.revoke()
 
-        response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
+        response = client.get(reverse("ca_crl", kwargs={"serial": usable_root.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        assert_crl(response.content, expires=600, idp=idp, signer=child, algorithm=child.algorithm)
+        assert_crl(response.content, expected=[child], expires=600, idp=idp, signer=usable_root)
 
-    @override_tmpcadir(CA_PASSWORDS={})
-    def test_password(self) -> None:
-        """Test getting a CRL with a password."""
-        ca = self.cas["pwd"]
-        key_backend_options = ca.key_backend.get_use_private_key_options(
-            ca, {"password": CERT_DATA["pwd"]["password"]}
-        )
+    def test_password(self, client: Client, usable_pwd: CertificateAuthority) -> None:
+        """Test getting a CRL for a CA that is encrypted with a password."""
+        # Make sure that the password is actually set
+        assert model_settings.CA_PASSWORDS[usable_pwd.serial] == CERT_DATA["pwd"]["password"]
 
-        # getting CRL from view directly doesn't work
-        with pytest.raises(ValueError, match=r"^Backend cannot be used for signing by this process.$"):
-            self.client.get(reverse("default", kwargs={"serial": ca.serial}))
-
-        ca.cache_crls(key_backend_options)  # cache CRLs for this CA
-
-        idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
-        response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))
+        idp = get_idp(full_name=idp_full_name(usable_pwd), only_contains_user_certs=True)
+        response = client.get(reverse("default", kwargs={"serial": usable_pwd.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        assert_crl(response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm)
+        assert_crl(response.content, encoding=Encoding.DER, expires=600, idp=idp, signer=usable_pwd)
 
-    @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
-    def test_password_with_ca_password_setting(self) -> None:
-        """Test getting a CRL with a password with CA_PASSWORDS."""
-        ca = self.cas["pwd"]
+    def test_password_with_missing_password(
+        self, client: Client, usable_pwd: CertificateAuthority, settings: SettingsWrapper
+    ) -> None:
+        """Try getting the CRL for an encrypted CA where there is no password (which fails)."""
+        settings.CA_PASSWORDS = {}
+        response = client.get(reverse("default", kwargs={"serial": usable_pwd.serial}))
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        assert response["Content-Type"] == "text/plain"
+        assert response.content == b"Error while retrieving the CRL."
 
-        # getting CRL from view directly works due to CA_PASSWORDS having a password
-        response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))
-        idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
+    def test_password_with_cached_response(
+        self, client: Client, usable_pwd: CertificateAuthority, settings: SettingsWrapper
+    ) -> None:
+        """Test getting the CRL for an encrypted CA where the response was cached (by cache_crls())."""
+        # Cache CRLs (NOTE: password is fetched from CA_PASSWORDS during model validation)
+        key_backend_options = usable_pwd.key_backend.get_use_private_key_options(usable_pwd, {})
+        usable_pwd.cache_crls(key_backend_options)  # cache CRLs for this CA
+
+        # Clear password in settings, so this will now only work if we find the CRL in the cache.
+        settings.CA_PASSWORDS = {}
+
+        idp = get_idp(full_name=idp_full_name(usable_pwd), only_contains_user_certs=True)
+        response = client.get(reverse("default", kwargs={"serial": usable_pwd.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        assert_crl(
-            response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm, expires=600
-        )
+        assert_crl(response.content, encoding=Encoding.DER, idp=idp, signer=usable_pwd)
 
-    @override_tmpcadir()
-    def test_overwrite(self) -> None:
-        """Test overwriting a CRL."""
-        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        response = self.client.get(reverse("advanced", kwargs={"serial": self.ca.serial}))
+    def test_view_configuration(self, client: Client, usable_child: CertificateAuthority) -> None:
+        """Test fetching the CRL for a manually configured view that overrides some settings."""
+        idp = get_idp(full_name=idp_full_name(usable_child), only_contains_user_certs=True)
+        response = client.get(reverse("advanced", kwargs={"serial": usable_child.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
         assert_crl(response.content, expires=321, idp=idp, algorithm=hashes.SHA256())
 
-    @override_tmpcadir()
-    def test_force_idp_inclusion(self) -> None:
+    def test_force_idp_inclusion(self, client: Client, usable_child: CertificateAuthority) -> None:
         """Test that forcing inclusion of CRLs works."""
         # View still works with self.ca, because it's the child CA
-        idp = get_idp(full_name=idp_full_name(self.ca))
-        response = self.client.get(reverse("include_idp", kwargs={"serial": self.ca.serial}))
+        idp = get_idp(full_name=idp_full_name(usable_child))
+        response = client.get(reverse("include_idp", kwargs={"serial": usable_child.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        assert_crl(response.content, encoding=Encoding.DER, expires=600, idp=idp, algorithm=self.ca.algorithm)
+        assert_crl(response.content, encoding=Encoding.DER, expires=600, idp=idp)
 
-        with pytest.raises(
-            ValueError,
-            match=r"^Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs\.$",
-        ):
-            response = self.client.get(reverse("include_idp", kwargs={"serial": self.cas["root"].serial}))
+    def test_force_idp_inclusion_with_root(self, client: Client, usable_root: CertificateAuthority) -> None:
+        """Test forcing an IDP for a root CA (which fails, because it cannot have an IDP)."""
+        response = client.get(reverse("include_idp", kwargs={"serial": usable_root.serial}))
+        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        assert response["Content-Type"] == "text/plain"
+        assert response.content == b"Error while retrieving the CRL."
 
-    @override_tmpcadir()
-    def test_force_idp_exclusion(self) -> None:
+    def test_force_idp_exclusion(self, client: Client, usable_child: CertificateAuthority) -> None:
         """Test that forcing exclusion of CRLs works."""
-        response = self.client.get(reverse("exclude_idp", kwargs={"serial": self.ca.serial}))
+        response = client.get(reverse("exclude_idp", kwargs={"serial": usable_child.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        assert_crl(
-            response.content, encoding=Encoding.DER, expires=600, idp=None, algorithm=self.ca.algorithm
-        )
+        assert_crl(response.content, encoding=Encoding.DER, expires=600, idp=None)
 
-    @override_tmpcadir()
-    def test_force_encoding(self) -> None:
+    def test_force_encoding(self, client: Client, usable_root: CertificateAuthority) -> None:
         """Test that forcing a different encoding."""
-        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
-        response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}), {"encoding": "PEM"})
+        idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+        response = client.get(reverse("default", kwargs={"serial": usable_root.serial}), {"encoding": "PEM"})
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        assert_crl(response.content, encoding=Encoding.PEM, expires=600, idp=idp, algorithm=self.ca.algorithm)
+        assert_crl(response.content, signer=usable_root, encoding=Encoding.PEM, expires=600, idp=idp)
 
-    @override_tmpcadir()
-    def test_invalid_encoding(self) -> None:
+    def test_invalid_encoding(self, client: Client, usable_root: CertificateAuthority) -> None:
         """Test that forcing an unsupported encoding."""
-        response = self.client.get(
-            reverse("default", kwargs={"serial": self.ca.serial}), {"encoding": "X962"}
-        )
+        response = client.get(reverse("default", kwargs={"serial": usable_root.serial}), {"encoding": "X962"})
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response["Content-Type"] == "text/plain"
         assert response.content == b"X962: Invalid encoding requested."
 
 
-@override_settings(ROOT_URLCONF=__name__)
-@freeze_time("2019-04-14 12:26:00")
-class GenericCRLViewTests(GenericCRLViewTestsMixin, TestCase):
-    """Test CertificateRevocationListView."""
-
-
-@override_settings(ROOT_URLCONF=__name__, USE_TZ=False)
-@freeze_time("2019-04-14 12:26:00")
-class GenericCRLWithoutTimezoneSupportViewTests(GenericCRLViewTestsMixin, TestCase):
-    """Test CertificateRevocationListView without timezone support."""
-
-
-class GenericCAIssuersViewTests(TestCaseMixin, TestCase):
-    """Test issuer view."""
-
-    load_cas = "__usable__"
-
-    def test_view(self) -> None:
-        """Basic test for the view."""
-        for ca in self.cas.values():
-            url = reverse("django_ca:issuer", kwargs={"serial": ca.root.serial})
-            resp = self.client.get(url)
-            assert resp["Content-Type"] == "application/pkix-cert"
-            assert resp.content == ca.root.pub.der
+def test_generic_ca_issuers_view(usable_root: CertificateAuthority, client: Client) -> None:
+    """Test the generic ca issuer view."""
+    url = reverse("django_ca:issuer", kwargs={"serial": usable_root.serial})
+    resp = client.get(url)
+    assert resp["Content-Type"] == "application/pkix-cert"
+    assert resp.content == usable_root.pub.der
