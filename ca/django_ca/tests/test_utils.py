@@ -36,12 +36,12 @@ import pytest
 from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca import constants, utils
+from django_ca import utils
 from django_ca.conf import model_settings
 from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.doctest import doctest_module
-from django_ca.tests.base.utils import dns
+from django_ca.tests.base.utils import cn, country, dns
 from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
@@ -55,8 +55,6 @@ from django_ca.utils import (
     parse_serialized_name_attributes,
     read_file,
     serialize_name,
-    split_str,
-    validate_hostname,
     validate_private_key_parameters,
     validate_public_key_parameters,
     x509_name,
@@ -98,13 +96,10 @@ def test_deprecated_storage_configuration(settings: SettingsWrapper) -> None:
 @pytest.mark.parametrize(
     "attributes,expected",
     [
-        ([(NameOID.COMMON_NAME, "example.com")], [x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
+        ([(NameOID.COMMON_NAME, "example.com")], [cn("example.com")]),
         (
             [(NameOID.COUNTRY_NAME, "AT"), (NameOID.COMMON_NAME, "example.com")],
-            [
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-            ],
+            [country("AT"), cn("example.com")],
         ),
         (
             [(NameOID.X500_UNIQUE_IDENTIFIER, "65:78:61:6D:70:6C:65")],
@@ -120,53 +115,6 @@ def test_parse_serialized_name_attributes(
         {"oid": attr[0].dotted_string, "value": attr[1]} for attr in attributes
     ]
     assert parse_serialized_name_attributes(serialized) == expected
-
-
-class ValidateHostnameTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.validate_hostname`."""
-
-    def test_no_port(self) -> None:
-        """Test with no port."""
-        self.assertEqual(validate_hostname("localhost"), "localhost")
-        self.assertEqual(validate_hostname("testserver"), "testserver")
-        self.assertEqual(validate_hostname("example.com"), "example.com")
-        self.assertEqual(validate_hostname("test.example.com"), "test.example.com")
-
-    def test_with_port(self) -> None:
-        """Test with a port."""
-        self.assertEqual(validate_hostname("localhost:443", allow_port=True), "localhost:443")
-        self.assertEqual(validate_hostname("testserver:443", allow_port=True), "testserver:443")
-        self.assertEqual(validate_hostname("example.com:443", allow_port=True), "example.com:443")
-        self.assertEqual(validate_hostname("test.example.com:443", allow_port=True), "test.example.com:443")
-        self.assertEqual(validate_hostname("test.example.com:1", allow_port=True), "test.example.com:1")
-        self.assertEqual(validate_hostname("example.com:65535", allow_port=True), "example.com:65535")
-
-    def test_invalid_hostname(self) -> None:
-        """Test with an invalid hostname."""
-        with self.assertRaisesRegex(ValueError, "example..com: Not a valid hostname"):
-            validate_hostname("example..com")
-
-    def test_no_allow_port(self) -> None:
-        """Test passing a port when it's not allowed."""
-        with self.assertRaisesRegex(ValueError, "^localhost:443: Not a valid hostname$"):
-            validate_hostname("localhost:443")
-        with self.assertRaisesRegex(ValueError, "^test.example.com:443: Not a valid hostname$"):
-            validate_hostname("test.example.com:443")
-
-    def test_port_errors(self) -> None:
-        """Test passing an invalid port."""
-        with self.assertRaisesRegex(ValueError, "^no-int: Port must be an integer$"):
-            validate_hostname("localhost:no-int", allow_port=True)
-        with self.assertRaisesRegex(ValueError, "^0: Port must be between 1 and 65535$"):
-            validate_hostname("localhost:0", allow_port=True)
-        with self.assertRaisesRegex(ValueError, "^-5: Port must be between 1 and 65535$"):
-            validate_hostname("localhost:-5", allow_port=True)
-        with self.assertRaisesRegex(ValueError, "^65536: Port must be between 1 and 65535$"):
-            validate_hostname("localhost:65536", allow_port=True)
-        with self.assertRaisesRegex(ValueError, "^100000: Port must be between 1 and 65535$"):
-            validate_hostname("localhost:100000", allow_port=True)
-        with self.assertRaisesRegex(ValueError, "^colon: Port must be an integer$"):
-            validate_hostname("localhost:double:colon", allow_port=True)
 
 
 class GeneratePrivateKeyTestCase(TestCase):
@@ -199,14 +147,7 @@ class GeneratePrivateKeyTestCase(TestCase):
         (dns("example.com"), "DNS:example.com"),
         (x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")), "IP:127.0.0.1"),
         (
-            x509.DirectoryName(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                    ]
-                )
-            ),
+            x509.DirectoryName(x509.Name([country("AT"), cn("example.com")])),
             "dirname:C=AT,CN=example.com",
         ),
         (x509.OtherName(NameOID.COMMON_NAME, b"\x01\x01\xff"), "otherName:2.5.4.3;BOOLEAN:TRUE"),
@@ -223,18 +164,11 @@ class SerializeName(TestCase):
     def test_name(self) -> None:
         """Test passing a standard Name."""
         self.assertEqual(
-            serialize_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])),
+            serialize_name(x509.Name([cn("example.com")])),
             [{"oid": "2.5.4.3", "value": "example.com"}],
         )
         self.assertEqual(
-            serialize_name(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-                    ]
-                )
-            ),
+            serialize_name(x509.Name([country("AT"), cn("example.com")])),
             [{"oid": "2.5.4.6", "value": "AT"}, {"oid": "2.5.4.3", "value": "example.com"}],
         )
 
@@ -249,25 +183,24 @@ class SerializeName(TestCase):
         )
 
 
-class ParseEllipticCurveTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.parse_key_curve`."""
+@pytest.mark.parametrize(
+    "value,expected", (("SECT409R1", ec.SECT409R1), ("sect409R1", ec.SECT409R1), ("SECP192R1", ec.SECP192R1))
+)
+def test_parse_key_curve(value: str, expected: type[ec.EllipticCurve]) -> None:
+    """Some basic tests for parse_key_curve()."""
+    msg = r"^parse_key_curve\(\) is deprecated and will be removed in django-ca 2\.0\.$"
+    with assert_removed_in_200(msg):
+        assert isinstance(parse_key_curve(value), expected)
 
-    def test_basic(self) -> None:
-        """Some basic tests."""
-        self.assertIsInstance(parse_key_curve("SECT409R1"), ec.SECT409R1)
-        self.assertIsInstance(parse_key_curve("SECP521R1"), ec.SECP521R1)
-        self.assertIsInstance(parse_key_curve("SECP192R1"), ec.SECP192R1)
 
-        for name, cls in constants.ELLIPTIC_CURVE_TYPES.items():
-            self.assertIsInstance(parse_key_curve(name), cls)
+def test_parse_key_curve_error() -> None:
+    """Test some error cases  for parse_key_curve()."""
+    msg = r"^parse_key_curve\(\) is deprecated and will be removed in django-ca 2\.0\.$"
+    with pytest.raises(ValueError, match=r"^FOOBAR: Not a known Elliptic Curve$"), assert_removed_in_200(msg):
+        parse_key_curve("FOOBAR")
 
-    def test_error(self) -> None:
-        """Test some error cases."""
-        with self.assertRaisesRegex(ValueError, "^FOOBAR: Not a known Elliptic Curve$"):
-            parse_key_curve("FOOBAR")
-
-        with self.assertRaisesRegex(ValueError, "^ECDH: Not a known Elliptic Curve$"):
-            parse_key_curve("ECDH")  # present in the module, but *not* an EllipticCurve
+    with pytest.raises(ValueError, match=r"^ECDH: Not a known Elliptic Curve$"), assert_removed_in_200(msg):
+        parse_key_curve("ECDH")  # present in the module, but *not* an EllipticCurve
 
 
 @pytest.mark.parametrize(
@@ -287,7 +220,7 @@ def test_parse_encoding(value: Any, expected: Encoding) -> None:
 @pytest.mark.parametrize("value", (Encoding.PEM, Encoding.DER))
 def test_parse_encoding_with_deprecated_values(value: Encoding) -> None:
     """Test parsing encodings with raw Encodings."""
-    message = r"^Passing Encoding for value is deprecated and will be removed in django ca 2\.0\.$"
+    message = r"^Passing Encoding for value is deprecated and will be removed in django-ca 2\.0\.$"
     with assert_removed_in_200(message):
         assert parse_encoding(value) == value  # type: ignore[arg-type]  # what we test
 
@@ -706,127 +639,3 @@ class ValidatePublicKeyParametersTest(TestCase):
             msg = rf"^{key_type} keys do not allow an algorithm for signing\.$"
             with self.assertRaisesRegex(ValueError, msg):
                 validate_public_key_parameters(key_type, hashes.SHA256())  # type: ignore[arg-type]
-
-
-class SplitStrTestCase(TestCase):
-    """Test split_str()."""
-
-    def test_basic(self) -> None:
-        """Some basic split_str() test cases."""
-        self.assertCountEqual(split_str("foo", "/"), ["foo"])
-        self.assertCountEqual(split_str("foo bar", "/"), ["foo bar"])
-        self.assertCountEqual(split_str("foo/bar", "/"), ["foo", "bar"])
-        self.assertCountEqual(split_str("foo'/'bar", "/"), ["foo/bar"])
-        self.assertCountEqual(split_str('foo"/"bar', "/"), ["foo/bar"])
-        self.assertCountEqual(split_str("'foo/bar'", "/"), ["foo/bar"])
-        self.assertCountEqual(split_str('"foo/bar"', "/"), ["foo/bar"])
-        self.assertCountEqual(split_str('"foo/bar"/bla', "/"), ["foo/bar", "bla"])
-
-    def test_start_end_delimiters(self) -> None:
-        """Test what happens when the delimiter is at the start/end of the string."""
-        self.assertCountEqual(split_str("foo/", "/"), ["foo"])
-        self.assertCountEqual(split_str("/foo", "/"), ["foo"])
-        self.assertCountEqual(split_str("/foo/", "/"), ["foo"])
-
-        self.assertCountEqual(split_str("foo/bar/", "/"), ["foo", "bar"])
-        self.assertCountEqual(split_str("/foo/bar", "/"), ["foo", "bar"])
-        self.assertCountEqual(split_str("/foo/bar/", "/"), ["foo", "bar"])
-        self.assertCountEqual(split_str("/C=AT/CN=example.com/", "/"), ["C=AT", "CN=example.com"])
-
-    def test_quotes(self) -> None:
-        """Test quoting."""
-        self.assertCountEqual(split_str(r"foo/bar", "/"), ["foo", "bar"])
-        self.assertCountEqual(split_str(r"foo'/'bar", "/"), ["foo/bar"])
-        self.assertCountEqual(split_str(r'foo"/"bar', "/"), ["foo/bar"])
-        self.assertCountEqual(split_str(r'fo"o/b"ar', "/"), ["foo/bar"])
-
-        # escape quotes inside quotes
-        self.assertCountEqual(split_str(r'"foo\"bar"', "/"), ['foo"bar'])
-
-        # backslash is not interpreted as escape inside single quotes, b/c of shlex.escapedquotes.
-        # --> The middle "'" is not special and so the quotation is not closed
-        with self.assertRaises(ValueError):
-            list(split_str(r"'foo\'bar'", "/"))
-
-    def test_escape(self) -> None:
-        """Test the escape char."""
-        self.assertCountEqual(split_str(r"foo\/bar", "/"), ["foo/bar"])
-        self.assertCountEqual(split_str(r"foo\\/bar", "/"), ["foo\\", "bar"])
-
-        # Escape the double quote - so it has no special meaning
-        self.assertCountEqual(split_str(r"foo\"bar", "/"), [r'foo"bar'])
-        self.assertCountEqual(split_str(r"foo\"/\"bar", "/"), [r'foo"', '"bar'])
-
-        # both tokens quoted in single quotes:
-        self.assertCountEqual(split_str(r"'foo\\'/'bar'", "/"), [r"foo\\", "bar"])
-
-    def test_escaping_non_special_characters(self) -> None:
-        """Test how a backslash in front of a non-special character behaves."""
-        # Backslash in front of normal character in unquoted string - the backslash is ignored
-        self.assertCountEqual(split_str(r"foo\xbar", "/"), ["fooxbar"])
-
-        # Inside a quoted or double-quoted string, single backslash is preserved
-        self.assertCountEqual(split_str(r'"foo\xbar"', "/"), [r"foo\xbar"])
-        self.assertCountEqual(split_str(r"'foo\xbar'", "/"), [r"foo\xbar"])
-
-        # In a double-quoted string, backslash is interpreted as escape -> single backslash in result
-        self.assertCountEqual(split_str(r'"foo\\xbar"', "/"), [r"foo\xbar"])
-
-        # ... but in single quote it's not an escape -> double backslash in result
-        self.assertCountEqual(split_str(r"'foo\\xbar'", "/"), [r"foo\\xbar"])
-
-    def test_escaped_delimiters(self) -> None:
-        """Test escaping delimiters."""
-        # No quotes, single backslash preceeding "/" --> "/" is escaped
-        self.assertCountEqual(split_str(r"foo\/bar", "/"), ["foo/bar"])
-
-        # No quotes, but *double* backslash preceeding "/" --> backslash itself is escaped, slash is delimiter
-        self.assertCountEqual(split_str(r"foo\\/bar", "/"), ["foo\\", "bar"])
-
-        # With quotes/double quotes, no backslashes -> slash is inside quoted string -> it's not a delimiter
-        self.assertCountEqual(split_str('"foo/bar"/bla', "/"), ["foo/bar", "bla"])
-        self.assertCountEqual(split_str("'foo/bar'/bla", "/"), ["foo/bar", "bla"])
-
-        # With quotes/double quotes, with one backslash
-        self.assertCountEqual(split_str(r'"foo\/bar"/bla', "/"), [r"foo\/bar", "bla"])
-        self.assertCountEqual(split_str(r"'foo\/bar'/bla", "/"), [r"foo\/bar", "bla"])
-
-        # With double quotes and a double backslash -> backslash is escape char -> single backslash in result
-        self.assertCountEqual(split_str(r'"foo\\/bar"/bla', "/"), [r"foo\/bar", "bla"])
-
-        # With single quotes and a double backslash -> backslash is *not* escape char -> double backslash
-        self.assertCountEqual(split_str(r"'foo\\/bar'/bla", "/"), [r"foo\\/bar", "bla"])
-
-    def test_quote_errors(self) -> None:
-        """Try messing with some quotation errors."""
-        with self.assertRaises(ValueError):
-            list(split_str(r"foo'bar", "/"))
-        with self.assertRaises(ValueError):
-            list(split_str(r'foo"bar', "/"))
-        with self.assertRaises(ValueError):
-            list(split_str(r"foo'bar/bla", "/"))
-        with self.assertRaises(ValueError):
-            list(split_str(r'foo"bar/bla', "/"))
-
-    def test_commenters(self) -> None:
-        """Test that default comment characters play no special role."""
-        self.assertCountEqual(split_str("foo#bar", "/"), ["foo#bar"])
-        self.assertCountEqual(split_str("foo/#bar", "/"), ["foo", "#bar"])
-        self.assertCountEqual(split_str("foo#/bar", "/"), ["foo#", "bar"])
-        self.assertCountEqual(split_str("foo'#'bar", "/"), ["foo#bar"])
-        self.assertCountEqual(split_str("'foo#bar'/bla#baz", "/"), ["foo#bar", "bla#baz"])
-
-    def test_wordchars(self) -> None:
-        """Test that non-wordchars also work properly."""
-        # From the docs: If whitespace_split is set to True, this will have no effect.
-        self.assertCountEqual(split_str("foo=bar/what=ever", "/"), ["foo=bar", "what=ever"])
-
-    def test_punctuation_chars(self) -> None:
-        """Test that punctuation chars do not affect the parsing.
-
-        We test this here because documentation is not exactly clear about this parameter. But if we pass
-        `punctuation_chars=False` to shlex, this test fails, so we test for that too.
-        """
-        self.assertCountEqual(split_str("foo|bar", "/"), ["foo|bar"])
-        self.assertCountEqual(split_str("(foo|bar)/bla/baz(bla", "/"), ["(foo|bar)", "bla", "baz(bla"])
-        self.assertCountEqual(split_str("(foo|{b,}ar)/bla/baz(bla", "/"), ["(foo|{b,}ar)", "bla", "baz(bla"])

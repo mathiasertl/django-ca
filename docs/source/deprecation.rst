@@ -64,6 +64,7 @@ Python API
 * :py:func:`django_ca.managers.CertificateManager.create_cert` will stop accepting ``int`` for `expires`.
 * ``django_ca.extensions.parse_extension()`` will be removed. Use Pydantic models instead (deprecated since
   1.29.0).
+* ``django_ca.extensions.parse_key_curve()`` will be removed (deprecated since 1.29.0).
 
 *************************
 1.29.0 (Upcoming release)

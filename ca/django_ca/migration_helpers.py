@@ -18,6 +18,7 @@ that they are tested properly.
 """
 
 import typing
+import warnings
 from typing import Optional
 
 from cryptography import x509
@@ -75,7 +76,12 @@ class Migration0040Helper:
         # This is how this value was parsed until 1.27.0. De facto, it was a single text input field, and
         # no documented input method (admin or command-line interface) allowed multiple values. The
         # maximum length was only 255 characters. Together, this makes multiple values unlikely.
-        alternative_names = [parse_general_name(name) for name in split_str(ca.issuer_alt_name.strip(), ",")]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            alternative_names = [
+                parse_general_name(name) for name in split_str(ca.issuer_alt_name.strip(), ",")
+            ]
+
         if not alternative_names:
             ca.sign_issuer_alternative_name = None
             return

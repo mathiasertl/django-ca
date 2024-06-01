@@ -31,7 +31,7 @@ from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
-from django_ca.utils import add_colons, file_exists, read_file
+from django_ca.utils import add_colons, get_storage, read_file
 
 
 def regenerate_ocsp_keys(*serials: str, **kwargs: Any) -> tuple[str, str]:
@@ -61,8 +61,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         priv_path = f"ocsp/{ca.serial}.key"
         cert_path = f"ocsp/{ca.serial}.pem"
 
-        self.assertTrue(file_exists(priv_path))
-        self.assertTrue(file_exists(cert_path))
+        self.assertTrue(get_storage().exists(priv_path))
+        self.assertTrue(get_storage().exists(cert_path))
         if key_type is None:
             ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
                 ca, UsePrivateKeyOptions(password=None)
@@ -110,8 +110,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         """Assert that the key is **not** present."""
         priv_path = f"ocsp/{serial}.key"
         cert_path = f"ocsp/{serial}.pem"
-        self.assertFalse(file_exists(priv_path))
-        self.assertFalse(file_exists(cert_path))
+        self.assertFalse(get_storage().exists(priv_path))
+        self.assertFalse(get_storage().exists(cert_path))
 
     @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
     def test_basic(self) -> None:

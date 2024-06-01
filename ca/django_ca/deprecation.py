@@ -51,6 +51,24 @@ DeprecationWarningType = Union[
 ]
 
 
+def deprecate_function(category: DeprecationWarningType, stacklevel: int = 2) -> typing.Callable[[F], F]:
+    """Decorator to deprecate an entire function."""
+
+    def decorator_deprecate(func: F) -> F:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            warnings.warn(
+                f"{func.__name__}() is deprecated and will be removed in django-ca {category.version}.",
+                category=category,
+                stacklevel=stacklevel,
+            )
+            return func(*args, **kwargs)
+
+        return typing.cast(F, wrapper)
+
+    return decorator_deprecate
+
+
 def deprecate_argument(
     arg: str, category: DeprecationWarningType, stacklevel: int = 2
 ) -> typing.Callable[[F], F]:
@@ -67,7 +85,7 @@ def deprecate_argument(
             bound = sig.bind(*args, **kwargs)
             if arg in bound.arguments:
                 warnings.warn(
-                    f"Argument {arg} is deprecated and will be removed in django ca {category.version}.",
+                    f"Argument {arg} is deprecated and will be removed in django-ca {category.version}.",
                     category=category,
                     stacklevel=stacklevel,
                 )
@@ -95,7 +113,7 @@ def deprecate_type(
             if arg in bound.arguments and isinstance(bound.arguments.get(arg), types):
                 name = type(bound.arguments.get(arg)).__name__
                 warnings.warn(
-                    f"Passing {name} for {arg} is deprecated and will be removed in django ca {category.version}.",  # NOQA: E501
+                    f"Passing {name} for {arg} is deprecated and will be removed in django-ca {category.version}.",  # NOQA: E501
                     category=category,
                     stacklevel=stacklevel,
                 )

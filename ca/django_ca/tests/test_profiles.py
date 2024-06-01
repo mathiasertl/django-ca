@@ -197,7 +197,7 @@ def test_init_expires() -> None:
 
 def test_init_expires_with_deprecated_type() -> None:
     """Test the `expire` parameter."""
-    msg = r"^Passing int for expires is deprecated and will be removed in django ca 2\.0\.$"
+    msg = r"^Passing int for expires is deprecated and will be removed in django-ca 2\.0\.$"
     with assert_removed_in_200(msg):
         prof = Profile("example", expires=30)  # type: ignore[arg-type]
     assert prof.expires == timedelta(days=30)
@@ -699,7 +699,7 @@ def test_create_cert_with_deprecated_expires_type(
 ) -> None:
     """Create a certificate with an int for expires (which is deprecated)."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    msg = r"^Passing int for expires is deprecated and will be removed in django ca 2\.0\.$"
+    msg = r"^Passing int for expires is deprecated and will be removed in django-ca 2\.0\.$"
 
     prof = Profile("example")
     with mock_signal(pre_sign_cert) as pre, assert_removed_in_200(msg):

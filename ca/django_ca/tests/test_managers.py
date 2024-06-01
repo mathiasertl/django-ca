@@ -465,7 +465,7 @@ def test_init_with_deprecated_expires(
 ) -> None:
     """Test a deprecated expired type."""
     name = type(expires).__name__
-    msg = rf"^Passing {name} for expires is deprecated and will be removed in django ca 2.0.$"
+    msg = rf"^Passing {name} for expires is deprecated and will be removed in django-ca 2.0.$"
     with assert_create_ca_signals(), assert_removed_in_200(msg):
         ca = CertificateAuthority.objects.init(
             ca_name,

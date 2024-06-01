@@ -42,7 +42,7 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA200Warning, deprecate_type
+from django_ca.deprecation import RemovedInDjangoCA200Warning, deprecate_function, deprecate_type
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
@@ -304,6 +304,7 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
+# @deprecate_function(RemovedInDjangoCA200Warning)
 def parse_name_x509(name: ParsableName) -> tuple[x509.NameAttribute, ...]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
@@ -339,6 +340,7 @@ def parse_name_x509(name: ParsableName) -> tuple[x509.NameAttribute, ...]:
     return tuple(x509.NameAttribute(oid, value) for oid, value in items)
 
 
+# @deprecate_function(RemovedInDjangoCA200Warning)
 def x509_name(name: ParsableName) -> x509.Name:
     """Parses a string or iterable of two-tuples into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
@@ -869,16 +871,12 @@ def parse_encoding(value: str) -> Encoding:
     raise ValueError(f"Unknown type passed: {type(value).__name__}")
 
 
+@deprecate_function(RemovedInDjangoCA200Warning)
 def parse_expires(expires: Optional[Union[int, datetime, timedelta]] = None) -> datetime:
     """Parse a value specifying an expiry into a concrete datetime.
 
     This function always returns a timezone-aware datetime object with UTC as a timezone.
     """
-    warnings.warn(
-        "parse_expires() is deprecated and will be removed in django-ca 2.0.",
-        RemovedInDjangoCA200Warning,
-        stacklevel=2,
-    )
     now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
 
     if isinstance(expires, int):
@@ -897,19 +895,13 @@ def parse_expires(expires: Optional[Union[int, datetime, timedelta]] = None) -> 
     return now + model_settings.CA_DEFAULT_EXPIRES
 
 
+@deprecate_function(RemovedInDjangoCA200Warning)
 def parse_key_curve(value: str) -> ec.EllipticCurve:
     """Parse a string an :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
 
-    This function is intended to parse user input, so it ignores case.
+    .. deprecated:: 1.29.0
 
-    Example usage::
-
-        >>> parse_key_curve('SECP256R1')  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>
-        >>> parse_key_curve('SECP384R1')  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.asymmetric.ec.SECP384R1 object at ...>
-        >>> parse_key_curve('secp384r1')  # doctest: +ELLIPSIS
-        <cryptography.hazmat.primitives.asymmetric.ec.SECP384R1 object at ...>
+       This function is no longer used internallay and will be removed in django-ca 2.0.0.
 
     Parameters
     ----------
@@ -995,11 +987,6 @@ def get_storage() -> Storage:
         return ca_storage_cls(**ca_file_storage_kwargs)
 
 
-def file_exists(path: str) -> bool:
-    """Test if a file with the given path exists."""
-    return get_storage().exists(path)
-
-
 def read_file(path: str) -> bytes:
     """Read the file from the given path."""
     storage = get_storage()
@@ -1015,32 +1002,7 @@ def read_file(path: str) -> bytes:
 def split_str(val: str, sep: str) -> Iterator[str]:
     """Split a character on the given set of characters.
 
-    Example::
-
-        >>> list(split_str('foo,bar', ', '))
-        ['foo', 'bar']
-        >>> list(split_str('foo\\\\,bar1', ','))  # escape a separator
-        ['foo,bar1']
-        >>> list(split_str('foo,"bar,bla"', ','))  # do not split on quoted separator
-        ['foo', 'bar,bla']
-
-    Note that `sep` gives one or more separator characters, not a single separator string::
-
-        >>> list(split_str("foo,bar bla", ", "))
-        ['foo', 'bar', 'bla']
-
-    Unlike ``str.split()``, separators at the start/end of a string are simply ignored, as are multiple
-    subsequent separators::
-
-        >>> list(split_str("/C=AT//ST=Vienna///OU=something//CN=example.com/", "/"))
-        ['C=AT', 'ST=Vienna', 'OU=something', 'CN=example.com']
-
-    Parameters
-    ----------
-    val : str
-        The string to split.
-    sep: str
-        String of characters that are considered separators.
+    This function is now only used in a migration and will be moved there in 2.0.
     """
     lex = shlex.shlex(val, posix=True)
     lex.commenters = ""
