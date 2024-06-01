@@ -27,6 +27,7 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca.conf import model_settings
+from django_ca.tests.base.assertions import assert_crl
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import get_idp, idp_full_name, override_tmpcadir, uri
@@ -87,7 +88,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content,
             encoding=Encoding.DER,
             expires=600,
@@ -102,7 +103,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content,
             encoding=Encoding.DER,
             expires=600,
@@ -115,7 +116,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content,
             expected=[self.cert],
             encoding=Encoding.DER,
@@ -135,7 +136,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("full", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content,
             encoding=Encoding.DER,
             expires=600,
@@ -147,7 +148,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("full", kwargs={"serial": self.cas["root"].serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content,
             encoding=Encoding.DER,
             expires=600,
@@ -166,7 +167,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        self.assertCRL(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
+        assert_crl(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
 
         child.revoke()
         child.save()
@@ -175,14 +176,14 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        self.assertCRL(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
+        assert_crl(response.content, expires=600, idp=idp, signer=root, algorithm=root.algorithm)
 
         # clear the cache and fetch again
         cache.clear()
         response = self.client.get(reverse("ca_crl", kwargs={"serial": root.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        self.assertCRL(
+        assert_crl(
             response.content,
             expected=[child],
             expires=600,
@@ -202,7 +203,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("ca_crl", kwargs={"serial": child.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        self.assertCRL(response.content, expires=600, idp=idp, signer=child, algorithm=child.algorithm)
+        assert_crl(response.content, expires=600, idp=idp, signer=child, algorithm=child.algorithm)
 
     @override_tmpcadir(CA_PASSWORDS={})
     def test_password(self) -> None:
@@ -222,7 +223,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("default", kwargs={"serial": ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm)
+        assert_crl(response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm)
 
     @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
     def test_password_with_ca_password_setting(self) -> None:
@@ -234,7 +235,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content, encoding=Encoding.DER, idp=idp, signer=ca, algorithm=ca.algorithm, expires=600
         )
 
@@ -245,7 +246,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("advanced", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        self.assertCRL(response.content, expires=321, idp=idp, algorithm=hashes.SHA256())
+        assert_crl(response.content, expires=321, idp=idp, algorithm=hashes.SHA256())
 
     @override_tmpcadir()
     def test_force_idp_inclusion(self) -> None:
@@ -255,9 +256,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("include_idp", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
-            response.content, encoding=Encoding.DER, expires=600, idp=idp, algorithm=self.ca.algorithm
-        )
+        assert_crl(response.content, encoding=Encoding.DER, expires=600, idp=idp, algorithm=self.ca.algorithm)
 
         with pytest.raises(
             ValueError,
@@ -271,7 +270,7 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("exclude_idp", kwargs={"serial": self.ca.serial}))
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "application/pkix-crl"
-        self.assertCRL(
+        assert_crl(
             response.content, encoding=Encoding.DER, expires=600, idp=None, algorithm=self.ca.algorithm
         )
 
@@ -282,14 +281,11 @@ class GenericCRLViewTestsMixin(TestCaseMixin):
         response = self.client.get(reverse("default", kwargs={"serial": self.ca.serial}), {"encoding": "PEM"})
         assert response.status_code == HTTPStatus.OK
         assert response["Content-Type"] == "text/plain"
-        self.assertCRL(
-            response.content, encoding=Encoding.PEM, expires=600, idp=idp, algorithm=self.ca.algorithm
-        )
+        assert_crl(response.content, encoding=Encoding.PEM, expires=600, idp=idp, algorithm=self.ca.algorithm)
 
     @override_tmpcadir()
     def test_invalid_encoding(self) -> None:
-        """Test that forcing a different encoding."""
-        idp = get_idp(full_name=idp_full_name(self.ca), only_contains_user_certs=True)
+        """Test that forcing an unsupported encoding."""
         response = self.client.get(
             reverse("default", kwargs={"serial": self.ca.serial}), {"encoding": "X962"}
         )

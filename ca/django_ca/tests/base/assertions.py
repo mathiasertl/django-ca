@@ -241,7 +241,7 @@ def assert_crl(
     assert list(parsed_crl.extensions) == extensions
 
     entries = {e.serial_number: e for e in parsed_crl}
-    assert list(entries) == [c.pub.loaded.serial_number for c in expected]
+    assert sorted(entries) == sorted(c.pub.loaded.serial_number for c in expected)
     for i, entry in enumerate(entries.values()):
         assert revoked_certificate_revocation_date(entry) == now
         if entry_extensions:

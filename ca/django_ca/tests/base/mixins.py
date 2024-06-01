@@ -18,16 +18,13 @@ import re
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone as tz
+from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any, Optional, Union
 from unittest import mock
 from urllib.parse import quote
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import x448, x25519
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.conf import settings
@@ -41,7 +38,6 @@ from django.urls import reverse
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
-from django_ca.deprecation import crl_last_update, crl_next_update, revoked_certificate_revocation_date
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
@@ -157,72 +153,6 @@ class TestCaseMixin(TestCaseProtocol):
         if name.startswith(":"):  # pragma: no branch
             name = f"django_ca{name}"
         return f"http://{hostname}{reverse(name, kwargs=kwargs)}"
-
-    def assertCRL(
-        # pylint: disable=invalid-name
-        self,
-        crl: bytes,
-        expected: Optional[typing.Sequence[X509CertMixin]] = None,
-        signer: Optional[CertificateAuthority] = None,
-        expires: int = 86400,
-        algorithm: Optional[hashes.HashAlgorithm] = None,
-        encoding: Encoding = Encoding.PEM,
-        idp: Optional["x509.Extension[x509.IssuingDistributionPoint]"] = None,
-        extensions: Optional[list["x509.Extension[x509.ExtensionType]"]] = None,
-        crl_number: int = 0,
-    ) -> None:
-        """Test the given CRL.
-
-        Parameters
-        ----------
-        crl : bytes
-            The raw CRL
-        expected : list
-            CAs/certs to be expected in this CRL.
-        signer
-        expires
-        algorithm
-        encoding
-        idp
-        extensions
-        crl_number
-        """
-        expected = expected or []
-        signer = signer or self.cas["child"]
-        extensions = extensions or []
-        now = datetime.now(tz=tz.utc)
-        expires_timestamp = now + timedelta(seconds=expires)
-
-        if idp is not None:  # pragma: no branch
-            extensions.append(idp)
-        extensions.append(
-            x509.Extension(
-                value=x509.CRLNumber(crl_number=crl_number), critical=False, oid=ExtensionOID.CRL_NUMBER
-            )
-        )
-        extensions.append(signer.get_authority_key_identifier_extension())
-
-        if encoding == Encoding.PEM:
-            parsed_crl = x509.load_pem_x509_crl(crl)
-        else:
-            parsed_crl = x509.load_der_x509_crl(crl)
-
-        public_key = signer.pub.loaded.public_key()
-        if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
-            raise TypeError()  # just to make mypy happy
-
-        self.assertIsInstance(parsed_crl.signature_hash_algorithm, type(algorithm))
-        self.assertTrue(parsed_crl.is_signature_valid(public_key))
-        self.assertEqual(parsed_crl.issuer, signer.pub.loaded.subject)
-        self.assertEqual(crl_last_update(parsed_crl), now)
-        self.assertEqual(crl_next_update(parsed_crl), expires_timestamp)
-        self.assertCountEqual(list(parsed_crl.extensions), extensions)
-
-        entries = {e.serial_number: e for e in parsed_crl}
-        self.assertCountEqual(entries, {c.pub.loaded.serial_number: c for c in expected})
-        for entry in entries.values():
-            self.assertEqual(revoked_certificate_revocation_date(entry), now)
-            self.assertEqual(list(entry.extensions), [])
 
     @contextmanager
     def assertSignCertSignals(  # pylint: disable=invalid-name
