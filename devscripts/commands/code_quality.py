@@ -30,7 +30,7 @@ class Command(DevCommand):
 
     def manage(self, *args: str) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run manage.py with warnings turned into errors."""
-        python: list[Union[str, "os.PathLike[str]"]] = ["python"]
+        python: list[Union[str, os.PathLike[str]]] = ["python"]
 
         # Django 4.2 introduced a new way of handling storages
         known_warnings = [

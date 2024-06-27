@@ -30,11 +30,11 @@ except ModuleNotFoundError as ex:
     print(f"Error setting up Django: {ex}")
     sys.exit(1)
 
-from django.core.cache import cache  # NOQA: E402
+from django.core.cache import cache
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first.
-from ca.celery import app  # noqa: E402
-from django_ca.models import CertificateAuthority  # noqa: E402
+from ca.celery import app
+from django_ca.models import CertificateAuthority
 
 # Verify database connectivity by fetching a list of CAs. Even an empty list verifies connectivity.
 list(CertificateAuthority.objects.all())

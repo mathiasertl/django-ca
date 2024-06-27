@@ -328,7 +328,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         response["replay-nonce"] = self.get_nonce()
         return response
 
-    def post(  # noqa: PLR0911,PLR0912
+    def post(  # noqa: PLR0911
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
     ) -> AcmeResponse:
         # pylint: disable=missing-function-docstring; standard Django view function

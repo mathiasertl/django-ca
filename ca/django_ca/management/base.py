@@ -258,7 +258,7 @@ class BaseCommand(
         )
 
         # Common help text for extensions that are usually configured automatically.
-        default_hostname_suffix: "StrOrPromise" = ""
+        default_hostname_suffix: StrOrPromise = ""
         if model_settings.CA_DEFAULT_HOSTNAME:  # pragma: no branch
             default_hostname_suffix = _(
                 " This extension is configured automatically using the CA_DEFAULT_HOSTNAME if not overridden "

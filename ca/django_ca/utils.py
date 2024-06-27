@@ -723,7 +723,7 @@ def format_other_name(other_name: x509.OtherName) -> str:
     return f"{oid};{typ}:{value}"
 
 
-def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: PLR0911,PLR0912
+def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: PLR0911
     """Parse a general name from user input.
 
     This function will do its best to detect the intended type of any value passed to it:
@@ -901,7 +901,7 @@ def parse_key_curve(value: str) -> ec.EllipticCurve:
 
     .. deprecated:: 1.29.0
 
-       This function is no longer used internallay and will be removed in django-ca 2.0.0.
+       This function is no longer used internally and will be removed in django-ca 2.0.0.
 
     Parameters
     ----------

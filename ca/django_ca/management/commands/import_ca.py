@@ -84,7 +84,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0913
         self,
         name: str,
         key: typing.BinaryIO,
