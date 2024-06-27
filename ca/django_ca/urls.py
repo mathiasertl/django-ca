@@ -40,13 +40,13 @@ urlpatterns: list[Union[URLResolver, URLPattern]] = [
     path("crl/ca/<hex:serial>/", views.CertificateRevocationListView.as_view(scope="ca"), name="ca-crl"),
 ]
 
-if model_settings.CA_ENABLE_REST_API is True:
+if model_settings.CA_ENABLE_REST_API is True:  # pragma: no branch
     from django_ca.api.endpoints import api
 
     urlpatterns.append(path("api/", api.urls))
 
 
-if model_settings.CA_ENABLE_ACME:
+if model_settings.CA_ENABLE_ACME:  # pragma: no branch
     from django_ca.acme import views as acme_views
 
     # NOTE: Some functions depend on the fact that ALL ACME urls have a "serial" kwarg

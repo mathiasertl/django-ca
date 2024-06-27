@@ -43,7 +43,7 @@ jobs:
       - name: Install program
         run: pip install -e .
 
-      - name: Run black, isort and flake8
+      - name: Run ruff
         run: python dev.py code-quality
 
       # Will show outdated dependencies, etc

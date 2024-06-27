@@ -30,6 +30,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
+import django
 from django.test import TestCase, override_settings
 
 import pytest
@@ -81,6 +82,7 @@ def test_read_file(tmpcadir: Path) -> None:
     assert read_file(path) == data
 
 
+@pytest.mark.skipif(django.VERSION >= (5, 1), reason="get_storage_class() is removed in Django 5.1")
 def test_deprecated_storage_configuration(settings: SettingsWrapper) -> None:
     """Test that using a deprecated storage configuration emits a warning."""
     settings.STORAGES = {

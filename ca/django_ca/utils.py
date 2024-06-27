@@ -36,7 +36,7 @@ from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
 from django.conf import global_settings, settings
-from django.core.files.storage import InvalidStorageError, Storage, get_storage_class, storages
+from django.core.files.storage import InvalidStorageError, Storage, storages
 from django.utils import timezone
 
 from django_ca import constants
@@ -973,6 +973,11 @@ def get_storage() -> Storage:
             RemovedInDjangoCA200Warning,
             stacklevel=2,
         )
+
+        # Lazy import as this function is removed in Django 5.0.
+        # pylint: disable-next=import-outside-toplevel
+        from django.core.files.storage import get_storage_class
+
         ca_file_storage = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
         ca_file_storage_kwargs = getattr(
             settings,
@@ -983,6 +988,7 @@ def get_storage() -> Storage:
                 "directory_permissions_mode": 0o700,
             },
         )
+
         ca_storage_cls = get_storage_class(ca_file_storage)
         return ca_storage_cls(**ca_file_storage_kwargs)
 
@@ -1000,10 +1006,7 @@ def read_file(path: str) -> bytes:
 
 
 def split_str(val: str, sep: str) -> Iterator[str]:
-    """Split a character on the given set of characters.
-
-    This function is now only used in a migration and will be moved there in 2.0.
-    """
+    """Split a character on the given set of characters."""
     lex = shlex.shlex(val, posix=True)
     lex.commenters = ""
     lex.whitespace = sep

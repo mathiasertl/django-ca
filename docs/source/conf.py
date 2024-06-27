@@ -471,8 +471,6 @@ jinja_filters = {
 }
 
 qualname_overrides = {
-    "BytesIO": "python:io.BytesIO",
-    "StringIO": "python:io.StringIO",
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
@@ -480,6 +478,15 @@ qualname_overrides = {
     "cryptography.hazmat.primitives._serialization.Encoding.DER": "cg:cryptography.hazmat.primitives.serialization.Encoding.DER",  # noqa: E501
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
+    # These only happen when building on GitHub actions (2024-06-27)
+    "BytesIO": "python:io.BytesIO",
+    "StringIO": "python:io.StringIO",
+    "ec.EllipticCurve": "cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve",
+    "ec.EllipticCurvePrivateKey": "cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey",
+    "dsa.DSAPrivateKey": "cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey",
+    "rsa.RSAPrivateKey": "cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey",
+    "ed25519.Ed25519PrivateKey": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey",
+    "ed448.Ed448PrivateKey": "cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey",
     # Django documents these classes  under re-exported path names:
     "django.http.request.HttpRequest": "django:django.http.HttpRequest",
     "django.http.response.HttpResponse": "django:django.http.HttpResponse",
