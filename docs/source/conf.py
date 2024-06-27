@@ -471,6 +471,7 @@ jinja_filters = {
 }
 
 qualname_overrides = {
+    "BytesIO": "python:io.BytesIO",
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
