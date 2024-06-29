@@ -32,6 +32,12 @@ Views
 2.0.0 (TBR)
 ***********
 
+Dependencies
+============
+
+* Support for Alpine 3.17 will be removed.
+* Support for ``celery~=5.3``, ``pydantic~=2.5.0``, ``acme~=2.9.0`` and ``acme~=2.10.0`` will be removed.
+
 Command-line
 ============
 

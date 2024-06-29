@@ -19,6 +19,7 @@ alpine = [
     "3.17",  # until 2024-11-22
     "3.18",  # until 2025-05-09
     "3.19",  # until 2025-11-01
+    "3.20",  # until 2026-04-01
 ]
 
 # Blacklist images that we don't want to build for
@@ -45,6 +46,7 @@ ubuntu-releases = [
     "focal",  # 20.04, until 2025-04-23
     "jammy",  # 22.04, until 2027-04-21
     "mantic",  # 23.10, until 2024-07
+    "noble",  # 24.04, until 2029-05-31
 ]
 
 [django-ca.release.github]

@@ -1,6 +1,6 @@
-############
-1.29.0 (TBR)
-############
+###################
+1.29.0 (2024-06-29)
+###################
 
 * Fix the `encoding` GET parameter when retrieving certificate revocation lists.
 * Configuring a password in a certificate revocation list view is deprecated. Use the ``CA_PASSWORDS`` setting
@@ -51,10 +51,17 @@ Many settings now have more strictly enforced limits, meant to catch configurati
   renew certificates runs every hour, so any lower value will cause problems).
 
 ************
+Docker image
+************
+
+* Docker image is now based on Alpine 3.20.
+
+************
 Dependencies
 ************
 
-* Add support for ``acme~=2.10.0`` and ``pydantic~=2.7.0``.
+* Add support for Alpine 3.20 and Ubuntu 24.04.
+* Add support for ``acme~=2.10.0``, ``acme~=2.11.0`` and ``pydantic~=2.7.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Python 3.8.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=41.0``, ``acme~=2.7.0`` and ``acme~=2.8.0``.
 * Increased minimum required versions to ``dnspython>=2.5``, ``hiredis>=2.1.0``, ``idna>=3.4``,
@@ -111,6 +118,9 @@ Deprecation notices
 
 Please see the :doc:`deprecation timeline </deprecation>` for a detailed timeline of deprecated features.
 
+* This is the last release to support ``celery~=5.3``, ``pydantic~=2.5.0``, ``acme~=2.9.0`` and
+  ``acme~=2.10.0``.
+* This will be the last release to support Alpine 3.17.
 * Support for the old extension format in profiles will be removed in 2.0.0.
 * Support for the old subject format in :ref:`settings-ca-default-subject` and subjects in profiles will be
   removed in 2.2.0.

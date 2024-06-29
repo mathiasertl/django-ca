@@ -17,6 +17,7 @@ Run these steps when you begin to create a new release:
   * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.
   * Add a deprecation notice for versions no longer supported upstream.
 
+* Update table in ``docs/source/quickstart/as_app.rst``
 * Run :command:`./dev.py validate state` and fix any errors.
 * Update version in ``ca/django_ca/__init__.py``.
 
@@ -32,7 +33,7 @@ docker-compose
 
 * Verify that :file:`docker-compose.yml` uses up-to-date version of 3rd-party containers.
 * Set the default django-ca version in :file:`docker-compose.yml` to the new version.
-* Update table in ``docs/source/quickstart_docker_compose.rst``.
+* Update table in ``docs/source/quickstart/docker_compose.rst``.
 
 ******************
 Test current state

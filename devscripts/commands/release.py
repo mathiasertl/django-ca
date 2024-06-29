@@ -67,23 +67,16 @@ class Command(DevCommand):
         parser.add_argument("release", help="The actual release you want to build.")
 
     def _validate_changelog(self, release: str) -> None:
-        path = str(config.DOCS_SOURCE_DIR / "changelog.rst")
+        today = date.today().strftime("%Y-%m-%d")
+        path = config.DOCS_SOURCE_DIR / "changelog" / f"{today}_{release}.rst"
         with open(path, encoding="utf-8") as stream:
             changelog = stream.read()
-        changelog_header = changelog.splitlines(keepends=True)[:11]
-        expected = f"""#########
-ChangeLog
-#########
-
-.. _changelog-head:
-
-.. _changelog-{release}:
-
-*******************
+        changelog_header = changelog.splitlines(keepends=True)[:3]
+        expected = f"""###################
 {release} ({date.today().strftime('%Y-%m-%d')})
-*******************\n""".splitlines(keepends=True)
+###################\n""".splitlines(keepends=True)
         if changelog_header != expected:
-            diff = difflib.unified_diff(changelog_header, expected, fromfile=path, tofile="expected")
+            diff = difflib.unified_diff(changelog_header, expected, fromfile=str(path), tofile="expected")
             raise CommandError(f"ChangeLog has improper header:\n\n{''.join(diff)}")
 
     def pre_tag_checks(self, release: str) -> "Repo":
