@@ -1034,7 +1034,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         ]
 
         # Elements of the CSR chapter
-        csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
+        csr_subject_input_chapter = self.key_value_field.find_element(
+            By.CSS_SELECTOR, ".subject-input-chapter.csr"
+        )
         no_csr = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr .no-csr")
         has_content = self.key_value_field.find_element(
             By.CSS_SELECTOR, ".subject-input-chapter.csr .has-content"
@@ -1044,9 +1046,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         )
 
         # Check that the right parts of the CSR chapter is displayed
-        self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
-        self.assertIs(has_content.is_displayed(), False)
-        self.assertIs(no_content.is_displayed(), False)
+        assert no_csr.is_displayed() is True  # this is displayed as we haven't pasted a CSR
+        assert has_content.is_displayed() is False
+        assert no_content.is_displayed() is False
 
         csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
         csr_field = self.find("textarea#id_csr")
@@ -1054,29 +1056,33 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
         # Make sure that the displayed subject has not changed
         self.assertNotModified()
-        self.assertEqual(self.value, initial_subject)
+        assert self.value == initial_subject
 
-        # check the JSON value from the chapter
-        self.assertEqual(
-            json.loads(csr_chapter.get_attribute("data-value")),  # type: ignore[arg-type]
-            csr_subject,
+        # Wait for the CSR results to be fetched
+        WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
+            lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
+            "data-fetched for CSR was not set.",
         )
 
+        # check the JSON value from the chapter
+        value: str = csr_subject_input_chapter.get_attribute("data-value")  # type: ignore[assignment]
+        assert json.loads(value) == csr_subject
+
         # check that the right chapter is displayed
-        self.assertIs(no_csr.is_displayed(), False)
-        self.assertIs(has_content.is_displayed(), True)
-        self.assertIs(no_content.is_displayed(), False)
+        assert no_csr.is_displayed() is False
+        assert has_content.is_displayed() is True
+        assert no_content.is_displayed() is False
 
         # Check the li element inside
         lis = has_content.find_elements(By.TAG_NAME, "li")
-        self.assertEqual(len(lis), len(csr_subject))
-        self.assertEqual(lis[0].text, "countryName (C): AT")  # just testing the first one
+        assert len(lis) == len(csr_subject)
+        assert lis[0].text == "countryName (C): AT"  # just testing the first one
 
         # Click the copy button and validate that the subject is set
-        csr_chapter.find_element(By.CSS_SELECTOR, ".copy-button").click()
+        csr_subject_input_chapter.find_element(By.CSS_SELECTOR, ".copy-button").click()
         self.assertModified()
-        self.assertEqual(self.value, csr_subject)
-        self.assertEqual(self.displayed_value, csr_subject)
+        assert self.value == csr_subject
+        assert self.displayed_value == csr_subject
 
     @override_tmpcadir()
     def test_paste_csr_no_subject(self) -> None:
