@@ -13,11 +13,8 @@
 
 """Test :py:mod:`django_ca.deprecation`."""
 
-import contextlib
-from collections.abc import Iterator
-from typing import Any
-
-from django.test import TestCase
+import re
+from typing import Any, Union
 
 import pytest
 
@@ -26,46 +23,82 @@ from django_ca.deprecation import (
     RemovedInDjangoCA200Warning,
     RemovedInDjangoCA210Warning,
     RemovedInDjangoCA220Warning,
-    RemovedInNextVersionWarning,
     deprecate_argument,
+    deprecate_function,
+    deprecate_type,
+)
+
+WARNING_TYPES: tuple[DeprecationWarningType, ...] = (
+    RemovedInDjangoCA200Warning,
+    RemovedInDjangoCA210Warning,
+    RemovedInDjangoCA220Warning,
 )
 
 
-@pytest.mark.parametrize(
-    "cls", (RemovedInDjangoCA200Warning, RemovedInDjangoCA210Warning, RemovedInDjangoCA220Warning)
-)
-def test_deprecation_warnings(cls: DeprecationWarningType) -> None:
+@pytest.mark.parametrize("cls", WARNING_TYPES)
+def test_deprecation_warning_version(cls: DeprecationWarningType) -> None:
     """Test versions in deprecation warnings."""
     assert cls.__name__ == f"RemovedInDjangoCA{cls.version.replace('.', '')}0Warning"
 
 
-class DeprecateArgumentTestCase(TestCase):
-    """Test the `@deprecate_argument` decorator."""
+@pytest.mark.parametrize("warning", WARNING_TYPES)
+def test_deprecate_function(warning: DeprecationWarningType) -> None:
+    """Test deprecate_function() decorator."""
+    version = re.escape(warning.version)
+    match = rf"^deprecated\(\) is deprecated and will be removed in django-ca {version}\.$"
 
-    @deprecate_argument("kw", RemovedInNextVersionWarning)
-    def func(self, unused: Any, kw: str = "default") -> str:  # pylint: disable=all
+    @deprecate_function(warning)
+    def deprecated() -> None:
+        pass
+
+    with pytest.warns(warning, match=match):
+        deprecated()
+
+
+@pytest.mark.parametrize("warning", WARNING_TYPES)
+def test_deprecated_argument(warning: DeprecationWarningType) -> None:
+    """Test deprecate_argument() decorator."""
+    version = re.escape(warning.version)
+    match = rf"^Argument kw is deprecated and will be removed in django-ca {version}\.$"
+
+    @deprecate_argument("kw", warning)
+    def func_with_deprecated_kw(unused: Any, kw: str = "default") -> str:  # pylint: disable=all
         """Just  a test function with a deprecated argument (used in tests)."""
         return kw
 
-    @contextlib.contextmanager
-    def assertWarning(  # pylint: disable=invalid-name
-        self, arg: str, cls: DeprecationWarningType = RemovedInNextVersionWarning
-    ) -> Iterator[None]:
-        """Shortcut for testing the deprecation warning emitted."""
-        message = rf"Argument {arg} is deprecated and will be removed"
-        with self.assertWarnsRegex(cls, message) as warn_cm:
-            yield
+    with pytest.warns(warning, match=match):
+        assert func_with_deprecated_kw("arg", "foobar") == "foobar"
+    with pytest.warns(warning, match=match):
+        assert func_with_deprecated_kw("arg", kw="foobar") == "foobar"
 
-        # make sure that the stacklevel is correct and the warning is issue from this file (= file where
-        # function is called)
-        self.assertEqual(warn_cm.filename, __file__)
 
-    def test_basic(self) -> None:
-        """Really basic test of the decorator."""
-        self.assertEqual(self.func("arg"), "default")  # no kwarg -> no warning
+@pytest.mark.parametrize("warning", WARNING_TYPES)
+def test_deprecated_argument_not_passed(warning: DeprecationWarningType) -> None:
+    """Test deprecate_argument() decorator when deprecated argument is not passed."""
 
-        with self.assertWarning("kw"):
-            self.assertEqual(self.func("arg", "foobar"), "foobar")
+    @deprecate_argument("kw", warning)
+    def func_with_deprecated_kw(unused: Any, kw: str = "default") -> str:  # pylint: disable=all
+        """Just  a test function with a deprecated argument (used in tests)."""
+        return kw
 
-        with self.assertWarning("kw"):
-            self.assertEqual(self.func("arg", kw="foobar"), "foobar")
+    assert func_with_deprecated_kw("arg") == "default"
+
+
+@pytest.mark.parametrize("typ", (int, (int, set)))
+@pytest.mark.parametrize("warning", WARNING_TYPES)
+def test_deprecate_type(
+    typ: Union[type[Any], tuple[type[Any], ...]], warning: DeprecationWarningType
+) -> None:
+    """Test the deprecate_type() operator."""
+    version = re.escape(warning.version)
+    match = rf"^Passing int for arg is deprecated and will be removed in django-ca {version}\.$"
+
+    @deprecate_type("arg", typ, warning)
+    def func_with_deprecated_type(arg: str) -> None:
+        pass
+
+    with pytest.warns(warning, match=match):
+        func_with_deprecated_type(3)  # type: ignore[arg-type]  # what we're testing
+
+    # no warning if called with correct type:
+    func_with_deprecated_type("foo")

@@ -102,7 +102,7 @@ def deprecate_type(
     types: Union[type[Any], tuple[type[Any], ...]],
     category: DeprecationWarningType,
     stacklevel: int = 2,
-) -> typing.Callable[[F], F]:  # pragma: no cover  # not used at the beginning of 1.24.0 development
+) -> typing.Callable[[F], F]:
     """Decorator to mark a type for an argument as deprecated."""
 
     def decorator_deprecate(func: F) -> F:
