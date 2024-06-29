@@ -153,14 +153,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const csr_data = await csr_response.json();
             const subject = csr_data["subject"];
 
-            // Set the data-fetched property, so that Selenium tests can wait for completion.
-            input.dataset.fetched = "true"
-
             // No need to do anything if the CSR has an empty subject
             if (subject.length === 0) {
                 csr_subject_input_chapter.querySelector(".no-csr").style.display = "none";
                 csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
                 csr_subject_input_chapter.querySelector(".no-content").style.display = "block";
+
+                // Set the data-fetched property, so that Selenium tests can wait for completion.
+                input.dataset.fetched = "true";
                 return;
             }
 
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             csr_subject_input_chapter.querySelector(".no-content").style.display = "none";
 
             // Set the data-fetched property, so that Selenium tests can wait for completion.
-            input.dataset.fetched = "true"
+            input.dataset.fetched = "true";
         });
     }
 

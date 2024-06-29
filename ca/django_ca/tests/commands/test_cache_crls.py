@@ -30,7 +30,7 @@ from django_ca.tests.base.utils import cmd, get_idp, idp_full_name, uri
 from django_ca.utils import get_crl_cache_key
 
 # freeze time as otherwise CRLs might have rounding errors
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.usefixtures("clear_cache")]
 
 
 def assert_crl_by_ca(ca: CertificateAuthority, expected: Optional[list[Certificate]] = None) -> None:

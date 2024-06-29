@@ -208,7 +208,7 @@ def assert_crl(  # noqa: PLR0913
     signer = signer or CertificateAuthority.objects.get(name="child")
     extensions = extensions or []
     now = datetime.now(tz=tz.utc)
-    expires_timestamp = now + timedelta(seconds=expires)
+    expires_timestamp = (now + timedelta(seconds=expires)).replace(microsecond=0)
 
     if idp is not None:  # pragma: no branch
         extensions.append(idp)
@@ -236,7 +236,7 @@ def assert_crl(  # noqa: PLR0913
     assert parsed_crl.is_signature_valid(public_key) is True
     assert parsed_crl.issuer == signer.pub.loaded.subject
     assert parsed_crl.last_update_utc == last_update
-    assert parsed_crl.next_update_utc == expires_timestamp.replace(microsecond=0)
+    assert parsed_crl.next_update_utc == expires_timestamp
     assert list(parsed_crl.extensions) == extensions
 
     entries = {e.serial_number: e for e in parsed_crl}

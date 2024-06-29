@@ -1104,7 +1104,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.find("textarea#id_csr").send_keys(csr_pem)
 
         # Wait for the CSR results to be fetched
-        WebDriverWait(self.selenium, 2, poll_frequency=0.1).until(
+        WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
             lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
             "data-fetched for CSR was not set.",
         )
