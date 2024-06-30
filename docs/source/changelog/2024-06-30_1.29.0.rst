@@ -1,5 +1,5 @@
 ###################
-1.29.0 (2024-06-29)
+1.29.0 (2024-06-30)
 ###################
 
 * Fix the `encoding` GET parameter when retrieving certificate revocation lists.
