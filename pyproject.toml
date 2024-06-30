@@ -43,7 +43,6 @@ debian-releases = [
 ubuntu-releases = [
     "focal",  # 20.04, until 2025-04-23
     "jammy",  # 22.04, until 2027-04-21
-    "mantic",  # 23.10, until 2024-07
     "noble",  # 24.04, until 2029-05-31
 ]
 

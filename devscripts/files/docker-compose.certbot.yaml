@@ -1,4 +1,3 @@
-version: "3.9"
 services:
     db:
         environment:
@@ -48,7 +47,7 @@ services:
                 aliases:
                     - ca.example.com
     certbot:
-        build: 
+        build:
             context: .
             dockerfile: devscripts/files/Dockerfile.certbot
 
@@ -81,6 +80,6 @@ networks:
     dns:
         driver: bridge
         ipam:
-            config: 
+            config:
                 - subnet: "10.5.0.0/16"
                   gateway: "10.5.0.1"
