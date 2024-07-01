@@ -27,11 +27,8 @@ from devscripts.commands import DevCommand
 from devscripts.out import info, ok
 
 
-def run(
-    release: str, image: str, extra: str = ""
-) -> "subprocess.CompletedProcess[Any]":
+def run(release: str, image: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
     """Actually run a given wheel test."""
-    docker_pip_cache = "/tmp/cache"
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
     command = "devscripts/standalone/test-imports.py"
 
@@ -42,7 +39,7 @@ def run(
     commands = [
         "python -m venv /tmp/venv",
         # NOTE: We require at least setuptools>=68.1 for reading package configuration from pyproject.toml
-        f"/tmp/venv/bin/pip install -U pip 'setuptools>=68.1' wheel",
+        "/tmp/venv/bin/pip install -U pip 'setuptools>=68.1' wheel",
         f"/tmp/venv/bin/pip install {wheel}",
         f"/tmp/venv/bin/python {command}",
     ]
