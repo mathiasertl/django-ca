@@ -27,7 +27,9 @@ from devscripts.commands import DevCommand
 from devscripts.out import info, ok
 
 
-def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
+def run(
+    release: str, image: str, extra: str = ""
+) -> "subprocess.CompletedProcess[Any]":
     """Actually run a given wheel test."""
     docker_pip_cache = "/tmp/cache"
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
@@ -40,14 +42,12 @@ def run(release: str, image: str, pip_cache_dir: str, extra: str = "") -> "subpr
     commands = [
         "python -m venv /tmp/venv",
         # NOTE: We require at least setuptools>=68.1 for reading package configuration from pyproject.toml
-        f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} -U pip 'setuptools>=68.1'",
-        f"/tmp/venv/bin/pip install --cache-dir={docker_pip_cache} {wheel}",
+        f"/tmp/venv/bin/pip install -U pip 'setuptools>=68.1' wheel",
+        f"/tmp/venv/bin/pip install {wheel}",
         f"/tmp/venv/bin/python {command}",
     ]
 
     return utils.docker_run(
-        "-v",
-        f"{pip_cache_dir}:{docker_pip_cache}",
         f"--user={os.getuid()}:{os.getgid()}",
         "--rm",
         image,
@@ -67,7 +67,10 @@ class Command(DevCommand):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.pyproject_toml = read_configuration(config.ROOT_DIR / "pyproject.toml")
-        self.extra_choices = ["none", *list(self.pyproject_toml["project"]["optional-dependencies"])]
+        self.extra_choices = [
+            "none",
+            *list(self.pyproject_toml["project"]["optional-dependencies"]),
+        ]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -90,11 +93,6 @@ class Command(DevCommand):
         info("Testing Python wheel...")
         release = self.django_ca.__version__
         client = self.docker.from_env()
-
-        # get pip  cache dir in image
-        host_pip_cache = subprocess.run(
-            ["pip", "cache", "dir"], check=True, capture_output=True, text=True
-        ).stdout.strip()
 
         python_versions = args.python
         if not python_versions:
@@ -120,11 +118,11 @@ class Command(DevCommand):
 
             if test_no_extras:
                 info("Test with no extras", indent="    ")
-                run(release, image.id, host_pip_cache)
+                run(release, image.id)
 
             for extra in extras:
                 info(f"Test extra: {extra}", indent="    ")
-                run(release, image.id, host_pip_cache, extra=extra)
+                run(release, image.id, extra=extra)
 
             time.sleep(1)
             image.remove(force=True)
