@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone as tz
+from datetime import datetime, timedelta
 from typing import Any, Generic, Optional, TypeVar, Union
 
 from pydantic import BaseModel
@@ -28,7 +28,6 @@ from django.urls import reverse
 
 from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.deprecation import RemovedInDjangoCA200Warning, deprecate_type
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.key_backends.base import KeyBackend
 from django_ca.modelfields import LazyCertificateSigningRequest
@@ -205,7 +204,6 @@ class CertificateAuthorityManager(
             ),
         )
 
-    @deprecate_type("expires", (int, timedelta), RemovedInDjangoCA200Warning)
     def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
@@ -354,15 +352,9 @@ class CertificateAuthorityManager(
         # NOTE: Already verified by the caller, so this is only for when the Python API is used directly.
         algorithm = validate_public_key_parameters(key_type, algorithm)
 
-        if isinstance(expires, timedelta):  # pragma: only django-ca<2.0  # deprecated
-            now = datetime.now(tz=tz.utc).replace(microsecond=0, second=0)
-            expires = now + expires
-        elif isinstance(expires, int):  # pragma: only django-ca<2.0  # deprecated
-            now = datetime.now(tz=tz.utc).replace(microsecond=0, second=0)
-            expires = now + timedelta(days=expires)
-        elif not isinstance(expires, datetime):
+        if not isinstance(expires, datetime):
             raise TypeError(f"{expires}: expires must be a datetime.")
-        elif expires.utcoffset() is None:
+        if expires.utcoffset() is None:
             raise ValueError("expires must not be a naive datetime.")
 
         # Append OpenSSH extensions if an OpenSSH CA was requested

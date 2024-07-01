@@ -24,30 +24,30 @@ from typing import Any, Union
 F = typing.TypeVar("F", bound=typing.Callable[..., Any])
 
 
-class RemovedInDjangoCA200Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==2.0."""
-
-    version = "2.0"
-
-
 class RemovedInDjangoCA210Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==2.1."""
+    """Warning if a feature will be removed in django-ca~=2.1.0."""
 
     version = "2.1"
 
 
 class RemovedInDjangoCA220Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca==2.2."""
+    """Warning if a feature will be removed in django-ca~=2.2.0."""
 
     version = "2.2"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA200Warning
+class RemovedInDjangoCA230Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca~=2.3.0."""
+
+    version = "2.3"
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA210Warning
 
 DeprecationWarningType = Union[
-    type[RemovedInDjangoCA200Warning],
     type[RemovedInDjangoCA210Warning],
     type[RemovedInDjangoCA220Warning],
+    type[RemovedInDjangoCA230Warning],
 ]
 
 

@@ -191,9 +191,6 @@ def test_hash_algorithm_names() -> None:
 def test_name_oid_names_completeness() -> None:
     """Test that we support all NameOID instances."""
     known_oids = [v for v in vars(x509.NameOID).values() if isinstance(v, x509.ObjectIdentifier)]
-    organization_id = x509.ObjectIdentifier("2.5.4.97")
-    if organization_id not in known_oids:  # pragma: only cryptography<42.0
-        known_oids.append(organization_id)
     assert sorted(known_oids, key=oid_sorter) == sorted(constants.NAME_OID_NAMES, key=oid_sorter)
 
 

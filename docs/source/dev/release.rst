@@ -113,6 +113,7 @@ After a release
 ***************
 
 * Update version in ``ca/django_ca/__init__.py``.
+* Start new changelog entry in ``docs/source/changelog/``.
 * Update :file:`ca/django_ca/deprecation.py` and remove code marked by such warnings.
 * Search for deprecation comments that could be removed::
 
@@ -125,4 +126,3 @@ After a release
       $ grep -r '# pragma:' ca/ docs/source/ devscripts/ *.py
 
 * Update :file:`docker-compose.yml` to use the ``latest`` version of **django-ca**.
-* Start new changelog entry in :file:`docs/source/changelog.rst`.

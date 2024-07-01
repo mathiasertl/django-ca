@@ -13,7 +13,6 @@
 
 """Module for handling certificate profiles."""
 
-import warnings
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta, timezone as tz
 from threading import local
@@ -34,8 +33,6 @@ from django_ca.constants import (
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     HASH_ALGORITHM_NAMES,
 )
-from django_ca.deprecation import RemovedInDjangoCA200Warning, deprecate_type
-from django_ca.extensions import parse_extension
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.pydantic.extensions import (
     CertificateExtension,
@@ -55,7 +52,7 @@ from django_ca.typehints import (
     SerializedProfile,
     SerializedPydanticName,
 )
-from django_ca.utils import merge_x509_names, x509_name
+from django_ca.utils import merge_x509_names
 
 if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -82,7 +79,6 @@ class Profile:
     expires: timedelta
     extensions: dict[x509.ObjectIdentifier, Optional[ConfigurableExtension]]
 
-    @deprecate_type("expires", int, RemovedInDjangoCA200Warning)
     def __init__(  # noqa: PLR0913
         self,
         name: str,
@@ -108,16 +104,8 @@ class Profile:
             self.subject: Optional[x509.Name] = model_settings.CA_DEFAULT_SUBJECT
         elif subject is False:
             self.subject = None
-        elif isinstance(subject, x509.Name):
-            self.subject = subject
         else:
-            warnings.warn(
-                f"{subject}: Support for passing a value of type {subject.__class__} is deprecated and will "
-                "be removed in django-ca 2.0.",
-                RemovedInDjangoCA200Warning,
-                stacklevel=2,
-            )
-            self.subject = x509_name(subject)
+            self.subject = subject
 
         if algorithm is not None:
             try:
@@ -127,8 +115,6 @@ class Profile:
 
         if expires is None:
             self.expires = model_settings.CA_DEFAULT_EXPIRES
-        elif isinstance(expires, int):  # pragma: only django-ca<2.0  # removed in 2.0
-            self.expires = timedelta(days=expires)
         else:
             self.expires = expires
 
@@ -156,20 +142,11 @@ class Profile:
                 # None value explicitly deactivates/unsets an extension in the admin interface
                 self.extensions[constants.CONFIGURABLE_EXTENSION_KEY_OIDS[key]] = None
             elif isinstance(extension, dict):
-                try:
-                    parsed_model = cast(
-                        ExtensionModel[ConfigurableExtensionType],
-                        CertificateExtension.validate_python({**extension, "type": key}),
-                    )
-                    parsed_extension = parsed_model.cryptography
-                except ValueError:
-                    # TYPEHINT NOTE: constructor already uses new format in typehints
-                    parsed_extension = parse_extension(key, extension)  # type: ignore[arg-type,assignment]
-                    warnings.warn(
-                        f"{name}: {key}: Deprecated extension format (value: {extension}).",
-                        RemovedInDjangoCA200Warning,
-                        stacklevel=2,
-                    )
+                parsed_model = cast(
+                    ExtensionModel[ConfigurableExtensionType],
+                    CertificateExtension.validate_python({**extension, "type": key}),
+                )
+                parsed_extension = parsed_model.cryptography
                 self.extensions[parsed_extension.oid] = cast(ConfigurableExtension, parsed_extension)
             else:
                 raise TypeError(f"Profile {name}, extension {key}: {extension}: Unsupported type")
@@ -205,7 +182,6 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    @deprecate_type("expires", int, RemovedInDjangoCA200Warning)
     def create_cert(  # noqa: PLR0913
         self,
         ca: "CertificateAuthority",
@@ -334,8 +310,6 @@ class Profile:
         now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
         if isinstance(expires, timedelta):
             expires = now + expires
-        elif isinstance(expires, int):  # pragma: only django-ca<2.0  # removed in 2.0
-            expires = now + timedelta(days=expires)
         elif expires is None:
             expires = now + self.expires
         # else: it's a datetime

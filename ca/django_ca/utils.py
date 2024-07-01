@@ -14,13 +14,11 @@
 """Reusable utility functions used throughout django-ca."""
 
 import binascii
-import os
 import re
 import shlex
 import typing
-import warnings
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone as tz
+from datetime import datetime, timezone as tz
 from ipaddress import ip_address, ip_network
 from typing import Optional, Union
 
@@ -35,14 +33,12 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
-from django.conf import global_settings, settings
-from django.core.files.storage import InvalidStorageError, Storage, storages
+from django.core.files.storage import Storage, storages
 from django.utils import timezone
 
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA200Warning, deprecate_function, deprecate_type
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
@@ -841,7 +837,6 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
     return x509.DNSName(dns_validator(name))  # validator may raise ValueError itself
 
 
-@deprecate_type("value", Encoding, RemovedInDjangoCA200Warning)
 def parse_encoding(value: str) -> Encoding:
     """Parse a value to a valid encoding.
 
@@ -857,72 +852,13 @@ def parse_encoding(value: str) -> Encoding:
         >>> parse_encoding("ASN1")
         <Encoding.DER: 'DER'>
     """
-    if isinstance(value, Encoding):
-        return value
-    if isinstance(value, str):
-        if value == "ASN1":
-            value = "DER"
+    if value == "ASN1":
+        value = "DER"
 
-        try:
-            return Encoding[value]
-        except KeyError as e:
-            raise ValueError(f"Unknown encoding: {value}") from e
-
-    raise ValueError(f"Unknown type passed: {type(value).__name__}")
-
-
-@deprecate_function(RemovedInDjangoCA200Warning)
-def parse_expires(expires: Optional[Union[int, datetime, timedelta]] = None) -> datetime:
-    """Parse a value specifying an expiry into a concrete datetime.
-
-    This function always returns a timezone-aware datetime object with UTC as a timezone.
-    """
-    now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
-
-    if isinstance(expires, int):
-        return now + timedelta(days=expires)
-    if isinstance(expires, timedelta):
-        return now + expires
-    if isinstance(expires, datetime):
-        if timezone.is_naive(expires):
-            # Should never happen, as all callers of this function already pass a tz-aware timestamp.
-            raise ValueError("expires must not be a naive datetime")
-
-        # NOTE: A datetime is passed when creating an intermediate CA and the expiry is limited by the expiry
-        # of the parent CA.
-        return expires.replace(second=0, microsecond=0).astimezone(tz.utc)
-
-    return now + model_settings.CA_DEFAULT_EXPIRES
-
-
-@deprecate_function(RemovedInDjangoCA200Warning)
-def parse_key_curve(value: str) -> ec.EllipticCurve:
-    """Parse a string an :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
-
-    .. deprecated:: 1.29.0
-
-       This function is no longer used internally and will be removed in django-ca 2.0.0.
-
-    Parameters
-    ----------
-    value : str
-        The name of the curve (case-insensitive).
-
-    Returns
-    -------
-    curve
-        An :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instance.
-
-    Raises
-    ------
-    ValueError
-        If the named curve is not supported.
-    """
     try:
-        curves = {k.lower(): v for k, v in constants.ELLIPTIC_CURVE_TYPES.items()}
-        return curves[value.strip().lower()]()
-    except KeyError as ex:
-        raise ValueError(f"{value}: Not a known Elliptic Curve") from ex
+        return Encoding[value]
+    except KeyError as e:
+        raise ValueError(f"Unknown encoding: {value}") from e
 
 
 def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:
@@ -965,37 +901,12 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
 
 def get_storage() -> Storage:
     """Get the django-ca storage class."""
-    try:
-        return storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
-    except InvalidStorageError:
-        warnings.warn(
-            "Support for CA_FILE_STORAGE is deprecated and will be removed in django-ca==2.0.",
-            RemovedInDjangoCA200Warning,
-            stacklevel=2,
-        )
-
-        # Lazy import as this function is removed in Django 5.0.
-        # pylint: disable-next=import-outside-toplevel
-        from django.core.files.storage import get_storage_class
-
-        ca_file_storage = getattr(settings, "CA_FILE_STORAGE", global_settings.DEFAULT_FILE_STORAGE)
-        ca_file_storage_kwargs = getattr(
-            settings,
-            "CA_FILE_STORAGE_KWARGS",
-            {
-                "location": getattr(settings, "CA_DIR", os.path.join(settings.BASE_DIR, "files")),
-                "file_permissions_mode": 0o600,
-                "directory_permissions_mode": 0o700,
-            },
-        )
-
-        ca_storage_cls = get_storage_class(ca_file_storage)
-        return ca_storage_cls(**ca_file_storage_kwargs)
+    return storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
 
 
 def read_file(path: str) -> bytes:
     """Read the file from the given path."""
-    storage = get_storage()
+    storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
     stream = storage.open(path)
 
     try:

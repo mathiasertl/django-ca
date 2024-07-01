@@ -15,7 +15,7 @@
 
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -41,7 +41,6 @@ from django_ca.tests.base.assertions import (
     assert_create_cert_signals,
     assert_extensions,
     assert_improperly_configured,
-    assert_removed_in_200,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
@@ -445,37 +444,6 @@ def test_init_with_api_parameters(ca_name: str, subject: x509.Name, key_backend:
         )
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
-
-
-@pytest.mark.django_db
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-@pytest.mark.parametrize(
-    "expires,expected",
-    (
-        (3, TIMESTAMPS["everything_valid"] + timedelta(days=3)),
-        (timedelta(days=3), TIMESTAMPS["everything_valid"] + timedelta(days=3)),
-    ),
-)
-def test_init_with_deprecated_expires(
-    ca_name: str,
-    subject: x509.Name,
-    key_backend: StoragesBackend,
-    expires: Union[int, timedelta],
-    expected: datetime,
-) -> None:
-    """Test a deprecated expired type."""
-    name = type(expires).__name__
-    msg = rf"^Passing {name} for expires is deprecated and will be removed in django-ca 2.0.$"
-    with assert_create_ca_signals(), assert_removed_in_200(msg):
-        ca = CertificateAuthority.objects.init(
-            ca_name,
-            key_backend,
-            key_backend_options,
-            subject,
-            expires=expires,  # type: ignore[arg-type]  # what we're testing
-            api_enabled=True,
-        )
-    assert ca.expires == expected
 
 
 def test_init_with_expires_is_none(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:

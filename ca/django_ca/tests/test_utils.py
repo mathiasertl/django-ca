@@ -30,16 +30,13 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
-import django
 from django.test import TestCase, override_settings
 
 import pytest
 from freezegun import freeze_time
-from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import utils
 from django_ca.conf import model_settings
-from django_ca.tests.base.assertions import assert_removed_in_200
 from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.utils import cn, country, dns
@@ -49,10 +46,8 @@ from django_ca.utils import (
     format_general_name,
     generate_private_key,
     get_cert_builder,
-    get_storage,
     merge_x509_names,
     parse_encoding,
-    parse_key_curve,
     parse_serialized_name_attributes,
     read_file,
     serialize_name,
@@ -80,19 +75,6 @@ def test_read_file(tmpcadir: Path) -> None:
 
     assert read_file(name) == data
     assert read_file(path) == data
-
-
-@pytest.mark.skipif(django.VERSION >= (5, 1), reason="get_storage_class() is removed in Django 5.1")
-def test_deprecated_storage_configuration(settings: SettingsWrapper) -> None:
-    """Test that using a deprecated storage configuration emits a warning."""
-    settings.STORAGES = {
-        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-    }
-    with assert_removed_in_200(
-        r"^Support for CA_FILE_STORAGE is deprecated and will be removed in django-ca==2\.0\.$"
-    ):
-        get_storage()
 
 
 @pytest.mark.parametrize(
@@ -186,26 +168,6 @@ class SerializeName(TestCase):
 
 
 @pytest.mark.parametrize(
-    "value,expected", (("SECT409R1", ec.SECT409R1), ("sect409R1", ec.SECT409R1), ("SECP192R1", ec.SECP192R1))
-)
-def test_parse_key_curve(value: str, expected: type[ec.EllipticCurve]) -> None:
-    """Some basic tests for parse_key_curve()."""
-    msg = r"^parse_key_curve\(\) is deprecated and will be removed in django-ca 2\.0\.$"
-    with assert_removed_in_200(msg):
-        assert isinstance(parse_key_curve(value), expected)
-
-
-def test_parse_key_curve_error() -> None:
-    """Test some error cases  for parse_key_curve()."""
-    msg = r"^parse_key_curve\(\) is deprecated and will be removed in django-ca 2\.0\.$"
-    with pytest.raises(ValueError, match=r"^FOOBAR: Not a known Elliptic Curve$"), assert_removed_in_200(msg):
-        parse_key_curve("FOOBAR")
-
-    with pytest.raises(ValueError, match=r"^ECDH: Not a known Elliptic Curve$"), assert_removed_in_200(msg):
-        parse_key_curve("ECDH")  # present in the module, but *not* an EllipticCurve
-
-
-@pytest.mark.parametrize(
     "value,expected",
     (
         ("PEM", Encoding.PEM),
@@ -219,21 +181,10 @@ def test_parse_encoding(value: Any, expected: Encoding) -> None:
     assert parse_encoding(value) == expected
 
 
-@pytest.mark.parametrize("value", (Encoding.PEM, Encoding.DER))
-def test_parse_encoding_with_deprecated_values(value: Encoding) -> None:
-    """Test parsing encodings with raw Encodings."""
-    message = r"^Passing Encoding for value is deprecated and will be removed in django-ca 2\.0\.$"
-    with assert_removed_in_200(message):
-        assert parse_encoding(value) == value  # type: ignore[arg-type]  # what we test
-
-
-def test_parse_encoding_with_invalid_values() -> None:
+def test_parse_encoding_with_invalid_value() -> None:
     """Test some error cases."""
     with pytest.raises(ValueError, match="^Unknown encoding: foo$"):
         parse_encoding("foo")
-
-    with pytest.raises(ValueError, match="^Unknown type passed: bool$"):
-        parse_encoding(True)  # type: ignore[arg-type]  # what we're testing
 
 
 class AddColonsTestCase(TestCase):

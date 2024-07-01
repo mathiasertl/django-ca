@@ -11,12 +11,11 @@ python = ["3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["4.2", "5.0"]
 cryptography = ["42"]
-acme = ["2.9", "2.10", "2.11"]
-pydantic = ["2.5", "2.6", "2.7"]
+acme = ["2.10", "2.11"]
+pydantic = ["2.6", "2.7"]
 
 # https://alpinelinux.org/releases/
 alpine = [
-    "3.17",  # until 2024-11-22
     "3.18",  # until 2025-05-09
     "3.19",  # until 2025-11-01
     "3.20",  # until 2026-04-01
@@ -28,7 +27,6 @@ docker-image-blacklist = [
     "python:3.9-alpine3.20",
     "python:3.9-alpine3.19",
     "python:3.9-alpine3.18",
-    "python:3.9-alpine3.17",
 ]
 
 # List of tested Debian releases:
@@ -110,7 +108,7 @@ dynamic = ["version", "readme"]
 requires-python = ">=3.9"
 dependencies = [
     "Django>=4.2",
-    "acme>=2.9",
+    "acme>=2.10",
     "asn1crypto>=1.5",
     "cryptography>=42",
     "django-object-actions>=4.0.0",
@@ -118,13 +116,13 @@ dependencies = [
     "idna>=3.4",
     "josepy>=1.13.0",
     "packaging",
-    "pydantic>=2.5",
+    "pydantic>=2.6",
     "requests",
 ]
 
 [project.optional-dependencies]
 api = ["django-ninja>=1.1"]
-celery = ["celery>=5.3"]
+celery = ["celery>=5.4"]
 mysql = ["mysqlclient"]
 postgres = ["psycopg[c,pool]>=3.1"]
 # remove psycopg3 in django-ca==2.0, also update docs/source/include/pip-extras.rst
