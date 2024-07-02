@@ -34,3 +34,9 @@ Python API
 
 * :py:func:`~django_ca.profiles.Profile.create_cert` no longer accepts ``int`` for expires. Pass a
   ``timedelta`` instead.
+
+*******************
+Deprecation notices
+*******************
+
+* ``django_ca.utils.get_storage()`` will be removed in 2.2.0.

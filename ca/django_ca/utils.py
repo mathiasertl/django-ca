@@ -39,6 +39,7 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
+from django_ca.deprecation import RemovedInDjangoCA220Warning, deprecate_function
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
@@ -899,8 +900,14 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
     return builder
 
 
-def get_storage() -> Storage:
-    """Get the django-ca storage class."""
+@deprecate_function(RemovedInDjangoCA220Warning)  # deprecated in 2.0.
+def get_storage() -> Storage:  # pragma: no cover
+    """Get the django-ca storage class.
+
+    .. deprecated:: 2.0
+
+       Use ``storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]`` instead.
+    """
     return storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
 
 

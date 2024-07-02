@@ -42,6 +42,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.core.files.storage import storages
 from django.core.validators import MinValueValidator, URLValidator
 from django.db import models
 from django.http import HttpRequest
@@ -100,7 +101,6 @@ from django_ca.utils import (
     bytes_to_hex,
     generate_private_key,
     get_crl_cache_key,
-    get_storage,
     int_to_hex,
     read_file,
     validate_private_key_parameters,
@@ -918,7 +918,7 @@ class CertificateAuthority(X509CertMixin):
             format=PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
-        storage = get_storage()
+        storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
         private_path = storage.generate_filename(f"ocsp/{safe_serial}.key")
 
         if isinstance(private_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey)):

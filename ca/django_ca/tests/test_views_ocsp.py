@@ -37,6 +37,7 @@ from django.urls import path, re_path, reverse
 
 from freezegun import freeze_time
 
+from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate
@@ -45,7 +46,7 @@ from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DI
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import override_tmpcadir
-from django_ca.utils import get_storage, hex_to_bytes
+from django_ca.utils import hex_to_bytes
 from django_ca.views import OCSPView
 
 
@@ -707,7 +708,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         private_key, ocsp_cert = self.generate_ocsp_key(self.ca)
 
         # Overwrite key with PEM format
-        storage = get_storage()
+        storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
         private_path = storage.generate_filename(f"ocsp/{self.ca.serial.replace(':', '')}.key")
         pem_private_key = private_key.private_bytes(
             Encoding.PEM,
@@ -782,7 +783,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         private_key, ocsp_cert = self.generate_ocsp_key(self.ca)
 
         # Overwrite key with PEM format
-        storage = get_storage()
+        storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
         private_path = storage.generate_filename(f"ocsp/{self.ca.serial.replace(':', '')}.key")
         with storage.open(private_path, "wb") as stream:
             stream.write(b"bogus")
