@@ -51,6 +51,7 @@ from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import constants
+from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
 from django_ca.deprecation import RemovedInDjangoCA210Warning
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.typehints import CertificateRevocationListEncodings
@@ -135,12 +136,12 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:  # pylint: disable=unused-argument
         # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
-            # TYPEHINT NOTE: type is verified in next line
-            encoding = cast(CertificateRevocationListEncodings, parse_encoding(get_encoding))
-            if encoding not in constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES:
+            if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
                 return HttpResponseBadRequest(
                     f"{get_encoding}: Invalid encoding requested.", content_type="text/plain"
                 )
+            # TYPEHINT NOTE: type is verified in the previous line
+            encoding = cast(CertificateRevocationListEncodings, parse_encoding(get_encoding))
         else:
             encoding = self.type
 
