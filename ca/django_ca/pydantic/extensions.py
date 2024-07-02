@@ -1021,7 +1021,7 @@ CertificateExtensionModel = Annotated[
 ]
 
 ConfigurableExtensionModelList = TypeAdapter(list[ConfigurableExtensionModel])
-CertificateExtension = TypeAdapter(CertificateExtensionModel)
+CertificateExtension: TypeAdapter[CertificateExtensionModel] = TypeAdapter(CertificateExtensionModel)
 CertificateExtensionModelList = TypeAdapter(list[CertificateExtensionModel])
 
 ExtensionModelTypeVar = TypeVar("ExtensionModelTypeVar", bound=ExtensionModel[Any])
