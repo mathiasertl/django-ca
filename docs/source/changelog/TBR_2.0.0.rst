@@ -6,6 +6,8 @@
 Command-line utilities
 **********************
 
+* Subjects are now parsed in the RFC 4514 format by default. Subjects in the OpenSSL-style format are still
+  supported via the ``--subject-format=openssl`` option, but support for it will be removed in 2.0.0.
 * Removed the ``convert_timestamps`` command (deprecated since 1.28.0).
 
 ************
@@ -26,7 +28,8 @@ Python API
 * :py:class:`~django_ca.profiles.Profile` no longer accepts unparsed extension values:
 
   * An ``int`` for `expires` - pass a ``timedelta`` instead.
-  * A ``str`` or iterable of str-tuples for `subject` - pass a :py:class:`~cryptography.x509.Name` instead.
+  * A ``str`` or iterable of ``str``-tuples for `subject` - pass a :py:class:`~cryptography.x509.Name`
+    instead.
   * Deprecated extensions formats in `extensions`.
 
   Note that this does not affect configuration in settings, as these values are parsed before passed to this

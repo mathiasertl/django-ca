@@ -407,12 +407,11 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         parser.add_argument(
             "--subject-format",
             choices=("openssl", "rfc4514"),
-            default="openssl",
+            default="rfc4514",
             help='Format for parsing the subject. Use "openssl" (the default before django-ca 2.0) to pass '
             'slash-separated subjects (e.g. "/C=AT/O=Org/CN=example.com") and "rfc4514" to pass RFC 4514 '
-            'conforming strings (e.g. "C=AT,O=Org,CN=example.com"). The default is %(default)s, but will '
-            "switch to rfc4514 in django-ca 2.0. Support for openssl-style strings will be removed in "
-            "django-ca 2.2.",
+            'conforming strings (e.g. "C=AT,O=Org,CN=example.com"). The default is %(default)s, support for '
+            "openssl-style strings will be removed in django-ca 2.2.",
         )
 
     def parse_x509_name(self, value: str, name_format: SubjectFormats) -> x509.Name:

@@ -1172,7 +1172,9 @@ def test_deprecated_subject_format(hostname: str, ca_name: str) -> None:
     stderr = io.StringIO()
 
     with assert_create_ca_signals():
-        out, err = cmd("init_ca", ca_name, f"/CN={hostname}", stdout=stdout, stderr=stderr)
+        out, err = cmd(
+            "init_ca", ca_name, f"/CN={hostname}", subject_format="openssl", stdout=stdout, stderr=stderr
+        )
     assert out == ""
     # message is too long, just make sure it's there:
     assert f"WARNING: /CN={hostname}: openssl-style format is deprecated" in err
