@@ -506,7 +506,7 @@ def subject_key_identifier(
     cert: Union[X509CertMixin, x509.Certificate],
 ) -> x509.Extension[x509.SubjectKeyIdentifier]:
     """Shortcut for getting a SubjectKeyIdentifier extension."""
-    if isinstance(cert, X509CertMixin):
+    if isinstance(cert, X509CertMixin):  # pragma: no branch - usually full certificate is passed.
         cert = cert.pub.loaded
 
     ski = x509.SubjectKeyIdentifier.from_public_key(cert.public_key())
