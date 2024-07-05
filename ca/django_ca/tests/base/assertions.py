@@ -30,7 +30,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management import CommandError
 
 import pytest
@@ -40,7 +40,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA220Warning
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
-from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca, pre_sign_cert
+from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -122,23 +122,27 @@ def assert_ca_properties(
 
 
 def assert_certificate(
-    cert: Union[Certificate, CertificateAuthority],
+    cert: Union[x509.Certificate, CertificateAuthority, Certificate],
     subject: x509.Name,
     algorithm: type[hashes.HashAlgorithm] = hashes.SHA512,
-    parent: Optional[CertificateAuthority] = None,
+    signer: Optional[Union[CertificateAuthority, x509.Certificate]] = None,
 ) -> None:
     """Assert certificate properties."""
-    if isinstance(cert, Certificate):  # pragma: no cover  # pylint: disable=no-else-raise
-        parent = cert.ca
-        raise NotImplementedError("Remove no-cover pragma if this is caught.")
-    elif parent is None:
-        parent = cert
-    else:
-        parent = cert.parent
-    assert cert.pub.loaded.version == x509.Version.v3
-    assert cert.issuer == parent.subject  # type: ignore[union-attr]
+    if isinstance(cert, CertificateAuthority):
+        if cert.parent is not None:
+            signer = cert.parent
+        cert = cert.pub.loaded
+    elif isinstance(cert, Certificate):  # pragma: no cover  # not used, currently
+        signer = cert.ca
+        cert = cert.pub.loaded
+
+    if signer is None:
+        signer = cert
+
+    assert cert.version == x509.Version.v3
+    assert cert.issuer == signer.subject
     assert cert.subject == subject
-    assert isinstance(cert.algorithm, algorithm)
+    assert isinstance(cert.signature_hash_algorithm, algorithm)
 
 
 @contextmanager
@@ -177,7 +181,7 @@ def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[
 
 
 def assert_crl(  # noqa: PLR0913
-    crl: bytes,
+    crl: Union[bytes, x509.CertificateRevocationList],
     expected: Optional[typing.Sequence[X509CertMixin]] = None,
     signer: Optional[CertificateAuthority] = None,
     expires: int = 86400,
@@ -221,7 +225,9 @@ def assert_crl(  # noqa: PLR0913
         )
     )
 
-    if encoding == Encoding.PEM:
+    if isinstance(crl, x509.CertificateRevocationList):
+        parsed_crl = crl
+    elif encoding == Encoding.PEM:
         parsed_crl = x509.load_pem_x509_crl(crl)
     else:
         parsed_crl = x509.load_der_x509_crl(crl)
@@ -386,6 +392,17 @@ def assert_revoked(
         assert cert.revoked_reason == reason
 
 
+@contextmanager
+def assert_sign_cert_signals(pre: bool = True, post: bool = True) -> Iterator[tuple[Mock, Mock]]:
+    """Context manager mocking both ``pre_create_ca`` and ``post_create_ca`` signals."""
+    with mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_sign_cert) as post_sig:
+        try:
+            yield pre_sig, post_sig
+        finally:
+            assert pre_sig.called is pre
+            assert post_sig.called is post
+
+
 def assert_signature(
     chain: Iterable[CertificateAuthority], cert: Union[Certificate, CertificateAuthority]
 ) -> None:
@@ -425,3 +442,11 @@ def assert_removed_in_220(match: Optional[Union[str, "re.Pattern[str]"]] = None)
     """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
     with pytest.warns(RemovedInDjangoCA220Warning, match=match):
         yield
+
+
+@contextmanager
+def assert_validation_error(errors: dict[str, list[str]]) -> Iterator[None]:
+    """Context manager to assert that a ValidationError is thrown."""
+    with pytest.raises(ValidationError) as excinfo:
+        yield
+    assert excinfo.value.message_dict == errors

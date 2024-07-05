@@ -31,7 +31,6 @@ from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
@@ -39,10 +38,9 @@ from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
 from django_ca.models import Certificate, CertificateAuthority, DjangoCAModel, X509CertMixin
-from django_ca.signals import post_revoke_cert, post_sign_cert, pre_sign_cert
+from django_ca.signals import post_revoke_cert
 from django_ca.tests.admin.assertions import assert_change_response, assert_changelist_response
 from django_ca.tests.base.constants import CERT_DATA
-from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
 
 if typing.TYPE_CHECKING:
@@ -154,18 +152,6 @@ class TestCaseMixin(TestCaseProtocol):
             name = f"django_ca{name}"
         return f"http://{hostname}{reverse(name, kwargs=kwargs)}"
 
-    @contextmanager
-    def assertSignCertSignals(  # pylint: disable=invalid-name
-        self, pre: bool = True, post: bool = True
-    ) -> Iterator[tuple[mock.Mock, mock.Mock]]:
-        """Context manager mocking both pre and post_create_ca signals."""
-        with mock_signal(pre_sign_cert) as pre_sig, mock_signal(post_sign_cert) as post_sig:
-            try:
-                yield pre_sig, post_sig
-            finally:
-                self.assertTrue(pre_sig.called is pre)
-                self.assertTrue(post_sig.called is post)
-
     def assertAuthorityInformationAccessEqual(  # pylint: disable=invalid-name
         self,
         first: x509.AuthorityInformationAccess,
@@ -259,15 +245,6 @@ class TestCaseMixin(TestCaseProtocol):
     def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    @contextmanager
-    def assertValidationError(  # pylint: disable=invalid-name; unittest standard
-        self, errors: dict[str, list[str]]
-    ) -> Iterator[None]:
-        """Context manager to assert that a ValidationError is thrown."""
-        with self.assertRaises(ValidationError) as cmex:
-            yield
-        self.assertEqual(cmex.exception.message_dict, errors)
 
     def crl_distribution_points(
         self,
@@ -433,7 +410,7 @@ class TestCaseMixin(TestCaseProtocol):
     def usable_cas(self) -> Iterator[tuple[str, CertificateAuthority]]:
         """Yield loaded generated certificates."""
         for name, ca in self.cas.items():
-            if CERT_DATA[name]["key_filename"]:
+            if CERT_DATA[name]["key_filename"]:  # pragma: no branch
                 yield name, ca
 
 

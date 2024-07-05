@@ -144,7 +144,7 @@ def test_init_intermediate(
             use_parent_private_key_options=parent_key_backend_options,
         )
     assert_ca_properties(ca, ca_name, parent=usable_root)
-    assert_certificate(ca, subject, parent=usable_root)
+    assert_certificate(ca, subject, signer=usable_root)
     assert_intermediate_extensions(usable_root, ca)
 
 
@@ -163,7 +163,7 @@ def test_init_grandchild(
             use_parent_private_key_options=parent_key_backend_options,
         )
     assert_ca_properties(ca, ca_name, parent=usable_child)
-    assert_certificate(ca, subject, parent=usable_child)
+    assert_certificate(ca, subject, signer=usable_child)
     assert_intermediate_extensions(usable_child, ca)
 
 
@@ -395,7 +395,7 @@ def test_init_with_formatting_with_rdn_in_crldp(
             extensions=passed_extensions,
         )
     assert_ca_properties(ca, ca_name, parent=usable_root)
-    assert_certificate(ca, subject, parent=usable_root)
+    assert_certificate(ca, subject, signer=usable_root)
     assert ca.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crldp
 
 
