@@ -5,7 +5,7 @@ asgiref==3.8.1
 asn1crypto==1.5.1
 billiard==4.2.0
 celery==5.4.0
-certifi==2024.6.2
+certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
