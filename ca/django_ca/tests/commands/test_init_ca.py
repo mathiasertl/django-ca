@@ -1142,8 +1142,8 @@ def test_key_not_power_of_two(ca_name: str) -> None:
 def test_multiple_validation_errors(ca_name: str) -> None:
     """Test case where multiple validation errors are thrown."""
     msg = r"""2 errors:
-\* password: Input should be a valid bytes
-\* key_size: Input should be a valid integer, unable to parse string as an integer"""
+\* key_size: Input should be a valid integer, unable to parse string as an integer
+\* password: Input should be a valid bytes"""
     with assert_command_error(msg), assert_create_ca_signals(False, False):
         init_ca(ca_name, key_size="not-an-int", password=123)
 
