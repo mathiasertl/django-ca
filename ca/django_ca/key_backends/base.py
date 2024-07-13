@@ -18,9 +18,9 @@ import typing
 from collections.abc import Iterator, Sequence
 from datetime import datetime
 from threading import local
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -34,6 +34,7 @@ from django.core.management import CommandParser
 from django.utils.module_loading import import_string
 
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
+from django_ca.pydantic.type_aliases import PowerOfTwoInt
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
 
 if typing.TYPE_CHECKING:
@@ -45,6 +46,22 @@ Self = typing.TypeVar("Self", bound="KeyBackend[BaseModel,BaseModel,BaseModel]")
 CreatePrivateKeyOptionsTypeVar = typing.TypeVar("CreatePrivateKeyOptionsTypeVar", bound=BaseModel)
 UsePrivateKeyOptionsTypeVar = typing.TypeVar("UsePrivateKeyOptionsTypeVar", bound=BaseModel)
 StorePrivateKeyOptionsTypeVar = typing.TypeVar("StorePrivateKeyOptionsTypeVar", bound=BaseModel)
+
+
+class CreatePrivateKeyOptionsBaseModel(BaseModel):
+    """Base model for creating private keys that shares common fields and validators."""
+
+    key_type: ParsableKeyType
+    key_size: Optional[Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)]] = None
+
+    @model_validator(mode="after")
+    def validate_key_size(self) -> "typing.Self":
+        """Validate that the key size is not set for invalid key types."""
+        if self.key_type in ("RSA", "DSA") and self.key_size is None:
+            self.key_size = model_settings.CA_DEFAULT_KEY_SIZE
+        elif self.key_type not in ("RSA", "DSA") and self.key_size is not None:
+            raise ValueError(f"Key size is not supported for {self.key_type} keys.")
+        return self
 
 
 class KeyBackend(

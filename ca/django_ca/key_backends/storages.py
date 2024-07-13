@@ -17,7 +17,7 @@ import typing
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
@@ -42,9 +42,9 @@ from django.core.files.storage import storages
 
 from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.key_backends.base import KeyBackend
+from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel, KeyBackend
 from django_ca.management.actions import PasswordAction
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias, PowerOfTwoInt
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias
 from django_ca.typehints import (
     AllowedHashTypes,
     ArgumentGroup,
@@ -58,26 +58,15 @@ if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
-class CreatePrivateKeyOptions(BaseModel):
+class CreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
     """Options for initializing private keys."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    key_type: ParsableKeyType
     password: Optional[bytes]
     path: Path
-    key_size: Optional[Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)]] = None
     elliptic_curve: Optional[EllipticCurveTypeAlias] = None
-
-    @model_validator(mode="after")
-    def validate_key_size(self) -> "CreatePrivateKeyOptions":
-        """Validate that the key size is not set for invalid key types."""
-        if self.key_type in ("RSA", "DSA") and self.key_size is None:
-            self.key_size = model_settings.CA_DEFAULT_KEY_SIZE
-        elif self.key_type not in ("RSA", "DSA") and self.key_size is not None:
-            raise ValueError(f"Key size is not supported for {self.key_type} keys.")
-        return self
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "CreatePrivateKeyOptions":
