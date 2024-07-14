@@ -102,7 +102,7 @@ class UsePrivateKeyOptions(BaseModel):
         """Validator to load the password from CA_PASSWORDS if not given."""
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
-            if ca is not None:
+            if ca is not None:  # pragma: no branch  # ca is always set, this is just a precaution.
                 if settings_password := model_settings.CA_PASSWORDS.get(ca.serial):
                     return settings_password
 
@@ -225,7 +225,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         )
 
     def get_use_private_key_options(
-        self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
+        self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
             {"password": options.get(f"{self.options_prefix}password")}, context={"ca": ca}, strict=True
@@ -271,6 +271,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self,
         ca: "CertificateAuthority",
         key: CertificateIssuerPrivateKeyTypes,
+        certificate: x509.Certificate,
         options: StorePrivateKeyOptions,
     ) -> None:
         storage = storages[self.storage_alias]

@@ -574,6 +574,18 @@ PUBLIC_KEY_TYPES: tuple[type[CertificateIssuerPublicKeyTypes], ...] = (
     ed448.Ed448PublicKey,
     rsa.RSAPublicKey,
 )
+PUBLIC_KEY_TYPE_MAPPING: MappingProxyType[ParsableKeyType, type[CertificateIssuerPublicKeyTypes]] = (
+    MappingProxyType(
+        {
+            "DSA": dsa.DSAPublicKey,
+            "EC": ec.EllipticCurvePublicKey,
+            "Ed25519": ed25519.Ed25519PublicKey,
+            "Ed448": ed448.Ed448PublicKey,
+            "RSA": rsa.RSAPublicKey,
+        }
+    )
+)
+
 
 #: Tuple of supported private key types.
 PRIVATE_KEY_TYPES: tuple[type[CertificateIssuerPrivateKeyTypes], ...] = (

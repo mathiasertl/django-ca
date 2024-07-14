@@ -18,24 +18,31 @@ import re
 from datetime import timedelta
 from typing import Any, Optional
 from unittest import mock
+from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
+from django.conf import settings
 from django.core.cache import cache
+from django.core.management import CommandError
 from django.urls import reverse
 from django.utils import timezone
 
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
+from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends import key_backends
+from django_ca.key_backends.hsm import HSMBackend
+from django_ca.key_backends.hsm.models import HSMBackendUsePrivateKeyOptions
 from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
@@ -72,9 +79,12 @@ from django_ca.tests.base.utils import (
     subject_alternative_name,
     uri,
 )
+from django_ca.typehints import AllowedHashTypes, EllipticCurves, HashAlgorithms, ParsableKeyType
 from django_ca.utils import get_crl_cache_key
 
 use_options = UsePrivateKeyOptions(password=None)
+
+# pylint: disable=redefined-outer-name  # disabled because of fixtures
 
 
 def assert_post_create_ca(post: mock.Mock, ca: CertificateAuthority) -> None:
@@ -155,8 +165,8 @@ def init_ca_e2e(
 
     with assert_create_ca_signals() as (_pre, post):
         out, err = cmd_e2e(["init_ca", name, subject, *args])
-    assert out == ""
-    assert err == ""
+        assert out == ""
+        assert err == ""
 
     ca = CertificateAuthority.objects.get(name=name)
     assert_post_create_ca(post, ca)
@@ -1058,6 +1068,259 @@ def test_non_default_key_backend_with_ec_key(
     assert isinstance(key.curve, ec.SECT571R1)
 
 
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+@pytest.mark.parametrize("key_type", HSMBackend.supported_key_types)
+def test_softhsm_hsm_backend(
+    ca_name: str, rfc4514_subject: str, key_type: ParsableKeyType, subject: x509.Name
+) -> None:
+    """Basic test for creating a key in the HSM."""
+    ca = init_ca_e2e(
+        ca_name,
+        rfc4514_subject,
+        "--subject-format=rfc4514",
+        f"--key-type={key_type}",
+        "--key-backend=hsm",
+        f"--hsm-key-label={ca_name}",
+    )
+
+    assert ca.key_backend_alias == "hsm"
+    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_type == key_type
+    assert ca.key_backend_options["key_label"] == ca_name
+    assert ca.key_backend_options["key_type"] == key_type
+    assert isinstance(ca.pub.loaded, x509.Certificate)
+    assert isinstance(ca.pub.loaded.public_key(), constants.PUBLIC_KEY_TYPE_MAPPING[key_type])
+
+    # Sign a certificate to make sure that the key is actually usable
+    cert_data = CERT_DATA["root-cert"]
+    csr = cert_data["csr"]["parsed"]
+    cert = Certificate.objects.create_cert(
+        ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+    )
+    assert_signature([ca], cert)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+def test_softhsm_hsm_backend_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
+    """Basic test for creating a key in the HSM."""
+    assert settings.CA_MIN_KEY_SIZE == 1024  # assert initial state
+    ca = init_ca_e2e(
+        ca_name,
+        rfc4514_subject,
+        "--subject-format=rfc4514",
+        "--key-type=RSA",
+        "--key-backend=hsm",
+        f"--hsm-key-label={ca_name}",
+        "--key-size=2048",  # RSA specific option
+    )
+
+    assert ca.key_backend_alias == "hsm"
+    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_type == "RSA"
+    assert ca.key_backend_options["key_label"] == ca_name
+    assert ca.key_backend_options["key_type"] == "RSA"
+    assert isinstance(ca.pub.loaded, x509.Certificate)
+    public_key = ca.pub.loaded.public_key()
+    assert isinstance(public_key, RSAPublicKey)
+    assert public_key.key_size == 2048
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+@pytest.mark.parametrize("key_type", ("RSA", "EC"))
+@pytest.mark.parametrize("algorithm", HSMBackend.supported_hash_algorithms)
+def test_softhsm_hsm_backend_with_hash_algorithms(
+    ca_name: str, key_type: str, algorithm: HashAlgorithms, subject: x509.Name
+) -> None:
+    """Basic test for creating a key in the HSM."""
+    ca = init_ca(
+        ca_name,
+        key_type=key_type,
+        key_backend=key_backends["hsm"],
+        hsm_key_label=ca_name,
+        algorithm=constants.HASH_ALGORITHM_TYPES[algorithm](),
+    )
+
+    assert ca.key_backend_alias == "hsm"
+    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_type == key_type
+    assert isinstance(ca.pub.loaded.signature_hash_algorithm, constants.HASH_ALGORITHM_TYPES[algorithm])
+
+    # Sign a certificate to make sure that the key is actually usable
+    cert_data = CERT_DATA["root-cert"]
+    csr = cert_data["csr"]["parsed"]
+    cert = Certificate.objects.create_cert(
+        ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+    )
+    assert_signature([ca], cert)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+@pytest.mark.parametrize("ec_curve", HSMBackend.supported_elliptic_curves)
+def test_softhsm_hsm_backend_with_ec_options(ca_name: str, ec_curve: EllipticCurves) -> None:
+    """Basic test for creating a key in the HSM."""
+    ca = init_ca(
+        ca_name,
+        key_type="EC",
+        key_backend=key_backends["hsm"],
+        hsm_key_label=ca_name,
+        elliptic_curve=ec_curve,
+    )
+
+    assert ca.key_backend_alias == "hsm"
+    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_type == "EC"
+    assert ca.key_backend_options["key_label"] == ca_name
+    assert ca.key_backend_options["key_type"] == "EC"
+    assert isinstance(ca.pub.loaded, x509.Certificate)
+    public_key = ca.pub.loaded.public_key()
+    assert isinstance(public_key, EllipticCurvePublicKey)
+
+    # TYPEHINT NOTE: seems to be a false positive
+    assert public_key.key_size == constants.ELLIPTIC_CURVE_TYPES[ec_curve].key_size  # type: ignore[comparison-overlap]
+    assert public_key.curve.name == ec_curve
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+def test_softhsm_hsm_backend_with_child_ca(ca_name: str) -> None:
+    """Basic test for creating a key in the HSM."""
+    parent_name = f"{ca_name}_parent"
+    parent = init_ca(parent_name, key_backend=key_backends["hsm"], hsm_key_label=parent_name, path_length=1)
+
+    assert parent.key_backend_alias == "hsm"
+    assert parent.key_backend.is_usable(
+        parent, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
+    )
+    assert parent.key_type == "RSA"
+    assert parent.key_backend_options["key_label"] == parent_name
+    assert parent.key_backend_options["key_type"] == "RSA"
+    assert isinstance(parent.pub.loaded, x509.Certificate)
+    assert isinstance(parent.pub.loaded.public_key(), RSAPublicKey)
+
+    # Create a child CA in the HSM
+    child_name = f"{ca_name}_child"
+    child = init_ca(child_name, parent=parent, key_backend=key_backends["hsm"], hsm_key_label=child_name)
+    assert child.key_backend_alias == "hsm"
+    assert child.key_backend.is_usable(
+        child, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
+    )
+    assert child.key_type == "RSA"
+    assert child.key_backend_options["key_label"] == child_name
+    assert child.key_backend_options["key_type"] == "RSA"
+    assert isinstance(child.pub.loaded, x509.Certificate)
+    assert isinstance(child.pub.loaded.public_key(), RSAPublicKey)
+    assert child.parent == parent
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+def test_softhsm_hsm_backend_with_key_label_already_exists(ca_name: str) -> None:
+    """Basic test for creating a key in the HSM."""
+    init_ca(ca_name, key_backend=key_backends["hsm"], hsm_key_label=ca_name)
+    with assert_command_error(rf"^{ca_name}: Private key with this label already exists\.$"):
+        init_ca(ca_name, key_backend=key_backends["hsm"], hsm_key_label=ca_name)
+    assert CertificateAuthority.objects.all().count() == 1
+
+
+def test_hsm_backend_without_key_label(ca_name: str) -> None:
+    """Test error when --key-label option is missing."""
+    with assert_command_error(r"^--hsm-key-label is a required option for this key backend\.$"):
+        init_ca(name=ca_name, key_backend=key_backends["hsm"])
+
+
+def test_hsm_backend_with_both_pins(ca_name: str) -> None:
+    """Test error when --key-label option is missing."""
+    with assert_command_error(
+        r'^Both SO pin and user pin configured\. To override a pin from settings, pass --hsm-so-pin="" or '
+        r'--hsm-user-pin=""\.$'
+    ):
+        init_ca(
+            name=ca_name,
+            key_backend=key_backends["hsm"],
+            hsm_key_label=ca_name,
+            hsm_so_pin="so-pin",
+            hsm_user_pin="user-pin",
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+def test_softhsm_hsm_backend_with_both_parent_pins(ca_name: str) -> None:
+    """Test error when --key-label option is missing."""
+    parent_name = f"{ca_name}_parent"
+    parent = init_ca(parent_name, key_backend=key_backends["hsm"], hsm_key_label=parent_name, path_length=1)
+
+    with assert_command_error(
+        r"^Both SO pin and user pin configured\. To override a pin from settings, pass "
+        r'--hsm-parent-so-pin="" or --hsm-parent-user-pin=""\.$'
+    ):
+        init_ca(
+            name=ca_name,
+            parent=parent,
+            key_backend=key_backends["hsm"],
+            hsm_key_label=ca_name,
+            hsm_parent_so_pin="so-pin",
+            hsm_parent_user_pin="user-pin",
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+def test_softhsm_hsm_backend_with_no_parent_pins(ca_name: str) -> None:
+    """Test error when --key-label option is missing."""
+    parent_name = f"{ca_name}_parent"
+    parent = init_ca(parent_name, key_backend=key_backends["hsm"], hsm_key_label=parent_name, path_length=1)
+
+    with assert_command_error(
+        r"^No SO or user pin configured\. Use --hsm-parent-so-pin or --hsm-parent-user-pin to specify "
+        r"a pin\.$"
+    ):
+        init_ca(
+            name=ca_name,
+            parent=parent,
+            key_backend=key_backends["hsm"],
+            hsm_key_label=ca_name,
+            hsm_parent_so_pin="",
+            hsm_parent_user_pin="",
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.usefixtures("softhsm_token")
+@pytest.mark.parametrize(
+    "algorithm", (hashes.SHA3_224(), hashes.SHA3_256(), hashes.SHA3_384(), hashes.SHA3_512())
+)
+def test_softhsm_hsm_backend_with_rsa_with_unsupported_hash_algorithm(
+    ca_name: str, algorithm: AllowedHashTypes
+) -> None:
+    """Test error with unsupported SHA-3 hash algorithms."""
+    name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+    msg = rf"^{name}: Algorithm not supported by hsm key backend\.$"
+    assert CertificateAuthority.objects.count() == 0
+    with assert_command_error(msg), assert_create_ca_signals(False, False):
+        init_ca(
+            name=ca_name,
+            key_backend=key_backends["hsm"],
+            hsm_key_label=ca_name,
+            key_type="RSA",
+            algorithm=algorithm,
+        )
+    assert CertificateAuthority.objects.count() == 0
+
+
 def test_invalid_public_key_parameters(ca_name: str) -> None:
     """Test passing invalid public key parameters."""
     msg = r"^Ed25519 keys do not allow an algorithm for signing\.$"
@@ -1175,6 +1438,26 @@ def test_key_size_with_unsupported_key_type(ca_name: str, key_type: str) -> None
     msg = rf"^Value error, Key size is not supported for {key_type} keys\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
         init_ca(ca_name, key_type=key_type, key_size=2048)
+
+
+@pytest.mark.django_db
+def test_get_use_private_key_options_raises_command_error(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test error handling when get_use_private_key_options() raises CommandError."""
+    msg = "some command error"
+    exc = CommandError(msg, returncode=3)
+    with assert_command_error(rf"^{msg}$", returncode=3):
+        with patch.object(key_backend, "get_use_private_key_options", side_effect=exc):
+            init_ca(ca_name, key_backend=key_backend)
+
+
+@pytest.mark.django_db
+def test_get_use_private_key_options_raises_exception(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test error handling when get_use_private_key_options() raises a generic Excpetion."""
+    msg = "some command error"
+    exc = Exception(msg)
+    with pytest.raises(Exception, match=rf"^{msg}$"):
+        with patch.object(key_backend, "get_use_private_key_options", side_effect=exc):
+            init_ca(ca_name, key_backend=key_backend)
 
 
 @pytest.mark.django_db

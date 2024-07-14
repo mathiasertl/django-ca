@@ -123,6 +123,7 @@ dependencies = [
 [project.optional-dependencies]
 api = ["django-ninja>=1.1"]
 celery = ["celery>=5.4"]
+hsm = ["python-pkcs11>=0.7"]
 mysql = ["mysqlclient"]
 postgres = ["psycopg[c,pool]>=3.1"]
 # remove psycopg3 in django-ca==2.0, also update docs/source/include/pip-extras.rst
@@ -193,6 +194,8 @@ module = [
     "docker.*",
     "enchant.tokenize",
     "httpcore.*",
+    "pkcs11.*",
+    "pkcs11.util.*",
     # psycopg and psycopg_c are not installed in isolated mypy envs (tox, ...)
     "psycopg",
     "psycopg_c",
@@ -390,6 +393,9 @@ filterwarnings = [
     "error:::acme",
     "error:::josepy",
     "error:::pydantic",
+
+    # PyOpenSSL==24.2.1 deprecates CSR support, which is still used by josepy==1.14.0.
+    "ignore:CSR support in pyOpenSSL is deprecated. You should use the APIs in cryptography.",
 
     # Disabled because cryptography calls the function directly and the warning is issued with stacklevel=2,
     # so it's shown for our code. See: https://github.com/pyca/cryptography/issues/9580
