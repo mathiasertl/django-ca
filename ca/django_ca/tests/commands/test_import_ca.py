@@ -15,18 +15,28 @@
 
 import typing
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast
+from unittest import mock
+
+import pkcs11
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
 
+from django.conf import settings
+from django.core.management import CommandError
+
 import pytest
 
 from django_ca.conf import model_settings
+from django_ca.key_backends import key_backends
+from django_ca.key_backends.hsm import HSMBackend
+from django_ca.key_backends.hsm.keys import PKCS11EllipticCurvePrivateKey, PKCS11RSAPrivateKey
+from django_ca.key_backends.hsm.models import HSMBackendUsePrivateKeyOptions
 from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
-from django_ca.models import CertificateAuthority
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
@@ -243,6 +253,76 @@ def test_secondary_key_backend(ca_name: str) -> None:
     assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password=b"foobar"))  # type: ignore[attr-defined]
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # b/c of signature validation in the end.
+@pytest.mark.usefixtures("softhsm_token")
+@pytest.mark.parametrize("ca_name", ("root", "ec"))
+def test_hsm_backend_store_key(ca_name: str, subject: x509.Name) -> None:
+    """Test storing keys in the HSM."""
+    key_backend = cast(HSMBackend, key_backends["hsm"])
+    ca_data = CERT_DATA[ca_name]
+    key_path = ca_data["key_path"]
+    pem_path = ca_data["pub_path"]
+
+    ca = import_ca(
+        ca_name,
+        key_path,
+        pem_path,
+        key_backend=key_backend,
+        hsm_key_label=ca_name,
+    )
+
+    assert ca.pub.loaded == ca_data["pub"]["parsed"]
+    key_backend_options = dict(ca.key_backend_options)  # copy so that we don't modify the original
+    assert key_backend_options.pop("key_id")
+    assert key_backend_options == {"key_label": ca_name, "key_type": ca_data["key_type"]}
+
+    # Verify that public and private key can be accessed from the HSM.
+    with key_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
+        private_key = key_backend._get_private_key(ca, session)  # pylint: disable=protected-access
+
+        # Assert basic private key properties
+        assert isinstance(private_key, (PKCS11RSAPrivateKey, PKCS11EllipticCurvePrivateKey))
+        assert private_key.key_size == ca_data["pub"]["parsed"].public_key().key_size
+        if isinstance(private_key, PKCS11EllipticCurvePrivateKey):
+            assert private_key.curve == ca_data["pub"]["parsed"].public_key().curve
+
+        # Test the underlying private key
+        pkcs11_private_key = private_key.pkcs11_private_key
+        assert isinstance(pkcs11_private_key, pkcs11.PrivateKey)
+
+        # Make sure that the public key stored in the HSM is identical to what we fed into it.
+        assert private_key.public_key() == ca_data["pub"]["parsed"].public_key()
+
+        # Sign a certificate to make sure that the key is actually usable
+        cert_data = CERT_DATA[f"{ca_name}-cert"]
+        csr = cert_data["csr"]["parsed"]
+        cert = Certificate.objects.create_cert(
+            ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+        )
+        assert_signature([ca], cert)
+
+
+@pytest.mark.parametrize("ca_name", ("ed448", "ed25519"))
+def test_hsm_backend_store_key_with_ed_keys(ca_name: str) -> None:
+    """Test storing ED448/Ed25519 keys in the HSM, which is not supported."""
+    cert_data = CERT_DATA[ca_name]
+    key_path = cert_data["key_path"]
+    pem_path = cert_data["pub_path"]
+
+    with assert_command_error(r"^Import of Ed448/Ed25519 keys is not implemented\.$"):
+        import_ca(ca_name, key_path, pem_path, key_backend=key_backends["hsm"], hsm_key_label=ca_name)
+
+
+def test_hsm_backend_store_key_with_dsa_keys() -> None:
+    """Test storing DSA keys in the HSM, which is not supported at all."""
+    cert_data = CERT_DATA["dsa"]
+    key_path = cert_data["key_path"]
+    pem_path = cert_data["pub_path"]
+
+    with assert_command_error(r"^DSA: Not supported by the hsm key backend\.$"):
+        import_ca("dsa", key_path, pem_path, key_backend=key_backends["hsm"], hsm_key_label="dsa")
+
+
 def test_bogus_public_key(ca_name: str) -> None:
     """Test importing a CA with a bogus public key."""
     key_path = CERT_DATA["root"]["key_path"]
@@ -280,3 +360,29 @@ def test_model_validation_error(ca_name: str, key_backend: StoragesBackend) -> N
     """
     with assert_command_error(r"^password: Input should be a valid bytes$"):
         import_ca(ca_name, key_backend=key_backend, password=123)
+
+
+def test_model_command_error(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test model retrieval raising a CommandError."""
+    msg = "some command error"
+    with assert_command_error(rf"^{msg}$", returncode=3):
+        with mock.patch.object(
+            key_backend,
+            "get_store_private_key_options",
+            autospec=True,
+            side_effect=CommandError(msg, returncode=3),
+        ):
+            import_ca(ca_name, key_backend=key_backend, password=123)
+
+
+def test_model_generic_exception(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test model retrieval raising arbitrary exception."""
+    msg = "some command error"
+    with assert_command_error(rf"^{msg}$"):
+        with mock.patch.object(
+            key_backend,
+            "get_store_private_key_options",
+            autospec=True,
+            side_effect=ValueError(msg),
+        ):
+            import_ca(ca_name, key_backend=key_backend, password=123)

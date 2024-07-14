@@ -102,7 +102,7 @@ class UsePrivateKeyOptions(BaseModel):
         """Validator to load the password from CA_PASSWORDS if not given."""
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
-            if ca is not None:
+            if ca is not None:  # pragma: no branch  # ca is always set, this is just a precaution.
                 if settings_password := model_settings.CA_PASSWORDS.get(ca.serial):
                     return settings_password
 
@@ -110,32 +110,7 @@ class UsePrivateKeyOptions(BaseModel):
 
 
 class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):
-    """The default storage backend that uses Django's file storage API.
-
-    The most common use case for this key backend is to store keys on the local file system. However, you can
-    use any custom Django storage system, for example from
-    `django-storages <https://django-storages.readthedocs.io/en/latest/>`_.
-
-
-    This backend takes a single option, ``storage_alias``. It defines the storage system (as defined in
-    `STORAGES <https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES>`_) to use.
-    The default configuration is a good example:
-
-    .. tab:: Python
-
-       .. literalinclude:: /include/config/settings_default_ca_key_backends.py
-          :language: python
-
-    .. tab:: YAML
-
-       .. literalinclude:: /include/config/settings_default_ca_key_backends.yaml
-          :language: YAML
-
-    .. seealso::
-
-       * `STORAGES setting <https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES>`_
-       * `Django file storage API <https://docs.djangoproject.com/en/5.0/ref/files/storage/>`_
-    """
+    """The default storage backend that uses Django's file storage API."""
 
     name = "storages"
     title = "Store private keys using the Django file storage API"
@@ -225,17 +200,20 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         )
 
     def get_use_private_key_options(
-        self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
+        self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
-            {"password": options.get(f"{self.options_prefix}password")}, context={"ca": ca}, strict=True
+            {"password": options.get(f"{self.options_prefix}password")},
+            context={"ca": ca, "backend": self},
+            strict=True,
         )
 
     def get_use_parent_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptions:
         return UsePrivateKeyOptions.model_validate(
-            {"password": options[f"{self.options_prefix}parent_password"]}, context={"ca": ca}
+            {"password": options[f"{self.options_prefix}parent_password"]},
+            context={"ca": ca, "backend": self},
         )
 
     def create_private_key(
@@ -262,7 +240,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         ca.key_backend_options = {"path": path}
 
         use_private_key_options = UsePrivateKeyOptions.model_validate(
-            {"password": options.password}, context={"ca": ca}
+            {"password": options.password}, context={"ca": ca, "backend": self}
         )
 
         return key.public_key(), use_private_key_options
@@ -271,6 +249,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         self,
         ca: "CertificateAuthority",
         key: CertificateIssuerPrivateKeyTypes,
+        certificate: x509.Certificate,
         options: StorePrivateKeyOptions,
     ) -> None:
         storage = storages[self.storage_alias]

@@ -2,14 +2,10 @@
 ``django_ca.key_backends`` - Key backends
 #########################################
 
-**django-ca** key backends allow you to store private keys in multiple locations. An interface allows you to
+**django-ca** key backends allow you to store private keys in different locations. An interface allows you to
 write custom backends as well.
 
-**********************
-Supported key backends
-**********************
-
-.. autoclass:: django_ca.key_backends.storages.StoragesBackend
+.. _custom_key_backends:
 
 ***********************
 Writing custom backends
@@ -152,3 +148,10 @@ Base class documentation
 .. autoclass:: django_ca.key_backends.base.KeyBackend
    :members:
    :exclude-members: class_path
+
+Implementations
+===============
+
+.. autoclass:: django_ca.key_backends.storages.StoragesBackend
+
+.. autoclass:: django_ca.key_backends.hsm.HSMBackend

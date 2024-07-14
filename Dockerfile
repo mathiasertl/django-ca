@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
         -r requirements-pinned.txt \
-        -e .[celery,redis,mysql,psycopg3,yaml]
+        -e .[celery,hsm,mysql,psycopg3,redis,yaml]
 
 # Finally, copy sources
 COPY ca/ ca/

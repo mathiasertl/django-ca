@@ -92,7 +92,7 @@ def cache_crl(serial: str, key_backend_options: Optional[dict[str, JSON]] = None
 
     ca = CertificateAuthority.objects.get(serial=serial)
     key_backend_options_model = ca.key_backend.use_model.model_validate(
-        key_backend_options, context={"ca": ca}, strict=True
+        key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
     )
     ca.cache_crls(key_backend_options_model)
 
@@ -160,7 +160,7 @@ def generate_ocsp_key(
 
     ca: CertificateAuthority = CertificateAuthority.objects.get(serial=parameters.serial)
     key_backend_options_model = ca.key_backend.use_model.model_validate(
-        key_backend_options, context={"ca": ca}, strict=True
+        key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
     )
 
     value = ca.generate_ocsp_key(

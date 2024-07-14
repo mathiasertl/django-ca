@@ -99,9 +99,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
     ) -> tuple[CertificateIssuerPublicKeyTypes, DummyModel]:
         return None, DummyModel()  # type: ignore[return-value]
 
-    def get_use_private_key_options(
-        self, ca: Optional[CertificateAuthority], options: dict[str, Any]
-    ) -> DummyModel:
+    def get_use_private_key_options(self, ca: CertificateAuthority, options: dict[str, Any]) -> DummyModel:
         return DummyModel()
 
     def is_usable(
@@ -136,7 +134,11 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         return None  # type: ignore[return-value]
 
     def store_private_key(
-        self, ca: "CertificateAuthority", key: CertificateIssuerPrivateKeyTypes, options: DummyModel
+        self,
+        ca: "CertificateAuthority",
+        key: CertificateIssuerPrivateKeyTypes,
+        certificate: x509.Certificate,
+        options: DummyModel,
     ) -> None:
         return None
 

@@ -218,7 +218,10 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
         if data["cat"] in ("contrib", "sphinx-contrib"):
             pub_fixture_name = f"contrib_{pub_fixture_name}"
         pub = request.getfixturevalue(pub_fixture_name)
-        cert = load_cert(ca, None, pub, data.get("profile", ""))
+        csr = None
+        if "csr" in data:
+            csr = data["csr"]["parsed"]
+        cert = load_cert(ca, csr, pub, data.get("profile", ""))
 
         yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 

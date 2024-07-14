@@ -14,7 +14,11 @@
 """Test settings for the django-ca project."""
 
 import json
+import os
+from datetime import datetime, timezone
 from pathlib import Path
+
+from django.utils.crypto import get_random_string
 
 # Base paths in this project
 BASE_DIR = Path(__file__).resolve().parent.parent  # ca/
@@ -186,6 +190,14 @@ with open(BASE_DIR / "django_ca" / "tests" / "fixtures" / "cert-data.json", enco
     _fixture_data = json.load(stream)
 
 
+# PKCS11 settings
+_timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S")
+PKCS11_PATH = os.environ.get("PKCS11_LIBRARY", "/usr/lib/softhsm/libsofthsm2.so")
+PKCS11_TOKEN_LABEL = f"pytest.{_timestamp}.{get_random_string(8)}"
+PKCS11_SO_PIN = "so-pin-1234"
+PKCS11_USER_PIN = "user-pin-1234"
+
+
 CA_KEY_BACKENDS = {
     "default": {
         "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
@@ -194,6 +206,14 @@ CA_KEY_BACKENDS = {
     "secondary": {
         "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
         "OPTIONS": {"storage_alias": "secondary"},
+    },
+    "hsm": {
+        "BACKEND": "django_ca.key_backends.hsm.HSMBackend",
+        "OPTIONS": {
+            "library_path": PKCS11_PATH,
+            "token": PKCS11_TOKEN_LABEL,
+            "user_pin": PKCS11_USER_PIN,
+        },
     },
 }
 
