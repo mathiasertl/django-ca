@@ -429,7 +429,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             try:
                 return parse_name_rfc4514(value)
             except ValueError as ex:  # pragma: only cryptography>=43.0
-                raise CommandError(str(ex)) from ex
+                raise CommandError(ex) from ex
         # COVERAGE NOTE: Already covered by argparse
         raise ValueError(f"{name_format}: Unknown subject format.")  # pragma: no cover
 

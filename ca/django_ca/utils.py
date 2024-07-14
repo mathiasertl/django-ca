@@ -638,6 +638,21 @@ def generate_private_key(
     raise ValueError(f"{key_type}: Unknown key type.")
 
 
+def get_private_key_type(private_key: CertificateIssuerPrivateKeyTypes) -> ParsableKeyType:
+    """Get the private key type as string from a given private key."""
+    if isinstance(private_key, dsa.DSAPrivateKey):
+        return "DSA"
+    if isinstance(private_key, rsa.RSAPrivateKey):
+        return "RSA"
+    if isinstance(private_key, ec.EllipticCurvePrivateKey):
+        return "EC"
+    if isinstance(private_key, ed25519.Ed25519PrivateKey):
+        return "Ed25519"
+    if isinstance(private_key, ed448.Ed448PrivateKey):
+        return "Ed448"
+    raise ValueError(f"{private_key}: Unknown private key type.")
+
+
 def parse_other_name(name: str) -> x509.OtherName:
     """Parse a formatted :py:class:`~cg:cryptography.x509.OtherName` instance."""
     try:

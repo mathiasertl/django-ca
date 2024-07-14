@@ -17,14 +17,20 @@
 
 import copy
 import os
+import subprocess
 from collections.abc import Iterator
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import cast
+from unittest import mock
 
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
+from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import storages
+from django.utils.crypto import get_random_string
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -32,6 +38,9 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
+from django_ca.key_backends.hsm import HSMBackend
+from django_ca.key_backends.hsm.models import CreatePrivateKeyOptions
+from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.conftest_helpers import (
@@ -248,6 +257,98 @@ def signed_certificate_timestamps_pub(
     name = request.param.replace("-", "_")
 
     yield request.getfixturevalue(f"{name}_pub")
+
+
+@pytest.fixture()
+def softhsm_setup(tmp_path: Path) -> Iterator[Path]:
+    """Fixture to set up a unique SoftHSM2 configuration."""
+    softhsm_dir = tmp_path / "softhsm"
+    token_dir = softhsm_dir / "tokens"
+    os.makedirs(token_dir)
+
+    softhsm2_conf = tmp_path / "softhsm2.conf"
+
+    with open(softhsm2_conf, "w", encoding="utf-8") as stream:
+        stream.write(f"""# SoftHSM v2 configuration file
+
+    directories.tokendir = {token_dir}
+    objectstore.backend = file
+
+    # ERROR, WARNING, INFO, DEBUG
+    log.level = DEBUG
+
+    # If CKF_REMOVABLE_DEVICE flag should be set
+    slots.removable = false
+
+    # Enable and disable PKCS#11 mechanisms using slots.mechanisms.
+    slots.mechanisms = ALL
+
+    # If the library should reset the state on fork
+    library.reset_on_fork = false""")
+
+    with mock.patch.dict(os.environ, {"SOFTHSM2_CONF": str(softhsm2_conf)}):
+        # Reinitialize library if already loaded (it might load the configuration).
+        if lib := SessionPool._lib_pool.get(settings.PKCS11_PATH):  # pylint: disable=protected-access
+            lib.reinitialize()
+
+        yield softhsm_dir
+
+
+@pytest.fixture()
+def softhsm_token(
+    request: "SubRequest",
+    settings: SettingsWrapper,
+) -> Iterator[str]:
+    """Get a unique token for the current test."""
+    request.getfixturevalue("softhsm_setup")
+    token = settings.PKCS11_TOKEN_LABEL
+    so_pin = settings.PKCS11_SO_PIN = get_random_string(8)
+    pin = settings.PKCS11_USER_PIN = get_random_string(8)
+
+    # Update key backend configuration
+    key_backend_config = copy.deepcopy(settings.CA_KEY_BACKENDS)
+    key_backend_config["hsm"]["OPTIONS"].update({"user_pin": pin})
+    settings.CA_KEY_BACKENDS = key_backend_config
+    key_backends._reset()  # pylint: disable=protected-access
+
+    args = ("softhsm2-util", "--init-token", "--free", "--label", token, "--so-pin", so_pin, "--pin", pin)
+    subprocess.run(args, check=True)
+
+    # Reinitialize library if already loaded (tokens are only seen after (re-)initialization).
+    if lib := SessionPool._lib_pool.get(settings.PKCS11_PATH):  # pylint: disable=protected-access
+        lib.reinitialize()
+
+    yield token
+
+
+@pytest.fixture()
+def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:
+    """Fixture providing a HSMBackend with the current token and (randomized) passwords."""
+    request.getfixturevalue("softhsm_token")
+    yield cast(HSMBackend, key_backends["hsm"])
+    key_backends._reset()  # pylint: disable=protected-access  # in case we manipulated the object
+
+
+@pytest.fixture(params=HSMBackend.supported_key_types)
+def usable_hsm_ca(
+    request: "SubRequest", ca_name: str, subject: x509.Name, hsm_backend: HSMBackend
+) -> Iterator[CertificateAuthority]:
+    """Parametrized fixture yielding a certificate authority for every key type."""
+    request.getfixturevalue("db")
+    key_type = request.param
+    key_backend_options = CreatePrivateKeyOptions(
+        user_pin=hsm_backend.user_pin, key_label=ca_name, key_type=key_type, elliptic_curve=None
+    )
+    ca = CertificateAuthority.objects.init(
+        name=ca_name,
+        key_backend=hsm_backend,
+        key_backend_options=key_backend_options,
+        key_type=key_type,
+        subject=subject,
+        expires=datetime.now(tz=timezone.utc) + timedelta(days=720),
+    )
+    assert isinstance(ca.key_backend, HSMBackend)
+    yield ca
 
 
 @pytest.fixture()

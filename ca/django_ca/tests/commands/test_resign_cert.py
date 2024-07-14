@@ -64,6 +64,49 @@ def resign_cert(serial: str, **kwargs: Any) -> tuple[str, str]:
     return cmd("resign_cert", serial, **kwargs)
 
 
+def assert_resigned(
+    old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
+) -> None:
+    """Assert that the resigned certificate matches the old cert."""
+    new_ca = new_ca or old.ca
+    issuer = new_ca.subject
+
+    assert old.pk != new.pk  # make sure we're not comparing the same cert
+
+    # assert various properties
+    assert new_ca == new.ca
+    assert issuer == new.issuer
+
+
+def assert_equal_ext(
+    old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
+) -> None:
+    """Assert that the extensions in both certs are equal."""
+    new_ca = new_ca or old.ca
+    assert old.subject == new.subject
+
+    # assert extensions that should be equal
+    aki = new_ca.get_authority_key_identifier_extension()
+    assert aki == new.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER]
+    for oid in [
+        ExtensionOID.EXTENDED_KEY_USAGE,
+        ExtensionOID.KEY_USAGE,
+        ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+        ExtensionOID.TLS_FEATURE,
+    ]:
+        assert old.extensions.get(oid) == new.extensions.get(oid)
+
+    # Test extensions that don't come from the old cert but from the signing CA
+    assert new.extensions[ExtensionOID.BASIC_CONSTRAINTS] == basic_constraints()
+    assert ExtensionOID.ISSUER_ALTERNATIVE_NAME not in new.extensions  # signing CA does not have this set
+
+    # Some properties come from the ca
+    if new_ca.sign_crl_distribution_points:
+        assert new.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == new_ca.sign_crl_distribution_points
+    else:
+        assert ExtensionOID.CRL_DISTRIBUTION_POINTS not in new.extensions
+
+
 class ResignCertTestCase(TestCaseMixin, TestCase):
     """Main test class for this command."""
 
@@ -71,61 +114,16 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
     load_cas = ("root", "child", "dsa")
     load_certs = ("root-cert", "dsa-cert", "no-extensions", "all-extensions")
 
-    def assertResigned(  # pylint: disable=invalid-name
-        self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
-    ) -> None:
-        """Assert that the resigned certificate matches the old cert."""
-        new_ca = new_ca or old.ca
-        issuer = new_ca.subject
-
-        self.assertNotEqual(old.pk, new.pk)  # make sure we're not comparing the same cert
-
-        # assert various properties
-        self.assertEqual(new_ca, new.ca)
-        self.assertEqual(issuer, new.issuer)
-
-    def assertEqualExt(  # pylint: disable=invalid-name
-        self, old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
-    ) -> None:
-        """Assert that the extensions in both certs are equal."""
-        new_ca = new_ca or old.ca
-        self.assertEqual(old.subject, new.subject)
-
-        # assert extensions that should be equal
-        aki = new_ca.get_authority_key_identifier_extension()
-        self.assertEqual(aki, new.extensions[ExtensionOID.AUTHORITY_KEY_IDENTIFIER])
-        for oid in [
-            ExtensionOID.EXTENDED_KEY_USAGE,
-            ExtensionOID.KEY_USAGE,
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
-            ExtensionOID.TLS_FEATURE,
-        ]:
-            self.assertEqual(old.extensions.get(oid), new.extensions.get(oid))
-
-        # Test extensions that don't come from the old cert but from the signing CA
-        self.assertEqual(new.extensions[ExtensionOID.BASIC_CONSTRAINTS], basic_constraints())
-        self.assertNotIn(
-            ExtensionOID.ISSUER_ALTERNATIVE_NAME, new.extensions
-        )  # signing CA does not have this set
-
-        # Some properties come from the ca
-        if new_ca.sign_crl_distribution_points:
-            self.assertEqual(
-                new.extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS], new_ca.sign_crl_distribution_points
-            )
-        else:
-            self.assertNotIn(ExtensionOID.CRL_DISTRIBUTION_POINTS, new.extensions)
-
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Simplest test while resigning a cert."""
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", self.cert.serial)
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.cert, new)
-        self.assertEqualExt(self.cert, new)
+        assert_resigned(self.cert, new)
+        assert_equal_ext(self.cert, new)
         self.assertIsInstance(new.algorithm, type(self.cert.algorithm))
 
     @override_tmpcadir()
@@ -133,11 +131,11 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Resign a certificate from a DSA CA."""
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", self.certs["dsa-cert"].serial)
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.certs["dsa-cert"], new)
-        self.assertEqualExt(self.certs["dsa-cert"], new)
+        assert_resigned(self.certs["dsa-cert"], new)
+        assert_equal_ext(self.certs["dsa-cert"], new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
     @override_tmpcadir()
@@ -146,10 +144,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         orig = self.certs["all-extensions"]
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", orig.serial)
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(orig, new)
+        assert_resigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         expected = orig.extensions
@@ -214,10 +212,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--tls-feature",
                 "status_request",
             )
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(orig, new)
+        assert_resigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.extensions
@@ -359,10 +357,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "--tls-feature",
                 "status_request",
             )
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(orig, new)
+        assert_resigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.extensions
@@ -467,10 +465,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                 "status_request",
                 "--tls-feature-critical",
             )
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(orig, new)
+        assert_resigned(orig, new)
         self.assertIsInstance(new.algorithm, hashes.SHA256)
 
         extensions = new.extensions
@@ -539,11 +537,11 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test resigning a cert with a new algorithm."""
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", self.cert.serial, algorithm=hashes.SHA512())
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.cert, new)
-        self.assertEqualExt(self.cert, new)
+        assert_resigned(self.cert, new)
+        assert_equal_ext(self.cert, new)
         self.assertIsInstance(new.algorithm, hashes.SHA512)
 
     @override_tmpcadir()
@@ -552,11 +550,11 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", self.cert.serial, ca=self.cas["child"])
 
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.cert, new, new_ca=self.cas["child"])
-        self.assertEqualExt(self.cert, new, new_ca=self.cas["child"])
+        assert_resigned(self.cert, new, new_ca=self.cas["child"])
+        assert_equal_ext(self.cert, new, new_ca=self.cas["child"])
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_overwrite(self) -> None:
@@ -588,10 +586,10 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     "subject-alternative-name.example.com",
                 ]
             )
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertResigned(self.cert, new)
+        assert_resigned(self.cert, new)
         self.assertEqual(new.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]))
         self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
 
@@ -627,12 +625,12 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         """Test getting the certificate from the profile."""
         with assert_create_cert_signals():
             stdout, stderr = cmd_e2e(["resign_cert", self.cert.serial, "--server"])
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
         self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
-        self.assertResigned(self.cert, new)
-        self.assertEqualExt(self.cert, new)
+        assert_resigned(self.cert, new)
+        assert_equal_ext(self.cert, new)
 
     @override_tmpcadir(
         CA_PROFILES={"server": {"expires": 200}, "webserver": {}},
@@ -645,12 +643,12 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         with assert_create_cert_signals():
             stdout, stderr = cmd_e2e(["resign_cert", self.cert.serial])
-        self.assertEqual(stderr, "")
+        assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
         self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
-        self.assertResigned(self.cert, new)
-        self.assertEqualExt(self.cert, new)
+        assert_resigned(self.cert, new)
+        assert_equal_ext(self.cert, new)
 
     @override_tmpcadir()
     def test_to_file(self) -> None:
@@ -659,15 +657,15 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         with assert_create_cert_signals():
             stdout, stderr = cmd("resign_cert", self.cert.serial, out=out_path)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
 
         with open(out_path, encoding="ascii") as stream:
             pub = stream.read()
 
         new = Certificate.objects.get(pub=pub)
-        self.assertResigned(self.cert, new)
-        self.assertEqualExt(self.cert, new)
+        assert_resigned(self.cert, new)
+        assert_equal_ext(self.cert, new)
 
     @override_tmpcadir()
     def test_no_cn(self) -> None:
@@ -713,6 +711,20 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         msg_re = rf'^Profile "{self.cert.profile}" for original certificate is no longer defined, please set one via the command line\.$'  # NOQA: E501
         with assert_command_error(msg_re):
             cmd("resign_cert", self.cert.serial)
+
+
+def test_hsm_backend(usable_hsm_ca: CertificateAuthority, root_cert: Certificate) -> None:
+    """Test signing a certificate with a CA that is in a HSM."""
+    # Fake the ca of an existing cert (this way we don't have to sign it)
+    root_cert.ca = usable_hsm_ca
+    root_cert.save()
+
+    with assert_create_cert_signals():
+        stdout, stderr = cmd("resign_cert", root_cert.serial)
+    assert stderr == ""
+    new = Certificate.objects.exclude(pk=root_cert.pk).get()
+    assert_resigned(root_cert, new)
+    assert_equal_ext(root_cert, new)
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])

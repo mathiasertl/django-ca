@@ -56,6 +56,7 @@ def test_key_backends_iter(settings: SettingsWrapper) -> None:
     assert list(key_backends) == [
         key_backends[model_settings.CA_DEFAULT_KEY_BACKEND],
         key_backends["secondary"],
+        key_backends["hsm"],
     ]
 
     settings.CA_KEY_BACKENDS = {
