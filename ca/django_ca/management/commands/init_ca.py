@@ -359,7 +359,6 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             key_backend_options = key_backend.get_create_private_key_options(
                 key_type, key_size, elliptic_curve=elliptic_curve, options=options
             )
-            load_key_backend_options = key_backend.get_use_private_key_options(None, options)
 
             # Make sure that the selected signature hash algorithm works for the selected backend.
             algorithm = key_backend.validate_signature_hash_algorithm(key_type, algorithm)
@@ -367,9 +366,8 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
             # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
             # worker and the current process is on the webserver side.
-            if parent is None:
-                signer_key_backend_options = load_key_backend_options
-            else:
+            signer_key_backend_options = None
+            if parent is not None:
                 signer_key_backend_options = parent.key_backend.get_use_parent_private_key_options(
                     parent, options
                 )
@@ -378,7 +376,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 parent.check_usable(signer_key_backend_options)
         except ValidationError as ex:
             self.validation_error_to_command_error(ex)
-        except CommandError:
+        except CommandError:  # reraise to give backends the opportunity to set the return code.
             raise
         except Exception as ex:
             raise CommandError(str(ex)) from ex
@@ -569,7 +567,17 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 ocsp_responder_key_validity=ocsp_responder_key_validity,
                 **kwargs,
             )
-        except Exception as ex:  # pragma: no cover
+
+            load_key_backend_options = key_backend.get_use_private_key_options(ca, options)
+        except ValidationError as ex:  # pragma: no cover
+            # COVERAGE NOTE: There is currently no way to trigger this via get_use_private_key_options(), as
+            #   all currently implemented backends would have raised an error earlier already. At the same
+            #   time, validation errors are hard to mock. Nonetheless, this is theoretically possible, so we
+            #   handle it here.
+            self.validation_error_to_command_error(ex)
+        except CommandError:  # reraise to give backends the opportunity to set the return code.
+            raise
+        except Exception as ex:
             raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs

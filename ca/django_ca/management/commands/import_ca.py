@@ -37,6 +37,7 @@ from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
 from django_ca.models import CertificateAuthority
+from django_ca.utils import get_private_key_type
 
 
 class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseCommand):
@@ -84,7 +85,7 @@ Note that the private key will be copied to the directory configured by the CA_D
             "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
         )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0913
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0913,PLR0912,PLR0915
         self,
         name: str,
         key: typing.BinaryIO,
@@ -114,10 +115,48 @@ Note that the private key will be copied to the directory configured by the CA_D
         key.close()
         pem.close()
 
+        # load private key
+        try:
+            key_loaded = serialization.load_pem_private_key(key_data, import_password)
+        except Exception:  # pylint: disable=broad-except
+            try:
+                key_loaded = serialization.load_der_private_key(key_data, import_password)
+            except Exception as ex:
+                raise CommandError("Unable to load private key.") from ex
+
+        # Ensure correct private key type
+        if not isinstance(key_loaded, PRIVATE_KEY_TYPES):
+            raise CommandError(f"{key_loaded.__class__.__name__}: Invalid private key type.")
+        key_loaded = typing.cast(CertificateIssuerPrivateKeyTypes, key_loaded)
+
+        # Make sure that the private key type is supported by the backend
+        key_type = get_private_key_type(key_loaded)
+        if key_type not in key_backend.supported_key_types:
+            raise CommandError(f"{key_type}: Not supported by the {key_backend.alias} key backend.")
+
+        # load certificate
+        try:
+            loaded_certificate = x509.load_pem_x509_certificate(certificate_data)
+        except Exception:  # pylint: disable=broad-except
+            try:
+                loaded_certificate = x509.load_der_x509_certificate(certificate_data)
+            except Exception as ex:
+                raise CommandError("Unable to load public key.") from ex
+
+        # Ensure correct certificate type
+        # COVERAGE NOTE: All public key types that can be encoded as PEM/DER work (x448/x255129 cannot be
+        #   encoded as PEM or DER).
+        if not isinstance(loaded_certificate.public_key(), PUBLIC_KEY_TYPES):  # pragma: no cover
+            raise CommandError(f"{loaded_certificate.__class__.__name__}: Invalid certificate type.")
+
         try:
             key_backend_options = key_backend.get_store_private_key_options(options)
         except ValidationError as ex:
             self.validation_error_to_command_error(ex)
+        except CommandError:  # reraise to give backends the opportunity to set the return code.
+            raise
+        except Exception as ex:
+            raise CommandError(ex) from ex
 
         # Add extensions for signing new certificates
         sign_authority_information_access_ext = None
@@ -183,41 +222,14 @@ Note that the private key will be copied to the directory configured by the CA_D
             if (api_enabled := options.get("api_enabled")) is not None:
                 ca.api_enabled = api_enabled
 
-        # load certificate
-        try:
-            loaded_certificate = x509.load_pem_x509_certificate(certificate_data)
-        except Exception:  # pylint: disable=broad-except
-            try:
-                loaded_certificate = x509.load_der_x509_certificate(certificate_data)
-            except Exception as ex:
-                raise CommandError("Unable to load public key.") from ex
-
-        # Ensure correct certificate type
-        # COVERAGE NOTE: All public key types that can be encoded as PEM/DER work (x448/x255129 cannot be
-        #   encoded as PEM or DER).
-        if not isinstance(loaded_certificate.public_key(), PUBLIC_KEY_TYPES):  # pragma: no cover
-            raise CommandError(f"{loaded_certificate.__class__.__name__}: Invalid certificate type.")
-
         # Store certificate and derived fields in database
         ca.update_certificate(loaded_certificate)
 
-        # load private key
-        try:
-            key_loaded = serialization.load_pem_private_key(key_data, import_password)
-        except Exception:  # pylint: disable=broad-except
-            try:
-                key_loaded = serialization.load_der_private_key(key_data, import_password)
-            except Exception as ex:
-                raise CommandError("Unable to load private key.") from ex
-
-        # Ensure correct private key type
-        if not isinstance(key_loaded, PRIVATE_KEY_TYPES):
-            raise CommandError(f"{key_loaded.__class__.__name__}: Invalid private key type.")
-        key_loaded = typing.cast(CertificateIssuerPrivateKeyTypes, key_loaded)
-
         # Store the private key
-        # TODO: error handling
-        key_backend.store_private_key(ca, key_loaded, key_backend_options)
+        try:
+            key_backend.store_private_key(ca, key_loaded, loaded_certificate, key_backend_options)
+        except Exception as ex:
+            raise CommandError(ex) from ex
 
         # Only save CA to database if we loaded all data and copied private key
         ca.save()

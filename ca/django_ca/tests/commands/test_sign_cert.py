@@ -566,6 +566,14 @@ def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> N
     assert_signature([pwd], cert)
 
 
+def test_hsm_backend(usable_hsm_ca: CertificateAuthority, rfc4514_subject: str) -> None:
+    """Test signing a certificate with a CA that is in a HSM."""
+    with assert_create_cert_signals() as (pre, post):
+        sign_cert(usable_hsm_ca, rfc4514_subject, stdin=csr)
+    cert = Certificate.objects.get()
+    assert_signature([usable_hsm_ca], cert)
+
+
 def test_encrypted_ca_with_settings(
     usable_pwd: CertificateAuthority, rfc4514_subject: str, settings: SettingsWrapper
 ) -> None:

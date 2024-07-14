@@ -2,6 +2,13 @@
 2.0.0 (TBR)
 ###########
 
+*******
+General
+*******
+
+* Add (preliminary) support for storing private keys in a hardware security module (HSM). See
+  :doc:`/key_backends` for more information.
+
 **********************
 Command-line utilities
 **********************

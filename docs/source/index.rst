@@ -34,12 +34,13 @@ Welcome to django-ca's documentation!
    cli/intro
    Command-line interface: certificate authority management <cli/cas>
    Command-line interface: certificate management <cli/certs>
-   web_interface
    acme
+   key_backends
    rest_api
    profiles
    crl
    ocsp
+   web_interface
 
 .. toctree::
    :maxdepth: 1

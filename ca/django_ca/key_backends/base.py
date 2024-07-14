@@ -225,13 +225,12 @@ class KeyBackend(
 
     @abc.abstractmethod
     def get_use_private_key_options(
-        self, ca: Optional["CertificateAuthority"], options: dict[str, Any]
+        self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> UsePrivateKeyOptionsTypeVar:
         """Get options to use the private key of a certificate authority.
 
         The returned model will be used for the certificate authority `ca`. You can pass it as extra context
-        to influence model validation. If `ca` is ``None``, it indicates that the CA is currently being
-        created via :command:`manage.py init_ca`.
+        to influence model validation.
 
         `options` is the dictionary of arguments to :command:`manage.py init_ca` (including default values).
         The key backend is expected to be able to sign certificates and CRLs using the options provided here.
@@ -285,6 +284,7 @@ class KeyBackend(
         self,
         ca: "CertificateAuthority",
         key: CertificateIssuerPrivateKeyTypes,
+        certificate: x509.Certificate,
         options: StorePrivateKeyOptionsTypeVar,
     ) -> None:
         """Store a private key for the certificate authority.

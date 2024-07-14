@@ -24,6 +24,7 @@ Documentation is available at https://django-ca.readthedocs.org/.
 1. Set up a secure local certificate authority in just a few minutes.
 2. Certificate revocation via CRLs and OCSP.
 3. Certificate issuance via ACMEv2, command line or web interface.
+4. **Preliminary** support for hardware security modules (HSMs).
 4. Management via command line and/or via Django's admin interface.
 5. Get email notifications about certificates about to expire.
 6. Written in Python 3.9+, Django 4.2+ and cryptography 42+.
