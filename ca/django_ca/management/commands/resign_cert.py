@@ -19,8 +19,6 @@
 from datetime import timedelta
 from typing import Any, Optional
 
-from pydantic import ValidationError
-
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID, NameOID
 
@@ -66,7 +64,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
@@ -111,19 +109,8 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         self.verify_certificate_authority(ca=ca, expires=expires, profile=profile_obj)
 
         # Get key backend options
-        try:
-            key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
-        except ValidationError as ex:
-            self.validation_error_to_command_error(ex)
-
-        # Check if the private key is usable
-        try:
-            ca.check_usable(key_backend_options)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
-
-        # Get/validate signature hash algorithm
-        algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
+        # Get key backend options and validate backend-specific options
+        key_backend_options, algorithm = self.get_signing_options(ca, algorithm, options)
 
         # get list of watchers
         if watch:

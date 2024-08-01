@@ -91,7 +91,12 @@ class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        kwargs.setdefault("choices", sorted(tuple(constants.HASH_ALGORITHM_TYPES)))
+        hash_algorithms: set[str] = set()
+        # Calculate all supported algorithms supported by any configured backend.
+        for backend in key_backends:
+            hash_algorithms |= set(backend.supported_hash_algorithms)
+
+        kwargs.setdefault("choices", sorted(hash_algorithms))
         kwargs.setdefault("metavar", "{SHA-512,SHA-256,...}")
         super().__init__(**kwargs)
 

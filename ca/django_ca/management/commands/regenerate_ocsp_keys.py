@@ -78,7 +78,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(
+    def handle(  # pylint: disable=too-many-locals
         self,
         serials: Iterable[str],
         profile: Optional[str],
@@ -113,9 +113,19 @@ class Command(UsePrivateKeyMixin, BaseCommand):
 
             try:
                 key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+
+                # Make sure that the selected signature hash algorithm works for the CAs backend.
+                signing_algorithm = ca.key_backend.validate_signature_hash_algorithm(
+                    ca.key_type, algorithm, default=ca.algorithm
+                )
             except ValidationError as ex:
                 self.validation_error_to_command_error(ex)
+            except Exception as ex:  # pragma: no cover  # pylint: disable=broad-exception-caught
+                if quiet is False:
+                    self.stderr.write(self.style.WARNING(f"{hr_serial}: {ex}"))
+                continue
 
+            # Only check if the key is usable from here and emit a warning otherwise.
             if not ca.is_usable(key_backend_options):
                 if quiet is False:  # pragma: no branch
                     # NOTE: coverage falsely identifies the above condition to always be false.
@@ -145,7 +155,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 key_type=ca_key_type,
                 key_size=ca_key_size,
                 elliptic_curve=ca_elliptic_curve,
-                algorithm=algorithm,
+                algorithm=signing_algorithm,
                 force=force,
             )
 

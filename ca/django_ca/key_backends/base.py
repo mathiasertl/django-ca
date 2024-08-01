@@ -33,9 +33,16 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management import CommandParser
 from django.utils.module_loading import import_string
 
+from django_ca import constants
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
 from django_ca.pydantic.type_aliases import PowerOfTwoInt
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
+from django_ca.typehints import (
+    AllowedHashTypes,
+    ArgumentGroup,
+    CertificateExtension,
+    HashAlgorithms,
+    ParsableKeyType,
+)
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -83,6 +90,11 @@ class KeyBackend(
     #: :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options` is guaranteed to be
     #: one of the named values.
     supported_key_types: tuple[str, ...]
+
+    #: Hash algorithms supported by the key backend. This defines the choices for the ``--algorithm`` argument
+    #: and the `algorithm` argument in :py:func:`~django_ca.key_backends.base.KeyBackend.sign_certificate` is
+    #: guaranteed to be one of the named values.
+    supported_hash_algorithms: tuple[HashAlgorithms, ...] = tuple(constants.HASH_ALGORITHM_TYPES)
 
     #: Elliptic curves supported by this backend for elliptic curve keys. This defines the choices for the
     #: ``--elliptic-curve`` parameter and the `elliptic_curve` parameter in
@@ -325,6 +337,43 @@ class KeyBackend(
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
         return model_settings.CA_DEFAULT_ELLIPTIC_CURVE
+
+    def validate_signature_hash_algorithm(
+        self,
+        key_type: ParsableKeyType,
+        algorithm: Optional[AllowedHashTypes],
+        default: Optional[AllowedHashTypes] = None,
+    ) -> Optional[AllowedHashTypes]:
+        """Give a backend the opportunity to check the signature hash algorithm or return the default value.
+
+        The `algorithm` is the one selected by the user, or ``None`` if no algorithm was selected. The
+        `default` reflects the signature algorithm of a signing certificate authority and is ``None`` only
+        when creating a root certificate authority.
+
+        Any backend implementation should raise ``ValueError`` if it wants to veto a particular combination of
+        key type and algorithm.
+        """
+        if key_type not in ("DSA", "RSA", "EC"):
+            if algorithm is not None:
+                raise ValueError(f"{key_type} keys do not allow an algorithm for signing.")
+
+            return None
+
+        # Compute the default hash algorithm
+        if algorithm is None:
+            if default is not None:
+                algorithm = default
+            elif key_type == "DSA":
+                algorithm = model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
+            else:
+                algorithm = model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+
+        name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+
+        # Make sure that the selected signature hash algorithm works for this backend.
+        if name not in self.supported_hash_algorithms:
+            raise ValueError(f"{name}: Algorithm not supported by {self.alias} key backend.")
+        return algorithm
 
 
 class KeyBackends:

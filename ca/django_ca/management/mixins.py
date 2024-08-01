@@ -16,9 +16,9 @@
 import abc
 import typing
 from textwrap import indent
-from typing import NoReturn, Optional
+from typing import Any, NoReturn, Optional
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -36,9 +36,8 @@ from django_ca.typehints import (
     AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
-    ParsableKeyType,
 )
-from django_ca.utils import add_colons, validate_public_key_parameters
+from django_ca.utils import add_colons
 
 if typing.TYPE_CHECKING:
     # When type checking, mixins use BaseCommand as base class for all mixins.
@@ -109,23 +108,6 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             dest="encoding",
             help=f'The format to use ("ASN1" is an alias for "DER", default: {Encoding.PEM.name}).',
         )
-
-    def get_hash_algorithm(
-        self,
-        key_type: ParsableKeyType,
-        algorithm: Optional[AllowedHashTypes],
-        default_algorithm: Optional[AllowedHashTypes] = None,
-    ) -> Optional[AllowedHashTypes]:
-        """Get the hash algorithm based on the options on the command line."""
-        # Use default if no hash algorithm was specified
-        if algorithm is None and default_algorithm is not None:
-            algorithm = default_algorithm
-
-        # Validate public key parameters early so that we can return better feedback to the user.
-        try:
-            return validate_public_key_parameters(key_type, algorithm)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
 
     def print_extension(self, ext: CertificateExtension) -> None:
         """Print extension to stdout."""
@@ -333,3 +315,23 @@ class UsePrivateKeyMixin:
             group = backend.add_use_private_key_group(parser)
             if group is not None:  # pragma: no branch  # all implementations add an option group
                 backend.add_use_private_key_arguments(group)
+
+    def get_signing_options(
+        self, ca: CertificateAuthority, algorithm: Optional[AllowedHashTypes], options: dict[str, Any]
+    ) -> tuple[BaseModel, Optional[AllowedHashTypes]]:
+        """Get variables required for signing a certificate."""
+        try:
+            key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
+
+            # Make sure that the selected signature hash algorithm works for the CAs backend.
+            algorithm = ca.key_backend.validate_signature_hash_algorithm(
+                ca.key_type, algorithm, default=ca.algorithm
+            )
+
+            ca.check_usable(key_backend_options)
+        except ValidationError as ex:
+            self.validation_error_to_command_error(ex)  # type: ignore[attr-defined]
+        except Exception as ex:
+            raise CommandError(str(ex)) from ex
+
+        return key_backend_options, algorithm

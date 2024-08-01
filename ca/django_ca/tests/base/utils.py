@@ -63,6 +63,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
     # This backend only supports RSA and EC keys, but also the (invented) "STRANGE" key type.
     supported_key_types = ("RSA", "EC", "STRANGE")
     supported_elliptic_curves = ("sect571r1",)
+    supported_hash_algorithms = ("SHA-256", "SHA-512")
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, DummyBackend)

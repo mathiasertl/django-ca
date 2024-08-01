@@ -18,6 +18,7 @@ import re
 from datetime import timedelta
 from typing import Any, Optional
 from unittest import mock
+from unittest.mock import patch
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -27,6 +28,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.core.cache import cache
+from django.core.management import CommandError
 from django.urls import reverse
 from django.utils import timezone
 
@@ -1121,6 +1123,19 @@ def test_key_type_not_supported_by_backend(settings: SettingsWrapper, ca_name: s
         init_ca(ca_name, key_backend=key_backends["dummy"], key_type="DSA")
 
 
+def test_algorithm_not_supported_by_backend(settings: SettingsWrapper, ca_name: str) -> None:
+    """Test creating a key with a type that is not supported by the selected backend."""
+    settings.CA_KEY_BACKENDS = {
+        **settings.CA_KEY_BACKENDS,
+        "dummy": {
+            "BACKEND": f"{DummyBackend.__module__}.DummyBackend",
+            "OPTIONS": {},
+        },
+    }
+    with assert_command_error(r"^SHA-384: Algorithm not supported by dummy key backend\.$"):
+        init_ca(ca_name, key_backend=key_backends["dummy"], key_type="RSA", algorithm=hashes.SHA384())
+
+
 def test_small_key_size(ca_name: str) -> None:
     """Test creating a key with a key size that is too small."""
     with (
@@ -1162,6 +1177,26 @@ def test_key_size_with_unsupported_key_type(ca_name: str, key_type: str) -> None
     msg = rf"^Value error, Key size is not supported for {key_type} keys\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
         init_ca(ca_name, key_type=key_type, key_size=2048)
+
+
+@pytest.mark.django_db
+def test_get_use_private_key_options_raises_command_error(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test error handling when get_use_private_key_options() raises CommandError."""
+    msg = "some command error"
+    exc = CommandError(msg, returncode=3)
+    with assert_command_error(rf"^{msg}$", returncode=3):
+        with patch.object(key_backend, "get_use_private_key_options", side_effect=exc):
+            init_ca(ca_name, key_backend=key_backend)
+
+
+@pytest.mark.django_db
+def test_get_use_private_key_options_raises_exception(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test error handling when get_use_private_key_options() raises a generic Excpetion."""
+    msg = "some command error"
+    exc = Exception(msg)
+    with pytest.raises(Exception, match=rf"^{msg}$"):
+        with patch.object(key_backend, "get_use_private_key_options", side_effect=exc):
+            init_ca(ca_name, key_backend=key_backend)
 
 
 @pytest.mark.django_db

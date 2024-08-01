@@ -19,8 +19,6 @@
 import typing
 from typing import Any, Optional
 
-from pydantic import ValidationError
-
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
@@ -85,24 +83,12 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
         expires: int,
         **options: Any,
     ) -> None:
-        # Get/validate signature hash algorithm
-        algorithm = self.get_hash_algorithm(ca.key_type, algorithm, ca.algorithm)
+        key_backend_options, algorithm = self.get_signing_options(ca, algorithm, options)
 
         if include_issuing_distribution_point is True and ca.parent is None and scope is None:
             raise CommandError(
                 "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
             )
-
-        try:
-            key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
-        except ValidationError as ex:
-            self.validation_error_to_command_error(ex)
-
-        # Check if the private key is usable
-        try:
-            ca.check_usable(key_backend_options)
-        except ValueError as ex:
-            raise CommandError(*ex.args) from ex
 
         # Actually create the CRL
         try:

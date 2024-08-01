@@ -146,7 +146,7 @@ def assert_certificate(
 
 
 @contextmanager
-def assert_command_error(msg: str) -> Iterator[None]:
+def assert_command_error(msg: str, returncode: int = 1) -> Iterator[None]:
     """Context manager asserting that CommandError is raised.
 
     Parameters
@@ -154,8 +154,9 @@ def assert_command_error(msg: str) -> Iterator[None]:
     msg : str
         The regex matching the exception message.
     """
-    with pytest.raises(CommandError, match=msg):
+    with pytest.raises(CommandError, match=msg) as exc_info:
         yield
+    assert exc_info.value.returncode == returncode
 
 
 @contextmanager
