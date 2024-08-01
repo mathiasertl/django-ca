@@ -1121,6 +1121,19 @@ def test_key_type_not_supported_by_backend(settings: SettingsWrapper, ca_name: s
         init_ca(ca_name, key_backend=key_backends["dummy"], key_type="DSA")
 
 
+def test_algorithm_not_supported_by_backend(settings: SettingsWrapper, ca_name: str) -> None:
+    """Test creating a key with a type that is not supported by the selected backend."""
+    settings.CA_KEY_BACKENDS = {
+        **settings.CA_KEY_BACKENDS,
+        "dummy": {
+            "BACKEND": f"{DummyBackend.__module__}.DummyBackend",
+            "OPTIONS": {},
+        },
+    }
+    with assert_command_error(r"^SHA-384: Algorithm not supported by dummy key backend\.$"):
+        init_ca(ca_name, key_backend=key_backends["dummy"], key_type="RSA", algorithm=hashes.SHA384())
+
+
 def test_small_key_size(ca_name: str) -> None:
     """Test creating a key with a key size that is too small."""
     with (
