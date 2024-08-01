@@ -151,7 +151,7 @@ def test_no_scope_with_child_ca(usable_child: CertificateAuthority) -> None:
     )
 
 
-def test_include_issuing_distribution_point(root: CertificateAuthority) -> None:
+def test_include_issuing_distribution_point(usable_root: CertificateAuthority) -> None:
     """Test forcing the inclusion of the IssuingDistributionPoint extension.
 
     Note: The only case where it is not included is for CRLs for root CAs with no scope, in which case not
@@ -159,7 +159,7 @@ def test_include_issuing_distribution_point(root: CertificateAuthority) -> None:
     raises an extension.
     """
     assert_e2e_command_error(
-        ["dump_crl", f"--ca={root.serial}", "--include-issuing-distribution-point"],
+        ["dump_crl", f"--ca={usable_root.serial}", "--include-issuing-distribution-point"],
         b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
         b"",
     )

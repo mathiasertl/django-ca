@@ -361,6 +361,9 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             )
             load_key_backend_options = key_backend.get_use_private_key_options(None, options)
 
+            # Make sure that the selected signature hash algorithm works for the selected backend.
+            algorithm = key_backend.validate_signature_hash_algorithm(key_type, algorithm)
+
             # If there is a parent CA, test if we can use it (here) to sign certificates. The most common case
             # where this happens is if the key is stored on the filesystem, but only accessible to the Celery
             # worker and the current process is on the webserver side.
@@ -375,13 +378,10 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 parent.check_usable(signer_key_backend_options)
         except ValidationError as ex:
             self.validation_error_to_command_error(ex)
-        except CommandError:  # pragma: no cover
+        except CommandError:
             raise
-        except Exception as ex:  # pragma: no cover
-            raise CommandError(*ex.args) from ex
-
-        # Get/validate signature hash algorithm
-        algorithm = self.get_hash_algorithm(key_type, algorithm)
+        except Exception as ex:
+            raise CommandError(str(ex)) from ex
 
         # In case of CAs, we silently set the expiry date to that of the parent CA if the user specified a
         # number of days that would make the CA expire after the parent CA.
