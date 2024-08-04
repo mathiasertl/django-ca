@@ -347,21 +347,21 @@ class X509CertMixin(DjangoCAModel):
         return x509.ReasonFlags[self.revoked_reason]
 
     def get_compromised_time(self) -> Optional[datetime]:
-        """Return when this certificate was compromised as a *naive* datetime.
+        """Return when this certificate was compromised.
 
         Returns ``None`` if the time is not known **or** if the certificate is not revoked.
         """
         if self.revoked is False or self.compromised is None:
             return None
 
-        if timezone.is_aware(self.compromised):
+        if timezone.is_naive(self.compromised):
             # convert datetime object to UTC and make it naive
-            return timezone.make_naive(self.compromised, tz.utc)
+            return timezone.make_aware(self.compromised, timezone=tz.utc)
 
         return self.compromised
 
     def get_revocation_time(self) -> Optional[datetime]:
-        """Get the revocation time as naive datetime."""
+        """Get the revocation time."""
         if self.revoked is False:
             return None
 
@@ -370,9 +370,9 @@ class X509CertMixin(DjangoCAModel):
             log.warning("Inconsistent model state: revoked=True and revoked_date=None.")
             return None
 
-        if timezone.is_aware(revoked_date):
+        if timezone.is_naive(revoked_date):
             # convert datetime object to UTC and make it naive
-            revoked_date = timezone.make_naive(revoked_date, tz.utc)
+            revoked_date = timezone.make_aware(revoked_date, timezone=tz.utc)
 
         return revoked_date.replace(microsecond=0)
 
@@ -928,15 +928,8 @@ class CertificateAuthority(X509CertMixin):
         else:
             csr_sign_algorithm = model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 
-        # The subject of the delegate certificate will be the common name of the CA with a suffix. Other
-        # fields in the CA are discarded.
-        common_name = self.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        if not common_name:  # pragma: no cover  # we don't really support CAs with no common name right now
-            common_name_value = self.name
-        else:
-            common_name_value = typing.cast(str, common_name[0].value)  # always str for common names
-        common_name_value += " OCSP authorized responder"
-        subject = x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value=common_name_value)])
+        # Use a static subject, it seems to be not used at all.
+        subject = x509.Name([x509.NameAttribute(oid=NameOID.COMMON_NAME, value="OCSP responder")])
 
         csr = (
             x509.CertificateSigningRequestBuilder()

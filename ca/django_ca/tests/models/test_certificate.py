@@ -13,7 +13,7 @@
 
 """Test the Certificate model."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as tz
 
 import josepy as jose
 
@@ -70,11 +70,11 @@ def test_get_revocation_time(settings: SettingsWrapper, root_cert: Certificate) 
 
     # timestamp does not have a timezone regardless of USE_TZ
     root_cert.revoked_date = timezone.now()
-    assert root_cert.get_revocation_time() == datetime(2019, 2, 3, 15, 43, 12)
+    assert root_cert.get_revocation_time() == datetime(2019, 2, 3, 15, 43, 12, tzinfo=tz.utc)
 
     settings.USE_TZ = False
     root_cert.refresh_from_db()
-    assert root_cert.get_revocation_time() == datetime(2019, 2, 3, 15, 43, 12)
+    assert root_cert.get_revocation_time() == datetime(2019, 2, 3, 15, 43, 12, tzinfo=tz.utc)
 
 
 @pytest.mark.freeze_time("2019-02-03 15:43:12")
@@ -85,12 +85,12 @@ def test_get_compromised_time(settings: SettingsWrapper, root_cert: Certificate)
 
     # timestamp does not have a timezone regardless of USE_TZ
     root_cert.compromised = timezone.now()
-    assert root_cert.get_compromised_time() == datetime(2019, 2, 3, 15, 43, 12)
+    assert root_cert.get_compromised_time() == datetime(2019, 2, 3, 15, 43, 12, tzinfo=tz.utc)
 
     settings.USE_TZ = False
     root_cert.refresh_from_db()
     assert root_cert.compromised == timezone.now()
-    assert root_cert.get_compromised_time() == datetime(2019, 2, 3, 15, 43, 12)
+    assert root_cert.get_compromised_time() == datetime(2019, 2, 3, 15, 43, 12, tzinfo=tz.utc)
 
 
 def test_get_revocation_reason(root_cert: Certificate) -> None:

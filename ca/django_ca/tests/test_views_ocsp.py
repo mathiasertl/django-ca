@@ -15,7 +15,7 @@
 
 import base64
 import typing
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Optional, Union
 from unittest import mock
@@ -42,7 +42,13 @@ from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages import UsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DIR, TIMESTAMPS
+from django_ca.tests.base.constants import (
+    CERT_DATA,
+    CRYPTOGRAPHY_VERSION,
+    FIXTURES_DATA,
+    FIXTURES_DIR,
+    TIMESTAMPS,
+)
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.typehints import HttpResponse
 from django_ca.tests.base.utils import override_tmpcadir
@@ -208,12 +214,21 @@ class OCSPViewTestMixin(TestCaseMixin):
         """Check information related to the certificate status."""
         if certificate.revoked is False:
             self.assertEqual(response.certificate_status, ocsp.OCSPCertStatus.GOOD)
-            self.assertIsNone(response.revocation_time)
+            if CRYPTOGRAPHY_VERSION < (43,):  # pragma: only cg<=42
+                self.assertIsNone(response.revocation_time)
+            else:
+                self.assertIsNone(response.revocation_time_utc)
             self.assertIsNone(response.revocation_reason)
         else:
             self.assertEqual(response.certificate_status, ocsp.OCSPCertStatus.REVOKED)
             self.assertEqual(response.revocation_reason, certificate.get_revocation_reason())
-            self.assertEqual(response.revocation_time, certificate.get_revocation_time())
+            if CRYPTOGRAPHY_VERSION < (43,):  # pragma: only cg<=42
+                self.assertEqual(
+                    response.revocation_time.replace(tzinfo=timezone.utc),  # type: ignore[union-attr]
+                    certificate.get_revocation_time(),
+                )
+            else:
+                self.assertEqual(response.revocation_time_utc, certificate.get_revocation_time())
 
     def assertOCSPSingleResponse(  # pylint: disable=invalid-name
         self,
@@ -262,8 +277,13 @@ class OCSPViewTestMixin(TestCaseMixin):
 
         # Check TIMESTAMPS
         # self.assertEqual(response.produced_at, datetime.now())
-        self.assertEqual(response.this_update, datetime.now())
-        self.assertEqual(response.next_update, datetime.now() + timedelta(seconds=expires))
+        if CRYPTOGRAPHY_VERSION < (43,):  # pragma: only cg<=42
+            self.assertEqual(response.this_update, datetime.now())
+            self.assertEqual(response.next_update, datetime.now() + timedelta(seconds=expires))
+        else:
+            now = datetime.now(tz=timezone.utc)
+            self.assertEqual(response.this_update_utc, now)
+            self.assertEqual(response.next_update_utc, now + timedelta(seconds=expires))
 
         # Check nonce if passed
         if nonce is None:

@@ -17,7 +17,7 @@ from typing import Optional
 
 import pytest
 
-from django_ca.key_backends.hsm.models import HSMBackendUsePrivateKeyOptions
+from django_ca.key_backends.hsm.models import CreatePrivateKeyOptions, HSMBackendUsePrivateKeyOptions
 
 
 @pytest.mark.parametrize("so_pin,user_pin", (("so-pin-value", None), (None, "user-pin-value")))
@@ -39,3 +39,9 @@ def test_invalid_pins(so_pin: Optional[str], user_pin: Optional[str], error: str
     """Test invalid pin configurations."""
     with pytest.raises(ValueError, match=error):
         HSMBackendUsePrivateKeyOptions(so_pin=so_pin, user_pin=user_pin)
+
+
+def test_with_elliptic_curve_with_rsa_key() -> None:
+    """Test creating a model with an elliptic curve with a key type that doesn't support it."""
+    with pytest.raises(ValueError, match=r"Elliptic curves are not supported for RSA keys."):
+        CreatePrivateKeyOptions(key_label="foo", user_pin="123", key_type="RSA", elliptic_curve="sect571r1")
