@@ -32,12 +32,19 @@ class Command(DevCommand):
         """Shortcut to run manage.py with warnings turned into errors."""
         python: list[Union[str, os.PathLike[str]]] = ["python"]
 
-        # Django 4.2 introduced a new way of handling storages
         known_warnings = [
             "default",  # equivalent to "python -Wd"
-            "ignore:django.core.files.storage.get_storage_class is deprecated",  # pragma: only django<4.2
-            "ignore:X509Extension support in pyOpenSSL is deprecated",  # from acme==2.8.0
-            "ignore:Support for class-based `config` is deprecated",  # from django-ninja==1.1
+            # acme==2.11.0; https://github.com/certbot/certbot/issues/8492
+            #               https://github.com/certbot/certbot/issues/9828
+            # josepy==1.14.0;
+            #   Both acme and josepy use pyOpenSSL extensively and there seem to be no plans to fix it.
+            "ignore:CSR support in pyOpenSSL is deprecated. You should use the APIs in cryptography.",
+            "ignore:X509Extension support in pyOpenSSL is deprecated",
+            # django-ninja==1.3.0; https://github.com/vitalik/django-ninja/issues/1093
+            #   A left-over from the migration to Pydantic 2.0.
+            "ignore:Support for class-based `config` is deprecated",
+            # django-ninja==1.3.0; https://github.com/vitalik/django-ninja/issues/1266
+            "ignore:Converter 'uuid' is already registered.::ninja.signature.utils",
         ]
         env = dict(os.environ, PYTHONWARNINGS=",".join(known_warnings))
 

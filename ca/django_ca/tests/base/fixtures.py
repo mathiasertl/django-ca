@@ -187,7 +187,7 @@ def hostname(ca_name: str) -> Iterator[str]:
 
     The value is unique for each test, and it includes the CA name, which includes the test name.
     """
-    yield f"{ca_name.replace('_', '-')}.example.com"
+    yield f"{ca_name.replace('_', '-')}.example.com"[-64:].lstrip("-.")
 
 
 @pytest.fixture(params=interesting_certificate_names)
@@ -257,6 +257,7 @@ def subject(hostname: str) -> Iterator[x509.Name]:
     The common name is based on :py:func:`~django_ca.tests.base.fixtures.hostname` and identical to
     :py:func:`~django_ca.tests.base.fixtures.rfc4514_subject`.
     """
+    hostname = hostname[-61:].lstrip("-.")
     yield x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
@@ -264,7 +265,7 @@ def subject(hostname: str) -> Iterator[x509.Name]:
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Django CA"),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Django CA Testsuite"),
-            x509.NameAttribute(NameOID.COMMON_NAME, f"subject.{hostname}"),
+            x509.NameAttribute(NameOID.COMMON_NAME, f"cn.{hostname}"),
         ]
     )
 

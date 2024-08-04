@@ -483,7 +483,11 @@ def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x50
 
 
 @pytest.mark.parametrize(
-    "value,msg", (((("CN", ""),), r"<Name\(CN=\)>: CommonName must not be an empty value\."),)
+    "value,msg",
+    (
+        ((("CN", ""),), r"Value error, Attribute's length must be >= 1 and <= 64, but it was 0"),
+        ((("CN", "X" * 65),), r"Value error, Attribute's length must be >= 1 and <= 64, but it was 65"),
+    ),
 )
 def test_ca_default_subject_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:
     """Test the check for empty common names."""

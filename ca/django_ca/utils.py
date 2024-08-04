@@ -276,8 +276,6 @@ def check_name(name: x509.Name) -> x509.Name:
             raise ValueError(f'Subject contains multiple "{constants.NAME_OID_NAMES[attr.oid]}" fields')
         seen.add(oid)
 
-        if oid == NameOID.COMMON_NAME and not attr.value:
-            raise ValueError("CommonName must not be an empty value")
     return name
 
 

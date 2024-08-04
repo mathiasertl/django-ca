@@ -208,7 +208,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         """Test that nullable fields work."""
         cert = Certificate.objects.create(
             pub=self.pub["parsed"],
-            csr=None,
+            csr=None,  # type: ignore[misc]  # what we test
             ca=self.ca,
             expires=timezone.now(),
             valid_from=timezone.now(),
@@ -280,7 +280,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse CertificateSigningRequest$"):
             Certificate.objects.create(
                 pub=CERT_DATA["child-cert"]["pub"]["parsed"],
-                csr=True,
+                csr=True,  # type: ignore[misc]  # what we test
                 ca=self.ca,
                 expires=timezone.now(),
                 valid_from=timezone.now(),
@@ -289,7 +289,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         with self.assertRaisesRegex(ValueError, r"^True: Could not parse Certificate$"):
             Certificate.objects.create(
                 csr=CERT_DATA["child-cert"]["csr"]["parsed"],
-                pub=True,
+                pub=True,  # type: ignore[misc]  # what we test
                 ca=self.ca,
                 expires=timezone.now(),
                 valid_from=timezone.now(),

@@ -285,7 +285,7 @@ class TestCaseMixin(TestCaseProtocol):
         """Get a hostname unique for the test case."""
         name = self.id().split(".", 2)[-1].lower()
         name = re.sub("[^a-z0-9.-]", "-", name)
-        return f"{name}.example.com"
+        return f"{name}.example.com"[-64:].lstrip("-.")
 
     @property
     def subject(self) -> x509.Name:

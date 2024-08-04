@@ -138,7 +138,7 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
 
     # exclude cryptography-version specific code
     this_version = typing.cast(tuple[int, int], packaging.version.parse(cryptography.__version__).release[:2])
-    cryptography_versions = [(37, 0), (38, 0), (39, 0), (40, 0), (41, 0), (42, 0), (43, 0), (44, 0)]
+    cryptography_versions = [(41, 0), (42, 0), (43, 0), (44, 0), (45, 0)]
     for ver in cryptography_versions:
         version_str = ".".join([str(v) for v in ver])
         exclude_versions(cov, "cryptography", this_version, ver, version_str)

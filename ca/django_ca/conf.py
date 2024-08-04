@@ -180,10 +180,15 @@ def _check_name(name: x509.Name) -> None:
             raise ImproperlyConfigured(
                 f'{name}: Contains multiple "{constants.NAME_OID_NAMES[attr.oid]}" fields.'
             )
-        seen.add(oid)
 
-        if oid == NameOID.COMMON_NAME and not attr.value:
-            raise ImproperlyConfigured(f"{name}: CommonName must not be an empty value.")
+        value = attr.value
+        if oid == NameOID.COMMON_NAME and (not value or len(value) > 64):  # pragma: only cryptography<43.0
+            # Imitate message from cryptography 43
+            raise ImproperlyConfigured(
+                f"Value error, Attribute's length must be >= 1 and <= 64, but it was {len(attr.value)}"
+            )
+
+        seen.add(oid)
 
 
 def _parse_deprecated_name_value(value: Any) -> Optional[x509.Name]:

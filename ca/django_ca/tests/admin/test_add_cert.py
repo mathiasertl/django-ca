@@ -887,6 +887,10 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         self.login()
 
         self.selenium.get(f"{self.live_server_url}{self.add_url}")
+
+        # Open the collapsed fieldset to make sure that fields are in view
+        self.find("fieldset.x509-extensions").click()
+
         select = Select(self.find("select#id_profile"))
         ku_select = Select(self.find("select#id_key_usage_0"))
         ku_critical = self.find("input#id_key_usage_1")
