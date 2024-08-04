@@ -14,7 +14,7 @@ Command-line utilities
 Dependencies
 ************
 
-* Add support for Pydantic 2.8.
+* Add support for cryptography 43 and Pydantic 2.8.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic<2.7.0``, ``acme~=2.9.0`` and ``Celery~=5.3.0``.
 * Drop support for Alpine 3.17.
 
