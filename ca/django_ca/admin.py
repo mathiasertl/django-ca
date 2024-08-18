@@ -849,11 +849,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         try:
             raw_csr = json.loads(request.body)["csr"]
             csr = x509.load_pem_x509_csr(raw_csr.encode("ascii"))
-        except Exception:  # pylint: disable=broad-except; docs don't list possible exceptions
+            subject = NameModel.model_validate(csr.subject).model_dump(mode="json")
+            return JsonResponse({"subject": subject})
+        except Exception as ex:  # pylint: disable=broad-except; docs don't list possible exceptions
+            print(ex)
             return JsonResponse({"message": "Cannot parse CSR."}, status=HTTPStatus.BAD_REQUEST)
-
-        subject = NameModel.model_validate(csr.subject).model_dump(mode="json")
-        return JsonResponse({"subject": subject})
 
     @property
     def name_to_rfc4514_view_name(self) -> str:

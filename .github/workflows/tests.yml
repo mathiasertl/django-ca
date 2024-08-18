@@ -11,10 +11,10 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
+        python-version: [ "3.12" ]
         django-version: [ "4.2.0", "5.0.0", "5.1.0" ]
-        cryptography-version: [ "42.0", "43.0" ]
-        pydantic-version: [ "2.7.0" , "2.8.0"]
+        cryptography-version: [ "43.0" ]
+        pydantic-version: [ "2.8.0"]
         exclude:
           - python-version: 3.9
             django-version: 5.0.0
@@ -46,8 +46,5 @@ jobs:
           pip install -U pip setuptools wheel
           pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }} pydantic~=${{ matrix.pydantic-version }}
 
-      - name: Initialize demo
-        run: python dev.py init-demo
-
       - name: Run tests
-        run: pytest -v --cov-report term-missing --durations=20
+        run: pytest -v ca/django_ca/tests/admin/test_add_cert.py::SubjectFieldSeleniumTestCase

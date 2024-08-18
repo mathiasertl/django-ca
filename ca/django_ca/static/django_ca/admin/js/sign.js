@@ -1,3 +1,5 @@
+var matilog = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     var csr_details_url = document.querySelector('meta[name="csr-details-url"]').getAttribute('content');
@@ -125,17 +127,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set up the CSR input field
     var csr_textarea = document.querySelector('.field-csr textarea');
+    matilog.push('### 1 ' + csr_textarea);
     if (csr_textarea) { // not set on the resign form
         document.querySelector('.field-csr textarea').addEventListener('input', async (event) => {
             // No data is fetched yet
+            matilog.push('### 2 - data input');
             event.target.dataset.fetched = "false"
 
             var input = event.target;
             var value = input.value.trim();
+            matilog.push('### 2.1: input: ' + value);
 
             // check if this at least *appears* to be a CSR by checking the delimiters
             if (! (value.startsWith('-----BEGIN CERTIFICATE REQUEST-----\n')
                    && value.endsWith('\n-----END CERTIFICATE REQUEST-----'))) {
+                matilog.push("### 3 - Invalid input?");
                 csr_subject_input_chapter.querySelector(".no-csr").style.display = "block";
                 csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
                 csr_subject_input_chapter.querySelector(".no-content").style.display = "none";
@@ -144,17 +150,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Retrieve CSR data via API
             const csr_response = await async_post(csr_details_url, {csr: value});
+            matilog.push("### 4 - status: " + csr_response.status);
+            matilog.push(csr_response);
+
             if (csr_response.status !== 200) {
+                const csr_text_response = await csr_response.text();
+                matilog.push(csr_text_response);
                 csr_subject_input_chapter.querySelector(".no-csr").style.display = "block";
                 csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
                 csr_subject_input_chapter.querySelector(".no-content").style.display = "none";
                 return;
             }
             const csr_data = await csr_response.json();
+            matilog.push("### 5 " + csr_data);
             const subject = csr_data["subject"];
+            matilog.push("### 6 " + subject);
 
             // No need to do anything if the CSR has an empty subject
             if (subject.length === 0) {
+                matilog.push("### 7 - length is zero");
                 csr_subject_input_chapter.querySelector(".no-csr").style.display = "none";
                 csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
                 csr_subject_input_chapter.querySelector(".no-content").style.display = "block";
@@ -164,7 +178,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+
+            matilog.push("### 8 - loading data...");
             loadDataToSubjectInputChapter(csr_subject_input_chapter, subject);
+            matilog.push("### 9 - loaded data...");
             csr_subject_input_chapter.querySelector(".no-csr").style.display = "none";
             csr_subject_input_chapter.querySelector(".has-content").style.display = "block";
             csr_subject_input_chapter.querySelector(".no-content").style.display = "none";

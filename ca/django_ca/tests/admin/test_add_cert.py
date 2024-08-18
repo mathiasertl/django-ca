@@ -967,9 +967,10 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
     """Test the Subject input field."""
 
     @override_tmpcadir(
+        DEBUG=True,
         CA_PROFILES={
             "webserver": {"subject": [{"oid": "C", "value": "AT"}, {"oid": "ST", "value": "Vienna"}]}
-        }
+        },
     )
     def test_subject_field(self) -> None:
         """Test core functionality of the subject field."""
@@ -1015,115 +1016,129 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         self.assertEqual(self.value, new_subject)
         self.assertEqual(self.displayed_value, new_subject)
 
-    @override_tmpcadir()
+    @override_tmpcadir(DEBUG=True)
     def test_csr_integration(self) -> None:
         """Test that pasting a CSR shows text next to subject input fields."""
-        self.initialize()
+        self.selenium.execute_script("matilog = [];")  # type: ignore[no-untyped-call]
+        try:
+            self.initialize()
 
-        initial_subject = [
-            {"oid": "2.5.4.6", "value": "AT"},
-            {"oid": "2.5.4.8", "value": "Vienna"},
-            {"oid": "2.5.4.7", "value": "Vienna"},
-            {"oid": "2.5.4.10", "value": "Django CA"},
-            {"oid": "2.5.4.11", "value": "Django CA Testsuite"},
-        ]
-        csr_subject = [
-            {"oid": "2.5.4.6", "value": "AT"},
-            {"oid": "2.5.4.8", "value": "csr.Vienna"},
-            {"oid": "2.5.4.7", "value": "csr.Vienna"},
-            {"oid": "2.5.4.10", "value": "csr.Example"},
-            {"oid": "2.5.4.11", "value": "csr.Example OU"},
-            {"oid": "2.5.4.3", "value": "csr.all-extensions.example.com"},
-            {"oid": "1.2.840.113549.1.9.1", "value": "csr.user@example.com"},
-        ]
+            initial_subject = [
+                {"oid": "2.5.4.6", "value": "AT"},
+                {"oid": "2.5.4.8", "value": "Vienna"},
+                {"oid": "2.5.4.7", "value": "Vienna"},
+                {"oid": "2.5.4.10", "value": "Django CA"},
+                {"oid": "2.5.4.11", "value": "Django CA Testsuite"},
+            ]
+            csr_subject = [
+                {"oid": "2.5.4.6", "value": "AT"},
+                {"oid": "2.5.4.8", "value": "csr.Vienna"},
+                {"oid": "2.5.4.7", "value": "csr.Vienna"},
+                {"oid": "2.5.4.10", "value": "csr.Example"},
+                {"oid": "2.5.4.11", "value": "csr.Example OU"},
+                {"oid": "2.5.4.3", "value": "csr.all-extensions.example.com"},
+                {"oid": "1.2.840.113549.1.9.1", "value": "csr.user@example.com"},
+            ]
 
-        # Elements of the CSR chapter
-        csr_subject_input_chapter = self.key_value_field.find_element(
-            By.CSS_SELECTOR, ".subject-input-chapter.csr"
-        )
-        no_csr = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr .no-csr")
-        has_content = self.key_value_field.find_element(
-            By.CSS_SELECTOR, ".subject-input-chapter.csr .has-content"
-        )
-        no_content = self.key_value_field.find_element(
-            By.CSS_SELECTOR, ".subject-input-chapter.csr .no-content"
-        )
+            # Elements of the CSR chapter
+            csr_subject_input_chapter = self.key_value_field.find_element(
+                By.CSS_SELECTOR, ".subject-input-chapter.csr"
+            )
+            no_csr = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr .no-csr")
+            has_content = self.key_value_field.find_element(
+                By.CSS_SELECTOR, ".subject-input-chapter.csr .has-content"
+            )
+            no_content = self.key_value_field.find_element(
+                By.CSS_SELECTOR, ".subject-input-chapter.csr .no-content"
+            )
 
-        # Check that the right parts of the CSR chapter is displayed
-        assert no_csr.is_displayed() is True  # this is displayed as we haven't pasted a CSR
-        assert has_content.is_displayed() is False
-        assert no_content.is_displayed() is False
+            # Check that the right parts of the CSR chapter is displayed
+            assert no_csr.is_displayed() is True  # this is displayed as we haven't pasted a CSR
+            assert has_content.is_displayed() is False
+            assert no_content.is_displayed() is False
 
-        csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
-        csr_field = self.find("textarea#id_csr")
-        csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii"))
+            csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
+            csr_field = self.find("textarea#id_csr")
+            csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii"))
 
-        # Make sure that the displayed subject has not changed
-        self.assertNotModified()
-        assert self.value == initial_subject
+            # Make sure that the displayed subject has not changed
+            self.assertNotModified()
+            assert self.value == initial_subject
 
-        # Wait for the CSR results to be fetched
-        WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
-            lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
-            "data-fetched for CSR was not set.",
-        )
+            # Wait for the CSR results to be fetched
+            WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
+                lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
+                "data-fetched for CSR was not set.",
+            )
 
-        # check the JSON value from the chapter
-        value: str = csr_subject_input_chapter.get_attribute("data-value")  # type: ignore[assignment]
-        assert json.loads(value) == csr_subject
+            # check the JSON value from the chapter
+            value: str = csr_subject_input_chapter.get_attribute("data-value")  # type: ignore[assignment]
+            assert json.loads(value) == csr_subject
 
-        # check that the right chapter is displayed
-        assert no_csr.is_displayed() is False
-        assert has_content.is_displayed() is True
-        assert no_content.is_displayed() is False
+            # check that the right chapter is displayed
+            assert no_csr.is_displayed() is False
+            assert has_content.is_displayed() is True
+            assert no_content.is_displayed() is False
 
-        # Check the li element inside
-        lis = has_content.find_elements(By.TAG_NAME, "li")
-        assert len(lis) == len(csr_subject)
-        assert lis[0].text == "countryName (C): AT"  # just testing the first one
+            # Check the li element inside
+            lis = has_content.find_elements(By.TAG_NAME, "li")
+            assert len(lis) == len(csr_subject)
+            assert lis[0].text == "countryName (C): AT"  # just testing the first one
 
-        # Click the copy button and validate that the subject is set
-        csr_subject_input_chapter.find_element(By.CSS_SELECTOR, ".copy-button").click()
-        self.assertModified()
-        assert self.value == csr_subject
-        assert self.displayed_value == csr_subject
+            # Click the copy button and validate that the subject is set
+            csr_subject_input_chapter.find_element(By.CSS_SELECTOR, ".copy-button").click()
+            self.assertModified()
+            assert self.value == csr_subject
+            assert self.displayed_value == csr_subject
+        except Exception:
+            logs = self.selenium.execute_script("return matilog;")  # type: ignore[no-untyped-call]
+            print(logs)
+            raise
 
-    @override_tmpcadir()
+    @override_tmpcadir(DEBUG=True)
     def test_paste_csr_no_subject(self) -> None:
         """Test that pasting a CSR shows text next to subject input fields."""
-        self.initialize()
+        self.selenium.execute_script("matilog = [];")  # type: ignore[no-untyped-call]
+        try:
+            self.initialize()
 
-        # Create a CSR with no subject
-        key = CERT_DATA["all-extensions"]["key"]["parsed"]
-        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(key, hashes.SHA256())
-        csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
+            # Create a CSR with no subject
+            key = CERT_DATA["all-extensions"]["key"]["parsed"]
+            csr = (
+                x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(key, hashes.SHA256())
+            )
+            csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
 
-        # Elements of the CSR chapter
-        csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
-        no_csr = csr_chapter.find_element(By.CSS_SELECTOR, ".no-csr")
-        has_content = csr_chapter.find_element(By.CSS_SELECTOR, ".has-content")
-        no_content = csr_chapter.find_element(By.CSS_SELECTOR, ".no-content")
+            # Elements of the CSR chapter
+            csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
+            no_csr = csr_chapter.find_element(By.CSS_SELECTOR, ".no-csr")
+            has_content = csr_chapter.find_element(By.CSS_SELECTOR, ".has-content")
+            no_content = csr_chapter.find_element(By.CSS_SELECTOR, ".no-content")
 
-        # send all but the first character to the CSR input field
-        self.find("textarea#id_csr").send_keys(csr_pem)
+            # send all but the first character to the CSR input field
+            self.find("textarea#id_csr").send_keys(csr_pem)
 
-        # Wait for the CSR results to be fetched
-        WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
-            lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
-            "data-fetched for CSR was not set.",
-        )
+            # Wait for the CSR results to be fetched
+            WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
+                lambda driver: driver.find_element(By.ID, "id_csr").get_attribute("data-fetched") == "true",
+                "data-fetched for CSR was not set.",
+            )
 
-        # Check that the right parts of the CSR chapter is displayed
-        self.assertIs(no_csr.is_displayed(), False)
-        self.assertIs(has_content.is_displayed(), False)
-        self.assertIs(no_content.is_displayed(), True)
-        self.assertNotModified()
+            # Check that the right parts of the CSR chapter is displayed
+            self.assertIs(no_csr.is_displayed(), False)
+            self.assertIs(has_content.is_displayed(), False)
+            self.assertIs(no_content.is_displayed(), True)
+            self.assertNotModified()
 
-        # Click the clear button and validate that the subject is cleared
-        csr_chapter.find_element(By.CSS_SELECTOR, ".clear-button").click()
-        self.assertModified()
-        self.assertEqual(self.value, [])
-        self.assertEqual(self.displayed_value, [])
+            # Click the clear button and validate that the subject is cleared
+            csr_chapter.find_element(By.CSS_SELECTOR, ".clear-button").click()
+            self.assertModified()
+            self.assertEqual(self.value, [])
+            self.assertEqual(self.displayed_value, [])
+        except Exception:
+            logs = self.selenium.execute_script("return matilog;")  # type: ignore[no-untyped-call]
+            print(logs)
+            raise
 
     @override_tmpcadir()
     def test_paste_csr_missing_delimiters(self) -> None:
