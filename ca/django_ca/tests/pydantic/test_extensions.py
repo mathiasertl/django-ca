@@ -134,7 +134,7 @@ def assert_extension_model(
     assert model.critical == expected_critical
     assert model.type == constants.EXTENSION_KEYS.get(expected.oid, "unknown")
     if hasattr(model, "_extension_type"):
-        assert model._extension_type == type(expected)  # pylint: disable=protected-access
+        assert model._extension_type is type(expected)  # pylint: disable=protected-access
 
     return model
 

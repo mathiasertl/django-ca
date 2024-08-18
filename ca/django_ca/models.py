@@ -108,6 +108,8 @@ from django_ca.utils import (
 )
 
 if typing.TYPE_CHECKING:
+    from typing import Self  # added in Python 3.11
+
     from django_stubs_ext.db.models import manager
 
 log = logging.getLogger(__name__)
@@ -199,7 +201,7 @@ class Watcher(models.Model):
         return self.mail
 
     @classmethod
-    def from_addr(cls, addr: str) -> "Watcher":
+    def from_addr(cls, addr: str) -> "Self":
         """Class constructor that creates an instance from an email address."""
         name = ""
         match = re.match(r"(.*?)\s*<(.*)>", addr)
@@ -465,7 +467,7 @@ class X509CertMixin(DjangoCAModel):
         post_revoke_cert.send(sender=self.__class__, cert=self)
 
 
-class CertificateAuthority(X509CertMixin):
+class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missing]
     """Model representing a x509 Certificate Authority."""
 
     DEFAULT_KEY_USAGE = x509.KeyUsage(
@@ -1414,7 +1416,7 @@ class AcmeAccount(DjangoCAModel):
         return tos_agreed and self.status == AcmeAccount.STATUS_VALID and self.ca.usable
 
 
-class AcmeOrder(DjangoCAModel):
+class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
     """Implements an ACME order object.
 
     .. seealso::
