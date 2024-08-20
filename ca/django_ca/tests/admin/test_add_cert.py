@@ -1059,7 +1059,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
 
             csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
             csr_field = self.find("textarea#id_csr")
-            csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii"))
+            csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii").strip())
 
             # Make sure that the displayed subject has not changed
             self.assertNotModified()
@@ -1107,7 +1107,7 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
             csr = (
                 x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(key, hashes.SHA256())
             )
-            csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
+            csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode().strip()
 
             # Elements of the CSR chapter
             csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
@@ -1135,10 +1135,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
             self.assertModified()
             self.assertEqual(self.value, [])
             self.assertEqual(self.displayed_value, [])
-        except Exception:
+        finally:
             logs = self.selenium.execute_script("return matilog;")  # type: ignore[no-untyped-call]
             print(logs)
-            raise
 
     @override_tmpcadir()
     def test_paste_csr_missing_delimiters(self) -> None:
