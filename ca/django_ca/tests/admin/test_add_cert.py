@@ -962,6 +962,16 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
 class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
     """Test the Subject input field."""
 
+    def send_csr_keys(self, csr: x509.CertificateSigningRequest) -> None:
+        """Send a CSR to the CSR input field. See inline comments for extra function rationale."""
+        # IMPORTANT: Always strip CSRs, as send_keys() sends it character by character. If the CSR has a final
+        #   newline, it sends the request twice. Since everything is asynchronous, the requests run in
+        #   parallel, causing transient test errors, as documented here:
+        #       https://docs.djangoproject.com/en/dev/topics/testing/tools/#liveservertestcase
+
+        csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode().strip()
+        self.find("textarea#id_csr").send_keys(csr_pem)
+
     @override_tmpcadir(
         CA_PROFILES={
             "webserver": {"subject": [{"oid": "C", "value": "AT"}, {"oid": "ST", "value": "Vienna"}]}
@@ -1050,9 +1060,8 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         assert has_content.is_displayed() is False
         assert no_content.is_displayed() is False
 
-        csr: x509.CertificateSigningRequest = CERT_DATA["all-extensions"]["csr"]["parsed"]
-        csr_field = self.find("textarea#id_csr")
-        csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii"))
+        # Send the CSR to the input field.
+        self.send_csr_keys(CERT_DATA["all-extensions"]["csr"]["parsed"])
 
         # Make sure that the displayed subject has not changed
         self.assertNotModified()
@@ -1092,7 +1101,6 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         # Create a CSR with no subject
         key = CERT_DATA["all-extensions"]["key"]["parsed"]
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([])).sign(key, hashes.SHA256())
-        csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode()
 
         # Elements of the CSR chapter
         csr_chapter = self.key_value_field.find_element(By.CSS_SELECTOR, ".subject-input-chapter.csr")
@@ -1100,8 +1108,8 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         has_content = csr_chapter.find_element(By.CSS_SELECTOR, ".has-content")
         no_content = csr_chapter.find_element(By.CSS_SELECTOR, ".no-content")
 
-        # send all but the first character to the CSR input field
-        self.find("textarea#id_csr").send_keys(csr_pem)
+        # Send the CSR to the input field.
+        self.send_csr_keys(csr)
 
         # Wait for the CSR results to be fetched
         WebDriverWait(self.selenium, 3, poll_frequency=0.1).until(
