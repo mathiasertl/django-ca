@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     var csr_details_url = document.querySelector('meta[name="csr-details-url"]').getAttribute('content');
 
+    // CSR cache makes sure that identical CSRs are not fetched again
+    var csr_cache = {};
+
     // global for the subject field
     var subject_field = document.querySelector('.field-subject .key-value-field');
     var subject_input = subject_field.querySelector('input#id_subject');  // actual hidden input
@@ -142,15 +145,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Retrieve CSR data via API
-            const csr_response = await async_post(csr_details_url, {csr: value});
-            if (csr_response.status !== 200) {
-                csr_subject_input_chapter.querySelector(".no-csr").style.display = "block";
-                csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
-                csr_subject_input_chapter.querySelector(".no-content").style.display = "none";
-                return;
+            // Try to find the CSR in the cache.
+            if (value in csr_cache) {
+                var csr_data = csr_cache[value];
+
+            // CSR is not in local cache, retrieve CSR data via API
+            } else {
+                const csr_response = await async_post(csr_details_url, {csr: value});
+                if (csr_response.status !== 200) {
+                    csr_subject_input_chapter.querySelector(".no-csr").style.display = "block";
+                    csr_subject_input_chapter.querySelector(".has-content").style.display = "none";
+                    csr_subject_input_chapter.querySelector(".no-content").style.display = "none";
+                    return;
+                }
+                var csr_data = await csr_response.json();
+                csr_cache[value] = csr_data;
             }
-            const csr_data = await csr_response.json();
             const subject = csr_data["subject"];
 
             // No need to do anything if the CSR has an empty subject
