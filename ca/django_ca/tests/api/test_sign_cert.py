@@ -15,6 +15,7 @@
 
 """Test the signing certificates via the API."""
 
+import base64
 import ipaddress
 from datetime import timedelta
 from http import HTTPStatus
@@ -33,6 +34,7 @@ from django.utils import timezone
 
 import pytest
 from freezegun import freeze_time
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import constants
 from django_ca.conf import model_settings
@@ -192,6 +194,71 @@ def test_private_key_unavailable(
 
     # Test that the response looks okay
     assert response.status_code == HTTPStatus.OK, response.content
+    expected_response["slug"] = order.slug
+    assert response.json() == expected_response
+
+
+@freeze_time(TIMESTAMPS["everything_valid"])
+def test_key_backend_options(
+    settings: SettingsWrapper,
+    api_client: Client,
+    usable_pwd: CertificateAuthority,
+    expected_response: dict[str, Any],
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+) -> None:
+    """Test passing key backend options."""
+    settings.CA_PASSWORDS = {}
+
+    usable_pwd.api_enabled = True
+    usable_pwd.save()
+
+    path = reverse_lazy("django_ca:api:sign_certificate", kwargs={"serial": usable_pwd.serial})
+    pwd = base64.b64encode(CERT_DATA["pwd"]["password"])  # pwd needs to be base64 encoded
+    data = {
+        "csr": csr,
+        "subject": default_subject,
+        "key_backend_options": {"password": pwd.decode("utf-8")},
+    }
+    with django_capture_on_commit_callbacks(execute=True):
+        response = api_client.post(path, data, content_type="application/json")
+        assert response.status_code == HTTPStatus.OK, response.content
+
+    order: CertificateOrder = CertificateOrder.objects.get(certificate_authority=usable_pwd)
+    expected_response["slug"] = order.slug
+    assert response.json() == expected_response
+
+    cert = Certificate.objects.get(ca=usable_pwd)
+    assert cert.serial
+
+
+@freeze_time(TIMESTAMPS["everything_valid"])
+def test_key_backend_configuration_not_required_on_frontend(
+    api_user: AbstractUser,
+    api_client: Client,
+    usable_pwd: CertificateAuthority,
+    expected_response: dict[str, Any],
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+) -> None:
+    """Test that the API endpoint does not need to know about the key backend or any options."""
+    usable_pwd.key_backend_alias = "unknown"  # frontend does not know about the CAs key backend at all
+    usable_pwd.api_enabled = True
+    usable_pwd.save()
+
+    path = reverse_lazy("django_ca:api:sign_certificate", kwargs={"serial": usable_pwd.serial})
+    data = {"csr": csr, "subject": default_subject}
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = api_client.post(path, data, content_type="application/json")
+        assert response.status_code == HTTPStatus.OK, response.content
+
+    # Get order before on_commit callbacks are called to test pending state
+    order: CertificateOrder = CertificateOrder.objects.get(certificate_authority=usable_pwd)
+    assert order.status == CertificateOrder.STATUS_PENDING
+    assert order.certificate is None
+    assert order.user == api_user
+
+    # Test that there was a callback.
+    assert len(callbacks) == 1
+
     expected_response["slug"] = order.slug
     assert response.json() == expected_response
 

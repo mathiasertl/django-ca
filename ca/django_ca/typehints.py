@@ -15,6 +15,7 @@
 
 import argparse
 import ipaddress
+import sys
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, TypeVar, Union
 
@@ -32,6 +33,10 @@ from django.core.management.base import CommandParser
 if TYPE_CHECKING:
     from django_ca import models
 
+if sys.version_info < (3, 12):  # pragma: only py<3.12
+    from typing_extensions import TypeAliasType as TypeAliasType  # noqa: PLC0414
+else:  # pragma: only py>=3.12
+    from typing import TypeAliasType as TypeAliasType  # noqa: PLC0414
 
 # pylint: disable-next=invalid-name
 JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]

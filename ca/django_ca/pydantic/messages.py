@@ -32,7 +32,18 @@ from django_ca.pydantic.type_aliases import (
     Serial,
     TimedeltaInSeconds,
 )
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtension, HashAlgorithms, ParsableKeyType
+from django_ca.typehints import (
+    JSON,
+    AllowedHashTypes,
+    ConfigurableExtension,
+    HashAlgorithms,
+    ParsableKeyType,
+    TypeAliasType,
+)
+
+# TypeAliasType is required for recursive types in Pydantic models. See:
+#       https://docs.pydantic.dev/latest/concepts/types/#named-recursive-types
+JSON = TypeAliasType("JSON", JSON)  # type: ignore[misc]   # we re-assign here
 
 
 class GenerateOCSPKeyMessage(BaseModel):
@@ -57,6 +68,11 @@ class GenerateOCSPKeyMessage(BaseModel):
 class SignCertificateMessage(BaseModel):
     """Schema for signing certificates."""
 
+    key_backend_options: dict[str, JSON] = Field(
+        default_factory=dict,
+        description="Options for the key backend. Valid values depend on the key backend of the certificate "
+        "authority. If not passed, the key backend must be configured for automatic signing in the backend.",
+    )
     algorithm: Optional[HashAlgorithms] = Field(
         default=None,
         description="Hash algorithm used for signing (default: same as in the certificate authority).",

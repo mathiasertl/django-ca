@@ -119,6 +119,8 @@ dependencies = [
     "packaging",
     "pydantic>=2.6",
     "requests",
+    # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
+    "typing_extensions>=4.6.0;python_version<'3.12'",
 ]
 
 [project.optional-dependencies]
