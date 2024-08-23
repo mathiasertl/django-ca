@@ -1181,6 +1181,12 @@ def test_invalid_common_name(value: str, msg: str) -> None:
         init_ca(value)
 
 
+def test_unparsable_subject(ca_name: str) -> None:
+    """Test error when you pass an unparsable subject."""
+    with assert_command_error(r"^/CN=example\.com: Could not parse name as RFC 4514 string\.$"):
+        cmd("init_ca", ca_name, "/CN=example.com")
+
+
 @pytest.mark.django_db
 def test_get_use_private_key_options_raises_command_error(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test error handling when get_use_private_key_options() raises CommandError."""

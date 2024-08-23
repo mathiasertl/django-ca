@@ -87,7 +87,17 @@ def parse_name_rfc4514(value: str) -> x509.Name:
     >>> parse_name_rfc4514("C=AT,O=MyOrg,OU=MyOrgUnit,CN=example.com")
     <Name(C=AT,O=MyOrg,OU=MyOrgUnit,CN=example.com)>
     """
-    name = x509.Name.from_rfc4514_string(value, {v: k for k, v in constants.RFC4514_NAME_OVERRIDES.items()})
+    try:
+        name = x509.Name.from_rfc4514_string(
+            value, {v: k for k, v in constants.RFC4514_NAME_OVERRIDES.items()}
+        )
+    except ValueError as ex:
+        # The parser raises ValueError with an empty string for some values, e.g. "/CN=example.com", so we
+        # raise a new exception with a more helpful message.
+        if not ex.args:
+            raise ValueError(f"{value}: Could not parse name as RFC 4514 string.") from ex
+        raise
+
     return check_name(x509.Name(reversed(list(name))))
 
 
