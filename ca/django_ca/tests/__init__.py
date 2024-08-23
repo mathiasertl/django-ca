@@ -29,6 +29,7 @@ from django_ca import conf, profiles
 # NOTE: No need to add test_* modules, they are included automatically.
 pytest.register_assert_rewrite(
     "django_ca.tests.base.assertions",
+    "django_ca.tests.acme.views.assertions",
     "django_ca.tests.admin.assertions",
     "django_ca.tests.pydantic.base",
 )

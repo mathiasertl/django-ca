@@ -25,7 +25,6 @@ from unittest import mock
 import acme
 import acme.jws
 import josepy as jose
-from requests.utils import parse_header_links
 
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
@@ -34,6 +33,10 @@ from django.urls import reverse
 
 from django_ca.acme.responses import AcmeResponseUnauthorized
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug
+from django_ca.tests.acme.views.assertions import (
+    assert_acme_problem,
+    assert_acme_response,
+)
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import mock_slug, override_tmpcadir
@@ -85,8 +88,6 @@ class AcmeTestCaseMixin(TestCaseMixin):
             hostname = self.SERVER_NAME
         return super().absolute_uri(name, hostname=hostname, **kwargs)
 
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyPep8Naming
     def assertAcmeProblem(  # pylint: disable=invalid-name
         self,
         response: "HttpResponse",
@@ -101,17 +102,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
 
         .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
         """
-        link_relations = link_relations or {}
-        self.assertEqual(response["Content-Type"], "application/problem+json", response.content)
-        self.assertLinkRelations(response, ca=ca, **link_relations)
-        data = response.json()
-        self.assertEqual(data["type"], f"urn:ietf:params:acme:error:{typ}", f"detail={data['detail']}")
-        self.assertEqual(data["status"], status)
-        if regex:
-            self.assertRegex(data["detail"], message)
-        else:
-            self.assertEqual(data["detail"], message)
-        self.assertIn("Replay-Nonce", response)
+        assert_acme_problem(response, typ, status, message, ca or self.ca, link_relations, regex)
 
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
@@ -122,25 +113,7 @@ class AcmeTestCaseMixin(TestCaseMixin):
         link_relations: Optional[dict[str, str]] = None,
     ) -> None:
         """Assert basic Acme Response properties (Content-Type & Link header)."""
-        link_relations = link_relations or {}
-        self.assertLinkRelations(response, ca=ca, **link_relations)
-        self.assertEqual(response["Content-Type"], "application/json")
-
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyPep8Naming
-    def assertLinkRelations(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", ca: Optional[CertificateAuthority] = None, **kwargs: str
-    ) -> None:
-        """Assert Link relations for a given request."""
-        if ca is None:  # pragma: no branch
-            ca = self.ca
-
-        directory = reverse("django_ca:acme-directory", kwargs={"serial": ca.serial})
-        kwargs.setdefault("index", response.wsgi_request.build_absolute_uri(directory))
-
-        expected = [{"rel": k, "url": v} for k, v in kwargs.items()]
-        actual = parse_header_links(response["Link"])
-        self.assertEqual(expected, actual)
+        assert_acme_response(response, ca or self.ca, link_relations)
 
     # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
     # noinspection PyPep8Naming
