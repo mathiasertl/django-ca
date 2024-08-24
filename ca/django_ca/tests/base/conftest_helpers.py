@@ -19,12 +19,10 @@ import sys
 import typing
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union, cast
 
 import coverage
-import packaging
 
-import cryptography
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
@@ -38,7 +36,14 @@ from _pytest.fixtures import SubRequest
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
+from django_ca.tests.base.constants import (
+    CERT_DATA,
+    CRYPTOGRAPHY_VERSION,
+    CRYPTOGRAPHY_VERSIONS,
+    DJANGO_VERSIONS,
+    FIXTURES_DIR,
+    PYTHON_VERSIONS,
+)
 from django_ca.tests.base.utils import crl_distribution_points, distribution_point, uri
 from django_ca.utils import int_to_hex
 
@@ -46,8 +51,8 @@ from django_ca.utils import int_to_hex
 def exclude_versions(
     cov: coverage.Coverage,
     software: str,
-    current_version: tuple[int, int],
-    pragma_version: tuple[int, int],
+    current_version: Union[tuple[int], tuple[int, int]],
+    pragma_version: Union[tuple[int], tuple[int, int]],
     version_str: str,
 ) -> None:
     """Add pragmas to exclude lines of code if specific versions of `software` are *not* installed.
@@ -83,7 +88,7 @@ def exclude_versions(
         # --> just completely exclude the block, as it is never executed
         cov.exclude(f"pragma: {software}>{version_str} branch")
         cov.exclude(f"pragma: {software}<{version_str} branch")
-    else:
+    else:  # pragma: no cover  # depending on the installed versions, this might or might not happen
         cov.exclude(f"pragma: only {software}=={version_str}")
         cov.exclude(f"pragma: {software}!={version_str}", which="partial")
 
@@ -125,23 +130,20 @@ def exclude_versions(
 def setup_pragmas(cov: coverage.Coverage) -> None:
     """Setup pragmas to allow coverage exclusion based on Python/django/cryptography version."""
     # exclude python version specific code
-    py_versions = [(3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14)]
-    for version in py_versions:
+    for version in PYTHON_VERSIONS:
         version_str = ".".join([str(v) for v in version])
         exclude_versions(cov, "py", sys.version_info[:2], version, version_str)
 
     # exclude django-version specific code
-    django_versions = [(3, 2), (4, 1), (4, 2), (5, 0), (5, 1)]
-    for version in django_versions:
+    for version in DJANGO_VERSIONS:
         version_str = ".".join([str(v) for v in version])
         exclude_versions(cov, "django", django.VERSION[:2], version, version_str)
 
     # exclude cryptography-version specific code
-    this_version = typing.cast(tuple[int, int], packaging.version.parse(cryptography.__version__).release[:2])
-    cryptography_versions = [(41, 0), (42, 0), (43, 0), (44, 0), (45, 0)]
-    for ver in cryptography_versions:
+    for ver in CRYPTOGRAPHY_VERSIONS:
         version_str = ".".join([str(v) for v in ver])
-        exclude_versions(cov, "cryptography", this_version, ver, version_str)
+        cg_version = cast(tuple[int], CRYPTOGRAPHY_VERSION[:1])
+        exclude_versions(cov, "cryptography", cg_version, ver, version_str)
 
 
 def generate_pub_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certificate]]:

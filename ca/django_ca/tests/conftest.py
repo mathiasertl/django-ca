@@ -65,8 +65,9 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: "PytestConfig") -> None:
     """Output libraries, configure coverage pragmas."""
     cov_plugin: CovPlugin = config.pluginmanager.get_plugin("_cov")
-    cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
-    setup_pragmas(cov)
+    if cov_plugin.cov_controller is not None:  # pragma: no branch
+        cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
+        setup_pragmas(cov)
 
     config.addinivalue_line("markers", "selenium: mark tests that use selenium")
 

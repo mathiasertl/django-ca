@@ -22,7 +22,7 @@ import typing
 from datetime import datetime, timedelta, timezone as tz
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import packaging.version
 
@@ -45,9 +45,8 @@ except ImportError:  # pragma: only py<3.11
     import tomli as tomllib  # type: ignore[no-redef]
 
 
-def _load_latest_version(versions: list[str]) -> tuple[int, int]:
-    parsed_versions = [tuple(int(e) for e in v.split("."))[:2] for v in versions]
-    return sorted(parsed_versions)[-1]  # type: ignore[return-value]
+def _load_versions(versions: list[str]) -> tuple[tuple[int, int], ...]:
+    return tuple(tuple(int(e) for e in v.split("."))[:2] for v in versions)  # type: ignore[misc]
 
 
 _FILE_DIR = Path(__file__).resolve().parent  # dir of this file
@@ -73,22 +72,27 @@ if TOX_ENV_DIR := os.environ.get("TOX_ENV_DIR"):  # pragma: no cover
 else:  # pragma: no cover
     GECKODRIVER_LOG_PATH = ROOT_DIR / "geckodriver.log"
 
+RELEASE = PROJECT_CONFIG["django-ca"]["release"]
+PYTHON_VERSIONS = _load_versions(RELEASE["python"])
+CRYPTOGRAPHY_VERSIONS = cast(tuple[tuple[int], ...], _load_versions(RELEASE["cryptography"]))
+DJANGO_VERSIONS = _load_versions(RELEASE["django"])
+ACME_VERSIONS = _load_versions(RELEASE["acme"])
+PYDANTIC_VERSIONS = _load_versions(RELEASE["pydantic"])
 
 # Newest versions of software components.
-NEWEST_PYTHON_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["python"])
-NEWEST_CRYPTOGRAPHY_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["cryptography"])
-NEWEST_DJANGO_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["django"])
-NEWEST_ACME_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["acme"])
-NEWEST_PYDANTIC_VERSION = _load_latest_version(PROJECT_CONFIG["django-ca"]["release"]["pydantic"])
+NEWEST_PYTHON_VERSION = PYTHON_VERSIONS[-1]
+NEWEST_CRYPTOGRAPHY_VERSION = CRYPTOGRAPHY_VERSIONS[-1]
+NEWEST_DJANGO_VERSION = DJANGO_VERSIONS[-1]
+NEWEST_ACME_VERSION = ACME_VERSIONS[-1]
+NEWEST_PYDANTIC_VERSION = PYDANTIC_VERSIONS[-1]
 
 # Determine if we're running on the respective newest versions
-_parsed_cg_version = packaging.version.parse(cryptography.__version__).release
-CRYPTOGRAPHY_VERSION = _parsed_cg_version[:1]
+CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 ACME_VERSION = packaging.version.parse(version("acme")).release
 PYDANTIC_VERSION = packaging.version.parse(version("pydantic")).release
 
 NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
-NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION == NEWEST_CRYPTOGRAPHY_VERSION
+NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION[:1] == NEWEST_CRYPTOGRAPHY_VERSION
 NEWEST_DJANGO = django.VERSION[:2] == NEWEST_DJANGO_VERSION
 NEWEST_ACME = ACME_VERSION[:2] == NEWEST_ACME_VERSION
 NEWEST_PYDANTIC = PYDANTIC_VERSION[:2] == NEWEST_PYDANTIC_VERSION

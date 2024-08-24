@@ -182,7 +182,7 @@ def _check_name(name: x509.Name) -> None:
             )
 
         value = attr.value
-        if oid == NameOID.COMMON_NAME and (not value or len(value) > 64):  # pragma: only cryptography<43.0
+        if oid == NameOID.COMMON_NAME and (not value or len(value) > 64):  # pragma: only cryptography<43
             # Imitate message from cryptography 43
             raise ImproperlyConfigured(
                 f"Value error, Attribute's length must be >= 1 and <= 64, but it was {len(attr.value)}"
