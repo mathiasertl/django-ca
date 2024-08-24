@@ -16,188 +16,162 @@
 from http import HTTPStatus
 from unittest import mock
 
-from django.test import TestCase
-from django.test.utils import override_settings
-from django.urls import reverse, reverse_lazy
+from django.test.client import Client
+from django.urls import reverse
 
+import pytest
 from freezegun import freeze_time
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
+
+# ACME views require a currently valid certificate authority
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+
+RANDOM_URL = "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417"
+URL = reverse("django_ca:acme-directory")
 
 
-class DirectoryTestCase(TestCaseMixin, TestCase):
-    """Test basic ACMEv2 directory view."""
+def test_default(client: Client, root: CertificateAuthority) -> None:
+    """Test the default directory view."""
+    """Test the default directory view."""
+    with mock.patch("secrets.token_bytes", return_value=b"foobar"):
+        response = client.get(URL)
+    assert response.status_code == HTTPStatus.OK
+    req = response.wsgi_request
+    assert response.json() == {
+        "Zm9vYmFy": RANDOM_URL,
+        "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+        "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/revoke/"),
+        "newAccount": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-account/"),
+        "newNonce": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-nonce/"),
+        "newOrder": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-order/"),
+    }
 
-    load_cas = ("root",)
-    url = reverse_lazy("django_ca:acme-directory")
-    random_url = "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417"
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca.acme_enabled = True
-        self.ca.save()
+def test_named_ca(client: Client, root: CertificateAuthority) -> None:
+    """Test getting directory for named CA."""
+    url = reverse("django_ca:acme-directory", kwargs={"serial": root.serial})
+    with mock.patch("secrets.token_bytes", return_value=b"foobar"):
+        response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
+    assert response["Content-Type"] == "application/json"
+    req = response.wsgi_request
+    assert response.json() == {
+        "Zm9vYmFy": RANDOM_URL,
+        "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+        "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/revoke/"),
+        "newAccount": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-account/"),
+        "newNonce": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-nonce/"),
+        "newOrder": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-order/"),
+    }
 
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_default(self) -> None:
-        """Test the default directory view."""
-        with mock.patch("secrets.token_bytes", return_value=b"foobar"):
-            response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        req = response.wsgi_request
-        self.assertEqual(
-            response.json(),
-            {
-                "Zm9vYmFy": self.random_url,
-                "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-                "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/revoke/"),
-                "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
-                "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
-                "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
-            },
-        )
 
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_named_ca(self) -> None:
-        """Test getting directory for named CA."""
-        url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
-        with mock.patch("secrets.token_bytes", return_value=b"foobar"):
-            response = self.client.get(url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["Content-Type"], "application/json")
-        req = response.wsgi_request
-        self.assertEqual(
-            response.json(),
-            {
-                "Zm9vYmFy": self.random_url,
-                "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-                "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/revoke/"),
-                "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
-                "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
-                "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
-            },
-        )
+def test_meta(client: Client, root: CertificateAuthority) -> None:
+    """Test the meta property."""
+    root.website = "http://ca.example.com"
+    root.terms_of_service = "http://ca.example.com/acme/tos"
+    root.caa_identity = "ca.example.com"
+    root.save()
 
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_meta(self) -> None:
-        """Test the meta property."""
-        self.ca.website = "http://ca.example.com"
-        self.ca.terms_of_service = "http://ca.example.com/acme/tos"
-        self.ca.caa_identity = "ca.example.com"
-        self.ca.save()
+    url = reverse("django_ca:acme-directory", kwargs={"serial": root.serial})
+    with mock.patch("secrets.token_bytes", return_value=b"foobar"):
+        response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
+    assert response["Content-Type"] == "application/json"
+    req = response.wsgi_request
+    assert response.json() == {
+        "Zm9vYmFy": RANDOM_URL,
+        "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+        "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/revoke/"),
+        "newAccount": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-account/"),
+        "newNonce": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-nonce/"),
+        "newOrder": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-order/"),
+        "meta": {
+            "termsOfService": root.terms_of_service,
+            "caaIdentities": [root.caa_identity],
+            "website": root.website,
+        },
+    }
 
-        url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
-        with mock.patch("secrets.token_bytes", return_value=b"foobar"):
-            response = self.client.get(url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["Content-Type"], "application/json")
-        req = response.wsgi_request
-        self.assertEqual(
-            response.json(),
-            {
-                "Zm9vYmFy": self.random_url,
-                "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
-                "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/revoke/"),
-                "newAccount": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-account/"),
-                "newNonce": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-nonce/"),
-                "newOrder": req.build_absolute_uri(f"/django_ca/acme/{self.ca.serial}/new-order/"),
-                "meta": {
-                    "termsOfService": self.ca.terms_of_service,
-                    "caaIdentities": [
-                        self.ca.caa_identity,
-                    ],
-                    "website": self.ca.website,
-                },
-            },
-        )
 
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_acme_default_disabled(self) -> None:
-        """Test that fetching the default CA with ACME disabled doesn't work."""
-        self.ca.acme_enabled = False
-        self.ca.save()
+def test_acme_default_disabled(client: Client, root: CertificateAuthority) -> None:
+    """Test that fetching the default CA with ACME disabled doesn't work."""
+    root.acme_enabled = False
+    root.save()
 
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response["Content-Type"], "application/problem+json")
-        self.assertEqual(
-            response.json(),
-            {
-                "detail": "No (usable) default CA configured.",
-                "status": 404,
-                "type": "urn:ietf:params:acme:error:not-found",
-            },
-        )
+    response = client.get(URL)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response["Content-Type"] == "application/problem+json"
+    assert response.json() == {
+        "detail": "No (usable) default CA configured.",
+        "status": 404,
+        "type": "urn:ietf:params:acme:error:not-found",
+    }
 
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_acme_disabled(self) -> None:
-        """Test that fetching the default CA with ACME disabled doesn't work."""
-        self.ca.acme_enabled = False
-        self.ca.save()
 
-        url = reverse("django_ca:acme-directory", kwargs={"serial": self.ca.serial})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response["Content-Type"], "application/problem+json")
-        self.assertEqual(
-            response.json(),
-            {
-                "detail": f"{self.ca.serial}: CA not found.",
-                "status": 404,
-                "type": "urn:ietf:params:acme:error:not-found",
-            },
-        )
+def test_acme_disabled(client: Client, root: CertificateAuthority) -> None:
+    """Test that fetching a named CA with ACME disabled doesn't work."""
+    root.acme_enabled = False
+    root.save()
 
-    def test_no_ca(self) -> None:
-        """Test using default CA when **no** CA exists."""
-        CertificateAuthority.objects.all().delete()
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response["Content-Type"], "application/problem+json")
-        self.assertEqual(
-            response.json(),
-            {
-                "detail": "No (usable) default CA configured.",
-                "status": 404,
-                "type": "urn:ietf:params:acme:error:not-found",
-            },
-        )
+    url = reverse("django_ca:acme-directory", kwargs={"serial": root.serial})
+    response = client.get(url)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response["Content-Type"] == "application/problem+json"
+    assert response.json() == {
+        "detail": f"{root.serial}: CA not found.",
+        "status": 404,
+        "type": "urn:ietf:params:acme:error:not-found",
+    }
 
-    @freeze_time(TIMESTAMPS["everything_expired"])
-    def test_expired_ca(self) -> None:
-        """Test using default CA when all CAs are expired."""
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(response["Content-Type"], "application/problem+json")
-        self.assertEqual(
-            response.json(),
-            {
-                "detail": "No (usable) default CA configured.",
-                "status": 404,
-                "type": "urn:ietf:params:acme:error:not-found",
-            },
-        )
 
-    @override_settings(CA_ENABLE_ACME=False)
-    def test_disabled(self) -> None:
-        """Test that CA_ENABLE_ACME=False means HTTP 404."""
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertTrue(response["Content-Type"].startswith("text/html"))  # --> coming from Django
+@pytest.mark.django_db  # to query for CAs
+def test_no_ca(client: Client) -> None:
+    """Test using default CA when **no** CA exists."""
+    response = client.get(URL)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response["Content-Type"] == "application/problem+json"
+    assert response.json() == {
+        "detail": "No (usable) default CA configured.",
+        "status": 404,
+        "type": "urn:ietf:params:acme:error:not-found",
+    }
 
-    def test_unknown_serial(self) -> None:
-        """Test explicitly naming an unknown serial."""
-        serial = "ABCDEF"
-        url = reverse("django_ca:acme-directory", kwargs={"serial": serial})
-        response = self.client.get(url)
 
-        self.assertEqual(response["Content-Type"], "application/problem+json")
-        self.assertEqual(
-            response.json(),
-            {
-                "detail": "ABCDEF: CA not found.",
-                "status": 404,
-                "type": "urn:ietf:params:acme:error:not-found",
-            },
-        )
+@freeze_time(TIMESTAMPS["everything_expired"])
+def test_expired_ca(client: Client, root: CertificateAuthority) -> None:
+    """Test using default CA when all CAs are expired."""
+    response = client.get(URL)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response["Content-Type"] == "application/problem+json"
+    assert response.json() == {
+        "detail": "No (usable) default CA configured.",
+        "status": 404,
+        "type": "urn:ietf:params:acme:error:not-found",
+    }
+
+
+@pytest.mark.usefixtures("root")  # otherwise we wouldn't find anything ever anyway
+def test_disabled(client: Client, settings: SettingsWrapper) -> None:
+    """Test that CA_ENABLE_ACME=False means HTTP 404."""
+    settings.CA_ENABLE_ACME = False
+    response = client.get(URL)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response["Content-Type"].startswith("text/html")  # --> coming from Django
+
+
+@pytest.mark.usefixtures("root")  # otherwise we wouldn't find anything ever anyway
+def test_unknown_serial(client: Client) -> None:
+    """Test explicitly naming an unknown serial."""
+    serial = "ABCDEF"
+    url = reverse("django_ca:acme-directory", kwargs={"serial": serial})
+    response = client.get(url)
+
+    assert response["Content-Type"] == "application/problem+json"
+    assert response.json() == {
+        "detail": "ABCDEF: CA not found.",
+        "status": 404,
+        "type": "urn:ietf:params:acme:error:not-found",
+    }

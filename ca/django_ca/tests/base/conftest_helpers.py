@@ -178,7 +178,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
             "sign_authority_information_access": data.get("sign_authority_information_access"),
         }
 
-        ca = load_ca(name, pub, parent, **kwargs)
+        ca = load_ca(name, pub, parent, acme_enabled=True, **kwargs)
 
         yield ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 

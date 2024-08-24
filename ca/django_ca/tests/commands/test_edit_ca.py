@@ -125,16 +125,16 @@ def test_enable_disable(root: CertificateAuthority) -> None:
 def test_acme_arguments(root: CertificateAuthority) -> None:
     """Test ACME arguments."""
     # Test initial state
-    assert root.acme_enabled is False
+    assert root.acme_enabled is True
     assert root.acme_registration
     assert root.acme_profile == model_settings.CA_DEFAULT_PROFILE
     assert root.acme_requires_contact
 
     # change all settings
     edit_ca(
-        root, acme_enabled=True, acme_registration=False, acme_requires_contact=False, acme_profile="client"
+        root, acme_enabled=False, acme_registration=False, acme_requires_contact=False, acme_profile="client"
     )
-    assert root.acme_enabled, True
+    assert root.acme_enabled is False
     assert root.acme_registration is False
     assert root.acme_profile == "client"
     assert root.acme_requires_contact is False
@@ -143,13 +143,13 @@ def test_acme_arguments(root: CertificateAuthority) -> None:
 def test_acme_arguments_mutually_exclusive(root: CertificateAuthority) -> None:
     """Try mutually exclusive ACME arguments."""
     # Check initial state:
-    assert root.acme_enabled is False
+    assert root.acme_enabled is True
     assert root.acme_requires_contact is True
 
     with pytest.raises(SystemExit, match=r"^2$") as exception_info:
         cmd_e2e(["edit_ca", "--acme-enable", "--acme-disable"])
     assert exception_info.value.args == (2,)
-    assert root.acme_enabled is False  # state unchanged
+    assert root.acme_enabled is True  # state unchanged
 
     with pytest.raises(SystemExit, match=r"^2$") as exception_info:
         cmd_e2e(["edit_ca", "--acme-contact-optional", "--acme-contact-required"])

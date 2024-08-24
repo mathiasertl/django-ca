@@ -57,7 +57,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -106,7 +107,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -165,7 +167,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -217,7 +220,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -270,7 +274,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -319,7 +324,8 @@ Key storage options:
 * No information available.
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -369,7 +375,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -418,7 +425,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions for signed certificates:
 * Authority Information Access:
@@ -457,7 +465,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions for signed certificates:
 * Authority Information Access:
@@ -573,7 +582,7 @@ Digest:
   SHA-512: {sha512}
 
 {pub[pem]}""",
-    "root-sign-options": """* Name: {name}
+    "root-acme-disabled-by-ca": """* Name: {name}
 * Enabled: Yes
 * Subject:
   * commonName (CN): {name}.example.com
@@ -595,6 +604,55 @@ Key storage options:
 
 ACMEv2 support:
 * Enabled: False
+
+Certificate extensions:
+* Authority Key Identifier{authority_key_identifier_critical}:
+{authority_key_identifier_text}
+* Basic Constraints{basic_constraints_critical}:
+{basic_constraints_text}
+* Key Usage{key_usage_critical}:
+{key_usage_text}
+* Subject Key Identifier{subject_key_identifier_critical}:
+{subject_key_identifier_text}
+
+Certificate extensions for signed certificates:
+* Authority Information Access:
+  CA Issuers:
+    * URI:{sign_authority_information_access[value][1][access_location][value]}
+  OCSP:
+    * URI:{sign_authority_information_access[value][0][access_location][value]}
+* CRL Distribution Points:
+  * DistributionPoint:
+    * Full Name:
+      * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
+
+Digest:
+  SHA-256: {sha256}
+  SHA-512: {sha512}
+""",
+    "root-sign-options": """* Name: {name}
+* Enabled: Yes
+* Subject:
+  * commonName (CN): {name}.example.com
+* Serial: {serial_colons}
+* Issuer:
+  * commonName (CN): {name}.example.com
+* Valid from: {valid_from_str}
+* Valid until: {valid_until_str}
+* Status: Valid
+
+Certificate Authority information:
+* Certificate authority is a root CA.
+* Certificate authority has no children.
+* Maximum levels of sub-CAs (path length): {path_length_text}
+
+Key storage options:
+* backend: default
+* path: {key_filename}
+
+ACMEv2 support:
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -651,7 +709,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -691,7 +750,8 @@ Key storage options:
 * path: {key_filename}
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -739,7 +799,8 @@ Key storage options:
 * path: globalsign.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Basic Constraints{basic_constraints_critical}:
@@ -783,7 +844,8 @@ Key storage options:
 * path: digicert_ev_root.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -831,7 +893,8 @@ Key storage options:
 * path: comodo.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Basic Constraints{basic_constraints_critical}:
@@ -873,7 +936,8 @@ Key storage options:
 * path: identrust_root_1.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Basic Constraints{basic_constraints_critical}:
@@ -915,7 +979,8 @@ Key storage options:
 * path: globalsign_r2_root.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -965,7 +1030,8 @@ Key storage options:
 * path: comodo_dv.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1017,7 +1083,8 @@ Key storage options:
 * path: rapidssl_g3.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1067,7 +1134,8 @@ Key storage options:
 * path: geotrust.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -1113,7 +1181,8 @@ Key storage options:
 * path: comodo_ev.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1165,7 +1234,8 @@ Key storage options:
 * path: digicert_ha_intermediate.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1215,7 +1285,8 @@ Key storage options:
 * path: dst_root_x3.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Basic Constraints{basic_constraints_critical}:
@@ -1258,7 +1329,8 @@ Key storage options:
 * path: globalsign_dv.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1313,7 +1385,8 @@ Key storage options:
 * path: godaddy_g2_intermediate.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1367,7 +1440,8 @@ Key storage options:
 * path: godaddy_g2_root.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Basic Constraints{basic_constraints_critical}:
@@ -1409,7 +1483,8 @@ Key storage options:
 * path: google_g3.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1460,7 +1535,8 @@ Key storage options:
 * path: letsencrypt_x1.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1511,7 +1587,8 @@ Key storage options:
 * path: letsencrypt_x3.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1563,7 +1640,8 @@ Key storage options:
 * path: startssl_root.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -1615,7 +1693,8 @@ Key storage options:
 * path: startssl_class2.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1667,7 +1746,8 @@ Key storage options:
 * path: startssl_class3.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1720,7 +1800,8 @@ Key storage options:
 * path: trustid_server_a52.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1774,7 +1855,8 @@ Key storage options:
 * path: digicert_global_root.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -1819,7 +1901,8 @@ Key storage options:
 * path: digicert_sha2.key
 
 ACMEv2 support:
-* Enabled: False
+* Enabled: True
+* Requires contact: True
 
 Certificate extensions:
 * Authority Information Access{authority_information_access_critical}:
@@ -1914,6 +1997,16 @@ def test_acme_disabled(usable_root: CertificateAuthority, settings: SettingsWrap
     assert stderr == ""
     data = get_cert_context("root")
     assert stdout == expected["root-acme-disabled"].format(**data)
+
+
+def test_acme_disabled_by_ca(root: CertificateAuthority) -> None:
+    """Test viewing when ACME is disabled via the CA."""
+    root.acme_enabled = False
+    root.save()
+    stdout, stderr = cmd("view_ca", root.serial, wrap=False, pem=False)
+    assert stderr == ""
+    data = get_cert_context("root")
+    assert stdout == expected["root-acme-disabled-by-ca"].format(**data)
 
 
 def test_no_extensions(usable_root: CertificateAuthority) -> None:

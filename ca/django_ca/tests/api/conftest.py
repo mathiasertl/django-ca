@@ -71,7 +71,7 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
         root.sign_crl_distribution_points
     ).model_dump(mode="json")
     return {
-        "acme_enabled": False,
+        "acme_enabled": True,
         "acme_profile": "webserver",
         "acme_registration": True,
         "acme_requires_contact": True,
