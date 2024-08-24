@@ -35,7 +35,6 @@ URL = reverse("django_ca:acme-directory")
 
 def test_default(client: Client, root: CertificateAuthority) -> None:
     """Test the default directory view."""
-    """Test the default directory view."""
     with mock.patch("secrets.token_bytes", return_value=b"foobar"):
         response = client.get(URL)
     assert response.status_code == HTTPStatus.OK
@@ -141,7 +140,8 @@ def test_no_ca(client: Client) -> None:
 
 
 @freeze_time(TIMESTAMPS["everything_expired"])
-def test_expired_ca(client: Client, root: CertificateAuthority) -> None:
+@pytest.mark.usefixtures("root")
+def test_expired_ca(client: Client) -> None:
     """Test using default CA when all CAs are expired."""
     response = client.get(URL)
     assert response.status_code == HTTPStatus.NOT_FOUND

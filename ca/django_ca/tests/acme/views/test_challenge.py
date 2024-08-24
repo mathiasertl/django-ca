@@ -13,119 +13,133 @@
 
 """Test retrieving a challenge."""
 
+import unittest
+from collections.abc import Iterator
 from http import HTTPStatus
+from typing import Optional
 from unittest import mock
 
-import acme
-import acme.jws
 import josepy as jose
 
-from django.test import TransactionTestCase
+from django.test import Client
 
-from freezegun import freeze_time
+import pytest
 
-from django_ca.models import AcmeAuthorization, AcmeChallenge, AcmeOrder
+from django_ca.models import AcmeAuthorization, AcmeChallenge, AcmeOrder, CertificateAuthority
 from django_ca.tasks import acme_validate_challenge
+from django_ca.tests.acme.views.assertions import assert_acme_response, assert_unauthorized
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
+from django_ca.tests.acme.views.constants import SERVER_NAME
+from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.typehints import CaptureOnCommitCallbacks
+from django_ca.tests.base.utils import root_reverse
+
+# ACME views require a currently valid certificate authority
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeChallengeViewTestCase(
-    AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TransactionTestCase
-):
+@pytest.fixture()
+def url(challenge: AcmeChallenge) -> Iterator[str]:
+    """URL under test."""
+    yield root_reverse("acme-challenge", slug=challenge.slug)
+
+
+@pytest.fixture()
+def message() -> Iterator[bytes]:
+    """Yield an empty bytestring, since this is a POST-AS-GET request."""
+    yield b""
+
+
+def test_basic(
+    client: Client,
+    url: str,
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    root: CertificateAuthority,
+    authz: AcmeAuthorization,
+    challenge: AcmeChallenge,
+    kid: str,
+) -> None:
+    """Basic test for creating an account via ACME."""
+    with (
+        mock.patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert mockcm.call_args_list == [mock.call(acme_validate_challenge, challenge.pk)]
+
+    assert_acme_response(resp, root, link_relations={"up": f"http://{SERVER_NAME}{authz.acme_url}"})
+
+    assert resp.json() == {
+        "status": "processing",
+        "type": challenge.type,
+        "token": jose.json_util.encode_b64jose(challenge.token.encode()),
+        "url": f"http://{SERVER_NAME}{challenge.acme_url}",
+    }
+
+
+def test_no_state_change(
+    client: Client,
+    url: str,
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    root: CertificateAuthority,
+    authz: AcmeAuthorization,
+    challenge: AcmeChallenge,
+    kid: str,
+) -> None:
+    """Test challenge endpoint when no state change is triggered (e.g. already valid)."""
+    challenge.status = AcmeChallenge.STATUS_VALID
+    challenge.save()
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+    authz.order.status = AcmeOrder.STATUS_VALID
+    authz.order.save()
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        resp = acme_request(client, url, root, b"", kid=kid)
+    assert callbacks == []  # no validation task was triggerd
+
+    # ... but response is still ok
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root, link_relations={"up": f"http://{SERVER_NAME}{authz.acme_url}"})
+
+    assert resp.json() == {
+        "status": "valid",
+        "type": challenge.type,
+        "token": jose.json_util.encode_b64jose(challenge.token.encode()),
+        "url": f"http://{SERVER_NAME}{challenge.acme_url}",
+    }
+
+
+def test_not_found(
+    client: Client,
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    root: CertificateAuthority,
+    challenge: AcmeChallenge,
+    kid: str,
+) -> None:
+    """Basic test for creating an account via ACME."""
+    url = root_reverse("acme-challenge", slug="abc")
+    with django_capture_on_commit_callbacks() as callbacks:
+        resp = acme_request(client, url, root, b"", kid=kid)
+    assert callbacks == []  # no validation task was triggerd
+    assert_unauthorized(resp, root, "You are not authorized to perform this request.")
+
+
+class TestAcmeChallengeView(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields]):
     """Test retrieving a challenge."""
 
     # NOTE: type parameter not required post-as-get requests
-
     post_as_get = True
-    view_name = "acme-challenge"
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.order = AcmeOrder.objects.create(account=self.account)
-        self.order.add_authorizations(
-            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value="example.com")]
-        )
-        self.authz = AcmeAuthorization.objects.get(order=self.order, value="example.com")
-        self.challenge = self.authz.get_challenges()[0]
-        self.challenge.token = "foobar"
-        self.challenge.save()
-
-    @property
-    def url(self) -> str:
-        """Get default generic url."""
-        return self.get_url(serial=self.challenge.serial, slug=self.challenge.slug)
-
-    @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Basic test for creating an account via ACME."""
-        with self.patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-
-        self.assertEqual(mockcm.call_args_list, [mock.call(acme_validate_challenge, self.challenge.pk)])
-
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(
-            resp, link_relations={"up": f"http://{self.SERVER_NAME}{self.authz.acme_url}"}
-        )
-
-        self.assertEqual(
-            resp.json(),
-            {
-                "status": "processing",
-                "type": self.challenge.type,
-                "token": jose.json_util.encode_b64jose(self.challenge.token.encode()),
-                "url": f"http://{self.SERVER_NAME}{self.challenge.acme_url}",
-            },
-        )
-
-    def test_duplicate_nonce(self) -> None:
+    def test_duplicate_nonce(
+        self, client: Client, url: str, message: bytes, root: CertificateAuthority, kid: Optional[str]
+    ) -> None:
         # wrapped so that the triggered task is not run, which would do an HTTP request
-        with self.patch("django_ca.acme.views.run_task"):
-            super().test_duplicate_nonce()
+        with mock.patch("django_ca.acme.views.run_task"):
+            super().test_duplicate_nonce(client, url, message, root, kid)
 
-    @override_tmpcadir()
-    def test_no_state_change(self) -> None:
-        """Test challenge endpoint when no state change is triggered (e.g. already valid)."""
-        self.challenge.status = AcmeChallenge.STATUS_VALID
-        self.challenge.save()
-        self.authz.status = AcmeAuthorization.STATUS_VALID
-        self.authz.save()
-        self.order.status = AcmeOrder.STATUS_VALID
-        self.order.save()
-
-        with self.patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-
-        mockcm.assert_not_called()  # no validation task was triggerd
-
-        # ... but response is still ok
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(
-            resp, link_relations={"up": f"http://{self.SERVER_NAME}{self.authz.acme_url}"}
-        )
-
-        self.assertEqual(
-            resp.json(),
-            {
-                "status": "valid",
-                "type": self.challenge.type,
-                "token": jose.json_util.encode_b64jose(self.challenge.token.encode()),
-                "url": f"http://{self.SERVER_NAME}{self.challenge.acme_url}",
-            },
-        )
-
-    @override_tmpcadir()
-    def test_not_found(self) -> None:
-        """Basic test for creating an account via ACME."""
-        url = self.get_url(serial=self.challenge.serial, slug="abc")
-        with self.patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
-
-    def test_payload_in_post_as_get(self) -> None:
+    @unittest.skip("Do nothing, since we ignore the body")
+    def test_payload_in_post_as_get(self) -> None:  # type: ignore[override]
         """Do nothing, since we ignore the body."""
-        return

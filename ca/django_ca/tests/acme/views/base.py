@@ -14,304 +14,120 @@
 """Test ACME related views."""
 
 import abc
-import json
 import typing
 from collections.abc import Iterator
-from contextlib import contextmanager
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Optional
 from unittest import mock
 
 import acme
 import acme.jws
 import josepy as jose
 
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from django.test import Client
 
-from django.urls import reverse
+import pytest
+from _pytest.logging import LogCaptureFixture
+from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.acme.responses import AcmeResponseUnauthorized
-from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug
+from django_ca.models import AcmeAccount, CertificateAuthority
 from django_ca.tests.acme.views.assertions import (
     assert_acme_problem,
-    assert_acme_response,
+    assert_malformed,
+    assert_unauthorized,
 )
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.acme.views.utils import absolute_acme_uri, acme_request, get_nonce
 from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import mock_slug, override_tmpcadir
 
 MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 
-if typing.TYPE_CHECKING:
-    from django.test.client import _MonkeyPatchedWSGIResponse as HttpResponse
 
-
-class AcmeTestCaseMixin(TestCaseMixin):
-    """TestCase mixin with various common utility functions."""
-
-    hostname = "example.com"  # what we want a certificate for
-    SERVER_NAME = "example.com"
-
-    # NOTE: PEM here is the same as AcmeAccount.pem when this cert is used for account registration
-    PEM = (
-        CERT_DATA["root-cert"]["key"]["parsed"]
-        .public_key()
-        .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
-        .decode("utf-8")
-        .strip()
-    )
-    thumbprint = "kqtZjXqX07HbrRg220VoINzqF9QXsfIkQava3PdWM8o"
-    ACCOUNT_ONE_CONTACT = "mailto:one@example.com"
-    CHILD_PEM = (
-        CERT_DATA["child-cert"]["key"]["parsed"]
-        .public_key()
-        .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
-        .decode("utf-8")
-        .strip()
-    )
-    CHILD_THUMBPRINT = "ux-66bpJQiyeDduTWQZHgkB4KJWK0kSdPOabnFiitFM"
-    ACCOUNT_TWO_CONTACT = "mailto:two@example.net"
-
-    load_cas: tuple[str, ...] = ("root",)
-    load_certs: tuple[str, ...] = ("root-cert",)
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.ca.acme_enabled = True
-        self.ca.save()
-        self.client.defaults["SERVER_NAME"] = self.SERVER_NAME
-
-    def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
-        """Override to set a default for `hostname`."""
-        if not hostname:  # pragma: no branch
-            hostname = self.SERVER_NAME
-        return super().absolute_uri(name, hostname=hostname, **kwargs)
-
-    def assertAcmeProblem(  # pylint: disable=invalid-name
-        self,
-        response: "HttpResponse",
-        typ: str,
-        status: int,
-        message: str,
-        ca: Optional[CertificateAuthority] = None,
-        link_relations: Optional[dict[str, str]] = None,
-        regex: bool = False,
-    ) -> None:
-        """Assert that an HTTP response confirms to an ACME problem report.
-
-        .. seealso:: `RFC 8555, section 8 <https://tools.ietf.org/html/rfc8555#section-6.7>`_
-        """
-        assert_acme_problem(response, typ, status, message, ca or self.ca, link_relations, regex)
-
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyPep8Naming
-    def assertAcmeResponse(  # pylint: disable=invalid-name
-        self,
-        response: "HttpResponse",
-        ca: Optional[CertificateAuthority] = None,
-        link_relations: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Assert basic Acme Response properties (Content-Type & Link header)."""
-        assert_acme_response(response, ca or self.ca, link_relations)
-
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyPep8Naming
-    def assertMalformed(  # pylint: disable=invalid-name
-        self, resp: "HttpResponse", message: str = "", typ: str = "malformed", **kwargs: Any
-    ) -> None:
-        """Assert an unauthorized response."""
-        self.assertAcmeProblem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, **kwargs)
-
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyPep8Naming
-    def assertUnauthorized(  # pylint: disable=invalid-name
-        self, resp: "HttpResponse", message: str = AcmeResponseUnauthorized.message, **kwargs: Any
-    ) -> None:
-        """Assert an unauthorized response."""
-        self.assertAcmeProblem(
-            resp, "unauthorized", status=HTTPStatus.UNAUTHORIZED, message=message, **kwargs
-        )
-
-    def get_nonce(self, ca: Optional[CertificateAuthority] = None) -> bytes:
-        """Get a nonce with an actual request.
-
-        Returns
-        -------
-        nonce : bytes
-            The decoded bytes of the nonce.
-        """
-        if ca is None:  # pragma: no branch
-            ca = self.ca
-
-        url = reverse("django_ca:acme-new-nonce", kwargs={"serial": ca.serial})
-        response = self.client.head(url)
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
-        return jose.json_util.decode_b64jose(response["replay-nonce"])
-
-    @contextmanager
-    def mock_slug(self) -> Iterator[str]:
-        """Mock random slug generation, yields the static value."""
-        with mock_slug() as slug:
-            yield slug
-
-    def post(
-        self, url: str, data: Any, content_type: str = "application/jose+json", **extra: str
-    ) -> "HttpResponse":
-        """Make a post request with some ACME specific default data."""
-        return self.client.post(
-            url,
-            json.dumps(data),
-            content_type=content_type,
-            follow=False,
-            secure=False,
-            **extra,  # type: ignore[arg-type]  # mypy 1.4.1 confuses this with header arg
-        )
-
-
-class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar]):
+class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
     """Base class with test cases for all views."""
 
     post_as_get = False
     requires_kid = True
-    message_cls: type[MessageTypeVar]
-    view_name: str
 
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyAttributeOutsideInit
-    def setUp(self) -> None:
-        super().setUp()
-        self.account_slug = acme_slug()
-        self.child_account_slug = acme_slug()
-        self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.account_slug)
-        self.child_kid = self.absolute_uri(
-            ":acme-account", serial=self.ca.serial, slug=self.child_account_slug
-        )
-
-    @property
-    @abc.abstractmethod
-    def url(self) -> str:
-        """Property providing a single URL under test."""
-
-    def acme(
+    def test_internal_server_error(
         self,
-        uri: str,
-        msg: Union[jose.json_util.JSONObjectWithFields, bytes],
-        cert: Optional[CertificateIssuerPrivateKeyTypes] = None,
-        kid: Optional[str] = None,
-        nonce: Optional[bytes] = None,
-        payload_cb: Optional[typing.Callable[[dict[Any, Any]], dict[Any, Any]]] = None,
-        post_kwargs: Optional[dict[str, str]] = None,
-    ) -> "HttpResponse":
-        """Do a generic ACME request.
-
-        The `payload_cb` parameter is an optional callback that will receive the message data before being
-        serialized to JSON.
-        """
-        if nonce is None:
-            nonce = self.get_nonce()
-        if cert is None:
-            cert = typing.cast(
-                CertificateIssuerPrivateKeyTypes, CERT_DATA[self.load_certs[0]]["key"]["parsed"]
-            )
-        if post_kwargs is None:
-            post_kwargs = {}
-
-        comparable = jose.util.ComparableRSAKey(cert)  # type: ignore[arg-type] # could also be DSA/EC key
-        key = jose.jwk.JWKRSA(key=comparable)
-
-        if isinstance(msg, jose.json_util.JSONObjectWithFields):
-            payload = msg.to_json()
-            if payload_cb is not None:
-                payload = payload_cb(payload)
-            payload = json.dumps(payload).encode("utf-8")
-        else:
-            payload = msg
-
-        if self.requires_kid and kid is None:
-            kid = self.kid
-
-        jws = acme.jws.JWS.sign(
-            payload, key, jose.jwa.RS256, nonce=nonce, url=self.absolute_uri(uri), kid=kid
-        )
-        return self.post(uri, jws.to_json(), **post_kwargs)
-
-    def get_message(self, **kwargs: Any) -> Union[bytes, MessageTypeVar]:
-        """Return a  message that can be sent to the server successfully.
-
-        This function is used by test cases that want to get a useful message and manipulate it in some way so
-        that it violates the ACME spec.
-        """
-        if self.post_as_get:
-            return b""
-
-        return self.message_cls(**kwargs)
-
-    def get_url(self, **kwargs: Any) -> str:
-        """Get a URL for this view with the given kwargs."""
-        return reverse(f"django_ca:{self.view_name}", kwargs=kwargs)
-
-    @property
-    def message(self) -> Union[bytes, MessageTypeVar]:
-        """Property for sending the default message."""
-        return self.get_message()
-
-    @override_tmpcadir()
-    def test_internal_server_error(self) -> None:
+        caplog: LogCaptureFixture,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+    ) -> None:
         """Test raising an uncaught exception -> Internal server error."""
         view = "django.views.generic.base.View.dispatch"
-        msg = f"{self.url} mock-exception"
-        with mock.patch(view, side_effect=Exception(msg)), self.assertLogs() as logcm:
-            resp = self.acme(self.url, self.message, nonce=b"foo")
+        msg = f"{url} mock-exception"
+        with mock.patch(view, side_effect=Exception(msg)):
+            resp = acme_request(client, url, root, message, nonce=b"foo")
 
-        self.assertEqual(resp.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
-        self.assertEqual(
-            resp.json(),
-            {
-                "detail": "Internal server error",
-                "status": HTTPStatus.INTERNAL_SERVER_ERROR,
-                "type": "urn:ietf:params:acme:error:serverInternal",
-            },
-        )
-        self.assertEqual(len(logcm.output), 1)
-        self.assertIn(msg, logcm.output[0])
+        assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        assert resp.json() == {
+            "detail": "Internal server error",
+            "status": HTTPStatus.INTERNAL_SERVER_ERROR,
+            "type": "urn:ietf:params:acme:error:serverInternal",
+        }
+        assert msg in caplog.text
 
-    @override_tmpcadir()
-    def test_unknown_nonce(self) -> None:
+    def test_unknown_nonce(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: Optional[str],
+    ) -> None:
         """Test sending an unknown nonce."""
-        resp = self.acme(self.url, self.message, nonce=b"foo")
-        self.assertMalformed(resp, "Bad or invalid nonce.", typ="badNonce")
+        resp = acme_request(client, url, root, message, nonce=b"foo", kid=kid)
+        assert_malformed(resp, root, "Bad or invalid nonce.", typ="badNonce")
 
-    @override_tmpcadir()
-    def test_duplicate_nonce(self) -> None:
+    def test_duplicate_nonce(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: Optional[str],
+    ) -> None:
         """Test sending a nonce twice."""
-        nonce = self.get_nonce()
-        self.acme(self.url, self.message, nonce=nonce)
-        resp1 = self.acme(self.url, self.message, nonce=nonce)
-        self.assertMalformed(resp1, "Bad or invalid nonce.", typ="badNonce")
+        nonce = get_nonce(client, root)
+        acme_request(client, url, root, message, nonce=nonce, kid=kid)
+        resp1 = acme_request(client, url, root, message, nonce=nonce, kid=kid)
+        assert_malformed(resp1, root, "Bad or invalid nonce.", typ="badNonce")
 
-    @override_tmpcadir(CA_ENABLE_ACME=False)
-    def test_disabled_acme(self) -> None:
+    def test_disabled_acme(
+        self,
+        settings: SettingsWrapper,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+    ) -> None:
         """Test that we get HTTP 404 if ACME is disabled."""
-        resp = self.acme(self.url, self.message, nonce=b"foo")
-        self.assertEqual(resp.status_code, HTTPStatus.NOT_FOUND)
+        settings.CA_ENABLE_ACME = False
+        resp = acme_request(client, url, root, message, nonce=b"foo")
+        assert resp.status_code == HTTPStatus.NOT_FOUND, resp.content
 
-    @override_tmpcadir()
-    def test_invalid_content_type(self) -> None:
+    def test_invalid_content_type(
+        self, client: Client, url: str, message: MessageTypeVar, root: CertificateAuthority
+    ) -> None:
         """Test that any request with an invalid Content-Type header is an error.
 
         .. seealso:: RFC 8555, 6.2
         """
-        resp = self.acme(self.url, self.message, post_kwargs={"content_type": "FOO"})
-        self.assertAcmeProblem(
+        resp = acme_request(client, url, root, message, post_kwargs={"content_type": "FOO"})
+        assert_acme_problem(
             resp,
             "malformed",
             status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
             message="Requests must use the application/jose+json content type.",
+            ca=root,
         )
 
-    @override_tmpcadir()
-    def test_jwk_and_kid(self) -> None:
+    def test_jwk_and_kid(
+        self, client: Client, url: str, message: MessageTypeVar, root: CertificateAuthority
+    ) -> None:
         """Test sending both a jwk and a kid, which are supposed to be mutually exclusive."""
         sign = acme.jws.Signature.sign
 
@@ -321,45 +137,69 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
             return sign(*args, **kwargs)
 
         with self.patch("acme.jws.Signature.sign", spec_set=True, side_effect=sign_mock):
-            resp = self.acme(self.url, self.message, kid="foo")
-        self.assertMalformed(resp, "jwk and kid are mutually exclusive.")
+            resp = acme_request(client, url, root, message, kid="foo")
+        assert_malformed(resp, root, "jwk and kid are mutually exclusive.")
 
-    @override_tmpcadir()
-    def test_invalid_ca(self) -> None:
+    def test_invalid_ca(
+        self, client: Client, url: str, message: MessageTypeVar, root: CertificateAuthority
+    ) -> None:
         """Test a request where the CA cannot be found."""
-        CertificateAuthority.objects.all().update(acme_enabled=False)
-        resp = self.acme(self.url, self.message)
-        self.assertAcmeProblem(
-            resp, "not-found", status=HTTPStatus.NOT_FOUND, message="The requested CA cannot be found."
+        root.acme_enabled = False
+        root.save()
+        resp = acme_request(client, url, root, message)
+        assert_acme_problem(
+            resp,
+            "not-found",
+            status=HTTPStatus.NOT_FOUND,
+            message="The requested CA cannot be found.",
+            ca=root,
         )
 
-    @override_tmpcadir()
-    def test_wrong_jwk_or_kid(self) -> None:
-        """Send a KID where a JWK is required and vice-versa."""
-        kid: Optional[str] = self.kid
+    def test_wrong_jwk_or_kid(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: Optional[str],
+        account_slug: str,
+    ) -> None:
+        """Send a KID where a JWK is required and vice versa."""
         expected = "Request requires a full JWK key."
         if self.requires_kid:
             self.requires_kid = False
             expected = "Request requires a JWK key ID."
             kid = None
+        else:
+            kid = absolute_acme_uri(":acme-account", serial=root.serial, slug=account_slug)
 
-        self.assertMalformed(self.acme(self.url, self.message, kid=kid), expected)
+        resp = acme_request(client, url, root, message, kid=kid)
+        assert_malformed(resp, root, expected)
 
-    @override_tmpcadir()
-    def test_invalid_jws(self) -> None:
+    def test_invalid_jws(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: Optional[str],
+    ) -> None:
         """Test invalid JWS signature."""
-        kid = self.kid if self.requires_kid else None
         with self.patch("acme.jws.JWS.verify", return_value=False) as verify_mock:
-            self.assertMalformed(self.acme(self.url, self.message, kid=kid), "JWS signature invalid.")
+            resp = acme_request(client, url, root, message, kid=kid)
+
+        assert_malformed(resp, root, "JWS signature invalid.")
         verify_mock.assert_called_once()
 
         # function might also raise an exception
         with self.patch("acme.jws.JWS.verify", side_effect=Exception("foo")) as verify_mock:
-            self.assertMalformed(self.acme(self.url, self.message, kid=kid), "JWS signature invalid.")
+            resp = acme_request(client, url, root, message, kid=kid)
+        assert_malformed(resp, root, "JWS signature invalid.")
         verify_mock.assert_called_once()
 
-    @override_tmpcadir()
-    def test_neither_jwk_nor_kid(self) -> None:
+    def test_neither_jwk_nor_kid(
+        self, client: Client, url: str, message: MessageTypeVar, root: CertificateAuthority
+    ) -> None:
         """Test sending neither a jwk and a kid."""
         sign = acme.jws.Signature.sign
 
@@ -370,97 +210,110 @@ class AcmeBaseViewTestCaseMixin(AcmeTestCaseMixin, typing.Generic[MessageTypeVar
             return sign(*args, **kwargs)
 
         with self.patch("acme.jws.Signature.sign", spec_set=True, side_effect=sign_mock):
-            resp = self.acme(self.url, self.message, kid="foo")
-        self.assertMalformed(resp, "JWS contained neither key nor key ID.")
+            resp = acme_request(client, url, root, message, kid="foo")
+        assert_malformed(resp, root, "JWS contained neither key nor key ID.")
 
-    def test_invalid_json(self) -> None:
+    def test_invalid_json(self, client: Client, url: str, root: CertificateAuthority) -> None:
         """Test sending invalid JSON to the server."""
-        resp = self.client.post(self.url, "{", content_type="application/jose+json")
-        self.assertMalformed(resp, "Could not parse JWS token.")
+        resp = client.post(url, "{", content_type="application/jose+json")
+        assert_malformed(resp, root, "Could not parse JWS token.")
 
-    @override_tmpcadir()
-    def test_wrong_url(self) -> None:
+    def test_wrong_url(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: Optional[str],
+    ) -> None:
         """Test sending the wrong URL."""
-        kid = self.kid if self.requires_kid else None
         with self.patch("django.http.request.HttpRequest.build_absolute_uri", return_value="foo"):
-            if self.post_as_get:
-                resp = self.acme(self.url, b"", kid=kid)
-            else:
-                resp = self.acme(self.url, self.message, kid=kid)
-        self.assertUnauthorized(resp, "URL does not match.", link_relations={"index": "foo"})
+            resp = acme_request(client, url, root, message, kid=kid)
+        assert_unauthorized(resp, root, "URL does not match.", link_relations={"index": "foo"})
 
-    @override_tmpcadir()
-    def test_payload_in_post_as_get(self) -> None:
+    def test_payload_in_post_as_get(
+        self,
+        client: Client,
+        url: str,
+        root: CertificateAuthority,
+        kid: Optional[str],
+    ) -> None:
         """Test sending a payload to a post-as-get request."""
         if not self.post_as_get:
             return
 
         # just some bogus data
         message = acme.messages.Registration(contact=("user@example.com",), terms_of_service_agreed=True)
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertMalformed(resp, "Non-empty payload in get-as-post request.")
+        resp = acme_request(client, url, root, message, kid=kid)
+        assert_malformed(resp, root, "Non-empty payload in get-as-post request.")
 
 
+@pytest.mark.usefixtures("account")
 class AcmeWithAccountViewTestCaseMixin(
     AcmeBaseViewTestCaseMixin[MessageTypeVar], typing.Generic[MessageTypeVar], metaclass=abc.ABCMeta
 ):
     """Mixin that also adds accounts to the database."""
 
-    # NOINSPECTION NOTE: PyCharm does not detect mixins as a TestCase
-    # noinspection PyAttributeOutsideInit
-    def setUp(self) -> None:
-        super().setUp()
-        self.account = AcmeAccount.objects.create(
-            ca=self.ca,
-            contact=self.ACCOUNT_ONE_CONTACT,
-            terms_of_service_agreed=True,
-            slug=self.account_slug,
-            kid=self.kid,
-            pem=self.PEM,
-            thumbprint=self.thumbprint,
-        )
-        self.account2 = AcmeAccount.objects.create(
-            ca=self.ca,
-            contact=self.ACCOUNT_TWO_CONTACT,
-            terms_of_service_agreed=True,
-            slug=self.child_account_slug,
-            kid=self.child_kid,
-            pem=self.CHILD_PEM,
-            thumbprint=self.CHILD_THUMBPRINT,
-        )
+    @pytest.fixture()
+    def main_account(self, account: AcmeAccount) -> Iterator[AcmeAccount]:
+        """Return the main account to be used for this test case.
 
-    @property
-    def main_account(self) -> AcmeAccount:
-        """Return the main account to be used for this test case."""
-        return self.account
+        This is overwritten by the revocation test case.
+        """
+        yield account
 
-    @override_tmpcadir()
-    def test_deactivated_account(self) -> None:
+    def test_deactivated_account(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: str,
+        main_account: AcmeAccount,
+    ) -> None:
         """Test request with a deactivated account."""
-        self.main_account.status = AcmeAccount.STATUS_DEACTIVATED
-        self.main_account.save()
-        response = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(response, "Account has been deactivated.")
+        main_account.status = AcmeAccount.STATUS_DEACTIVATED
+        main_account.save()
+        response = acme_request(client, url, root, message, kid=kid)
+        assert_unauthorized(response, root, "Account has been deactivated.")
 
-    @override_tmpcadir()
-    def test_tos_not_agreed_account(self) -> None:
+    def test_tos_not_agreed_account(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: str,
+        main_account: AcmeAccount,
+    ) -> None:
         """Test request with a deactivated account."""
-        self.main_account.ca.terms_of_service = "http://tos.example.com"
-        self.main_account.ca.save()
+        main_account.ca.terms_of_service = "http://tos.example.com"
+        main_account.ca.save()
 
-        self.main_account.terms_of_service_agreed = False
-        self.main_account.save()
-        response = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(response, "Account did not agree to the terms of service.")
+        main_account.terms_of_service_agreed = False
+        main_account.save()
+        resp = acme_request(client, url, root, message, kid=kid)
+        assert_unauthorized(resp, root, "Account did not agree to the terms of service.")
 
-    @override_tmpcadir()
-    def test_unknown_account(self) -> None:
+    def test_unknown_account(
+        self, client: Client, url: str, message: MessageTypeVar, root: CertificateAuthority
+    ) -> None:
         """Test doing request with an unknown kid."""
-        self.assertUnauthorized(self.acme(self.url, self.message, kid="unknown"), "Account not found.")
+        resp = acme_request(client, url, root, message, kid="unknown")
+        assert_unauthorized(resp, root, "Account not found.")
 
-    @override_tmpcadir()
-    def test_unusable_account(self) -> None:
+    def test_unusable_account(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: str,
+        main_account: AcmeAccount,
+    ) -> None:
         """Test doing a request with an unusable account."""
-        self.main_account.status = AcmeAccount.STATUS_REVOKED
-        self.main_account.save()
-        self.assertUnauthorized(self.acme(self.url, self.message, kid=self.kid), "Account not usable.")
+        main_account.status = AcmeAccount.STATUS_REVOKED
+        main_account.save()
+
+        resp = acme_request(client, url, root, message, kid=kid)
+        assert_unauthorized(resp, root, "Account not usable.")

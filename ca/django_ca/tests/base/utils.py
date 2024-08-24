@@ -40,12 +40,14 @@ from django.conf import settings
 from django.core.files.storage import storages
 from django.core.management import ManagementUtility, call_command
 from django.test import override_settings
+from django.urls import reverse
 from django.utils.crypto import get_random_string
 
 from django_ca.extensions import extension_as_text
 from django_ca.key_backends import KeyBackend
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
+from django_ca.tests.acme.views.constants import SERVER_NAME
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
 
@@ -141,6 +143,20 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         options: DummyModel,
     ) -> None:
         return None
+
+
+def root_reverse(name: str, **kwargs: Any) -> str:
+    """Shortcut to get a django-ca url with a root serial."""
+    kwargs.setdefault("serial", CERT_DATA["root"]["serial"])
+    return reverse(f"django_ca:{name}", kwargs=kwargs)
+
+
+def root_uri(name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
+    """Full URI with a root serial."""
+    if not hostname:  # pragma: no branch
+        hostname = SERVER_NAME
+    path = root_reverse(name, **kwargs)
+    return f"http://{hostname}{path}"
 
 
 def authority_information_access(

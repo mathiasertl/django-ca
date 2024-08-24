@@ -25,7 +25,7 @@ from unittest import mock
 from urllib.parse import quote
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
@@ -146,7 +146,7 @@ class TestCaseMixin(TestCaseProtocol):
         if hostname is None:
             hostname = settings.ALLOWED_HOSTS[0]
 
-        if name.startswith("/"):
+        if name.startswith("/"):  # pragma: no cover
             return f"http://{hostname}{name}"
         if name.startswith(":"):  # pragma: no branch
             name = f"django_ca{name}"
@@ -286,11 +286,6 @@ class TestCaseMixin(TestCaseProtocol):
         name = self.id().split(".", 2)[-1].lower()
         name = re.sub("[^a-z0-9.-]", "-", name)
         return f"{name}.example.com"[-64:].lstrip("-.")
-
-    @property
-    def subject(self) -> x509.Name:
-        """Subject containing a common name that is unique for the test case."""
-        return x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, self.hostname)])
 
     @classmethod
     def expires(cls, days: int) -> timedelta:

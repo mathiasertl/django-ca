@@ -13,176 +13,211 @@
 
 """Test viewing an order."""
 
+from collections.abc import Iterator
 from http import HTTPStatus
+from typing import Optional
+from unittest import mock
 
 import josepy as jose
 import pyrfc3339
 
-from django.test import TestCase, override_settings
+from django.test import Client
 from django.utils import timezone
 
-from freezegun import freeze_time
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.acme.errors import AcmeUnauthorized
 from django_ca.conf import model_settings
-from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeOrder
+from django_ca.models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+)
+from django_ca.tests.acme.views.assertions import assert_acme_response, assert_unauthorized
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
+from django_ca.tests.acme.views.constants import HOST_NAME, SERVER_NAME
+from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import root_reverse
+
+# ACME views require a currently valid certificate authority
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeOrderViewTestCase(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase):
+@pytest.fixture()
+def url(order: AcmeOrder) -> Iterator[str]:
+    """URL under test."""
+    yield root_reverse("acme-order", slug=order.slug)
+
+
+@pytest.fixture()
+def message() -> Iterator[bytes]:
+    """Yield an empty bytestring, since this is a POST-AS-GET request."""
+    yield b""
+
+
+@pytest.mark.parametrize("use_tz", (True, False))
+def test_basic(
+    settings: SettingsWrapper,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+    use_tz: bool,
+) -> None:
+    """Basic test for creating an account via ACME."""
+    settings.USE_TZ = use_tz
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+    expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(expires, accept_naive=not use_tz),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "pending",
+    }
+
+
+def test_valid_cert(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    root_cert: Certificate,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+) -> None:
+    """Test viewing an order with a valid certificate."""
+    order.status = AcmeOrder.STATUS_VALID
+    order.save()
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+    acme_cert = AcmeCertificate.objects.create(order=order, cert=root_cert)
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+    expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "certificate": f"http://{SERVER_NAME}{acme_cert.acme_url}",
+        "expires": pyrfc3339.generate(expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "valid",
+    }
+
+
+def test_cert_not_yet_issued(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+) -> None:
+    """Test viewing an order where the certificate has not yet been issued.
+
+    NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
+    *should* always be true at the same time.
+    """
+    order.status = AcmeOrder.STATUS_VALID
+    order.save()
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+    AcmeCertificate.objects.create(order=order)
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+    expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "valid",
+    }
+
+
+def test_cert_not_yet_valid(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    root_cert: Certificate,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+) -> None:
+    """Test viewing an order where the certificate has not yet valid.
+
+    NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
+    *should* always be true at the same time.
+    """
+    order.status = AcmeOrder.STATUS_PROCESSING
+    order.save()
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+    AcmeCertificate.objects.create(order=order, cert=root_cert)
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+    expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "processing",
+    }
+
+
+def test_wrong_account(
+    client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: Optional[str]
+) -> None:
+    """Test viewing for the wrong account."""
+    account = AcmeAccount.objects.create(
+        ca=root, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+    )
+    order.account = account
+    order.save()
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert_unauthorized(resp, root)
+
+
+def test_not_found(client: Client, root: CertificateAuthority, order: AcmeOrder, kid: Optional[str]) -> None:
+    """Test viewing an order that simply does not exist."""
+    account = AcmeAccount.objects.create(
+        ca=root, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+    )
+    order.account = account
+    order.save()
+
+    url = root_reverse("acme-order", slug=order.slug)
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert_unauthorized(resp, root)
+
+
+def test_basic_exception(client: Client, url: str, root: CertificateAuthority, kid: Optional[str]) -> None:
+    """Test throwing an AcmeException in acme_request().
+
+    We have to mock this, as at present this is not usually done.
+    """
+    with mock.patch(
+        "django_ca.acme.views.AcmeOrderView.acme_request", side_effect=AcmeUnauthorized(message="foo")
+    ):
+        resp = acme_request(client, url, root, b"", kid=kid)
+    assert_unauthorized(resp, root, "foo")
+
+
+class TestAcmeOrderView(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields]):
     """Test retrieving an order."""
 
     # NOTE: type parameter not required post-as-get requests
 
     post_as_get = True
-    view_name = "acme-order"
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.order = AcmeOrder.objects.create(account=self.account)
-        self.authz = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
-
-    @property
-    def url(self) -> str:
-        """Get URL for the standard auth object."""
-        return self.get_url(serial=self.ca.serial, slug=self.order.slug)
-
-    @override_tmpcadir()
-    def test_basic(self, accept_naive: bool = False) -> None:
-        """Basic test for creating an account via ACME."""
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(resp)
-        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
-        self.assertEqual(
-            resp.json(),
-            {
-                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-                "expires": pyrfc3339.generate(expires, accept_naive=accept_naive),
-                "identifiers": [{"type": "dns", "value": self.hostname}],
-                "status": "pending",
-            },
-        )
-
-    @override_settings(USE_TZ=False)
-    def test_basic_with_tz(self) -> None:
-        """Basic test without timezone support."""
-        self.test_basic(True)
-
-    @override_tmpcadir()
-    def test_valid_cert(self) -> None:
-        """Test viewing an order with a valid certificate."""
-        self.order.status = AcmeOrder.STATUS_VALID
-        self.order.save()
-        self.authz.status = AcmeAuthorization.STATUS_VALID
-        self.authz.save()
-        acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
-
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(resp)
-        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
-        self.assertEqual(
-            resp.json(),
-            {
-                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-                "certificate": f"http://{self.SERVER_NAME}{acmecert.acme_url}",
-                "expires": pyrfc3339.generate(expires, accept_naive=True),
-                "identifiers": [{"type": "dns", "value": self.hostname}],
-                "status": "valid",
-            },
-        )
-
-    @override_tmpcadir()
-    def test_cert_not_yet_issued(self) -> None:
-        """Test viewing an order where the certificate has not yet been issued.
-
-        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
-        *should* always be true at the same time.
-        """
-        self.order.status = AcmeOrder.STATUS_VALID
-        self.order.save()
-        self.authz.status = AcmeAuthorization.STATUS_VALID
-        self.authz.save()
-        AcmeCertificate.objects.create(order=self.order)
-
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(resp)
-        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
-        self.assertEqual(
-            resp.json(),
-            {
-                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-                "expires": pyrfc3339.generate(expires, accept_naive=True),
-                "identifiers": [{"type": "dns", "value": self.hostname}],
-                "status": "valid",
-            },
-        )
-
-    @override_tmpcadir()
-    def test_cert_not_yet_valid(self) -> None:
-        """Test viewing an order where the certificate has not yet valid.
-
-        NOTE: test_cert_not_yet_issued and test_cert_not_yet_valid test two different conditions that
-        *should* always be true at the same time.
-        """
-        self.order.status = AcmeOrder.STATUS_PROCESSING
-        self.order.save()
-        self.authz.status = AcmeAuthorization.STATUS_VALID
-        self.authz.save()
-        AcmeCertificate.objects.create(order=self.order, cert=self.cert)
-
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertAcmeResponse(resp)
-        expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
-        self.assertEqual(
-            resp.json(),
-            {
-                "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-                "expires": pyrfc3339.generate(expires, accept_naive=True),
-                "identifiers": [{"type": "dns", "value": self.hostname}],
-                "status": "processing",
-            },
-        )
-
-    @override_tmpcadir()
-    def test_wrong_account(self) -> None:
-        """Test viewing for the wrong account."""
-        account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
-        )
-        self.order.account = account
-        self.order.save()
-
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp)
-
-    @override_tmpcadir()
-    def test_not_found(self) -> None:
-        """Test viewing an order that simply does not exist."""
-        account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
-        )
-        self.order.account = account
-        self.order.save()
-
-        url = self.get_url(serial=self.ca.serial, slug=self.order.slug)
-        resp = self.acme(url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp)
-
-    @override_tmpcadir()
-    def test_basic_exception(self) -> None:
-        """Test throwing an AcmeException in acme_request().
-
-        We have to mock this, as at present this is not usually done.
-        """
-        with self.patch(
-            "django_ca.acme.views.AcmeOrderView.acme_request", side_effect=AcmeUnauthorized(message="foo")
-        ):
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp, "foo")

@@ -13,11 +13,14 @@
 
 """Test AcmeOrderFinalizeView."""
 
+# pylint: disable=redefined-outer-name
+
+from collections.abc import Iterator
 from http import HTTPStatus
+from typing import Optional
 from unittest import mock
 from unittest.mock import patch
 
-import acme
 import josepy as jose
 import pyrfc3339
 
@@ -26,19 +29,67 @@ from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from OpenSSL.crypto import X509Req
 
-from django.test import TransactionTestCase, override_settings
-from django.urls import reverse, reverse_lazy
+from django.test import Client
+from django.urls import reverse
 
-from freezegun import freeze_time
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.acme.messages import CertificateRequest
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
 from django_ca.tasks import acme_issue_certificate
-from django_ca.tests.acme.views.assertions import assert_acme_problem, assert_acme_response
+from django_ca.tests.acme.views.assertions import (
+    assert_acme_problem,
+    assert_acme_response,
+    assert_unauthorized,
+)
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
+from django_ca.tests.acme.views.constants import HOST_NAME, SERVER_NAME
+from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
-from django_ca.tests.base.typehints import HttpResponse
-from django_ca.tests.base.utils import dns, override_tmpcadir
+from django_ca.tests.base.typehints import CaptureOnCommitCallbacks, HttpResponse
+from django_ca.tests.base.utils import dns, root_reverse
+
+# ACME views require a currently valid certificate authority
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+
+# Create a CSR based on root-cert
+# NOTE: certbot CSRs have an empty subject
+CSR = (
+    x509.CertificateSigningRequestBuilder()
+    .subject_name(x509.Name([]))
+    .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
+    .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+)
+
+
+@pytest.fixture()
+def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
+    """Override the module-level fixture to set the status to ready."""
+    order.status = AcmeOrder.STATUS_READY
+    order.save()
+    yield order
+
+
+@pytest.fixture()
+def authz(authz: AcmeAuthorization) -> Iterator[AcmeAuthorization]:
+    """Override the module-level fixture to set the status to valid."""
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+    yield authz
+
+
+@pytest.fixture()
+def url(order: AcmeOrder) -> Iterator[str]:
+    """URL under test."""
+    yield root_reverse("acme-order-finalize", slug=order.slug)
+
+
+@pytest.fixture()
+def message() -> Iterator[CertificateRequest]:
+    """Default message sent to the server."""
+    req = X509Req.from_cryptography(CSR)
+    yield CertificateRequest(csr=jose.util.ComparableX509(req))
 
 
 def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthority) -> None:
@@ -46,340 +97,479 @@ def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthor
     assert_acme_problem(response, "badCSR", ca=ca, status=HTTPStatus.BAD_REQUEST, message=message)
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeOrderFinalizeViewTestCase(
-    AcmeWithAccountViewTestCaseMixin[CertificateRequest], TransactionTestCase
-):
-    """Test retrieving a challenge."""
+@pytest.mark.parametrize("use_tz", (True, False))
+def test_basic(
+    settings: SettingsWrapper,
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    usable_root: CertificateAuthority,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+    use_tz: bool,
+) -> None:
+    """Basic test for creating an account via ACME."""
+    settings.USE_TZ = use_tz
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, usable_root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, usable_root)
+    assert len(callbacks) == 1
 
-    slug = "92MPyl7jm0zw"
-    url = reverse_lazy(
-        "django_ca:acme-order-finalize", kwargs={"serial": CERT_DATA["root"]["serial"], "slug": slug}
+    order = AcmeOrder.objects.get(pk=order.pk)
+    cert = order.acmecertificate
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(order.expires, accept_naive=not use_tz),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "processing",
+    }
+
+
+def test_unknown_key_backend(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    usable_root: CertificateAuthority,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+) -> None:
+    """Test that the frontend does not need to know about the backend."""
+    usable_root.key_backend_alias = "unknown"
+    usable_root.save()
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, usable_root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, usable_root)
+    assert len(callbacks) == 1
+
+    order = AcmeOrder.objects.get(pk=order.pk)
+    cert = order.acmecertificate
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(order.expires, accept_naive=False),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "processing",
+    }
+
+
+@pytest.mark.usefixtures("account")
+def test_not_found(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test an order that does not exist."""
+    url = reverse("django_ca:acme-order-finalize", kwargs={"serial": root.serial, "slug": "foo"})
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_unauthorized(resp, root, "You are not authorized to perform this request.")
+
+
+def test_wrong_account(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    kid: Optional[str],
+) -> None:
+    """Test an order for a different account."""
+    account = AcmeAccount.objects.create(
+        ca=root, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+    )
+    order.account = account
+    order.save()
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_unauthorized(resp, root, "You are not authorized to perform this request.")
+
+
+def test_not_ready(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    kid: Optional[str],
+) -> None:
+    """Test an order that is not yet ready."""
+    order.status = AcmeOrder.STATUS_INVALID
+    order.save()
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_acme_problem(
+        resp,
+        "orderNotReady",
+        status=HTTPStatus.FORBIDDEN,
+        message="This order is not yet ready.",
+        ca=root,
     )
 
-    def setUp(self) -> None:
-        super().setUp()
 
-        # Create a CSR based on root-cert
-        # NOTE: certbot CSRs have an empty subject
-        self.csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(x509.Name([]))
-            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-        )
+def test_invalid_auth(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+) -> None:
+    """Test an order where one of the authentications is not valid."""
+    authz.status = AcmeAuthorization.STATUS_INVALID
+    authz.save()
 
-        self.order = AcmeOrder.objects.create(
-            account=self.account, status=AcmeOrder.STATUS_READY, slug=self.slug
-        )
-        self.order.add_authorizations(
-            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value=self.hostname)]
-        )
-        self.authz = AcmeAuthorization.objects.get(order=self.order, value=self.hostname)
-        self.authz.status = AcmeAuthorization.STATUS_VALID
-        self.authz.save()
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_acme_problem(
+        resp,
+        "orderNotReady",
+        status=HTTPStatus.FORBIDDEN,
+        message="This order is not yet ready.",
+        ca=root,
+    )
 
-    def get_message(  # type: ignore[override]
-        self, csr: x509.CertificateSigningRequest
-    ) -> CertificateRequest:
-        """Get a message for the given cryptography CSR object."""
-        req = X509Req.from_cryptography(csr)
-        return CertificateRequest(csr=jose.util.ComparableX509(req))
 
-    @property
-    def message(self) -> CertificateRequest:
-        """Default message to send to the server."""
-        return self.get_message(self.csr)
+def test_csr_invalid_signature(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR with an invalid signature."""
+    # create property mock for CSR object.
+    # We mock parse_acme_csr below because the actual class returned depends on the backend in use
+    csr_mock = mock.MagicMock()
+    # attach to type: https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
+    type(csr_mock).is_signature_valid = mock.PropertyMock(return_value=False)
 
-    @override_tmpcadir()
-    def test_basic(self, accept_naive: bool = False) -> None:
-        """Basic test for creating an account via ACME."""
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        assert resp.status_code == HTTPStatus.OK, resp.content
-        assert_acme_response(resp, self.ca)
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        patch("django_ca.acme.views.parse_acme_csr", return_value=csr_mock),
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "CSR signature is not valid.", ca=root)
 
-        order = AcmeOrder.objects.get(pk=self.order.pk)
-        cert = order.acmecertificate
-        assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
 
-        assert resp.json() == {
-            "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-            "expires": pyrfc3339.generate(order.expires, accept_naive=accept_naive),
-            "identifiers": [{"type": "dns", "value": self.hostname}],
-            "status": "processing",
-        }
+def test_csr_bad_algorithm(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR with a bad algorithm."""
+    with open(FIXTURES_DIR / "md5.csr.pem", "rb") as stream:
+        signed_csr = x509.load_pem_x509_csr(stream.read())
 
-    @override_settings(USE_TZ=False)
-    def test_basic_without_tz(self) -> None:
-        """Basic test without timezone support."""
-        self.test_basic(True)
+    req = X509Req.from_cryptography(signed_csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks() as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "md5: Insecure hash algorithm.", ca=root)
 
-    @override_tmpcadir()
-    def test_unknown_key_backend(self) -> None:
-        """Test that the frontend does not need to know about the backend."""
-        self.ca.key_backend_alias = "unknown"
-        self.ca.save()
+    with open(FIXTURES_DIR / "sha1.csr.pem", "rb") as stream:
+        signed_csr = x509.load_pem_x509_csr(stream.read())
+    req = X509Req.from_cryptography(signed_csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
 
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        assert resp.status_code == HTTPStatus.OK, resp.content
-        assert_acme_response(resp, self.ca)
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "sha1: Insecure hash algorithm.", ca=root)
 
-        order = AcmeOrder.objects.get(pk=self.order.pk)
-        cert = order.acmecertificate
-        assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
 
-        assert resp.json() == {
-            "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-            "expires": pyrfc3339.generate(order.expires, accept_naive=False),
-            "identifiers": [{"type": "dns", "value": self.hostname}],
-            "status": "processing",
-        }
-
-    @override_tmpcadir()
-    def test_not_found(self) -> None:
-        """Test an order that does not exist."""
-        url = reverse("django_ca:acme-order-finalize", kwargs={"serial": self.ca.serial, "slug": "foo"})
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
-
-    @override_tmpcadir()
-    def test_wrong_account(self) -> None:
-        """Test an order for a different account."""
-        account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
-        )
-        self.order.account = account
-        self.order.save()
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        self.assertUnauthorized(resp, "You are not authorized to perform this request.")
-
-    @override_tmpcadir()
-    def test_not_ready(self) -> None:
-        """Test an order that is not yet ready."""
-        self.order.status = AcmeOrder.STATUS_INVALID
-        self.order.save()
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        self.assertAcmeProblem(
-            resp, "orderNotReady", status=HTTPStatus.FORBIDDEN, message="This order is not yet ready."
-        )
-
-    @override_tmpcadir()
-    def test_invalid_auth(self) -> None:
-        """Test an order where one of the authentications is not valid."""
-        self.authz.status = AcmeAuthorization.STATUS_INVALID
-        self.authz.save()
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        self.assertAcmeProblem(
-            resp, "orderNotReady", status=HTTPStatus.FORBIDDEN, message="This order is not yet ready."
-        )
-
-    @override_tmpcadir()
-    def test_csr_invalid_signature(self) -> None:
-        """Test posting a CSR with an invalid signature."""
-        # create property mock for CSR object.
-        # We mock parse_acme_csr below because the actual class returned depends on the backend in use
-        csr_mock = mock.MagicMock()
-        # attach to type: https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
-        type(csr_mock).is_signature_valid = mock.PropertyMock(return_value=False)
-
-        with (
-            patch("django_ca.acme.views.run_task") as mockcm,
-            patch("django_ca.acme.views.parse_acme_csr", return_value=csr_mock),
-        ):
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "CSR signature is not valid.", self.ca)
-
-    @override_tmpcadir()
-    def test_csr_bad_algorithm(self) -> None:
-        """Test posting a CSR with a bad algorithm."""
-        with open(FIXTURES_DIR / "md5.csr.pem", "rb") as stream:
-            signed_csr = x509.load_pem_x509_csr(stream.read())
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(signed_csr), kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "md5: Insecure hash algorithm.", self.ca)
-
-        with open(FIXTURES_DIR / "sha1.csr.pem", "rb") as stream:
-            signed_csr = x509.load_pem_x509_csr(stream.read())
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(signed_csr), kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "sha1: Insecure hash algorithm.", self.ca)
-
-    @override_tmpcadir()
-    def test_csr_valid_subject(self) -> None:
-        """Test posting a CSR where the CommonName was in the order."""
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COMMON_NAME, self.hostname),
-                    ]
-                )
+def test_csr_valid_subject(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR where the CommonName was in the order."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COMMON_NAME, HOST_NAME),
+                ]
             )
-            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
         )
+        .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
 
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
-        assert resp.status_code == HTTPStatus.OK, resp.content
-        assert_acme_response(resp, self.ca)
+    req = X509Req.from_cryptography(csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 1
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
 
-        order = AcmeOrder.objects.get(pk=self.order.pk)
-        cert = order.acmecertificate
-        assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
-        assert resp.json() == {
-            "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-            "expires": pyrfc3339.generate(order.expires, accept_naive=True),
-            "identifiers": [{"type": "dns", "value": self.hostname}],
-            "status": "processing",
-        }
+    order.refresh_from_db()
+    cert = order.acmecertificate
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(order.expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "processing",
+    }
 
-    @override_tmpcadir()
-    def test_csr_subject_no_cn(self) -> None:
-        """Test posting a CSR that has a subject but no common name."""
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-                    ]
-                )
-            )
-            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+
+def test_csr_subject_no_cn(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    authz: AcmeAuthorization,
+    order: AcmeOrder,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR that has a subject but no common name."""
+    csr_builder = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")]))
+        .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
+    )
+    csr = csr_builder.sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    req = X509Req.from_cryptography(csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 1
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+
+    cert = order.acmecertificate
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(order.expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "processing",
+    }
+
+
+def test_csr_subject_no_domain(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR where the CommonName is not a domain name."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "user@example.com")]))
+        .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    req = X509Req.from_cryptography(csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "CommonName was not in order.", ca=root)
+
+
+def test_csr_subject_not_in_order(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR where the CommonName was not in the order."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.net")]))
+        .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    req = X509Req.from_cryptography(csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "CommonName was not in order.", root)
+
+
+def test_csr_no_san(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR with no SubjectAlternativeName extension."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([]))
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    req = X509Req.from_cryptography(csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "No subject alternative names found in CSR.", root)
+
+
+def test_csr_different_names(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test posting a CSR with different names in the SubjectAlternativeName extension."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([]))
+        .add_extension(
+            x509.SubjectAlternativeName([dns(HOST_NAME), dns("example.net")]),
+            critical=False,
         )
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    req = X509Req.from_cryptography(csr)
+    message = CertificateRequest(csr=jose.util.ComparableX509(req))
 
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
-        assert resp.status_code == HTTPStatus.OK, resp.content
-        assert_acme_response(resp, self.ca)
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "Names in CSR do not match.", root)
 
-        order = AcmeOrder.objects.get(pk=self.order.pk)
-        cert = order.acmecertificate
-        assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
 
-        assert resp.json() == {
-            "authorizations": [f"http://{self.SERVER_NAME}{self.authz.acme_url}"],
-            "expires": pyrfc3339.generate(order.expires, accept_naive=True),
-            "identifiers": [{"type": "dns", "value": self.hostname}],
-            "status": "processing",
-        }
+def test_unparsable_csr(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    kid: Optional[str],
+) -> None:
+    """Test passing a completely unparsable CSR."""
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        patch("django_ca.acme.views.AcmeOrderFinalizeView.message_cls.encode", side_effect=[b"foo"]),
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "Unable to parse CSR.", root)
 
-    @override_tmpcadir()
-    def test_csr_subject_no_domain(self) -> None:
-        """Test posting a CSR where the CommonName is not a domain name."""
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COMMON_NAME, "user@example.com"),
-                    ]
-                )
-            )
-            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-        )
 
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "CommonName was not in order.", self.ca)
+def test_csr_invalid_version(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    root: CertificateAuthority,
+    url: str,
+    message: CertificateRequest,
+    kid: Optional[str],
+) -> None:
+    """Test passing a completely unparsable CSR."""
+    # It's difficult to create a CSR with an invalid version, so we just mock the parsing function raising
+    # the exception instead.
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        patch("django_ca.acme.views.parse_acme_csr", side_effect=x509.InvalidVersion("foo", 42)),
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "Invalid CSR version.", root)
 
-    @override_tmpcadir()
-    def test_csr_subject_not_in_order(self) -> None:
-        """Test posting a CSR where the CommonName was not in the order."""
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(
-                x509.Name(
-                    [
-                        x509.NameAttribute(NameOID.COMMON_NAME, "example.net"),
-                    ]
-                )
-            )
-            .add_extension(x509.SubjectAlternativeName([dns(self.hostname)]), critical=False)
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-        )
 
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "CommonName was not in order.", self.ca)
-
-    @override_tmpcadir()
-    def test_csr_no_san(self) -> None:
-        """Test posting a CSR with no SubjectAlternativeName extension."""
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(x509.Name([]))
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-        )
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "No subject alternative names found in CSR.", self.ca)
-
-    @override_tmpcadir()
-    def test_csr_different_names(self) -> None:
-        """Test posting a CSR with different names in the SubjectAlternativeName extension."""
-        csr = (
-            x509.CertificateSigningRequestBuilder()
-            .subject_name(x509.Name([]))
-            .add_extension(
-                x509.SubjectAlternativeName([dns(self.hostname), dns("example.net")]),
-                critical=False,
-            )
-            .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-        )
-
-        with patch("django_ca.acme.views.run_task") as mockcm:
-            resp = self.acme(self.url, self.get_message(csr), kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "Names in CSR do not match.", self.ca)
-
-    @override_tmpcadir()
-    def test_unparsable_csr(self) -> None:
-        """Test passing a completely unparsable CSR."""
-        with (
-            patch("django_ca.acme.views.run_task") as mockcm,
-            patch("django_ca.acme.views.AcmeOrderFinalizeView.message_cls.encode", side_effect=[b"foo"]),
-            self.assertLogs(),
-        ):
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "Unable to parse CSR.", self.ca)
-
-    @override_tmpcadir()
-    def test_csr_invalid_version(self) -> None:
-        """Test passing a completely unparsable CSR."""
-        # It's difficult to create a CSR with an invalid version, so we just mock the parsing function raising
-        # the exception instead.
-        with (
-            patch("django_ca.acme.views.run_task") as mockcm,
-            patch("django_ca.acme.views.parse_acme_csr", side_effect=x509.InvalidVersion("foo", 42)),
-        ):
-            resp = self.acme(self.url, self.message, kid=self.kid)
-        mockcm.assert_not_called()
-        assert_bad_csr(resp, "Invalid CSR version.", self.ca)
+class TestAcmeOrderFinalizeView(AcmeWithAccountViewTestCaseMixin[CertificateRequest]):
+    """Test retrieving a challenge."""

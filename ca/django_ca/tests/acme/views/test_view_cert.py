@@ -13,78 +13,108 @@
 
 """Test downloading the certificate."""
 
+# pylint: disable=redefined-outer-name,attribute-defined-outside-init  # for to fixtures
+
+from collections.abc import Iterator
 from http import HTTPStatus
+from typing import Optional
 
 import josepy as jose
 
-from django.test import TestCase
+from django.test import Client
 
-from freezegun import freeze_time
+import pytest
 
-from django_ca.models import AcmeAccount, AcmeCertificate, AcmeOrder
+from django_ca.models import AcmeAccount, AcmeCertificate, AcmeOrder, CertificateAuthority
+from django_ca.tests.acme.views.assertions import assert_unauthorized
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
+from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import CERT_PEM_REGEX, TIMESTAMPS
-from django_ca.tests.base.utils import override_tmpcadir
+from django_ca.tests.base.utils import root_reverse
+
+# ACME views require a currently valid certificate authority
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeCertificateViewTestCase(
-    AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields], TestCase
-):
+@pytest.fixture()
+def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
+    """Override to set status to valid."""
+    order.status = AcmeOrder.STATUS_VALID
+    order.save()
+    yield order
+
+
+@pytest.fixture()
+def url(acme_cert_slug: str) -> Iterator[str]:
+    """URL under test."""
+    yield root_reverse("acme-cert", slug=acme_cert_slug)
+
+
+@pytest.fixture()
+def message() -> Iterator[bytes]:
+    """Yield an empty bytestring, since this is a POST-AS-GET request."""
+    yield b""
+
+
+def test_basic(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: Optional[str],
+    acme_cert: AcmeCertificate,
+) -> None:
+    """Basic test case."""
+    # acme_cert.order.status = AcmeOrder.STATUS_VALID
+    # acme_cert.order.save()
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+
+    # Make sure that certbot parses the expected list of PEMs
+    certbot_split = CERT_PEM_REGEX.findall(resp.content)
+    assert len(certbot_split) == 2  # make sure that we get cert and root ca
+    assert [c.pub.pem.encode() for c in acme_cert.cert.bundle] == certbot_split  # type: ignore[union-attr]
+
+
+@pytest.mark.usefixtures("account")
+def test_not_found(client: Client, root: CertificateAuthority, kid: Optional[str]) -> None:
+    """Test fetching a cert that simply does not exist."""
+    url = root_reverse("acme-cert", slug="abc")
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert_unauthorized(resp, root)
+
+
+def test_wrong_account(
+    client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: Optional[str]
+) -> None:
+    """Test fetching a certificate for a different account."""
+    account = AcmeAccount.objects.create(
+        ca=root, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
+    )
+    order.account = account
+    order.save()
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert_unauthorized(resp, root)
+
+
+def test_no_cert_issued(
+    client: Client, url: str, root: CertificateAuthority, acme_cert: AcmeCertificate, kid: Optional[str]
+) -> None:
+    """Test when no cert is issued.
+
+    NOTE: should not really happen, as the order is marked as valid, the certificate is also set in one
+    transaction.
+    """
+    acme_cert.cert = None
+    acme_cert.save()
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert_unauthorized(resp, root)
+
+
+class TestAcmeCertificateView(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSONObjectWithFields]):
     """Test retrieving a certificate."""
 
     # NOTE: This is the request that does *not* return a JSON object (but the full cert), so the generic
     #       type for AcmeWithAccountViewTestCaseMixin really is just a dummy.
 
     post_as_get = True
-    view_name = "acme-cert"
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_VALID)
-        self.acmecert = AcmeCertificate.objects.create(order=self.order, cert=self.cert)
-
-    @property
-    def url(self) -> str:
-        """Get URL for the standard cert object."""
-        return self.get_url(serial=self.ca.serial, slug=self.acmecert.slug)
-
-    @override_tmpcadir()
-    def test_basic(self) -> None:
-        """Basic test case."""
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-
-        # Make sure that certbot parses the expected list of PEMs
-        certbot_split = CERT_PEM_REGEX.findall(resp.content)
-        self.assertEqual([c.pub.pem.encode() for c in self.cert.bundle], certbot_split)
-
-    @override_tmpcadir()
-    def test_not_found(self) -> None:
-        """Test fetching a cert that simply does not exist."""
-        resp = self.acme(self.get_url(serial=self.ca.serial, slug="abc"), self.message, kid=self.kid)
-        self.assertUnauthorized(resp)
-
-    @override_tmpcadir()
-    def test_wrong_account(self) -> None:
-        """Test fetching a certificate for a different account."""
-        account = AcmeAccount.objects.create(
-            ca=self.ca, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
-        )
-        self.order.account = account
-        self.order.save()
-
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp)
-
-    @override_tmpcadir()
-    def test_no_cert_issued(self) -> None:
-        """Test when no cert is issued.
-
-        NOTE: should not really happen, as the order is marked as valid, the certificate is also set in one
-        transaction.
-        """
-        self.acmecert.cert = None
-        self.acmecert.save()
-        resp = self.acme(self.url, self.message, kid=self.kid)
-        self.assertUnauthorized(resp)

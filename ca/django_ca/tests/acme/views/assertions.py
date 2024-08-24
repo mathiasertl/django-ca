@@ -14,12 +14,14 @@
 """Assertions for ACME views."""
 
 import re
-from typing import TYPE_CHECKING, Optional
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, Optional
 
 from requests.utils import parse_header_links
 
 from django.urls import reverse
 
+from django_ca.acme.responses import AcmeResponseUnauthorized
 from django_ca.models import CertificateAuthority
 
 if TYPE_CHECKING:
@@ -71,3 +73,22 @@ def assert_acme_response(
     link_relations = link_relations or {}
     assert_link_relations(response, ca, **link_relations)
     assert response["Content-Type"] == "application/json"
+
+
+def assert_unauthorized(
+    resp: "HttpResponse",
+    ca: CertificateAuthority,
+    message: str = AcmeResponseUnauthorized.message,
+    **kwargs: Any,
+) -> None:
+    """Assert an unauthorized response."""
+    assert_acme_problem(
+        resp, "unauthorized", status=HTTPStatus.UNAUTHORIZED, message=message, ca=ca, **kwargs
+    )
+
+
+def assert_malformed(
+    resp: "HttpResponse", ca: CertificateAuthority, message: str = "", typ: str = "malformed", **kwargs: Any
+) -> None:
+    """Assert an unauthorized response."""
+    assert_acme_problem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, ca=ca, **kwargs)

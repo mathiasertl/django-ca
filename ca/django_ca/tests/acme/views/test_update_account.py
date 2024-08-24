@@ -14,168 +14,166 @@
 """Test updating and ACME account."""
 
 import unittest
+from collections.abc import Iterator
 from http import HTTPStatus
 
-import acme
-import acme.jws
+from acme.messages import IDENTIFIER_FQDN, Identifier, Registration
 
-from django.test import TestCase
+from django.test import Client
 
-from freezegun import freeze_time
+import pytest
 
-from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder
+from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
+from django_ca.tests.acme.views.assertions import assert_malformed
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
+from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.base.utils import root_reverse, root_uri
+
+# ACME views require a currently valid certificate authority
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+
+ACCOUNT_ONE_CONTACT = "mailto:one@example.com"
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeUpdateAccountViewTestCase(AcmeWithAccountViewTestCaseMixin[acme.messages.Registration], TestCase):
+@pytest.fixture()
+def url(account_slug: str) -> Iterator[str]:
+    """URL under test."""
+    yield root_reverse("acme-account", slug=account_slug)
+
+
+@pytest.fixture()
+def message() -> Iterator[Registration]:
+    """Default message sent to the server."""
+    yield Registration()
+
+
+def test_deactivation(
+    client: Client, url: str, root: CertificateAuthority, account: AcmeAccount, kid: str
+) -> None:
+    """Test basic account deactivation."""
+    order = AcmeOrder.objects.create(account=account)
+    order.add_authorizations([Identifier(typ=IDENTIFIER_FQDN, value="example.com")])
+    authorizations = order.authorizations.all()
+
+    # send actual message
+    message = Registration(status="deactivated")
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert resp.json() == {
+        "contact": [ACCOUNT_ONE_CONTACT],
+        "orders": root_uri("acme-account-orders", slug=account.slug),
+        "status": AcmeAccount.STATUS_DEACTIVATED,
+    }
+    account.refresh_from_db()
+    order.refresh_from_db()
+
+    assert account.usable is False
+    assert account.status == AcmeAccount.STATUS_DEACTIVATED
+    assert order.status == AcmeOrder.STATUS_INVALID
+
+    for authz in authorizations:
+        authz.refresh_from_db()
+        assert authz.status == AcmeAuthorization.STATUS_DEACTIVATED
+
+
+def test_email(client: Client, url: str, root: CertificateAuthority, account: AcmeAccount, kid: str) -> None:
+    """Test setting an email address."""
+    email = "mailto:user.updated@example.com"
+    message = Registration(contact=(email,))
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert resp.json() == {
+        "contact": [email],
+        "orders": root_uri("acme-account-orders", slug=account.slug),
+        "status": AcmeAccount.STATUS_VALID,
+    }
+
+    account.refresh_from_db()
+    assert account.contact == email
+    assert account.usable is True
+
+
+def test_multiple_emails(
+    client: Client, url: str, root: CertificateAuthority, account: AcmeAccount, kid: str
+) -> None:
+    """Test setting multiple emails."""
+    email1 = "mailto:user.updated.1@example.com"
+    email2 = "mailto:user.updated.2@example.com"
+    message = Registration(contact=(email1, email2))
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert resp.json() == {
+        "contact": [email1, email2],
+        "orders": root_uri("acme-account-orders", slug=account.slug),
+        "status": AcmeAccount.STATUS_VALID,
+    }
+
+    account.refresh_from_db()
+    assert account.contact.split() == [email1, email2]
+    assert account.usable is True
+
+
+def test_deactivate_with_email(
+    client: Client, url: str, root: CertificateAuthority, account: AcmeAccount, kid: str
+) -> None:
+    """Test that a deactivation message does not allow you to configure emails too."""
+    email = "mailto:user.updated@example.com"
+    message = Registration(status="deactivated", contact=(email,))
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert resp.json() == {
+        "contact": [ACCOUNT_ONE_CONTACT],
+        "orders": root_uri("acme-account-orders", slug=account.slug),
+        "status": AcmeAccount.STATUS_DEACTIVATED,
+    }
+
+    account.refresh_from_db()
+    assert account.usable is False
+    assert account.contact == ACCOUNT_ONE_CONTACT
+    assert account.status == AcmeAccount.STATUS_DEACTIVATED
+
+
+def test_agree_tos(
+    client: Client, url: str, root: CertificateAuthority, account: AcmeAccount, kid: str
+) -> None:
+    """Test updating the agreement to the terms of service."""
+    account.terms_of_service_agreed = False
+    account.save()
+
+    message = Registration(terms_of_service_agreed=True)
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.json() == {
+        "contact": [ACCOUNT_ONE_CONTACT],
+        "orders": root_uri("acme-account-orders", slug=account.slug),
+        "status": AcmeAccount.STATUS_VALID,
+    }
+
+    account.refresh_from_db()
+
+    assert account.terms_of_service_agreed is True
+    assert account.usable is True
+    assert account.contact == ACCOUNT_ONE_CONTACT
+    assert account.status == AcmeAccount.STATUS_VALID
+
+
+def test_malformed(
+    client: Client, url: str, root: CertificateAuthority, account: AcmeAccount, kid: str
+) -> None:
+    """Test updating something we cannot update."""
+    message = Registration()
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert_malformed(resp, root, "Only contact information can be updated.")
+
+    account.refresh_from_db()
+    assert account.usable is True
+    assert account.contact == ACCOUNT_ONE_CONTACT
+    assert account.status == AcmeAccount.STATUS_VALID
+
+
+class TestAcmeUpdateAccountView(AcmeWithAccountViewTestCaseMixin[Registration]):
     """Test updating and ACME account."""
 
-    message_cls = acme.messages.Registration
-    view_name = "acme-account"
-
-    @property
-    def url(self) -> str:
-        """Get URL for the standard auth object."""
-        return self.get_url(serial=self.ca.serial, slug=self.account_slug)
-
     @unittest.skip("Not applicable.")
-    def test_tos_not_agreed_account(self) -> None:
+    def test_tos_not_agreed_account(self) -> None:  # type: ignore[override]
         """Skipped here because clients can agree to the TOS in an update, so not having agreed is okay."""
-
-    def test_deactivation(self) -> None:
-        """Test basic account deactivation."""
-        order = AcmeOrder.objects.create(account=self.account)
-        order.add_authorizations(
-            [acme.messages.Identifier(typ=acme.messages.IDENTIFIER_FQDN, value="example.com")]
-        )
-        authorizations = order.authorizations.all()
-
-        # send actual message
-        message = self.get_message(status="deactivated")
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertEqual(
-            resp.json(),
-            {
-                "contact": [self.ACCOUNT_ONE_CONTACT],
-                "orders": self.absolute_uri(
-                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
-                ),
-                "status": AcmeAccount.STATUS_DEACTIVATED,
-            },
-        )
-        self.account.refresh_from_db()
-        order.refresh_from_db()
-
-        self.assertFalse(self.account.usable)
-        self.assertEqual(self.account.status, AcmeAccount.STATUS_DEACTIVATED)
-        self.assertEqual(order.status, AcmeOrder.STATUS_INVALID)
-
-        for authz in authorizations:
-            authz.refresh_from_db()
-            self.assertEqual(authz.status, AcmeAuthorization.STATUS_DEACTIVATED)
-
-    def test_email(self) -> None:
-        """Test setting an email address."""
-        email = "mailto:user.updated@example.com"
-        message = self.get_message(contact=(email,))
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertEqual(
-            resp.json(),
-            {
-                "contact": [email],
-                "orders": self.absolute_uri(
-                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
-                ),
-                "status": AcmeAccount.STATUS_VALID,
-            },
-        )
-
-        self.account.refresh_from_db()
-
-        self.assertEqual(self.account.contact, email)
-        self.assertTrue(self.account.usable)
-
-    def test_multiple_emails(self) -> None:
-        """Test setting multiple emails."""
-        email1 = "mailto:user.updated.1@example.com"
-        email2 = "mailto:user.updated.2@example.com"
-        message = self.get_message(contact=(email1, email2))
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertEqual(
-            resp.json(),
-            {
-                "contact": [email1, email2],
-                "orders": self.absolute_uri(
-                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
-                ),
-                "status": AcmeAccount.STATUS_VALID,
-            },
-        )
-
-        self.account.refresh_from_db()
-
-        self.assertEqual(self.account.contact.split(), [email1, email2])
-        self.assertTrue(self.account.usable)
-
-    def test_deactivate_with_email(self) -> None:
-        """Test that a deactivation message does not allow you to configure emails too."""
-        email = "mailto:user.updated@example.com"
-        message = self.get_message(status="deactivated", contact=(email,))
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertEqual(resp.status_code, HTTPStatus.OK, resp.content)
-        self.assertEqual(
-            resp.json(),
-            {
-                "contact": [self.ACCOUNT_ONE_CONTACT],
-                "orders": self.absolute_uri(
-                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
-                ),
-                "status": AcmeAccount.STATUS_DEACTIVATED,
-            },
-        )
-        self.account.refresh_from_db()
-
-        self.assertFalse(self.account.usable)
-        self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
-        self.assertEqual(self.account.status, AcmeAccount.STATUS_DEACTIVATED)
-
-    def test_agree_tos(self) -> None:
-        """Test updating the agreement to the terms of service."""
-        self.account.terms_of_service_agreed = False
-        self.account.save()
-
-        message = self.get_message(terms_of_service_agreed=True)
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertEqual(
-            resp.json(),
-            {
-                "contact": [self.ACCOUNT_ONE_CONTACT],
-                "orders": self.absolute_uri(
-                    ":acme-account-orders", serial=self.ca.serial, slug=self.account_slug
-                ),
-                "status": AcmeAccount.STATUS_VALID,
-            },
-        )
-
-        self.account.refresh_from_db()
-
-        self.assertTrue(self.account.terms_of_service_agreed)
-        self.assertTrue(self.account.usable)
-        self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
-        self.assertEqual(self.account.status, AcmeAccount.STATUS_VALID)
-
-    def test_malformed(self) -> None:
-        """Test updating something we cannot update."""
-        message = self.get_message()
-        resp = self.acme(self.url, message, kid=self.kid)
-        self.assertMalformed(resp, "Only contact information can be updated.")
-        self.account.refresh_from_db()
-
-        self.assertTrue(self.account.usable)
-        self.assertEqual(self.account.contact, self.ACCOUNT_ONE_CONTACT)
-        self.assertEqual(self.account.status, AcmeAccount.STATUS_VALID)

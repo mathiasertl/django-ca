@@ -1097,7 +1097,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
 
         # If the request is signed with the certificate key (and not the account), a JWK is set for this
         # request, and we verify it was signed by the certificate on record.
-        if self.jws.signature.combined.jwk:
+        if self.jws.signature.combined.jwk:  # -> kid is None
             # NOTE: RFC 8555, section 7.6 states:
             #
             #   The server MUST also consider a revocation request valid if it is signed with the private key
