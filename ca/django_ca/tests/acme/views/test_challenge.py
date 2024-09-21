@@ -13,6 +13,8 @@
 
 """Test retrieving a challenge."""
 
+# pylint: disable=redefined-outer-name  # because of fixtures
+
 import unittest
 from collections.abc import Iterator
 from http import HTTPStatus
@@ -112,11 +114,11 @@ def test_no_state_change(
     }
 
 
+@pytest.mark.usefixtures("challenge")
 def test_not_found(
     client: Client,
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
     root: CertificateAuthority,
-    challenge: AcmeChallenge,
     kid: str,
 ) -> None:
     """Basic test for creating an account via ACME."""
@@ -134,7 +136,12 @@ class TestAcmeChallengeView(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
     post_as_get = True
 
     def test_duplicate_nonce(
-        self, client: Client, url: str, message: bytes, root: CertificateAuthority, kid: Optional[str]
+        self,
+        client: Client,
+        url: str,
+        message: bytes,  # type: ignore[override]
+        root: CertificateAuthority,
+        kid: Optional[str],
     ) -> None:
         # wrapped so that the triggered task is not run, which would do an HTTP request
         with mock.patch("django_ca.acme.views.run_task"):

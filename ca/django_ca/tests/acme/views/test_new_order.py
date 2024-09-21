@@ -13,6 +13,8 @@
 
 """Test creating a new order."""
 
+# pylint: disable=redefined-outer-name  # because of fixtures
+
 from collections.abc import Iterator
 from datetime import timedelta, timezone as tz
 from http import HTTPStatus

@@ -13,6 +13,8 @@
 
 """Test updating and ACME account."""
 
+# pylint: disable=redefined-outer-name  # because of fixtures
+
 import unittest
 from collections.abc import Iterator
 from http import HTTPStatus

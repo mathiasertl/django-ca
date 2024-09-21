@@ -13,6 +13,8 @@
 
 """Test requesting a new authorization."""
 
+# pylint: disable=redefined-outer-name  # because of fixtures
+
 from collections.abc import Iterator
 from http import HTTPStatus
 

@@ -12,7 +12,7 @@ python = ["3.9", "3.10", "3.11", "3.12"]
 django = ["4.2", "5.0", "5.1"]
 cryptography = ["42", "43"]
 acme = ["2.10", "2.11"]
-pydantic = ["2.7", "2.8"]
+pydantic = ["2.7", "2.8", "2.9"]
 
 # https://alpinelinux.org/releases/
 alpine = [
@@ -279,6 +279,7 @@ enable = [
 
 # https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
 disable = [
+    "too-many-positional-arguments",
     # devscripts have some larger overlapping parts
     "duplicate-code",
     # pylint is just buggy with TypedDict inheritance.

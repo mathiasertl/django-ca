@@ -13,6 +13,8 @@
 
 """Test ACME related views."""
 
+# pylint: disable=redefined-outer-name  # because of fixtures
+
 from collections.abc import Iterator
 from http import HTTPStatus
 from unittest import mock
@@ -248,7 +250,7 @@ def test_invalid_email(
 def test_no_tos_agreed_flag(client: Client, url: str, root: CertificateAuthority) -> None:
     """Test not sending the terms_of_service_agreed flag."""
     message = Registration(contact=(CONTACT,))
-    assert message.terms_of_service_agreed is None  # type: ignore[union-attr]
+    assert message.terms_of_service_agreed is None
     with mock_slug() as slug:
         resp = acme_request(client, url, root, message)
     assert resp.status_code == HTTPStatus.CREATED, resp.content

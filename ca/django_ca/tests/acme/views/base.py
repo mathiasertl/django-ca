@@ -17,7 +17,7 @@ import abc
 import typing
 from collections.abc import Iterator
 from http import HTTPStatus
-from typing import Optional
+from typing import Optional, Union
 from unittest import mock
 
 import acme
@@ -86,7 +86,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         self,
         client: Client,
         url: str,
-        message: MessageTypeVar,
+        message: Union[bytes, MessageTypeVar],
         root: CertificateAuthority,
         kid: Optional[str],
     ) -> None:

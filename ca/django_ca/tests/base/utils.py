@@ -146,7 +146,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
 
 
 def root_reverse(name: str, **kwargs: Any) -> str:
-    """Shortcut to get a django-ca url with a root serial."""
+    """Shortcut to get a django-ca URI with a root serial."""
     kwargs.setdefault("serial", CERT_DATA["root"]["serial"])
     return reverse(f"django_ca:{name}", kwargs=kwargs)
 

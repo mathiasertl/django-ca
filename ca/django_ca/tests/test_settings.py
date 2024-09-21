@@ -17,7 +17,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 from unittest import mock
 
 from cryptography import x509
@@ -330,12 +330,16 @@ def test_ca_acme_cert_validity_timedelta_settings_as_int(settings: SettingsWrapp
 @pytest.mark.parametrize(
     "value,message",
     (
+        (0.9, "Input should be greater than or equal to 1 day"),
         (timedelta(seconds=1), "Input should be greater than or equal to 1 day"),
+        ("PT1S", "Input should be greater than or equal to 1 day"),
+        (366, "Input should be less than or equal to 365 days"),
         (timedelta(days=366), "Input should be less than or equal to 365 days"),
+        ("P1Y1D", "Input should be less than or equal to 365 days"),
     ),
 )
 def test_ca_acme_cert_validity_limits(
-    settings: SettingsWrapper, setting: str, value: timedelta, message: str
+    settings: SettingsWrapper, setting: str, value: Union[int, timedelta], message: str
 ) -> None:
     """Test limits for CA_ACME_DEFAULT_CERT_VALIDITY and CA_ACME_MAX_CERT_VALIDITY."""
     with assert_improperly_configured(message):

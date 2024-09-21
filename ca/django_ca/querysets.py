@@ -268,7 +268,7 @@ class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
 
     def url(self) -> "AcmeAuthorizationQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
-        return self.select_related("order__account__ca")  # pylint: disable=not-callable  # false positive
+        return self.select_related("order__account__ca")
 
     def valid(self) -> "AcmeAuthorizationQuerySet":
         """Filter for currently valid authorizations."""
@@ -297,7 +297,7 @@ class AcmeChallengeQuerySet(AcmeChallengeQuerySetBase):
 
     def url(self) -> "AcmeChallengeQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
-        return self.select_related("auth__order__account__ca")  # pylint: disable=not-callable  # false positive
+        return self.select_related("auth__order__account__ca")
 
     def viewable(self) -> "AcmeChallengeQuerySet":
         """Filter ACME challenges that can be viewed via the ACME API.
@@ -322,7 +322,7 @@ class AcmeCertificateQuerySet(AcmeCertificateQuerySetBase):
 
     def url(self) -> "AcmeCertificateQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
-        return self.select_related("order__account__ca")  # pylint: disable=not-callable  # false positive
+        return self.select_related("order__account__ca")
 
     def viewable(self) -> "AcmeCertificateQuerySet":
         """Filter ACME certificates that can be viewed via the ACME API.

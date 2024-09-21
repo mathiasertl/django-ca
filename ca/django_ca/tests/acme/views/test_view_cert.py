@@ -13,7 +13,7 @@
 
 """Test downloading the certificate."""
 
-# pylint: disable=redefined-outer-name,attribute-defined-outside-init  # for to fixtures
+# pylint: disable=redefined-outer-name  # for to fixtures
 
 from collections.abc import Iterator
 from http import HTTPStatus

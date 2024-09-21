@@ -21,7 +21,7 @@ Command-line utilities
 Dependencies
 ************
 
-* Add support for Django 5.1, cryptography 43 and Pydantic 2.8.
+* Add support for Django 5.1, cryptography 43 and Pydantic 2.8 and 2.9.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic<2.7.0``, ``acme~=2.9.0`` and ``Celery~=5.3.0``.
 * Remove the ``psycopg3`` pip extra, use the ``postgres`` extra instead.
 * Drop support for Alpine 3.17.

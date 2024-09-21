@@ -13,6 +13,8 @@
 
 """Test ACME certificate revocation."""
 
+# pylint: disable=redefined-outer-name  # because of fixtures
+
 import unittest
 from collections.abc import Iterator
 from datetime import datetime
@@ -56,7 +58,7 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.ma
 
 
 @pytest.fixture()
-def url(account_slug: str) -> Iterator[str]:
+def url() -> Iterator[str]:
     """URL under test."""
     yield root_reverse("acme-revoke")
 
@@ -82,6 +84,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         )
 
     def get_message(self, **kwargs: Any) -> Revocation:
+        """Get default message."""
         default_certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
         kwargs.setdefault(
             "certificate", jose.util.ComparableX509(X509.from_cryptography(default_certificate))
@@ -284,7 +287,8 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         pass
 
     @pytest.fixture()
-    def kid(self, child_kid_fixture: str) -> Iterator[Optional[str]]:  # type: ignore[override]
+    def kid(self, child_kid_fixture: str) -> Iterator[Optional[str]]:
+        """Override kid to return the child kid."""
         yield child_kid_fixture
 
     def test_wrong_authorizations(self, client: Client, url: str, root: CertificateAuthority) -> None:
