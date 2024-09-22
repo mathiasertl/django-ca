@@ -159,14 +159,12 @@ for extra in args.extra:
         import redis
     elif extra == "mysql":
         import MySQLdb
-    elif extra in ("postgres", "psycopg3"):
-        # Temporary situation until psycopg3 becomes mandatory
-        try:
-            import psycopg
-            import psycopg_c
-        except ImportError:
-            import psycopg2
+    elif extra == "postgres":
+        import psycopg
+        import psycopg_c
     elif extra == "yaml":
         from yaml import safe_load
+    elif extra == "hsm":
+        import pkcs11
     else:
         raise ValueError(f"{extra}: Unknown extra encountered.")

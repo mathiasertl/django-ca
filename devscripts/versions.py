@@ -54,4 +54,10 @@ def get_last_version() -> semantic_version.Version:
     if version.minor > 0:
         version.minor -= 1
         return version
+
+    # hardcoded branch for 2.0.0:
+    if version.minor == 0:
+        version.major = 1
+        version.minor = 29
+        return version
     raise ValueError("Unable to get last release version.")
