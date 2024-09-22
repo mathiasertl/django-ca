@@ -21,7 +21,7 @@ Command-line utilities
 Dependencies
 ************
 
-* Add support for Django 5.1, cryptography 43 and Pydantic 2.8 and 2.9.
+* Add support for ``Django~=5.1.0``, ``cryptography~=43.0`` and ``pydantic~=2.8.0`` and ``pydantic~=2.9.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic<2.7.0``, ``acme~=2.9.0`` and ``Celery~=5.3.0``.
 * Remove the ``psycopg3`` pip extra, use the ``postgres`` extra instead.
 * Drop support for Alpine 3.17.
@@ -46,6 +46,12 @@ Python API
 
 * :py:func:`~django_ca.profiles.Profile.create_cert` no longer accepts ``int`` for expires. Pass a
   ``timedelta`` instead.
+
+*********************
+Docker/Docker Compose
+*********************
+
+* Update NGINX to 1.26.0.
 
 *******************
 Deprecation notices

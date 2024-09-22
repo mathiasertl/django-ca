@@ -24,7 +24,7 @@ VersionTuple = Union[tuple[int, int, int], tuple[int, int, int, str, int]]
 # https://www.python.org/dev/peps/pep-0440/
 # https://www.python.org/dev/peps/pep-0396/
 # https://www.python.org/dev/peps/pep-0386/
-VERSION: VersionTuple = (2, 0, 0, "dev", 1)
+VERSION: VersionTuple = (2, 0, 0)
 
 # __version__ specified in PEP 0396, but we use the PEP 0440 format instead
 __version__ = ".".join([str(e) for e in VERSION[:3]])
