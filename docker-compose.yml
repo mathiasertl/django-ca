@@ -24,7 +24,7 @@ services:
             - pgdata_16:/var/lib/postgresql/data
 
     backend:
-        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.29.0}
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-2.0.0}
         command: ./celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             - cache
@@ -58,7 +58,7 @@ services:
         stop_grace_period: 30s
 
     frontend:
-        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-1.29.0}
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-2.0.0}
         depends_on:
             - cache
             - db
@@ -100,7 +100,9 @@ services:
         stop_signal: SIGINT
 
     webserver:
-        image: nginx:1.24-alpine
+        # available images: https://hub.docker.com/_/nginx
+        # table of versions: http://nginx.org/en/download.html
+        image: nginx:1.26-alpine
         depends_on:
             frontend:
                 condition: service_healthy
