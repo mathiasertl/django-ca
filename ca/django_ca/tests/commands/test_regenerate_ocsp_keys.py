@@ -174,7 +174,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "serial": CERT_DATA["root"]["serial"],
                         "key_backend_options": {"password": None},
                         "profile": "ocsp",
-                        "expires": 172800,
+                        "expires": "P2D",
                         "algorithm": "SHA-256",
                         "key_size": None,
                         "key_type": "RSA",

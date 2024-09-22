@@ -16,7 +16,7 @@
 from datetime import datetime, timedelta, timezone as tz
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from cryptography import x509
 
@@ -30,7 +30,6 @@ from django_ca.pydantic.type_aliases import (
     HashAlgorithmTypeAlias,
     PowerOfTwoInt,
     Serial,
-    TimedeltaInSeconds,
 )
 from django_ca.typehints import (
     JSON,
@@ -52,11 +51,9 @@ class GenerateOCSPKeyMessage(BaseModel):
     This message is used by :py:class:`~django_ca.tasks.generate_ocsp_key` to parse parameters.
     """
 
-    model_config = ConfigDict(strict=True)
-
     serial: Serial
     profile: str = "ocsp"
-    expires: Optional[Annotated[TimedeltaInSeconds, Field(ge=timedelta(seconds=3600))]] = None
+    expires: Optional[timedelta] = Field(default=None, ge=timedelta(seconds=3600))
     key_type: Optional[ParsableKeyType] = None
     key_size: Optional[Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)]] = None
     elliptic_curve: Optional[EllipticCurveTypeAlias] = None

@@ -21,7 +21,7 @@ import typing
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import requests
 
@@ -127,7 +127,7 @@ def generate_ocsp_key(
     serial: str,
     key_backend_options: Optional[dict[str, JSON]] = None,
     profile: str = "ocsp",
-    expires: Optional[int] = None,
+    expires: Optional[Union[str, int]] = None,
     algorithm: Optional[HashAlgorithms] = None,
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = None,

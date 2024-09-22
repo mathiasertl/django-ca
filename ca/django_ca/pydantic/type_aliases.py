@@ -15,7 +15,6 @@
 
 import base64
 from collections.abc import Hashable
-from datetime import timedelta
 from typing import Annotated, Any, Callable, Optional, TypeVar, Union
 
 from pydantic import AfterValidator, BeforeValidator, Field, GetPydanticSchema, PlainSerializer
@@ -149,26 +148,6 @@ Serial = Annotated[
     Field(min_length=1, max_length=40, pattern="^[A-F0-9]+$"),
 ]
 
-_timedelta_json_schema = core_schema.chain_schema(
-    [
-        core_schema.int_schema(),
-        core_schema.no_info_plain_validator_function(lambda value: timedelta(seconds=value)),
-    ]
-)
-TimedeltaInSeconds = Annotated[
-    timedelta,
-    GetPydanticSchema(
-        lambda tp, handler: core_schema.json_or_python_schema(
-            json_schema=_timedelta_json_schema,
-            python_schema=core_schema.union_schema(
-                [core_schema.is_instance_schema(timedelta), _timedelta_json_schema]
-            ),
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                lambda instance: int(instance.total_seconds()), when_used="json"
-            ),
-        )
-    ),
-]
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 

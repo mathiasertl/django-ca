@@ -13,9 +13,6 @@
 
 """Test type aliases for Pydantic from django_ca.pydantic.type_aliases."""
 
-from datetime import timedelta
-from typing import Any
-
 from pydantic import BaseModel
 
 from cryptography.hazmat.primitives import hashes
@@ -31,7 +28,6 @@ from django_ca.pydantic.type_aliases import (
     EllipticCurveTypeAlias,
     HashAlgorithmTypeAlias,
     Serial,
-    TimedeltaInSeconds,
 )
 
 
@@ -63,12 +59,6 @@ class SerialModel(BaseModel):
     """Test class to test the Serial type alias."""
 
     value: Serial
-
-
-class TimedeltaInSecondsModel(BaseModel):
-    """Test class to test the TimedeltaInSeconds type alias."""
-
-    value: TimedeltaInSeconds
 
 
 @pytest.mark.parametrize("name,curve_cls", constants.ELLIPTIC_CURVE_TYPES.items())
@@ -236,28 +226,3 @@ def test_serial_errors(value: str) -> None:
     """Test invalid values for the Serial type alias."""
     with pytest.raises(ValueError):
         SerialModel(value=value)
-
-
-@pytest.mark.parametrize(
-    "value,expected",
-    (
-        (0, timedelta(seconds=0)),
-        (1, timedelta(seconds=1)),
-        (3600, timedelta(seconds=3600)),
-    ),
-)
-def test_timedelta_in_seconds(value: int, expected: timedelta) -> None:
-    """Test the TimedeltaInSeconds type alias."""
-    model = TimedeltaInSecondsModel(value=value)
-    assert model.value == expected
-    assert TimedeltaInSecondsModel(value=expected).value == expected
-
-    assert model.model_dump() == {"value": expected}
-    assert model.model_dump(mode="json") == {"value": value}
-
-
-@pytest.mark.parametrize("value", (1.1, "false"))
-def test_timedelta_in_seconds_errors(value: Any) -> None:
-    """Test wrong values for the TimedeltaInSeconds type alias."""
-    with pytest.raises(ValueError):
-        TimedeltaInSecondsModel(value=value)
