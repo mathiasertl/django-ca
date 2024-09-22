@@ -8,7 +8,8 @@ WORKDIR /usr/src/django-ca
 
 RUN --mount=type=cache,target=/etc/apk/cache apk upgrade
 RUN --mount=type=cache,target=/etc/apk/cache apk add --update \
-        pcre openssl tzdata binutils busybox libpq postgresql-client mariadb-connector-c mariadb-client
+        pcre openssl tzdata binutils busybox softhsm \
+        libpq postgresql-client mariadb-connector-c mariadb-client
 
 # Add user (some tests check if it's impossible to write a file)
 RUN addgroup -g 9000 -S django-ca && \
@@ -29,7 +30,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/http \
     pip install --no-warn-script-location --ignore-installed --prefix=/install \
         -r requirements/requirements-docker.txt \
         -r requirements-pinned.txt \
-        -e .[celery,hsm,mysql,psycopg3,redis,yaml]
+        -e .[celery,hsm,mysql,postgres,redis,yaml]
 
 # Finally, copy sources
 COPY ca/ ca/
