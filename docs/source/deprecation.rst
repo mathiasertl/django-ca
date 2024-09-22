@@ -32,3 +32,9 @@ Views
 
 * Configuring a password in a certificate revocation list view will be removed. Use the ``CA_PASSWORDS``
   setting instead (deprecated since 1.29.0).
+
+Dependencies
+============
+
+* Support ``pydantic~=2.7.0``, ``pydantic~=2.8.0``, ``cryptography~=42.0`` and ``acme~=2.10.0`` will be
+  dropped.

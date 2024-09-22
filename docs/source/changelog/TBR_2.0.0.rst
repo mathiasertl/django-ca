@@ -51,4 +51,6 @@ Python API
 Deprecation notices
 *******************
 
+* This will be the last release to support ``pydantic~=2.7.0``, ``pydantic~=2.8.0``, ``cryptography~=42.0``
+  and ``acme~=2.10.0``.
 * ``django_ca.utils.get_storage()`` will be removed in 2.2.0.
