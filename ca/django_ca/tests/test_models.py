@@ -29,7 +29,7 @@ from django.utils import timezone
 
 from freezegun import freeze_time
 
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,
@@ -45,7 +45,7 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
-key_backend_options = UsePrivateKeyOptions(password=None)
+key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 
 class TestWatcher(TestCase):

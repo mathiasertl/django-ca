@@ -33,7 +33,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.key_backends import key_backends
-from django_ca.key_backends.storages import CreatePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesCreatePrivateKeyOptions
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.utils import (
@@ -79,7 +79,9 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
     subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
     kwargs.setdefault("expires", datetime.now(tz=tz.utc) + timedelta(days=365 * 2))
     key_backend = key_backends["default"]
-    key_backend_options = CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=1024)
+    key_backend_options = StoragesCreatePrivateKeyOptions(
+        key_type="RSA", password=None, path="ca", key_size=1024
+    )
     if kwargs.get("parent"):
         kwargs["use_parent_private_key_options"] = key_backend.use_model(password=None)
     return CertificateAuthority.objects.init(name, key_backend, key_backend_options, subject, **kwargs)

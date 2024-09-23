@@ -36,10 +36,13 @@ but is designed to provide defaults that work in most cases::
    >>> from datetime import datetime, timedelta, timezone
    >>> from cryptography.x509.oid import NameOID
    >>> from django_ca.key_backends import key_backends
-   >>> from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions
+   >>> from django_ca.key_backends.storages import (
+   ...     StoragesCreatePrivateKeyOptions,
+   ...     StoragesUsePrivateKeyOptions,
+   ... )
    >>> from django_ca.models import CertificateAuthority
    >>> key_backend = key_backends["default"]
-   >>> key_backend_options = CreatePrivateKeyOptions(
+   >>> key_backend_options = StoragesCreatePrivateKeyOptions(
    ...     key_type="RSA", key_size=1024, password=None, path="ca"
    ... )
    >>> expires = datetime.now(tz=timezone.utc) + timedelta(days=365 * 10)
@@ -61,7 +64,7 @@ intermediate CA, simply pass the parent::
    ...     name='child',
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
-   ...     use_parent_private_key_options=UsePrivateKeyOptions(password=None),
+   ...     use_parent_private_key_options=StoragesUsePrivateKeyOptions(password=None),
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "child.example.com")]),
    ...     expires=expires,
    ...     parent=ca
@@ -82,7 +85,7 @@ Or to create a CA with all extensions that live CAs have, you can pass many more
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "full.example.com")]),
    ...     expires=expires,
    ...     parent=ca,  # some extensions are only valid for intermediate CAs
-   ...     use_parent_private_key_options=UsePrivateKeyOptions(password=None),
+   ...     use_parent_private_key_options=StoragesUsePrivateKeyOptions(password=None),
    ...
    ...     # Extensions for the certificate authority itself
    ...     extensions=[
@@ -180,7 +183,7 @@ There are some more parameters to configure how the CA will be signed::
 
    >>> from cryptography.hazmat.primitives.asymmetric import ec
    >>> from cryptography.hazmat.primitives import hashes
-   >>> key_backend_options = CreatePrivateKeyOptions(
+   >>> key_backend_options = StoragesCreatePrivateKeyOptions(
    ...     key_type="EC", elliptic_curve=ec.SECP256R1(), password=b"secret", path="ca"
    ... )
    >>> CertificateAuthority.objects.init(
@@ -221,7 +224,7 @@ using ``Certificate.objects``, e.g.::
    >>> from django_ca.models import Certificate
    >>> Certificate.objects.create_cert(
    ...     ca=ca,
-   ...     key_backend_options=UsePrivateKeyOptions(password=None),
+   ...     key_backend_options=StoragesUsePrivateKeyOptions(password=None),
    ...     csr=csr,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")])
    ... )

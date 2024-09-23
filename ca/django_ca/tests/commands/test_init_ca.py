@@ -42,8 +42,8 @@ from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.hsm import HSMBackend
-from django_ca.key_backends.hsm.models import HSMBackendUsePrivateKeyOptions
-from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
+from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend, StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
 from django_ca.tests.base.assertions import (
@@ -82,7 +82,7 @@ from django_ca.tests.base.utils import (
 from django_ca.typehints import AllowedHashTypes, EllipticCurves, HashAlgorithms, ParsableKeyType
 from django_ca.utils import get_crl_cache_key
 
-use_options = UsePrivateKeyOptions(password=None)
+use_options = StoragesUsePrivateKeyOptions(password=None)
 
 # pylint: disable=redefined-outer-name  # disabled because of fixtures
 
@@ -884,10 +884,10 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     with pytest.raises(ValueError):
         # NOTE: cryptography is notoriously unstable when it comes to the error message here, so we only
         # check the exception class.
-        key_backend.get_key(parent, UsePrivateKeyOptions(password=b"wrong"))
+        key_backend.get_key(parent, StoragesUsePrivateKeyOptions(password=b"wrong"))
 
     # test the private key
-    key = key_backend.get_key(parent, UsePrivateKeyOptions(password=password))
+    key = key_backend.get_key(parent, StoragesUsePrivateKeyOptions(password=password))
     assert isinstance(key, RSAPrivateKey)
     assert key.key_size == 1024
 
@@ -1017,7 +1017,7 @@ def test_non_default_key_backend_with_rsa_key(
     assert ca.key_backend_alias == "secondary"
     assert ca.key_backend_options["path"].startswith("secondary-ca-path")
 
-    key = secondary_backend.get_key(ca, UsePrivateKeyOptions(password=password.encode()))
+    key = secondary_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=password.encode()))
     assert isinstance(key, RSAPrivateKey)
     assert key.key_size == 2048
 
@@ -1074,7 +1074,7 @@ def test_softhsm_hsm_backend(
     )
 
     assert ca.key_backend_alias == "hsm"
-    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_backend.is_usable(ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert ca.key_type == key_type
     assert ca.key_backend_options["key_label"] == ca_name
     assert ca.key_backend_options["key_type"] == key_type
@@ -1085,7 +1085,7 @@ def test_softhsm_hsm_backend(
     cert_data = CERT_DATA["root-cert"]
     csr = cert_data["csr"]["parsed"]
     cert = Certificate.objects.create_cert(
-        ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+        ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
     )
     assert_signature([ca], cert)
 
@@ -1107,7 +1107,7 @@ def test_softhsm_hsm_backend_with_rsa_options(ca_name: str, rfc4514_subject: str
     )
 
     assert ca.key_backend_alias == "hsm"
-    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_backend.is_usable(ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert ca.key_type == "RSA"
     assert ca.key_backend_options["key_label"] == ca_name
     assert ca.key_backend_options["key_type"] == "RSA"
@@ -1135,7 +1135,7 @@ def test_softhsm_hsm_backend_with_hash_algorithms(
     )
 
     assert ca.key_backend_alias == "hsm"
-    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_backend.is_usable(ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert ca.key_type == key_type
     assert isinstance(ca.pub.loaded.signature_hash_algorithm, constants.HASH_ALGORITHM_TYPES[algorithm])
 
@@ -1143,7 +1143,7 @@ def test_softhsm_hsm_backend_with_hash_algorithms(
     cert_data = CERT_DATA["root-cert"]
     csr = cert_data["csr"]["parsed"]
     cert = Certificate.objects.create_cert(
-        ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+        ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
     )
     assert_signature([ca], cert)
 
@@ -1163,7 +1163,7 @@ def test_softhsm_hsm_backend_with_ec_options(ca_name: str, ec_curve: EllipticCur
     )
 
     assert ca.key_backend_alias == "hsm"
-    assert ca.key_backend.is_usable(ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
+    assert ca.key_backend.is_usable(ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert ca.key_type == "EC"
     assert ca.key_backend_options["key_label"] == ca_name
     assert ca.key_backend_options["key_type"] == "EC"
@@ -1185,9 +1185,7 @@ def test_softhsm_hsm_backend_with_child_ca(ca_name: str) -> None:
     parent = init_ca(parent_name, key_backend=key_backends["hsm"], hsm_key_label=parent_name, path_length=1)
 
     assert parent.key_backend_alias == "hsm"
-    assert parent.key_backend.is_usable(
-        parent, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
-    )
+    assert parent.key_backend.is_usable(parent, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert parent.key_type == "RSA"
     assert parent.key_backend_options["key_label"] == parent_name
     assert parent.key_backend_options["key_type"] == "RSA"
@@ -1198,9 +1196,7 @@ def test_softhsm_hsm_backend_with_child_ca(ca_name: str) -> None:
     child_name = f"{ca_name}_child"
     child = init_ca(child_name, parent=parent, key_backend=key_backends["hsm"], hsm_key_label=child_name)
     assert child.key_backend_alias == "hsm"
-    assert child.key_backend.is_usable(
-        child, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
-    )
+    assert child.key_backend.is_usable(child, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert child.key_type == "RSA"
     assert child.key_backend_options["key_label"] == child_name
     assert child.key_backend_options["key_type"] == "RSA"

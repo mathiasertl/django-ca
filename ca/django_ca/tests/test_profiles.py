@@ -30,7 +30,7 @@ from django_ca.constants import (
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     EXTENSION_DEFAULT_CRITICAL,
 )
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.signals import pre_sign_cert
@@ -56,7 +56,7 @@ from django_ca.tests.base.utils import (
 )
 
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
-key_backend_options = UsePrivateKeyOptions(password=None)
+key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 
 @pytest.fixture()

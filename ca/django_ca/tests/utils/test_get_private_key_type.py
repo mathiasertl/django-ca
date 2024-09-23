@@ -15,7 +15,7 @@
 
 import pytest
 
-from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend, StoragesUsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 from django_ca.utils import get_private_key_type
 
@@ -24,11 +24,21 @@ def test_get_private_key_type(key_backend: StoragesBackend, usable_cas: list[Cer
     """Test the normal operation of this function."""
     cas = {ca.name: ca for ca in usable_cas}
 
-    assert get_private_key_type(key_backend.get_key(cas["root"], UsePrivateKeyOptions())) == "RSA"
-    assert get_private_key_type(key_backend.get_key(cas["dsa"], UsePrivateKeyOptions())) == "DSA"
-    assert get_private_key_type(key_backend.get_key(cas["ec"], UsePrivateKeyOptions())) == "EC"
-    assert get_private_key_type(key_backend.get_key(cas["ed25519"], UsePrivateKeyOptions())) == "Ed25519"
-    assert get_private_key_type(key_backend.get_key(cas["ed448"], UsePrivateKeyOptions())) == "Ed448"
+    assert (
+        get_private_key_type(key_backend.get_key(cas["root"], StoragesUsePrivateKeyOptions())) == "RSA"
+    )
+    assert (
+        get_private_key_type(key_backend.get_key(cas["dsa"], StoragesUsePrivateKeyOptions())) == "DSA"
+    )
+    assert get_private_key_type(key_backend.get_key(cas["ec"], StoragesUsePrivateKeyOptions())) == "EC"
+    assert (
+        get_private_key_type(key_backend.get_key(cas["ed25519"], StoragesUsePrivateKeyOptions()))
+        == "Ed25519"
+    )
+    assert (
+        get_private_key_type(key_backend.get_key(cas["ed448"], StoragesUsePrivateKeyOptions()))
+        == "Ed448"
+    )
 
 
 def test_get_private_key_type_with_invalid_type() -> None:

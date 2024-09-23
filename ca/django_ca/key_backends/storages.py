@@ -58,7 +58,7 @@ if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
-class CreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
+class StoragesCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
     """Options for initializing private keys."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -69,7 +69,7 @@ class CreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
     elliptic_curve: Optional[EllipticCurveTypeAlias] = None
 
     @model_validator(mode="after")
-    def validate_elliptic_curve(self) -> "CreatePrivateKeyOptions":
+    def validate_elliptic_curve(self) -> "StoragesCreatePrivateKeyOptions":
         """Validate that the elliptic curve is not set for invalid key types."""
         if self.key_type == "EC" and self.elliptic_curve is None:
             self.elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
@@ -78,7 +78,7 @@ class CreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
         return self
 
 
-class StorePrivateKeyOptions(BaseModel):
+class StoragesStorePrivateKeyOptions(BaseModel):
     """Options for storing a private key."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -88,7 +88,7 @@ class StorePrivateKeyOptions(BaseModel):
     password: Optional[bytes]
 
 
-class UsePrivateKeyOptions(BaseModel):
+class StoragesUsePrivateKeyOptions(BaseModel):
     """Options for using a private key."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -109,7 +109,9 @@ class UsePrivateKeyOptions(BaseModel):
         return password
 
 
-class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions, UsePrivateKeyOptions]):
+class StoragesBackend(
+    KeyBackend[StoragesCreatePrivateKeyOptions, StoragesStorePrivateKeyOptions, StoragesUsePrivateKeyOptions]
+):
     """The default storage backend that uses Django's file storage API."""
 
     name = "storages"
@@ -118,7 +120,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         "It is most commonly used to store private keys on the filesystem. Custom file storage backends can "
         "be used to store keys on other systems (e.g. a cloud storage system)."
     )
-    use_model = UsePrivateKeyOptions
+    use_model = StoragesUsePrivateKeyOptions
 
     supported_key_types: tuple[ParsableKeyType, ...] = constants.PARSABLE_KEY_TYPES
     supported_elliptic_curves: tuple[EllipticCurves, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
@@ -185,8 +187,8 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         key_size: Optional[int],
         elliptic_curve: Optional[EllipticCurves],  # type: ignore[override]
         options: dict[str, Any],
-    ) -> CreatePrivateKeyOptions:
-        return CreatePrivateKeyOptions(
+    ) -> StoragesCreatePrivateKeyOptions:
+        return StoragesCreatePrivateKeyOptions(
             key_type=key_type,
             password=options[f"{self.options_prefix}password"],
             path=options[f"{self.options_prefix}path"],
@@ -194,15 +196,15 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
             elliptic_curve=elliptic_curve,
         )
 
-    def get_store_private_key_options(self, options: dict[str, Any]) -> StorePrivateKeyOptions:
-        return StorePrivateKeyOptions(
+    def get_store_private_key_options(self, options: dict[str, Any]) -> StoragesStorePrivateKeyOptions:
+        return StoragesStorePrivateKeyOptions(
             password=options[f"{self.options_prefix}password"], path=options[f"{self.options_prefix}path"]
         )
 
     def get_use_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
-    ) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions.model_validate(
+    ) -> StoragesUsePrivateKeyOptions:
+        return StoragesUsePrivateKeyOptions.model_validate(
             {"password": options.get(f"{self.options_prefix}password")},
             context={"ca": ca, "backend": self},
             strict=True,
@@ -210,15 +212,18 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
 
     def get_use_parent_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
-    ) -> UsePrivateKeyOptions:
-        return UsePrivateKeyOptions.model_validate(
+    ) -> StoragesUsePrivateKeyOptions:
+        return StoragesUsePrivateKeyOptions.model_validate(
             {"password": options[f"{self.options_prefix}parent_password"]},
             context={"ca": ca, "backend": self},
         )
 
     def create_private_key(
-        self, ca: "CertificateAuthority", key_type: ParsableKeyType, options: CreatePrivateKeyOptions
-    ) -> tuple[CertificateIssuerPublicKeyTypes, UsePrivateKeyOptions]:
+        self,
+        ca: "CertificateAuthority",
+        key_type: ParsableKeyType,
+        options: StoragesCreatePrivateKeyOptions,
+    ) -> tuple[CertificateIssuerPublicKeyTypes, StoragesUsePrivateKeyOptions]:
         storage = storages[self.storage_alias]
 
         if options.password is None:
@@ -239,7 +244,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         # Update model instance
         ca.key_backend_options = {"path": path}
 
-        use_private_key_options = UsePrivateKeyOptions.model_validate(
+        use_private_key_options = StoragesUsePrivateKeyOptions.model_validate(
             {"password": options.password}, context={"ca": ca, "backend": self}
         )
 
@@ -250,7 +255,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         ca: "CertificateAuthority",
         key: CertificateIssuerPrivateKeyTypes,
         certificate: x509.Certificate,
-        options: StorePrivateKeyOptions,
+        options: StoragesStorePrivateKeyOptions,
     ) -> None:
         storage = storages[self.storage_alias]
 
@@ -270,7 +275,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         ca.key_backend_options = {"path": path}
 
     def get_key(
-        self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions
+        self, ca: "CertificateAuthority", use_private_key_options: StoragesUsePrivateKeyOptions
     ) -> CertificateIssuerPrivateKeyTypes:
         """The CAs private key as private key."""
         storage = storages[self.storage_alias]
@@ -304,7 +309,9 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         return key
 
     def is_usable(
-        self, ca: "CertificateAuthority", use_private_key_options: Optional[UsePrivateKeyOptions] = None
+        self,
+        ca: "CertificateAuthority",
+        use_private_key_options: Optional[StoragesUsePrivateKeyOptions] = None,
     ) -> bool:
         # If key_backend_options is not set or path is not set, it is certainly unusable.
         if not ca.key_backend_options or not ca.key_backend_options.get("path"):
@@ -320,7 +327,9 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         except Exception:  # pylint: disable=broad-exception-caught  # want to always return bool
             return False
 
-    def check_usable(self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions) -> None:
+    def check_usable(
+        self, ca: "CertificateAuthority", use_private_key_options: StoragesUsePrivateKeyOptions
+    ) -> None:
         """Check if the given CA is usable, raise ValueError if not.
 
         The `options` are the options returned by
@@ -350,7 +359,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def sign_certificate(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: UsePrivateKeyOptions,
+        use_private_key_options: StoragesUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
@@ -370,14 +379,14 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
     def sign_certificate_revocation_list(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: UsePrivateKeyOptions,
+        use_private_key_options: StoragesUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)
 
     def get_ocsp_key_size(
-        self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions
+        self, ca: "CertificateAuthority", use_private_key_options: StoragesUsePrivateKeyOptions
     ) -> int:
         """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
         key = self.get_key(ca, use_private_key_options)
@@ -386,7 +395,7 @@ class StoragesBackend(KeyBackend[CreatePrivateKeyOptions, StorePrivateKeyOptions
         return key.key_size
 
     def get_ocsp_key_elliptic_curve(
-        self, ca: "CertificateAuthority", use_private_key_options: UsePrivateKeyOptions
+        self, ca: "CertificateAuthority", use_private_key_options: StoragesUsePrivateKeyOptions
     ) -> ec.EllipticCurve:
         """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
         key = self.get_key(ca, use_private_key_options)

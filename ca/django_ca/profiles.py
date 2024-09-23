@@ -204,9 +204,9 @@ class Profile:
 
             >>> from cryptography import x509
             >>> from cryptography.x509.oid import NameOID
-            >>> from django_ca.key_backends.storages import UsePrivateKeyOptions
+            >>> from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
             >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
-            >>> key_backend_options = UsePrivateKeyOptions(password=None)
+            >>> key_backend_options = StoragesUsePrivateKeyOptions(password=None)
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>

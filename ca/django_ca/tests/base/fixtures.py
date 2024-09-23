@@ -39,7 +39,7 @@ from pytest_django.fixtures import SettingsWrapper
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.hsm import HSMBackend
-from django_ca.key_backends.hsm.models import CreatePrivateKeyOptions
+from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
 from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.models import Certificate, CertificateAuthority
@@ -336,7 +336,7 @@ def usable_hsm_ca(
     """Parametrized fixture yielding a certificate authority for every key type."""
     request.getfixturevalue("db")
     key_type = request.param
-    key_backend_options = CreatePrivateKeyOptions(
+    key_backend_options = HSMCreatePrivateKeyOptions(
         user_pin=hsm_backend.user_pin, key_label=ca_name, key_type=key_type, elliptic_curve=None
     )
     ca = CertificateAuthority.objects.init(

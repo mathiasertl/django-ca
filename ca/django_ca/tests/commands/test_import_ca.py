@@ -34,8 +34,8 @@ from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.keys import PKCS11EllipticCurvePrivateKey, PKCS11RSAPrivateKey
-from django_ca.key_backends.hsm.models import HSMBackendUsePrivateKeyOptions
-from django_ca.key_backends.storages import StoragesBackend, UsePrivateKeyOptions
+from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend, StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -97,7 +97,7 @@ def test_basic(usable_ca_name: str) -> None:
     # test the private key
     # NOTE: password is always None since we don't encrypt the stored key with --password
     ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-        ca, UsePrivateKeyOptions(password=None)
+        ca, StoragesUsePrivateKeyOptions(password=None)
     )
     if cert_data["key_type"] == "EC":
         key = typing.cast(ec.EllipticCurvePrivateKey, ca_key)
@@ -144,9 +144,9 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
 
     # test the private key
     with pytest.raises(TypeError, match="^Password was not given but private key is encrypted$"):
-        key_backend.get_key(ca, UsePrivateKeyOptions(password=None))
+        key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=None))
 
-    ca_key = key_backend.get_key(ca, UsePrivateKeyOptions(password=password))
+    ca_key = key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=password))
     assert isinstance(ca_key, rsa.RSAPrivateKey)
     assert ca_key.key_size == CERT_DATA["root"]["key_size"]
     assert ca.serial == CERT_DATA["root"]["serial"]
@@ -250,7 +250,7 @@ def test_secondary_key_backend(ca_name: str) -> None:
     assert ca.key_backend_alias == "secondary"
     assert ca.key_backend_options["path"].startswith("secondary-ca-path")
     assert isinstance(ca.key_backend, StoragesBackend)
-    assert ca.key_backend.get_key(ca, UsePrivateKeyOptions(password=b"foobar"))  # type: ignore[attr-defined]
+    assert ca.key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=b"foobar"))  # type: ignore[attr-defined]
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # b/c of signature validation in the end.
@@ -297,7 +297,7 @@ def test_hsm_backend_store_key(ca_name: str, subject: x509.Name) -> None:
         cert_data = CERT_DATA[f"{ca_name}-cert"]
         csr = cert_data["csr"]["parsed"]
         cert = Certificate.objects.create_cert(
-            ca, HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+            ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
         )
         assert_signature([ca], cert)
 
