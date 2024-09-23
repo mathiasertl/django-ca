@@ -40,13 +40,13 @@ from freezegun import freeze_time
 
 from django_ca import tasks
 from django_ca.conf import model_settings
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
 
-key_backend_options = UsePrivateKeyOptions(password=None)
+key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 
 class TestBasic(TestCaseMixin, TestCase):

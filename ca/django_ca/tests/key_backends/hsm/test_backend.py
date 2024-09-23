@@ -26,9 +26,9 @@ import pytest
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.models import (
-    CreatePrivateKeyOptions,
-    HSMBackendStorePrivateKeyOptions,
-    HSMBackendUsePrivateKeyOptions,
+    HSMCreatePrivateKeyOptions,
+    HSMStorePrivateKeyOptions,
+    HSMUsePrivateKeyOptions,
 )
 from django_ca.models import CertificateAuthority
 
@@ -70,7 +70,7 @@ def test_invalid_private_key_type(root: CertificateAuthority) -> None:
     root.key_backend_alias = "hsm"
     root.key_backend_options = {"key_id": "123", "key_label": "label", "key_type": "WRONG"}
     root.save()
-    use_options = HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
+    use_options = HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
     with pytest.raises(ValueError, match=r"^WRONG: Unsupported key type\.$"):
         root.check_usable(use_options)
 
@@ -90,7 +90,7 @@ def test_is_usable_with_wrong_user_pin(root: CertificateAuthority) -> None:
     root.key_backend_alias = "hsm"
     root.key_backend_options = {"key_id": "123", "key_label": "label", "key_type": "RSA"}
     root.save()
-    assert root.is_usable(HSMBackendUsePrivateKeyOptions(user_pin="wrong")) is False
+    assert root.is_usable(HSMUsePrivateKeyOptions(user_pin="wrong")) is False
 
 
 def test_no_private_key_options(root: CertificateAuthority) -> None:
@@ -98,7 +98,7 @@ def test_no_private_key_options(root: CertificateAuthority) -> None:
     root.key_backend_alias = "hsm"
     root.key_backend_options = {}
     root.save()
-    use_options = HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
+    use_options = HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
     assert root.is_usable(use_options) is False
     with pytest.raises(ValueError, match=r"^key backend options are not defined\.$"):
         root.check_usable(use_options)
@@ -109,7 +109,7 @@ def test_private_key_options_not_a_dict(root: CertificateAuthority) -> None:
     root.key_backend_alias = "hsm"
     root.key_backend_options = []
     root.save()
-    use_options = HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
+    use_options = HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
     assert root.is_usable(use_options) is False
     with pytest.raises(ValueError, match=r"^key backend options are not defined\.$"):
         root.check_usable(use_options)
@@ -124,7 +124,7 @@ def test_private_key_options_missing_parameter(root: CertificateAuthority, param
     del root.key_backend_options[parameter]
     root.save()
 
-    use_options = HSMBackendUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
+    use_options = HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN)
     assert root.is_usable(use_options) is False
 
     with pytest.raises(ValueError, match=rf"^{parameter}: Required key option is not defined\.$"):
@@ -141,7 +141,7 @@ def test_create_private_key_with_read_only_session(
     root.key_backend_options = {"key_id": "123", "key_label": "label", "key_type": "RSA"}
     root.save()
 
-    options = CreatePrivateKeyOptions(
+    options = HSMCreatePrivateKeyOptions(
         key_type=key_type, key_label=ca_name, elliptic_curve=None, user_pin=settings.PKCS11_USER_PIN
     )
 
@@ -160,7 +160,7 @@ def test_create_private_key_with_unknown_key_type(root: CertificateAuthority, ca
     root.key_backend_options = {"key_id": "123", "key_label": "label", "key_type": "WRONG"}
     root.save()
 
-    options = CreatePrivateKeyOptions(
+    options = HSMCreatePrivateKeyOptions(
         key_type="RSA", key_label=ca_name, elliptic_curve=None, user_pin=settings.PKCS11_USER_PIN
     )
 
@@ -173,7 +173,7 @@ def test_store_private_key_with_unknown_type(
     root: CertificateAuthority, root_cert_pub: x509.Certificate
 ) -> None:
     """Test storing a private key with an unknown type."""
-    options = HSMBackendStorePrivateKeyOptions(user_pin="abc", key_label="def")
+    options = HSMStorePrivateKeyOptions(user_pin="abc", key_label="def")
     backend: HSMBackend = key_backends["hsm"]  # type: ignore[assignment]
     with pytest.raises(ValueError, match=r"^True: Importing a key of this type is not supported\.$"):
         backend.store_private_key(

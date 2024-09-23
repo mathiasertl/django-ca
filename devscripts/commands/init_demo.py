@@ -220,11 +220,11 @@ class Command(DevCommand):
         from django.core.management import call_command as manage
 
         from django_ca.conf import model_settings
-        from django_ca.key_backends.storages import UsePrivateKeyOptions
+        from django_ca.key_backends.storages import StoragesBackendUsePrivateKeyOptions
 
         # pylint: enable=import-outside-toplevel
 
-        self.UsePrivateKeyOptions = UsePrivateKeyOptions  # pylint: disable=invalid-name
+        self.UsePrivateKeyOptions = StoragesBackendUsePrivateKeyOptions  # pylint: disable=invalid-name
 
         print("Creating database...", end="")
         manage("migrate", verbosity=0)

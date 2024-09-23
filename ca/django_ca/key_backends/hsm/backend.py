@@ -45,9 +45,9 @@ from django_ca.key_backends.hsm.keys import (
     PKCS11RSAPrivateKey,
 )
 from django_ca.key_backends.hsm.models import (
-    CreatePrivateKeyOptions,
-    HSMBackendStorePrivateKeyOptions,
-    HSMBackendUsePrivateKeyOptions,
+    HSMCreatePrivateKeyOptions,
+    HSMStorePrivateKeyOptions,
+    HSMUsePrivateKeyOptions,
 )
 from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.hsm.typehints import SupportedKeyType
@@ -65,9 +65,7 @@ if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
-class HSMBackend(
-    KeyBackend[CreatePrivateKeyOptions, HSMBackendStorePrivateKeyOptions, HSMBackendUsePrivateKeyOptions]
-):
+class HSMBackend(KeyBackend[HSMCreatePrivateKeyOptions, HSMStorePrivateKeyOptions, HSMUsePrivateKeyOptions]):
     """A key backend to create and use private keys in a hardware security module (HSM)."""
 
     name = "hsm"
@@ -76,7 +74,7 @@ class HSMBackend(
         "The private key will be stored on the hardware security module (HSM). The HSM makes sure that the"
         "private key can never be recovered and thus compromised."
     )
-    use_model = HSMBackendUsePrivateKeyOptions
+    use_model = HSMUsePrivateKeyOptions
 
     supported_key_types: tuple[SupportedKeyType, ...] = ("RSA", "EC", "Ed25519", "Ed448")
     supported_hash_algorithms: tuple[HashAlgorithms, ...] = ("SHA-224", "SHA-256", "SHA-384", "SHA-512")
@@ -209,7 +207,7 @@ class HSMBackend(
         key_size: Optional[int],
         elliptic_curve: Optional[str],
         options: dict[str, Any],
-    ) -> CreatePrivateKeyOptions:
+    ) -> HSMCreatePrivateKeyOptions:
         key_label = options[f"{self.options_prefix}key_label"]
         if not key_label:
             raise CommandError(
@@ -224,7 +222,7 @@ class HSMBackend(
             #       backend).
             elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
 
-        return CreatePrivateKeyOptions(
+        return HSMCreatePrivateKeyOptions(
             key_label=key_label,
             key_type=key_type,
             key_size=key_size,
@@ -235,24 +233,24 @@ class HSMBackend(
 
     def get_use_parent_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
-    ) -> HSMBackendUsePrivateKeyOptions:
+    ) -> HSMUsePrivateKeyOptions:
         so_pin, user_pin = self._get_pins(options, "parent-")
-        return HSMBackendUsePrivateKeyOptions.model_validate(
+        return HSMUsePrivateKeyOptions.model_validate(
             {"so_pin": so_pin, "user_pin": user_pin}, context={"ca": ca, "backend": self}, strict=True
         )
 
     def get_use_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
-    ) -> HSMBackendUsePrivateKeyOptions:
+    ) -> HSMUsePrivateKeyOptions:
         so_pin, user_pin = self._get_pins(options)
-        return HSMBackendUsePrivateKeyOptions.model_validate(
+        return HSMUsePrivateKeyOptions.model_validate(
             {"so_pin": so_pin, "user_pin": user_pin}, context={"ca": ca, "backend": self}, strict=True
         )
 
-    def get_store_private_key_options(self, options: dict[str, Any]) -> HSMBackendStorePrivateKeyOptions:
+    def get_store_private_key_options(self, options: dict[str, Any]) -> HSMStorePrivateKeyOptions:
         key_label = options[f"{self.options_prefix}key_label"]
         so_pin, user_pin = self._get_pins(options)
-        return HSMBackendStorePrivateKeyOptions.model_validate(
+        return HSMStorePrivateKeyOptions.model_validate(
             {"key_label": key_label, "so_pin": so_pin, "user_pin": user_pin},
             context={"backend": self},
             strict=True,
@@ -261,7 +259,7 @@ class HSMBackend(
     def is_usable(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: Optional[HSMBackendUsePrivateKeyOptions] = None,
+        use_private_key_options: Optional[HSMUsePrivateKeyOptions] = None,
     ) -> bool:
         if not ca.key_backend_options or not isinstance(ca.key_backend_options, dict):
             return False
@@ -281,7 +279,7 @@ class HSMBackend(
             return False
 
     def check_usable(
-        self, ca: "CertificateAuthority", use_private_key_options: HSMBackendUsePrivateKeyOptions
+        self, ca: "CertificateAuthority", use_private_key_options: HSMUsePrivateKeyOptions
     ) -> None:
         if not ca.key_backend_options or not isinstance(ca.key_backend_options, dict):
             raise ValueError("key backend options are not defined.")
@@ -298,8 +296,8 @@ class HSMBackend(
         self,
         ca: "CertificateAuthority",
         key_type: SupportedKeyType,  # type: ignore[override]  # more specific here
-        options: CreatePrivateKeyOptions,
-    ) -> tuple[CertificateIssuerPublicKeyTypes, HSMBackendUsePrivateKeyOptions]:
+        options: HSMCreatePrivateKeyOptions,
+    ) -> tuple[CertificateIssuerPublicKeyTypes, HSMUsePrivateKeyOptions]:
         key_id = int_to_hex(x509.random_serial_number())
         key_label = options.key_label
 
@@ -389,7 +387,7 @@ class HSMBackend(
                 raise ValueError(f"{key_type}: unknown key type")
 
         ca.key_backend_options = {"key_id": key_id, "key_label": key_label, "key_type": key_type}
-        use_private_key_options = HSMBackendUsePrivateKeyOptions.model_validate(
+        use_private_key_options = HSMUsePrivateKeyOptions.model_validate(
             {"so_pin": options.so_pin, "user_pin": options.user_pin}, context={"ca": ca, "backend": self}
         )
 
@@ -400,7 +398,7 @@ class HSMBackend(
         ca: "CertificateAuthority",
         key: CertificateIssuerPrivateKeyTypes,
         certificate: x509.Certificate,
-        options: HSMBackendStorePrivateKeyOptions,
+        options: HSMStorePrivateKeyOptions,
     ) -> None:
         key_id = int_to_hex(x509.random_serial_number())
         public_key = certificate.public_key()
@@ -452,7 +450,7 @@ class HSMBackend(
     def sign_certificate(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: HSMBackendUsePrivateKeyOptions,
+        use_private_key_options: HSMUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
         algorithm: Optional[AllowedHashTypes],
@@ -477,7 +475,7 @@ class HSMBackend(
     def sign_certificate_revocation_list(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: HSMBackendUsePrivateKeyOptions,
+        use_private_key_options: HSMUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
         algorithm: Optional[AllowedHashTypes],
     ) -> x509.CertificateRevocationList:

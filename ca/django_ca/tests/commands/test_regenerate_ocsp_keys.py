@@ -27,7 +27,7 @@ from django.core.files.storage import storages
 from django.test import TestCase
 
 from django_ca.conf import model_settings
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA
@@ -68,7 +68,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         self.assertTrue(storage.exists(cert_path))
         if key_type is None:
             ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-                ca, UsePrivateKeyOptions(password=None)
+                ca, StoragesUsePrivateKeyOptions(password=None)
             )
             key_type = type(ca_key)
 

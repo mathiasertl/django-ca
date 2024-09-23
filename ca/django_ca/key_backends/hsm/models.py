@@ -56,7 +56,7 @@ class PinModelMixin:
         return self
 
 
-class CreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel):
+class HSMCreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel):
     """Options for initializing private keys."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -67,7 +67,7 @@ class CreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel):
     elliptic_curve: Optional[EllipticCurves]
 
     @model_validator(mode="after")
-    def validate_elliptic_curve(self) -> "CreatePrivateKeyOptions":
+    def validate_elliptic_curve(self) -> "HSMCreatePrivateKeyOptions":
         """Validate that the elliptic curve is not set for invalid key types."""
         if self.key_type == "EC" and self.elliptic_curve is None:
             default_elliptic_curve_type = type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE)
@@ -77,7 +77,7 @@ class CreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel):
         return self
 
 
-class HSMBackendStorePrivateKeyOptions(PinModelMixin, BaseModel):
+class HSMStorePrivateKeyOptions(PinModelMixin, BaseModel):
     """Options for storing a private key."""
 
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
@@ -86,7 +86,7 @@ class HSMBackendStorePrivateKeyOptions(PinModelMixin, BaseModel):
     key_label: str
 
 
-class HSMBackendUsePrivateKeyOptions(PinModelMixin, BaseModel):
+class HSMUsePrivateKeyOptions(PinModelMixin, BaseModel):
     """Options for using the private key."""
 
     model_config = ConfigDict(frozen=True)

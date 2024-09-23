@@ -61,7 +61,10 @@ except ModuleNotFoundError as django_ex:
 # pylint: disable=wrong-import-position # django_setup needs to be called first
 from django_ca.conf import model_settings  # noqa: E402
 from django_ca.key_backends import key_backends  # noqa: E402
-from django_ca.key_backends.storages import CreatePrivateKeyOptions, UsePrivateKeyOptions  # noqa: E402
+from django_ca.key_backends.storages import (  # noqa: E402
+    StoragesBackendUsePrivateKeyOptions,
+    StoragesCreatePrivateKeyOptions,
+)
 from django_ca.models import Certificate, CertificateAuthority  # noqa: E402
 
 # pylint: enable=wrong-import-position
@@ -116,7 +119,10 @@ def create_cert(ca: CertificateAuthority) -> Certificate:
 
     # Create a certificate
     cert = Certificate.objects.create_cert(
-        ca=ca, key_backend_options=UsePrivateKeyOptions(password=None), csr=csr_request, subject=subject
+        ca=ca,
+        key_backend_options=StoragesBackendUsePrivateKeyOptions(password=None),
+        csr=csr_request,
+        subject=subject,
     )
     return cert
 
@@ -133,14 +139,14 @@ if args.env != "frontend":
     rsa_root = CertificateAuthority.objects.init(
         "rsa.example.com",
         key_backend,
-        CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=2048),
+        StoragesCreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=2048),
         subject=cn("rsa.example.com"),
         expires=expires,
     )
     ec_root = CertificateAuthority.objects.init(
         "ecc.example.net",
         key_backend,
-        CreatePrivateKeyOptions(
+        StoragesCreatePrivateKeyOptions(
             key_type="EC", password=None, path="ca", elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         ),
         subject=cn("ecc.example.net"),
@@ -151,16 +157,16 @@ if args.env != "frontend":
     rsa_child = CertificateAuthority.objects.init(
         "child.rsa.example.com",
         key_backend,
-        CreatePrivateKeyOptions(key_type="RSA", password=None, path="ca/shared/"),
+        StoragesCreatePrivateKeyOptions(key_type="RSA", password=None, path="ca/shared/"),
         subject=cn("child.rsa.example.com"),
         expires=expires,
         parent=rsa_root,
-        use_parent_private_key_options=UsePrivateKeyOptions(password=None),
+        use_parent_private_key_options=StoragesBackendUsePrivateKeyOptions(password=None),
     )
     ec_child = CertificateAuthority.objects.init(
         "child.ecc.example.net",
         key_backend,
-        CreatePrivateKeyOptions(
+        StoragesCreatePrivateKeyOptions(
             key_type="EC",
             password=None,
             path="ca/shared/",
@@ -170,7 +176,7 @@ if args.env != "frontend":
         expires=expires,
         key_type="EC",
         parent=ec_root,
-        use_parent_private_key_options=UsePrivateKeyOptions(password=None),
+        use_parent_private_key_options=StoragesBackendUsePrivateKeyOptions(password=None),
     )
 else:
     rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")

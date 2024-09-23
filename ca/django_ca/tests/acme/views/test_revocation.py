@@ -35,7 +35,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
@@ -181,7 +181,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         builder = builder.issuer_name(root_cert.ca.subject)
         builder = builder.subject_name(root_cert.pub.loaded.subject)
         ca_key = usable_root.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-            root_cert.ca, UsePrivateKeyOptions(password=None)
+            root_cert.ca, StoragesUsePrivateKeyOptions(password=None)
         )
         cert = builder.sign(private_key=ca_key, algorithm=model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
         message = Revocation(certificate=jose.util.ComparableX509(X509.from_cryptography(cert)))

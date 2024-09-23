@@ -39,7 +39,7 @@ from freezegun import freeze_time
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.key_backends.storages import UsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import (
@@ -314,7 +314,7 @@ class OCSPViewTestMixin(TestCaseMixin):
         self, ca: CertificateAuthority
     ) -> tuple[CertificateIssuerPrivateKeyTypes, Certificate]:
         """Generate an OCSP key for the given CA and return private kay and public key model instance."""
-        key_backend_options = UsePrivateKeyOptions(password=CERT_DATA[ca.name].get("password"))
+        key_backend_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[ca.name].get("password"))
         priv_path, _cert_path, ocsp_cert = ca.generate_ocsp_key(key_backend_options)  # type: ignore[misc]
         with storages["django-ca"].open(priv_path, "rb") as stream:
             private_key = typing.cast(
