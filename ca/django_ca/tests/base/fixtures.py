@@ -336,6 +336,10 @@ def usable_hsm_ca(
     """Parametrized fixture yielding a certificate authority for every key type."""
     request.getfixturevalue("db")
     key_type = request.param
+
+    if key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:
+        pytest.xfail(f"{key_type}: Algorithm not supported on this platform.")
+
     key_backend_options = HSMCreatePrivateKeyOptions(
         user_pin=hsm_backend.user_pin, key_label=ca_name, key_type=key_type, elliptic_curve=None
     )
