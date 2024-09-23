@@ -197,6 +197,11 @@ PKCS11_TOKEN_LABEL = f"pytest.{_timestamp}.{get_random_string(8)}"
 PKCS11_SO_PIN = "so-pin-1234"
 PKCS11_USER_PIN = "user-pin-1234"
 
+# Some environments do not support all key algorithms:
+# * Alpine 3.20 does not support ed448 for unknown reasons.
+PKCS11_EXCLUDE_KEY_TYPES = os.environ.get("PKCS11_EXCLUDE_KEY_TYPES", "").split(",")
+PKCS11_EXCLUDE_ELLIPTIC_CURVES = os.environ.get("PKCS11_EXCLUDE_ELLIPTIC_CURVES", "").split(",")
+
 
 CA_KEY_BACKENDS = {
     "default": {
