@@ -337,7 +337,7 @@ def usable_hsm_ca(
     request.getfixturevalue("db")
     key_type = request.param
 
-    if key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:
+    if key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:  # pragma: no cover
         pytest.xfail(f"{key_type}: Algorithm not supported on this platform.")
 
     key_backend_options = HSMCreatePrivateKeyOptions(
