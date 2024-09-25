@@ -65,9 +65,9 @@ COPY docs/source/ docs/source/
 ARG FAIL_UNDER=100
 ENV COVERAGE_FILE=/tmp/.coverage
 # Alpine currently does not support all key types or EC curves
-ENV PKCS11_EXCLUDE_KEY_TYPES='Ed448'
+ENV PKCS11_EXCLUDE_KEY_TYPES='Ed448,Ed25519'
 ENV PKCS11_EXCLUDE_ELLIPTIC_CURVES='sect163r2,sect571r1,sect409r1,sect283r1,sect233k1,sect283k1,sect409k1,sect233r1,sect571k1,sect163k1'
-RUN pytest -v  --cov-report term-missing --cov-fail-under=$FAIL_UNDER -p no:cacheprovider --no-selenium
+RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium
 
 ###############
 # Build stage #
