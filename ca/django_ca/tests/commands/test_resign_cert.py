@@ -713,6 +713,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             cmd("resign_cert", self.cert.serial)
 
 
+@pytest.mark.hsm
 def test_hsm_backend(usable_hsm_ca: CertificateAuthority, root_cert: Certificate) -> None:
     """Test signing a certificate with a CA that is in a HSM."""
     # Fake the ca of an existing cert (this way we don't have to sign it)

@@ -260,7 +260,7 @@ def signed_certificate_timestamps_pub(
 
 
 @pytest.fixture()
-def softhsm_setup(tmp_path: Path) -> Iterator[Path]:
+def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
     """Fixture to set up a unique SoftHSM2 configuration."""
     softhsm_dir = tmp_path / "softhsm"
     token_dir = softhsm_dir / "tokens"
@@ -295,7 +295,7 @@ def softhsm_setup(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture()
-def softhsm_token(
+def softhsm_token(  # pragma: hsm
     request: "SubRequest",
     settings: SettingsWrapper,
 ) -> Iterator[str]:
@@ -322,7 +322,7 @@ def softhsm_token(
 
 
 @pytest.fixture()
-def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:
+def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:  # pragma: hsm
     """Fixture providing a HSMBackend with the current token and (randomized) passwords."""
     request.getfixturevalue("softhsm_token")
     yield cast(HSMBackend, key_backends["hsm"])
@@ -330,7 +330,7 @@ def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:
 
 
 @pytest.fixture(params=HSMBackend.supported_key_types)
-def usable_hsm_ca(
+def usable_hsm_ca(  # pragma: hsm
     request: "SubRequest", ca_name: str, subject: x509.Name, hsm_backend: HSMBackend
 ) -> Iterator[CertificateAuthority]:
     """Parametrized fixture yielding a certificate authority for every key type."""

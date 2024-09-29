@@ -64,10 +64,8 @@ COPY docs/source/ docs/source/
 # Finally run tests
 ARG FAIL_UNDER=100
 ENV COVERAGE_FILE=/tmp/.coverage
-# Alpine currently does not support all key types or EC curves
-ENV PKCS11_EXCLUDE_KEY_TYPES='Ed448,Ed25519'
-ENV PKCS11_EXCLUDE_ELLIPTIC_CURVES='sect163r2,sect571r1,sect409r1,sect283r1,sect233k1,sect283k1,sect409k1,sect233r1,sect571k1,sect163k1'
-RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium
+# Alpine Linux has issues with the SoftHSM library, so tests are disabled here.
+RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium --no-hsm
 
 ###############
 # Build stage #

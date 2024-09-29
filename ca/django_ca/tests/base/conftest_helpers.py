@@ -145,12 +145,6 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
         cg_version = cast(tuple[int], CRYPTOGRAPHY_VERSION[:1])
         exclude_versions(cov, "cryptography", cg_version, ver, version_str)
 
-    for key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:
-        cov.exclude(f"pragma: pkcs11-key-type-{key_type}")
-
-    if "Ed448" in settings.PKCS11_EXCLUDE_KEY_TYPES and "Ed25519" in settings.PKCS11_EXCLUDE_KEY_TYPES:
-        cov.exclude("pragma: pkcs11-key-type-ed")
-
 
 def generate_pub_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certificate]]:
     """Generate fixture for a loaded public key (root_pub, root_cert_pub, ...)."""

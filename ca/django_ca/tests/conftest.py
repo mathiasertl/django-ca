@@ -60,6 +60,7 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Do not run tests in virtual display.",
     )
+    parser.addoption("--no-hsm", action="store_true", default=False, help="Disable HSM tests.")
 
 
 def pytest_configure(config: "PytestConfig") -> None:
@@ -70,8 +71,17 @@ def pytest_configure(config: "PytestConfig") -> None:
         setup_pragmas(cov)
 
     config.addinivalue_line("markers", "selenium: mark tests that use selenium")
+    config.addinivalue_line("markers", "hsm: mark tests that use HSM")
 
     skip_selenium = config.getoption("--no-selenium") or not RUN_SELENIUM_TESTS
+    skip_hsm = config.getoption("--no-hsm")
+
+    if skip_hsm and cov_plugin.cov_controller is not None:  # pragma: no branch
+        omit = cov.config.get_option("run:omit")
+        omit.append("*/hsm/*")
+        cov.config.set_option("run:omit", omit)
+        cov.config.set_option("report:omit", omit)
+        cov.exclude("pragma: hsm")
 
     if config.getoption("--no-virtual-display"):  # pragma: no cover
         os.environ["VIRTUAL_DISPLAY"] = "n"
@@ -106,6 +116,12 @@ def pytest_collection_modifyitems(config: "PytestConfig", items: list[Any]) -> N
         for item in items:
             if "selenium" in item.keywords:
                 item.add_marker(skip_selenium)
+
+    if config.getoption("--no-hsm"):
+        skip_hsm = pytest.mark.skip(reason="HSM tests disabled via the command-line.")
+        for item in items:
+            if "hsm" in item.keywords:
+                item.add_marker(skip_hsm)
 
 
 @pytest.fixture()

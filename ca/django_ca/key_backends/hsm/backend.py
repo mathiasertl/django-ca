@@ -176,13 +176,13 @@ class HSMBackend(KeyBackend[HSMCreatePrivateKeyOptions, HSMStorePrivateKeyOption
         key_label: str = ca.key_backend_options["key_label"]
         key_type: SupportedKeyType = ca.key_backend_options["key_type"]
 
-        if key_type == "RSA":  # pragma: pkcs11-key-type-RSA
+        if key_type == "RSA":
             return PKCS11RSAPrivateKey(session, key_id, key_label)
-        if key_type == "Ed448":  # pragma: pkcs11-key-type-Ed448
+        if key_type == "Ed448":
             return PKCS11Ed448PrivateKey(session, key_id, key_label)
-        if key_type == "Ed25519":  # pragma: pkcs11-key-type-Ed25519
+        if key_type == "Ed25519":
             return PKCS11Ed25519PrivateKey(session, key_id, key_label)
-        if key_type == "EC":  # pragma: pkcs11-key-type-EC
+        if key_type == "EC":
             return PKCS11EllipticCurvePrivateKey(session, key_id, key_label)
 
         raise ValueError(f"{key_type}: Unsupported key type.")
@@ -328,7 +328,7 @@ class HSMBackend(KeyBackend[HSMCreatePrivateKeyOptions, HSMStorePrivateKeyOption
                 )
                 public_key = private_key.public_key()
 
-            elif key_type in ("Ed25519", "Ed448"):  # pragma: pkcs11-key-type-ed
+            elif key_type in ("Ed25519", "Ed448"):
                 named_curve_parameters = encode_named_curve_parameters(
                     SignedDigestAlgorithmId(key_type.lower()).dotted
                 )
@@ -352,7 +352,7 @@ class HSMBackend(KeyBackend[HSMCreatePrivateKeyOptions, HSMStorePrivateKeyOption
                         pkcs11_private_key=pkcs11_private_key,
                         pkcs11_public_key=pkcs11_public_key,
                     )
-                else:  # pragma: pkcs11-key-type-Ed448
+                else:
                     private_key = PKCS11Ed448PrivateKey(
                         session=session,
                         key_id=key_id,
