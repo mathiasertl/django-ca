@@ -76,9 +76,9 @@ def pytest_configure(config: "PytestConfig") -> None:
     skip_selenium = config.getoption("--no-selenium") or not RUN_SELENIUM_TESTS
     skip_hsm = config.getoption("--no-hsm")
 
-    if skip_hsm and cov_plugin.cov_controller is not None:  # pragma: no branch
+    if skip_hsm and cov_plugin.cov_controller is not None:  # pragma: no cover
         omit = cov.config.get_option("run:omit")
-        omit.append("*/hsm/*")
+        omit.append("*/hsm/*")  # type: ignore[union-attr]  # we know it's a list
         cov.config.set_option("run:omit", omit)
         cov.config.set_option("report:omit", omit)
         cov.exclude("pragma: hsm")

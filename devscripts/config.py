@@ -66,7 +66,7 @@ GITHUB_CONFIG = _release_config["github"]
 _alpine_images = ["default"]
 for python_version in reversed(PYTHON_RELEASES):
     for alpine_version in reversed(ALPINE_RELEASES):
-        image_name = f"python:{python_version}-alpine{alpine_version}"
+        image_name = f"python:{python_version}-alpine{alpine_version}"  # pylint: disable=invalid-name
 
         # Skip images that are just no longer built upstream
         if image_name in _release_config["docker-image-blacklist"]:
