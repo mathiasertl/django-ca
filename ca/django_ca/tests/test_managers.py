@@ -32,8 +32,8 @@ from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends.storages import (
     StoragesBackend,
-    StoragesUsePrivateKeyOptions,
     StoragesCreatePrivateKeyOptions,
+    StoragesUsePrivateKeyOptions,
 )
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
@@ -176,9 +176,7 @@ def test_init_grandchild(
 @pytest.mark.django_db
 def test_openssh_ca(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test OpenSSH CA support."""
-    ca_key_backend_options = StoragesCreatePrivateKeyOptions(
-        key_type="Ed25519", password=None, path="ca"
-    )
+    ca_key_backend_options = StoragesCreatePrivateKeyOptions(key_type="Ed25519", password=None, path="ca")
     expires = datetime.now(tz=tz.utc) + timedelta(days=10)
     ca = CertificateAuthority.objects.init(
         ca_name, key_backend, ca_key_backend_options, subject, expires, key_type="Ed25519", openssh_ca=True

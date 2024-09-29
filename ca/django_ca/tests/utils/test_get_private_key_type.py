@@ -24,21 +24,13 @@ def test_get_private_key_type(key_backend: StoragesBackend, usable_cas: list[Cer
     """Test the normal operation of this function."""
     cas = {ca.name: ca for ca in usable_cas}
 
-    assert (
-        get_private_key_type(key_backend.get_key(cas["root"], StoragesUsePrivateKeyOptions())) == "RSA"
-    )
-    assert (
-        get_private_key_type(key_backend.get_key(cas["dsa"], StoragesUsePrivateKeyOptions())) == "DSA"
-    )
+    assert get_private_key_type(key_backend.get_key(cas["root"], StoragesUsePrivateKeyOptions())) == "RSA"
+    assert get_private_key_type(key_backend.get_key(cas["dsa"], StoragesUsePrivateKeyOptions())) == "DSA"
     assert get_private_key_type(key_backend.get_key(cas["ec"], StoragesUsePrivateKeyOptions())) == "EC"
     assert (
-        get_private_key_type(key_backend.get_key(cas["ed25519"], StoragesUsePrivateKeyOptions()))
-        == "Ed25519"
+        get_private_key_type(key_backend.get_key(cas["ed25519"], StoragesUsePrivateKeyOptions())) == "Ed25519"
     )
-    assert (
-        get_private_key_type(key_backend.get_key(cas["ed448"], StoragesUsePrivateKeyOptions()))
-        == "Ed448"
-    )
+    assert get_private_key_type(key_backend.get_key(cas["ed448"], StoragesUsePrivateKeyOptions())) == "Ed448"
 
 
 def test_get_private_key_type_with_invalid_type() -> None:

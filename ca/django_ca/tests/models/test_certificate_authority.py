@@ -308,9 +308,7 @@ def test_crl_invalid_scope(root: CertificateAuthority) -> None:
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) -> None:
     """Test caching of CRLs."""
-    ca_private_key_options = StoragesUsePrivateKeyOptions(
-        password=CERT_DATA[usable_ca.name].get("password")
-    )
+    ca_private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
     der_user_key = get_crl_cache_key(usable_ca.serial, Encoding.DER, "user")
     pem_user_key = get_crl_cache_key(usable_ca.serial, Encoding.PEM, "user")
     der_ca_key = get_crl_cache_key(usable_ca.serial, Encoding.DER, "ca")
@@ -478,9 +476,7 @@ def test_allows_intermediate(root: CertificateAuthority, child: CertificateAutho
 
 def test_generate_ocsp_key(usable_ca: CertificateAuthority) -> None:
     """Test generate_ocsp_key()."""
-    private_key_options = StoragesUsePrivateKeyOptions(
-        password=CERT_DATA[usable_ca.name].get("password")
-    )
+    private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
     with generate_ocsp_key(usable_ca, private_key_options) as (key, cert):
         ca_key = usable_ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
             usable_ca, private_key_options
