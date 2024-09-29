@@ -22,8 +22,8 @@ from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import (
     StoragesBackend,
-    StoragesUsePrivateKeyOptions,
     StoragesCreatePrivateKeyOptions,
+    StoragesUsePrivateKeyOptions,
 )
 from django_ca.models import CertificateAuthority
 
