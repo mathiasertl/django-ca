@@ -10,9 +10,9 @@ build-backend = "setuptools.build_meta"
 python = ["3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["4.2", "5.0", "5.1"]
-cryptography = ["42", "43"]
-acme = ["2.10", "2.11"]
-pydantic = ["2.7", "2.8", "2.9"]
+cryptography = ["43"]
+acme = ["2.11"]
+pydantic = ["2.9"]
 
 # https://alpinelinux.org/releases/
 alpine = [
@@ -109,9 +109,9 @@ dynamic = ["version", "readme"]
 requires-python = ">=3.9"
 dependencies = [
     "Django>=4.2",
-    "acme>=2.10",
+    "acme>=2.11",
     "asn1crypto>=1.5",
-    "cryptography>=42",
+    "cryptography>=43",
     "django-object-actions>=4.0.0",
     "dnspython>=2.5",
     "idna>=3.4",

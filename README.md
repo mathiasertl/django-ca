@@ -27,7 +27,7 @@ Documentation is available at https://django-ca.readthedocs.org/.
 4. **Preliminary** support for hardware security modules (HSMs).
 4. Management via command line and/or via Django's admin interface.
 5. Get email notifications about certificates about to expire.
-6. Written in Python 3.9+, Django 4.2+ and cryptography 42+.
+6. Written in Python 3.9+, Django 4.2+ and cryptography 43+.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 

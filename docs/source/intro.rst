@@ -12,6 +12,7 @@ Features:
 #. **Preliminary** support for hardware security modules (HSMs).
 #. Management via command line and/or via Django's admin interface.
 #. Get email notifications about certificates about to expire.
-#. Written in Python 3.9+, Django 4.2+ and cryptography 42+.
+#. Written in Python 3.9+, Django 4.2+ and cryptography 43+.
+#. Written in Python 3.9+, Django 4.2+ and cryptography 43+.
 
 Please see https://django-ca.readthedocs.org for the most recent documentation.
