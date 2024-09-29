@@ -72,9 +72,9 @@ class Command(DevCommand):
         with open(path, encoding="utf-8") as stream:
             changelog = stream.read()
         changelog_header = changelog.splitlines(keepends=True)[:3]
-        expected = f"""###################
+        expected = f"""##################
 {release} ({date.today().strftime('%Y-%m-%d')})
-###################\n""".splitlines(keepends=True)
+##################\n""".splitlines(keepends=True)
         if changelog_header != expected:
             diff = difflib.unified_diff(changelog_header, expected, fromfile=str(path), tofile="expected")
             raise CommandError(f"ChangeLog has improper header:\n\n{''.join(diff)}")
