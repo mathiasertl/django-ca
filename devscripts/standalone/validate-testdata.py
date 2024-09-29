@@ -54,7 +54,7 @@ except ModuleNotFoundError as ex:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position # django_setup needs to be called first.
-from django_ca.key_backends.storages import StoragesBackendUsePrivateKeyOptions  # noqa: E402
+from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions  # noqa: E402
 from django_ca.models import Certificate, CertificateAuthority  # noqa: E402
 
 # pylint: enable=wrong-import-position
@@ -73,12 +73,12 @@ for ca in CertificateAuthority.objects.all():
         sys.exit(1)
 
     if args.env != "frontend" or (args.env == "frontend" and ca.name in frontend_cas):
-        if not ca.is_usable(StoragesBackendUsePrivateKeyOptions(password=None)):
+        if not ca.is_usable(StoragesUsePrivateKeyOptions(password=None)):
             print(f"{ca}: Private key does not exist.")
             sys.exit(1)
 
         # TYPEHINT NOTE: We assume StoragesBackend
-        key = ca.key_backend.get_key(ca, StoragesBackendUsePrivateKeyOptions(password=None))  # type: ignore[attr-defined]
+        key = ca.key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=None))  # type: ignore[attr-defined]
 
         # Verify the private key
         if ca.name.endswith("rsa.example.com"):
