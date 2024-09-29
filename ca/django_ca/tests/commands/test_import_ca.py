@@ -256,7 +256,8 @@ def test_secondary_key_backend(ca_name: str) -> None:
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # b/c of signature validation in the end.
 @pytest.mark.usefixtures("softhsm_token")
 @pytest.mark.parametrize("ca_name", ("root", "ec"))
-def test_hsm_backend_store_key(ca_name: str, subject: x509.Name) -> None:
+@pytest.mark.hsm
+def test_hsm_store_key(ca_name: str, subject: x509.Name) -> None:
     """Test storing keys in the HSM."""
     key_backend = cast(HSMBackend, key_backends["hsm"])
     ca_data = CERT_DATA[ca_name]
@@ -303,7 +304,7 @@ def test_hsm_backend_store_key(ca_name: str, subject: x509.Name) -> None:
 
 
 @pytest.mark.parametrize("ca_name", ("ed448", "ed25519"))
-def test_hsm_backend_store_key_with_ed_keys(ca_name: str) -> None:
+def test_hsm_store_key_with_ed_keys(ca_name: str) -> None:
     """Test storing ED448/Ed25519 keys in the HSM, which is not supported."""
     cert_data = CERT_DATA[ca_name]
     key_path = cert_data["key_path"]
@@ -313,7 +314,7 @@ def test_hsm_backend_store_key_with_ed_keys(ca_name: str) -> None:
         import_ca(ca_name, key_path, pem_path, key_backend=key_backends["hsm"], hsm_key_label=ca_name)
 
 
-def test_hsm_backend_store_key_with_dsa_keys() -> None:
+def test_hsm_store_key_with_dsa_keys() -> None:
     """Test storing DSA keys in the HSM, which is not supported at all."""
     cert_data = CERT_DATA["dsa"]
     key_path = cert_data["key_path"]

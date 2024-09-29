@@ -566,6 +566,7 @@ def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> N
     assert_signature([pwd], cert)
 
 
+@pytest.mark.hsm
 def test_hsm_backend(usable_hsm_ca: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing a certificate with a CA that is in a HSM."""
     with assert_create_cert_signals() as (pre, post):

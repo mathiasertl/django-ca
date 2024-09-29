@@ -1060,6 +1060,7 @@ def test_non_default_key_backend_with_ec_key(
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
 @pytest.mark.parametrize("key_type", HSMBackend.supported_key_types)
+@pytest.mark.hsm
 def test_hsm_backend(
     ca_name: str, rfc4514_subject: str, key_type: ParsableKeyType, subject: x509.Name
 ) -> None:
@@ -1096,7 +1097,8 @@ def test_hsm_backend(
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
+@pytest.mark.hsm
+def test_hsm_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
     """Basic test for creating a key in the HSM."""
     assert settings.CA_MIN_KEY_SIZE == 1024  # assert initial state
     ca = init_ca_e2e(
@@ -1125,7 +1127,8 @@ def test_hsm_backend_with_rsa_options(ca_name: str, rfc4514_subject: str) -> Non
 @pytest.mark.usefixtures("softhsm_token")
 @pytest.mark.parametrize("key_type", ("RSA", "EC"))
 @pytest.mark.parametrize("algorithm", HSMBackend.supported_hash_algorithms)
-def test_hsm_backend_with_hash_algorithms(
+@pytest.mark.hsm
+def test_hsm_with_hash_algorithms(
     ca_name: str, key_type: str, algorithm: HashAlgorithms, subject: x509.Name
 ) -> None:
     """Basic test for creating a key in the HSM."""
@@ -1155,7 +1158,8 @@ def test_hsm_backend_with_hash_algorithms(
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
 @pytest.mark.parametrize("ec_curve", HSMBackend.supported_elliptic_curves)
-def test_hsm_backend_with_ec_options(ca_name: str, ec_curve: EllipticCurves) -> None:
+@pytest.mark.hsm
+def test_hsm_with_ec_options(ca_name: str, ec_curve: EllipticCurves) -> None:
     """Basic test for creating a key in the HSM."""
     if ec_curve in settings.PKCS11_EXCLUDE_ELLIPTIC_CURVES:
         pytest.xfail(f"{ec_curve}: Algorithm not supported on this platform.")
@@ -1185,7 +1189,8 @@ def test_hsm_backend_with_ec_options(ca_name: str, ec_curve: EllipticCurves) -> 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_child_ca(ca_name: str) -> None:
+@pytest.mark.hsm
+def test_hsm_with_child_ca(ca_name: str) -> None:
     """Basic test for creating a key in the HSM."""
     parent_name = f"{ca_name}_parent"
     parent = init_ca(parent_name, key_backend=key_backends["hsm"], hsm_key_label=parent_name, path_length=1)
@@ -1214,7 +1219,8 @@ def test_hsm_backend_with_child_ca(ca_name: str) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_so_pin_overwrite(ca_name: str, settings: SettingsWrapper) -> None:
+@pytest.mark.hsm
+def test_hsm_with_so_pin_overwrite(ca_name: str, settings: SettingsWrapper) -> None:
     """Test using an so_pin. At least with SoftHSM2, this yields an error currently."""
     with assert_command_error(
         r"^An operation required a login, but none was provided\. "
@@ -1233,7 +1239,8 @@ def test_hsm_backend_with_so_pin_overwrite(ca_name: str, settings: SettingsWrapp
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_invalid_pin(ca_name: str) -> None:
+@pytest.mark.hsm
+def test_hsm_with_invalid_pin(ca_name: str) -> None:
     """Test error when passing an invalid user pin."""
     with assert_command_error(r"^Pin incorrect\.$"):
         init_ca(
@@ -1248,7 +1255,8 @@ def test_hsm_backend_with_invalid_pin(ca_name: str) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_invalid_so_pin(ca_name: str) -> None:
+@pytest.mark.hsm
+def test_hsm_with_invalid_so_pin(ca_name: str) -> None:
     """Test error when passing an invalid SO pin."""
     with assert_command_error(r"^Pin incorrect\.$"):
         init_ca(
@@ -1264,7 +1272,8 @@ def test_hsm_backend_with_invalid_so_pin(ca_name: str) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_key_label_already_exists(ca_name: str) -> None:
+@pytest.mark.hsm
+def test_hsm_with_key_label_already_exists(ca_name: str) -> None:
     """Basic test for creating a key in the HSM."""
     init_ca(ca_name, key_backend=key_backends["hsm"], hsm_key_label=ca_name)
     with assert_command_error(rf"^{ca_name}: Private key with this label already exists\.$"):
@@ -1272,13 +1281,13 @@ def test_hsm_backend_with_key_label_already_exists(ca_name: str) -> None:
     assert CertificateAuthority.objects.all().count() == 1
 
 
-def test_hsm_backend_without_key_label(ca_name: str) -> None:
+def test_hsm_without_key_label(ca_name: str) -> None:
     """Test error when --key-label option is missing."""
     with assert_command_error(r"^--hsm-key-label is a required option for this key backend\.$"):
         init_ca(name=ca_name, key_backend=key_backends["hsm"])
 
 
-def test_hsm_backend_with_no_pins(ca_name: str, hsm_backend: HSMBackend) -> None:
+def test_hsm_with_no_pins(ca_name: str, hsm_backend: HSMBackend) -> None:
     """Test error when --key-label option is missing."""
     hsm_backend.user_pin = None
 
@@ -1292,7 +1301,7 @@ def test_hsm_backend_with_no_pins(ca_name: str, hsm_backend: HSMBackend) -> None
         )
 
 
-def test_hsm_backend_with_both_pins(ca_name: str) -> None:
+def test_hsm_with_both_pins(ca_name: str) -> None:
     """Test error when --key-label option is missing."""
     with assert_command_error(
         r'^Both SO pin and user pin configured\. To override a pin from settings, pass --hsm-so-pin="" or '
@@ -1310,7 +1319,8 @@ def test_hsm_backend_with_both_pins(ca_name: str) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_both_parent_pins(ca_name: str) -> None:
+@pytest.mark.hsm
+def test_hsm_with_both_parent_pins(ca_name: str) -> None:
     """Test error when --key-label option is missing."""
     parent_name = f"{ca_name}_parent"
     parent = init_ca(parent_name, key_backend=key_backends["hsm"], hsm_key_label=parent_name, path_length=1)
@@ -1332,7 +1342,8 @@ def test_hsm_backend_with_both_parent_pins(ca_name: str) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.usefixtures("softhsm_token")
-def test_hsm_backend_with_no_parent_pins(ca_name: str, hsm_backend: HSMBackend) -> None:
+@pytest.mark.hsm
+def test_hsm_with_no_parent_pins(ca_name: str, hsm_backend: HSMBackend) -> None:
     """Test error when --key-label option is missing."""
     parent_name = f"{ca_name}_parent"
     parent = init_ca(parent_name, key_backend=hsm_backend, hsm_key_label=parent_name, path_length=1)
@@ -1355,9 +1366,7 @@ def test_hsm_backend_with_no_parent_pins(ca_name: str, hsm_backend: HSMBackend) 
 @pytest.mark.parametrize(
     "algorithm", (hashes.SHA3_224(), hashes.SHA3_256(), hashes.SHA3_384(), hashes.SHA3_512())
 )
-def test_hsm_backend_with_rsa_with_unsupported_hash_algorithm(
-    ca_name: str, algorithm: AllowedHashTypes
-) -> None:
+def test_hsm_with_rsa_with_unsupported_hash_algorithm(ca_name: str, algorithm: AllowedHashTypes) -> None:
     """Test error with unsupported SHA-3 hash algorithms."""
     name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
     msg = rf"^{name}: Algorithm not supported by hsm key backend\.$"

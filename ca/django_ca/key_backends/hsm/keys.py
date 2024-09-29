@@ -113,14 +113,14 @@ class PKCS11EdwardsPrivateKeyMixin(PKCS11PrivateKeyMixin, Generic[EdwardsPublicK
             "Private bytes cannot be retrieved for keys stored in a hardware security module (HSM)."
         )
 
-    def public_key(self) -> EdwardsPublicKeyTypeVar:  # pragma: pkcs11-key-type-ed
+    def public_key(self) -> EdwardsPublicKeyTypeVar:
         ec_point = bytes(OctetString.load(self.pkcs11_public_key[Attribute.EC_POINT]))
         value = {"algorithm": {"algorithm": self.public_key_algorithm}, "public_key": ec_point}
         public_key: bytes = PublicKeyInfo(value).dump()
 
         return cast(EdwardsPublicKeyTypeVar, load_der_public_key(public_key))
 
-    def sign(self, data: bytes) -> bytes:  # pragma: pkcs11-key-type-ed
+    def sign(self, data: bytes) -> bytes:
         return self.pkcs11_private_key.sign(data, mechanism=pkcs11.Mechanism.EDDSA)  # type: ignore[no-any-return]
 
 
