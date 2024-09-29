@@ -62,8 +62,8 @@ except ModuleNotFoundError as django_ex:
 from django_ca.conf import model_settings  # noqa: E402
 from django_ca.key_backends import key_backends  # noqa: E402
 from django_ca.key_backends.storages import (  # noqa: E402
-    StoragesBackendUsePrivateKeyOptions,
     StoragesCreatePrivateKeyOptions,
+    StoragesUsePrivateKeyOptions,
 )
 from django_ca.models import Certificate, CertificateAuthority  # noqa: E402
 
@@ -120,7 +120,7 @@ def create_cert(ca: CertificateAuthority) -> Certificate:
     # Create a certificate
     cert = Certificate.objects.create_cert(
         ca=ca,
-        key_backend_options=StoragesBackendUsePrivateKeyOptions(password=None),
+        key_backend_options=StoragesUsePrivateKeyOptions(password=None),
         csr=csr_request,
         subject=subject,
     )
@@ -161,7 +161,7 @@ if args.env != "frontend":
         subject=cn("child.rsa.example.com"),
         expires=expires,
         parent=rsa_root,
-        use_parent_private_key_options=StoragesBackendUsePrivateKeyOptions(password=None),
+        use_parent_private_key_options=StoragesUsePrivateKeyOptions(password=None),
     )
     ec_child = CertificateAuthority.objects.init(
         "child.ecc.example.net",
@@ -176,7 +176,7 @@ if args.env != "frontend":
         expires=expires,
         key_type="EC",
         parent=ec_root,
-        use_parent_private_key_options=StoragesBackendUsePrivateKeyOptions(password=None),
+        use_parent_private_key_options=StoragesUsePrivateKeyOptions(password=None),
     )
 else:
     rsa_root = CertificateAuthority.objects.get(name="rsa.example.com")
