@@ -41,7 +41,7 @@ from django_ca.api.utils import get_certificate_authority
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.pydantic.messages import SignCertificateMessage
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
-from django_ca.tasks import run_task, sign_certificate as sign_certificate_task
+from django_ca.tasks import api_sign_certificate as sign_certificate_task, run_task
 
 api = NinjaAPI(title="django-ca API", version=__version__, urls_namespace="django_ca:api")
 

@@ -207,7 +207,7 @@ def generate_ocsp_keys(
 
 @shared_task
 @transaction.atomic
-def sign_certificate(
+def api_sign_certificate(
     order_pk: int,
     csr: str,
     subject: SerializedPydanticName,
