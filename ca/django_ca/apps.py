@@ -39,4 +39,7 @@ class DjangoCAConfig(AppConfig):
         from django_ca import checks  # NOQA: F401  # import already registers the checks
 
         log = logging.getLogger("django_ca")
-        log.info("Loaded settings from files: %s", settings.SETTINGS_FILES)
+        log.info(
+            "Loaded settings from files: %s",
+            ", ".join(str(path) for path in getattr(settings, "SETTINGS_FILES", [])),
+        )
