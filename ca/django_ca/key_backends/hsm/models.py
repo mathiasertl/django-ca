@@ -13,10 +13,11 @@
 
 """Models used by the HSM backend."""
 
+import logging
 import typing
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from django_ca import constants
@@ -28,6 +29,8 @@ from django_ca.typehints import EllipticCurves
 if TYPE_CHECKING:
     from django_ca.key_backends.hsm import HSMBackend
 
+log = logging.getLogger(__name__)
+
 
 class PinModelMixin:
     """Mixin providing so/user pin and validation."""
@@ -35,20 +38,21 @@ class PinModelMixin:
     so_pin: Optional[str] = None
     user_pin: Optional[str] = None
 
-    @field_validator("so_pin", "user_pin", mode="after")
-    @classmethod
-    def load_pins_from_backend(cls, value: Optional[str], info: ValidationInfo) -> Optional[str]:
-        """Load pins from backend if configured."""
-        if info.context and value is None:
-            backend: HSMBackend = info.context.get("backend")
-            if backend is not None:  # pragma: no branch  # backend is always set
-                # TYPEHINT NOTE: field_name is always set in field validators for multiple fields.
-                return cast(Optional[str], getattr(backend, info.field_name))  # type: ignore[arg-type]
-        return value
-
     @model_validator(mode="after")
-    def validate_pins(self) -> "typing.Self":
+    def validate_pins(self, info: ValidationInfo) -> "typing.Self":
         """Validate that exactly one of `so_pin` and `user_pin` is set."""
+        # Load pins from backend configuration passed in context (if not set already)
+        if info.context and self.so_pin is None and self.user_pin is None:
+            backend: HSMBackend = info.context.get("backend")
+            if backend is not None:
+                self.so_pin = backend.so_pin
+                self.user_pin = backend.user_pin
+            else:
+                log.warning("%s: Did not receive backend in context.", self.__class__.__name__)
+        elif not info.context:
+            log.warning("%s: No context passed.", self.__class__.__name__)
+
+        # We must have at least one of user_pin and so_pin, otherwise the configuration is not usable.
         if self.so_pin is None and self.user_pin is None:
             raise ValueError("Provide one of so_pin or user_pin.")
         if self.so_pin is not None and self.user_pin is not None:
@@ -88,5 +92,3 @@ class HSMStorePrivateKeyOptions(PinModelMixin, BaseModel):
 
 class HSMUsePrivateKeyOptions(PinModelMixin, BaseModel):
     """Options for using the private key."""
-
-    model_config = ConfigDict(frozen=True)

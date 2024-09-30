@@ -16,7 +16,9 @@
 from typing import Optional
 
 import pytest
+from _pytest.logging import LogCaptureFixture
 
+from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.models import (
     HSMCreatePrivateKeyOptions,
     HSMUsePrivateKeyOptions,
@@ -50,3 +52,33 @@ def test_with_elliptic_curve_with_rsa_key() -> None:
         HSMCreatePrivateKeyOptions(
             key_label="foo", user_pin="123", key_type="RSA", elliptic_curve="sect571r1"
         )
+
+
+def test_with_hsm_backend(hsm_backend: HSMBackend) -> None:
+    """Test creating a Model with loading the pins from the context."""
+    model = HSMUsePrivateKeyOptions.model_validate({}, context={"backend": hsm_backend}, strict=True)
+    assert model.user_pin is not None
+    assert model.user_pin == hsm_backend.user_pin
+    assert model.so_pin is None
+
+
+def test_with_hsm_backend_with_pins(hsm_backend: HSMBackend) -> None:
+    """Test creating a model instance with context when the pin is already set."""
+    model = HSMUsePrivateKeyOptions.model_validate({"user_pin": "dict"}, context={"backend": hsm_backend})
+    assert model.user_pin == "dict"  # backend does not overwrite this
+    assert model.so_pin is None
+
+
+def test_with_no_context(caplog: LogCaptureFixture) -> None:
+    """Test creating a Model with loading the pins from the context."""
+    model = HSMUsePrivateKeyOptions.model_validate({"user_pin": "dict"})
+    assert model.user_pin == "dict"
+    assert model.so_pin is None
+    assert "No context passed." in caplog.text
+
+
+def test_with_no_backend_in_context(caplog: LogCaptureFixture) -> None:
+    """Test creating a Model with loading the pins from the context."""
+    with pytest.raises(ValueError):
+        HSMUsePrivateKeyOptions.model_validate({}, context={"foo": "bar"})
+    assert "Did not receive backend in context." in caplog.text

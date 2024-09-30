@@ -31,7 +31,7 @@ class DjangoCAConfig(AppConfig):
     verbose_name = _("Certificate Authority")
 
     def ready(self) -> None:
-        # pylint: disable-next=import-outside-toplevel  # that's how checks work
+        # pylint: disable=import-outside-toplevel  # that's how checks work
         import logging
 
         from django.conf import settings
