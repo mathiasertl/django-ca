@@ -577,7 +577,6 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
                     "--tls-feature",
                     "status_request_v2",
                     "--tls-feature-critical",
-                    "--subject-format=rfc4514",
                     "--subject",
                     f"CN={cname}",
                     "--watch",
@@ -678,7 +677,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             r"--subject-alternative-name/--name arguments\.$"
         )
         with assert_create_cert_signals(False, False), assert_command_error(msg):
-            cmd("resign_cert", cert, subject_format="rfc4514", subject=subject.rfc4514_string())
+            cmd("resign_cert", cert, subject=subject.rfc4514_string())
 
     @override_tmpcadir()
     def test_error(self) -> None:

@@ -142,7 +142,6 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
         "init_ca",
         name,
         f"C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit,CN={name}",
-        subject_format="rfc4514",
         stdout=stdout,
         stderr=stderr,
         **kwargs,
@@ -176,7 +175,7 @@ def init_ca_e2e(
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_basic(ca_name: str, subject: x509.Name, rfc4514_subject: str, key_backend: StoragesBackend) -> None:
     """Basic tests for the command."""
-    ca = init_ca_e2e(ca_name, rfc4514_subject, "--subject-format=rfc4514")
+    ca = init_ca_e2e(ca_name, rfc4514_subject)
     assert_ca_properties(ca, ca_name, crl_number='{"scope": {"user": 1, "ca": 1}}')
     assert_certificate(ca, subject)
 
@@ -223,7 +222,6 @@ def test_arguments(hostname: str, ca_name: str, key_backend: StoragesBackend) ->
     ca = init_ca_e2e(
         ca_name,
         "CN={self.hostname}",
-        "--subject-format=rfc4514",
         "--algorithm=SHA-256",  # hashes.SHA256(),
         "--key-type=EC",
         "--expires=720",
@@ -288,7 +286,6 @@ def test_add_extensions(hostname: str, ca_name: str) -> None:
     ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
-        "--subject-format=rfc4514",
         # Basic Constraints extension
         "--path-length=3",
         # Certificate Policies extension
@@ -394,7 +391,6 @@ def test_add_extensions_with_non_default_critical(hostname: str, ca_name: str) -
     ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
-        "--subject-format=rfc4514",
         # Certificate Policies extension:
         "--policy-identifier=anyPolicy",
         "--certificate-policies-critical",
@@ -450,7 +446,6 @@ def test_add_extensions_with_formatting(
     ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
-        "--subject-format=rfc4514",
         f"--parent={usable_root.serial}",
         "--ocsp-responder=https://example.com/ocsp/{OCSP_PATH}",
         "--ca-issuer=https://example.com/ca-issuer/{CA_ISSUER_PATH}",
@@ -486,7 +481,6 @@ def test_add_extensions_with_formatting_without_uri(
     ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
-        "--subject-format=rfc4514",
         f"--parent={usable_root.serial}",
         "--ocsp-responder=DNS:example.com",
         "--ca-issuer=DNS:example.net",
@@ -528,7 +522,6 @@ def test_sign_extensions(hostname: str, ca_name: str, usable_root: CertificateAu
         ca_name,
         f"CN={hostname}",
         f"--parent={usable_root.serial}",
-        "--subject-format=rfc4514",
         # Certificate Policies extension
         "--sign-policy-identifier=anyPolicy",
         "--sign-certification-practice-statement=https://example.com/cps1/",
@@ -567,7 +560,6 @@ def test_multiple_ians(hostname: str, ca_name: str) -> None:
         ca_name,
         "--sign-issuer-alternative-name=example.com",
         "--sign-issuer-alternative-name=https://example.com",
-        "--subject-format=rfc4514",
         f"CN={hostname}",
     )
     assert ca.sign_issuer_alternative_name == issuer_alternative_name(
@@ -582,7 +574,6 @@ def test_acme_arguments(hostname: str, ca_name: str) -> None:
     ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
-        "--subject-format=rfc4514",
         "--acme-enable",
         "--acme-disable-account-registration",
         "--acme-contact-optional",
@@ -599,7 +590,7 @@ def test_acme_arguments(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_api_arguments(hostname: str, ca_name: str) -> None:
     """Test REST API arguments."""
-    ca = init_ca_e2e(ca_name, f"CN={hostname}", "--api-enable", "--subject-format=rfc4514")
+    ca = init_ca_e2e(ca_name, f"CN={hostname}", "--api-enable")
 
     assert ca.api_enabled is True
 
@@ -610,7 +601,7 @@ def test_disabled_arguments(settings: SettingsWrapper) -> None:
     """Test that ACME/REST API options don't work when feature is disabled."""
     settings.CA_ENABLE_ACME = False
     settings.CA_ENABLE_REST_API = False
-    command = ["init_ca", "Test CA", "--subject-format=rfc4514", "CN=example.com"]
+    command = ["init_ca", "Test CA", "CN=example.com"]
     with assert_system_exit(2):
         cmd_e2e([*command, "--acme-enable"])
 
@@ -645,11 +636,7 @@ def test_unknown_acme_profile(hostname: str, ca_name: str) -> None:
 def test_ocsp_responder_arguments(hostname: str, ca_name: str) -> None:
     """Test ACME arguments."""
     ca = init_ca_e2e(
-        ca_name,
-        f"CN={hostname}",
-        "--subject-format=rfc4514",
-        "--ocsp-responder-key-validity=10",
-        "--ocsp-response-validity=3600",
+        ca_name, f"CN={hostname}", "--ocsp-responder-key-validity=10", "--ocsp-response-validity=3600"
     )
 
     assert ca.ocsp_responder_key_validity == 10
@@ -660,12 +647,12 @@ def test_ocsp_responder_arguments(hostname: str, ca_name: str) -> None:
 def test_invalid_ocsp_responder_arguments() -> None:
     """Test naming an unknown profile."""
     assert_e2e_error(
-        ["init_ca", "--subject-format=rfc4514", "CN=example.com", "--ocsp-responder-key-validity=0"],
+        ["init_ca", "CN=example.com", "--ocsp-responder-key-validity=0"],
         stderr=re.compile(r"--ocsp-responder-key-validity: DAYS must be equal or greater then 1\."),
     )
 
     assert_e2e_error(
-        ["init_ca", "--subject-format=rfc4514", "CN=example.com", "--ocsp-response-validity=10"],
+        ["init_ca", "CN=example.com", "--ocsp-response-validity=10"],
         stderr=re.compile(r"--ocsp-response-validity: SECONDS must be equal or greater then 600\."),
     )
 
@@ -697,7 +684,7 @@ def test_dsa(ca_name: str, key_backend: StoragesBackend) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_permitted(hostname: str, ca_name: str) -> None:
     """Test the NameConstraints extension with 'permitted'."""
-    ca = init_ca_e2e(ca_name, "--subject-format=rfc4514", "--permit-name", "DNS:.com", f"CN={hostname}")
+    ca = init_ca_e2e(ca_name, "--permit-name", "DNS:.com", f"CN={hostname}")
     assert ca.extensions[ExtensionOID.NAME_CONSTRAINTS] == name_constraints(
         permitted=[dns(".com")], critical=True
     )
@@ -707,7 +694,7 @@ def test_permitted(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_excluded(hostname: str, ca_name: str) -> None:
     """Test the NameConstraints extension with 'excluded'."""
-    ca = init_ca_e2e(ca_name, "--subject-format=rfc4514", "--exclude-name", "DNS:.com", f"CN={hostname}")
+    ca = init_ca_e2e(ca_name, "--exclude-name", "DNS:.com", f"CN={hostname}")
     assert ca.extensions[ExtensionOID.NAME_CONSTRAINTS] == name_constraints(
         excluded=[dns(".com")], critical=True
     )
@@ -734,7 +721,7 @@ def test_no_path_length(ca_name: str) -> None:
 def test_empty_subject_fields(hostname: str, ca_name: str) -> None:
     """Test creating a CA with empty subject fields."""
     with assert_create_ca_signals() as (pre, post):
-        out, err = cmd("init_ca", ca_name, f"L=,CN={hostname}", subject_format="rfc4514")
+        out, err = cmd("init_ca", ca_name, f"L=,CN={hostname}")
     assert out == ""
     assert err == ""
     ca = CertificateAuthority.objects.get(name=ca_name)
@@ -754,7 +741,7 @@ def test_no_cn(ca_name: str) -> None:
     subject = "C=AT,ST=Vienna,L=Vienna,O=Org,OU=OrgUnit"
     error = r"^Subject must contain a common name \(CN=\.\.\.\)\.$"
     with assert_create_ca_signals(False, False), assert_command_error(error):
-        cmd("init_ca", ca_name, subject, subject_format="rfc4514")
+        cmd("init_ca", ca_name, subject)
 
 
 @pytest.mark.django_db
@@ -979,7 +966,6 @@ def test_multiple_ocsp_and_ca_issuers(hostname: str, ca_name: str, usable_root: 
     ca = init_ca_e2e(
         ca_name,
         f"CN={hostname}",
-        "--subject-format=rfc4514",
         f"--parent={usable_root.serial}",
         # NOTE: mixing the order of arguments here. This way we make sure that the values are properly
         # sorted (by method) in the assertion for the extension.
@@ -1007,7 +993,6 @@ def test_non_default_key_backend_with_rsa_key(
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
-        "--subject-format=rfc4514",
         "--key-backend=secondary",
         "--secondary-path=secondary-ca-path",
         "--key-size=2048",
@@ -1025,7 +1010,6 @@ def test_non_default_key_backend_with_rsa_key(
     child = init_ca_e2e(
         f"{ca_name} child",
         rfc4514_subject,
-        "--subject-format=rfc4514",
         f"--parent={ca.serial}",
         f"--secondary-parent-password={password}",
         chain=[ca],
@@ -1044,7 +1028,6 @@ def test_non_default_key_backend_with_ec_key(
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
-        "--subject-format=rfc4514",
         "--key-backend=secondary",
         "--key-type=EC",
         "--elliptic-curve=sect571r1",  # non default curve
@@ -1071,7 +1054,6 @@ def test_hsm_backend(
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
-        "--subject-format=rfc4514",
         f"--key-type={key_type}",
         "--key-backend=hsm",
         f"--hsm-key-label={ca_name}",
@@ -1104,7 +1086,6 @@ def test_hsm_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
-        "--subject-format=rfc4514",
         "--key-type=RSA",
         "--key-backend=hsm",
         f"--hsm-key-label={ca_name}",

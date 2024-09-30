@@ -68,7 +68,6 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 def sign_cert(ca: CertificateAuthority, subject: str, **kwargs: Any) -> tuple[str, str]:
     """Shortcut for the sign_cert command."""
-    kwargs.setdefault("subject_format", "rfc4514")
     return cmd("sign_cert", ca=ca, subject=subject, **kwargs)
 
 
@@ -164,7 +163,7 @@ def test_subject_sort_with_profile_subject(
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = ({"oid": "ST", "value": "Vienna"},)
     subject = f"CN={hostname},C=DE"  # not the default order
-    cmdline = ["sign_cert", f"--subject={subject}", "--subject-format=rfc4514", f"--ca={usable_root.serial}"]
+    cmdline = ["sign_cert", f"--subject={subject}", f"--ca={usable_root.serial}"]
 
     with assert_create_cert_signals() as (pre, post):
         stdout, stderr = cmd_e2e(cmdline, stdin=csr)
@@ -194,13 +193,7 @@ def test_subject_sort_with_no_common_name(
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = None
     subject = "emailAddress=user@example.com,C=AT"  # not the default order
-    cmdline = [
-        "sign_cert",
-        f"--subject={subject}",
-        "--subject-format=rfc4514",
-        f"--ca={usable_root.serial}",
-        f"--alt={hostname}",
-    ]
+    cmdline = ["sign_cert", f"--subject={subject}", f"--ca={usable_root.serial}", f"--alt={hostname}"]
 
     with assert_create_cert_signals() as (pre, post):
         stdout, stderr = cmd_e2e(cmdline, stdin=csr)
@@ -302,7 +295,6 @@ def test_extensions(usable_root: CertificateAuthority, subject: x509.Name, rfc45
     cmdline = [
         "sign_cert",
         f"--subject={rfc4514_subject}",
-        "--subject-format=rfc4514",
         f"--ca={usable_root.serial}",
         # Authority Information Access extension
         "--ocsp-responder=http://ocsp.example.com/1",
@@ -393,7 +385,6 @@ def test_extensions_with_non_default_critical(
     cmdline = [
         "sign_cert",
         f"--subject={rfc4514_subject}",
-        "--subject-format=rfc4514",
         f"--ca={usable_root.serial}",
         # Certificate Policies extension
         "--policy-identifier=1.2.3",
@@ -476,7 +467,6 @@ def test_extensions_with_formatting(
     cmdline = [
         "sign_cert",
         f"--subject={rfc4514_subject}",
-        "--subject-format=rfc4514",
         f"--ca={usable_root.serial}",
         "--ocsp-responder=https://example.com/ocsp/{OCSP_PATH}",
         "--ca-issuer=https://example.com/ca-issuer/{CA_ISSUER_PATH}",
@@ -518,7 +508,6 @@ def test_multiple_sans(usable_root: CertificateAuthority, subject: x509.Name, rf
     cmdline = [
         "sign_cert",
         f"--subject={rfc4514_subject}",
-        "--subject-format=rfc4514",
         f"--ca={usable_root.serial}",
         "--subject-alternative-name=URI:https://example.net",
         "--subject-alternative-name=DNS:example.org",
