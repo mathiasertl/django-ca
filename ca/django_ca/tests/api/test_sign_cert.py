@@ -490,6 +490,34 @@ def test_sign_certificate_with_subject_alternative_name(
     )
 
 
+def test_invalid_csr(api_client: Client) -> None:
+    """Test passing an unparseable CSR."""
+    data = {"subject": default_subject, "csr": "unparsable"}
+    response = request(api_client, data)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.json()
+    assert response.json() == {
+        "detail": [
+            {
+                "ctx": {"error": "Invalid PEM data."},
+                "loc": ["body", "data", "csr"],
+                "msg": "Value error, Invalid PEM data.",
+                "type": "value_error",
+            }
+        ]
+    }
+
+
+def test_invalid_csr_with_valid_headers(api_client: Client) -> None:
+    """Test passing an unparseable CSR that at least has valid delimiters."""
+    data = {
+        "subject": default_subject,
+        "csr": "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----\n",
+    }
+    response = request(api_client, data)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.json()
+    assert response.json() == {"detail": "Unable to parse CSR."}
+
+
 @pytest.mark.usefixtures("tmpcadir")
 @freeze_time(TIMESTAMPS["everything_valid"])
 def test_crldp_with_full_name_and_relative_name(api_client: Client) -> None:

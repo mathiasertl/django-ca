@@ -18,6 +18,8 @@ from http import HTTPStatus
 from ninja import NinjaAPI, Query
 from ninja.errors import HttpError
 
+from cryptography import x509
+
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 from django.db import transaction
@@ -131,6 +133,12 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateMes
     The `extensions` value is optional and allows you to add additional extensions to the certificate. Usually
     extensions are defined either by the CA or by the named profile.
     """
+    # Validate the CSR before creating anything.
+    try:
+        x509.load_pem_x509_csr(data.csr)
+    except ValueError as ex:
+        raise HttpError(HTTPStatus.BAD_REQUEST, "Unable to parse CSR.") from ex
+
     ca = get_certificate_authority(serial)
 
     # TYPEHINT NOTE: django-ninja sets the user as `request.auth` and mypy does not know about it

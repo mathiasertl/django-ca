@@ -163,6 +163,15 @@ def oid_validator(value: str) -> str:
     return value
 
 
+def pem_csr_validator(value: bytes) -> bytes:
+    """Validate that the given bytes is a valid CSR in PEM format."""
+    if not value.startswith(b"-----BEGIN CERTIFICATE REQUEST-----\n") or not value.strip().endswith(
+        b"\n-----END CERTIFICATE REQUEST-----"
+    ):
+        raise ValueError("Invalid PEM data.")
+    return value
+
+
 def serial_validator(value: str) -> str:
     """Validator for serials."""
     value = value.replace(":", "").upper()
