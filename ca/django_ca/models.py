@@ -230,7 +230,7 @@ class X509CertMixin(DjangoCAModel):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    valid_from = models.DateTimeField(blank=False)
+    not_before = models.DateTimeField(blank=False)
     expires = models.DateTimeField(null=False, blank=False)
 
     pub = CertificateField(verbose_name=_("Public key"))
@@ -292,11 +292,6 @@ class X509CertMixin(DjangoCAModel):
     def issuer(self) -> x509.Name:
         """The certificate issuer field as :py:class:`~cg:cryptography.x509.Name`."""
         return self.pub.loaded.issuer
-
-    @property
-    def not_before(self) -> datetime:
-        """A timezone-aware datetime representing the beginning of the validity period."""
-        return self.pub.loaded.not_valid_before_utc
 
     @property
     def not_after(self) -> datetime:
@@ -381,19 +376,19 @@ class X509CertMixin(DjangoCAModel):
     def update_certificate(self, value: x509.Certificate) -> None:
         """Update this instance with data from a :py:class:`cg:cryptography.x509.Certificate`.
 
-        This function will also populate the `cn`, `serial, `expires` and `valid_from` fields.
+        This function will also populate the `cn`, `serial, `expires` and `not_before` fields.
         """
         self.pub = LazyCertificate(value)
         self.cn = next(
             (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME),  # type: ignore[misc]
             "",
         )
-        self.expires = self.not_after
-        self.valid_from = self.not_before
+        self.expires = value.not_valid_after_utc
+        self.not_before = value.not_valid_before_utc
 
         if settings.USE_TZ is False:
             self.expires = timezone.make_naive(self.expires, timezone=tz.utc)
-            self.valid_from = timezone.make_naive(self.valid_from, timezone=tz.utc)
+            self.not_before = timezone.make_naive(self.not_before, timezone=tz.utc)
 
         self.serial = int_to_hex(value.serial_number)  # upper-cased by int_to_hex()
 
@@ -1227,7 +1222,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     @property
     def usable(self) -> bool:
         """True if the CA is currently usable or not."""
-        return self.enabled and self.valid_from < timezone.now() < self.expires
+        return self.enabled and self.not_before < timezone.now() < self.expires
 
     @property
     def is_openssh_ca(self) -> bool:

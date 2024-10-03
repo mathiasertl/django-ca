@@ -43,8 +43,8 @@ expected = {
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -93,8 +93,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -153,8 +153,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -206,8 +206,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): root.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -260,8 +260,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -310,8 +310,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -360,8 +360,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -411,8 +411,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -451,8 +451,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -490,8 +490,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -543,8 +543,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -589,8 +589,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -637,8 +637,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -695,8 +695,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -736,8 +736,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {name}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -785,8 +785,8 @@ Digest:
   * organizationName (O): GlobalSign nv-sa
   * organizationalUnitName (OU): Root CA
   * commonName (CN): GlobalSign Root CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -830,8 +830,8 @@ Digest:
   * organizationName (O): DigiCert Inc
   * organizationalUnitName (OU): www.digicert.com
   * commonName (CN): DigiCert High Assurance EV Root CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -879,8 +879,8 @@ Digest:
   * localityName (L): Salford
   * organizationName (O): COMODO CA Limited
   * commonName (CN): COMODO RSA Certification Authority
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -922,8 +922,8 @@ Digest:
   * countryName (C): US
   * organizationName (O): IdenTrust
   * commonName (CN): IdenTrust Commercial Root CA 1
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -965,8 +965,8 @@ Digest:
   * organizationalUnitName (OU): GlobalSign Root CA - R2
   * organizationName (O): GlobalSign
   * commonName (CN): GlobalSign
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1016,8 +1016,8 @@ Digest:
   * localityName (L): Salford
   * organizationName (O): COMODO CA Limited
   * commonName (CN): COMODO RSA Certification Authority
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1069,8 +1069,8 @@ Digest:
   * countryName (C): US
   * organizationName (O): GeoTrust Inc.
   * commonName (CN): GeoTrust Global CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1120,8 +1120,8 @@ Digest:
   * countryName (C): US
   * organizationName (O): GeoTrust Inc.
   * commonName (CN): GeoTrust Global CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1167,8 +1167,8 @@ Digest:
   * localityName (L): Salford
   * organizationName (O): COMODO CA Limited
   * commonName (CN): COMODO RSA Certification Authority
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1220,8 +1220,8 @@ Digest:
   * organizationName (O): DigiCert Inc
   * organizationalUnitName (OU): www.digicert.com
   * commonName (CN): DigiCert High Assurance EV Root CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1271,8 +1271,8 @@ Digest:
 * Issuer:
   * organizationName (O): Digital Signature Trust Co.
   * commonName (CN): DST Root CA X3
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1315,8 +1315,8 @@ Digest:
   * organizationName (O): GlobalSign nv-sa
   * organizationalUnitName (OU): Root CA
   * commonName (CN): GlobalSign Root CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1371,8 +1371,8 @@ Digest:
   * localityName (L): Scottsdale
   * organizationName (O): GoDaddy.com, Inc.
   * commonName (CN): Go Daddy Root Certificate Authority - G2
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1426,8 +1426,8 @@ Digest:
   * localityName (L): Scottsdale
   * organizationName (O): GoDaddy.com, Inc.
   * commonName (CN): Go Daddy Root Certificate Authority - G2
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1469,8 +1469,8 @@ Digest:
   * organizationalUnitName (OU): GlobalSign Root CA - R2
   * organizationName (O): GlobalSign
   * commonName (CN): GlobalSign
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1521,8 +1521,8 @@ Digest:
 * Issuer:
   * organizationName (O): Digital Signature Trust Co.
   * commonName (CN): DST Root CA X3
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1573,8 +1573,8 @@ Digest:
 * Issuer:
   * organizationName (O): Digital Signature Trust Co.
   * commonName (CN): DST Root CA X3
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1626,8 +1626,8 @@ Digest:
   * organizationName (O): StartCom Ltd.
   * organizationalUnitName (OU): Secure Digital Certificate Signing
   * commonName (CN): StartCom Certification Authority
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1679,8 +1679,8 @@ Digest:
   * organizationName (O): StartCom Ltd.
   * organizationalUnitName (OU): Secure Digital Certificate Signing
   * commonName (CN): StartCom Certification Authority
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1732,8 +1732,8 @@ Digest:
   * organizationName (O): StartCom Ltd.
   * organizationalUnitName (OU): Secure Digital Certificate Signing
   * commonName (CN): StartCom Certification Authority
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1786,8 +1786,8 @@ Digest:
   * countryName (C): US
   * organizationName (O): IdenTrust
   * commonName (CN): IdenTrust Commercial Root CA 1
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:
@@ -1841,8 +1841,8 @@ Digest:
   * organizationName (O): DigiCert Inc
   * organizationalUnitName (OU): www.digicert.com
   * commonName (CN): DigiCert Global Root CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 
 Certificate Authority information:
@@ -1887,8 +1887,8 @@ Digest:
   * organizationName (O): DigiCert Inc
   * organizationalUnitName (OU): www.digicert.com
   * commonName (CN): DigiCert Global Root CA
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Expired
 
 Certificate Authority information:

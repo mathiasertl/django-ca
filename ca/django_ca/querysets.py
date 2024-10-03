@@ -142,7 +142,7 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is disabled.")
             if ca.expires < now:
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is expired.")
-            if ca.valid_from > now:  # OK, how could this ever happen? ;-)
+            if ca.not_before > now:  # OK, how could this ever happen? ;-)
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is not yet valid.")
             return ca
 
@@ -168,12 +168,12 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
     def valid(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are currently valid."""
         now = timezone.now()
-        return self.filter(expires__gt=now, valid_from__lt=now)
+        return self.filter(expires__gt=now, not_before__lt=now)
 
     def invalid(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are either expired or not yet valid."""
         now = timezone.now()
-        return self.exclude(expires__gt=now, valid_from__lt=now)
+        return self.exclude(expires__gt=now, not_before__lt=now)
 
     def revoked(self) -> "CertificateAuthorityQuerySet":
         """Return revoked certificates."""
@@ -193,11 +193,11 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
         .. WARNING:: This does not exclude revoked certificates.
         """
         now = timezone.now()
-        return self.filter(expires__gt=now, valid_from__lt=now)
+        return self.filter(expires__gt=now, not_before__lt=now)
 
     def not_yet_valid(self) -> "CertificateQuerySet":
         """Return certificates that are not yet valid."""
-        return self.filter(revoked=False, valid_from__gt=timezone.now())
+        return self.filter(revoked=False, not_before__gt=timezone.now())
 
     def valid(self) -> "CertificateQuerySet":
         """Return valid certificates."""
@@ -226,7 +226,7 @@ class AcmeAccountQuerySet(AcmeAccountQuerySetBase):
         """
         now = timezone.now()
         return self.filter(
-            ca__enabled=True, ca__acme_enabled=True, ca__expires__gt=now, ca__valid_from__lt=now
+            ca__enabled=True, ca__acme_enabled=True, ca__expires__gt=now, ca__not_before__lt=now
         )
 
 
@@ -247,7 +247,7 @@ class AcmeOrderQuerySet(AcmeOrderQuerySetBase):
             account__ca__enabled=True,
             account__ca__acme_enabled=True,
             account__ca__expires__gt=now,
-            account__ca__valid_from__lt=now,
+            account__ca__not_before__lt=now,
         ).exclude(account__status=Status.REVOKED.value)
 
 
@@ -284,7 +284,7 @@ class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
             order__account__ca__enabled=True,
             order__account__ca__acme_enabled=True,
             order__account__ca__expires__gt=now,
-            order__account__ca__valid_from__lt=now,
+            order__account__ca__not_before__lt=now,
         ).exclude(order__account__status=Status.REVOKED.value)
 
 
@@ -309,7 +309,7 @@ class AcmeChallengeQuerySet(AcmeChallengeQuerySetBase):
             auth__order__account__ca__enabled=True,
             auth__order__account__ca__acme_enabled=True,
             auth__order__account__ca__expires__gt=now,
-            auth__order__account__ca__valid_from__lt=now,
+            auth__order__account__ca__not_before__lt=now,
         ).exclude(auth__order__account__status=Status.REVOKED.value)
 
 
@@ -336,7 +336,7 @@ class AcmeCertificateQuerySet(AcmeCertificateQuerySetBase):
                 order__account__ca__enabled=True,
                 order__account__ca__acme_enabled=True,
                 order__account__ca__expires__gt=now,
-                order__account__ca__valid_from__lt=now,
+                order__account__ca__not_before__lt=now,
                 order__status=Status.VALID.value,
             )
             .exclude(order__account__status=Status.REVOKED.value)

@@ -26,6 +26,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
+from django.conf import settings
 from django.core.management.base import (
     BaseCommand as _BaseCommand,
     CommandError,
@@ -652,9 +653,9 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         now = datetime.now(tz.utc)
         if cert.revoked:
             self.stdout.write("* Status: Revoked")
-        elif cert.not_after < now:
+        elif cert.pub.loaded.not_valid_after_utc < now:
             self.stdout.write("* Status: Expired")
-        elif cert.not_before > now:
+        elif cert.pub.loaded.not_valid_before_utc > now:
             self.stdout.write("* Status: Not yet valid")
         else:
             self.stdout.write("* Status: Valid")
@@ -678,8 +679,19 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
             self.output_name(cert.issuer)
         else:
             self.stdout.write("* Issuer: (empty)")
-        self.stdout.write(f"* Valid from: {cert.not_before.isoformat(' ')}")
-        self.stdout.write(f"* Valid until: {cert.not_after.isoformat(' ')}")
+
+        if settings.USE_TZ:
+            # If USE_TZ is True, database (and thus output) fields will use locally configured timezone
+            not_before = cert.not_before
+            not_after = cert.not_after
+        else:
+            # If USE_TZ is False, still display UTC timestamps.
+            not_before = cert.pub.loaded.not_valid_before_utc
+            not_after = cert.pub.loaded.not_valid_after_utc
+
+        self.stdout.write(f"* Not valid before: {not_before.isoformat(' ')}")
+        self.stdout.write(f"* Not valid after: {not_after.isoformat(' ')}")
+
         self.output_status(cert)
 
     def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:

@@ -124,7 +124,7 @@ CERT_DATA["multiple_ous"] = {
     "key_type": "RSA",
     "cat": "contrib",
     "type": "cert",
-    "valid_from": "1998-05-18 00:00:00",
+    "not_before": "1998-05-18 00:00:00",
     "valid_until": "2028-08-01 23:59:59",
     "ca": "root",
     "serial": "7DD9FE07CFA81EB7107967FBA78934C6",
@@ -148,7 +148,7 @@ CERT_DATA["cloudflare_1"] = {
     "cat": "contrib",
     "type": "cert",
     "key_type": "EC",
-    "valid_from": "2018-07-18 00:00:00",
+    "not_before": "2018-07-18 00:00:00",
     "valid_until": "2019-01-24 23:59:59",
     "ca": "root",
     "serial": "92529ABD85F0A6A4D6C53FD1C91011C1",
@@ -388,12 +388,12 @@ for _name, _cert_data in CERT_DATA.items():
     # Data derived from public key
     _cert_data["issuer"] = _cert.issuer
     _cert_data["serial_colons"] = add_colons(_cert_data["serial"])
-    _valid_from = _cert.not_valid_before_utc
-    _valid_until = _cert.not_valid_after_utc
-    _cert_data["valid_from"] = _valid_from
-    _cert_data["valid_until"] = _valid_until
-    _cert_data["valid_from_str"] = _cert_data["valid_from"].isoformat(" ")
-    _cert_data["valid_until_str"] = _cert_data["valid_until"].isoformat(" ")
+    _not_before = _cert.not_valid_before_utc
+    _not_after = _cert.not_valid_after_utc
+    _cert_data["not_before"] = _not_before
+    _cert_data["valid_until"] = _not_after
+    _cert_data["not_before_str"] = _cert_data["not_before"].isoformat(" ")
+    _cert_data["not_after_str"] = _cert_data["valid_until"].isoformat(" ")
 
     for extension in _cert.extensions:
         try:
@@ -413,7 +413,7 @@ TIMESTAMPS["after_child"] = TIMESTAMPS["base"] + timedelta(days=4)
 TIMESTAMPS["ca_certs_valid"] = TIMESTAMPS["base"] + timedelta(days=7)
 TIMESTAMPS["profile_certs_valid"] = TIMESTAMPS["base"] + timedelta(days=12)
 
-# When creating fixtures, latest valid_from of any generated cert is 20 days, we need to be after that
+# When creating fixtures, latest not_before of any generated cert is 20 days, we need to be after that
 _root_cert: x509.Certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
 _time_base = _root_cert.not_valid_before_utc
 

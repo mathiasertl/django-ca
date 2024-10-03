@@ -38,8 +38,8 @@ expected = {
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): root.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -75,8 +75,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -112,8 +112,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): ec.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -149,8 +149,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): ed25519.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -186,8 +186,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): ed448.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -223,8 +223,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): pwd.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -260,8 +260,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): dsa.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -297,8 +297,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -334,8 +334,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -371,8 +371,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -408,8 +408,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -438,8 +438,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -470,8 +470,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {ca}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -484,8 +484,8 @@ Digest:
     "empty-subject": """* Subject: (empty)
 * Serial: {serial_colons}
 * Issuer: (empty)
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -508,8 +508,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -558,8 +558,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -607,8 +607,8 @@ def assert_basic_output(name: str, cert: Certificate, status: str) -> None:
         assert (
             stdout
             == """Common Name: {cn}
-Valid from: {valid_from_str}
-Valid until: {valid_until_str}
+Valid from: {not_before_str}
+Valid until: {not_after_str}
 Status: {status}
 Watchers:
 Digest:
@@ -633,8 +633,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {ca}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: {status}
 * No watchers
 
@@ -678,8 +678,8 @@ Digest:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {ca}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: {status}
 * No watchers
 
@@ -741,8 +741,8 @@ def test_revoked(child_cert: Certificate) -> None:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): child.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Revoked
 * No watchers
 
@@ -769,8 +769,8 @@ def test_no_san_with_watchers(no_extensions: Certificate) -> None:
 * Serial: {serial_colons}
 * Issuer:
   * commonName (CN): {ca}.example.com
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * Watchers:
   * user@example.com
@@ -813,8 +813,8 @@ def test_contrib_godaddy_derstandardat() -> None:
   * organizationName (O): GoDaddy.com, Inc.
   * organizationalUnitName (OU): http://certs.godaddy.com/repository/
   * commonName (CN): Go Daddy Secure Certificate Authority - G2
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -878,8 +878,8 @@ def test_contrib_letsencrypt_jabber_at() -> None:
   * countryName (C): US
   * organizationName (O): Let's Encrypt
   * commonName (CN): Let's Encrypt Authority X3
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -928,8 +928,8 @@ def test_contrib_cloudflare_1() -> None:
   * localityName (L): Salford
   * organizationName (O): COMODO CA Limited
   * commonName (CN): COMODO ECC Domain Validation Secure Server CA 2
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 
@@ -980,8 +980,8 @@ def test_contrib_multiple_ous() -> None:
   * organizationalUnitName (OU): Class 3 Public Primary Certification Authority - G2
   * organizationalUnitName (OU): (c) 1998 VeriSign, Inc. - For authorized use only
   * organizationalUnitName (OU): VeriSign Trust Network
-* Valid from: {valid_from_str}
-* Valid until: {valid_until_str}
+* Not valid before: {not_before_str}
+* Not valid after: {not_after_str}
 * Status: Valid
 * No watchers
 

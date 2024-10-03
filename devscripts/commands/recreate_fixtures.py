@@ -69,7 +69,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
 
     # pylint: enable=import-outside-toplevel
     # The time-offsets from now from which CAs/certs are valid starts 25 days in the past, with the largest
-    # offset being 20 days. So the latest valid_from of any certs is five days in the past from when you run
+    # offset being 20 days. So the latest not_before of any certs is five days in the past from when you run
     # this script.
     #
     # This is important in tests, as the "everything_valid" timestamp is 23 days after the date computed
