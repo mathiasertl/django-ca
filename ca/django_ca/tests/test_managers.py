@@ -30,6 +30,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
+from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages import (
     StoragesBackend,
     StoragesCreatePrivateKeyOptions,
@@ -624,6 +625,43 @@ def test_create_cert_with_wrong_profile_type(root: CertificateAuthority, subject
             add_issuer_url=False,
         )
     assert Certificate.objects.exists() is False
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_create_cert_with_deprecated_expires(usable_root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test creating a certificate with the deprecated expires parameter."""
+    not_after = datetime.now(tz=tz.utc) + timedelta(days=12)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    csr = CERT_DATA["root-cert"]["csr"]["parsed"]
+    profile = profiles[model_settings.CA_DEFAULT_PROFILE]
+    with assert_create_cert_signals(), pytest.warns(RemovedInDjangoCA230Warning, match=warning):
+        cert = Certificate.objects.create_cert(
+            usable_root, key_backend_options, csr, subject=subject, expires=not_after
+        )
+    assert cert.subject == subject
+    assert cert.pub.loaded.not_valid_after_utc == not_after
+    # TYPEHINT NOTE: default profile always has extensions, so override here
+    assert_extensions(cert, list(profile.extensions.values()))  # type: ignore[arg-type]
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_create_cert_with_expires_and_not_after(root: CertificateAuthority) -> None:
+    """Test passing both not_after and deprecated expires, which is an error."""
+    not_after = datetime.now(tz=tz.utc)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    error = r"^`not_before` and `expires` cannot both be set\.$"
+    with pytest.warns(RemovedInDjangoCA230Warning, match=warning), pytest.raises(ValueError, match=error):
+        Certificate.objects.create_cert(
+            root,
+            key_backend_options,
+            csr=CERT_DATA["root-cert"]["csr"]["parsed"],
+            expires=not_after,
+            not_after=not_after,
+        )
 
 
 class TypingExamples:

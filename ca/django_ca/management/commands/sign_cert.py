@@ -194,7 +194,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 key_backend_options,
                 csr,
                 profile=profile_obj,
-                expires=expires,
+                not_after=expires,
                 extensions=extensions,
                 subject=parsed_subject,
                 algorithm=algorithm,

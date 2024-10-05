@@ -195,7 +195,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
                 key_backend_options=key_backend_options,
                 csr=cert.csr.loaded,
                 profile=profile_obj,
-                expires=expires,
+                not_after=expires,
                 subject=parsed_subject,
                 algorithm=algorithm,
                 extensions=extensions,

@@ -59,7 +59,7 @@ def test_deprecate_function(warning: DeprecationWarningType) -> None:
 def test_deprecated_argument(warning: DeprecationWarningType) -> None:
     """Test deprecate_argument() decorator."""
     version = re.escape(warning.version)
-    match = rf"^Argument kw is deprecated and will be removed in django-ca {version}\.$"
+    match = rf"^Argument `kw` is deprecated and will be removed in django-ca {version}\.$"
 
     @deprecate_argument("kw", warning)
     def func_with_deprecated_kw(unused: Any, kw: str = "default") -> str:  # pylint: disable=all

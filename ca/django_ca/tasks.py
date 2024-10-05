@@ -431,7 +431,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(
-        ca, key_backend_options, csr=csr, profile=profile, expires=expires, extensions=extensions
+        ca, key_backend_options, csr=csr, profile=profile, not_after=expires, extensions=extensions
     )
 
     acme_cert.cert = cert

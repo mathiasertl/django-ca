@@ -2,6 +2,16 @@
 Deprecation timeline
 ####################
 
+***********
+2.3.0 (TBR)
+***********
+
+Python API
+==========
+
+* The ``expires`` parameter to :py:func:`CertificateManager.create_cert()
+  <django_ca.managers.CertificateManager.create_cert>` will be removed. Use ``not_after`` instead (deprecated
+  since 2.1.0).
 
 ***********
 2.2.0 (TBR)
