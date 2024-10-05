@@ -42,6 +42,7 @@ from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
+from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic import CertificatePoliciesModel
@@ -815,14 +816,44 @@ def test_sign_with_non_default_values(subject: x509.Name, usable_root: Certifica
     """Pass non-default parameters."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     algorithm = hashes.SHA256()
-    expires = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
     with assert_sign_cert_signals():
         cert = usable_root.sign(
-            key_backend_options, csr, subject=subject, algorithm=algorithm, expires=expires
+            key_backend_options, csr, subject=subject, algorithm=algorithm, not_after=not_after
         )
 
     assert_certificate(cert, subject, hashes.SHA256, signer=usable_root)
-    assert cert.not_valid_after_utc == expires
+    assert cert.not_valid_after_utc == not_after
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_sign_with_deprecated_expires(subject: x509.Name, usable_root: CertificateAuthority) -> None:
+    """Pass non-default parameters."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    algorithm = hashes.SHA256()
+    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
+        cert = usable_root.sign(
+            key_backend_options, csr, subject=subject, algorithm=algorithm, expires=not_after
+        )
+    assert cert.not_valid_after_utc == not_after
+
+
+def test_sign_with_not_after_and_expires(root: CertificateAuthority, subject: x509.Name) -> None:
+    """Test error when passing extensions that may not be passed to this function."""
+    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    with (
+        pytest.warns(RemovedInDjangoCA230Warning, match=warning),
+        pytest.raises(ValueError, match=r"^`not_before` and `expires` cannot both be set\.$"),
+    ):
+        root.sign(key_backend_options, csr, subject=subject, not_after=not_after, expires=not_after)
 
 
 @pytest.mark.parametrize(

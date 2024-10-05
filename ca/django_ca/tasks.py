@@ -251,7 +251,7 @@ def api_sign_certificate(
         message.get_csr(),
         subject=message.subject.cryptography,  # pylint: disable=no-member  # false positive
         algorithm=message.get_algorithm(),
-        expires=message.not_after,
+        not_after=message.not_after,
         extensions=parsed_extensions,
     )
 
@@ -416,13 +416,13 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     # Honor not_after from the order if set
     if acme_cert.order.not_after:
-        expires = acme_cert.order.not_after
+        not_after = acme_cert.order.not_after
 
-        # Make sure expires_datetime is tz-aware, even if USE_TZ=False.
-        if timezone.is_naive(expires):
-            expires = timezone.make_aware(expires)
+        # Make sure not_after is tz-aware, even if USE_TZ=False.
+        if timezone.is_naive(not_after):
+            not_after = timezone.make_aware(not_after)
     else:
-        expires = datetime.now(tz=tz.utc) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        not_after = datetime.now(tz=tz.utc) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
 
     csr = acme_cert.parse_csr()
 
@@ -431,7 +431,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(
-        ca, key_backend_options, csr=csr, profile=profile, not_after=expires, extensions=extensions
+        ca, key_backend_options, csr=csr, profile=profile, not_after=not_after, extensions=extensions
     )
 
     acme_cert.cert = cert

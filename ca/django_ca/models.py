@@ -56,6 +56,7 @@ from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
+from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_argument
 from django_ca.extensions import get_extension_name
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.managers import (
@@ -707,12 +708,14 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
 
         return extensions
 
+    @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
     def sign(
         self,
         key_backend_options: BaseModel,
         csr: x509.CertificateSigningRequest,
         subject: x509.Name,
         algorithm: Optional[AllowedHashTypes] = None,
+        not_after: Optional[datetime] = None,
         expires: Optional[datetime] = None,
         extensions: Optional[list[ConfigurableExtension]] = None,
     ) -> x509.Certificate:
@@ -724,6 +727,11 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         will add the AuthorityKeyIdentifier, BasicConstraints and SubjectKeyIdentifier extensions with values
         coming from the certificate authority.
 
+        .. deprecated:: 2.1.0
+
+           The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
+           instead.
+
         Parameters
         ----------
         key_backend_options : BaseModel
@@ -734,7 +742,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             Subject for the certificate
         algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used for signing the certificate, defaults to the algorithm used in the CA.
-        expires : datetime, optional
+        not_after : datetime, optional
             When the certificate expires. If not provided, the ``CA_DEFAULT_EXPIRES`` setting will be used.
         extensions : list of :py:class:`~cg:cryptography.x509.Extension`, optional
             List of extensions to add to the certificates. The function will add some extensions unless
@@ -742,9 +750,14 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         """
         if algorithm is None:
             algorithm = self.algorithm
-        if expires is None:
-            expires = timezone.now() + model_settings.CA_DEFAULT_EXPIRES
-            expires = expires.replace(second=0, microsecond=0)
+        if not_after is not None and expires is not None:
+            raise ValueError("`not_before` and `expires` cannot both be set.")
+        if expires is not None:
+            not_after = expires
+
+        if not_after is None:
+            not_after = timezone.now() + model_settings.CA_DEFAULT_EXPIRES
+            not_after = not_after.replace(second=0, microsecond=0)
         if extensions is None:
             extensions = []
 
@@ -770,7 +783,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             sender=self.__class__,
             ca=self,
             csr=csr,
-            expires=expires,
+            not_after=not_after,
             algorithm=algorithm,
             subject=subject,
             extensions=certificate_extensions,
@@ -785,7 +798,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             algorithm=algorithm,
             issuer=self.subject,
             subject=subject,
-            expires=expires,
+            expires=not_after,
             extensions=certificate_extensions,
         )
 

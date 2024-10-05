@@ -9,11 +9,13 @@ Deprecation timeline
 Python API
 ==========
 
-* The ``expires`` parameter to :py:func:`CertificateAuthorityManager.init()
-  <django_ca.managers.CertificateAuthorityManager.init>`, :py:func:`CertificateManager.create_cert()
-  <django_ca.managers.CertificateManager.create_cert>` and :func:`Profile.create_cert()
-  <django_ca.profiles.Profile.create_cert>` will be removed. Use ``not_after`` instead (deprecated since
-  2.1.0).
+* The ``expires`` parameter to functions that create a certificate will be removed. Use ``not_after`` instead
+  (deprecated since 2.1.0). The following functions are affected:
+
+  * :func:`django_ca.models.CertificateAuthority.sign`
+  * :func:`django_ca.managers.CertificateAuthorityManager.init`
+  * :func:`django_ca.managers.CertificateManager.create_cert`
+  * :func:`django_ca.profiles.Profile.create_cert`
 
 ***********
 2.2.0 (TBR)
