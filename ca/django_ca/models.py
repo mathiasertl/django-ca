@@ -294,11 +294,6 @@ class X509CertMixin(DjangoCAModel):
         return self.pub.loaded.issuer
 
     @property
-    def not_after(self) -> datetime:
-        """A timezone-aware datetime representing the end of the validity period."""
-        return self.pub.loaded.not_valid_after_utc
-
-    @property
     def subject(self) -> x509.Name:
         """The certificate subject field as :py:class:`~cg:cryptography.x509.Name`."""
         return self.pub.loaded.subject

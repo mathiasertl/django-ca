@@ -683,7 +683,7 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         if settings.USE_TZ:
             # If USE_TZ is True, database (and thus output) fields will use locally configured timezone
             not_before = cert.not_before
-            not_after = cert.not_after
+            not_after = cert.expires
         else:
             # If USE_TZ is False, still display UTC timestamps.
             not_before = cert.pub.loaded.not_valid_before_utc
