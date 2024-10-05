@@ -649,7 +649,7 @@ class CertificateManager(
             key_backend_options,
             csr,
             subject=subject,
-            expires=not_after,
+            not_after=not_after,
             algorithm=algorithm,
             extensions=extensions,
             add_crl_url=add_crl_url,

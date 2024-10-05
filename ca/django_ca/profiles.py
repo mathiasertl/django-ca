@@ -33,6 +33,7 @@ from django_ca.constants import (
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     HASH_ALGORITHM_NAMES,
 )
+from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_argument
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.pydantic.extensions import (
     CertificateExtension,
@@ -182,7 +183,8 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    def create_cert(  # noqa: PLR0913
+    @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
+    def create_cert(  # noqa: PLR0912, PLR0913  # pylint: disable=too-many-locals
         self,
         ca: "CertificateAuthority",
         key_backend_options: BaseModel,
@@ -190,6 +192,7 @@ class Profile:
         *,
         subject: Optional[x509.Name] = None,
         expires: Optional[Union[datetime, timedelta]] = None,
+        not_after: Optional[Union[datetime, timedelta]] = None,
         algorithm: Optional[AllowedHashTypes] = None,
         extensions: Optional[Iterable[ConfigurableExtension]] = None,
         add_crl_url: Optional[bool] = None,
@@ -210,6 +213,11 @@ class Profile:
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
+
+        .. deprecated:: 2.1.0
+
+           The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
+           instead.
 
         .. versionchanged:: 1.26.0
 
@@ -234,7 +242,7 @@ class Profile:
         subject : :py:class:`~cg:cryptography.x509.Name`, optional
             Subject for the certificate. The value will be merged with the subject of the profile. If not
             given, the certificate's subject will be identical to the subject from the profile.
-        expires : datetime or timedelta, optional
+        not_after : datetime or timedelta, optional
             Override when this certificate will expire.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Override the hash algorithm used when signing the certificate.
@@ -264,6 +272,11 @@ class Profile:
         cryptography.x509.Certificate
             The signed certificate.
         """
+        if not_after is not None and expires is not None:
+            raise ValueError("`not_before` and `expires` cannot both be set.")
+        if expires is not None:
+            not_after = expires
+
         # Get overrides values from profile if not passed as parameter
         if add_crl_url is None:
             add_crl_url = self.add_crl_url
@@ -308,10 +321,10 @@ class Profile:
 
         # Make sure that expires is a fixed timestamp
         now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
-        if isinstance(expires, timedelta):
-            expires = now + expires
-        elif expires is None:
-            expires = now + self.expires
+        if isinstance(not_after, timedelta):
+            not_after = now + not_after
+        elif not_after is None:
+            not_after = now + self.expires
         # else: it's a datetime
 
         if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not configurable_cert_extensions.get(
@@ -347,7 +360,7 @@ class Profile:
             sender=self.__class__,
             ca=ca,
             csr=csr,
-            expires=expires,
+            not_after=not_after,
             algorithm=algorithm,
             subject=subject,
             extensions=certificate_extensions,
@@ -362,7 +375,7 @@ class Profile:
             algorithm=algorithm,
             issuer=ca.subject,
             subject=subject,
-            expires=expires,
+            expires=not_after,
             extensions=certificate_extensions,
         )
 
