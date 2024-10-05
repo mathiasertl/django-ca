@@ -13,7 +13,8 @@ Dependencies
 Python API
 **********
 
-* :py:func:`CertificateManager.create_cert() <django_ca.managers.CertificateManager.create_cert>`  and
+* :py:func:`CertificateAuthorityManager.init() <django_ca.managers.CertificateAuthorityManager.init>`,
+  :py:func:`CertificateManager.create_cert() <django_ca.managers.CertificateManager.create_cert>`  and
   :func:`Profile.create_cert() <django_ca.profiles.Profile.create_cert>` now takes a ``not_after`` parameter,
   replacing ``expires``. The latter is deprecated and will be removed in django-ca 2.3.0.
 

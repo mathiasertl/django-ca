@@ -205,6 +205,7 @@ class CertificateAuthorityManager(
             ),
         )
 
+    @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
     def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
@@ -212,7 +213,8 @@ class CertificateAuthorityManager(
         key_backend: KeyBackend[Any, Any, Any],
         key_backend_options: BaseModel,
         subject: x509.Name,
-        expires: datetime,
+        not_after: Optional[datetime] = None,
+        expires: Optional[datetime] = None,
         algorithm: Optional[AllowedHashTypes] = None,
         parent: Optional["CertificateAuthority"] = None,
         use_parent_private_key_options: Optional[BaseModel] = None,
@@ -238,14 +240,19 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
-        .. versionchanged:: 1.29.0
+        .. deprecated:: 2.1.0
 
-           * The `expires` parameter is now mandatory, passing ``None`` will raise ``ValueError``.
+           The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
+           instead.
 
-        .. deprecated:: 1.29.0
+        .. versionchanged:: 2.0.0
 
            * Support for passing an ``int`` or ``timedelta`` for `expires` has been deprecated and will be
              removed in django-ca 2.0.
+
+        .. versionchanged:: 1.29.0
+
+           * The `expires` parameter is now mandatory, passing ``None`` will raise ``ValueError``.
 
         .. versionchanged:: 1.28.0
 
@@ -275,7 +282,7 @@ class CertificateAuthorityManager(
             Parameters required for creating the private key using `key_backend`.
         subject : :py:class:`cg:cryptography.x509.Name`
            The desired subject for the certificate.
-        expires : datetime
+        not_after : datetime
             When this certificate authority will expire.
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used when signing the certificate, defaults to
@@ -336,6 +343,13 @@ class CertificateAuthorityManager(
             For various cases of wrong input data (e.g. extensions of invalid type).
         """
         # pylint: disable=too-many-locals
+        if expires is not None and not_after is not None:
+            raise ValueError("`not_before` and `expires` cannot both be set.")
+        if not_after is None:
+            not_after = expires
+        if not_after is None:  # pragma: only django-ca<2.3.0  # can only happen while we still have expires
+            raise TypeError("Missing required argument: 'not_after'")
+
         if parent is not None and use_parent_private_key_options is None:
             raise ValueError("use_parent_private_key_options is required when parent is passed.")
         if openssh_ca and parent:
@@ -353,10 +367,10 @@ class CertificateAuthorityManager(
         # NOTE: Already verified by the caller, so this is only for when the Python API is used directly.
         algorithm = validate_public_key_parameters(key_type, algorithm)
 
-        if not isinstance(expires, datetime):
-            raise TypeError(f"{expires}: expires must be a datetime.")
-        if expires.utcoffset() is None:
-            raise ValueError("expires must not be a naive datetime.")
+        if not isinstance(not_after, datetime):
+            raise TypeError(f"{not_after}: not_after must be a datetime.")
+        if not_after.utcoffset() is None:
+            raise ValueError("not_after must not be a naive datetime.")
 
         # Append OpenSSH extensions if an OpenSSH CA was requested
         if openssh_ca:
@@ -477,7 +491,7 @@ class CertificateAuthorityManager(
             name=name,
             key_type=key_type,
             algorithm=algorithm,
-            expires=expires,
+            not_after=not_after,
             parent=parent,
             subject=subject,
             path_length=path_length,
@@ -543,11 +557,11 @@ class CertificateAuthorityManager(
             signer_ca,
             use_private_key_options,
             public_key,
-            serial,
-            algorithm,
-            issuer,
-            subject,
-            expires,
+            serial=serial,
+            algorithm=algorithm,
+            issuer=issuer,
+            subject=subject,
+            expires=not_after,
             extensions=extensions,
         )
 

@@ -54,13 +54,13 @@ creates a minimal CA using the file system storage backend::
    >>> key_backend_options = StoragesCreatePrivateKeyOptions(
    ...     key_type="RSA", key_size=1024, password=None, path="ca"
    ... )
-   >>> expires = datetime.now(tz=timezone.utc) + timedelta(days=365 * 10)
+   >>> not_after = datetime.now(tz=timezone.utc) + timedelta(days=365 * 10)
    >>> CertificateAuthority.objects.init(
    ...     name="ca-two",
    ...     key_backend=key_backends["default"],
    ...     key_backend_options=key_backend_options,
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ca.example.com")]),
-   ...     expires=expires,
+   ...     not_after=not_after,
    ... )
    <CertificateAuthority: ca-two>
 

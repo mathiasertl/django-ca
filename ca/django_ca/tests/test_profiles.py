@@ -666,6 +666,7 @@ def test_create_cert_with_deprecated_expires(usable_root: CertificateAuthority, 
     with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
         cert = create_cert(prof, usable_root, csr, subject=subject, expires=not_after)
     assert cert.expires == not_after
+    assert cert.pub.loaded.not_valid_after_utc == not_after
 
 
 def test_create_cert_with_not_after_and_deprecated_expires(

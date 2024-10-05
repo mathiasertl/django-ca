@@ -387,13 +387,13 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         # The reasoning is simple: When issuing the child CA, the default is automatically after that of the
         # parent if it wasn't issued on the same day.
         if parent and timezone.now() + expires > parent.expires:
-            expires_datetime = parent.expires
+            not_after_datetime = parent.expires
 
             # Make sure expires_datetime is tz-aware, even if USE_TZ=False.
-            if timezone.is_naive(expires_datetime):
-                expires_datetime = timezone.make_aware(expires_datetime)
+            if timezone.is_naive(not_after_datetime):
+                not_after_datetime = timezone.make_aware(not_after_datetime)
         else:
-            expires_datetime = datetime.now(tz=tz.utc) + expires
+            not_after_datetime = datetime.now(tz=tz.utc) + expires
 
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to path length restrictions.")
@@ -549,7 +549,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 key_backend=key_backend,
                 key_backend_options=key_backend_options,
                 subject=parsed_subject,
-                expires=expires_datetime,
+                not_after=not_after_datetime,
                 algorithm=algorithm,
                 parent=parent,
                 use_parent_private_key_options=signer_key_backend_options,

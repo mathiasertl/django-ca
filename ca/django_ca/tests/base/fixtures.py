@@ -349,7 +349,7 @@ def usable_hsm_ca(  # pragma: hsm
         key_backend_options=key_backend_options,
         key_type=key_type,
         subject=subject,
-        expires=datetime.now(tz=timezone.utc) + timedelta(days=720),
+        not_after=datetime.now(tz=timezone.utc) + timedelta(days=720),
     )
     assert isinstance(ca.key_backend, HSMBackend)
     yield ca

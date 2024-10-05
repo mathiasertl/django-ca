@@ -146,7 +146,7 @@ def test_init_intermediate(
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
         )
@@ -165,7 +165,7 @@ def test_init_grandchild(
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_child,
             use_parent_private_key_options=parent_key_backend_options,
         )
@@ -212,7 +212,7 @@ def test_openssh_ca_for_intermediate(
             key_backend,
             ca_key_backend_options,
             subject=subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             key_type="Ed25519",
             parent=root,
             use_parent_private_key_options=parent_key_backend_options,
@@ -231,7 +231,7 @@ def test_init_with_no_default_hostname(
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_child,
             use_parent_private_key_options=parent_key_backend_options,
             default_hostname=False,
@@ -288,7 +288,7 @@ def test_init_with_partial_authority_information_access(
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -307,7 +307,7 @@ def test_init_with_partial_authority_information_access(
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -336,7 +336,7 @@ def test_init_with_formatting(
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             parent=usable_root,
             use_parent_private_key_options=parent_key_backend_options,
             extensions=passed_extensions,
@@ -453,32 +453,73 @@ def test_init_with_api_parameters(ca_name: str, subject: x509.Name, key_backend:
     assert_certificate(ca, subject)
 
 
-def test_init_with_expires_is_none(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
+def test_init_with_expires_is_wrong_type(
+    ca_name: str, subject: x509.Name, key_backend: StoragesBackend
+) -> None:
     """Test init with an expired as None."""
-    with pytest.raises(TypeError, match=r"^None: expires must be a datetime\."):
+    with pytest.raises(TypeError, match=r"^3: not_after must be a datetime\."):
         CertificateAuthority.objects.init(
             ca_name,
             key_backend,
             key_backend_options,
             subject,
-            expires=None,  # type: ignore[arg-type]  # what we're testing
+            not_after=3,  # type: ignore[arg-type]  # what we're testing
         )
 
 
 def test_init_with_naive_expires(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test init with a naive expired."""
-    expires = datetime(2024, 5, 31)
-    with pytest.raises(ValueError, match=r"^expires must not be a naive datetime\."):
-        CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject, expires=expires)
+    not_after = datetime(2024, 5, 31)
+    with pytest.raises(ValueError, match=r"^not_after must not be a naive datetime\."):
+        CertificateAuthority.objects.init(
+            ca_name, key_backend, key_backend_options, subject, not_after=not_after
+        )
 
 
 def test_init_with_unknown_profile(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a CA with a profile that doesn't exist."""
-    expires = datetime.now(tz=tz.utc) + timedelta(days=10)
+    not_after = datetime.now(tz=tz.utc) + timedelta(days=10)
     with pytest.raises(ValueError, match=r"^foobar: Profile is not defined\.$"):
         CertificateAuthority.objects.init(
-            ca_name, key_backend, key_backend_options, subject, expires, acme_profile="foobar"
+            ca_name, key_backend, key_backend_options, subject, not_after, acme_profile="foobar"
         )
+
+
+def test_init_with_not_after_and_expires(
+    ca_name: str, subject: x509.Name, key_backend: StoragesBackend
+) -> None:
+    """Create a CA with both not_after and expires, which is an error."""
+    not_after = datetime.now(tz=tz.utc) + timedelta(days=10)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    error = r"^`not_before` and `expires` cannot both be set\.$"
+    with pytest.warns(RemovedInDjangoCA230Warning, match=warning), pytest.raises(ValueError, match=error):
+        CertificateAuthority.objects.init(
+            ca_name, key_backend, key_backend_options, subject, not_after=not_after, expires=not_after
+        )
+
+
+def test_init_with_not_after_is_none(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
+    """Pass ``None`` for not_after, which is checked until 2.3.0."""
+    with pytest.raises(TypeError, match=r"^Missing required argument: 'not_after'$"):
+        CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject, not_after=None)
+
+
+@pytest.mark.django_db
+def test_init_with_deprecated_expires(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
+    """Create a CA with deprecated expires parameter."""
+    not_after = datetime.now(tz=tz.utc) + timedelta(days=10)
+    not_after = not_after.replace(microsecond=0, second=0)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
+        ca = CertificateAuthority.objects.init(
+            ca_name, key_backend, key_backend_options, subject, expires=not_after
+        )
+    assert ca.expires == not_after
+    assert ca.pub.loaded.not_valid_after_utc == not_after
 
 
 @pytest.mark.django_db
@@ -490,7 +531,7 @@ def test_init_with_unknown_extension_type(subject: x509.Name, key_backend: Stora
             key_backend,
             key_backend_options,
             subject,
-            expires=datetime.now(tz=tz.utc) + timedelta(days=10),
+            not_after=datetime.now(tz=tz.utc) + timedelta(days=10),
             extensions=[True],  # type: ignore[list-item]  # what we are testing
         )
     assert CertificateAuthority.objects.count() == 0
