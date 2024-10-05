@@ -65,7 +65,7 @@ ca : :py:class:`~django_ca.models.CertificateAuthority`
     The certificate authority used to sign the certificate
 csr : :py:class:`~cg:cryptography.x509.CertificateSigningRequest`
     The certificate signing request used for the certificate.
-expires : datetime
+not_after : datetime
     When the certificate will expire.
 algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`
     The algorithm used for signing the certificate.

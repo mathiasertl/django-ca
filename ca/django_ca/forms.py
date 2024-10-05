@@ -116,7 +116,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         required=False,
         help_text=_("Password for the private key. If not given, the private key must be unencrypted."),
     )
-    expires = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
+    not_after = forms.DateField(initial=_initial_expires, widget=AdminDateWidget())
     subject = fields.NameField(label=_("Subject"), required=False)
     subject_alternative_name = fields.SubjectAlternativeNameField(
         required=False,
@@ -192,8 +192,8 @@ class CreateCertificateBaseForm(CertificateModelForm):
             return constants.HASH_ALGORITHM_TYPES[algorithm_name]()
         return None  # required by mypy
 
-    def clean_expires(self) -> datetime:  # pylint: disable=missing-function-docstring
-        expires: datetime = self.cleaned_data["expires"]
+    def clean_not_after(self) -> datetime:  # pylint: disable=missing-function-docstring
+        expires: datetime = self.cleaned_data["not_after"]
         if expires < date.today():
             raise forms.ValidationError(_("Certificate cannot expire in the past."))
         return expires
@@ -211,7 +211,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
         if data is None:  # pragma: no cover
             return data
 
-        expires = data.get("expires")
+        expires = data.get("not_after")
         ca: CertificateAuthority = data["ca"]
         subject = typing.cast(Optional[x509.Name], data.get("subject"))
         algorithm = typing.cast(Optional[hashes.HashAlgorithm], data.get("algorithm"))
@@ -257,9 +257,11 @@ class CreateCertificateBaseForm(CertificateModelForm):
                 "Subject Alternative Name is required if the subject does not contain a Common Name.",
             )
 
-        if ca and expires and ca.expires.date() < expires:
-            stamp = ca.expires.strftime("%Y-%m-%d")
-            self.add_error("expires", _("CA expires on %s, certificate must not expire after that.") % stamp)
+        if ca and expires and ca.not_after.date() < expires:
+            stamp = ca.not_after.strftime("%Y-%m-%d")
+            self.add_error(
+                "not_after", _("CA not_after on %s, certificate must not expire after that.") % stamp
+            )
         return data
 
     class Media:

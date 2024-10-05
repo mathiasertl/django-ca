@@ -293,7 +293,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 key_backend,
                 key_backend_options,
                 subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
-                expires=datetime.now(tz=tz.utc) + data[name]["expires"],
+                expires=datetime.now(tz=tz.utc) + data[name]["not_after"],
                 key_type=data[name]["key_type"],
                 algorithm=data[name].get("algorithm"),
                 path_length=data[name]["path_length"],
@@ -338,7 +338,7 @@ def create_certs(
                 key_backend_options=StoragesUsePrivateKeyOptions(password=pwd),
                 csr=csr,
                 profile=profiles["server"],
-                expires=data[name]["expires"],
+                expires=data[name]["not_after"],
                 algorithm=data[name]["algorithm"],
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
                 extensions=data[name].get("extensions", {}).values(),
@@ -372,7 +372,7 @@ def create_certs(
                 csr=csr,
                 profile=profiles[profile],
                 algorithm=data[name]["algorithm"],
-                expires=data[name]["expires"],
+                expires=data[name]["not_after"],
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
                 extensions=data[name].get("extensions", {}).values(),
             )
@@ -403,7 +403,7 @@ def create_special_certs(  # noqa: PLR0915
 
         builder = x509.CertificateBuilder()
         builder = builder.not_valid_before(no_ext_now)
-        builder = builder.not_valid_after(no_ext_now + data[name]["expires"])
+        builder = builder.not_valid_after(no_ext_now + data[name]["not_after"])
         builder = builder.serial_number(x509.random_serial_number())
         builder = builder.subject_name(subject)
         builder = builder.issuer_name(ca.pub.loaded.subject)
@@ -443,7 +443,7 @@ def create_special_certs(  # noqa: PLR0915
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
             subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
-            expires=data[name]["expires"],
+            expires=data[name]["not_after"],
             extensions=data[name]["extensions"].values(),
         )
     _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -465,7 +465,7 @@ def create_special_certs(  # noqa: PLR0915
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
             subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
-            expires=data[name]["expires"],
+            expires=data[name]["not_after"],
             extensions=data[name]["extensions"].values(),
         )
     _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -487,7 +487,7 @@ def create_special_certs(  # noqa: PLR0915
 
         builder = x509.CertificateBuilder()
         builder = builder.not_valid_before(no_ext_now)
-        builder = builder.not_valid_after(no_ext_now + data[name]["expires"])
+        builder = builder.not_valid_after(no_ext_now + data[name]["not_after"])
         builder = builder.serial_number(x509.random_serial_number())
         builder = builder.subject_name(x509.Name([]))
         builder = builder.issuer_name(x509.Name([]))

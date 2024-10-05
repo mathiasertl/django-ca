@@ -41,14 +41,14 @@ class Command(BaseCommand):
         now = timezone.now()
         expires = now + timedelta(days=options["days"] + 1)  # add a day to avoid one-of errors
 
-        qs = Certificate.objects.valid().filter(expires__lt=expires)
+        qs = Certificate.objects.valid().filter(not_after__lt=expires)
         for cert in qs:
-            days = (cert.expires - now).days
+            days = (cert.not_after - now).days
 
             if days not in model_settings.CA_NOTIFICATION_DAYS:
                 continue
 
-            timestamp = cert.expires.strftime("%Y-%m-%d")
+            timestamp = cert.not_after.strftime("%Y-%m-%d")
             subj = f"Certificate expiration for {cert.cn} on {timestamp}"
             msg = f"The certificate for {cert.cn} will expire on {timestamp}."
             recipient = list(cert.watchers.values_list("mail", flat=True))

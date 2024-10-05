@@ -45,7 +45,7 @@ def test_responder_key_validity(usable_root: CertificateAuthority) -> None:
 
     generate_ocsp_key(usable_root.serial)
     cert = qs.get()
-    assert cert.expires == TIMESTAMPS["everything_valid"] + timedelta(days=10)
+    assert cert.not_after == TIMESTAMPS["everything_valid"] + timedelta(days=10)
 
 
 def test_with_explicit_password(usable_pwd: CertificateAuthority) -> None:

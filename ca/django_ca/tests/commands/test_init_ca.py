@@ -822,14 +822,14 @@ def test_intermediate_check(ca_name: str) -> None:
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test that if we request an expiry after that of the parent, we override to that of the parent."""
-    expires = usable_root.expires - timezone.now() + timedelta(days=10)
+    expires = usable_root.not_after - timezone.now() + timedelta(days=10)
     with assert_create_ca_signals() as (pre, post):
         child = init_ca(name=ca_name, parent=usable_root, expires=expires)
     assert_post_create_ca(post, child)
     child.full_clean()  # assert e.g. max_length in serials
     assert_signature([usable_root], child)
 
-    assert usable_root.expires == child.expires
+    assert usable_root.not_after == child.not_after
     assert usable_root.parent is None
     assert child.parent == usable_root
     assert not list(child.children.all())
@@ -844,10 +844,10 @@ def test_expires_override_with_use_tz_false(
     """Test silently limiting expiry if USE_TZ=False."""
     settings.USE_TZ = False
     usable_root.refresh_from_db()
-    expires = usable_root.expires - timezone.now() + timedelta(days=10)
+    expires = usable_root.not_after - timezone.now() + timedelta(days=10)
     ca = init_ca(name=ca_name, expires=expires, parent=usable_root)
-    assert ca.expires.tzinfo is None
-    assert ca.expires == usable_root.expires
+    assert ca.not_after.tzinfo is None
+    assert ca.not_after == usable_root.not_after
 
 
 @pytest.mark.django_db

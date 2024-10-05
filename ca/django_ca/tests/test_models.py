@@ -118,7 +118,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=pub,
             csr=csr,
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
         self.assertEqual(cert.pub, pub)
@@ -138,7 +138,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=pub,
             csr=csr,
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
         self.assertEqual(cert.pub, pub)
@@ -158,7 +158,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=pub,
             csr=csr,
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
         self.assertEqual(cert.pub, pub)
@@ -179,7 +179,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=loaded.pub,
             csr=loaded.csr,
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
         self.assertEqual(loaded.pub, cert.pub)
@@ -195,7 +195,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=self.pub["pem"],
             csr=self.csr["parsed"].public_bytes(Encoding.PEM).decode("utf-8"),
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
         cert.refresh_from_db()
@@ -210,7 +210,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=self.pub["parsed"],
             csr=None,  # type: ignore[misc]  # what we test
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
         self.assertIsNone(cert.csr)
@@ -223,7 +223,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=self.pub["parsed"],
             csr=self.csr["parsed"],
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
         )
 
@@ -238,7 +238,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=self.pub["parsed"],
             csr=self.csr["parsed"],
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
             cn="foo",
             serial="0",
@@ -251,7 +251,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=cert.pub,
             csr=cert.csr,
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
             cn="foo",
             serial="0",
@@ -266,7 +266,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             pub=self.pub["parsed"],
             csr="",
             ca=self.ca,
-            expires=timezone.now(),
+            not_after=timezone.now(),
             not_before=timezone.now(),
             cn="foo",
             serial="0",
@@ -282,7 +282,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
                 pub=CERT_DATA["child-cert"]["pub"]["parsed"],
                 csr=True,  # type: ignore[misc]  # what we test
                 ca=self.ca,
-                expires=timezone.now(),
+                not_after=timezone.now(),
                 not_before=timezone.now(),
             )
 
@@ -291,7 +291,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
                 csr=CERT_DATA["child-cert"]["csr"]["parsed"],
                 pub=True,  # type: ignore[misc]  # what we test
                 ca=self.ca,
-                expires=timezone.now(),
+                not_after=timezone.now(),
                 not_before=timezone.now(),
             )
 

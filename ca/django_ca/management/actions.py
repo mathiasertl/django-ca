@@ -156,9 +156,9 @@ class ExpiresAction(SingleValueAction[str, timedelta]):
     NOTE: str(timedelta) is different in python 3.6, so only outputting days here
 
     >>> parser = argparse.ArgumentParser()
-    >>> parser.add_argument('--expires', action=ExpiresAction)  # doctest: +ELLIPSIS
+    >>> parser.add_argument('--not_after', action=ExpiresAction)  # doctest: +ELLIPSIS
     ExpiresAction(...)
-    >>> parser.parse_args(['--expires', '3']).expires.days
+    >>> parser.parse_args(['--not_after', '3']).expires.days
     3
     """
 

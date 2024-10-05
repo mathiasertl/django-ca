@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
     def qs(self, qs: CertificateAuthorityQuerySet) -> CertificateAuthorityQuerySet:
         """Order given queryset appropriately."""
-        return qs.order_by("expires", "name")
+        return qs.order_by("not_after", "name")
 
     def list_ca(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list line for a given CA."""

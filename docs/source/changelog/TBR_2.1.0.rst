@@ -22,5 +22,5 @@ Python API
 Database models
 ***************
 
-* Rename the ``valid_from`` to ``not_before`` to align with the terminology in `RFC 5280`_. The previous
-  read-only property is removed.
+* Rename the ``valid_from`` to ``not_before`` and ``expires`` to ``not_after`` to align with the terminology
+  used in `RFC 5280`_. The previous read-only property was removed.

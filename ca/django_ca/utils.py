@@ -904,9 +904,9 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
         serial = x509.random_serial_number()
 
     if timezone.is_naive(expires):
-        raise ValueError("expires must not be a naive datetime")
+        raise ValueError("not_after must not be a naive datetime")
     if expires <= now:
-        raise ValueError("expires must be in the future")
+        raise ValueError("not_after must be in the future")
 
     # strip seconds and microseconds
     expires = expires.replace(second=0, microsecond=0)

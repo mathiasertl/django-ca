@@ -128,7 +128,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             ),
             "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
             "algorithm": algorithm,
-            "expires": ca.expires.strftime("%Y-%m-%d"),
+            "not_after": ca.not_after.strftime("%Y-%m-%d"),
             "certificate_policies_0": "1.2.3",
             "certificate_policies_1": "https://cps.example.com",
             "certificate_policies_2": "explicit-text",
@@ -570,20 +570,21 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             Certificate.objects.get(cn=self.hostname)
 
     @override_tmpcadir()
-    def test_expires_in_the_past(self) -> None:
-        """Test creating a cert that expires in the past."""
+    def test_not_after_in_the_past(self) -> None:
+        """Test creating a cert that not_after in the past."""
         ca = self.cas["root"]
         expires = datetime.now() - timedelta(days=3)
 
         with assert_create_cert_signals(False, False):
             response = self.client.post(
-                self.add_url, data={**self.form_data(CSR, ca), "expires": expires.strftime("%Y-%m-%d")}
+                self.add_url, data={**self.form_data(CSR, ca), "not_after": expires.strftime("%Y-%m-%d")}
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("Certificate cannot expire in the past.", response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
         self.assertEqual(
-            response.context["adminform"].form.errors, {"expires": ["Certificate cannot expire in the past."]}
+            response.context["adminform"].form.errors,
+            {"not_after": ["Certificate cannot expire in the past."]},
         )
 
         with self.assertRaises(Certificate.DoesNotExist):
@@ -591,20 +592,20 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     @override_tmpcadir()
     def test_expires_too_late(self) -> None:
-        """Test that creating a cert that expires after the CA expires throws an error."""
+        """Test that creating a cert that not_after after the CA not_after throws an error."""
         ca = self.cas["root"]
-        expires = ca.expires + timedelta(days=3)
-        correct_expires = ca.expires.strftime("%Y-%m-%d")
-        error = f"CA expires on {correct_expires}, certificate must not expire after that."
+        expires = ca.not_after + timedelta(days=3)
+        correct_expires = ca.not_after.strftime("%Y-%m-%d")
+        error = f"CA not_after on {correct_expires}, certificate must not expire after that."
 
         with assert_create_cert_signals(False, False):
             response = self.client.post(
-                self.add_url, data={**self.form_data(CSR, ca), "expires": expires.strftime("%Y-%m-%d")}
+                self.add_url, data={**self.form_data(CSR, ca), "not_after": expires.strftime("%Y-%m-%d")}
             )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(error, response.content.decode("utf-8"))
         self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(response.context["adminform"].form.errors, {"expires": [error]})
+        self.assertEqual(response.context["adminform"].form.errors, {"not_after": [error]})
 
         with self.assertRaises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=self.hostname)
@@ -625,7 +626,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "SHA-256",  # this is what we test
-                    "expires": self.default_expires,
+                    "not_after": self.default_expires,
                 },
             )
         self.assertFalse(response.context["adminform"].form.is_valid(), response)
@@ -647,7 +648,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "SHA-256",  # this is what we test
-                    "expires": self.default_expires,
+                    "not_after": self.default_expires,
                 },
             )
         self.assertFalse(response.context["adminform"].form.is_valid(), response)
@@ -669,7 +670,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "SHA-512",  # this is what we test
-                    "expires": self.default_expires,
+                    "not_after": self.default_expires,
                 },
             )
         self.assertFalse(response.context["adminform"].form.is_valid(), response)
@@ -690,7 +691,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                         [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
                     ),
                     "algorithm": "",  # this is what we test
-                    "expires": self.default_expires,
+                    "not_after": self.default_expires,
                 },
             )
         self.assertFalse(response.context["adminform"].form.is_valid(), response)
@@ -720,7 +721,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "not_after": ca.not_after.strftime("%Y-%m-%d"),
                     "certificate_policies_0": "abc",
                 },
             )
@@ -751,7 +752,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "not_after": ca.not_after.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
                         "key_agreement",
@@ -790,7 +791,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
-                    "expires": ca.expires.strftime("%Y-%m-%d"),
+                    "not_after": ca.not_after.strftime("%Y-%m-%d"),
                     "key_usage_0": [
                         "digital_signature",
                         "key_agreement",
@@ -1326,7 +1327,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
             [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
         )
         now = datetime.now(tz=tz.utc).replace(tzinfo=None)
-        form["expires"] = (now + timedelta(days=10)).strftime("%Y-%m-%d")
+        form["not_after"] = (now + timedelta(days=10)).strftime("%Y-%m-%d")
 
         # Submit the form
         response = form.submit().follow()

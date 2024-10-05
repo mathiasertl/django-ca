@@ -536,7 +536,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
             cert_values["csr_filename"] = False
 
         if cert_values.get("type") == "ca":
-            data[cert_name].setdefault("expires", timedelta(days=ca_validity))
+            data[cert_name].setdefault("not_after", timedelta(days=ca_validity))
         else:
             if common_name := next(
                 (
@@ -548,7 +548,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
             ):
                 data[cert_name]["cn"] = common_name["value"]
 
-            data[cert_name].setdefault("expires", timedelta(days=cert_validity))
+            data[cert_name].setdefault("not_after", timedelta(days=cert_validity))
 
     ocsp_data = {}
     if not only_contrib:
@@ -587,8 +587,8 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
     for cert_values in data.values():
         if "delta" in cert_values:
             del cert_values["delta"]
-        if "expires" in cert_values:
-            del cert_values["expires"]
+        if "not_after" in cert_values:
+            del cert_values["not_after"]
         if "parsed_cert" in cert_values:
             del cert_values["parsed_cert"]
 

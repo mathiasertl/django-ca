@@ -56,7 +56,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         email = "user1@example.com"
         watcher = Watcher.from_addr(f"First Last <{email}>")
         self.cert.watchers.add(watcher)
-        timestamp = self.cert.expires.strftime("%Y-%m-%d")
+        timestamp = self.cert.not_after.strftime("%Y-%m-%d")
 
         stdout, stderr = cmd("notify_expiring_certs")
         self.assertEqual(stdout, "")
@@ -71,7 +71,7 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         watcher = Watcher.from_addr(f"First Last <{email}>")
         self.cert.watchers.add(watcher)
 
-        with freeze_time(self.cert.expires - timedelta(days=20)) as frozen_time:
+        with freeze_time(self.cert.not_after - timedelta(days=20)) as frozen_time:
             for _i in reversed(range(0, 20)):
                 stdout, stderr = cmd("notify_expiring_certs", days=14)
                 self.assertEqual(stdout, "")

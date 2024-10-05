@@ -427,7 +427,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(
-            self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+            self.acme_cert.cert.not_after, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
         )
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
         self.assertEqual(self.acme_cert.cert.profile, model_settings.CA_DEFAULT_PROFILE)
@@ -455,7 +455,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
         )
         self.assertEqual(
-            self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+            self.acme_cert.cert.not_after, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
         )
         self.assertIn(self.acme_cert.cert.cn, [self.hostname, hostname2])
 
@@ -480,7 +480,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
-        self.assertEqual(self.acme_cert.cert.expires, not_after)
+        self.assertEqual(self.acme_cert.cert.not_after, not_after)
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
 
     def test_not_after_with_use_tz_is_false(self) -> None:
@@ -510,7 +510,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             subject_alternative_name(x509.DNSName(self.hostname)),
         )
         self.assertEqual(
-            self.acme_cert.cert.expires, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+            self.acme_cert.cert.not_after, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
         )
         self.assertEqual(self.acme_cert.cert.cn, self.hostname)
         self.assertEqual(self.acme_cert.cert.profile, "client")

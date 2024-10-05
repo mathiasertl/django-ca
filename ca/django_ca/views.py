@@ -87,7 +87,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     include both."""
 
     expires = 600
-    """CRL expires in this many seconds."""
+    """CRL not_after in this many seconds."""
 
     # header used in the request
     content_type = None

@@ -627,7 +627,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
+        self.assertEqual(new.not_after.date(), timezone.now().date() + timedelta(days=200))
         assert_resigned(self.cert, new)
         assert_equal_ext(self.cert, new)
 
@@ -645,7 +645,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertEqual(new.expires.date(), timezone.now().date() + timedelta(days=200))
+        self.assertEqual(new.not_after.date(), timezone.now().date() + timedelta(days=200))
         assert_resigned(self.cert, new)
         assert_equal_ext(self.cert, new)
 

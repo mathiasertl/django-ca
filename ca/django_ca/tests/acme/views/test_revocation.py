@@ -176,7 +176,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         """Test sending a different certificate with the same serial."""
         # Create a clone of the existing certificate with the same serial number
         pkey = CERT_DATA["root-cert"]["csr"]["parsed"].public_key()
-        builder = get_cert_builder(root_cert.expires, serial=root_cert.pub.loaded.serial_number)
+        builder = get_cert_builder(root_cert.not_after, serial=root_cert.pub.loaded.serial_number)
         builder = builder.public_key(pkey)
         builder = builder.issuer_name(root_cert.ca.subject)
         builder = builder.subject_name(root_cert.pub.loaded.subject)

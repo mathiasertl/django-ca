@@ -448,7 +448,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             "subject_alternative_name_0": json.dumps(serialized),
             "subject_alternative_name_1": False,
             "algorithm": "SHA-256",
-            "expires": self.cert.ca.expires.strftime("%Y-%m-%d"),
+            "not_after": self.cert.ca.not_after.strftime("%Y-%m-%d"),
             "key_usage_0": ["digital_signature", "key_agreement", "key_encipherment"],
             "key_usage_1": True,
             "extended_key_usage_0": [ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],

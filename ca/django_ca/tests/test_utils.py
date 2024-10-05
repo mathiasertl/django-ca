@@ -491,7 +491,7 @@ class GetCertBuilderTestCase(TestCase):
     @freeze_time("2021-01-23 14:42:11")
     def test_negative_datetime(self) -> None:
         """Test passing a datetime in the past."""
-        msg = r"^expires must be in the future$"
+        msg = r"^not_after must be in the future$"
         with self.assertRaisesRegex(ValueError, msg):
             get_cert_builder(datetime.now(tz.utc) - timedelta(seconds=60))
 
@@ -502,7 +502,7 @@ class GetCertBuilderTestCase(TestCase):
 
     def test_naive_datetime(self) -> None:
         """Test passing a naive datetime."""
-        with self.assertRaisesRegex(ValueError, r"^expires must not be a naive datetime$"):
+        with self.assertRaisesRegex(ValueError, r"^not_after must not be a naive datetime$"):
             get_cert_builder(datetime.now())
 
 

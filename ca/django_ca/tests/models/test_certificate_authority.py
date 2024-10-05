@@ -542,7 +542,7 @@ def test_regenerate_ocsp_responder_certificate(usable_root: CertificateAuthority
         updated_ocsp_responder_key_data = usable_root.generate_ocsp_key(key_backend_options)
         assert updated_ocsp_responder_key_data is not None
         _, _, updated_ocsp_responder_certificate = updated_ocsp_responder_key_data
-        assert updated_ocsp_responder_certificate.expires > ocsp_responder_certificate.expires
+        assert updated_ocsp_responder_certificate.not_after > ocsp_responder_certificate.not_after
 
 
 def test_force_regenerate_ocsp_responder_certificate(usable_root: CertificateAuthority) -> None:

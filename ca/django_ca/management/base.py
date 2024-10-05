@@ -592,7 +592,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         self, ca: CertificateAuthority, expires: Optional[timedelta], profile: Profile
     ) -> None:
         """Verify that the certificate authority can be used for signing."""
-        if ca.expires < timezone.now():
+        if ca.not_after < timezone.now():
             raise CommandError("Certificate authority has expired.")
         if ca.revoked:
             raise CommandError("Certificate authority is revoked.")
@@ -603,8 +603,8 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             expires = profile.expires
         parsed_expires = datetime.now(tz=tz.utc).replace(second=0, microsecond=0) + expires
 
-        if ca.expires < parsed_expires:
-            max_days = (ca.expires - timezone.now()).days
+        if ca.not_after < parsed_expires:
+            max_days = (ca.not_after - timezone.now()).days
             raise CommandError(
                 f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."
             )
@@ -683,7 +683,7 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
         if settings.USE_TZ:
             # If USE_TZ is True, database (and thus output) fields will use locally configured timezone
             not_before = cert.not_before
-            not_after = cert.expires
+            not_after = cert.not_after
         else:
             # If USE_TZ is False, still display UTC timestamps.
             not_before = cert.pub.loaded.not_valid_before_utc

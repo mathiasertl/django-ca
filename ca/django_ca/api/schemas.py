@@ -42,7 +42,6 @@ class X509BaseSchema(ModelSchema, abc.ABC):
     not_after: datetime = Field(
         description="The certificate is not valid after this date.",
         json_schema_extra={"example": DATETIME_EXAMPLE},
-        validation_alias="expires",
     )
     not_before: datetime = Field(
         description="The certificate is not valid before this date.",

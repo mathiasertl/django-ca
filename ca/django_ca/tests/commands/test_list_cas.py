@@ -135,18 +135,23 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         self.assertEqual(stderr, "")
 
         # manually create Certificate objects
-        expires = timezone.now() + timedelta(days=3)
+        not_after = timezone.now() + timedelta(days=3)
         not_before = timezone.now() - timedelta(days=3)
         root = self.cas["root"]
         pub = CERT_DATA["child-cert"]["pub"]["parsed"]
         child3 = CertificateAuthority.objects.create(
-            name="child3", serial="child3", parent=root, expires=expires, not_before=not_before, pub=pub
+            name="child3", serial="child3", parent=root, not_after=not_after, not_before=not_before, pub=pub
         )
         CertificateAuthority.objects.create(
-            name="child4", serial="child4", parent=root, expires=expires, not_before=not_before, pub=pub
+            name="child4", serial="child4", parent=root, not_after=not_after, not_before=not_before, pub=pub
         )
         CertificateAuthority.objects.create(
-            name="child3.1", serial="child3.1", parent=child3, expires=expires, not_before=not_before, pub=pub
+            name="child3.1",
+            serial="child3.1",
+            parent=child3,
+            not_after=not_after,
+            not_before=not_before,
+            pub=pub,
         )
 
         stdout, stderr = cmd("list_cas", tree=True)

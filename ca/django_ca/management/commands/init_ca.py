@@ -386,8 +386,8 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         #
         # The reasoning is simple: When issuing the child CA, the default is automatically after that of the
         # parent if it wasn't issued on the same day.
-        if parent and timezone.now() + expires > parent.expires:
-            not_after_datetime = parent.expires
+        if parent and timezone.now() + expires > parent.not_after:
+            not_after_datetime = parent.not_after
 
             # Make sure expires_datetime is tz-aware, even if USE_TZ=False.
             if timezone.is_naive(not_after_datetime):

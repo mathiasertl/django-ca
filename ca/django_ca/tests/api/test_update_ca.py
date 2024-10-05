@@ -103,7 +103,7 @@ def expected_response(root: CertificateAuthority, payload: dict[str, Any]) -> di
             "can_sign_certificates": False,
             "created": iso_format(root.created),
             "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
-            "not_after": iso_format(root.expires),
+            "not_after": iso_format(root.not_after),
             "not_before": iso_format(root.not_before),
             "pem": CERT_DATA["root"]["pub"]["pem"],
             "revoked": False,

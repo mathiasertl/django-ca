@@ -685,7 +685,7 @@ def test_unsortable_subject_with_no_common_name(
 
 def test_expiry_too_late(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test signing with an expiry after the CA expires."""
-    time_left = (usable_root.expires - timezone.now()).days
+    time_left = (usable_root.not_after - timezone.now()).days
     expires = timedelta(days=time_left + 3)
 
     with (

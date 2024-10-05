@@ -231,7 +231,7 @@ class X509CertMixin(DjangoCAModel):
     updated = models.DateTimeField(auto_now=True)
 
     not_before = models.DateTimeField(blank=False)
-    expires = models.DateTimeField(null=False, blank=False)
+    not_after = models.DateTimeField(null=False, blank=False)
 
     pub = CertificateField(verbose_name=_("Public key"))
     cn = models.CharField(max_length=128, verbose_name=_("CommonName"))
@@ -371,18 +371,18 @@ class X509CertMixin(DjangoCAModel):
     def update_certificate(self, value: x509.Certificate) -> None:
         """Update this instance with data from a :py:class:`cg:cryptography.x509.Certificate`.
 
-        This function will also populate the `cn`, `serial, `expires` and `not_before` fields.
+        This function will also populate the `cn`, `serial, `not_after` and `not_before` fields.
         """
         self.pub = LazyCertificate(value)
         self.cn = next(
             (attr.value for attr in value.subject if attr.oid == NameOID.COMMON_NAME),  # type: ignore[misc]
             "",
         )
-        self.expires = value.not_valid_after_utc
+        self.not_after = value.not_valid_after_utc
         self.not_before = value.not_valid_before_utc
 
         if settings.USE_TZ is False:
-            self.expires = timezone.make_naive(self.expires, timezone=tz.utc)
+            self.not_after = timezone.make_naive(self.not_after, timezone=tz.utc)
             self.not_before = timezone.make_naive(self.not_before, timezone=tz.utc)
 
         self.serial = int_to_hex(value.serial_number)  # upper-cased by int_to_hex()
@@ -975,8 +975,8 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         self, scope: typing.Literal[None, "ca", "user", "attribute"], now: datetime
     ) -> Iterable[X509CertMixin]:
         """Get CRLs for the given scope."""
-        ca_qs = self.children.filter(expires__gt=now).revoked()
-        cert_qs = self.certificate_set.filter(expires__gt=now).revoked()
+        ca_qs = self.children.filter(not_after__gt=now).revoked()
+        cert_qs = self.certificate_set.filter(not_after__gt=now).revoked()
 
         if scope == "ca":
             return ca_qs
@@ -1217,7 +1217,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     @property
     def usable(self) -> bool:
         """True if the CA is currently usable or not."""
-        return self.enabled and self.not_before < timezone.now() < self.expires
+        return self.enabled and self.not_before < timezone.now() < self.not_after
 
     @property
     def is_openssh_ca(self) -> bool:

@@ -518,7 +518,7 @@ def test_init_with_deprecated_expires(ca_name: str, subject: x509.Name, key_back
         ca = CertificateAuthority.objects.init(
             ca_name, key_backend, key_backend_options, subject, expires=not_after
         )
-    assert ca.expires == not_after
+    assert ca.not_after == not_after
     assert ca.pub.loaded.not_valid_after_utc == not_after
 
 
@@ -593,7 +593,7 @@ def test_default_with_not_yet_valid(root: CertificateAuthority, settings: Settin
 def test_default_with_no_default_ca(settings: SettingsWrapper) -> None:
     """Test what is returned when **no** CA is configured as default."""
     settings.CA_DEFAULT_CA = None
-    ca = sorted(CertificateAuthority.objects.all(), key=lambda obj: (obj.expires, obj.serial))[-1]
+    ca = sorted(CertificateAuthority.objects.all(), key=lambda obj: (obj.not_after, obj.serial))[-1]
     assert CertificateAuthority.objects.default() == ca
 
 
