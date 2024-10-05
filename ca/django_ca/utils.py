@@ -885,12 +885,16 @@ def parse_encoding(value: str) -> Encoding:
         raise ValueError(f"Unknown encoding: {value}") from e
 
 
-def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:
+def get_cert_builder(not_after: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:
     """Get a basic X.509 certificate builder object.
+
+    .. versionchanged:: 2.1.0
+
+        The ``expires`` parameter was renamed to ``not_after``.
 
     Parameters
     ----------
-    expires : datetime
+    not_after : datetime
         When this certificate is supposed to expire, as a timezone-aware datetime object.
     serial : int, optional
         Serial for the certificate. If not passed, a serial will be randomly generated using
@@ -903,21 +907,21 @@ def get_cert_builder(expires: datetime, serial: Optional[int] = None) -> x509.Ce
     if serial is None:
         serial = x509.random_serial_number()
 
-    if timezone.is_naive(expires):
+    if timezone.is_naive(not_after):
         raise ValueError("not_after must not be a naive datetime")
-    if expires <= now:
+    if not_after <= now:
         raise ValueError("not_after must be in the future")
 
     # strip seconds and microseconds
-    expires = expires.replace(second=0, microsecond=0)
+    not_after = not_after.replace(second=0, microsecond=0)
 
     # cryptography expects timezone-naive objects in UTC, so we convert them.
     now = timezone.make_naive(now, timezone=tz.utc)
-    expires = timezone.make_naive(expires, timezone=tz.utc)
+    not_after = timezone.make_naive(not_after, timezone=tz.utc)
 
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)
-    builder = builder.not_valid_after(expires)
+    builder = builder.not_valid_after(not_after)
     builder = builder.serial_number(serial)
 
     return builder
