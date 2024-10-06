@@ -53,7 +53,7 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
 
     # RFC 8555, section 8.4: "Verify that the contents of one of the TXT records match the digest value"
     for answer in answers:
-        txt_data = answer.strings
+        txt_data = answer.strings  # type: ignore[attr-defined]  # seems to be a false positive
 
         # A single TXT record can have multiple string values, even if rarely seen in practice
         for value in txt_data:
