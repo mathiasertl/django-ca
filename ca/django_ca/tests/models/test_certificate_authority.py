@@ -557,6 +557,32 @@ def test_force_regenerate_ocsp_responder_certificate(usable_root: CertificateAut
         assert cert_renewed.serial != cert.serial
 
 
+def test_regenerate_ocsp_key_with_deprecated_expires(usable_root: CertificateAuthority) -> None:
+    """Test calling generate_ocsp_key() with deprecated expires parameter."""
+    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
+        _, _, certificate = usable_root.generate_ocsp_key(  # type: ignore[misc]
+            key_backend_options, expires=not_after
+        )
+    assert certificate.not_after == not_after.replace(second=0, microsecond=0)
+
+
+def test_regenerate_ocsp_key_with_not_after_and_expires(root: CertificateAuthority) -> None:
+    """Test calling generate_ocsp_key() with both not_after and (deprecated) expires, which is an error."""
+    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+    warning = (
+        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
+    )
+    with (
+        pytest.warns(RemovedInDjangoCA230Warning, match=warning),
+        pytest.raises(ValueError, match=r"^`not_before` and `expires` cannot both be set\.$"),
+    ):
+        root.generate_ocsp_key(key_backend_options, not_after=not_after, expires=not_after)
+
+
 def test_empty_extensions_for_certificate(root: CertificateAuthority) -> None:
     """Test extensions_for_certificate property when no values are set."""
     root.sign_certificate_policies = None

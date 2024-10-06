@@ -166,7 +166,7 @@ def generate_ocsp_key(
     value = ca.generate_ocsp_key(
         key_backend_options=key_backend_options_model,
         profile=parameters.profile,
-        expires=parameters.not_after,
+        not_after=parameters.not_after,
         algorithm=parameters.algorithm,
         key_size=parameters.key_size,
         key_type=parameters.key_type,

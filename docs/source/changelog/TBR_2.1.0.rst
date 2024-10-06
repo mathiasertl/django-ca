@@ -18,6 +18,7 @@ Python API
   affected:
 
   * :func:`django_ca.models.CertificateAuthority.sign`
+  * :func:`django_ca.models.CertificateAuthority.generate_ocsp_key`
   * :func:`django_ca.managers.CertificateAuthorityManager.init`
   * :func:`django_ca.managers.CertificateManager.create_cert`
   * :func:`django_ca.profiles.Profile.create_cert`
