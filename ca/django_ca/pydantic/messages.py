@@ -54,7 +54,7 @@ class GenerateOCSPKeyMessage(BaseModel):
 
     serial: Serial
     profile: str = "ocsp"
-    expires: Optional[timedelta] = Field(default=None, ge=timedelta(seconds=3600))
+    not_after: Optional[timedelta] = Field(default=None, ge=timedelta(seconds=3600))
     key_type: Optional[ParsableKeyType] = None
     key_size: Optional[Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)]] = None
     elliptic_curve: Optional[EllipticCurveTypeAlias] = None

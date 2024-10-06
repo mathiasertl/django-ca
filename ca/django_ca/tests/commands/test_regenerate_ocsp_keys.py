@@ -64,8 +64,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         cert_path = f"ocsp/{ca.serial}.pem"
 
         storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
-        self.assertTrue(storage.exists(priv_path))
-        self.assertTrue(storage.exists(cert_path))
+        assert storage.exists(priv_path) is True
+        assert storage.exists(cert_path) is True
         if key_type is None:
             ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
                 ca, StoragesUsePrivateKeyOptions(password=None)
@@ -114,8 +114,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         priv_path = f"ocsp/{serial}.key"
         cert_path = f"ocsp/{serial}.pem"
         storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
-        self.assertFalse(storage.exists(priv_path))
-        self.assertFalse(storage.exists(cert_path))
+        assert storage.exists(priv_path) is False
+        assert storage.exists(cert_path) is False
 
     @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
     def test_basic(self) -> None:
@@ -123,8 +123,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         with self.mute_celery():
             stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
 
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         self.assertKey(self.cas["root"])
 
     @override_tmpcadir(CA_USE_CELERY=False)
@@ -135,8 +135,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 "regenerate_ocsp_keys", CERT_DATA["root"]["serial"], key_type="RSA", key_size=4096
             )
 
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         self.assertKey(self.cas["root"], key_size=4096)
 
     @override_tmpcadir(CA_USE_CELERY=False)
@@ -147,8 +147,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 "regenerate_ocsp_keys", CERT_DATA["ec"]["serial"], elliptic_curve=ec.SECP384R1()
             )
 
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         self.assertKey(self.cas["ec"], elliptic_curve=ec.SECP384R1)
 
     @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
@@ -159,8 +159,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 "regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--algorithm", "SHA-256"
             )
 
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         self.assertKey(self.cas["root"])
 
     @override_tmpcadir(CA_USE_CELERY=True)
@@ -174,7 +174,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                         "serial": CERT_DATA["root"]["serial"],
                         "key_backend_options": {"password": None},
                         "profile": "ocsp",
-                        "expires": "P2D",
+                        "not_after": "P2D",
                         "algorithm": "SHA-256",
                         "key_size": None,
                         "key_type": "RSA",
@@ -189,15 +189,15 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
             stdout, stderr = cmd_e2e(
                 ["regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--algorithm", "SHA-256"]
             )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
 
     @override_tmpcadir()
     def test_with_ed448_with_explicit_key_type(self) -> None:
         """Test creating an Ed448-based OCSP key for an RSA-based CA."""
         stdout, stderr = cmd_e2e(["regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--key-type", "Ed448"])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
 
         self.assertKey(self.cas["root"], key_type=ed448.Ed448PrivateKey)
 
@@ -209,8 +209,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         del self.cas["pwd"]
 
         stdout, stderr = cmd("regenerate_ocsp_keys")
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         for ca in self.cas.values():
             self.assertKey(ca)
 
@@ -218,8 +218,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def test_overwrite(self) -> None:
         """Test overwriting pre-generated OCSP keys."""
         stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         priv, cert = self.assertKey(self.cas["root"])
 
         # get list of existing certificates
@@ -227,8 +227,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
 
         # write again
         stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"], force=True)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
         new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)
 
         # Key/Cert should now be different
@@ -240,8 +240,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         """Try passing an unknown CA."""
         serial = "ZZZZZ"
         stdout, stderr = cmd("regenerate_ocsp_keys", serial, no_color=True)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "0Z:ZZ:ZZ: Unknown CA.\n")
+        assert stdout == ""
+        assert stderr == "0Z:ZZ:ZZ: Unknown CA.\n"
         self.assertHasNoKey(serial)
 
     @override_tmpcadir(CA_PROFILES={"ocsp": None})

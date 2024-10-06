@@ -127,7 +127,7 @@ def generate_ocsp_key(
     serial: str,
     key_backend_options: Optional[dict[str, JSON]] = None,
     profile: str = "ocsp",
-    expires: Optional[Union[str, int]] = None,
+    not_after: Optional[Union[str, int]] = None,
     algorithm: Optional[HashAlgorithms] = None,
     key_size: Optional[int] = None,
     key_type: Optional[ParsableKeyType] = None,
@@ -149,7 +149,7 @@ def generate_ocsp_key(
     parameters = GenerateOCSPKeyMessage(
         serial=serial,
         profile=profile,
-        expires=expires,
+        not_after=not_after,
         key_type=key_type,
         key_size=key_size,
         elliptic_curve=elliptic_curve,
@@ -166,7 +166,7 @@ def generate_ocsp_key(
     value = ca.generate_ocsp_key(
         key_backend_options=key_backend_options_model,
         profile=parameters.profile,
-        expires=parameters.expires,
+        expires=parameters.not_after,
         algorithm=parameters.algorithm,
         key_size=parameters.key_size,
         key_type=parameters.key_type,

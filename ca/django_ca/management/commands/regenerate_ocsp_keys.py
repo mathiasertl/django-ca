@@ -151,7 +151,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             parameters = GenerateOCSPKeyMessage(
                 serial=ca.serial,
                 profile=profile,
-                expires=expires,
+                not_after=expires,
                 key_type=ca_key_type,
                 key_size=ca_key_size,
                 elliptic_curve=ca_elliptic_curve,
