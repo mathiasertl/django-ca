@@ -798,7 +798,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             algorithm=algorithm,
             issuer=self.subject,
             subject=subject,
-            expires=not_after,
+            not_after=not_after,
             extensions=certificate_extensions,
         )
 

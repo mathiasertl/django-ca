@@ -375,7 +375,7 @@ class Profile:
             algorithm=algorithm,
             issuer=ca.subject,
             subject=subject,
-            expires=not_after,
+            not_after=not_after,
             extensions=certificate_extensions,
         )
 

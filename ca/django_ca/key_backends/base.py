@@ -306,7 +306,7 @@ class KeyBackend(
         algorithm: Optional[AllowedHashTypes],
         issuer: x509.Name,
         subject: x509.Name,
-        expires: datetime,
+        not_after: datetime,
         # NOTE: Allows any extension, as the function is also used for creating certificate authorities.
         extensions: Sequence[CertificateExtension],
     ) -> x509.Certificate:

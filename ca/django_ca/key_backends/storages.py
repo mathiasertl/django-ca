@@ -365,10 +365,10 @@ class StoragesBackend(
         algorithm: Optional[AllowedHashTypes],
         issuer: x509.Name,
         subject: x509.Name,
-        expires: datetime,
+        not_after: datetime,
         extensions: Sequence[CertificateExtension],
     ) -> x509.Certificate:
-        builder = get_cert_builder(expires, serial=serial)
+        builder = get_cert_builder(not_after, serial=serial)
         builder = builder.public_key(public_key)
         builder = builder.issuer_name(issuer)
         builder = builder.subject_name(subject)

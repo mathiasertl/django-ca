@@ -561,7 +561,7 @@ class CertificateAuthorityManager(
             algorithm=algorithm,
             issuer=issuer,
             subject=subject,
-            expires=not_after,
+            not_after=not_after,
             extensions=extensions,
         )
 

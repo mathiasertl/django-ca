@@ -130,7 +130,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         algorithm: Optional[AllowedHashTypes],
         issuer: x509.Name,
         subject: x509.Name,
-        expires: datetime,
+        not_after: datetime,
         extensions: Sequence[CertificateExtension],
     ) -> x509.Certificate:
         return None  # type: ignore[return-value]
