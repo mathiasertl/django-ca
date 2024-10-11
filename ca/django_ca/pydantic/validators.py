@@ -14,9 +14,9 @@
 """Validators for Pydantic models."""
 
 import base64
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import timedelta
-from typing import Any, Callable, Literal, TypeVar, Union
+from typing import Any, Callable, Literal, Optional, TypeVar, Union
 from urllib.parse import urlsplit
 
 import idna
@@ -40,6 +40,25 @@ def base64_encoded_str_validator(value: Any) -> Any:
     if isinstance(value, str):
         return base64.b64decode(value.encode(encoding="ascii"))
     return value
+
+
+def crl_scope_validator(
+    only_contains_ca_certs: bool,
+    only_contains_user_certs: bool,
+    only_contains_attribute_certs: bool,
+    only_some_reasons: Optional[Iterable[x509.ReasonFlags]],
+) -> None:
+    """Validate the scope of a certificate revocation list (CRL)."""
+    contains = (only_contains_ca_certs, only_contains_user_certs, only_contains_attribute_certs)
+    if len([c for c in contains if c is True]) > 1:
+        raise ValueError(
+            "Only one of `only_contains_ca_certs`, `only_contains_user_certs` and "
+            "`only_contains_attribute_certs` can be set."
+        )
+
+    if only_some_reasons is not None:
+        for reason in only_some_reasons:
+            reason_flag_crl_scope_validator(reason)
 
 
 def dns_validator(name: str) -> str:
@@ -169,6 +188,20 @@ def pem_csr_validator(value: bytes) -> bytes:
         b"\n-----END CERTIFICATE REQUEST-----"
     ):
         raise ValueError("Invalid PEM data.")
+    return value
+
+
+def reason_flag_validator(value: Any) -> Any:
+    """Validate a ``str`` to a :class:`~cg:cryptography.x509.ReasonFlags`."""
+    if isinstance(value, str):
+        return x509.ReasonFlags[value]
+    return value
+
+
+def reason_flag_crl_scope_validator(value: x509.ReasonFlags) -> x509.ReasonFlags:
+    """Ensure that the :class:`~cg:cryptography.x509.ReasonFlags` is allowed in a CRL scope."""
+    if value in (x509.ReasonFlags.unspecified, x509.ReasonFlags.remove_from_crl):
+        raise ValueError("unspecified and remove_from_crl are not valid for `only_some_reasons`.")
     return value
 
 

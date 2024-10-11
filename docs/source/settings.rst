@@ -60,16 +60,27 @@ CA_CRL_PROFILES
           'user': {
               'expires': 86400,
               'scope': 'user',
-              'encodings': ["DER", "PEM"],
           },
           'ca': {
               'expires': 86400,
               'scope': 'ca',
-              'encodings': ["DER", "PEM"],
           },
       }
 
    A set of CRLs to create using automated tasks. The default value is usually fine.
+
+   .. versionchanged:: 2.1.0
+
+      * The `only_some_reasons` parameter was added.
+      * The `encodings` parameter was removed. Both supported encodings are now always available.
+      * The `scope` parameter to :ref:`settings-ca-crl-profiles` is now deprecated in favor of the
+        `only_contains_ca_certs`, `only_contains_user_certs` and `only_some_reasons` parameters. The old
+        parameter currently still takes precedence, but will be removed in django-ca 2.3.0.
+
+
+   .. versionchanged:: 1.25.0
+
+      Support for specifying custom signature hash algorithms in the configuration was removed.
 
    You may also specify an ``"OVERRIDES"`` key for a particular profile to specify custom behavior for select
    certificate authorities named by serial. It can set the same values as a general profile, plus the
@@ -85,10 +96,6 @@ CA_CRL_PROFILES
                }
           }
       }
-
-   .. versionchanged:: 1.25.0
-
-      Support for specifying custom signature hash algorithms in the configuration was removed.
 
    The hash algorithm used for signing the CRL will be the one used for signing the certificate authority
    itself.

@@ -37,7 +37,7 @@ import pytest
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA220Warning
+from django_ca.deprecation import RemovedInDjangoCA220Warning, RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
@@ -71,7 +71,6 @@ def assert_ca_properties(
     acme_enabled: bool = False,
     acme_profile: Optional[str] = None,
     acme_requires_contact: bool = True,
-    crl_number: str = '{"scope": {}}',
     password: Optional[bytes] = None,
 ) -> None:
     """Assert some basic properties of a CA."""
@@ -83,7 +82,6 @@ def assert_ca_properties(
     assert ca.name == name
     assert ca.enabled is True
     assert ca.parent == parent
-    assert ca.crl_number == crl_number
 
     # Test ACME properties
     assert ca.acme_enabled is acme_enabled
@@ -217,7 +215,7 @@ def assert_crl(  # noqa: PLR0913
 
     if idp is not None:  # pragma: no branch
         extensions.append(idp)
-    if last_update is None:
+    if last_update is None:  # pragma: no branch
         last_update = now.replace(microsecond=0)
     extensions.append(signer.get_authority_key_identifier_extension())
     extensions.append(
@@ -244,7 +242,11 @@ def assert_crl(  # noqa: PLR0913
     assert parsed_crl.issuer == signer.pub.loaded.subject
     assert parsed_crl.last_update_utc == last_update
     assert parsed_crl.next_update_utc == expires_timestamp
-    assert list(parsed_crl.extensions) == extensions
+
+    def ext_sorter(ext: x509.Extension[x509.ExtensionType]) -> str:
+        return ext.oid.dotted_string
+
+    assert sorted(parsed_crl.extensions, key=ext_sorter) == sorted(extensions, key=ext_sorter)
 
     entries = {e.serial_number: e for e in parsed_crl}
     assert sorted(entries) == sorted(c.pub.loaded.serial_number for c in expected)
@@ -370,6 +372,33 @@ def assert_improperly_configured(msg: str) -> Iterator[None]:
         yield
 
 
+def assert_issuing_distribution_point(
+    extension: x509.Extension[x509.IssuingDistributionPoint],
+    full_name: Optional[Iterable[x509.GeneralName]] = None,
+    relative_name: Optional[x509.RelativeDistinguishedName] = None,
+    only_contains_user_certs: bool = False,
+    only_contains_ca_certs: bool = False,
+    only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None,
+    indirect_crl: bool = False,
+    only_contains_attribute_certs: bool = False,
+    critical: bool = True,
+) -> None:
+    """Shortcut for asserting an Issuing Point Distribution extension."""
+    assert extension == x509.Extension(
+        oid=ExtensionOID.ISSUING_DISTRIBUTION_POINT,
+        critical=critical,
+        value=x509.IssuingDistributionPoint(
+            full_name=full_name,
+            relative_name=relative_name,
+            only_contains_user_certs=only_contains_user_certs,
+            only_contains_ca_certs=only_contains_ca_certs,
+            only_contains_attribute_certs=only_contains_attribute_certs,
+            indirect_crl=indirect_crl,
+            only_some_reasons=only_some_reasons,
+        ),
+    )
+
+
 def assert_post_issue_cert(post: Mock, cert: Certificate) -> None:
     """Assert that the post_issue_cert signal was called with the expected certificate."""
     post.assert_called_once_with(cert=cert, signal=post_issue_cert, sender=Certificate)
@@ -442,6 +471,13 @@ def assert_system_exit(code: int) -> Iterator[None]:
 def assert_removed_in_220(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
     """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
     with pytest.warns(RemovedInDjangoCA220Warning, match=match):
+        yield
+
+
+@contextmanager
+def assert_removed_in_230(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
+    """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
+    with pytest.warns(RemovedInDjangoCA230Warning, match=match):
         yield
 
 

@@ -20,13 +20,19 @@ from datetime import timedelta
 from importlib.util import find_spec
 from typing import Annotated, Any, Literal, Optional, Union, cast
 
-from annotated_types import Ge, Le, MinLen
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
+from annotated_types import Ge, Le
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.conf import settings as _settings
@@ -35,26 +41,26 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
-from django_ca.deprecation import RemovedInDjangoCA220Warning
+from django_ca.deprecation import RemovedInDjangoCA220Warning, RemovedInDjangoCA230Warning
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.type_aliases import (
-    CertificateRevocationListEncodingTypeAlias,
+    CertificateRevocationListReasonCode,
     EllipticCurveTypeAlias,
     HashAlgorithmTypeAlias,
     PowerOfTwoInt,
     Serial,
     UniqueElementsTuple,
 )
-from django_ca.pydantic.validators import name_oid_parser, timedelta_as_number_parser
+from django_ca.pydantic.validators import crl_scope_validator, name_oid_parser, timedelta_as_number_parser
 from django_ca.typehints import (
     AllowedHashTypes,
     CertificateRevocationListScopes,
     ConfigurableExtension,
     ConfigurableExtensionKeys,
     ParsableKeyType,
+    Self,
 )
 
-CRLEncodings = Annotated[frozenset[CertificateRevocationListEncodingTypeAlias], MinLen(1)]
 # BeforeValidator currently does not work together with Le(), see:
 #   https://github.com/pydantic/pydantic/issues/10459
 # TimedeltaAsDays = Annotated[timedelta, BeforeValidator(timedelta_as_number_parser("days"))]
@@ -244,22 +250,86 @@ def _subject_validator(value: Any) -> Any:
 Subject = Annotated[x509.Name, BeforeValidator(_subject_validator)]
 
 
-class CertificateRevocationListProfileOverride(BaseModel):
+class CertificateRevociationListBaseModel(BaseModel):
+    """Base model for CRL profiles and overrides."""
+
+    encodings: Optional[Any] = None
+    scope: Optional[CertificateRevocationListScopes] = None
+    only_contains_ca_certs: bool = False
+    only_contains_user_certs: bool = False
+    only_contains_attribute_certs: bool = False
+    only_some_reasons: Optional[frozenset[CertificateRevocationListReasonCode]] = None
+
+    @field_validator("encodings")
+    @classmethod
+    def warn_encodings(cls, v: Any) -> Any:
+        """Validator to warn that encodings is now unused."""
+        warnings.warn(
+            "encodings: Setting has no effect starting with django-ca 2.1.0.",
+            RemovedInDjangoCA230Warning,
+            stacklevel=1,
+        )
+        return v
+
+    @model_validator(mode="after")
+    def validate_scope(self) -> Self:
+        """Validate the scope of the CRL."""
+        if "scope" in self.model_fields_set:
+            warnings.warn(
+                "scope: Setting is deprecated and will be removed in django-ca 2.3.0. Use "
+                "`only_contains_ca_certs` and `only_contains_user_certs` instead.",
+                RemovedInDjangoCA230Warning,
+                stacklevel=1,
+            )
+            if self.scope == "user":
+                self.only_contains_user_certs = True
+            if self.scope == "ca":
+                self.only_contains_ca_certs = True
+            if self.scope == "attribute":
+                self.only_contains_attribute_certs = True
+            self.scope = None
+
+        crl_scope_validator(
+            self.only_contains_ca_certs,
+            self.only_contains_user_certs,
+            self.only_contains_attribute_certs,
+            None,  # already validated by type alias for field
+        )
+        return self
+
+
+class CertificateRevocationListProfileOverride(CertificateRevociationListBaseModel):
     """Model for overriding fields of a CRL Profile."""
 
-    encodings: Optional[CRLEncodings] = None
     expires: Optional[timedelta] = None
-    scope: Optional[CertificateRevocationListScopes] = None
     skip: bool = False
 
 
-class CertificateRevocationListProfile(BaseModel):
+class CertificateRevocationListProfile(CertificateRevociationListBaseModel):
     """Model for profiles for CRL generation."""
 
-    encodings: CRLEncodings
     expires: timedelta = timedelta(days=1)
-    scope: Optional[CertificateRevocationListScopes] = None
     OVERRIDES: dict[Serial, CertificateRevocationListProfileOverride] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_overrides(self) -> Self:
+        """Validate that overrides do not create an invalid scope."""
+        # pylint: disable-next=no-member  # pylint doesn't recognize the type of OVERRIDES.
+        for override in self.OVERRIDES.values():
+            only_contains_user_certs = self.only_contains_user_certs
+            only_contains_ca_certs = self.only_contains_ca_certs
+            only_contains_attribute_certs = self.only_contains_attribute_certs
+            if "only_contains_ca_certs" in override.model_fields_set:
+                only_contains_ca_certs = override.only_contains_ca_certs
+            if "only_contains_user_certs" in override.model_fields_set:
+                only_contains_user_certs = override.only_contains_user_certs
+            if "only_contains_attribute_certs" in override.model_fields_set:
+                only_contains_attribute_certs = override.only_contains_attribute_certs
+
+            crl_scope_validator(  # only_some_reasons is already validated by type alias for field
+                only_contains_ca_certs, only_contains_user_certs, only_contains_attribute_certs, None
+            )
+        return self
 
 
 class KeyBackendConfigurationModel(BaseModel):
@@ -300,12 +370,8 @@ class SettingsModel(BaseModel):
     CA_ACME_MAX_CERT_VALIDITY: AcmeCertValidity = timedelta(days=90)
 
     CA_CRL_PROFILES: dict[str, CertificateRevocationListProfile] = {
-        "user": CertificateRevocationListProfile(
-            expires=timedelta(days=1), scope="user", encodings=[Encoding.PEM, Encoding.DER]
-        ),
-        "ca": CertificateRevocationListProfile(
-            expires=timedelta(days=1), scope="ca", encodings=[Encoding.PEM, Encoding.DER]
-        ),
+        "user": CertificateRevocationListProfile(only_contains_user_certs=True),
+        "ca": CertificateRevocationListProfile(only_contains_ca_certs=True),
     }
     CA_DEFAULT_CA: Optional[Serial] = None
     CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA256()

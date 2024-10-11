@@ -18,7 +18,7 @@ import argparse
 import getpass
 import typing
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -162,17 +162,21 @@ class ExpiresAction(SingleValueAction[str, timedelta]):
     3
     """
 
+    def __init__(self, unit: Literal["days", "hours", "minutes", "seconds"] = "days", **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.unit = unit
+
     def parse_value(self, value: str) -> timedelta:
         """Parse the value for this action."""
         # NOTE: Making this a member of ExpiresAction causes an infinite loop for some reason
         try:
-            days = int(value)
+            parsed = int(value)
         except ValueError as ex:
             raise argparse.ArgumentError(self, f"{value}: Value must be an integer.") from ex
-        if days <= 0:
+        if parsed <= 0:
             raise argparse.ArgumentError(self, f"{value}: Value must not be negative.")
 
-        return timedelta(days=days)
+        return timedelta(**{self.unit: parsed})  # type: ignore[misc]  # mypy does not expect Literal as str
 
 
 class FormatAction(SingleValueAction[str, Encoding]):

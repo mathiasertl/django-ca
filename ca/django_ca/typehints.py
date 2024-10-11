@@ -38,6 +38,11 @@ if sys.version_info < (3, 12):  # pragma: only py<3.12
 else:  # pragma: only py>=3.12
     from typing import TypeAliasType as TypeAliasType  # noqa: PLC0414
 
+if sys.version_info < (3, 11):  # pragma: only py<3.11
+    from typing_extensions import Self as Self  # noqa: PLC0414
+else:  # pragma: only py>=3.11
+    from typing import Self as Self  # noqa: PLC0414
+
 # pylint: disable-next=invalid-name
 JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]
 

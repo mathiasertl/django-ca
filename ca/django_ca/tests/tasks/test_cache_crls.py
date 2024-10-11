@@ -17,8 +17,6 @@ import base64
 import logging
 from unittest import mock
 
-from cryptography.hazmat.primitives.serialization import Encoding
-
 from django.core.cache import cache
 
 import pytest
@@ -27,8 +25,8 @@ from _pytest.logging import LogCaptureFixture
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crls
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.utils import crl_cache_key
 from django_ca.tests.tasks.conftest import assert_crls
-from django_ca.utils import get_crl_cache_key
 
 pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
@@ -47,7 +45,7 @@ def test_with_expired_certificate_authorities(usable_cas: list[CertificateAuthor
     cache_crls()
 
     for ca in usable_cas:
-        key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
+        key = crl_cache_key(ca.serial, only_contains_ca_certs=True)
         assert cache.get(key) is None
 
 
@@ -61,7 +59,7 @@ def test_with_invalid_password(usable_pwd: CertificateAuthority) -> None:
     """Test passing an invalid password."""
     password = base64.b64encode(b"wrong").decode()
     cache_crls([usable_pwd.serial], {usable_pwd.serial: {"password": password}})
-    key = get_crl_cache_key(usable_pwd.serial, Encoding.DER, "ca")
+    key = crl_cache_key(usable_pwd.serial, only_contains_ca_certs=True)
     assert cache.get(key) is None
 
 

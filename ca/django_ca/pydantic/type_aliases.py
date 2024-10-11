@@ -21,9 +21,9 @@ from pydantic import AfterValidator, BeforeValidator, Field, GetPydanticSchema, 
 from pydantic_core import core_schema
 from pydantic_core.core_schema import IsInstanceSchema, LiteralSchema
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.serialization import Encoding
 
 from django_ca import constants
 from django_ca.pydantic.validators import (
@@ -33,10 +33,12 @@ from django_ca.pydantic.validators import (
     non_empty_validator,
     oid_parser,
     oid_validator,
+    reason_flag_crl_scope_validator,
+    reason_flag_validator,
     serial_validator,
     unique_validator,
 )
-from django_ca.typehints import AllowedHashTypes, CertificateRevocationListEncodings
+from django_ca.typehints import AllowedHashTypes
 
 T = TypeVar("T", bound=type[Any])
 
@@ -48,12 +50,12 @@ def _get_cryptography_schema(
     json_serializer: Optional[Callable[[T], str]] = None,
     str_loader: Optional[Callable[[str], T]] = None,
 ) -> GetPydanticSchema:
-    if json_serializer is None:
+    if json_serializer is None:  # pragma: no branch
 
         def json_serializer(instance: T) -> str:
             return name_mapping[type(instance)]
 
-    if str_loader is None:
+    if str_loader is None:  # pragma: no branch
 
         def str_loader(value: str) -> T:
             return type_mapping[value]()  # type: ignore[no-any-return,misc]  # false positive
@@ -65,7 +67,7 @@ def _get_cryptography_schema(
         ]
     )
 
-    if isinstance(cls, list):
+    if isinstance(cls, list):  # pragma: no cover
         python_schema: Union[LiteralSchema, IsInstanceSchema] = core_schema.literal_schema(cls)
     else:
         python_schema = core_schema.is_instance_schema(cls)
@@ -91,6 +93,11 @@ Base64EncodedBytes = Annotated[
     ),
 ]
 
+#: A subset of :class:`~cg:cryptography.x509.ReasonFlags` that allows only reason codes valid in a certificate
+#: revocation list (CRL).
+CertificateRevocationListReasonCode = Annotated[
+    x509.ReasonFlags, BeforeValidator(reason_flag_validator), AfterValidator(reason_flag_crl_scope_validator)
+]
 
 #: A type alias for :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instances.
 #:
@@ -114,21 +121,6 @@ HashAlgorithmTypeAlias = Annotated[
     ),
 ]
 
-#: A type alias for :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding` instances.
-#:
-#: This type alias validates names from
-#: :py:attr:`~django_ca.constants.CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES` and serializes to the canonical
-#: name in JSON. Models using this type alias can be used with strict schema validation.
-CertificateRevocationListEncodingTypeAlias = Annotated[
-    CertificateRevocationListEncodings,
-    _get_cryptography_schema(
-        list(constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES),
-        constants.CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES,
-        constants.CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES,
-        json_serializer=lambda v: v.name,
-        str_loader=lambda v: Encoding[v],
-    ),
-]
 
 #: A type alias for an integer that is a power of two, e.g. an RSA/DSA KeySize.
 #:

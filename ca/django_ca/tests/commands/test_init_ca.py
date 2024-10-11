@@ -66,12 +66,12 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     cmd,
     cmd_e2e,
+    crl_cache_key,
     crl_distribution_points,
     distribution_point,
     dns,
     extended_key_usage,
     get_idp,
-    idp_full_name,
     issuer_alternative_name,
     key_usage,
     name_constraints,
@@ -80,7 +80,6 @@ from django_ca.tests.base.utils import (
     uri,
 )
 from django_ca.typehints import AllowedHashTypes, EllipticCurves, HashAlgorithms, ParsableKeyType
-from django_ca.utils import get_crl_cache_key
 
 use_options = StoragesUsePrivateKeyOptions(password=None)
 
@@ -120,13 +119,13 @@ def assert_ocsp_responder_certificate(ca: CertificateAuthority) -> None:
 
 def assert_crls(ca: CertificateAuthority) -> None:
     """Assert CRLs."""
-    cache_key = get_crl_cache_key(ca.serial, Encoding.PEM, scope="user")
-    user_idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
+    cache_key = crl_cache_key(ca.serial, Encoding.PEM, only_contains_user_certs=True)
+    user_idp = get_idp(only_contains_user_certs=True)
     crl = cache.get(cache_key)
     assert_crl(crl, signer=ca, algorithm=ca.algorithm, idp=user_idp)
 
-    cache_key = get_crl_cache_key(ca.serial, Encoding.PEM, scope="ca")
-    ca_idp = get_idp(full_name=None, only_contains_ca_certs=True)
+    cache_key = crl_cache_key(ca.serial, Encoding.PEM, only_contains_ca_certs=True)
+    ca_idp = get_idp(only_contains_ca_certs=True)
     crl = cache.get(cache_key)
     assert_crl(crl, signer=ca, algorithm=ca.algorithm, idp=ca_idp)
 
@@ -176,7 +175,7 @@ def init_ca_e2e(
 def test_basic(ca_name: str, subject: x509.Name, rfc4514_subject: str, key_backend: StoragesBackend) -> None:
     """Basic tests for the command."""
     ca = init_ca_e2e(ca_name, rfc4514_subject)
-    assert_ca_properties(ca, ca_name, crl_number='{"scope": {"user": 1, "ca": 1}}')
+    assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
 
     # test the private key

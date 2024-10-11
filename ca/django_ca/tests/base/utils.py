@@ -34,6 +34,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
+from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.conf import settings
@@ -50,6 +51,7 @@ from django_ca.profiles import profiles
 from django_ca.tests.acme.views.constants import SERVER_NAME
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
 from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
+from django_ca.utils import get_crl_cache_key
 
 
 class DummyModel(BaseModel):
@@ -346,6 +348,25 @@ def country(value: str) -> x509.NameAttribute:
     return x509.NameAttribute(NameOID.COUNTRY_NAME, value)
 
 
+def crl_cache_key(
+    serial: str,
+    encoding: Encoding = Encoding.DER,
+    only_contains_ca_certs: bool = False,
+    only_contains_user_certs: bool = False,
+    only_contains_attribute_certs: bool = False,
+    only_some_reasons: Optional[Iterable[x509.ReasonFlags]] = None,
+) -> str:
+    """Shortcut to get a CRL cache key."""
+    return get_crl_cache_key(
+        serial,
+        encoding,
+        only_contains_ca_certs=only_contains_ca_certs,
+        only_contains_user_certs=only_contains_user_certs,
+        only_contains_attribute_certs=only_contains_attribute_certs,
+        only_some_reasons=only_some_reasons,
+    )
+
+
 def crl_distribution_points(
     *distribution_points: x509.DistributionPoint, critical: bool = False
 ) -> x509.Extension[x509.CRLDistributionPoints]:
@@ -441,19 +462,6 @@ def get_idp(
         ),
         critical=True,
     )
-
-
-def idp_full_name(ca: CertificateAuthority) -> Optional[list[x509.UniformResourceIdentifier]]:
-    """Get the IDP full name for `ca`."""
-    if ca.sign_crl_distribution_points is None:  # pragma: no cover
-        return None
-    full_names = []
-    for dpoint in ca.sign_crl_distribution_points.value:
-        if dpoint.full_name:  # pragma: no branch
-            full_names += dpoint.full_name
-    if full_names:  # pragma: no branch
-        return full_names
-    return None  # pragma: no cover
 
 
 def iso_format(value: datetime, timespec: str = "seconds") -> str:

@@ -38,10 +38,19 @@ from ca.settings_utils import (
     update_database_setting_from_environment,
 )
 from django_ca import conf
-from django_ca.conf import KeyBackendConfigurationModel, model_settings
-from django_ca.tests.base.assertions import assert_improperly_configured, assert_removed_in_220
+from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
+from django_ca.tests.base.assertions import (
+    assert_improperly_configured,
+    assert_removed_in_220,
+    assert_removed_in_230,
+)
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.utils import cn, country, state
+
+SCOPE_ERROR = (
+    r"Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` "
+    r"can be set\."
+)
 
 
 @pytest.mark.parametrize("value", (True, False) * 5)
@@ -359,6 +368,51 @@ def test_ca_acme_order_validity_limits(settings: SettingsWrapper, value: timedel
         settings.CA_ACME_ORDER_VALIDITY = value
 
 
+def test_ca_crl_profiles_with_reason_codes(settings: SettingsWrapper) -> None:
+    """Test only_some_reasons for CA_CRL_PROFILES."""
+    settings.CA_CRL_PROFILES = {
+        "ca": {"only_some_reasons": ["key_compromise", x509.ReasonFlags.ca_compromise]}
+    }
+    assert model_settings.CA_CRL_PROFILES == {
+        "ca": CertificateRevocationListProfile(
+            only_some_reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.ca_compromise])
+        )
+    }
+
+
+@pytest.mark.parametrize("reason", (x509.ReasonFlags.unspecified, x509.ReasonFlags.remove_from_crl))
+def test_ca_crl_profiles_with_invalid_reason_codes(
+    settings: SettingsWrapper, reason: x509.ReasonFlags
+) -> None:
+    """Test that an in valid only_some_reasons in CA_CRL_PROFILES raises an exception."""
+    message = r"unspecified and remove_from_crl are not valid for `only_some_reasons`\."
+    with assert_improperly_configured(message):
+        settings.CA_CRL_PROFILES = {"ca": {"only_some_reasons": [reason]}}
+
+
+def test_ca_crl_profiles_with_deprecated_encodings(settings: SettingsWrapper) -> None:
+    """Test that `encodings` in CA_CRL_PROFILES creates a warning."""
+    msg = r"^encodings: Setting has no effect starting with django-ca 2\.1\.0\.$"
+    with assert_removed_in_230(msg):
+        settings.CA_CRL_PROFILES = {"ca": {"encodings": ["PEM"]}}
+    with assert_removed_in_230(msg):
+        assert model_settings.CA_CRL_PROFILES == {"ca": CertificateRevocationListProfile(encodings=["PEM"])}
+
+
+@pytest.mark.parametrize("scope", ("user", "ca", "attribute"))
+def test_ca_crl_profiles_with_deprecated_scope(settings: SettingsWrapper, scope: str) -> None:
+    """Set deprecated ca scope."""
+    msg = (
+        r"^scope: Setting is deprecated and will be removed in django-ca 2\.3\.0\. Use "
+        r"`only_contains_ca_certs` and `only_contains_user_certs` instead\.$"
+    )
+    with assert_removed_in_230(msg):
+        settings.CA_CRL_PROFILES = {"ca": {"scope": scope}}
+    assert model_settings.CA_CRL_PROFILES == {
+        "ca": CertificateRevocationListProfile(**{f"only_contains_{scope}_certs": True})
+    }
+
+
 @pytest.mark.parametrize(
     "value,parsed",
     (
@@ -671,3 +725,26 @@ def test_ca_use_celery_is_true_with_celery_not_installed(settings: SettingsWrapp
     with mock.patch.dict("sys.modules", celery=None):
         with assert_improperly_configured(msg):
             settings.CA_USE_CELERY = True
+
+
+def test_ca_crl_profiles_invalid_scope(settings: SettingsWrapper) -> None:
+    """Test that setting both `only_contains_ca_certs` and `only_contains_user_certs` is an error."""
+    with assert_improperly_configured(SCOPE_ERROR):
+        settings.CA_CRL_PROFILES = {"ca": {"only_contains_ca_certs": True, "only_contains_user_certs": True}}
+
+
+@pytest.mark.parametrize(
+    "base,override",
+    (
+        ("only_contains_ca_certs", "only_contains_user_certs"),
+        ("only_contains_user_certs", "only_contains_ca_certs"),
+        ("only_contains_attribute_certs", "only_contains_user_certs"),
+        ("only_contains_user_certs", "only_contains_attribute_certs"),
+    ),
+)
+def test_ca_crl_profiles_invalid_scope_by_override(
+    settings: SettingsWrapper, base: bool, override: bool
+) -> None:
+    """Test that setting an invalid scope in an override."""
+    with assert_improperly_configured(SCOPE_ERROR):
+        settings.CA_CRL_PROFILES = {"ca": {base: True, "OVERRIDES": {"123": {override: True}}}}

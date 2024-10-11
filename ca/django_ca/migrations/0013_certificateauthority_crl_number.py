@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 default='{"scope": {}}',
                 help_text="Data structure to store the CRL number (see RFC 5280, 5.2.3) depending on the scope.",
-                validators=[django_ca.models.json_validator],
+                validators=[],
                 verbose_name="CRL Number",
             ),
         ),

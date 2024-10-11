@@ -637,7 +637,7 @@ class ReasonFlags(enum.Enum):
     remove_from_crl = "removeFromCRL"
 
 
-#: Mapping of RFC 5280, section 5.3.1 reason codes too cryptography reason codes
+#: Mapping of RFC 5280, section 5.3.1 reason codes to cryptography reason codes
 REASON_CODES = {
     0: ReasonFlags.unspecified,
     1: ReasonFlags.key_compromise,

@@ -18,16 +18,13 @@ from typing import Optional
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
-from django.urls import reverse
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_crl
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.utils import cmd, get_idp, idp_full_name, uri
-from django_ca.utils import get_crl_cache_key
+from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.base.utils import cmd, crl_cache_key, get_idp
 
 # freeze time as otherwise CRLs might have rounding errors
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.usefixtures("clear_cache")]
@@ -35,53 +32,26 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.ma
 
 def assert_crl_by_ca(ca: CertificateAuthority, expected: Optional[list[Certificate]] = None) -> None:
     """Assert all cached CRLs for the given CA."""
-    key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
+    key = crl_cache_key(ca.serial, only_contains_ca_certs=True)
     crl = cache.get(key)
     assert crl is not None
-    if ca.parent:
-        url_path = reverse("django_ca:ca-crl", kwargs={"serial": ca.serial})
-        idp = get_idp(full_name=[uri(f"http://localhost:8000{url_path}")], only_contains_ca_certs=True)
-    else:
-        idp = get_idp(only_contains_ca_certs=True)
-
+    idp = get_idp(only_contains_ca_certs=True)
     assert_crl(crl, signer=ca, algorithm=ca.algorithm, encoding=Encoding.DER, idp=idp)
 
-    key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
+    key = crl_cache_key(ca.serial, only_contains_user_certs=True)
     crl = cache.get(key)
     assert crl is not None
-    idp = get_idp(full_name=idp_full_name(ca), only_contains_user_certs=True)
+    idp = get_idp(only_contains_user_certs=True)
     assert_crl(crl, signer=ca, algorithm=ca.algorithm, encoding=Encoding.DER, idp=idp, expected=expected)
 
 
-def test_cmd(settings: SettingsWrapper, usable_cas: list[CertificateAuthority]) -> None:
+def test_cmd(usable_cas: list[CertificateAuthority]) -> None:
     """Test the basic command."""
-    settings.CA_CRL_PROFILES = {
-        "user": {
-            "expires": 86400,
-            "scope": "user",
-            "encodings": ["PEM", "DER"],
-            "OVERRIDES": {
-                CERT_DATA["pwd"]["serial"]: {"skip": True},
-            },
-        },
-        "ca": {
-            "expires": 86400,
-            "scope": "ca",
-            "encodings": ["PEM", "DER"],
-            "OVERRIDES": {
-                CERT_DATA["pwd"]["serial"]: {"skip": True},
-            },
-        },
-    }
-
     stdout, stderr = cmd("cache_crls")
     assert stdout == ""
     assert stderr == ""
 
     for ca in usable_cas:
-        if ca.name == "pwd":
-            # TODO: not supported yet
-            continue
         assert_crl_by_ca(ca)
 
 
@@ -90,9 +60,6 @@ def test_with_serial(usable_cert: Certificate) -> None:
     """Test passing an explicit serial."""
     usable_cert.revoke()
     ca = usable_cert.ca
-    if CERT_DATA[ca.name].get("password"):
-        # TODO: not yet possible
-        return
 
     stdout, stderr = cmd("cache_crls", ca.serial)
     assert stdout == ""
@@ -103,10 +70,6 @@ def test_with_serial(usable_cert: Certificate) -> None:
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_with_serial_with_empty_crl(usable_ca: CertificateAuthority) -> None:
     """Test passing an explicit serial."""
-    if CERT_DATA[usable_ca.name].get("password"):
-        # TODO: not yet possible
-        return
-
     stdout, stderr = cmd("cache_crls", usable_ca.serial)
     assert stdout == ""
     assert stderr == ""

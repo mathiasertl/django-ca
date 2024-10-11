@@ -17,7 +17,7 @@ import binascii
 import re
 import shlex
 import typing
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from datetime import datetime, timezone as tz
 from ipaddress import ip_address, ip_network
 from typing import Optional, Union
@@ -959,6 +959,31 @@ def split_str(val: str, sep: str) -> Iterator[str]:
     yield from lex
 
 
-def get_crl_cache_key(serial: str, encoding: Encoding = Encoding.DER, scope: Optional[str] = None) -> str:
-    """Get the cache key for a CRL with the given parameters."""
-    return f"crl_{serial}_{encoding.name}_{scope}"
+def get_crl_cache_key(
+    serial: str,
+    encoding: Encoding,
+    *,
+    only_contains_ca_certs: bool,
+    only_contains_user_certs: bool,
+    only_contains_attribute_certs: bool,
+    only_some_reasons: Optional[Iterable[x509.ReasonFlags]],
+) -> str:
+    """Get the cache key for a CRL with the given parameters.
+
+    Note that this function does not assert the consistency of `only_contains_ca_certs` and
+    `only_contains_user_certs` and `only_contains_attribute_certs`, as this is expected to already be done by
+    the caller.
+
+    .. versionchanged:: 2.1.0
+
+       The `scope` parameter was removed. Use `only_contains_ca_certs`, `only_contains_user_certs` and
+       `only_contains_attribute_certs` instead.
+    """
+    reasons = "None"
+    if only_some_reasons is not None:
+        reasons = ",".join(sorted(reason.name for reason in only_some_reasons))
+
+    return (
+        f"crl_{serial}_{encoding.name}_{only_contains_ca_certs}_{only_contains_user_certs}_"
+        f"{only_contains_attribute_certs}_{reasons}"
+    )

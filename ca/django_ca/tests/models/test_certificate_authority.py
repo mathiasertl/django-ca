@@ -35,7 +35,6 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import storages
 from django.db import connection
-from django.urls import reverse
 
 import pytest
 from freezegun import freeze_time
@@ -46,24 +45,35 @@ from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic import CertificatePoliciesModel
-from django_ca.tests.base.assertions import assert_certificate, assert_crl, assert_sign_cert_signals
+from django_ca.tests.base.assertions import (
+    assert_certificate,
+    assert_crl,
+    assert_removed_in_230,
+    assert_sign_cert_signals,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
     certificate_policies,
+    crl_cache_key,
     crl_distribution_points,
     distribution_point,
     get_idp,
-    idp_full_name,
     issuer_alternative_name,
     uri,
 )
 from django_ca.tests.models.base import assert_bundle
 from django_ca.typehints import PolicyQualifier
-from django_ca.utils import get_crl_cache_key
 
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
+
+CACHE_KEY_KWARGS = {
+    "only_contains_ca_certs": False,
+    "only_contains_user_certs": False,
+    "only_contains_attribute_certs": False,
+    "only_some_reasons": None,
+}
 
 
 @contextmanager
@@ -114,195 +124,13 @@ def test_root(root: CertificateAuthority, child: CertificateAuthority) -> None:
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("clear_cache")
-def test_full_crl(
-    usable_root: CertificateAuthority, child: CertificateAuthority, root_cert: Certificate
-) -> None:
+@pytest.mark.usefixtures("child")  # to make sure that they don't show up when they're not revoked.
+@pytest.mark.usefixtures("root_cert")  # to make sure that they don't show up when they're not revoked.
+def test_get_crl(usable_root: CertificateAuthority) -> None:
     """Test getting the CRL for a CertificateAuthority."""
-    full_name = "http://localhost/crl"
-    idp = get_idp(full_name=[uri(full_name)])
-
-    crl = usable_root.get_crl(key_backend_options, full_name=[uri(full_name)])
-    assert_crl(crl, idp=idp, signer=usable_root)
-
-    usable_root.sign_crl_distribution_points = crl_distribution_points(distribution_point([uri(full_name)]))
-    usable_root.save()
-    crl = usable_root.get_crl(key_backend_options)
-    assert_crl(crl, crl_number=1, signer=usable_root)
-
-    # revoke a cert and a ca
-    root_cert.revoke()
-    child.revoke()
-    crl = usable_root.get_crl(key_backend_options)
-    assert_crl(crl, expected=[root_cert, child], crl_number=2, signer=usable_root)
-
-    # unrevoke cert (so we have all three combinations)
-    root_cert.revoked = False
-    root_cert.revoked_date = None
-    root_cert.revoked_reason = ""
-    root_cert.save()
-
-    crl = usable_root.get_crl(key_backend_options)
-    assert_crl(crl, expected=[child], crl_number=3, signer=usable_root)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_intermediate_crl(usable_child: CertificateAuthority, child_cert: Certificate) -> None:
-    """Test getting the CRL of an intermediate CA."""
-    full_name = "http://localhost/crl"
-    idp = get_idp(full_name=[uri(full_name)])
-
-    crl = usable_child.get_crl(key_backend_options, full_name=[uri(full_name)])
-    assert_crl(crl, idp=idp, signer=usable_child)
-
-    # Revoke a cert
-    child_cert.revoke()
-    crl = usable_child.get_crl(key_backend_options, full_name=[uri(full_name)])
-    assert_crl(crl, expected=[child_cert], idp=idp, crl_number=1, signer=usable_child)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-@pytest.mark.usefixtures("clear_cache")
-def test_full_crl_without_timezone_support(
-    settings: SettingsWrapper,
-    usable_root: CertificateAuthority,
-    child: CertificateAuthority,
-    root_cert: Certificate,
-) -> None:
-    """Test full CRL but with timezone support disabled."""
-    settings.USE_TZ = False
-    # otherwise we get TZ warnings for preloaded objects
-
-    usable_root.refresh_from_db()
-    child.refresh_from_db()
-    root_cert.refresh_from_db()
-
-    test_full_crl(usable_root, child, root_cert)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_ca_crl(usable_root: CertificateAuthority, ec: CertificateAuthority, child_cert: Certificate) -> None:
-    """Test getting a CA CRL."""
-    idp = get_idp(only_contains_ca_certs=True)  # root CAs don't have a full name (GitHub issue #64)
-
-    crl = usable_root.get_crl(key_backend_options, scope="ca")
-    assert_crl(crl, idp=idp, signer=usable_root)
-
-    # revoke ca and cert, CRL only contains CA
-    child_cert.ca.revoke()
-    ec.revoke()
-    child_cert.revoke()
-    crl = usable_root.get_crl(key_backend_options, scope="ca")
-    assert_crl(crl, expected=[child_cert.ca], idp=idp, crl_number=1, signer=usable_root)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_intermediate_ca_crl(usable_child: CertificateAuthority) -> None:
-    """Test getting the CRL for an intermediate CA."""
-    # Intermediate CAs have a DP in the CRL that has the CA url
-    full_name = [uri(f"http://{model_settings.CA_DEFAULT_HOSTNAME}/django_ca/crl/ca/{usable_child.serial}/")]
-    idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
-
-    crl = usable_child.get_crl(key_backend_options, scope="ca")
-    assert_crl(crl, idp=idp, signer=usable_child)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_user_crl(usable_root: CertificateAuthority, root_cert: Certificate, child_cert: Certificate) -> None:
-    """Test getting a user CRL."""
-    idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
-
-    crl = usable_root.get_crl(key_backend_options, scope="user")
-    assert_crl(crl, idp=idp, signer=usable_root)
-
-    # revoke ca and cert, CRL only contains cert
-    root_cert.revoke()
-    child_cert.revoke()
-    child_cert.ca.revoke()
-    crl = usable_root.get_crl(key_backend_options, scope="user")
-    assert_crl(crl, expected=[root_cert], idp=idp, crl_number=1, signer=usable_root)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_attr_crl(usable_root: CertificateAuthority, root_cert: Certificate, child_cert: Certificate) -> None:
-    """Test getting an Attribute CRL (always an empty list)."""
-    idp = get_idp(only_contains_attribute_certs=True)
-
-    crl = usable_root.get_crl(key_backend_options, scope="attribute")
-    assert_crl(crl, idp=idp, signer=usable_root)
-
-    # revoke ca and cert, CRL is empty (we don't know attribute certs)
-    root_cert.revoke()
-    child_cert.revoke()
-    child_cert.ca.revoke()
-    crl = usable_root.get_crl(key_backend_options, scope="attribute")
-    assert_crl(crl, idp=idp, crl_number=1, signer=usable_root)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_no_idp(usable_child: CertificateAuthority) -> None:
-    """Test a CRL with no IDP."""
-    # CRLs require a full name (or only_some_reasons) if it's a full CRL
-    usable_child.sign_crl_distribution_points = None
-    usable_child.save()
-    crl = usable_child.get_crl(key_backend_options)
-    assert_crl(crl, idp=None, signer=usable_child)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_counter(usable_root: CertificateAuthority) -> None:
-    """Test the counter for CRLs."""
-    crl = usable_root.get_crl(key_backend_options, counter="test")
-    assert_crl(crl, crl_number=0, signer=usable_root)
-    crl = usable_root.get_crl(key_backend_options, counter="test")
-    assert_crl(crl, crl_number=1, signer=usable_root)
-
-    crl = usable_root.get_crl(key_backend_options)  # test with no counter
-    assert_crl(crl, crl_number=0, signer=usable_root)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_no_auth_key_identifier(usable_root: CertificateAuthority) -> None:
-    """Test getting the CRL from a CA with no AuthorityKeyIdentifier."""
-
-    # All CAs have an authority key identifier, so we mock that this exception is not present
-    def side_effect(cls: Any) -> NoReturn:
-        raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
-
-    full_name = "http://localhost/crl"
-    idp = get_idp(full_name=[uri(full_name)])
-
-    with mock.patch("cryptography.x509.extensions.Extensions.get_extension_for_oid", side_effect=side_effect):
-        crl = usable_root.get_crl(key_backend_options, full_name=[uri(full_name)])
-    # Note that we still get an AKI because the value comes from the public key in this case
-    assert_crl(crl, idp=idp, signer=usable_root, algorithm=usable_root.algorithm)
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_get_crl_with_wrong_algorithm(ed_ca: CertificateAuthority) -> None:
-    """Test that we validate the algorithm if passed by the user."""
-    # DSA/RSA/EC keys cannot trigger this condition, as the algorithm would default to the one used by
-    # the certificate authority itself.
-
-    with pytest.raises(ValueError, match=r"^Ed(25519|448) keys do not allow an algorithm for signing\.$"):
-        ed_ca.get_crl(key_backend_options, algorithm=hashes.SHA256())
-
-
-def test_validate_json(root: CertificateAuthority) -> None:
-    """Test the json validator."""
-    # Validation works if we're not revoked
-    root.full_clean()
-
-    root.crl_number = "{"
-    # Note: we do not use self.assertValidationError, b/c the JSON message might be system dependent
-    with pytest.raises(ValidationError, match="Must be valid JSON:"):
-        root.full_clean()
-    # self.assertTrue(re.match("Must be valid JSON: ", exc_cm.exception.message_dict["crl_number"][0]))
-
-
-def test_crl_invalid_scope(root: CertificateAuthority) -> None:
-    """Try getting a CRL with an invalid scope."""
-    with pytest.raises(ValueError, match=r'^scope must be either None, "ca", "user" or "attribute"$'):
-        root.get_crl(key_backend_options, scope="foobar")  # type: ignore[arg-type]
+    with assert_removed_in_230(r"^get_crl\(\) is deprecated and will be removed in django-ca 2\.3\.$"):
+        crl = usable_root.get_crl(key_backend_options)
+    assert_crl(crl, signer=usable_root)
 
 
 @pytest.mark.usefixtures("clear_cache")
@@ -310,17 +138,12 @@ def test_crl_invalid_scope(root: CertificateAuthority) -> None:
 def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) -> None:
     """Test caching of CRLs."""
     ca_private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
-    der_user_key = get_crl_cache_key(usable_ca.serial, Encoding.DER, "user")
-    pem_user_key = get_crl_cache_key(usable_ca.serial, Encoding.PEM, "user")
-    der_ca_key = get_crl_cache_key(usable_ca.serial, Encoding.DER, "ca")
-    pem_ca_key = get_crl_cache_key(usable_ca.serial, Encoding.PEM, "ca")
-    user_idp = get_idp(full_name=idp_full_name(usable_ca), only_contains_user_certs=True)
-    if usable_ca.parent is None:
-        ca_idp = get_idp(full_name=None, only_contains_ca_certs=True)
-    else:
-        crl_path = reverse("django_ca:ca-crl", kwargs={"serial": usable_ca.serial})
-        full_name = [uri(f"http://{model_settings.CA_DEFAULT_HOSTNAME}{crl_path}")]
-        ca_idp = get_idp(full_name=full_name, only_contains_ca_certs=True)
+    der_user_key = crl_cache_key(usable_ca.serial, only_contains_user_certs=True)
+    pem_user_key = crl_cache_key(usable_ca.serial, Encoding.PEM, only_contains_user_certs=True)
+    der_ca_key = crl_cache_key(usable_ca.serial, only_contains_ca_certs=True)
+    pem_ca_key = crl_cache_key(usable_ca.serial, Encoding.PEM, only_contains_ca_certs=True)
+    user_idp = get_idp(full_name=None, only_contains_user_certs=True)
+    ca_idp = get_idp(full_name=None, only_contains_ca_certs=True)
 
     assert cache.get(der_ca_key) is None
     assert cache.get(pem_ca_key) is None
@@ -334,7 +157,6 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     assert_crl(
         der_user_crl,
         idp=user_idp,
-        crl_number=0,
         encoding=Encoding.DER,
         signer=usable_ca,
         algorithm=usable_ca.algorithm,
@@ -342,7 +164,6 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     assert_crl(
         pem_user_crl,
         idp=user_idp,
-        crl_number=0,
         encoding=Encoding.PEM,
         signer=usable_ca,
         algorithm=usable_ca.algorithm,
@@ -353,7 +174,6 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     assert_crl(
         der_ca_crl,
         idp=ca_idp,
-        crl_number=0,
         encoding=Encoding.DER,
         signer=usable_ca,
         algorithm=usable_ca.algorithm,
@@ -361,7 +181,6 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     assert_crl(
         pem_ca_crl,
         idp=ca_idp,
-        crl_number=0,
         encoding=Encoding.PEM,
         signer=usable_ca,
         algorithm=usable_ca.algorithm,
@@ -411,7 +230,9 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
 
     # clear caches and skip generation
     cache.clear()
-    crl_profiles = {k: v.model_dump() for k, v in model_settings.CA_CRL_PROFILES.items()}
+    crl_profiles = {
+        k: v.model_dump(exclude={"encodings", "scope"}) for k, v in model_settings.CA_CRL_PROFILES.items()
+    }
     crl_profiles["ca"]["OVERRIDES"][usable_ca.serial] = {"skip": True}
     crl_profiles["user"]["OVERRIDES"][usable_ca.serial] = {"skip": True}
 
@@ -425,42 +246,51 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
 
 
 @pytest.mark.usefixtures("clear_cache")
-def test_cache_crls_algorithm(usable_root: CertificateAuthority) -> None:
-    """Test passing an explicit hash algorithm."""
-    der_user_key = get_crl_cache_key(usable_root.serial, Encoding.DER, "user")
-    pem_user_key = get_crl_cache_key(usable_root.serial, Encoding.PEM, "user")
-    der_ca_key = get_crl_cache_key(usable_root.serial, Encoding.DER, "ca")
-    pem_ca_key = get_crl_cache_key(usable_root.serial, Encoding.PEM, "ca")
-
-    assert cache.get(der_ca_key) is None
-    assert cache.get(pem_ca_key) is None
-    assert cache.get(der_user_key) is None
-    assert cache.get(pem_user_key) is None
-
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+@pytest.mark.parametrize(
+    "parameters",
+    (
+        {"only_contains_ca_certs": True},
+        {"only_contains_user_certs": True},
+        {"only_contains_attribute_certs": True},
+        {"only_contains_user_certs": True, "only_some_reasons": frozenset([x509.ReasonFlags.key_compromise])},
+    ),
+)
+def test_cache_crls_with_profiles(
+    settings: SettingsWrapper, usable_root: CertificateAuthority, parameters: dict[str, Any]
+) -> None:
+    """Test cache_crls() with various CRL profiles."""
+    settings.CA_CRL_PROFILES = {"test": parameters}
     usable_root.cache_crls(key_backend_options)
 
-    der_user_crl = cache.get(der_user_key)
-    pem_user_crl = cache.get(pem_user_key)
-    assert isinstance(der_user_crl, bytes)
-    assert isinstance(pem_user_crl, bytes)
+    der_key = crl_cache_key(usable_root.serial, **parameters)
+    pem_key = crl_cache_key(usable_root.serial, Encoding.PEM, **parameters)
+
+    der_crl = x509.load_der_x509_crl(cache.get(der_key))
+    pem_crl = x509.load_pem_x509_crl(cache.get(pem_key))
+    idp = get_idp(**parameters)
+
+    assert_crl(der_crl, idp=idp, signer=usable_root)
+    assert_crl(pem_crl, idp=idp, signer=usable_root)
 
 
 @pytest.mark.usefixtures("clear_cache")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_cache_crls_with_overrides(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
-    """Test CA overrides for CRL profiles."""
-    ca_crl_profile = model_settings.CA_CRL_PROFILES["user"].model_dump()
-    ca_crl_profile["OVERRIDES"] = {usable_root.serial: {"encodings": frozenset([Encoding.PEM])}}
+    """Test cache_crls() with overrides for CRL profiles."""
+    ca_crl_profile = model_settings.CA_CRL_PROFILES["user"].model_dump(exclude={"encodings", "scope"})
+    ca_crl_profile["OVERRIDES"] = {usable_root.serial: {"expires": timedelta(days=3)}}
 
-    der_user_key = get_crl_cache_key(usable_root.serial, Encoding.DER, "user")
-    pem_user_key = get_crl_cache_key(usable_root.serial, Encoding.PEM, "user")
+    der_user_key = crl_cache_key(usable_root.serial, only_contains_user_certs=True)
+    pem_user_key = crl_cache_key(usable_root.serial, Encoding.PEM, only_contains_user_certs=True)
 
     settings.CA_CRL_PROFILES = {"user": ca_crl_profile}
     usable_root.cache_crls(key_backend_options)
 
-    der_user_crl = cache.get(der_user_key)
-    pem_user_crl = cache.get(pem_user_key)
-    assert der_user_crl is None  # now None since not specified in override
-    assert isinstance(pem_user_crl, bytes)
+    der_user_crl = x509.load_der_x509_crl(cache.get(der_user_key))
+    pem_user_crl = x509.load_pem_x509_crl(cache.get(pem_user_key))
+    assert der_user_crl.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=3)
+    assert pem_user_crl.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=3)
 
 
 def test_max_path_length(root: CertificateAuthority, child: CertificateAuthority) -> None:

@@ -15,7 +15,11 @@
 
 import abc
 import typing
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from collections.abc import Iterable
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
+
+from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
@@ -30,12 +34,16 @@ from django_ca.utils import sanitize_serial
 if not TYPE_CHECKING:
     # Inverting TYPE_CHECKING check here to make pylint==2.9.3 happy:
     #   https://github.com/PyCQA/pylint/issues/4697
+    CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
+    CertificateRevocationListQuerySetBase = models.QuerySet
     AcmeAccountQuerySetBase = AcmeAuthorizationQuerySetBase = AcmeCertificateQuerySetBase = (
         AcmeChallengeQuerySetBase
-    ) = AcmeOrderQuerySetBase = CertificateQuerySetBase = CertificateAuthorityQuerySetBase = models.QuerySet
+    ) = AcmeOrderQuerySetBase = models.QuerySet
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
 else:  # pragma: no cover  # only used for type checking
+    from typing import Self
+
     from django_ca.models import (
         AcmeAccount,
         AcmeAuthorization,
@@ -44,6 +52,7 @@ else:  # pragma: no cover  # only used for type checking
         AcmeOrder,
         Certificate,
         CertificateAuthority,
+        CertificateRevocationList,
         X509CertMixin,
     )
 
@@ -54,18 +63,19 @@ else:  # pragma: no cover  # only used for type checking
     AcmeOrderQuerySetBase = models.QuerySet[AcmeOrder]
     CertificateAuthorityQuerySetBase = models.QuerySet[CertificateAuthority]
     CertificateQuerySetBase = models.QuerySet[Certificate]
+    CertificateRevocationListQuerySetBase = models.QuerySet[CertificateRevocationList]
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet[X509CertMixin])
 
 
-class QuerySetProtocol(
+class X509CertMixinQuerySetProtocol(
     typing.Protocol[X509CertMixinTypeVar]
 ):  # pragma: nocover; pylint: disable=missing-function-docstring
     """Protocol used for a generic-self in mixins.
 
     Note that I couldn't get this to work in functions that should return the same type as well. So::
 
-        def filter(self: QuerySetProtocol) -> QuerySetProtocol:
+        def filter(self: X509CertMixinQuerySetProtocol) -> X509CertMixinQuerySetProtocol:
             ...
 
     ... doesn't work, unfortunately.
@@ -75,14 +85,18 @@ class QuerySetProtocol(
 
     model: X509CertMixinTypeVar
 
+    def filter(self, *args: Any, **kwargs: Any) -> "Self": ...
+
     def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
+
+    def revoked(self) -> "Self": ...
 
 
 class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
     """Mixin with common methods for CertificateAuthority and Certificate models."""
 
     def get_by_serial_or_cn(
-        self: QuerySetProtocol[X509CertMixinTypeVar], identifier: str
+        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
     ) -> X509CertMixinTypeVar:
         """Get a model by serial *or* by common name.
 
@@ -108,6 +122,28 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
             return self.get(exact_query)
         except self.model.DoesNotExist:
             return self.get(startswith_query)
+
+    def for_certificate_revocation_list(
+        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar],
+        *,
+        now: datetime,
+        reasons: Optional[Iterable[x509.ReasonFlags]],
+        grace_timedelta: timedelta = timedelta(minutes=10),
+    ) -> X509CertMixinQuerySetProtocol[X509CertMixinTypeVar]:
+        """Get certificates for a certificate revocation list (CRL).
+
+        .. versionadded:: 2.1.0
+        """
+        # Include certificates expired up to 10 minutes ago to account for a potential clock skew by a client.
+        not_before = now + grace_timedelta
+        not_after = now - grace_timedelta
+
+        qs = self.filter(not_before__lt=not_before, not_after__gt=not_after).revoked()
+
+        if reasons is not None:
+            reason_names = [reason.name for reason in reasons]
+            qs = self.filter(revoked_reason__in=reason_names)
+        return qs
 
 
 class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], CertificateAuthorityQuerySetBase):
@@ -213,6 +249,39 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
     def revoked(self) -> "CertificateQuerySet":
         """Return revoked certificates."""
         return self.filter(revoked=True)
+
+
+class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
+    """Queryset for :class:`~django_ca.models.CertificateRevocationList`."""
+
+    def newest(self) -> Optional["CertificateRevocationList"]:
+        """Get the instance with the highest CRL number."""
+        return self.order_by("-number").first()
+
+    def reasons(
+        self, only_some_reasons: Optional[frozenset[x509.ReasonFlags]]
+    ) -> "CertificateRevocationListQuerySet":
+        """Return CRLs with the given set of reasons."""
+        if only_some_reasons is None:
+            return self.filter(only_some_reasons__isnull=True)
+        reason_names = [reason.name for reason in only_some_reasons]
+        return self.filter(only_some_reasons=sorted(reason_names))
+
+    def scope(
+        self,
+        ca: "CertificateAuthority",
+        only_contains_ca_certs: bool = False,
+        only_contains_user_certs: bool = False,
+        only_contains_attribute_certs: bool = False,
+        only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None,
+    ) -> "CertificateRevocationListQuerySet":
+        """Return CRLs with the given scope."""
+        return self.filter(
+            ca=ca,
+            only_contains_ca_certs=only_contains_ca_certs,
+            only_contains_user_certs=only_contains_user_certs,
+            only_contains_attribute_certs=only_contains_attribute_certs,
+        ).reasons(only_some_reasons)
 
 
 class AcmeAccountQuerySet(AcmeAccountQuerySetBase):

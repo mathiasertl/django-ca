@@ -708,10 +708,10 @@ def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
         sign_cert(root, rfc4514_subject, stdin=csr)
 
 
-def test_invalid_algorithm(usable_ed448: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_invalid_algorithm(ed_ca: CertificateAuthority, rfc4514_subject: str) -> None:
     """Test passing an invalid algorithm."""
-    with assert_command_error(r"^Ed448 keys do not allow an algorithm for signing\.$"):
-        sign_cert(usable_ed448, rfc4514_subject, algorithm=hashes.SHA512())
+    with assert_command_error(r"^Ed(448|25519) keys do not allow an algorithm for signing\.$"):
+        sign_cert(ed_ca, rfc4514_subject, algorithm=hashes.SHA512())
 
 
 def test_no_cn_or_san(usable_root: CertificateAuthority, hostname: str) -> None:

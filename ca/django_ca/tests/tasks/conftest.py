@@ -14,12 +14,11 @@
 """Minor assertions for tasks."""
 
 from cryptography import x509
-from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache
 
 from django_ca.models import CertificateAuthority
-from django_ca.utils import get_crl_cache_key
+from django_ca.tests.base.utils import crl_cache_key
 
 
 def assert_crl(ca: CertificateAuthority, crl: x509.CertificateRevocationList) -> None:
@@ -35,10 +34,10 @@ def assert_crl(ca: CertificateAuthority, crl: x509.CertificateRevocationList) ->
 
 def assert_crls(ca: CertificateAuthority) -> None:
     """Assert that the correct CRLs have been generated."""
-    key = get_crl_cache_key(ca.serial, Encoding.DER, "ca")
+    key = crl_cache_key(ca.serial, only_contains_ca_certs=True)
     crl = x509.load_der_x509_crl(cache.get(key))
     assert_crl(ca, crl)
 
-    key = get_crl_cache_key(ca.serial, Encoding.DER, "user")
+    key = crl_cache_key(ca.serial, only_contains_user_certs=True)
     crl = x509.load_der_x509_crl(cache.get(key))
     assert_crl(ca, crl)

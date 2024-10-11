@@ -6,10 +6,19 @@ Deprecation timeline
 2.3.0 (TBR)
 ***********
 
+* The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` will be removed (deprecated
+  since django-ca 2.1.0).
+
+Settings
+========
+
+* The `scope` and `encodings` parameter to :ref:`settings-ca-crl-profiles` will be removed (deprecated since
+  django-ca 2.1.0).
+
 Python API
 ==========
 
-* The ``expires`` parameter to functions that create a certificate will be removed. Use ``not_after`` instead
+* The `expires` parameter to functions that create a certificate will be removed. Use `not_after` instead
   (deprecated since 2.1.0). The following functions are affected:
 
   * :func:`django_ca.models.CertificateAuthority.sign`
@@ -17,6 +26,17 @@ Python API
   * :func:`django_ca.managers.CertificateAuthorityManager.init`
   * :func:`django_ca.managers.CertificateManager.create_cert`
   * :func:`django_ca.profiles.Profile.create_cert`
+
+* The `scope` parameter to :func:`~django_ca.utils.get_crl_cache_key` will be removed (deprecated since
+  django-ca 2.1.0).
+* :func:`django_ca.models.CertificateAuthority.get_crl_certs` and
+  :func:`django_ca.models.CertificateAuthority.get_crl` will be removed (deprecated since django-ca 2.1.0).
+
+Views
+=====
+
+* The `scope` and `include_issuing_distribution_point` :class:`~django_ca.views.CertificateRevocationListView`
+  parameters will be removed (deprecated since 2.1.0).
 
 ***********
 2.2.0 (TBR)

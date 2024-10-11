@@ -52,8 +52,9 @@ from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import constants
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
-from django_ca.deprecation import RemovedInDjangoCA210Warning
-from django_ca.models import Certificate, CertificateAuthority
+from django_ca.deprecation import RemovedInDjangoCA210Warning, RemovedInDjangoCA230Warning
+from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
+from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.typehints import CertificateRevocationListEncodings
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
@@ -65,6 +66,8 @@ if typing.TYPE_CHECKING:
     SingleObjectMixinBase = SingleObjectMixin[CertificateAuthority]
 else:
     SingleObjectMixinBase = SingleObjectMixin
+
+_NOT_SET = object()
 
 
 class CertificateRevocationListView(View, SingleObjectMixinBase):
@@ -82,19 +85,51 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     type: CertificateRevocationListEncodings = Encoding.DER
     """Encoding for CRL."""
 
-    scope: Optional[typing.Literal["ca", "user", "attribute"]] = "user"
+    scope: Any = _NOT_SET
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
-    include both."""
+    include both.
+    
+    .. deprecated:: 2.1.0
+    
+       This flag is deprecated and will be removed in django-ca 2.3.0. Use `only_contains_ca_certs` and
+       `only_contains_user_certs` instead.
+    """
 
-    expires = 600
-    """CRL not_after in this many seconds."""
+    only_contains_ca_certs: bool = False
+    """Set to ``True`` to only include CA certificates in the CRL."""
+
+    only_contains_user_certs: bool = False
+    """Set to ``True`` to only include end-entity certificates in the CRL."""
+
+    only_contains_attribute_certs: bool = False
+    """Set to ``True`` to only include attribute certificates in the CRL."""
+
+    only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None
+    """Only include certificates revoked for one of the given :class:`~cg:cryptography.x509.ReasonFlags`. If
+    not set, all reasons are included."""
+
+    expires = 86400
+    """**(deprecated)** CRL not_after in this many seconds.
+    
+    *Please note* that this value is only used if no current CRL is found in the database (or cache) and the
+    CRL is generated locally (which will fail if the view does not have access to the private key).
+    
+    .. versionchanged:: 2.1.0
+    
+       The default was changed to one day (from 600) to align with the default elsewhere in the code.
+    """
 
     # header used in the request
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
     include_issuing_distribution_point: Optional[bool] = None
-    """Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension."""
+    """**(deprecated)** Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension.
+    
+    .. deprecated:: 2.1.0
+    
+       This parameter no longer has any effect and will be removed in django-ca 2.3.0.
+    """
 
     def get_key_backend_options(self, ca: CertificateAuthority) -> BaseModel:
         """Method to get the key backend options to access the private key.
@@ -112,25 +147,88 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
 
     def fetch_crl(self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
-        cache_key = get_crl_cache_key(ca.serial, encoding=encoding, scope=self.scope)
+        print(self.scope)
+        if self.scope is not _NOT_SET:
+            print(2)
+            warnings.warn(
+                "The scope parameter is deprecated and will be removed in django-ca 2.3.0, use "
+                "`only_contains_{ca,user,attribute}_cert` instead.",
+                RemovedInDjangoCA230Warning,
+                stacklevel=2,
+            )
+
+        if self.scope == "user":
+            only_contains_ca_certs = False
+            only_contains_user_certs = True
+            only_contains_attribute_certs = False
+        elif self.scope == "ca":
+            only_contains_ca_certs = True
+            only_contains_user_certs = False
+            only_contains_attribute_certs = False
+        elif self.scope == "attribute":
+            only_contains_ca_certs = False
+            only_contains_user_certs = False
+            only_contains_attribute_certs = True
+        else:  # scope is none or not set, defaults from self are fine.
+            only_contains_ca_certs = self.only_contains_ca_certs
+            only_contains_user_certs = self.only_contains_user_certs
+            only_contains_attribute_certs = self.only_contains_attribute_certs
+
+        crl_scope_validator(
+            only_contains_ca_certs=only_contains_ca_certs,
+            only_contains_user_certs=only_contains_user_certs,
+            only_contains_attribute_certs=only_contains_attribute_certs,
+            only_some_reasons=self.only_some_reasons,
+        )
+
+        cache_key = get_crl_cache_key(
+            ca.serial,
+            encoding=encoding,
+            only_contains_ca_certs=only_contains_ca_certs,
+            only_contains_user_certs=only_contains_user_certs,
+            only_contains_attribute_certs=only_contains_attribute_certs,
+            only_some_reasons=self.only_some_reasons,
+        )
 
         encoded_crl: Optional[bytes] = cache.get(cache_key)
+
+        # CRL is not cached, try to retrieve it from the database.
         if encoded_crl is None:
-            # Catch this case early so that we can give a better error message
-            if self.include_issuing_distribution_point is True and ca.parent is None and self.scope is None:
-                raise ValueError(
-                    "Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs."
+            crl_obj: Optional[CertificateRevocationList] = (
+                CertificateRevocationList.objects.scope(
+                    ca=ca,
+                    only_contains_ca_certs=only_contains_ca_certs,
+                    only_contains_user_certs=only_contains_user_certs,
+                    only_contains_attribute_certs=only_contains_attribute_certs,
+                    only_some_reasons=self.only_some_reasons,
+                )
+                .filter(data__isnull=False)  # only objects that have CRL data associated with it
+                .newest()
+            )
+
+            # CRL was not found in the database either, so we try to regenerate it.
+            if crl_obj is None:
+                key_backend_options = self.get_key_backend_options(ca)
+                expires = datetime.now(tz=tz.utc) + timedelta(seconds=self.expires)
+                crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+                    ca=ca,
+                    key_backend_options=key_backend_options,
+                    next_update=expires,
+                    only_contains_ca_certs=only_contains_ca_certs,
+                    only_contains_user_certs=only_contains_user_certs,
+                    only_contains_attribute_certs=only_contains_attribute_certs,
+                    only_some_reasons=self.only_some_reasons,
                 )
 
-            key_backend_options = self.get_key_backend_options(ca)
-            crl = ca.get_crl(
-                key_backend_options,
-                expires=self.expires,
-                scope=self.scope,
-                include_issuing_distribution_point=self.include_issuing_distribution_point,
-            )
-            encoded_crl = crl.public_bytes(encoding)
-            cache.set(cache_key, encoded_crl, self.expires)
+            # Cache the CRL.
+            crl_obj.cache()
+
+            # Get object in the right encoding.
+            if encoding == Encoding.PEM:
+                encoded_crl = crl_obj.pem
+            else:
+                encoded_crl = bytes(crl_obj.data)  # type: ignore[arg-type]  # None is ruled out by filter()
+
         return encoded_crl
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:  # pylint: disable=unused-argument

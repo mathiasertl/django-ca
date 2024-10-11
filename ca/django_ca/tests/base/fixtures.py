@@ -42,7 +42,8 @@ from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
 from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
-from django_ca.models import Certificate, CertificateAuthority
+from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
+from django_ca.tests.base import constants
 from django_ca.tests.base.conftest_helpers import (
     all_ca_names,
     all_cert_names,
@@ -53,7 +54,7 @@ from django_ca.tests.base.conftest_helpers import (
     usable_ca_names,
     usable_cert_names,
 )
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 
 
 @pytest.fixture(params=all_cert_names)
@@ -230,6 +231,77 @@ def rfc4514_subject(subject: x509.Name) -> Iterator[str]:
     :py:func:`~django_ca.tests.base.fixtures.subject`.
     """
     yield x509.Name(reversed(list(subject))).rfc4514_string()
+
+
+@pytest.fixture()
+def root_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
+    """Fixture for the global CRL object for the Root CA."""
+    with open(constants.FIXTURES_DIR / "root.crl", "rb") as stream:
+        crl_data = stream.read()
+    last_update = TIMESTAMPS["everything_valid"]
+    next_update = last_update + timedelta(seconds=86400)
+    crl = CertificateRevocationList.objects.create(
+        ca=root, number=0, last_update=last_update, next_update=next_update, data=crl_data
+    )
+    crl.cache()
+    yield crl
+
+
+@pytest.fixture()
+def root_ca_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
+    """Fixture for the user CRL object for the Root CA."""
+    with open(constants.FIXTURES_DIR / "root.ca.crl", "rb") as stream:
+        crl_data = stream.read()
+    last_update = TIMESTAMPS["everything_valid"]
+    next_update = last_update + timedelta(seconds=86400)
+    crl = CertificateRevocationList.objects.create(
+        ca=root,
+        number=0,
+        last_update=last_update,
+        next_update=next_update,
+        data=crl_data,
+        only_contains_ca_certs=True,
+    )
+    crl.cache()
+    yield crl
+
+
+@pytest.fixture()
+def root_user_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
+    """Fixture for the user CRL object for the Root CA."""
+    with open(constants.FIXTURES_DIR / "root.user.crl", "rb") as stream:
+        crl_data = stream.read()
+    last_update = TIMESTAMPS["everything_valid"]
+    next_update = last_update + timedelta(seconds=86400)
+    crl = CertificateRevocationList.objects.create(
+        ca=root,
+        number=0,
+        last_update=last_update,
+        next_update=next_update,
+        data=crl_data,
+        only_contains_user_certs=True,
+    )
+    crl.cache()
+    yield crl
+
+
+@pytest.fixture()
+def root_attribute_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
+    """Fixture for the attribute CRL object for the Root CA."""
+    with open(constants.FIXTURES_DIR / "root.attribute.crl", "rb") as stream:
+        crl_data = stream.read()
+    last_update = TIMESTAMPS["everything_valid"]
+    next_update = last_update + timedelta(seconds=86400)
+    crl = CertificateRevocationList.objects.create(
+        ca=root,
+        number=0,
+        last_update=last_update,
+        next_update=next_update,
+        data=crl_data,
+        only_contains_attribute_certs=True,
+    )
+    crl.cache()
+    yield crl
 
 
 @pytest.fixture()

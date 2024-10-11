@@ -22,9 +22,8 @@ from typing import Any
 from unittest import mock
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import CRLEntryExtensionOID, NameOID
+from cryptography.x509.oid import CRLEntryExtensionOID
 
 from django.utils import timezone
 
@@ -36,16 +35,11 @@ from django_ca.tests.base.assertions import (
     assert_command_error,
     assert_crl,
     assert_e2e_command_error,
+    assert_removed_in_230,
     assert_revoked,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.utils import (
-    cmd,
-    crl_distribution_points,
-    distribution_point,
-    get_idp,
-    idp_full_name,
-)
+from django_ca.tests.base.utils import cmd, cmd_e2e, get_idp
 
 # freeze time as otherwise CRLs might have rounding errors
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
@@ -58,32 +52,29 @@ def dump_crl(*args: Any, **kwargs: Any) -> bytes:
     return out
 
 
-def test_command(usable_ca: CertificateAuthority) -> None:
+def dump_crl_e2e(serial: str, *args: str) -> bytes:
+    """Run a dump_crl command via cmd_e2e()."""
+    out, err = cmd_e2e(["dump_crl", f"--ca={serial}", *args], stdout=BytesIO(), stderr=BytesIO())
+    assert err == b""
+    return out
+
+
+@pytest.mark.parametrize("encoding", (Encoding.DER, Encoding.PEM))
+def test_full_crl(usable_ca: CertificateAuthority, encoding: Encoding) -> None:
     """Test the command for every usable CA."""
-    stdout = dump_crl(ca=usable_ca, scope="user")
-    expected_idp = get_idp(full_name=idp_full_name(usable_ca), only_contains_user_certs=True)
-    assert_crl(stdout, signer=usable_ca, algorithm=usable_ca.algorithm, idp=expected_idp)
-
-
-def test_rsa_ca_with_sha512(usable_root: CertificateAuthority) -> None:
-    """Test creating a CRL from an RSA key with a custom algorithm."""
-    hash_cls = hashes.SHA512
-    assert not isinstance(usable_root.algorithm, hash_cls)  # make sure that test has a point
-    stdout = dump_crl(ca=usable_root, scope="user", algorithm=hash_cls())
-    expected_idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
-    assert_crl(stdout, signer=usable_root, algorithm=hash_cls(), idp=expected_idp)
+    stdout = dump_crl(ca=usable_ca, encoding=encoding)
+    assert_crl(stdout, signer=usable_ca, algorithm=usable_ca.algorithm, encoding=encoding)
 
 
 def test_file(tmp_path: Path, usable_root: CertificateAuthority) -> None:
     """Test dumping to a file."""
     path = os.path.join(tmp_path, "crl-test.crl")
-    stdout = dump_crl(path, ca=usable_root, scope="user")
+    stdout = dump_crl(path, ca=usable_root)
     assert stdout == b""
 
     with open(path, "rb") as stream:
         crl = stream.read()
-    expected_idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
-    assert_crl(crl, signer=usable_root, algorithm=usable_root.algorithm, idp=expected_idp)
+    assert_crl(crl, signer=usable_root, algorithm=usable_root.algorithm)
 
 
 def test_file_with_destination_does_not_exist(tmp_path: Path, usable_root: CertificateAuthority) -> None:
@@ -91,7 +82,7 @@ def test_file_with_destination_does_not_exist(tmp_path: Path, usable_root: Certi
     path = os.path.join(tmp_path, "test", "crl-test.crl")
 
     with assert_command_error(rf"^\[Errno 2\] No such file or directory: '{re.escape(path)}'$"):
-        dump_crl(path, ca=usable_root, scope="user")
+        dump_crl(path, ca=usable_root)
 
 
 def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: CertificateAuthority) -> None:
@@ -101,18 +92,19 @@ def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: Cer
         dump_crl(ca=usable_pwd, scope="user")
 
 
-def test_pwd_ca_with_wrong_password(usable_pwd: CertificateAuthority) -> None:
+@pytest.mark.usefixtures("usable_pwd")
+def test_pwd_ca_with_wrong_password() -> None:
     """Test creating a CRL for a CA with a password with the wrong password."""
-    with assert_command_error(r"^Could not decrypt private key - bad password\?$"):
-        dump_crl(ca=usable_pwd, scope="user", password=b"wrong")
+    # NOTE: we use e2e here as this also covers some code in management.base.BinaryOutputWrapper
+    assert_e2e_command_error(
+        ["dump_crl", "--password=wrong"], b"Could not decrypt private key - bad password?", b""
+    )
 
 
 def test_pwd_ca(usable_pwd: CertificateAuthority) -> None:
     """Test creating a CRL for a CA with a password with the wrong password."""
-    stdout = dump_crl(ca=usable_pwd, scope="user", password=CERT_DATA["pwd"]["password"])
-
-    expected_idp = get_idp(full_name=idp_full_name(usable_pwd), only_contains_user_certs=True)
-    assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm, idp=expected_idp)
+    stdout = dump_crl(ca=usable_pwd, password=CERT_DATA["pwd"]["password"])
+    assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm)
 
 
 def test_pwd_ca_with_password_in_settings(
@@ -122,10 +114,8 @@ def test_pwd_ca_with_password_in_settings(
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA["pwd"]["password"]}
 
     # This works because CA_PASSWORDS is set
-    stdout = dump_crl(ca=usable_pwd, scope="user")
-
-    expected_idp = get_idp(full_name=idp_full_name(usable_pwd), only_contains_user_certs=True)
-    assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm, idp=expected_idp)
+    stdout = dump_crl(ca=usable_pwd)
+    assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm)
 
 
 def test_no_scope_with_root_ca(usable_root: CertificateAuthority) -> None:
@@ -138,79 +128,10 @@ def test_no_scope_with_root_ca(usable_root: CertificateAuthority) -> None:
 
 
 def test_no_scope_with_child_ca(usable_child: CertificateAuthority) -> None:
-    """Test no-scope CRL for child CA."""
-    idp = get_idp(full_name=idp_full_name(usable_child))
+    """Test full CRL for child CA."""
     stdout = dump_crl(ca=usable_child, scope=None)
     assert_crl(
-        stdout,
-        encoding=Encoding.PEM,
-        expires=86400,
-        signer=usable_child,
-        idp=idp,
-        algorithm=usable_child.algorithm,
-    )
-
-
-def test_include_issuing_distribution_point(usable_root: CertificateAuthority) -> None:
-    """Test forcing the inclusion of the IssuingDistributionPoint extension.
-
-    Note: The only case where it is not included is for CRLs for root CAs with no scope, in which case not
-    enough information is available to even add the extension, so the test here asserts that the call
-    raises an extension.
-    """
-    assert_e2e_command_error(
-        ["dump_crl", f"--ca={usable_root.serial}", "--include-issuing-distribution-point"],
-        b"Cannot add IssuingDistributionPoint extension to CRLs with no scope for root CAs.",
-        b"",
-    )
-
-
-def test_exclude_issuing_distribution_point_with_root_ca(usable_root: CertificateAuthority) -> None:
-    """Test forcing the exclusion of the IssuingDistributionPoint extension."""
-    # For Root CAs, there should not be an IssuingDistributionPoint extension, test that forced exclusion
-    # does not break this.
-    stdout = dump_crl(ca=usable_root, include_issuing_distribution_point=False)
-    assert_crl(
-        stdout,
-        encoding=Encoding.PEM,
-        expires=86400,
-        signer=usable_root,
-        idp=None,
-        algorithm=usable_root.algorithm,
-    )
-
-
-def test_exclude_issuing_distribution_point_with_child_ca(usable_child: CertificateAuthority) -> None:
-    """Test forcing the exclusion of the IssuingDistributionPoint extension."""
-    stdout = dump_crl(ca=usable_child, include_issuing_distribution_point=False)
-    assert_crl(
-        stdout,
-        encoding=Encoding.PEM,
-        expires=86400,
-        signer=usable_child,
-        idp=None,
-        algorithm=usable_child.algorithm,
-    )
-
-
-def test_no_full_name_in_sign_crl_distribution_point(usable_child: CertificateAuthority) -> None:
-    """Test dumping a CRL where the CRL Distribution Point extension for signing has only an RDN."""
-    usable_child.sign_crl_distribution_points = crl_distribution_points(
-        distribution_point(
-            relative_name=x509.RelativeDistinguishedName(
-                [x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com")]
-            )
-        )
-    )
-    usable_child.save()
-    stdout = dump_crl(ca=usable_child)
-    assert_crl(
-        stdout,
-        encoding=Encoding.PEM,
-        expires=86400,
-        signer=usable_child,
-        idp=None,
-        algorithm=usable_child.algorithm,
+        stdout, encoding=Encoding.PEM, expires=86400, signer=usable_child, algorithm=usable_child.algorithm
     )
 
 
@@ -219,20 +140,18 @@ def test_disabled(usable_root: CertificateAuthority) -> None:
     usable_root.enabled = False
     usable_root.save()
 
-    stdout = dump_crl(ca=usable_root, scope="user")
-    expected_idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
-    assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm, idp=expected_idp)
+    stdout = dump_crl(ca=usable_root)
+    assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm)
 
 
-@pytest.mark.parametrize("reason", list(x509.ReasonFlags))
+@pytest.mark.parametrize("reason", [x509.ReasonFlags.unspecified, x509.ReasonFlags.key_compromise])
 def test_revoked_with_reason(
     usable_root: CertificateAuthority, root_cert: Certificate, reason: x509.ReasonFlags
 ) -> None:
     """Test revoked certificates."""
-    idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
     root_cert.revoke(reason=reason)  # type: ignore[arg-type]
 
-    stdout = dump_crl(ca=usable_root, scope="user")
+    stdout = dump_crl(ca=usable_root)
 
     # unspecified is not included (see RFC 5280, 5.3.1)
     if reason == x509.ReasonFlags.unspecified:
@@ -248,14 +167,13 @@ def test_revoked_with_reason(
         [root_cert],
         signer=usable_root,
         algorithm=usable_root.algorithm,
-        idp=idp,
         entry_extensions=entry_extensions,
     )
 
 
 def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
     """Test creating a CRL with a compromised cert with a compromised timestamp."""
-    idp = get_idp(full_name=idp_full_name(usable_root), only_contains_user_certs=True)
+    idp = get_idp(only_contains_user_certs=True)
     stamp = timezone.now().replace(microsecond=0) - timedelta(10)
     root_cert.revoke(compromised=stamp)
 
@@ -264,7 +182,7 @@ def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Cer
         critical=False,
         value=x509.InvalidityDate(stamp.replace(tzinfo=None)),
     )
-    stdout = dump_crl(ca=usable_root, scope="user")
+    stdout = dump_crl(ca=usable_root, only_contains_user_certs=True)
     assert_crl(
         stdout,
         [root_cert],
@@ -277,26 +195,83 @@ def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Cer
 
 def test_ca_crl(usable_root: CertificateAuthority, child: CertificateAuthority) -> None:
     """Test creating a CA CRL."""
-    stdout = dump_crl(ca=usable_root, scope="ca")
+    stdout = dump_crl(ca=usable_root, only_contains_ca_certs=True)
     idp = get_idp(only_contains_ca_certs=True)
     assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm, idp=idp)
 
     # revoke the CA and see if it's there
     child.revoke()
     assert_revoked(child)
-    stdout = dump_crl(ca=usable_root, scope="ca")
+    stdout = dump_crl(ca=usable_root, only_contains_ca_certs=True)
     assert_crl(stdout, [child], signer=usable_root, algorithm=usable_root.algorithm, idp=idp, crl_number=1)
 
 
-def test_hash_algorithm_not_allowed(ed_ca: CertificateAuthority) -> None:
-    """Test creating a CRL with a hash algorithm and for a CA that does not allow it."""
-    with assert_command_error(rf"^{ed_ca.key_type} keys do not allow an algorithm for signing\.$"):
-        dump_crl(ca=ed_ca, algorithm=hashes.SHA512())
+def test_user_crl(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
+    """Test creating a user CRL."""
+    stdout = dump_crl(ca=usable_root, only_contains_user_certs=True)
+    idp = get_idp(only_contains_user_certs=True)
+    assert_crl(stdout, signer=usable_root, idp=idp)
+
+    # revoke the CA and see if it's there
+    root_cert.revoke()
+    assert_revoked(root_cert)
+    stdout = dump_crl(ca=usable_root, only_contains_user_certs=True)
+    assert_crl(stdout, [root_cert], signer=usable_root, idp=idp, crl_number=1)
+
+
+def test_attribute_crl(usable_root: CertificateAuthority) -> None:
+    """Test creating an attribute CRL."""
+    stdout = dump_crl(ca=usable_root, only_contains_attribute_certs=True)
+    idp = get_idp(only_contains_attribute_certs=True)
+    assert_crl(stdout, signer=usable_root, idp=idp)
+
+
+def test_only_some_reasons(usable_root: CertificateAuthority) -> None:
+    """Test the only-some-reasons parameter."""
+    stdout = dump_crl_e2e(
+        usable_root.serial, "--only-some-reasons=key_compromise", "--only-some-reasons=aa_compromise"
+    )
+    idp = get_idp(
+        only_some_reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.aa_compromise])
+    )
+    assert_crl(stdout, signer=usable_root, idp=idp)
+
+
+@pytest.mark.parametrize("scope", ("ca", "user", "attribute"))
+def test_deprecated_scope(usable_root: CertificateAuthority, scope: str) -> None:
+    """Test passing the deprecated scope parameter."""
+    with assert_removed_in_230(
+        r"^--scope is deprecated and will be removed in django-ca 2\.3\.0\. Use "
+        r"--only-contains-{ca,user,attribute}-certs instead\.$"
+    ):
+        stdout = dump_crl(ca=usable_root, scope=scope)
+    # pylint: disable-next=unexpected-keyword-arg
+    idp = get_idp(**{f"only_contains_{scope}_certs": True})  # type: ignore[arg-type]
+    assert_crl(stdout, signer=usable_root, idp=idp)
+
+
+def test_deprecated_algorithm(usable_root: CertificateAuthority) -> None:
+    """Test passing the deprecated algorithm parameter."""
+    with assert_removed_in_230(
+        r"^--algorithm no longer has any effect and will be removed in django-ca 2\.3\.0\.$"
+    ):
+        stdout = dump_crl(ca=usable_root, algorithm="SHA-256")
+    assert_crl(stdout, signer=usable_root)
+
+
+def test_deprecated_include_issuing_distribution_point(usable_root: CertificateAuthority) -> None:
+    """Test passing the deprecated include_issuing_distribution_point parameter."""
+    with assert_removed_in_230(
+        r"^--include-issuing-distribution-point and --exclude-issuing-distribution-point no longer "
+        r"have any effect and will be removed in django-ca 2\.3\.0\.$"
+    ):
+        stdout = dump_crl(ca=usable_root, include_issuing_distribution_point=True)
+    assert_crl(stdout, signer=usable_root)
 
 
 def test_unknown_error(usable_root: CertificateAuthority) -> None:
     """Test that creating a CRL fails for an unknown reason."""
-    method = "django_ca.models.CertificateAuthority.get_crl"
+    method = "django_ca.managers.crl_scope_validator"
     with mock.patch(method, side_effect=Exception("foo")), assert_command_error("foo"):
         dump_crl(ca=usable_root)
 

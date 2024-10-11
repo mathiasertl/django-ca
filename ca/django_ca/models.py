@@ -25,7 +25,7 @@ import re
 import typing
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import josepy as jose
 from acme import challenges, messages
@@ -56,7 +56,7 @@ from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_argument
+from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_argument, deprecate_function
 from django_ca.extensions import get_extension_name
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.managers import (
@@ -67,6 +67,7 @@ from django_ca.managers import (
     AcmeOrderManager,
     CertificateAuthorityManager,
     CertificateManager,
+    CertificateRevocationListManager,
 )
 from django_ca.modelfields import (
     AuthorityInformationAccessField,
@@ -87,12 +88,12 @@ from django_ca.querysets import (
     AcmeOrderQuerySet,
     CertificateAuthorityQuerySet,
     CertificateQuerySet,
+    CertificateRevocationListQuerySet,
 )
 from django_ca.signals import post_revoke_cert, post_sign_cert, pre_revoke_cert, pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
     CertificateExtension,
-    CertificateRevocationListScopes,
     ConfigurableExtension,
     ConfigurableExtensionDict,
     EndEntityCertificateExtension,
@@ -147,20 +148,31 @@ def validate_past(value: datetime) -> None:
         raise ValidationError(_("Date must be in the past!"))
 
 
-def json_validator(value: Union[str, bytes, bytearray]) -> None:
-    """Validated that the given data is valid JSON."""
-    try:
-        json.loads(value)
-    except Exception as e:
-        raise ValidationError(_("Must be valid JSON: %(message)s") % {"message": str(e)}) from e
-
-
 def pem_validator(value: str) -> None:
     """Validator that ensures a value is a valid PEM public certificate."""
     if not value.startswith("-----BEGIN PUBLIC KEY-----\n"):
         raise ValidationError(_("Not a valid PEM."))
     if not value.endswith("\n-----END PUBLIC KEY-----"):
         raise ValidationError(_("Not a valid PEM."))
+
+
+class ReasonEncoder(json.JSONEncoder):
+    """Encoder for revocation reasons."""
+
+    def default(self, o: Union[x509.ReasonFlags, Iterable[x509.ReasonFlags]]) -> Union[str, list[str]]:
+        if isinstance(o, Iterable):
+            return sorted(elem.name for elem in o)
+        # if isinstance(o, x509.ReasonFlags):
+        #     return o.name
+        raise TypeError(f"Object of type {o.__class__.__name__} is not serializable with this encoder.")
+
+
+class ReasonDecoder(json.JSONDecoder):
+    """Decoder for revocation reasons."""
+
+    def decode(self, s: str) -> frozenset[x509.ReasonFlags]:  # type: ignore[override]  # _w is internal arg
+        decoded: list[str] = super().decode(s)
+        return frozenset(x509.ReasonFlags[elem] for elem in decoded)
 
 
 class DjangoCAModel(models.Model):
@@ -493,13 +505,6 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     key_backend_options = models.JSONField(default=dict, blank=True, help_text=_("Key backend options"))
 
     # various details used when signing certs
-    crl_number = models.TextField(
-        default='{"scope": {}}',
-        blank=True,
-        verbose_name=_("CRL Number"),
-        validators=[json_validator],
-        help_text=_("Data structure to store the CRL number (see RFC 5280, 5.2.3) depending on the scope."),
-    )
     sign_authority_information_access = AuthorityInformationAccessField(
         constants.EXTENSION_NAMES[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
         null=True,
@@ -645,34 +650,28 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
            Support for passing a custom hash algorithm to this function was removed.
         """
         for crl_profile in model_settings.CA_CRL_PROFILES.values():
+            now = datetime.now(tz=tz.utc)
+
             # If there is an override for the current CA, create a new profile model with values updated from
             # the override.
             if crl_profile_override := crl_profile.OVERRIDES.get(self.serial):
                 if crl_profile_override.skip:
                     continue
 
-                config = crl_profile.model_dump()
+                config = crl_profile.model_dump(exclude_unset=True)
                 config.update(crl_profile_override.model_dump(exclude_unset=True))
                 crl_profile = CertificateRevocationListProfile.model_validate(config)
 
-            expires = int(crl_profile.expires.total_seconds())
-            crl = self.get_crl(
+            crl = CertificateRevocationList.objects.create_certificate_revocation_list(
+                ca=self,
                 key_backend_options=key_backend_options,
-                expires=expires,
-                algorithm=self.algorithm,
-                scope=crl_profile.scope,
+                next_update=now + crl_profile.expires,
+                only_contains_ca_certs=crl_profile.only_contains_ca_certs,
+                only_contains_user_certs=crl_profile.only_contains_user_certs,
+                only_contains_attribute_certs=crl_profile.only_contains_attribute_certs,
+                only_some_reasons=crl_profile.only_some_reasons,
             )
-
-            for encoding in crl_profile.encodings:
-                cache_key = get_crl_cache_key(self.serial, encoding, scope=crl_profile.scope)
-
-                if expires >= 600:  # pragma: no branch
-                    # for longer expiries we subtract a random value so that regular CRL regeneration is
-                    # distributed a bit
-                    expires -= random.randint(1, 5) * 60
-
-                encoded_crl = crl.public_bytes(encoding)
-                cache.set(cache_key, encoded_crl, expires)
+            crl.cache()
 
     def get_end_entity_certificate_extensions(
         self, public_key: CertificateIssuerPublicKeyTypes
@@ -995,10 +994,16 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             value=self.get_authority_key_identifier(),
         )
 
-    def get_crl_certs(
-        self, scope: typing.Literal[None, "ca", "user", "attribute"], now: datetime
+    @deprecate_function(RemovedInDjangoCA230Warning)
+    def get_crl_certs(  # pragma: no cover
+        self, scope: typing.Literal[None, "ca", "user"], now: datetime
     ) -> Iterable[X509CertMixin]:
-        """Get CRLs for the given scope."""
+        """Get CRLs for the given scope.
+
+        .. deprecated:: 2.1.0
+
+           This function is deprecated and will be removed in django-ca 2.3.0.
+        """
         ca_qs = self.children.filter(not_after__gt=now).revoked()
         cert_qs = self.certificate_set.filter(not_after__gt=now).revoked()
 
@@ -1006,29 +1011,37 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             return ca_qs
         if scope == "user":
             return cert_qs
-        if scope == "attribute":
-            return []  # not really supported
         if scope is None:
             return itertools.chain(ca_qs, cert_qs)
-        raise ValueError('scope must be either None, "ca", "user" or "attribute"')
+        raise ValueError('scope must be either None, "ca" or "user".')
 
+    @deprecate_function(RemovedInDjangoCA230Warning)
+    @deprecate_argument("algorithm", RemovedInDjangoCA230Warning)
+    @deprecate_argument("counter", RemovedInDjangoCA230Warning)
+    @deprecate_argument("full_name", RemovedInDjangoCA230Warning)
+    @deprecate_argument("relative_name", RemovedInDjangoCA230Warning)
+    @deprecate_argument("include_issuing_distribution_point", RemovedInDjangoCA230Warning)
     def get_crl(
         self,
         key_backend_options: BaseModel,
         expires: int = 86400,
-        algorithm: Optional[AllowedHashTypes] = None,
-        scope: Optional[CertificateRevocationListScopes] = None,
-        counter: Optional[str] = None,
-        full_name: Optional[Iterable[x509.GeneralName]] = None,
-        relative_name: Optional[x509.RelativeDistinguishedName] = None,
-        include_issuing_distribution_point: Optional[bool] = None,
+        algorithm: Optional[AllowedHashTypes] = None,  # pylint: disable=unused-argument
+        scope: Optional[Literal[None, "ca", "user", "attribute"]] = None,
+        counter: Optional[str] = None,  # pylint: disable=unused-argument
+        full_name: Optional[Iterable[x509.GeneralName]] = None,  # pylint: disable=unused-argument
+        relative_name: Optional[x509.RelativeDistinguishedName] = None,  # pylint: disable=unused-argument
+        include_issuing_distribution_point: Optional[bool] = None,  # pylint: disable=unused-argument
     ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
 
-        The ``full_name`` and ``relative_name`` parameters describe how to retrieve the CRL and are used in
-        the `Issuing Distribution Point extension <https://tools.ietf.org/html/rfc5280.html#section-5.2.5>`_.
-        The former defaults to the ``crl_url`` field, pass ``None`` to not include the value. At most one of
-        the two may be set.
+        .. deprecated:: 2.1.0
+
+           This function is deprecated and will be removed in django-ca 2.3.0.
+
+        .. versionchanged:: 2.1.0
+
+           The `algorithm`, `counter`, `full_name`, `relative_name` and `include_issuing_distribution_point`
+           parameters no longer have any effect. Using them will issue an additional warning.
 
         Parameters
         ----------
@@ -1036,148 +1049,20 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             Options required for using the private key of the certificate authority.
         expires : int
             The time in seconds when this CRL expires. Note that you should generate a new CRL until then.
-        algorithm : :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            The hash algorithm used to generate the signature of the CRL. By default, the algorithm used for
-            signing the CA is used. If a value is passed for an Ed25519/Ed448 CA, `ValueError` is raised.
         scope : {None, 'ca', 'user', 'attribute'}, optional
             What to include in the CRL: Use ``"ca"`` to include only revoked certificate authorities and
             ``"user"`` to include only certificates or ``None`` (the default) to include both.
-            ``"attribute"`` is reserved for future use and always produces an empty CRL.
-        counter : str, optional
-            Override the counter-variable for the CRL Number extension. Passing the same key to multiple
-            invocations will yield a different sequence then what would ordinarily be returned. The default is
-            to use the scope as the key.
-        full_name : list of :py:class:`~cg:cryptography.x509.GeneralName`, optional
-            List of general names to use in the Issuing Distribution Point extension. If not passed, use
-            the full names of the first distribution point in ``sign_crl_distribution_points`` (if present)
-            that has full names set.
-        relative_name : :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`, optional
-            Used in Issuing Distribution Point extension, retrieve the CRL relative to the issuer.
-        include_issuing_distribution_point: bool, optional
-            Force the inclusion/exclusion of the IssuingDistributionPoint extension. By default, the inclusion
-            is automatically determined.
-
-        Returns
-        -------
-        bytes
-            The CRL in the requested format.
         """
-        # pylint: disable=too-many-locals; It's not easy to create a CRL. Sorry.
-
-        now = datetime.now(tz=tz.utc)
-        now_naive = now.replace(tzinfo=None)
-
-        # Default to the algorithm used by the certificate authority itself (None in case of Ed448/Ed25519
-        # based certificate authorities).
-        if algorithm is None:
-            algorithm = self.algorithm
-
-        builder = x509.CertificateRevocationListBuilder()
-        builder = builder.issuer_name(self.pub.loaded.subject)
-        builder = builder.last_update(now_naive)
-        builder = builder.next_update(now_naive + timedelta(seconds=expires))
-
-        parsed_full_name = None
-        if full_name is not None:
-            parsed_full_name = full_name
-
-        # CRLs for root CAs with scope "ca" (or no scope - this includes CAs) do not set a full_name in the
-        # IssuingDistributionPoint extension by default. For full path validation with CRLs, the CRL is also
-        # used for validating the Root CA (which does not contain a CRL Distribution Point). But the Full Name
-        # in the CRL IDP and the CA CRL DP have to match. See also:
-        #       https://github.com/mathiasertl/django-ca/issues/64
-        elif scope in ("ca", None) and self.parent is None:
-            parsed_full_name = None
-
-        # If CA_DEFAULT_HOSTNAME is set, CRLs with scope "ca" add the same URL in the IssuingDistributionPoint
-        # extension that is also added in the CRL Distribution Points extension for CAs issued by this CA.
-        # See also:
-        #       https://github.com/mathiasertl/django-ca/issues/64
-        elif scope == "ca" and model_settings.CA_DEFAULT_HOSTNAME:
-            crl_path = reverse("django_ca:ca-crl", kwargs={"serial": self.serial})
-            parsed_full_name = [
-                x509.UniformResourceIdentifier(f"http://{model_settings.CA_DEFAULT_HOSTNAME}{crl_path}")
-            ]
-        elif scope in ("user", None) and self.sign_crl_distribution_points:
-            full_names = []
-            for dpoint in self.sign_crl_distribution_points.value:
-                if dpoint.full_name:
-                    full_names += dpoint.full_name
-            if full_names:
-                parsed_full_name = full_names
-
-        # Keyword arguments for the IssuingDistributionPoint extension
-        only_contains_attribute_certs = False
-        only_contains_ca_certs = False
-        only_contains_user_certs = False
-        indirect_crl = False
-
-        if scope == "ca":
-            only_contains_ca_certs = True
-        elif scope == "user":
-            only_contains_user_certs = True
-        elif scope == "attribute":
-            # sorry, nothing we support right now
-            only_contains_attribute_certs = True
-
-        if settings.USE_TZ is True:
-            crl_certificates = self.get_crl_certs(scope, now)
-        else:
-            crl_certificates = self.get_crl_certs(scope, now_naive)
-
-        for cert in crl_certificates:
-            builder = builder.add_revoked_certificate(cert.get_revocation())
-
-        # Validate that the user has selected a usable algorithm
-        validate_public_key_parameters(self.key_type, algorithm)
-
-        # We can only add the IDP extension if one of these properties is set, see RFC 5280, 5.2.5.
-        if include_issuing_distribution_point is None:
-            include_issuing_distribution_point = (
-                only_contains_attribute_certs
-                or only_contains_user_certs
-                or only_contains_ca_certs
-                or parsed_full_name is not None
-                or relative_name is not None
-            )
-
-        if include_issuing_distribution_point is True:
-            builder = builder.add_extension(
-                x509.IssuingDistributionPoint(
-                    indirect_crl=indirect_crl,
-                    only_contains_attribute_certs=only_contains_attribute_certs,
-                    only_contains_ca_certs=only_contains_ca_certs,
-                    only_contains_user_certs=only_contains_user_certs,
-                    full_name=parsed_full_name,
-                    only_some_reasons=None,
-                    relative_name=relative_name,
-                ),
-                critical=True,
-            )
-
-        # Add AuthorityKeyIdentifier from CA
-        aki = self.get_authority_key_identifier()
-        builder = builder.add_extension(aki, critical=False)
-
-        # Add the CRLNumber extension (RFC 5280, 5.2.3)
-        if counter is None:
-            counter = scope or "all"
-        crl_number_data = json.loads(self.crl_number)
-        crl_number = int(crl_number_data["scope"].get(counter, 0))
-        builder = builder.add_extension(x509.CRLNumber(crl_number=crl_number), critical=False)
-
-        # Get the backend.
-        if self.is_usable(options=key_backend_options) is False:
-            raise ValueError("Backend cannot be used for signing by this process.")
-
-        # increase crl_number for the given scope and save
-        crl_number_data["scope"][counter] = crl_number + 1
-        self.crl_number = json.dumps(crl_number_data)
-        self.save()
-
-        return self.key_backend.sign_certificate_revocation_list(
-            ca=self, use_private_key_options=key_backend_options, builder=builder, algorithm=algorithm
+        next_update = datetime.now(tz=tz.utc) + timedelta(seconds=expires)
+        crl = CertificateRevocationList.objects.create_certificate_revocation_list(
+            ca=self,
+            key_backend_options=key_backend_options,
+            next_update=next_update,
+            only_contains_ca_certs=scope == "ca",
+            only_contains_user_certs=scope == "user",
+            only_contains_attribute_certs=scope == "attribute",
         )
+        return crl.loaded
 
     @property
     def path_length(self) -> Optional[int]:
@@ -1294,6 +1179,112 @@ class Certificate(X509CertMixin):
     def root(self) -> CertificateAuthority:
         """Get the root CA for this certificate."""
         return self.ca.root
+
+
+class CertificateRevocationList(DjangoCAModel):
+    """The `CertificateRevocationList` is used to store CRLs in the database.
+
+    Only one of `only_contains_ca_certs`, `only_contains_ca_certs` and `only_contains_attribute_certs` can be
+    ``True``.
+
+    .. versionadded:: 2.1.0
+    """
+
+    #: Certificate Authority that the CRL is generated for.
+    ca = models.ForeignKey(
+        CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
+    )
+    #: CRL Number used in this CRL.
+    number = models.PositiveIntegerField(
+        db_index=True, help_text=_("Monotonically increasing number for the CRLNumber extension.")
+    )
+    #: When the CRL was generated.
+    last_update = models.DateTimeField(help_text=_("The CRL's activation time."))
+    #: When the CRL expires.
+    next_update = models.DateTimeField(help_text=_("The CRL's next update time."))
+
+    #: True if the CRL contains only CA certificates.
+    only_contains_ca_certs = models.BooleanField(default=False)
+
+    #: True if the CRL contains only end-entity certificates.
+    only_contains_user_certs = models.BooleanField(default=False)
+
+    #: True if the CRL contains only attribute certificates.
+    only_contains_attribute_certs = models.BooleanField(default=False)
+
+    #: Optional list of revocation reasons. If set, the CRL only contains certificates revoked for the given
+    #: reasons.
+    only_some_reasons = models.JSONField(
+        null=True, default=None, encoder=ReasonEncoder, decoder=ReasonDecoder
+    )
+
+    #: The DER-encoded binary data of the CRL.
+    data = models.BinaryField(null=True)
+
+    objects: CertificateRevocationListManager = CertificateRevocationListManager.from_queryset(
+        CertificateRevocationListQuerySet
+    )()
+
+    class Meta:
+        indexes = (
+            # Index to speed-up lookups of the most recent CRL with the given scope.
+            models.Index(
+                fields=[
+                    "ca",
+                    "number",
+                    "only_contains_user_certs",
+                    "only_contains_ca_certs",
+                    "only_contains_attribute_certs",
+                    "only_some_reasons",
+                ]
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.number} (next update: {self.next_update})"
+
+    @cached_property
+    def loaded(self) -> x509.CertificateRevocationList:
+        """The CRL loaded into a :class:`cg:cryptography.x509.CertificateRevocationList` object."""
+        if self.data is None:
+            raise ValueError("CRL is not yet generated for this object.")
+        return x509.load_der_x509_crl(bytes(self.data))
+
+    @cached_property
+    def pem(self) -> bytes:
+        """The CRL encoded in PEM format."""
+        return self.loaded.public_bytes(Encoding.PEM)
+
+    def cache(self) -> None:
+        """Cache this instance."""
+        if self.data is None:
+            raise ValueError("CRL is not yet generated for this object.")
+
+        now = datetime.now(tz=tz.utc)
+        if self.loaded.next_update_utc is not None:
+            expires_seconds = (self.loaded.next_update_utc - now).total_seconds()
+        else:  # pragma: no cover  # we never generate CRLs without a next_update flag.
+            expires_seconds = 86400
+        for encoding in [Encoding.PEM, Encoding.DER]:
+            cache_key = get_crl_cache_key(
+                self.ca.serial,
+                encoding,
+                only_contains_ca_certs=self.only_contains_ca_certs,
+                only_contains_user_certs=self.only_contains_user_certs,
+                only_contains_attribute_certs=self.only_contains_attribute_certs,
+                only_some_reasons=self.only_some_reasons,
+            )
+
+            if expires_seconds >= 600:  # pragma: no branch
+                # for longer expiries we subtract a random value so that regular CRL regeneration is
+                # distributed a bit
+                expires_seconds -= random.randint(1, 5) * 60
+
+            if encoding == Encoding.PEM:
+                encoded_crl = self.pem
+            else:
+                encoded_crl = bytes(self.data)
+            cache.set(cache_key, encoded_crl, expires_seconds)
 
 
 class CertificateOrder(DjangoCAModel):

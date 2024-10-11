@@ -36,8 +36,16 @@ urlpatterns: list[Union[URLResolver, URLPattern]] = [
     path(
         "ocsp/<hex:serial>/ca/<base64:data>", views.GenericOCSPView.as_view(ca_ocsp=True), name="ocsp-ca-get"
     ),
-    path("crl/<hex:serial>/", views.CertificateRevocationListView.as_view(), name="crl"),
-    path("crl/ca/<hex:serial>/", views.CertificateRevocationListView.as_view(scope="ca"), name="ca-crl"),
+    path(
+        "crl/<hex:serial>/",
+        views.CertificateRevocationListView.as_view(only_contains_user_certs=True),
+        name="crl",
+    ),
+    path(
+        "crl/ca/<hex:serial>/",
+        views.CertificateRevocationListView.as_view(only_contains_ca_certs=True),
+        name="ca-crl",
+    ),
 ]
 
 if model_settings.CA_ENABLE_REST_API is True:  # pragma: no branch

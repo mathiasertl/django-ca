@@ -245,6 +245,17 @@ attributes.
 .. autoclass:: django_ca.models.X509CertMixin
    :members:
 
+*************************
+CertificateRevocationList
+*************************
+
+.. autoclass:: django_ca.models.CertificateRevocationList
+   :members:
+
+.. autoclass:: django_ca.managers.CertificateRevocationListManager
+   :members:
+
+
 .. _models-watcher:
 
 ********

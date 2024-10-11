@@ -180,7 +180,7 @@ def test_root_ca(ca_name: str) -> None:
         verify("-CAfile {0} {0}", *paths)
 
     # Create a CRL too and include it
-    with dumped(ca) as paths, crl(ca, scope="ca") as (crl_path, crl_parsed):
+    with dumped(ca) as paths, crl(ca, only_contains_ca_certs=True) as (crl_path, crl_parsed):
         verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
 
     # Try again with no scope
@@ -190,7 +190,7 @@ def test_root_ca(ca_name: str) -> None:
     # Try with cert scope (fails because of wrong scope
     with (
         dumped(ca) as paths,
-        crl(ca, scope="user") as (crl_path, crl_parsed),
+        crl(ca, only_contains_user_certs=True) as (crl_path, crl_parsed),
         pytest.raises(AssertionError),
     ):
         verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
@@ -204,12 +204,12 @@ def test_root_ca_cert(ca_name: str) -> None:
         verify("-CAfile {0} {cert}", *paths, cert=cert)
 
         # Create a CRL too and include it
-        with crl(ca, scope="user") as (crl_path, crl_parsed):
+        with crl(ca, only_contains_user_certs=True) as (crl_path, crl_parsed):
             assert_scope(crl_parsed, user=True)
             verify("-CAfile {0} -crl_check {cert}", *paths, crl_path=[crl_path], cert=cert)
 
             # for crl_check_all, we also need the root CRL
-            with crl(ca, scope="ca") as (crl2_path, crl2):
+            with crl(ca, only_contains_ca_certs=True) as (crl2_path, crl2):
                 assert_scope(crl2, ca=True)
                 verify("-CAfile {0} -crl_check_all {cert}", *paths, crl_path=[crl_path, crl2_path], cert=cert)
 
@@ -231,7 +231,7 @@ def test_ca_default_hostname(ca_name: str) -> None:
             verify("-trusted {0} -crl_check {cert}", *paths, crl_path=[crl_path], cert=cert)
             verify("-trusted {0} -crl_check_all {cert}", *paths, crl_path=[crl_path], cert=cert)
 
-        with crl(ca, scope="user") as (crl_path, crl_parsed):  # test user-only CRL
+        with crl(ca, only_contains_user_certs=True) as (crl_path, crl_parsed):  # test user-only CRL
             assert_scope(crl_parsed, user=True)
             verify("-trusted {0} -crl_check {cert}", *paths, crl_path=[crl_path], cert=cert)
             # crl_check_all does not work,  b/c the scope  is only "user"
@@ -264,10 +264,13 @@ def test_intermediate_ca(ca_name: str) -> None:
         verify("-CAfile {0} -untrusted {1} {2}", *paths)
 
         # Try validation with CRLs
-        with crl(root, scope="ca") as (crl1_path, crl1), crl(child, scope="ca") as (crl2_path, crl2):
+        with (
+            crl(root, only_contains_ca_certs=True) as (crl1_path, crl1),
+            crl(child, only_contains_ca_certs=True) as (crl2_path, crl2),
+        ):
             verify("-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl_path=[crl1_path, crl2_path])
 
-            with sign_cert(child) as cert, crl(child, scope="user") as (crl3_path, crl3):
+            with sign_cert(child) as cert, crl(child, only_contains_user_certs=True) as (crl3_path, crl3):
                 verify("-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert)
                 verify(
                     "-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl_path=[crl1_path, crl3_path]
@@ -275,8 +278,8 @@ def test_intermediate_ca(ca_name: str) -> None:
 
             with (
                 sign_cert(grandchild) as cert,
-                crl(child, scope="ca") as (crl4_path, crl4),
-                crl(grandchild, scope="user") as (crl6_path, crl6),
+                crl(child, only_contains_ca_certs=True) as (crl4_path, crl4),
+                crl(grandchild, only_contains_user_certs=True) as (crl6_path, crl6),
             ):
                 verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
                 verify(
@@ -310,52 +313,33 @@ def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrappe
 
     with (
         dumped(root, child, grandchild) as paths,
-        crl(root, scope="ca") as (root_ca_crl_path, root_ca_crl_parsed),
+        crl(root, only_contains_ca_certs=True) as (root_ca_crl_path, root_ca_crl_parsed),
     ):
         # Simple validation of the CAs
         verify("-trusted {0} {1}", *paths)
         verify("-trusted {0} -untrusted {1} {2}", *paths)
 
-        with crl(child, scope="ca") as (child_ca_crl_path, child_ca_crl_parsed):
-            assert_full_name(child_ca_crl_parsed, [uri(f"http://example.com{grandchild_ca_crl}")])
+        with crl(child, only_contains_ca_certs=True) as (child_ca_crl_path, child_ca_crl_parsed):
+            assert_full_name(child_ca_crl_parsed, None)
             verify(
                 "-trusted {0} -untrusted {1} -crl_check_all {2}",
                 *paths,
                 crl_path=[root_ca_crl_path, child_ca_crl_path],
             )
 
-        # Globally scoped CRLs do not validate, as the CRL will contain a different full name from the
-        # CRLdp extension
+        # Globally scoped CRLs validates as well (no full name)
         with crl(child) as (child_crl_path, child_crl_parsed):
-            # assert_full_name(crl, None)
-            # assert_full_name(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
             verify(
                 "-trusted {0} -untrusted {1} -crl_check_all {2}",
                 *paths,
                 crl_path=[root_ca_crl_path, child_crl_path],
-                code=2,
-                stderr="[dD]ifferent CRL scope",
+                code=0,
             )
 
-        # Changing the default hostname setting should not change the validation result
-        settings.CA_DEFAULT_HOSTNAME = "example.net"
-        with crl(root, scope="ca") as (crl_path, crl_parsed), crl(child, scope="ca") as (crl2_path, crl2):
-            # Known but not easily fixable issue: If CA_DEFAULT_HOSTNAME is changed, CRLs will get wrong
-            # full name and validation fails.
-            assert_full_name(crl_parsed, None)
-            # assert_full_name(crl2, [uri(f"http://example.com{grandchild_ca_crl}")])
-            verify(
-                "-trusted {0} -untrusted {1} -crl_check_all {2}",
-                *paths,
-                crl_path=[crl_path, crl2_path],
-                code=2,
-                stderr="[dD]ifferent CRL scope",
-            )
-
-        # Again, global CRLs do not validate
+        # Again, global CRL validates
         settings.CA_DEFAULT_HOSTNAME = "example.net"
         with (
-            crl(root, scope="ca") as (crl_path, crl_parsed),
+            crl(root, only_contains_ca_certs=True) as (crl_path, crl_parsed),
             crl(child) as (crl2_path, crl_parsed_2),
         ):
             assert_full_name(crl_parsed, None)
@@ -363,6 +347,5 @@ def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrappe
                 "-trusted {0} -untrusted {1} -crl_check_all {2}",
                 *paths,
                 crl_path=[crl_path, crl2_path],
-                code=2,
-                stderr="[dD]ifferent CRL scope",
+                code=0,
             )
