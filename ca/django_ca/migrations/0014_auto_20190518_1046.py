@@ -4,22 +4,17 @@ from django.db import migrations
 
 
 def remove_empty(apps, schema_editor):
-    Certificate = apps.get_model('django_ca', 'Certificate')
-    Certificate.objects.filter(revoked_reason='').update(revoked_reason='unspecified')
-    CertificateAuthority = apps.get_model('django_ca', 'CertificateAuthority')
-    CertificateAuthority.objects.filter(revoked_reason='').update(revoked_reason='unspecified')
-
-
-def noop():
-    pass
+    Certificate = apps.get_model("django_ca", "Certificate")
+    Certificate.objects.filter(revoked_reason="").update(revoked_reason="unspecified")
+    CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
+    CertificateAuthority.objects.filter(revoked_reason="").update(revoked_reason="unspecified")
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_ca', '0013_certificateauthority_crl_number'),
+        ("django_ca", "0013_certificateauthority_crl_number"),
     ]
 
     operations = [
-        migrations.RunPython(remove_empty, noop),
+        migrations.RunPython(remove_empty, migrations.RunPython.noop),
     ]

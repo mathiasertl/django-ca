@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def update_sign_certificates_schema(apps, schema_editor) -> None:
+def update_sign_certificates_schema(apps, schema_editor) -> None:  # pragma: no cover
     """Migrate stored data to new Pydantic-based serialization."""
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.exclude(sign_certificate_policies=None):

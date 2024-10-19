@@ -5,7 +5,7 @@ from cryptography import x509
 from django.db import migrations
 
 
-def migrate(apps, schema_editor):
+def migrate(apps, schema_editor):  # pragma: no cover
     Certificate = apps.get_model("django_ca", "Certificate")
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
 
@@ -34,17 +34,11 @@ def migrate(apps, schema_editor):
         ca.save()
 
 
-def noop(apps, schema_editor):
-    """no need to do anything in backwards data migration."""
-    pass
-
-
 class Migration(migrations.Migration):
-
     dependencies = [
         ("django_ca", "0022_auto_20210430_1124"),
     ]
 
     operations = [
-        migrations.RunPython(migrate, noop),
+        migrations.RunPython(migrate, migrations.RunPython.noop),
     ]

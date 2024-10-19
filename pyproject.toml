@@ -154,7 +154,7 @@ source = [
 ]
 branch = true
 omit = [
-    "*/migrations/*",
+    #"*/migrations/*",
     "*/tests/tests*",
     "*/tests/**/test_*",
     "ca/django_ca/mypy.py",

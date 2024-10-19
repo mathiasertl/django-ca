@@ -3,23 +3,23 @@
 from django.db import migrations
 
 
-def rm_colons(apps, schema_editor):
-    Certificate = apps.get_model('django_ca', 'Certificate')
-    CertificateAuthority = apps.get_model('django_ca', 'CertificateAuthority')
+def rm_colons(apps, schema_editor):  # pragma: no cover
+    Certificate = apps.get_model("django_ca", "Certificate")
+    CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
 
     for ca in CertificateAuthority.objects.all():
-        ca.serial = ca.serial.replace(':', '')
+        ca.serial = ca.serial.replace(":", "")
         ca.save()
     for cert in Certificate.objects.all():
-        cert.serial = cert.serial.replace(':', '')
+        cert.serial = cert.serial.replace(":", "")
         cert.save()
 
 
-def add_colons(apps, schema_editor):
-    Certificate = apps.get_model('django_ca', 'Certificate')
-    CertificateAuthority = apps.get_model('django_ca', 'CertificateAuthority')
+def add_colons(apps, schema_editor):  # pragma: no cover
+    Certificate = apps.get_model("django_ca", "Certificate")
+    CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
 
-    add_c = lambda s: ':'.join([s[i:i + 2] for i in range(0, len(s), 2)])  # NOQA
+    add_c = lambda s: ":".join([s[i : i + 2] for i in range(0, len(s), 2)])  # NOQA
 
     for ca in CertificateAuthority.objects.all():
         ca.serial = add_c(ca.serial)
@@ -30,11 +30,8 @@ def add_colons(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('django_ca', '0015_auto_20190518_1050'),
+        ("django_ca", "0015_auto_20190518_1050"),
     ]
 
-    operations = [
-        migrations.RunPython(rm_colons, add_colons)
-    ]
+    operations = [migrations.RunPython(rm_colons, add_colons)]

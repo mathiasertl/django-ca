@@ -6,6 +6,14 @@ Deprecation timeline
 2.3.0 (TBR)
 ***********
 
+Dependencies
+============
+
+* Remove support for django 5.0.
+
+Command-line
+============
+
 * The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` will be removed (deprecated
   since django-ca 2.1.0).
 

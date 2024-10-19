@@ -22,7 +22,6 @@ This migrates the following fields:
 * issuer_url and ocsp_url -> sign_authority_information_access
 """
 
-
 import typing
 
 from django.db import migrations
@@ -54,11 +53,11 @@ def reverse_extension_fields(apps: "StateApps", schema_editor: "BaseDatabaseSche
         ca.save()
 
 
-class Migration(migrations.Migration):  # noqa: D101
-    dependencies = [  # noqa: RUF012
+class Migration(migrations.Migration):
+    dependencies = [
         ("django_ca", "0039_certificateauthority_sign_authority_information_access_and_more"),
     ]
 
-    operations = [  # noqa: RUF012
+    operations = [
         migrations.RunPython(populate_extension_fields, reverse_extension_fields),
     ]

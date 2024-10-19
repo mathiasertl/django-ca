@@ -7,7 +7,7 @@ from django.db import migrations
 from django.utils import timezone
 
 
-def add_valid_from(apps, schema_editor):
+def add_valid_from(apps, schema_editor):  # pragma: no cover
     Certificate = apps.get_model("django_ca", "Certificate")
     for cert in Certificate.objects.all():
         pem = x509.load_pem_x509_certificate(cert.pub.encode("ascii"))
@@ -32,7 +32,6 @@ def add_valid_from(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("django_ca", "0009_auto_20181128_2050"),
     ]

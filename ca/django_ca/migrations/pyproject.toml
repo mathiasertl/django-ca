@@ -1,0 +1,17 @@
+[tool.ruff]
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint]
+extend-ignore = [
+    # D100: Missing docstring in public module - examples don't need docs
+    #   auto-generated migration modules don't need a docstring.
+    "D100",
+
+    # D101 Missing docstring in public class
+    #   default migration classes look like this.
+    "D101",
+
+    # RUF012 Mutable class attributes should be annotated with `typing.ClassVar`
+    #   default migration classes work like this.
+    "RUF012",
+]
