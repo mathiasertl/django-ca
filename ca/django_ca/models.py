@@ -1147,7 +1147,8 @@ class Certificate(X509CertMixin):
     ca = models.ForeignKey(
         CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
     )
-    csr = CertificateSigningRequestField(verbose_name=_("CSR"), blank=True, null=True)
+    # TYPEHINT NOTE: nullable field confuses django-stubs
+    csr = CertificateSigningRequestField(verbose_name=_("CSR"), blank=True, null=True)  # type: ignore[misc]
 
     # Note: We don't set choices here because the available profiles might be changed by the user.
     profile = models.CharField(

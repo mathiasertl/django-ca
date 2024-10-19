@@ -1,6 +1,6 @@
 -r requirements-dev-common.txt
-pre-commit==3.8.0
-pylint-django==2.5.5
-pylint==3.3.0
-ruff==0.6.7
+pre-commit==4.0.1
+pylint-django==2.6.1
+pylint==3.3.1
+ruff==0.7.0
 setuptools>=65

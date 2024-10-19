@@ -145,7 +145,7 @@ def user(
 @pytest.fixture()
 def user_client(user: "User", client: Client) -> Iterator[Client]:
     """A Django test client logged in as a normal user."""
-    client.force_login(user)
+    client.force_login(user)  # type: ignore[arg-type]  # django-stubs 5.1.0 thinks user is AbstractUser
     yield client
 
 

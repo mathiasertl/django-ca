@@ -244,7 +244,7 @@ class LazyBinaryField(
         form_class: Optional[type[forms.Field]] = None,
         choices_form_class: Optional[type[forms.ChoiceField]] = None,
         **kwargs: Any,
-    ) -> forms.Field:
+    ) -> Optional[forms.Field]:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
@@ -330,7 +330,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
         form_class: Optional[type[forms.Field]] = None,
         choices_form_class: Optional[type[forms.ChoiceField]] = None,
         **kwargs: Any,
-    ) -> forms.Field:
+    ) -> Optional[forms.Field]:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
