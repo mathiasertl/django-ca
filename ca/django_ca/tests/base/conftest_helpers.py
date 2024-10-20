@@ -151,7 +151,7 @@ def generate_pub_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certifi
 
     @pytest.fixture(scope="session")
     def fixture() -> Iterator[x509.Certificate]:
-        yield load_pub(name)
+        return load_pub(name)
 
     return fixture
 
@@ -159,7 +159,7 @@ def generate_pub_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certifi
 def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Iterator[CertificateAuthority]]:
     """Function to generate CA fixtures (root, child, ...)."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def fixture(
         request: "SubRequest",
         db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
@@ -182,7 +182,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
 
         ca = load_ca(name, pub, parent, acme_enabled=True, **kwargs)
 
-        yield ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
+        return ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
     return fixture
 
@@ -192,13 +192,13 @@ def generate_usable_ca_fixture(
 ) -> typing.Callable[["SubRequest", Path], Iterator[CertificateAuthority]]:
     """Function to generate CA fixtures (root, child, ...)."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def fixture(request: "SubRequest", tmpcadir: Path) -> Iterator[CertificateAuthority]:
         ca = request.getfixturevalue(name)  # load the CA into the database
         data = CERT_DATA[name]
         shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir)
 
-        yield ca
+        return ca
 
     return fixture
 
@@ -206,7 +206,7 @@ def generate_usable_ca_fixture(
 def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator[Certificate]]:
     """Function to generate cert fixtures (root_cert, all_extensions, no_extensions, ...)."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def fixture(request: "SubRequest") -> Iterator[Certificate]:
         sanitized_name = name.replace("-", "_")
         data = CERT_DATA[name]
@@ -225,7 +225,7 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator
             csr = data["csr"]["parsed"]
         cert = load_cert(ca, csr, pub, data.get("profile", ""))
 
-        yield cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
+        return cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
 
     return fixture
 

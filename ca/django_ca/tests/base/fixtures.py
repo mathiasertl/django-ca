@@ -60,13 +60,13 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 @pytest.fixture(params=all_cert_names)
 def any_cert(request: "SubRequest") -> Iterator[Certificate]:
     """Parametrized fixture for absolutely *any* certificate name."""
-    yield request.param
+    return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def ca_name(request: "SubRequest") -> Iterator[str]:
     """Fixture for a name suitable for a CA."""
-    yield request.node.name
+    return request.node.name
 
 
 @pytest.fixture(
@@ -165,7 +165,7 @@ def ca_name(request: "SubRequest") -> Iterator[str]:
 )
 def certificate_policies_value(request: "SubRequest") -> Iterator[x509.CertificatePolicies]:
     """Parametrized fixture with different :py:class:`~cg:cryptography.x509.CertificatePolicies` objects."""
-    yield x509.CertificatePolicies(policies=request.param)
+    return x509.CertificatePolicies(policies=request.param)
 
 
 @pytest.fixture(params=(True, False))
@@ -173,12 +173,12 @@ def certificate_policies(
     request: "SubRequest", certificate_policies_value: x509.CertificatePolicies
 ) -> Iterator[x509.Extension[x509.CertificatePolicies]]:
     """Parametrized fixture yielding different ``x509.Extension[x509.CertificatePolicies]`` objects."""
-    yield x509.Extension(
+    return x509.Extension(
         critical=request.param, oid=ExtensionOID.CERTIFICATE_POLICIES, value=certificate_policies_value
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def clear_cache() -> Iterator[None]:
     """Fixture to clear the cache after the test."""
     yield
@@ -188,16 +188,16 @@ def clear_cache() -> Iterator[None]:
 @pytest.fixture(params=("ed448", "ed25519"))
 def ed_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for CAs with an Edwards-curve algorithm (ed448, ed25519)."""
-    yield request.getfixturevalue(f"{request.param}")
+    return request.getfixturevalue(f"{request.param}")
 
 
-@pytest.fixture()
+@pytest.fixture
 def hostname(ca_name: str) -> Iterator[str]:
     """Fixture for a hostname.
 
     The value is unique for each test, and it includes the CA name, which includes the test name.
     """
-    yield f"{ca_name.replace('_', '-')}.example.com"[-64:].lstrip("-.")
+    return f"{ca_name.replace('_', '-')}.example.com"[-64:].lstrip("-.")
 
 
 @pytest.fixture(params=interesting_certificate_names)
@@ -206,34 +206,34 @@ def interesting_cert(request: "SubRequest") -> Iterator[Certificate]:
 
     A function using this fixture will be called once for each certificate with unusual extensions.
     """
-    yield request.getfixturevalue(request.param.replace("-", "_"))
+    return request.getfixturevalue(request.param.replace("-", "_"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def key_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for creating a new CA."""
     request.getfixturevalue("tmpcadir")
-    yield key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]  # type: ignore[misc]
+    return key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]  # type: ignore[misc]
 
 
 @pytest.fixture(params=precertificate_signed_certificate_timestamps_cert_names)
 def precertificate_signed_certificate_timestamps_pub(request: "SubRequest") -> Iterator[x509.Certificate]:
     """Parametrized fixture for certificates that have a PrecertSignedCertificateTimestamps extension."""
     name = request.param.replace("-", "_")
-    yield request.getfixturevalue(f"contrib_{name}_pub")
+    return request.getfixturevalue(f"contrib_{name}_pub")
 
 
-@pytest.fixture()
+@pytest.fixture
 def rfc4514_subject(subject: x509.Name) -> Iterator[str]:
     """Fixture for an RFC 4514 formatted name to use for a subject.
 
     The common name is based on :py:func:`~django_ca.tests.base.fixtures.hostname` and identical to
     :py:func:`~django_ca.tests.base.fixtures.subject`.
     """
-    yield x509.Name(reversed(list(subject))).rfc4514_string()
+    return x509.Name(reversed(list(subject))).rfc4514_string()
 
 
-@pytest.fixture()
+@pytest.fixture
 def root_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
     """Fixture for the global CRL object for the Root CA."""
     with open(constants.FIXTURES_DIR / "root.crl", "rb") as stream:
@@ -244,10 +244,10 @@ def root_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
         ca=root, number=0, last_update=last_update, next_update=next_update, data=crl_data
     )
     crl.cache()
-    yield crl
+    return crl
 
 
-@pytest.fixture()
+@pytest.fixture
 def root_ca_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
     """Fixture for the user CRL object for the Root CA."""
     with open(constants.FIXTURES_DIR / "root.ca.crl", "rb") as stream:
@@ -263,10 +263,10 @@ def root_ca_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationLis
         only_contains_ca_certs=True,
     )
     crl.cache()
-    yield crl
+    return crl
 
 
-@pytest.fixture()
+@pytest.fixture
 def root_user_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
     """Fixture for the user CRL object for the Root CA."""
     with open(constants.FIXTURES_DIR / "root.user.crl", "rb") as stream:
@@ -282,10 +282,10 @@ def root_user_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationL
         only_contains_user_certs=True,
     )
     crl.cache()
-    yield crl
+    return crl
 
 
-@pytest.fixture()
+@pytest.fixture
 def root_attribute_crl(root: CertificateAuthority) -> Iterator[CertificateRevocationList]:
     """Fixture for the attribute CRL object for the Root CA."""
     with open(constants.FIXTURES_DIR / "root.attribute.crl", "rb") as stream:
@@ -301,21 +301,21 @@ def root_attribute_crl(root: CertificateAuthority) -> Iterator[CertificateRevoca
         only_contains_attribute_certs=True,
     )
     crl.cache()
-    yield crl
+    return crl
 
 
-@pytest.fixture()
+@pytest.fixture
 def secondary_backend(request: "SubRequest") -> Iterator[StoragesBackend]:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for the secondary key backend."""
     request.getfixturevalue("tmpcadir")
-    yield key_backends["secondary"]  # type: ignore[misc]
+    return key_backends["secondary"]  # type: ignore[misc]
 
 
 @pytest.fixture(params=signed_certificate_timestamp_cert_names)
 def signed_certificate_timestamp_pub(request: "SubRequest") -> Iterator[x509.Certificate]:
     """Parametrized fixture for certificates that have any SCT extension."""
     name = request.param.replace("-", "_")
-    yield request.getfixturevalue(f"contrib_{name}_pub")
+    return request.getfixturevalue(f"contrib_{name}_pub")
 
 
 @pytest.fixture(params=signed_certificate_timestamps_cert_names)
@@ -328,10 +328,10 @@ def signed_certificate_timestamps_pub(
     """
     name = request.param.replace("-", "_")
 
-    yield request.getfixturevalue(f"{name}_pub")
+    return request.getfixturevalue(f"{name}_pub")
 
 
-@pytest.fixture()
+@pytest.fixture
 def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
     """Fixture to set up a unique SoftHSM2 configuration."""
     softhsm_dir = tmp_path / "softhsm"
@@ -366,7 +366,7 @@ def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
         yield softhsm_dir
 
 
-@pytest.fixture()
+@pytest.fixture
 def softhsm_token(  # pragma: hsm
     request: "SubRequest",
     settings: SettingsWrapper,
@@ -390,10 +390,10 @@ def softhsm_token(  # pragma: hsm
     if lib := SessionPool._lib_pool.get(settings.PKCS11_PATH):  # pylint: disable=protected-access
         lib.reinitialize()
 
-    yield token
+    return token
 
 
-@pytest.fixture()
+@pytest.fixture
 def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:  # pragma: hsm
     """Fixture providing a HSMBackend with the current token and (randomized) passwords."""
     request.getfixturevalue("softhsm_token")
@@ -424,10 +424,10 @@ def usable_hsm_ca(  # pragma: hsm
         not_after=datetime.now(tz=timezone.utc) + timedelta(days=720),
     )
     assert isinstance(ca.key_backend, HSMBackend)
-    yield ca
+    return ca
 
 
-@pytest.fixture()
+@pytest.fixture
 def subject(hostname: str) -> Iterator[x509.Name]:
     """Fixture for a :py:class:`~cg:cryptography.x509.Name` to use for a subject.
 
@@ -435,7 +435,7 @@ def subject(hostname: str) -> Iterator[x509.Name]:
     :py:func:`~django_ca.tests.base.fixtures.rfc4514_subject`.
     """
     hostname = hostname[-61:].lstrip("-.")
-    yield x509.Name(
+    return x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
@@ -447,7 +447,7 @@ def subject(hostname: str) -> Iterator[x509.Name]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[Path]:
     """Fixture to create a temporary directory for storing files using the StoragesBackend."""
     primary_directory = tmp_path / "storages" / "django-ca"
@@ -479,28 +479,28 @@ def ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
     fixture_name = request.param
     if CERT_DATA[fixture_name]["cat"] in ("contrib", "sphinx-contrib"):
         fixture_name = f"contrib_{fixture_name}"
-    yield request.getfixturevalue(fixture_name)
+    return request.getfixturevalue(fixture_name)
 
 
 @pytest.fixture(params=usable_ca_names)
 def usable_ca_name(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for the name of every usable CA."""
-    yield request.param
+    return request.param
 
 
 @pytest.fixture(params=usable_ca_names)
 def usable_ca(request: "SubRequest") -> Iterator[CertificateAuthority]:
     """Parametrized fixture for every usable CA (with usable private key)."""
-    yield request.getfixturevalue(f"usable_{request.param}")
+    return request.getfixturevalue(f"usable_{request.param}")
 
 
-@pytest.fixture()
+@pytest.fixture
 def usable_cas(request: "SubRequest") -> Iterator[list[CertificateAuthority]]:
     """Fixture for all usable CAs as a list."""
     cas = []
     for name in usable_ca_names:
         cas.append(request.getfixturevalue(f"usable_{name}"))
-    yield cas
+    return cas
 
 
 @pytest.fixture(params=usable_cert_names)
@@ -514,4 +514,4 @@ def usable_cert(request: "SubRequest") -> Iterator[Certificate]:
     cert = request.getfixturevalue(name.replace("-", "_"))
     cert.test_name = name
     request.getfixturevalue(f"usable_{cert.ca.name}")
-    yield cert
+    return cert

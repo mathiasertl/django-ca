@@ -42,7 +42,7 @@ from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import dns, key_usage, override_tmpcadir, uri
 
 
-@pytest.fixture()
+@pytest.fixture
 def key_backend_parser(settings: SettingsWrapper) -> Iterator[argparse.ArgumentParser]:
     """Fixture with a paser for various options."""
     # Make sure that some settings are in place

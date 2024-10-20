@@ -1,0 +1,7 @@
+[tool.ruff]
+extend = "../pyproject.toml"
+
+[tool.ruff.lint]
+extend-ignore = [
+    "PT",  # disable lake8-pytest-style - we have some assertions and no unit tests here
+]

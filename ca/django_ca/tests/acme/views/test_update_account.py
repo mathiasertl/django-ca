@@ -38,16 +38,16 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 ACCOUNT_ONE_CONTACT = "mailto:one@example.com"
 
 
-@pytest.fixture()
+@pytest.fixture
 def url(account_slug: str) -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-account", slug=account_slug)
+    return root_reverse("acme-account", slug=account_slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[Registration]:
     """Default message sent to the server."""
-    yield Registration()
+    return Registration()
 
 
 def test_deactivation(

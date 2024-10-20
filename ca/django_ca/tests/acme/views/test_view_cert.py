@@ -36,24 +36,24 @@ from django_ca.tests.base.utils import root_reverse
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@pytest.fixture()
+@pytest.fixture
 def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
     """Override to set status to valid."""
     order.status = AcmeOrder.STATUS_VALID
     order.save()
-    yield order
+    return order
 
 
-@pytest.fixture()
+@pytest.fixture
 def url(acme_cert_slug: str) -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-cert", slug=acme_cert_slug)
+    return root_reverse("acme-cert", slug=acme_cert_slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[bytes]:
     """Yield an empty bytestring, since this is a POST-AS-GET request."""
-    yield b""
+    return b""
 
 
 def test_basic(

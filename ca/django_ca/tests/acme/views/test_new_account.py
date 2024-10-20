@@ -52,22 +52,22 @@ PEM = (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def url() -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-new-account")
+    return root_reverse("acme-new-account")
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[Registration]:
     """Default message sent to the server."""
-    yield Registration(contact=(CONTACT,), terms_of_service_agreed=True)
+    return Registration(contact=(CONTACT,), terms_of_service_agreed=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def kid() -> Iterator[None]:
     """Request requires no kid, yield None."""
-    yield
+    return
 
 
 def test_basic(client: Client, url: str, message: Registration, root: CertificateAuthority) -> None:

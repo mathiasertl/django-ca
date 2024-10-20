@@ -43,7 +43,7 @@ def api_permission() -> tuple[type[Model], str]:
     return Certificate, "revoke_certificate"
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_response(root_cert_response: dict[str, Any]) -> DetailResponse:
     """Fixture for the regular response expected from this API view."""
     root_cert_response["revoked"] = True

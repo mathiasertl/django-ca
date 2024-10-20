@@ -45,16 +45,16 @@ now = TIMESTAMPS["everything_valid"]  # just a shortcut
 pytestmark = [pytest.mark.freeze_time(now)]
 
 
-@pytest.fixture()
+@pytest.fixture
 def url() -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-new-order")
+    return root_reverse("acme-new-order")
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[NewOrder]:
     """Default message sent to the server."""
-    yield NewOrder(identifiers=[{"type": "dns", "value": SERVER_NAME}])
+    return NewOrder(identifiers=[{"type": "dns", "value": SERVER_NAME}])
 
 
 @pytest.mark.parametrize("use_tz", (True, False))

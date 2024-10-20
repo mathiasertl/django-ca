@@ -254,13 +254,13 @@ class AcmeWithAccountViewTestCaseMixin(
 ):
     """Mixin that also adds accounts to the database."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def main_account(self, account: AcmeAccount) -> Iterator[AcmeAccount]:
         """Return the main account to be used for this test case.
 
         This is overwritten by the revocation test case.
         """
-        yield account
+        return account
 
     def test_deactivated_account(
         self,

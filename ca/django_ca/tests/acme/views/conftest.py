@@ -35,35 +35,35 @@ from django_ca.tests.acme.views.constants import HOST_NAME, PEM, SERVER_NAME, TH
 from django_ca.tests.acme.views.utils import absolute_acme_uri
 
 
-@pytest.fixture()
+@pytest.fixture
 def account_slug() -> Iterator[str]:
     """Fixture for an account slug."""
-    yield acme_slug()
+    return acme_slug()
 
 
-@pytest.fixture()
+@pytest.fixture
 def order_slug() -> Iterator[str]:
     """Fixture for an order slug."""
-    yield acme_slug()
+    return acme_slug()
 
 
-@pytest.fixture()
+@pytest.fixture
 def acme_cert_slug() -> Iterator[str]:
     """Fixture for an ACME certificate slug."""
-    yield acme_slug()
+    return acme_slug()
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(client: Client) -> Iterator[Client]:
     """Override client fixture to set the default server name."""
     client.defaults["SERVER_NAME"] = SERVER_NAME
-    yield client
+    return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def account(root: CertificateAuthority, account_slug: str, kid: str) -> Iterator[AcmeAccount]:
     """Fixture for an account."""
-    yield AcmeAccount.objects.create(
+    return AcmeAccount.objects.create(
         ca=root,
         contact="mailto:one@example.com",
         terms_of_service_agreed=True,
@@ -74,34 +74,34 @@ def account(root: CertificateAuthority, account_slug: str, kid: str) -> Iterator
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def kid(root: CertificateAuthority, account_slug: str) -> Iterator[str]:
     """Fixture for a full KID."""
-    yield absolute_acme_uri(":acme-account", serial=root.serial, slug=account_slug)
+    return absolute_acme_uri(":acme-account", serial=root.serial, slug=account_slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def order(account: AcmeAccount, order_slug: str) -> Iterator[AcmeOrder]:
     """Fixture for an order."""
-    yield AcmeOrder.objects.create(account=account, slug=order_slug)
+    return AcmeOrder.objects.create(account=account, slug=order_slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def authz(order: AcmeOrder) -> Iterator[AcmeAuthorization]:
     """Fixture for an authorization."""
-    yield AcmeAuthorization.objects.create(order=order, value=HOST_NAME)
+    return AcmeAuthorization.objects.create(order=order, value=HOST_NAME)
 
 
-@pytest.fixture()
+@pytest.fixture
 def challenge(authz: AcmeAuthorization) -> Iterator[AcmeChallenge]:
     """Fixture for a challenge."""
     challenge = authz.get_challenges()[0]
     challenge.token = "foobar"
     challenge.save()
-    yield challenge
+    return challenge
 
 
-@pytest.fixture()
+@pytest.fixture
 def acme_cert(root_cert: Certificate, order: AcmeOrder, acme_cert_slug: str) -> Iterator[AcmeCertificate]:
     """Fixture for an ACME certificate."""
-    yield AcmeCertificate.objects.create(order=order, cert=root_cert, slug=acme_cert_slug)
+    return AcmeCertificate.objects.create(order=order, cert=root_cert, slug=acme_cert_slug)

@@ -98,7 +98,7 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def root_cert_response(root_cert: Certificate) -> DetailResponse:
     """Fixture for the expected response schema for the certificate signed by the root CA."""
     return {

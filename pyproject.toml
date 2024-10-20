@@ -425,6 +425,7 @@ extend-select = [
     "G",  # flake8-logging-format
     "DJ",  # flake8-django
     "PL",  # pylint
+    "PT",  # flake8-pytest-style
     "UP",  # pyupgrade
     "RUF",  # ruff specific checks
 ]
@@ -438,10 +439,14 @@ ignore = [
     "D401",  # First line of docstring should be in imperative mood
     "PLR2004",  # Magic value used in comparison - not disabled in default pylint
     "PLW2901",  # redefined-loop-name - not disabled in default pylint
+    "PT004",  # pytest-missing-fixture-name-underscore - deprecated even in ruff
 ]
 unfixable = [
     "PLW1510",  # `subprocess.run` without explicit `check` argument - not deemed safe
 ]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-values-type = "tuple"
 
 [tool.ruff.lint.isort]
 section-order = [

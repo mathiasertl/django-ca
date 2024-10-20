@@ -124,7 +124,7 @@ def pytest_collection_modifyitems(config: "PytestConfig", items: list[Any]) -> N
                 item.add_marker(skip_hsm)
 
 
-@pytest.fixture()
+@pytest.fixture
 def user(
     # PYLINT NOTE: usefixtures() does not (yet?) work with fixtures as of pytest==7.4.3
     #   https://docs.pytest.org/en/7.4.x/how-to/fixtures.html
@@ -142,11 +142,11 @@ def user(
     return user
 
 
-@pytest.fixture()
+@pytest.fixture
 def user_client(user: "User", client: Client) -> Iterator[Client]:
     """A Django test client logged in as a normal user."""
     client.force_login(user)  # type: ignore[arg-type]  # django-stubs 5.1.0 thinks user is AbstractUser
-    yield client
+    return client
 
 
 # Dynamically inject repetitive fixtures:

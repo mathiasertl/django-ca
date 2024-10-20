@@ -39,7 +39,7 @@ def api_permission() -> tuple[type[Model], str]:
     return Certificate, "view_certificate"
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_response(root_cert_response: dict[str, Any]) -> ListResponse:
     """Fixture for the regular response expected from this API view."""
     return [root_cert_response]

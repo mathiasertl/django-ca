@@ -29,7 +29,7 @@ from django_ca.tests.base.constants import CERT_DATA, DOC_DIR
 BASE = os.path.relpath(DOC_DIR, os.path.dirname(__file__))
 
 
-@pytest.fixture()
+@pytest.fixture
 def globs(usable_root: CertificateAuthority, root_cert: Certificate) -> dict[str, Any]:
     """Fixture for global variables available to doctests."""
     return {

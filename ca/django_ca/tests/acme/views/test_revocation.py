@@ -57,13 +57,13 @@ from django_ca.utils import get_cert_builder
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.usefixtures("acme_cert")]
 
 
-@pytest.fixture()
+@pytest.fixture
 def url() -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-revoke")
+    return root_reverse("acme-revoke")
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[Revocation]:
     """Default message sent to the server."""
     default_certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
@@ -217,10 +217,10 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
     CHILD_THUMBPRINT = "ux-66bpJQiyeDduTWQZHgkB4KJWK0kSdPOabnFiitFM"
     CHILD_SLUG = acme_slug()
 
-    @pytest.fixture()
+    @pytest.fixture
     def child_kid_fixture(self, root: CertificateAuthority) -> Iterator[str]:
         """Fixture to set compute the child KID."""
-        yield self.absolute_uri(":acme-account", serial=root.serial, slug=self.CHILD_SLUG)
+        return self.absolute_uri(":acme-account", serial=root.serial, slug=self.CHILD_SLUG)
 
     @pytest.fixture(autouse=True)
     def account_two_fixture(
@@ -266,7 +266,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
             kid=self.child_kid,
         )
 
-    @pytest.fixture()
+    @pytest.fixture
     def main_account(self) -> AcmeAccount:  # type: ignore[override]
         return self.account2
 
@@ -286,10 +286,10 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
     def test_wrong_url(self) -> None:  # type: ignore[override]
         pass
 
-    @pytest.fixture()
+    @pytest.fixture
     def kid(self, child_kid_fixture: str) -> Iterator[Optional[str]]:
         """Override kid to return the child kid."""
-        yield child_kid_fixture
+        return child_kid_fixture
 
     def test_wrong_authorizations(self, client: Client, url: str, root: CertificateAuthority) -> None:
         """Test revoking a certificate when the account has some, but the wrong authorizations."""

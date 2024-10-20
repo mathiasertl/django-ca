@@ -27,12 +27,12 @@ from django_ca.tests.base.typehints import User
 @pytest.fixture(params=["name_to_rfc4514"])
 def extra_view_url(request: "SubRequest") -> Iterator[str]:
     """Parametrized fixture providing reversed extra view URLs."""
-    yield reverse(f"admin:django_ca_certificate_{request.param}")
+    return reverse(f"admin:django_ca_certificate_{request.param}")
 
 
-@pytest.fixture()
+@pytest.fixture
 def staff_client(user: "User", user_client: Client) -> Iterator[Client]:
     """Client with a staff user with no extra permissions."""
     user.is_staff = True
     user.save()
-    yield user_client
+    return user_client

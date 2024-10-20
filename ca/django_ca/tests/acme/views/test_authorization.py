@@ -40,16 +40,16 @@ from django_ca.tests.base.utils import root_reverse
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@pytest.fixture()
+@pytest.fixture
 def url(authz: AcmeAuthorization) -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-authz", slug=authz.slug)
+    return root_reverse("acme-authz", slug=authz.slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[bytes]:
     """Yield an empty bytestring, since this is a POST-AS-GET request."""
-    yield b""
+    return b""
 
 
 @pytest.mark.parametrize("use_tz", (True, False))

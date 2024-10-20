@@ -60,7 +60,7 @@ def api_permission() -> tuple[type[Model], str]:
     return CertificateAuthority, "change_certificateauthority"
 
 
-@pytest.fixture()
+@pytest.fixture
 def payload() -> dict[str, Any]:
     """Fixture for a standard request payload."""
     return {
@@ -94,7 +94,7 @@ def payload() -> dict[str, Any]:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_response(root: CertificateAuthority, payload: dict[str, Any]) -> dict[str, Any]:
     """Fixture for the expected response schema for the root CA."""
     return dict(

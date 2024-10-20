@@ -91,13 +91,13 @@ urlpatterns = [
 ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_url(root: CertificateAuthority) -> Iterator[str]:
     """Fixture for the default URL for the root CA."""
-    yield reverse("default", kwargs={"serial": root.serial})
+    return reverse("default", kwargs={"serial": root.serial})
 
 
-@pytest.fixture()
+@pytest.fixture
 def deprecated_scope() -> Iterator[None]:
     """Warning for deprecated scope parameter."""
     msg = (

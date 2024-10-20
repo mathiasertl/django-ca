@@ -41,16 +41,16 @@ from django_ca.tests.base.utils import root_reverse
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@pytest.fixture()
+@pytest.fixture
 def url(challenge: AcmeChallenge) -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-challenge", slug=challenge.slug)
+    return root_reverse("acme-challenge", slug=challenge.slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[bytes]:
     """Yield an empty bytestring, since this is a POST-AS-GET request."""
-    yield b""
+    return b""
 
 
 def test_basic(

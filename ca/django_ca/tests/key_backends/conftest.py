@@ -21,7 +21,7 @@ from django_ca.key_backends import key_backends
 from django_ca.key_backends.base import KeyBackends
 
 
-@pytest.fixture()
+@pytest.fixture
 def clean_key_backends() -> Iterator[KeyBackends]:
     """Fixture to make sure that no key backends are loaded yet."""
     key_backends._reset()  # pylint: disable=protected-access

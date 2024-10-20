@@ -70,7 +70,7 @@ def api_permission() -> tuple[type[Model], str]:
     return Certificate, "sign_certificate"
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_response() -> dict[str, Any]:
     """Fixture for the non-dynamic parts of the expected response."""
     return {

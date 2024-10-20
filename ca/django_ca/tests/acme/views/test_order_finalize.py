@@ -63,33 +63,33 @@ CSR = (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
     """Override the module-level fixture to set the status to ready."""
     order.status = AcmeOrder.STATUS_READY
     order.save()
-    yield order
+    return order
 
 
-@pytest.fixture()
+@pytest.fixture
 def authz(authz: AcmeAuthorization) -> Iterator[AcmeAuthorization]:
     """Override the module-level fixture to set the status to valid."""
     authz.status = AcmeAuthorization.STATUS_VALID
     authz.save()
-    yield authz
+    return authz
 
 
-@pytest.fixture()
+@pytest.fixture
 def url(order: AcmeOrder) -> Iterator[str]:
     """URL under test."""
-    yield root_reverse("acme-order-finalize", slug=order.slug)
+    return root_reverse("acme-order-finalize", slug=order.slug)
 
 
-@pytest.fixture()
+@pytest.fixture
 def message() -> Iterator[CertificateRequest]:
     """Default message sent to the server."""
     req = X509Req.from_cryptography(CSR)
-    yield CertificateRequest(csr=jose.util.ComparableX509(req))
+    return CertificateRequest(csr=jose.util.ComparableX509(req))
 
 
 def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthority) -> None:

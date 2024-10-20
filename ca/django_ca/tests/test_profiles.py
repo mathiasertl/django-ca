@@ -60,7 +60,7 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 
-@pytest.fixture()
+@pytest.fixture
 def doctest_globs(usable_root: CertificateAuthority) -> dict[str, Any]:
     """Fixture for context used in doctests."""
     return {
