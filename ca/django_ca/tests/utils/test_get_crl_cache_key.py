@@ -33,7 +33,7 @@ DEFAULT_KWARGS = {
 
 
 @pytest.mark.parametrize(
-    "kwargs,expected",
+    ("kwargs", "expected"),
     (
         (DEFAULT_KWARGS, "crl_123_DER_False_False_False_None"),
         ({**DEFAULT_KWARGS, "encoding": Encoding.PEM}, "crl_123_PEM_False_False_False_None"),

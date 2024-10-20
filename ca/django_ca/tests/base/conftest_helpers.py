@@ -17,7 +17,6 @@ import os
 import shutil
 import sys
 import typing
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Optional, Union, cast
 
@@ -146,24 +145,24 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
         exclude_versions(cov, "cryptography", cg_version, ver, version_str)
 
 
-def generate_pub_fixture(name: str) -> typing.Callable[[], Iterator[x509.Certificate]]:
+def generate_pub_fixture(name: str) -> typing.Callable[[], x509.Certificate]:
     """Generate fixture for a loaded public key (root_pub, root_cert_pub, ...)."""
 
     @pytest.fixture(scope="session")
-    def fixture() -> Iterator[x509.Certificate]:
+    def fixture() -> x509.Certificate:
         return load_pub(name)
 
     return fixture
 
 
-def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Iterator[CertificateAuthority]]:
+def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], CertificateAuthority]:
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture
     def fixture(
         request: "SubRequest",
         db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
-    ) -> Iterator[CertificateAuthority]:
+    ) -> CertificateAuthority:
         data = CERT_DATA[name]
         ca_fixture_name = f"{name}_pub"
         if data["cat"] == "sphinx-contrib":
@@ -187,27 +186,25 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Itera
     return fixture
 
 
-def generate_usable_ca_fixture(
-    name: str,
-) -> typing.Callable[["SubRequest", Path], Iterator[CertificateAuthority]]:
+def generate_usable_ca_fixture(name: str) -> typing.Callable[["SubRequest", Path], CertificateAuthority]:
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture
-    def fixture(request: "SubRequest", tmpcadir: Path) -> Iterator[CertificateAuthority]:
+    def fixture(request: "SubRequest", tmpcadir: Path) -> CertificateAuthority:
         ca = request.getfixturevalue(name)  # load the CA into the database
         data = CERT_DATA[name]
         shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir)
 
-        return ca
+        return ca  # type: ignore[no-any-return]
 
     return fixture
 
 
-def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Iterator[Certificate]]:
+def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Certificate]:
     """Function to generate cert fixtures (root_cert, all_extensions, no_extensions, ...)."""
 
     @pytest.fixture
-    def fixture(request: "SubRequest") -> Iterator[Certificate]:
+    def fixture(request: "SubRequest") -> Certificate:
         sanitized_name = name.replace("-", "_")
         data = CERT_DATA[name]
 

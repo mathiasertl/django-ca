@@ -13,13 +13,14 @@
 
 """:py:mod:`django_ca.tests.base.assertions` collects assertions used throughout the entire test suite."""
 
+import collections
 import io
 import re
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import AnyStr, Optional, Union
+from typing import Any, AnyStr, Optional, Union
 from unittest.mock import Mock
 
 from cryptography import x509
@@ -155,6 +156,12 @@ def assert_command_error(msg: str, returncode: int = 1) -> Iterator[None]:
     with pytest.raises(CommandError, match=msg) as exc_info:
         yield
     assert exc_info.value.returncode == returncode
+
+
+def assert_count_equal(first: Iterable[Any], second: Iterable[Any]) -> None:
+    """Roughly equivalent version of ``unittests assertCountEqual()``."""
+    first, second = list(first), list(second)
+    assert collections.Counter(first) == collections.Counter(second)
 
 
 @contextmanager
@@ -303,6 +310,34 @@ def assert_e2e_error(
         assert stderr.search(actual_stderr.getvalue())
     else:  # pragma: no cover
         raise NotImplementedError
+
+
+def assert_extension_equal(
+    first: Optional[x509.Extension[x509.ExtensionType]], second: Optional[x509.Extension[x509.ExtensionType]]
+) -> None:
+    """Compare two extensions for equality (or if both are None).
+
+    This assertion overrides comparison for iterable extension and should be used only when order of these
+    extension values cannot be guaranteed. For example, two ExtendedKeyUsage extension will pass as equal
+    regardless of order of the extended key usages in the extensions.
+    """
+    # If both are None that's still okay.
+    if first is None and second is None:
+        return
+    if first is None or second is None:  # pragma: no cover
+        raise AssertionError("One of the values is None.")
+
+    if second.oid in (
+        ExtensionOID.EXTENDED_KEY_USAGE,
+        ExtensionOID.TLS_FEATURE,
+        ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+    ):
+        assert first.oid == second.oid
+        assert first.critical == second.critical
+        assert_count_equal(first.value, second.value)  # type: ignore[arg-type]
+    else:
+        assert first == second
 
 
 def assert_extensions(

@@ -24,7 +24,7 @@ from django_ca.utils import parse_name_rfc4514
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ("CN=example.com", x509.Name([cn("example.com")])),
         (f"{NameOID.COMMON_NAME.dotted_string}=example.com", x509.Name([cn("example.com")])),
@@ -37,7 +37,7 @@ def test_parse_name_rfc4514(value: str, expected: x509.Name) -> None:
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         (
             "C=FOO",
@@ -57,7 +57,7 @@ def test_parse_name_rfc4514_with_error(value: str, expected: str) -> None:
 
 @pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (43,), reason="cryptography check was added in version 43")
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ("CN=", r"^Attribute's length must be >= 1 and <= 64, but it was 0$"),
         (f"CN={'x' * 65}", r"^Attribute's length must be >= 1 and <= 64, but it was 65$"),

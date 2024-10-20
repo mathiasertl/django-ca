@@ -47,24 +47,24 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
         with mock_signal(pre_revoke_cert) as pre, mock_signal(post_revoke_cert) as post:
             stdout, stderr = cmd_e2e(["revoke_cert", cert.serial, *arguments])
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        assert stdout == ""
+        assert stderr == ""
 
         cert.refresh_from_db()
-        self.assertEqual(pre.call_count, 1)
+        assert pre.call_count == 1
         self.assertPostRevoke(post, cert)
-        self.assertTrue(cert.revoked)
-        self.assertTrue(cert.revoked_date is not None)
-        self.assertEqual(cert.revoked_reason, reason)
+        assert cert.revoked
+        assert cert.revoked_date is not None
+        assert cert.revoked_reason == reason
 
     def test_no_arguments(self) -> None:
         """Test revoking without a reason."""
-        self.assertFalse(self.cert.revoked)
+        assert not self.cert.revoked
         self.revoke(self.cert)
 
     def test_with_reason(self) -> None:
         """Test revoking with a reason."""
-        self.assertFalse(self.cert.revoked)
+        assert not self.cert.revoked
 
         for reason in ReasonFlags:
             self.revoke(self.cert, ["--reason", reason.name], reason=reason.name)
@@ -79,26 +79,26 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
         """Test revoking the certificate with a compromised date."""
         now = datetime.now(tz=tz.utc)
         self.revoke(self.cert, arguments=["--compromised", now.isoformat()])
-        self.assertEqual(self.cert.compromised, now)
+        assert self.cert.compromised == now
 
     def test_with_compromised_with_use_tz_is_false(self) -> None:
         """Test revoking the certificate with a compromised date with USE_TZ=False."""
         with self.settings(USE_TZ=False):
             now = datetime.now(tz=tz.utc)
             self.revoke(self.cert, arguments=["--compromised", now.isoformat()])
-            self.assertEqual(self.cert.compromised, timezone.make_naive(now))
+            assert self.cert.compromised == timezone.make_naive(now)
 
     def test_revoked(self) -> None:
         """Test revoking a cert that is already revoked."""
-        self.assertFalse(self.cert.revoked)
+        assert not self.cert.revoked
 
         with mock_signal(pre_revoke_cert) as pre, mock_signal(post_revoke_cert) as post:
             cmd("revoke_cert", self.cert.serial)
 
         cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertEqual(pre.call_count, 1)
+        assert pre.call_count == 1
         self.assertPostRevoke(post, cert)
-        self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
+        assert cert.revoked_reason == ReasonFlags.unspecified.name
 
         with (
             assert_command_error(rf"^{self.cert.serial}: Certificate is already revoked\.$"),
@@ -106,13 +106,13 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
             mock_signal(post_revoke_cert) as post,
         ):
             cmd("revoke_cert", self.cert.serial, reason=ReasonFlags.key_compromise)
-        self.assertFalse(pre.called)
-        self.assertFalse(post.called)
+        assert not pre.called
+        assert not post.called
 
         cert = Certificate.objects.get(serial=self.cert.serial)
-        self.assertTrue(cert.revoked)
-        self.assertTrue(cert.revoked_date is not None)
-        self.assertEqual(cert.revoked_reason, ReasonFlags.unspecified.name)
+        assert cert.revoked
+        assert cert.revoked_date is not None
+        assert cert.revoked_reason == ReasonFlags.unspecified.name
 
     def test_compromised_with_naive_datetime(self) -> None:
         """Test passing a naive datetime (which is an error)."""

@@ -46,7 +46,7 @@ def test_revocation() -> None:
     # Never really happens in real life, but should still be checked
     cert = Certificate(revoked=False)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^Certificate is not revoked\.$"):
         cert.get_revocation()
 
 
@@ -129,7 +129,7 @@ def test_validate_past(root_cert: Certificate) -> None:
         root_cert.full_clean()
 
 
-@pytest.mark.parametrize("name,algorithm", (("sha256", hashes.SHA256()), ("sha512", hashes.SHA512())))
+@pytest.mark.parametrize(("name", "algorithm"), (("sha256", hashes.SHA256()), ("sha512", hashes.SHA512())))
 def test_get_fingerprint(name: str, algorithm: hashes.HashAlgorithm, usable_cert: Certificate) -> None:
     """Test getting the fingerprint value."""
     cert_name = usable_cert.test_name  # type: ignore[attr-defined]

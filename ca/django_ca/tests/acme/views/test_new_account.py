@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name  # because of fixtures
 
-from collections.abc import Iterator
 from http import HTTPStatus
 from unittest import mock
 
@@ -53,19 +52,19 @@ PEM = (
 
 
 @pytest.fixture
-def url() -> Iterator[str]:
+def url() -> str:
     """URL under test."""
     return root_reverse("acme-new-account")
 
 
 @pytest.fixture
-def message() -> Iterator[Registration]:
+def message() -> Registration:
     """Default message sent to the server."""
     return Registration(contact=(CONTACT,), terms_of_service_agreed=True)
 
 
 @pytest.fixture
-def kid() -> Iterator[None]:
+def kid() -> None:
     """Request requires no kid, yield None."""
     return
 
@@ -228,7 +227,7 @@ def test_unsupported_contact(client: Client, url: str, root: CertificateAuthorit
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ('mailto:"with spaces"@example.com', "Quoted local part in email is not allowed."),
         ("mailto:user@example.com,user@example.net", "More than one addr-spec is not allowed."),

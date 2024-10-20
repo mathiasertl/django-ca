@@ -24,13 +24,13 @@ class CommandLineTextWrapperTestCase(TestCase):
     def assertWraps(self, command: str, expected: list[str]) -> None:  # pylint: disable=invalid-name
         """Assert that the given command wraps to the expected full text."""
         wrapper = CommandLineTextWrapper(width=12)
-        self.assertEqual(wrapper.wrap(command), expected)
+        assert wrapper.wrap(command) == expected
 
     def assertSplits(self, command: str, expected: list[str]) -> None:  # pylint: disable=invalid-name
         """Assert that the given command splits into the expected tokens."""
         wrapper = CommandLineTextWrapper()
         # PYLINT note: this is the function that we override
-        self.assertEqual(wrapper._split(command), expected)  # pylint: disable=protected-access
+        assert wrapper._split(command) == expected  # pylint: disable=protected-access
 
     def test_split(self) -> None:
         """Test the overwritten split function."""

@@ -183,7 +183,7 @@ def test_critical_validation() -> None:
 
 
 @pytest.mark.parametrize(
-    "parameters,expected",
+    ("parameters", "expected"),
     (
         (
             {
@@ -212,7 +212,7 @@ def test_access_description_model(parameters: dict[str, Any], expected: x509.Acc
 
 
 @pytest.mark.parametrize(
-    "parameters,expected",
+    ("parameters", "expected"),
     (
         (
             {"full_name": [GENERAL_NAME]},
@@ -252,7 +252,7 @@ def test_distribution_point(parameters: dict[str, Any], expected: x509.Distribut
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             {
@@ -279,7 +279,7 @@ def test_distribution_point_errors(parameters: dict[str, Any], expected_errors: 
 
 
 @pytest.mark.parametrize(
-    "parameters,expected",
+    ("parameters", "expected"),
     (
         (
             {"full_name": [GENERAL_NAME]},
@@ -359,9 +359,9 @@ def test_signed_certificate_timestamp(signed_certificate_timestamp_pub: x509.Cer
 
 
 @pytest.mark.parametrize("critical", (True, False, None))
-@pytest.mark.parametrize("general_names,parsed_general_names", (([GENERAL_NAME], [dns("example.com")]),))
+@pytest.mark.parametrize(("general_names", "parsed_general_names"), (([GENERAL_NAME], [dns("example.com")]),))
 @pytest.mark.parametrize(
-    "model,extension_type",
+    ("model", "extension_type"),
     (
         (SubjectAlternativeNameModel, x509.SubjectAlternativeName),
         (IssuerAlternativeNameModel, x509.IssuerAlternativeName),
@@ -381,7 +381,7 @@ def test_alternative_name_extensions(
 
 @pytest.mark.parametrize("model", (SubjectAlternativeNameModel, IssuerAlternativeNameModel))
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ([], [("value_error", ("value",), "Value error, value must not be empty")]),
         ([GENERAL_NAME] * 2, [("value_error", ("value",), re.compile("value must be unique$"))]),
@@ -398,7 +398,7 @@ def test_alternative_name_extensions_errors(
 
 @pytest.mark.parametrize("critical", (False, None))
 @pytest.mark.parametrize(
-    "parameters,descriptions",
+    ("parameters", "descriptions"),
     (
         (
             [{"access_method": "ocsp", "access_location": GENERAL_NAME}],
@@ -425,7 +425,7 @@ def test_authority_information_access(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ({"value": []}, [("value_error", ("value",), "Value error, value must not be empty")]),
         (
@@ -461,7 +461,7 @@ def test_authority_information_access_errors(
 
 @pytest.mark.parametrize("critical", (False, None))
 @pytest.mark.parametrize(
-    "parameters,extension",
+    ("parameters", "extension"),
     (
         (
             {"key_identifier": b"MTIz"},
@@ -503,7 +503,7 @@ def test_authority_key_identifier(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             {
@@ -566,7 +566,7 @@ def test_authority_key_identifier_errors(parameters: dict[str, Any], expected_er
 
 @pytest.mark.parametrize("critical", (True, False, None))
 @pytest.mark.parametrize(
-    "parameters,extension",
+    ("parameters", "extension"),
     (
         ({"ca": False, "path_length": None}, x509.BasicConstraints(ca=False, path_length=None)),
         ({"ca": True, "path_length": None}, x509.BasicConstraints(ca=True, path_length=None)),
@@ -587,7 +587,7 @@ def test_basic_constraints(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             {},
@@ -620,7 +620,7 @@ def test_basic_constraints_errors(parameters: dict[str, Any], expected_errors: E
 
 @pytest.mark.parametrize("critical", (True, False, None))
 @pytest.mark.parametrize(
-    "parameters,policies",
+    ("parameters", "policies"),
     (
         (
             (
@@ -745,7 +745,7 @@ def test_certificate_policies(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             [],
@@ -807,7 +807,7 @@ DISTRIBUTION_POINTS_PARAMETERS = (
 
 @pytest.mark.parametrize("critical", (True, False, None))
 @pytest.mark.parametrize(
-    "parameters,distribution_points",
+    ("parameters", "distribution_points"),
     DISTRIBUTION_POINTS_PARAMETERS,
 )
 def test_crl_distribution_points(
@@ -823,7 +823,7 @@ def test_crl_distribution_points(
 
 @pytest.mark.parametrize("model", (CRLDistributionPointsModel, FreshestCRLModel))
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             [],
@@ -851,14 +851,14 @@ def test_distribution_point_extension_errors(
 
 
 @pytest.mark.parametrize("critical", (False, None))
-@pytest.mark.parametrize("crl_number", [0, 1])
+@pytest.mark.parametrize("crl_number", (0, 1))
 def test_crl_number(critical: Optional[bool], crl_number: int) -> None:
     """Test the CRLNumberModel."""
     assert_extension_model(CRLNumberModel, crl_number, x509.CRLNumber(crl_number), critical)
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ({"value": -1}, [("greater_than_equal", ("value",), "Input should be greater than or equal to 0")]),
         ({"value": 0, "critical": True}, [MUST_BE_NON_CRITICAL_ERROR]),
@@ -870,14 +870,14 @@ def test_crl_number_errors(parameters: dict[str, Any], expected_errors: Expected
 
 
 @pytest.mark.parametrize("critical", (True, None))
-@pytest.mark.parametrize("crl_number", [0, 1, 2])
+@pytest.mark.parametrize("crl_number", (0, 1, 2))
 def test_delta_crl_indicator(critical: Optional[bool], crl_number: int) -> None:
     """Test the DeltaCRLModel."""
     assert_extension_model(DeltaCRLIndicatorModel, crl_number, x509.DeltaCRLIndicator(crl_number), critical)
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ({"value": -1}, [("greater_than_equal", ("value",), "Input should be greater than or equal to 0")]),
         ({"value": 0, "critical": False}, [MUST_BE_CRITICAL_ERROR]),
@@ -893,7 +893,7 @@ def test_delta_crl_indicator_errors(
 
 @pytest.mark.parametrize("critical", (True, False, None))
 @pytest.mark.parametrize(
-    "usages,extension",
+    ("usages", "extension"),
     (
         (
             [ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string, ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],
@@ -916,7 +916,7 @@ def test_extended_key_usage(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             [],
@@ -954,7 +954,7 @@ def test_extended_key_usage_errors(parameters: dict[str, Any], expected_errors: 
 
 
 @pytest.mark.parametrize("critical", (False, None))
-@pytest.mark.parametrize("parameters,distribution_points", DISTRIBUTION_POINTS_PARAMETERS)
+@pytest.mark.parametrize(("parameters", "distribution_points"), DISTRIBUTION_POINTS_PARAMETERS)
 def test_freshest_crl(
     critical: Optional[bool],
     parameters: list[dict[str, Any]],
@@ -977,14 +977,14 @@ def test_freshest_crl_critical_error() -> None:
 
 
 @pytest.mark.parametrize("critical", (True, None))
-@pytest.mark.parametrize("skip_certs", [0, 1])
+@pytest.mark.parametrize("skip_certs", (0, 1))
 def test_inhibit_any_policy(critical: Optional[bool], skip_certs: int) -> None:
     """Test the InhibitAnyPolicyModel."""
     assert_extension_model(InhibitAnyPolicyModel, skip_certs, x509.InhibitAnyPolicy(skip_certs), critical)
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ({"value": -1}, [("greater_than_equal", ("value",), "Input should be greater than or equal to 0")]),
         ({"value": 0, "critical": False}, [MUST_BE_CRITICAL_ERROR]),
@@ -997,7 +997,7 @@ def test_inhibit_any_policy_errors(parameters: dict[str, Any], expected_errors: 
 
 @pytest.mark.parametrize("critical", (True, None))
 @pytest.mark.parametrize(
-    "parameters,issuing_distribution_point",
+    ("parameters", "issuing_distribution_point"),
     (
         (
             {"full_name": [GENERAL_NAME]},
@@ -1023,7 +1023,7 @@ def test_issuing_distribution_point(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ({"value": {}}, [("value_error", ("value",), "Value error, cannot create empty extension")]),
         (
@@ -1068,7 +1068,7 @@ def test_issuing_distribution_point_errors(
 
 @pytest.mark.parametrize("critical", (True, False, None))
 @pytest.mark.parametrize(
-    "parameters,extension",
+    ("parameters", "extension"),
     (
         (["crl_sign"], key_usage(crl_sign=True).value),
         (
@@ -1083,7 +1083,7 @@ def test_key_usage(critical: Optional[bool], parameters: dict[str, bool], extens
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             [],
@@ -1128,7 +1128,7 @@ def test_key_usage_errors(parameters: dict[str, bool], expected_errors: Expected
 
 @pytest.mark.parametrize("critical", (True, False))
 @pytest.mark.parametrize(
-    "parameters,extension",
+    ("parameters", "extension"),
     (
         (
             {"template_id": NameOID.COMMON_NAME.dotted_string},
@@ -1157,7 +1157,7 @@ def test_ms_certificate_template(
 
 @pytest.mark.parametrize("critical", (True, None))
 @pytest.mark.parametrize(
-    "parameters,extension",
+    ("parameters", "extension"),
     (
         (
             {"permitted_subtrees": [GENERAL_NAME]},
@@ -1186,7 +1186,7 @@ def test_name_constraints(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             {"value": {}},
@@ -1238,7 +1238,8 @@ def test_name_constraints_errors(parameters: dict[str, bool], expected_errors: E
 
 @pytest.mark.parametrize("critical", (True, None))
 @pytest.mark.parametrize(
-    "require_explicit_policy,inhibit_policy_mapping", ((0, 0), (1, 1), (0, 5), (5, 0), (None, 0), (0, None))
+    ("require_explicit_policy", "inhibit_policy_mapping"),
+    ((0, 0), (1, 1), (0, 5), (5, 0), (None, 0), (0, None)),
 )
 def test_policy_constraints(
     critical: Optional[bool], require_explicit_policy: int, inhibit_policy_mapping: int
@@ -1255,7 +1256,7 @@ def test_policy_constraints(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             {"value": {"require_explicit_policy": None, "inhibit_policy_mapping": None}},
@@ -1333,7 +1334,7 @@ def test_signed_certificate_timestamps(signed_certificate_timestamps_pub: x509.C
 
 
 @pytest.mark.parametrize(
-    "parameters,extension",
+    ("parameters", "extension"),
     (
         (
             [{"access_method": "ca_repository", "access_location": GENERAL_NAME}],
@@ -1352,7 +1353,7 @@ def test_subject_information_access(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         ({"value": []}, [("value_error", ("value",), "Value error, value must not be empty")]),
         (
@@ -1392,7 +1393,7 @@ def test_subject_information_access_errors(
 
 
 @pytest.mark.parametrize(
-    "digest,extension",
+    ("digest", "extension"),
     (
         # (b"123", x509.SubjectKeyIdentifier(b"123")),
         (b"kA==", x509.SubjectKeyIdentifier(b"\x90")),
@@ -1416,7 +1417,7 @@ def test_subject_key_identifier_errors() -> None:
 
 
 @pytest.mark.parametrize(
-    "parameters,features",
+    ("parameters", "features"),
     (
         (["status_request"], [x509.TLSFeatureType.status_request]),
         (["OCSPMustStaple"], [x509.TLSFeatureType.status_request]),
@@ -1449,7 +1450,7 @@ def test_tls_feature(
 
 
 @pytest.mark.parametrize(
-    "parameters,expected_errors",
+    ("parameters", "expected_errors"),
     (
         (
             {"value": []},
@@ -1471,7 +1472,7 @@ def test_tls_feature_errors(parameters: dict[str, bool], expected_errors: Expect
 
 
 @pytest.mark.parametrize(
-    "parameters,extension_type",
+    ("parameters", "extension_type"),
     (
         (
             {"value": b"MTIz", "oid": "1.2.3"},

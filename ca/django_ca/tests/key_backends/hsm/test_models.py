@@ -25,7 +25,7 @@ from django_ca.key_backends.hsm.models import (
 )
 
 
-@pytest.mark.parametrize("so_pin,user_pin", (("so-pin-value", None), (None, "user-pin-value")))
+@pytest.mark.parametrize(("so_pin", "user_pin"), (("so-pin-value", None), (None, "user-pin-value")))
 def test_pins(so_pin: Optional[str], user_pin: Optional[str]) -> None:
     """Test valid pin configurations."""
     model = HSMUsePrivateKeyOptions(so_pin=so_pin, user_pin=user_pin)
@@ -34,7 +34,7 @@ def test_pins(so_pin: Optional[str], user_pin: Optional[str]) -> None:
 
 
 @pytest.mark.parametrize(
-    "so_pin,user_pin,error",
+    ("so_pin", "user_pin", "error"),
     (
         (None, None, r"Provide one of so_pin or user_pin\."),
         ("so-pin-value", "user-pin-value", r"Provide either so_pin or user_pin\."),
@@ -79,6 +79,6 @@ def test_with_no_context(caplog: LogCaptureFixture) -> None:
 
 def test_with_no_backend_in_context(caplog: LogCaptureFixture) -> None:
     """Test creating a Model with loading the pins from the context."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         HSMUsePrivateKeyOptions.model_validate({}, context={"foo": "bar"})
     assert "Did not receive backend in context." in caplog.text

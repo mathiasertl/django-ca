@@ -55,7 +55,7 @@ def test_no_allow_port(value: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "value,error",
+    ("value", "error"),
     (
         ("localhost:no-int", "^no-int: Port must be an integer$"),
         ("localhost:0", "^0: Port must be between 1 and 65535$"),

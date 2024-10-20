@@ -22,7 +22,7 @@ from django_ca.utils import parse_name_x509
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ("/CN=example.com", [(NameOID.COMMON_NAME, "example.com")]),
         # leading or trailing spaces are always ok:
@@ -93,16 +93,6 @@ from django_ca.utils import parse_name_x509
         ("/O=/OU=", [(NameOID.ORGANIZATION_NAME, ""), (NameOID.ORGANIZATIONAL_UNIT_NAME, "")]),
         # no slash at start works:
         ("CN=example.com", [(NameOID.COMMON_NAME, "example.com")]),
-        # test multiple OUs
-        (
-            "/C=AT/OU=foo/OU=bar/CN=example.com",
-            [
-                (NameOID.COUNTRY_NAME, "AT"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"),
-                (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar"),
-                (NameOID.COMMON_NAME, "example.com"),
-            ],
-        ),
         (
             "/OU=foo/OU=bar",
             [(NameOID.ORGANIZATIONAL_UNIT_NAME, "foo"), (NameOID.ORGANIZATIONAL_UNIT_NAME, "bar")],

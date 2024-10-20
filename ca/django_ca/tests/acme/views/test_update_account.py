@@ -16,7 +16,6 @@
 # pylint: disable=redefined-outer-name  # because of fixtures
 
 import unittest
-from collections.abc import Iterator
 from http import HTTPStatus
 
 from acme.messages import IDENTIFIER_FQDN, Identifier, Registration
@@ -39,13 +38,13 @@ ACCOUNT_ONE_CONTACT = "mailto:one@example.com"
 
 
 @pytest.fixture
-def url(account_slug: str) -> Iterator[str]:
+def url(account_slug: str) -> str:
     """URL under test."""
     return root_reverse("acme-account", slug=account_slug)
 
 
 @pytest.fixture
-def message() -> Iterator[Registration]:
+def message() -> Registration:
     """Default message sent to the server."""
     return Registration()
 

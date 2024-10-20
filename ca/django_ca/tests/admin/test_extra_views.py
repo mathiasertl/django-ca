@@ -38,7 +38,7 @@ from django_ca.typehints import JSON
 
 
 @pytest.mark.parametrize(
-    "data,expected",
+    ("data", "expected"),
     (
         ([], ""),
         ([{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}], "CN=example.com"),
@@ -107,12 +107,11 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.url, data=json.dumps({"csr": csr}), content_type="application/json"
             )
-            self.assertEqual(response.status_code, 200, response.json())
+            assert response.status_code == 200, response.json()
             csr_subject = cert_data["csr"]["parsed"].subject
-            self.assertEqual(
-                response.json(),
-                {"subject": [{"oid": s.oid.dotted_string, "value": s.value} for s in csr_subject]},
-            )
+            assert response.json() == {
+                "subject": [{"oid": s.oid.dotted_string, "value": s.value} for s in csr_subject]
+            }
 
     def test_fields(self) -> None:
         """Test fetching a CSR with all subject fields."""
@@ -129,7 +128,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         response = self.client.post(
             self.url, data=json.dumps({"csr": csr_pem}), content_type="application/json"
         )
-        self.assertEqual(response.status_code, 200, response.json())
+        assert response.status_code == 200, response.json()
         expected = [
             {"oid": NameOID.USER_ID.dotted_string, "value": "test-uid"},
             {"oid": NameOID.DOMAIN_COMPONENT.dotted_string, "value": "test-domainComponent"},
@@ -169,12 +168,12 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"oid": NameOID.ORGANIZATION_IDENTIFIER.dotted_string, "value": "test-organizationIdentifier"},
         ]
 
-        self.assertEqual(json.loads(response.content.decode("utf-8")), {"subject": expected})
+        assert json.loads(response.content.decode("utf-8")) == {"subject": expected}
 
     def test_bad_request(self) -> None:
         """Test posting bogus data."""
         response = self.client.post(self.url, data={"csr": "foobar"})
-        self.assertEqual(response.status_code, 400)
+        assert response.status_code == 400
 
     def test_anonymous(self) -> None:
         """Try downloading as anonymous user."""
@@ -192,7 +191,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.user.is_superuser = False
         self.user.save()
         response = self.client.post(self.url, data={"csr": self.csr_pem})
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_no_staff(self) -> None:
         """Try downloading as user that has permissions but is not staff."""
@@ -217,22 +216,22 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Download a certificate in DER format."""
         filename = f"{self.cert.serial}.der"
         response = self.client.get(self.get_url(self.cert), {"format": "DER"})
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["Content-Type"], "application/pkix-cert")
-        self.assertEqual(response["Content-Disposition"], f"attachment; filename={filename}")
-        self.assertEqual(response.content, self.cert.pub.der)
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-cert"
+        assert response["Content-Disposition"] == f"attachment; filename={filename}"
+        assert response.content == self.cert.pub.der
 
     def test_not_found(self) -> None:
         """Try downloading a certificate that does not exist."""
         url = reverse("admin:django_ca_certificate_download", kwargs={"pk": "123"})
         response = self.client.get(f"{url}?format=DER")
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        assert response.status_code == HTTPStatus.NOT_FOUND
 
     def test_bad_format(self) -> None:
         """Try downloading an unknown format."""
         response = self.client.get(self.get_url(self.cert), {"format": "bad"})
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertEqual(response.content, b"")
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert response.content == b""
 
     def test_anonymous(self) -> None:
         """Try an anonymous download."""
@@ -249,7 +248,7 @@ class CertDownloadTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.user.is_superuser = False
         self.user.save()
         response = self.client.get(self.get_url(self.cert))
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
     def test_no_staff(self) -> None:
         """Try downloading with right permissions but not as staff user."""
@@ -283,10 +282,10 @@ class CertDownloadBundleTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """Try downloading an invalid format."""
         url = self.get_url(self.cert)
         response = self.client.get(f"{url}?format=INVALID")
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertEqual(response.content, b"")
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert response.content == b""
 
         # DER is not supported for bundles
         response = self.client.get(f"{url}?format=DER")
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert response.content == b"DER/ASN.1 certificates cannot be downloaded as a bundle."

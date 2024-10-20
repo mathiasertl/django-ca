@@ -54,7 +54,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
         # This test is only meaningful if the CA does **not** have the Certificate Policies extension in its
         # own extensions. We (can) only test for the used template after viewing, and the template would be
         # used for that extension.
-        self.assertNotIn(ExtensionOID.CERTIFICATE_POLICIES, ca.extensions)
+        assert ExtensionOID.CERTIFICATE_POLICIES not in ca.extensions
 
         ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
@@ -80,7 +80,7 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
         response = self.get_change_view(ca)
         assert_change_response(response)
         templates = [t.name for t in response.templates]
-        self.assertIn("django_ca/admin/extensions/2.5.29.32.html", templates)
+        assert "django_ca/admin/extensions/2.5.29.32.html" in templates
 
 
 class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCase):
@@ -111,13 +111,13 @@ class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCas
     def test_invalid_format(self) -> None:
         """Test downloading the bundle in an invalid format."""
         response = self.client.get(f"{self.url}?format=INVALID")
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertEqual(response.content, b"")
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert response.content == b""
 
         # DER is not supported for bundles
         response = self.client.get(f"{self.url}?format=DER")
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, b"DER/ASN.1 certificates cannot be downloaded as a bundle.")
+        assert response.status_code == 400
+        assert response.content == b"DER/ASN.1 certificates cannot be downloaded as a bundle."
 
     def test_permission_denied(self) -> None:
         """Test downloading without permissions fails."""
@@ -125,7 +125,7 @@ class CADownloadBundleTestCase(AdminTestCaseMixin[CertificateAuthority], TestCas
         self.user.save()
 
         response = self.client.get(f"{self.url}?format=PEM")
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
     def test_unauthorized(self) -> None:
         """Test viewing as unauthorized viewer."""

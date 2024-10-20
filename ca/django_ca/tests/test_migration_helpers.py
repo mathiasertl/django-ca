@@ -26,7 +26,7 @@ from django_ca.tests.base.utils import distribution_point, dns, rdn, uri
 
 
 @pytest.mark.parametrize(
-    "crl_url,full_name",
+    ("crl_url", "full_name"),
     (
         ("https://example.com", [uri("https://example.com")]),
         (
@@ -53,7 +53,7 @@ def test_0040_crl_url_to_sign_crl_distribution_points(
 
 
 @pytest.mark.parametrize(
-    "issuer_alt_name,general_names",
+    ("issuer_alt_name", "general_names"),
     (
         ("https://example.com", [uri("https://example.com")]),
         ("URI:https://example.com", [uri("https://example.com")]),
@@ -75,7 +75,7 @@ def test_0040_issuer_alt_name_to_sign_issuer_alternative_name(
 
 
 @pytest.mark.parametrize(
-    "issuer_url,ocsp_url,access_descriptions",
+    ("issuer_url", "ocsp_url", "access_descriptions"),
     (
         (
             "https://issuer.example.com",
@@ -133,7 +133,7 @@ def test_0040_ocsp_url_and_issuer_url_to_sign_authority_information_access(
 
 
 @pytest.mark.parametrize(
-    "distribution_points,crl_url",
+    ("distribution_points", "crl_url"),
     (
         ([distribution_point([uri("https://example.com")])], "https://example.com"),
         (
@@ -189,7 +189,7 @@ def test_0040_backwards_sign_crl_distribution_points_to_crl_url(
 
 
 @pytest.mark.parametrize(
-    "issuer_alt_name,general_names",
+    ("issuer_alt_name", "general_names"),
     (
         ("URI:https://example.com", [uri("https://example.com")]),
         # issuer_alt_name was a CharField, values where comma-separated.
@@ -210,7 +210,7 @@ def test_0040_backwards_sign_issuer_alternative_name_to_issuer_url(
 
 
 @pytest.mark.parametrize(
-    "issuer_url,ocsp_url,access_descriptions",
+    ("issuer_url", "ocsp_url", "access_descriptions"),
     (
         (
             "https://issuer.example.com",

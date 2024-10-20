@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name  # for to fixtures
 
-from collections.abc import Iterator
 from http import HTTPStatus
 from typing import Optional
 
@@ -37,7 +36,7 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 @pytest.fixture
-def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
+def order(order: AcmeOrder) -> AcmeOrder:
     """Override to set status to valid."""
     order.status = AcmeOrder.STATUS_VALID
     order.save()
@@ -45,13 +44,13 @@ def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
 
 
 @pytest.fixture
-def url(acme_cert_slug: str) -> Iterator[str]:
+def url(acme_cert_slug: str) -> str:
     """URL under test."""
     return root_reverse("acme-cert", slug=acme_cert_slug)
 
 
 @pytest.fixture
-def message() -> Iterator[bytes]:
+def message() -> bytes:
     """Yield an empty bytestring, since this is a POST-AS-GET request."""
     return b""
 

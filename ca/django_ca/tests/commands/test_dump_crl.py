@@ -144,7 +144,7 @@ def test_disabled(usable_root: CertificateAuthority) -> None:
     assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm)
 
 
-@pytest.mark.parametrize("reason", [x509.ReasonFlags.unspecified, x509.ReasonFlags.key_compromise])
+@pytest.mark.parametrize("reason", (x509.ReasonFlags.unspecified, x509.ReasonFlags.key_compromise))
 def test_revoked_with_reason(
     usable_root: CertificateAuthority, root_cert: Certificate, reason: x509.ReasonFlags
 ) -> None:

@@ -31,6 +31,7 @@ from django_ca.models import (
     Certificate,
     CertificateAuthority,
 )
+from django_ca.tests.base.assertions import assert_count_equal
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 
@@ -42,7 +43,7 @@ class QuerySetTestCaseMixin(TestCaseMixin):
         self, qs: "models.QuerySet[models.Model]", *items: models.Model
     ) -> None:
         """Minor shortcut to test querysets."""
-        self.assertCountEqual(qs, items)
+        assert_count_equal(qs, items)
 
     @contextmanager
     def attr(self, obj: models.Model, attr: str, value: Any) -> Iterator[None]:
@@ -67,42 +68,42 @@ class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
         """Test enabled/disabled filter."""
         self.load_named_cas("__usable__")
 
-        self.assertCountEqual(CertificateAuthority.objects.enabled(), self.cas.values())
-        self.assertCountEqual(CertificateAuthority.objects.disabled(), [])
+        assert_count_equal(CertificateAuthority.objects.enabled(), self.cas.values())
+        assert not CertificateAuthority.objects.disabled()
 
         self.ca.enabled = False
         self.ca.save()
 
-        self.assertCountEqual(
+        assert_count_equal(
             CertificateAuthority.objects.enabled(),
             [c for c in self.cas.values() if c.name != self.ca.name],
         )
-        self.assertCountEqual(CertificateAuthority.objects.disabled(), [self.ca])
+        assert_count_equal(CertificateAuthority.objects.disabled(), [self.ca])
 
     def test_valid(self) -> None:
         """Test valid/usable/invalid filters."""
         self.load_named_cas("__usable__")
 
         with freeze_time(TIMESTAMPS["before_cas"]):
-            self.assertCountEqual(CertificateAuthority.objects.valid(), [])
-            self.assertCountEqual(CertificateAuthority.objects.usable(), [])
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
+            assert not CertificateAuthority.objects.valid()
+            assert not CertificateAuthority.objects.usable()
+            assert_count_equal(CertificateAuthority.objects.invalid(), self.cas.values())
 
         with freeze_time(TIMESTAMPS["before_child"]):
             valid = [c for c in self.cas.values() if c.name != "child"]
-            self.assertCountEqual(CertificateAuthority.objects.valid(), valid)
-            self.assertCountEqual(CertificateAuthority.objects.usable(), valid)
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), [self.cas["child"]])
+            assert_count_equal(CertificateAuthority.objects.valid(), valid)
+            assert_count_equal(CertificateAuthority.objects.usable(), valid)
+            assert_count_equal(CertificateAuthority.objects.invalid(), [self.cas["child"]])
 
         with freeze_time(TIMESTAMPS["after_child"]):
-            self.assertCountEqual(CertificateAuthority.objects.valid(), self.cas.values())
-            self.assertCountEqual(CertificateAuthority.objects.usable(), self.cas.values())
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), [])
+            assert_count_equal(CertificateAuthority.objects.valid(), self.cas.values())
+            assert_count_equal(CertificateAuthority.objects.usable(), self.cas.values())
+            assert not CertificateAuthority.objects.invalid()
 
         with freeze_time(TIMESTAMPS["cas_expired"]):
-            self.assertCountEqual(CertificateAuthority.objects.valid(), [])
-            self.assertCountEqual(CertificateAuthority.objects.usable(), [])
-            self.assertCountEqual(CertificateAuthority.objects.invalid(), self.cas.values())
+            assert not CertificateAuthority.objects.valid()
+            assert not CertificateAuthority.objects.usable()
+            assert_count_equal(CertificateAuthority.objects.invalid(), self.cas.values())
 
 
 class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):

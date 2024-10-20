@@ -61,7 +61,7 @@ def assert_validation_errors(
     expected_errors: ExpectedErrors,
 ) -> None:
     """Assertion method to test validation errors."""
-    with pytest.raises(ValidationError) as ex_info:
+    with pytest.raises(ValidationError) as ex_info:  # noqa: PT012
         if isinstance(parameters, list):
             model_class(parameters)  # type: ignore[call-arg]  # ruled out with overload
         else:

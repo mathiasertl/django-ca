@@ -27,11 +27,11 @@ class CertificatePoliciesIsSimpleTestCase(TestCase):
 
     def assertIsSimple(self, *policies: x509.PolicyInformation) -> None:  # pylint: disable=invalid-name
         """Assert that a Certificate Policies extension with the given policies is simple."""
-        self.assertTrue(certificate_policies_is_simple(self.certificate_policy(*policies)))
+        assert certificate_policies_is_simple(self.certificate_policy(*policies))
 
     def assertIsNotSimple(self, *policies: x509.PolicyInformation) -> None:  # pylint: disable=invalid-name
         """Assert that a Certificate Policies extension with the given policies is *not* simple."""
-        self.assertFalse(certificate_policies_is_simple(self.certificate_policy(*policies)))
+        assert not certificate_policies_is_simple(self.certificate_policy(*policies))
 
     def certificate_policy(self, *policies: x509.PolicyInformation) -> x509.CertificatePolicies:
         """Create a Certificate Policy object from the given policies."""

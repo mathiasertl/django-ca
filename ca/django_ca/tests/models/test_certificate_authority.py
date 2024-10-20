@@ -450,7 +450,7 @@ def test_serial(usable_ca: CertificateAuthority) -> None:
     assert usable_ca.serial == CERT_DATA[usable_ca.name].get("serial")
 
 
-@pytest.mark.parametrize("name,algorithm", (("sha256", hashes.SHA256()), ("sha512", hashes.SHA512())))
+@pytest.mark.parametrize(("name", "algorithm"), (("sha256", hashes.SHA256()), ("sha512", hashes.SHA512())))
 def test_get_fingerprint(name: str, algorithm: hashes.HashAlgorithm, usable_ca: CertificateAuthority) -> None:
     """Test getting the fingerprint value."""
     assert usable_ca.get_fingerprint(algorithm) == CERT_DATA[usable_ca.name][name]

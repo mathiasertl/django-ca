@@ -17,6 +17,8 @@ from cryptography import x509
 
 from django.test import TestCase
 
+import pytest
+
 from django_ca.extensions import extension_as_text, parse_extension
 
 
@@ -39,17 +41,17 @@ class TypeErrorTests(TestCase):
 
     def test_parse_unknown_key(self) -> None:
         """Test exception for parsing an extension with an unsupported key."""
-        with self.assertRaisesRegex(ValueError, r"^wrong_key: Unknown extension key\.$"):
+        with pytest.raises(ValueError, match=r"^wrong_key: Unknown extension key\.$"):
             parse_extension("wrong_key", {})
 
     def test_no_extension_as_text(self) -> None:
         """Test textualizing an extension that is not an extension type."""
-        with self.assertRaisesRegex(TypeError, r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
+        with pytest.raises(TypeError, match=r"^bytes: Not a cryptography\.x509\.ExtensionType\.$"):
             extension_as_text(b"foo")  # type: ignore[arg-type]
 
     def test_unknown_extension_type_as_text(self) -> None:
         """Test textualizing an extension of unknown type."""
-        with self.assertRaisesRegex(
-            TypeError, r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
+        with pytest.raises(
+            TypeError, match=r"^UnknownExtensionType \(oid: 1\.2\.3\): Unknown extension type\.$"
         ):
             extension_as_text(self.ext_type)

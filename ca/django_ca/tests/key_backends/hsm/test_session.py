@@ -34,7 +34,7 @@ PoolKeyType = tuple[str, str, Optional[str], Optional[str]]
 
 
 @pytest.fixture
-def pool_key(softhsm_token: str) -> Iterator[PoolKeyType]:
+def pool_key(softhsm_token: str) -> PoolKeyType:
     """Minor fixture to return the pool key for the default settings."""
     return settings.PKCS11_PATH, softhsm_token, None, settings.PKCS11_USER_PIN
 

@@ -27,7 +27,7 @@ from django_ca.utils import parse_general_name
 
 @pytest.mark.parametrize("prefix", ("", "ip:"))
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ("1.2.3.4", IPv4Address("1.2.3.4")),
         ("1.2.3.0/24", IPv4Network("1.2.3.0/24")),
@@ -47,7 +47,7 @@ def test_ip(
 
 @pytest.mark.parametrize("prefix", ("", "DNS:"))
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ("example.com", dns("example.com")),
         (".example.com", dns(".example.com")),

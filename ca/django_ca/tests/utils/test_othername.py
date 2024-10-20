@@ -23,7 +23,7 @@ from django_ca.utils import format_other_name, parse_other_name
 
 
 @pytest.mark.parametrize(
-    "value,expected,normalized",
+    ("value", "expected", "normalized"),
     (
         ("UNIVERSALSTRING:ex", b"\x1c\x08\x00\x00\x00e\x00\x00\x00x", True),
         ("UNIV:ex", b"\x1c\x08\x00\x00\x00e\x00\x00\x00x", False),
@@ -59,7 +59,8 @@ def test_parse_and_format_othername(value: str, expected: bytes, normalized: boo
 
 @pytest.mark.parametrize("typ", ("UTF8", "UTF8String"))
 @pytest.mark.parametrize(
-    "value,expected", (("example", b"\x0c\x07example"), ("example;wrong:val", b"\x0c\x11example;wrong:val"))
+    ("value", "expected"),
+    (("example", b"\x0c\x07example"), ("example;wrong:val", b"\x0c\x11example;wrong:val")),
 )
 def test_othername_with_utf8(typ: str, value: str, expected: bytes) -> None:
     """Test UTF8 values."""
@@ -88,7 +89,7 @@ def test_othername_with_boolean_false(typ: str, value: str) -> None:
 
 @pytest.mark.parametrize("typ", ("INT", "INTEGER"))
 @pytest.mark.parametrize(
-    "raw_value,expected_bytes,formatted_value",
+    ("raw_value", "expected_bytes", "formatted_value"),
     (
         ("0", b"\x02\x01\x00", "0"),
         ("1", b"\x02\x01\x01", "1"),
@@ -104,7 +105,7 @@ def test_othername_integer(typ: str, raw_value: str, expected_bytes: bytes, form
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         (
             "2.4.5.3;BOOL:WRONG",

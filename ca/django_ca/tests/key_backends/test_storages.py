@@ -40,7 +40,7 @@ def test_private_key_options_key_size(key_size: int) -> None:
 @pytest.mark.parametrize("key_size", (-2048, -1, 0, 1, 1023, 1025, 2047, 2049, 8191, 8193, 1000, 2000, 3000))
 def test_private_key_options_with_invalid_key_size(key_size: int) -> None:
     """Test invalid key sizes for private key options."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         StoragesCreatePrivateKeyOptions(
             key_type="RSA", password=None, path=Path("/does/not/exist"), key_size=key_size
         )

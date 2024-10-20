@@ -49,8 +49,8 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
         """Assert that command outputs the given certs."""
         stdout, stderr = cmd("list_certs", **kwargs)
         sorted_certs = sorted(certs, key=lambda c: (c.not_after, c.cn, c.serial))
-        self.assertEqual(stdout, "".join([f"{self._line(c)}\n" for c in sorted_certs]))
-        self.assertEqual(stderr, "")
+        assert stdout == "".join([f"{self._line(c)}\n" for c in sorted_certs])
+        assert stderr == ""
 
     @freeze_time(TIMESTAMPS["everything_valid"])
     def test_basic(self) -> None:

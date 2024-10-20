@@ -108,12 +108,12 @@ class AlternativeNameLegacyAction(ParserTestCaseMixin, TestCase):
     def assertValue(self, namespace: argparse.Namespace, value: Any) -> None:  # pylint: disable=invalid-name
         """Assert a given extension value."""
         extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)
-        self.assertEqual(namespace.alt, extension)
+        assert namespace.alt == extension
 
     def test_basic(self) -> None:
         """Test basic functionality."""
         namespace = self.parser.parse_args([])
-        self.assertEqual(namespace.alt, None)
+        assert namespace.alt is None
 
         namespace = self.parser.parse_args(["--alt", "example.com"])
         self.assertValue(namespace, x509.SubjectAlternativeName([dns("example.com")]))
@@ -138,15 +138,10 @@ class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase
         oid = "1.2.3"
         cps = "http://example.com/cps"
         namespace = self.parser.parse_args(["--pi", oid, "--cps", cps])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[cps]
-                    )
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[cps])
+            ]
         )
 
     def test_add_multiple_cps(self) -> None:
@@ -155,15 +150,12 @@ class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase
         cps1 = "http://example.com/cps1"
         cps2 = "http://example.com/cps2"
         namespace = self.parser.parse_args(["--pi", oid, "--cps", cps1, "--cps", cps2])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[cps1, cps2]
-                    )
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[cps1, cps2]
+                )
+            ]
         )
 
     def test_add_multiple_cps_to_different_policy_identifiers(self) -> None:
@@ -173,18 +165,15 @@ class CertificationPracticeStatementActionTestCase(ParserTestCaseMixin, TestCase
         cps1 = "http://example.com/cps1"
         cps2 = "http://example.com/cps2"
         namespace = self.parser.parse_args(["--pi", oid1, "--cps", cps1, "--pi", oid2, "--cps", cps2])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid1), policy_qualifiers=[cps1]
-                    ),
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid2), policy_qualifiers=[cps2]
-                    ),
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid1), policy_qualifiers=[cps1]
+                ),
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid2), policy_qualifiers=[cps2]
+                ),
+            ]
         )
 
     def test_missing_policy_identifier(self) -> None:
@@ -217,21 +206,21 @@ class ExtendedKeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         namespace = self.parser.parse_args([])
-        self.assertIsNone(namespace.eku)
+        assert namespace.eku is None
 
         namespace = self.parser.parse_args(["--eku", "clientAuth"])
-        self.assertEqual(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.eku)
+        assert x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]) == namespace.eku
 
         namespace = self.parser.parse_args(["--eku", "clientAuth", "serverAuth"])
-        self.assertEqual(
-            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]),
-            namespace.eku,
+        assert (
+            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH])
+            == namespace.eku
         )
 
     def test_dotted_string_value(self) -> None:
         """Test passing a dotted string."""
         namespace = self.parser.parse_args(["--eku", "1.3.6.1.5.5.7.3.2"])
-        self.assertEqual(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]), namespace.eku)
+        assert x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]) == namespace.eku
 
     def test_duplicate_values(self) -> None:
         """Test wrong option values."""
@@ -265,13 +254,10 @@ class PolicyIdentifierActionTestCase(ParserTestCaseMixin, TestCase):
         """Basic test for adding a policy identifier."""
         oid = "1.2.3"
         namespace = self.parser.parse_args(["--pi", oid])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[])
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[])
+            ]
         )
 
     def test_multiple_policy_identifiers(self) -> None:
@@ -279,18 +265,11 @@ class PolicyIdentifierActionTestCase(ParserTestCaseMixin, TestCase):
         oid1 = "1.2.3"
         oid2 = "1.2.4"
         namespace = self.parser.parse_args(["--pi", oid1, "--pi", oid2])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid1), policy_qualifiers=[]
-                    ),
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid2), policy_qualifiers=[]
-                    ),
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid1), policy_qualifiers=[]),
+                x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid2), policy_qualifiers=[]),
+            ]
         )
 
     def test_any_policy_value_disallowed(self) -> None:
@@ -309,15 +288,12 @@ class PolicyIdentifierActionTestCase(ParserTestCaseMixin, TestCase):
 
         oid = "anyPolicy"
         namespace = parser.parse_args(["--pi", oid])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"), policy_qualifiers=[]
-                    )
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier("2.5.29.32.0"), policy_qualifiers=[]
+                )
+            ]
         )
 
     def test_invalid_dotted_string(self) -> None:
@@ -337,16 +313,16 @@ class IntegerRangeActionTestCase(ParserTestCaseMixin, TestCase):
         """Test action with no min/max values."""
         parser = argparse.ArgumentParser()
         parser.add_argument("--value", action=actions.IntegerRangeAction)
-        self.assertEqual(parser.parse_args(["--value=0"]).value, 0)
-        self.assertEqual(parser.parse_args(["--value=1"]).value, 1)
-        self.assertEqual(parser.parse_args(["--value=-1"]).value, -1)
+        assert parser.parse_args(["--value=0"]).value == 0
+        assert parser.parse_args(["--value=1"]).value == 1
+        assert parser.parse_args(["--value=-1"]).value == -1
 
     def test_min_values(self) -> None:
         """Test the min value for the action."""
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("--value", action=actions.IntegerRangeAction, min=0)
-        self.assertEqual(self.parser.parse_args(["--value=0"]).value, 0)
-        self.assertEqual(self.parser.parse_args(["--value=1"]).value, 1)
+        assert self.parser.parse_args(["--value=0"]).value == 0
+        assert self.parser.parse_args(["--value=1"]).value == 1
         assert_parser_error(
             self.parser,
             ["--value=-1"],
@@ -358,8 +334,8 @@ class IntegerRangeActionTestCase(ParserTestCaseMixin, TestCase):
         """Test the max value for the action."""
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("--value", action=actions.IntegerRangeAction, max=0)
-        self.assertEqual(self.parser.parse_args(["--value=0"]).value, 0)
-        self.assertEqual(self.parser.parse_args(["--value=-1"]).value, -1)
+        assert self.parser.parse_args(["--value=0"]).value == 0
+        assert self.parser.parse_args(["--value=-1"]).value == -1
         assert_parser_error(
             self.parser,
             ["--value=1"],
@@ -379,12 +355,10 @@ class KeyUsageActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         namespace = self.parser.parse_args(["--key-usage", "keyCertSign"])
-        self.assertEqual(key_usage(key_cert_sign=True, critical=False).value, namespace.key_usage)
+        assert key_usage(key_cert_sign=True, critical=False).value == namespace.key_usage
 
         namespace = self.parser.parse_args(["--key-usage", "keyCertSign", "keyAgreement"])
-        self.assertEqual(
-            key_usage(key_cert_sign=True, key_agreement=True, critical=False).value, namespace.key_usage
-        )
+        assert key_usage(key_cert_sign=True, key_agreement=True, critical=False).value == namespace.key_usage
 
     def test_invalid_values(self) -> None:
         """Test passing invalid values."""
@@ -448,15 +422,15 @@ class TLSFeatureActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         namespace = self.parser.parse_args(["--tls-feature", "status_request"])
-        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request]), namespace.tls_feature)
+        assert x509.TLSFeature([x509.TLSFeatureType.status_request]) == namespace.tls_feature
 
         namespace = self.parser.parse_args(["--tls-feature", "status_request_v2"])
-        self.assertEqual(x509.TLSFeature([x509.TLSFeatureType.status_request_v2]), namespace.tls_feature)
+        assert x509.TLSFeature([x509.TLSFeatureType.status_request_v2]) == namespace.tls_feature
 
         namespace = self.parser.parse_args(["--tls-feature", "status_request", "status_request_v2"])
-        self.assertEqual(
-            x509.TLSFeature([x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2]),
-            namespace.tls_feature,
+        assert (
+            x509.TLSFeature([x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2])
+            == namespace.tls_feature
         )
 
     def test_error(self) -> None:
@@ -483,16 +457,13 @@ class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
         oid = "1.2.3"
         notice = "notice text"
         namespace = self.parser.parse_args(["--pi", oid, "--notice", notice])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid),
-                        policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice)],
-                    )
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid),
+                    policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice)],
+                )
+            ]
         )
 
     def test_add_multiple_notices(self) -> None:
@@ -501,19 +472,16 @@ class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
         notice1 = "notice text one"
         notice2 = "notice text two"
         namespace = self.parser.parse_args(["--pi", oid, "--notice", notice1, "--notice", notice2])
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid),
-                        policy_qualifiers=[
-                            x509.UserNotice(notice_reference=None, explicit_text=notice1),
-                            x509.UserNotice(notice_reference=None, explicit_text=notice2),
-                        ],
-                    )
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid),
+                    policy_qualifiers=[
+                        x509.UserNotice(notice_reference=None, explicit_text=notice1),
+                        x509.UserNotice(notice_reference=None, explicit_text=notice2),
+                    ],
+                )
+            ]
         )
 
     def test_add_multiple_cps_to_different_policy_identifiers(self) -> None:
@@ -525,20 +493,17 @@ class UserNoticeActionTestCase(ParserTestCaseMixin, TestCase):
         namespace = self.parser.parse_args(
             ["--pi", oid1, "--notice", notice1, "--pi", oid2, "--notice", notice2]
         )
-        self.assertEqual(
-            namespace.pi,
-            x509.CertificatePolicies(
-                policies=[
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid1),
-                        policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice1)],
-                    ),
-                    x509.PolicyInformation(
-                        policy_identifier=x509.ObjectIdentifier(oid2),
-                        policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice2)],
-                    ),
-                ]
-            ),
+        assert namespace.pi == x509.CertificatePolicies(
+            policies=[
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid1),
+                    policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice1)],
+                ),
+                x509.PolicyInformation(
+                    policy_identifier=x509.ObjectIdentifier(oid2),
+                    policy_qualifiers=[x509.UserNotice(notice_reference=None, explicit_text=notice2)],
+                ),
+            ]
         )
 
     def test_missing_policy_identifier(self) -> None:
@@ -571,13 +536,13 @@ class FormatActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         args = self.parser.parse_args(["--action=DER"])
-        self.assertEqual(args.action, Encoding.DER)
+        assert args.action == Encoding.DER
 
         args = self.parser.parse_args(["--action=ASN1"])
-        self.assertEqual(args.action, Encoding.DER)
+        assert args.action == Encoding.DER
 
         args = self.parser.parse_args(["--action=PEM"])
-        self.assertEqual(args.action, Encoding.PEM)
+        assert args.action == Encoding.PEM
 
     def test_error(self) -> None:
         """Test false option values."""
@@ -601,13 +566,13 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         args = self.parser.parse_args(["--curve=sect409k1"])
-        self.assertIsInstance(args.curve, ec.SECT409K1)
+        assert isinstance(args.curve, ec.SECT409K1)
 
         args = self.parser.parse_args(["--curve=sect409r1"])
-        self.assertIsInstance(args.curve, ec.SECT409R1)
+        assert isinstance(args.curve, ec.SECT409R1)
 
         args = self.parser.parse_args(["--curve=brainpoolP512r1"])
-        self.assertIsInstance(args.curve, ec.BrainpoolP512R1)
+        assert isinstance(args.curve, ec.BrainpoolP512R1)
 
     def test_error(self) -> None:
         """Test false option values."""
@@ -633,10 +598,10 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         args = self.parser.parse_args(["--algo=SHA-256"])
-        self.assertIsInstance(args.algo, hashes.SHA256)
+        assert isinstance(args.algo, hashes.SHA256)
 
         args = self.parser.parse_args(["--algo=SHA-512"])
-        self.assertIsInstance(args.algo, hashes.SHA512)
+        assert isinstance(args.algo, hashes.SHA512)
 
     def test_error(self) -> None:
         """Test false option values."""
@@ -663,10 +628,10 @@ class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         args = self.parser.parse_args(["--size=2048"])
-        self.assertEqual(args.size, 2048)
+        assert args.size == 2048
 
         args = self.parser.parse_args(["--size=4096"])
-        self.assertEqual(args.size, 4096)
+        assert args.size == 4096
 
     def test_no_power_two(self) -> None:
         """Test giving values that are not the power of two."""
@@ -708,12 +673,12 @@ class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
     def test_none(self) -> None:
         """Test passing no password option at all."""
         args = self.parser.parse_args([])
-        self.assertIsNone(args.password)
+        assert args.password is None
 
     def test_given(self) -> None:
         """Test giving a password on the command line."""
         args = self.parser.parse_args(["--password=foobar"])
-        self.assertEqual(args.password, b"foobar")
+        assert args.password == b"foobar"
 
     @mock.patch("getpass.getpass", spec_set=True, return_value="prompted")
     def test_output(self, getpass: mock.MagicMock) -> None:
@@ -722,7 +687,7 @@ class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
         parser = argparse.ArgumentParser()
         parser.add_argument("--password", nargs="?", action=actions.PasswordAction, prompt=prompt)
         args = parser.parse_args(["--password"])
-        self.assertEqual(args.password, b"prompted")
+        assert args.password == b"prompted"
         getpass.assert_called_once_with(prompt=prompt)
 
     @mock.patch("getpass.getpass", spec_set=True, return_value="prompted")
@@ -731,7 +696,7 @@ class PasswordActionTestCase(ParserTestCaseMixin, TestCase):
         parser = argparse.ArgumentParser()
         parser.add_argument("--password", nargs="?", action=actions.PasswordAction)
         args = parser.parse_args(["--password"])
-        self.assertEqual(args.password, b"prompted")
+        assert args.password == b"prompted"
         getpass.assert_called_once()
 
 
@@ -750,12 +715,12 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
         """Test basic functionality of action."""
         for name, cert in self.certs.items():
             args = self.parser.parse_args([CERT_DATA[name]["serial"]])
-            self.assertEqual(args.cert, cert)
+            assert args.cert == cert
 
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
         args = self.parser.parse_args([CERT_DATA["root-cert"]["serial"][:6]])
-        self.assertEqual(args.cert, self.certs["root-cert"])
+        assert args.cert == self.certs["root-cert"]
 
     def test_missing(self) -> None:
         """Test giving an unknown cert."""
@@ -801,13 +766,13 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         """Test basic functionality of action."""
         for name, ca in self.usable_cas:
             args = self.parser.parse_args([CERT_DATA[name]["serial"]])
-            self.assertEqual(args.ca, ca)
+            assert args.ca == ca
 
     @override_tmpcadir()
     def test_abbreviation(self) -> None:
         """Test using an abbreviation."""
         args = self.parser.parse_args([CERT_DATA["ec"]["serial"][:6]])
-        self.assertEqual(args.ca, self.cas["ec"])
+        assert args.ca == self.cas["ec"]
 
     def test_missing(self) -> None:
         """Test giving an unknown CA."""
@@ -850,7 +815,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         parser.add_argument("ca", action=actions.CertificateAuthorityAction, allow_disabled=True)
 
         args = parser.parse_args([self.ca.serial])
-        self.assertEqual(args.ca, self.ca)
+        assert args.ca == self.ca
 
     # TODO: re-enable with better checks
     # def test_private_key_does_not_exists(self) -> None:
@@ -870,7 +835,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
     def test_password(self) -> None:
         """Test that the action works with a password-encrypted CA."""
         args = self.parser.parse_args([CERT_DATA["pwd"]["serial"]])
-        self.assertEqual(args.ca, self.cas["pwd"])
+        assert args.ca == self.cas["pwd"]
 
 
 class URLActionTestCase(ParserTestCaseMixin, TestCase):
@@ -885,7 +850,7 @@ class URLActionTestCase(ParserTestCaseMixin, TestCase):
         """Test basic functionality of action."""
         for url in ["http://example.com", "https://www.example.org"]:
             args = self.parser.parse_args([f"--url={url}"])
-            self.assertEqual(args.url, url)
+            assert args.url == url
 
     def test_error(self) -> None:
         """Test false option values."""
@@ -908,7 +873,7 @@ class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
         """Test basic functionality of action."""
         expires = timedelta(days=30)
         args = self.parser.parse_args(["--expires=30"])
-        self.assertEqual(args.expires, expires)
+        assert args.expires == expires
 
     def test_default(self) -> None:
         """Test using the default value."""
@@ -916,7 +881,7 @@ class ExpiresActionTestCase(ParserTestCaseMixin, TestCase):
         parser = argparse.ArgumentParser()
         parser.add_argument("--expires", action=actions.ExpiresAction, default=delta)
         args = parser.parse_args([])
-        self.assertEqual(args.expires, delta)
+        assert args.expires == delta
 
     def test_negative(self) -> None:
         """Test passing a negative value."""
@@ -950,7 +915,7 @@ class ReasonActionTestCase(ParserTestCaseMixin, TestCase):
     def test_basic(self) -> None:
         """Test basic functionality of action."""
         args = self.parser.parse_args([ReasonFlags.unspecified.name])
-        self.assertEqual(args.reason, ReasonFlags.unspecified)
+        assert args.reason == ReasonFlags.unspecified
 
     def test_error(self) -> None:
         """Test false option values."""
@@ -986,17 +951,17 @@ class MultipleURLActionTestCase(ParserTestCaseMixin, TestCase):
             parser.add_argument("--url", action=actions.MultipleURLAction)
 
             args = parser.parse_args([f"--url={url}"])
-            self.assertEqual(args.url, [url])
+            assert args.url == [url]
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--url", action=actions.MultipleURLAction)
         args = parser.parse_args([f"--url={urls[0]}", f"--url={urls[1]}"])
-        self.assertEqual(args.url, urls)
+        assert args.url == urls
 
     def test_none(self) -> None:
         """Test passing no value at all."""
         args = self.parser.parse_args([])
-        self.assertEqual(args.url, [])
+        assert args.url == []
 
     def test_error(self) -> None:
         """Test false option values."""

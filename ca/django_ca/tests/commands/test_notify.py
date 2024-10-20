@@ -37,18 +37,18 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
     def test_no_certs(self) -> None:
         """Try notify command when all certs are still valid."""
         stdout, stderr = cmd("notify_expiring_certs")
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(len(mail.outbox), 0)
+        assert stdout == ""
+        assert stderr == ""
+        assert len(mail.outbox) == 0
 
     @freeze_time(TIMESTAMPS["ca_certs_expiring"])
     def test_no_watchers(self) -> None:
         """Try expiring certs, but with no watchers."""
         # certs have no watchers by default, so we get no mails
         stdout, stderr = cmd("notify_expiring_certs")
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(len(mail.outbox), 0)
+        assert stdout == ""
+        assert stderr == ""
+        assert len(mail.outbox) == 0
 
     @freeze_time(TIMESTAMPS["ca_certs_expiring"])
     def test_one_watcher(self) -> None:
@@ -59,11 +59,11 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         timestamp = self.cert.not_after.strftime("%Y-%m-%d")
 
         stdout, stderr = cmd("notify_expiring_certs")
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, f"Certificate expiration for {self.cert.cn} on {timestamp}")
-        self.assertEqual(mail.outbox[0].to, [email])
+        assert stdout == ""
+        assert stderr == ""
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].subject == f"Certificate expiration for {self.cert.cn} on {timestamp}"
+        assert mail.outbox[0].to == [email]
 
     def test_notification_days(self) -> None:
         """Test that user gets multiple notifications of expiring certs."""
@@ -74,8 +74,8 @@ class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
         with freeze_time(self.cert.not_after - timedelta(days=20)) as frozen_time:
             for _i in reversed(range(0, 20)):
                 stdout, stderr = cmd("notify_expiring_certs", days=14)
-                self.assertEqual(stdout, "")
-                self.assertEqual(stderr, "")
+                assert stdout == ""
+                assert stderr == ""
                 frozen_time.tick(timedelta(days=1))
 
-        self.assertEqual(len(mail.outbox), 4)
+        assert len(mail.outbox) == 4

@@ -124,7 +124,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(self.cert, new)
         assert_equal_ext(self.cert, new)
-        self.assertIsInstance(new.algorithm, type(self.cert.algorithm))
+        assert isinstance(new.algorithm, type(self.cert.algorithm))
 
     @override_tmpcadir()
     def test_dsa_ca_resign(self) -> None:
@@ -136,7 +136,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(self.certs["dsa-cert"], new)
         assert_equal_ext(self.certs["dsa-cert"], new)
-        self.assertIsInstance(new.algorithm, hashes.SHA256)
+        assert isinstance(new.algorithm, hashes.SHA256)
 
     @override_tmpcadir()
     def test_all_extensions_certificate(self) -> None:
@@ -148,20 +148,19 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(orig, new)
-        self.assertIsInstance(new.algorithm, hashes.SHA256)
+        assert isinstance(new.algorithm, hashes.SHA256)
 
         expected = orig.extensions
         actual = new.extensions
-        self.assertEqual(
-            sorted(expected.values(), key=lambda e: e.oid.dotted_string),
-            sorted(actual.values(), key=lambda e: e.oid.dotted_string),
+        assert sorted(expected.values(), key=lambda e: e.oid.dotted_string) == sorted(
+            actual.values(), key=lambda e: e.oid.dotted_string
         )
 
     @override_tmpcadir()
     def test_test_all_extensions_cert_with_overrides(self) -> None:
         """Test resigning a certificate with adding new extensions."""
-        self.assertIsNotNone(self.ca.sign_authority_information_access)
-        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        assert self.ca.sign_authority_information_access is not None
+        assert self.ca.sign_crl_distribution_points is not None
         self.ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
@@ -216,104 +215,91 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(orig, new)
-        self.assertIsInstance(new.algorithm, hashes.SHA256)
+        assert isinstance(new.algorithm, hashes.SHA256)
 
         extensions = new.extensions
 
         # Test Authority Information Access extension
-        self.assertEqual(
-            extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            x509.Extension(
-                oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-                critical=False,
-                value=x509.AuthorityInformationAccess(
-                    [
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.OCSP,
-                            access_location=uri("http://ocsp.example.com/1"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.OCSP,
-                            access_location=uri("http://ocsp.example.com/2"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                            access_location=uri("http://issuer.example.com/1"),
-                        ),
-                        x509.AccessDescription(
-                            access_method=AuthorityInformationAccessOID.CA_ISSUERS,
-                            access_location=uri("http://issuer.example.com/2"),
-                        ),
-                    ]
-                ),
+        assert extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS] == x509.Extension(
+            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            critical=False,
+            value=x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.OCSP,
+                        access_location=uri("http://ocsp.example.com/1"),
+                    ),
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.OCSP,
+                        access_location=uri("http://ocsp.example.com/2"),
+                    ),
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                        access_location=uri("http://issuer.example.com/1"),
+                    ),
+                    x509.AccessDescription(
+                        access_method=AuthorityInformationAccessOID.CA_ISSUERS,
+                        access_location=uri("http://issuer.example.com/2"),
+                    ),
+                ]
             ),
         )
 
         # Test Certificate Policies extension
-        self.assertEqual(
-            extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            x509.Extension(
-                oid=ExtensionOID.CERTIFICATE_POLICIES,
-                critical=False,
-                value=x509.CertificatePolicies(
-                    policies=[
-                        x509.PolicyInformation(
-                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                            policy_qualifiers=[
-                                "https://example.com/overwritten/",
-                                x509.UserNotice(
-                                    notice_reference=None, explicit_text="overwritten user notice text"
-                                ),
-                            ],
-                        )
-                    ]
-                ),
+        assert extensions[ExtensionOID.CERTIFICATE_POLICIES] == x509.Extension(
+            oid=ExtensionOID.CERTIFICATE_POLICIES,
+            critical=False,
+            value=x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                        policy_qualifiers=[
+                            "https://example.com/overwritten/",
+                            x509.UserNotice(
+                                notice_reference=None, explicit_text="overwritten user notice text"
+                            ),
+                        ],
+                    )
+                ]
             ),
         )
 
         # Test CRL Distribution Points extension
-        self.assertEqual(
-            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points([uri("http://crl.example.com"), uri("http://crl.example.net")]),
+        assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == self.crl_distribution_points(
+            [uri("http://crl.example.com"), uri("http://crl.example.net")]
         )
 
         # Test Extended Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+        assert extensions[ExtensionOID.EXTENDED_KEY_USAGE] == extended_key_usage(
+            ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH
         )
 
         # Test Issuer Alternative Name extension
-        self.assertEqual(
-            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            issuer_alternative_name(dns("ian-override.example.com"), uri("http://ian-override.example.com")),
+        assert extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] == issuer_alternative_name(
+            dns("ian-override.example.com"), uri("http://ian-override.example.com")
         )
 
         # Test KeyUsage extension
-        self.assertEqual(
-            extensions[ExtensionOID.KEY_USAGE],
-            key_usage(key_agreement=True, key_encipherment=True, critical=False),
+        assert extensions[ExtensionOID.KEY_USAGE] == key_usage(
+            key_agreement=True, key_encipherment=True, critical=False
         )
 
         # Test OCSP No Check extension
-        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], ocsp_no_check(critical=True))
+        assert extensions[ExtensionOID.OCSP_NO_CHECK] == ocsp_no_check(critical=True)
 
         # Test Subject Alternative Name extension
-        self.assertEqual(
-            extensions[x509.SubjectAlternativeName.oid],
-            subject_alternative_name(dns("override.example.net")),
+        assert extensions[x509.SubjectAlternativeName.oid] == subject_alternative_name(
+            dns("override.example.net")
         )
 
         # Test TLSFeature extension
-        self.assertEqual(
-            extensions[ExtensionOID.TLS_FEATURE], tls_feature(x509.TLSFeatureType.status_request)
-        )
+        assert extensions[ExtensionOID.TLS_FEATURE] == tls_feature(x509.TLSFeatureType.status_request)
 
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides(self) -> None:
         """Test resigning a certificate with adding new extensions."""
-        self.assertIsNotNone(self.ca.sign_authority_information_access)
-        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        assert self.ca.sign_authority_information_access is not None
+        assert self.ca.sign_crl_distribution_points is not None
         self.ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
@@ -361,68 +347,55 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(orig, new)
-        self.assertIsInstance(new.algorithm, hashes.SHA256)
+        assert isinstance(new.algorithm, hashes.SHA256)
 
         extensions = new.extensions
 
         # Test Certificate Policies extension
-        self.assertEqual(
-            extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            certificate_policies(
-                x509.PolicyInformation(
-                    policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                    policy_qualifiers=[
-                        "https://example.com/overwritten/",
-                        x509.UserNotice(notice_reference=None, explicit_text="overwritten user notice text"),
-                    ],
-                )
-            ),
+        assert extensions[ExtensionOID.CERTIFICATE_POLICIES] == certificate_policies(
+            x509.PolicyInformation(
+                policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                policy_qualifiers=[
+                    "https://example.com/overwritten/",
+                    x509.UserNotice(notice_reference=None, explicit_text="overwritten user notice text"),
+                ],
+            )
         )
 
         # Test CRL Distribution Points extension
-        self.assertEqual(
-            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            crl_distribution_points(
-                distribution_point([uri("http://crl.example.com"), uri("http://crl.example.net")])
-            ),
+        assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == crl_distribution_points(
+            distribution_point([uri("http://crl.example.com"), uri("http://crl.example.net")])
         )
 
         # Test Extended Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
+        assert extensions[ExtensionOID.EXTENDED_KEY_USAGE] == extended_key_usage(
+            ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH
         )
 
         # Test Issuer Alternative Name extension
-        self.assertEqual(
-            extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            issuer_alternative_name(dns("ian-override.example.com"), uri("http://ian-override.example.com")),
+        assert extensions[ExtensionOID.ISSUER_ALTERNATIVE_NAME] == issuer_alternative_name(
+            dns("ian-override.example.com"), uri("http://ian-override.example.com")
         )
 
         # Test Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.KEY_USAGE], key_usage(key_agreement=True, key_encipherment=True)
-        )
+        assert extensions[ExtensionOID.KEY_USAGE] == key_usage(key_agreement=True, key_encipherment=True)
 
         # Test OCSP No Check extension
-        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], ocsp_no_check())
+        assert extensions[ExtensionOID.OCSP_NO_CHECK] == ocsp_no_check()
 
         # Test Subject Alternative Name extension
-        self.assertEqual(
-            extensions[x509.SubjectAlternativeName.oid],
-            subject_alternative_name(dns("override.example.net")),
+        assert extensions[x509.SubjectAlternativeName.oid] == subject_alternative_name(
+            dns("override.example.net")
         )
 
         # Test TLSFeature extension
-        self.assertEqual(
-            extensions[ExtensionOID.TLS_FEATURE], tls_feature(x509.TLSFeatureType.status_request)
-        )
+        assert extensions[ExtensionOID.TLS_FEATURE] == tls_feature(x509.TLSFeatureType.status_request)
 
     @override_tmpcadir()
     def test_test_no_extensions_cert_with_overrides_with_non_default_critical(self) -> None:
         """Test resigning a certificate with adding new extensions with non-default critical values."""
-        self.assertIsNotNone(self.ca.sign_authority_information_access)
-        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        assert self.ca.sign_authority_information_access is not None
+        assert self.ca.sign_crl_distribution_points is not None
         self.ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
@@ -469,67 +442,55 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(orig, new)
-        self.assertIsInstance(new.algorithm, hashes.SHA256)
+        assert isinstance(new.algorithm, hashes.SHA256)
 
         extensions = new.extensions
 
         # Test Certificate Policies extension
-        self.assertEqual(
-            extensions[ExtensionOID.CERTIFICATE_POLICIES],
-            x509.Extension(
-                oid=ExtensionOID.CERTIFICATE_POLICIES,
-                critical=True,
-                value=x509.CertificatePolicies(
-                    policies=[
-                        x509.PolicyInformation(
-                            policy_identifier=x509.ObjectIdentifier("1.2.3"),
-                            policy_qualifiers=[
-                                "https://example.com/overwritten/",
-                                x509.UserNotice(
-                                    notice_reference=None, explicit_text="overwritten user notice text"
-                                ),
-                            ],
-                        )
-                    ]
-                ),
+        assert extensions[ExtensionOID.CERTIFICATE_POLICIES] == x509.Extension(
+            oid=ExtensionOID.CERTIFICATE_POLICIES,
+            critical=True,
+            value=x509.CertificatePolicies(
+                policies=[
+                    x509.PolicyInformation(
+                        policy_identifier=x509.ObjectIdentifier("1.2.3"),
+                        policy_qualifiers=[
+                            "https://example.com/overwritten/",
+                            x509.UserNotice(
+                                notice_reference=None, explicit_text="overwritten user notice text"
+                            ),
+                        ],
+                    )
+                ]
             ),
         )
 
         # Test CRL Distribution Points extension
-        self.assertEqual(
-            extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS],
-            self.crl_distribution_points(
-                [uri("http://crl.example.com"), uri("http://crl.example.net")], critical=True
-            ),
+        assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == self.crl_distribution_points(
+            [uri("http://crl.example.com"), uri("http://crl.example.net")], critical=True
         )
 
         # Test Extended Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            extended_key_usage(
-                ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
-            ),
+        assert extensions[ExtensionOID.EXTENDED_KEY_USAGE] == extended_key_usage(
+            ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
         )
 
         # Test Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.KEY_USAGE],
-            key_usage(key_agreement=True, key_encipherment=True, critical=False),
+        assert extensions[ExtensionOID.KEY_USAGE] == key_usage(
+            key_agreement=True, key_encipherment=True, critical=False
         )
 
         # Test OCSP No Check extension
-        self.assertEqual(extensions[ExtensionOID.OCSP_NO_CHECK], ocsp_no_check(True))
+        assert extensions[ExtensionOID.OCSP_NO_CHECK] == ocsp_no_check(True)
 
         # Test Subject Alternative Name extension
-        self.assertEqual(
-            extensions[x509.SubjectAlternativeName.oid],
-            subject_alternative_name(dns("override.example.net"), critical=True),
+        assert extensions[x509.SubjectAlternativeName.oid] == subject_alternative_name(
+            dns("override.example.net"), critical=True
         )
 
         # Test TLSFeature extension
-        self.assertEqual(
-            extensions[ExtensionOID.TLS_FEATURE],
-            tls_feature(x509.TLSFeatureType.status_request, critical=True),
+        assert extensions[ExtensionOID.TLS_FEATURE] == tls_feature(
+            x509.TLSFeatureType.status_request, critical=True
         )
 
     @override_tmpcadir()
@@ -542,7 +503,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(self.cert, new)
         assert_equal_ext(self.cert, new)
-        self.assertIsInstance(new.algorithm, hashes.SHA512)
+        assert isinstance(new.algorithm, hashes.SHA512)
 
     @override_tmpcadir()
     def test_different_ca(self) -> None:
@@ -589,31 +550,28 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
 
         new = Certificate.objects.get(pub=stdout)
         assert_resigned(self.cert, new)
-        self.assertEqual(new.subject, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)]))
-        self.assertEqual(list(new.watchers.all()), [Watcher.objects.get(mail=watcher)])
+        assert new.subject == x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cname)])
+        assert list(new.watchers.all()) == [Watcher.objects.get(mail=watcher)]
 
         # assert overwritten extensions
         extensions = new.extensions
 
         # Test Extended Key Usage extension
-        self.assertEqual(
-            extensions[ExtensionOID.EXTENDED_KEY_USAGE],
-            extended_key_usage(ExtendedKeyUsageOID.EMAIL_PROTECTION, critical=True),
+        assert extensions[ExtensionOID.EXTENDED_KEY_USAGE] == extended_key_usage(
+            ExtendedKeyUsageOID.EMAIL_PROTECTION, critical=True
         )
 
         # Test Key Usage extension
-        self.assertEqual(extensions[ExtensionOID.KEY_USAGE], key_usage(crl_sign=True, critical=False))
+        assert extensions[ExtensionOID.KEY_USAGE] == key_usage(crl_sign=True, critical=False)
 
         # Test Subject Alternative Name extension
-        self.assertEqual(
-            extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(dns("subject-alternative-name.example.com")),
+        assert extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
+            dns("subject-alternative-name.example.com")
         )
 
         # Test TLSFeature extension
-        self.assertEqual(
-            extensions[ExtensionOID.TLS_FEATURE],
-            tls_feature(x509.TLSFeatureType.status_request_v2, critical=True),
+        assert extensions[ExtensionOID.TLS_FEATURE] == tls_feature(
+            x509.TLSFeatureType.status_request_v2, critical=True
         )
 
     @override_tmpcadir(
@@ -627,7 +585,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertEqual(new.not_after.date(), timezone.now().date() + timedelta(days=200))
+        assert new.not_after.date() == timezone.now().date() + timedelta(days=200)
         assert_resigned(self.cert, new)
         assert_equal_ext(self.cert, new)
 
@@ -645,7 +603,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
         assert stderr == ""
 
         new = Certificate.objects.get(pub=stdout)
-        self.assertEqual(new.not_after.date(), timezone.now().date() + timedelta(days=200))
+        assert new.not_after.date() == timezone.now().date() + timedelta(days=200)
         assert_resigned(self.cert, new)
         assert_equal_ext(self.cert, new)
 

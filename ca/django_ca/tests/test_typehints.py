@@ -37,7 +37,7 @@ def test_end_entity_certificate_extension_keys() -> None:
 
 
 @pytest.mark.parametrize(
-    "extension_types,extensions",
+    ("extension_types", "extensions"),
     (
         (typehints.ConfigurableExtensionType, typehints.ConfigurableExtension),
         (typehints.EndEntityCertificateExtensionType, typehints.EndEntityCertificateExtension),

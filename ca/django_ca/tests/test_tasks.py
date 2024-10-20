@@ -55,12 +55,12 @@ class TestBasic(TestCaseMixin, TestCase):
     def test_missing_celery(self) -> None:
         """Test that we work even if celery is not installed."""
         # negative assertion to make sure that the IsInstance assertion below is actually meaningful
-        self.assertNotIsInstance(tasks.cache_crl, types.FunctionType)
+        assert not isinstance(tasks.cache_crl, types.FunctionType)
 
         try:
             with mock.patch.dict("sys.modules", celery=None):
                 importlib.reload(tasks)
-                self.assertIsInstance(tasks.cache_crl, types.FunctionType)
+                assert isinstance(tasks.cache_crl, types.FunctionType)
         finally:
             # Make sure that module is reloaded, or any failed test in the try block will cause *all other
             # tests* to fail, because the celery import would be cached to *not* work
@@ -71,7 +71,7 @@ class TestBasic(TestCaseMixin, TestCase):
         # run_task() without celery
         with self.settings(CA_USE_CELERY=False), self.patch("django_ca.tasks.cache_crls") as task_mock:
             tasks.run_task(tasks.cache_crls)
-            self.assertEqual(task_mock.call_count, 1)
+            assert task_mock.call_count == 1
 
         # finally, run_task() with celery
         with self.settings(CA_USE_CELERY=True), self.mute_celery((((), {}), {})):
@@ -117,16 +117,16 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     def assertInvalid(self) -> None:  # pylint: disable=invalid-name; unittest standard
         """Assert that the challenge validation failed."""
         self.refresh_from_db()
-        self.assertEqual(self.chall.status, AcmeChallenge.STATUS_INVALID)
-        self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_INVALID)
-        self.assertEqual(self.order.status, AcmeOrder.STATUS_INVALID)
+        assert self.chall.status == AcmeChallenge.STATUS_INVALID
+        assert self.auth.status == AcmeAuthorization.STATUS_INVALID
+        assert self.order.status == AcmeOrder.STATUS_INVALID
 
     def assertValid(self, order_state: str = AcmeOrder.STATUS_READY) -> None:  # pylint: disable=invalid-name
         """Assert that the challenge is valid."""
         self.refresh_from_db()
-        self.assertEqual(self.chall.status, AcmeChallenge.STATUS_VALID)
-        self.assertEqual(self.auth.status, AcmeAuthorization.STATUS_VALID)
-        self.assertEqual(self.order.status, order_state)
+        assert self.chall.status == AcmeChallenge.STATUS_VALID
+        assert self.auth.status == AcmeAuthorization.STATUS_VALID
+        assert self.order.status == order_state
 
     @contextmanager
     def mock_challenge(
@@ -144,7 +144,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         """Test invoking task when ACME support is not enabled."""
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
-        self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
+        assert logcm.output == ["ERROR:django_ca.tasks:ACME is not enabled."]
 
     def test_unknown_challenge(self) -> None:
         """Test invoking task with an unknown challenge."""
@@ -152,7 +152,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         with self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
 
-        self.assertEqual(logcm.output, [f"ERROR:django_ca.tasks:Challenge with id={self.chall.pk} not found"])
+        assert logcm.output == [f"ERROR:django_ca.tasks:Challenge with id={self.chall.pk} not found"]
 
     def test_status_not_processing(self) -> None:
         """Test invoking task where the status is not "processing"."""
@@ -162,9 +162,9 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         with self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
 
-        self.assertEqual(
-            logcm.output, [f"ERROR:django_ca.tasks:{self.chall}: pending: Invalid state (must be processing)"]
-        )
+        assert logcm.output == [
+            f"ERROR:django_ca.tasks:{self.chall}: pending: Invalid state (must be processing)"
+        ]
 
     def test_unusable_auth(self) -> None:
         """Test invoking task with an unusable authentication."""
@@ -174,7 +174,7 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         with self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
 
-        self.assertEqual(logcm.output, [f"ERROR:django_ca.tasks:{self.chall}: Authentication is not usable"])
+        assert logcm.output == [f"ERROR:django_ca.tasks:{self.chall}: Authentication is not usable"]
 
     def test_response_wrong_content(self) -> None:
         """Test the server returning the wrong content in the response."""
@@ -184,12 +184,9 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         ):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        self.assertEqual(
-            logcm.output,
-            [
-                f"INFO:django_ca.tasks:{self.chall!s} is invalid",
-            ],
-        )
+        assert logcm.output == [
+            f"INFO:django_ca.tasks:{self.chall!s} is invalid",
+        ]
 
     def test_unsupported_challenge(self) -> None:
         """Test what happens when challenge type is not supported."""
@@ -202,13 +199,10 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
         ):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        self.assertEqual(
-            logcm.output,
-            [
-                f"ERROR:django_ca.tasks:{self.chall!s}: Challenge type is not supported.",
-                f"INFO:django_ca.tasks:{self.chall!s} is invalid",
-            ],
-        )
+        assert logcm.output == [
+            f"ERROR:django_ca.tasks:{self.chall!s}: Challenge type is not supported.",
+            f"INFO:django_ca.tasks:{self.chall!s} is invalid",
+        ]
 
     def test_basic(self) -> None:
         """Test validation actually working."""
@@ -270,7 +264,7 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
             matcher = req_mock.get(url, raw=HTTPResponse(body=content, status=status, preload_content=False))
             yield req_mock
 
-        self.assertEqual(matcher.call_count, call_count)
+        assert matcher.call_count == call_count
 
     def test_response_not_ok(self) -> None:
         """Test the server not returning a HTTP status code 200."""
@@ -284,10 +278,10 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
         with self.patch("requests.get", side_effect=Exception(val)) as req_mock, self.assertLogs() as logcm:
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        self.assertEqual(req_mock.mock_calls, [((self.url,), {"timeout": 1, "stream": True})])
-        self.assertEqual(len(logcm.output), 2)
-        self.assertIn(val, logcm.output[0])
-        self.assertEqual(logcm.output[1], f"INFO:django_ca.tasks:{self.chall!s} is invalid")
+        assert req_mock.mock_calls == [((self.url,), {"timeout": 1, "stream": True})]
+        assert len(logcm.output) == 2
+        assert val in logcm.output[0]
+        assert logcm.output[1] == f"INFO:django_ca.tasks:{self.chall!s} is invalid"
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -332,7 +326,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
             # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
             resolve_cm.assert_called_once()
             expected = (f"_acme_challenge.{domain}", "TXT")
-            self.assertEqual(resolve_cm.call_args_list[0].args[:2], expected)
+            assert resolve_cm.call_args_list[0].args[:2] == expected
 
     def test_nxdomain(self) -> None:
         """Test a ACME validation where the domain does not exist."""
@@ -348,14 +342,11 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         exp = self.chall.expected.decode("ascii")
         acme_domain = f"_acme_challenge.{domain}"
         logger = "django_ca.acme.validation"
-        self.assertEqual(
-            logcm.output,
-            [
-                f"INFO:{logger}:DNS-01 validation of {domain}: Expect {exp} on {acme_domain}",
-                f"DEBUG:{logger}:TXT {acme_domain}: record does not exist.",
-                f"INFO:django_ca.tasks:{self.chall!s} is invalid",
-            ],
-        )
+        assert logcm.output == [
+            f"INFO:{logger}:DNS-01 validation of {domain}: Expect {exp} on {acme_domain}",
+            f"DEBUG:{logger}:TXT {acme_domain}: record does not exist.",
+            f"INFO:django_ca.tasks:{self.chall!s} is invalid",
+        ]
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -385,7 +376,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         """Test invoking task when ACME support is not enabled."""
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
-        self.assertEqual(logcm.output, ["ERROR:django_ca.tasks:ACME is not enabled."])
+        assert logcm.output == ["ERROR:django_ca.tasks:ACME is not enabled."]
 
     def test_unknown_certificate(self) -> None:
         """Test invoking task with an unknown cert."""
@@ -393,9 +384,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
-        self.assertEqual(
-            logcm.output, [f"ERROR:django_ca.tasks:Certificate with id={self.acme_cert.pk} not found"]
-        )
+        assert logcm.output == [f"ERROR:django_ca.tasks:Certificate with id={self.acme_cert.pk} not found"]
 
     def test_unusable_cert(self) -> None:
         """Test invoking task where the order is not usable."""
@@ -405,9 +394,9 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
-        self.assertEqual(
-            logcm.output, [f"ERROR:django_ca.tasks:{self.order}: Cannot issue certificate for this order"]
-        )
+        assert logcm.output == [
+            f"ERROR:django_ca.tasks:{self.order}: Cannot issue certificate for this order"
+        ]
 
     @override_tmpcadir()
     def test_basic(self) -> None:
@@ -415,22 +404,20 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
-        self.assertEqual(
-            logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
-        )
+        assert logcm.output == [
+            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+        ]
+
         self.acme_cert.refresh_from_db()
         assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
-        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
-        self.assertEqual(
-            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(x509.DNSName(self.hostname)),
-        )
-        self.assertEqual(
-            self.acme_cert.cert.not_after, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
-        )
-        self.assertEqual(self.acme_cert.cert.cn, self.hostname)
-        self.assertEqual(self.acme_cert.cert.profile, model_settings.CA_DEFAULT_PROFILE)
+        assert self.order.status == AcmeOrder.STATUS_VALID
+        assert self.acme_cert.cert.extensions[
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        ] == subject_alternative_name(x509.DNSName(self.hostname))
+        assert self.acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        assert self.acme_cert.cert.cn == self.hostname
+        assert self.acme_cert.cert.profile == model_settings.CA_DEFAULT_PROFILE
 
     @override_settings(USE_TZ=False)
     def test_basic_without_timezone_support(self) -> None:
@@ -449,15 +436,13 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.acme_cert.refresh_from_db()
         assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
-        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
-        self.assertEqual(
-            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2)),
-        )
-        self.assertEqual(
-            self.acme_cert.cert.not_after, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
-        )
-        self.assertIn(self.acme_cert.cert.cn, [self.hostname, hostname2])
+        assert self.order.status == AcmeOrder.STATUS_VALID
+        assert self.acme_cert.cert.extensions[
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        ] == subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2))
+
+        assert self.acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        assert self.acme_cert.cert.cn in [self.hostname, hostname2]
 
     @override_tmpcadir()
     def test_not_after(self) -> None:
@@ -469,19 +454,20 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
-        self.assertEqual(
-            logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
-        )
+        assert logcm.output == [
+            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+        ]
+
         self.acme_cert.refresh_from_db()
         assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
-        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
-        self.assertEqual(
-            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(x509.DNSName(self.hostname)),
-        )
-        self.assertEqual(self.acme_cert.cert.not_after, not_after)
-        self.assertEqual(self.acme_cert.cert.cn, self.hostname)
+        assert self.order.status == AcmeOrder.STATUS_VALID
+        assert self.acme_cert.cert.extensions[
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        ] == subject_alternative_name(x509.DNSName(self.hostname))
+
+        assert self.acme_cert.cert.not_after == not_after
+        assert self.acme_cert.cert.cn == self.hostname
 
     def test_not_after_with_use_tz_is_false(self) -> None:
         """Test not_after with USE_TZ=False."""
@@ -498,22 +484,22 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         with self.assertLogs() as logcm:
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
-        self.assertEqual(
-            logcm.output, [f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"]
-        )
+        assert logcm.output == [
+            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+        ]
+
         self.acme_cert.refresh_from_db()
         assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
-        self.assertEqual(self.order.status, AcmeOrder.STATUS_VALID)
-        self.assertEqual(
-            self.acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(x509.DNSName(self.hostname)),
-        )
-        self.assertEqual(
-            self.acme_cert.cert.not_after, timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
-        )
-        self.assertEqual(self.acme_cert.cert.cn, self.hostname)
-        self.assertEqual(self.acme_cert.cert.profile, "client")
+        assert self.order.status == AcmeOrder.STATUS_VALID
+        assert self.acme_cert.cert.extensions[
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        ] == subject_alternative_name(x509.DNSName(self.hostname))
+
+        assert self.acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+
+        assert self.acme_cert.cert.cn == self.hostname
+        assert self.acme_cert.cert.profile == "client"
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -546,27 +532,27 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         """Basic test."""
         tasks.acme_cleanup()  # does nothing if nothing is expired
 
-        self.assertEqual(self.acme_cert, AcmeCertificate.objects.get(pk=self.acme_cert.pk))
-        self.assertEqual(self.order, AcmeOrder.objects.get(pk=self.order.pk))
-        self.assertEqual(self.auth, AcmeAuthorization.objects.get(pk=self.auth.pk))
-        self.assertEqual(self.account, AcmeAccount.objects.get(pk=self.account.pk))
+        assert self.acme_cert == AcmeCertificate.objects.get(pk=self.acme_cert.pk)
+        assert self.order == AcmeOrder.objects.get(pk=self.order.pk)
+        assert self.auth == AcmeAuthorization.objects.get(pk=self.auth.pk)
+        assert self.account == AcmeAccount.objects.get(pk=self.account.pk)
 
         with self.freeze_time(timezone.now() + timedelta(days=3)):
             tasks.acme_cleanup()
 
-        self.assertEqual(AcmeOrder.objects.all().count(), 0)
-        self.assertEqual(AcmeAuthorization.objects.all().count(), 0)
-        self.assertEqual(AcmeChallenge.objects.all().count(), 0)
-        self.assertEqual(AcmeCertificate.objects.all().count(), 0)
+        assert AcmeOrder.objects.all().count() == 0
+        assert AcmeAuthorization.objects.all().count() == 0
+        assert AcmeChallenge.objects.all().count() == 0
+        assert AcmeCertificate.objects.all().count() == 0
 
     def test_acme_disabled(self) -> None:
         """Test task when ACME is disabled."""
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
             with self.freeze_time(timezone.now() + timedelta(days=3)):
                 tasks.acme_cleanup()
-        self.assertEqual(logcm.output, ["INFO:django_ca.tasks:ACME is not enabled, not doing anything."])
+        assert logcm.output == ["INFO:django_ca.tasks:ACME is not enabled, not doing anything."]
 
-        self.assertEqual(AcmeOrder.objects.all().count(), 1)
-        self.assertEqual(AcmeAuthorization.objects.all().count(), 1)
-        self.assertEqual(AcmeChallenge.objects.all().count(), 1)
-        self.assertEqual(AcmeCertificate.objects.all().count(), 1)
+        assert AcmeOrder.objects.all().count() == 1
+        assert AcmeAuthorization.objects.all().count() == 1
+        assert AcmeChallenge.objects.all().count() == 1
+        assert AcmeCertificate.objects.all().count() == 1

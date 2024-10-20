@@ -53,7 +53,7 @@ class SerialModel(BaseModel):
     value: Serial
 
 
-@pytest.mark.parametrize("name,curve_cls", constants.ELLIPTIC_CURVE_TYPES.items())
+@pytest.mark.parametrize(("name", "curve_cls"), constants.ELLIPTIC_CURVE_TYPES.items())
 def test_elliptic_curve(name: str, curve_cls: type[ec.EllipticCurve]) -> None:
     """Test EllipticCurveTypeAliasModel."""
     model = EllipticCurveTypeAliasModel(value=name)
@@ -79,11 +79,11 @@ def test_elliptic_curve(name: str, curve_cls: type[ec.EllipticCurve]) -> None:
 @pytest.mark.parametrize("value", ("", "wrong", True, 42, ec.SECP224R1))
 def test_elliptic_curve_errors(value: str) -> None:
     """Test invalid values for EllipticCurveTypeAliasModel."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         EllipticCurveTypeAliasModel(value=value)
 
 
-@pytest.mark.parametrize("name,hash_cls", constants.HASH_ALGORITHM_TYPES.items())
+@pytest.mark.parametrize(("name", "hash_cls"), constants.HASH_ALGORITHM_TYPES.items())
 def test_hash_algorithm(name: str, hash_cls: type[hashes.HashAlgorithm]) -> None:
     """Test EllipticCurveTypeAliasModel."""
     model = HashAlgorithmTypeAliasModel(value=name)
@@ -110,12 +110,12 @@ def test_hash_algorithm(name: str, hash_cls: type[hashes.HashAlgorithm]) -> None
 @pytest.mark.parametrize("hash_obj", (hashes.SM3(), hashes.BLAKE2b(64), hashes.BLAKE2s(32)))
 def test_hash_algorithm_unsupported_types(hash_obj: hashes.HashAlgorithm) -> None:
     """Test that unsupported hash algorithm instances throw an error."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         HashAlgorithmTypeAliasModel(value=hash_obj)
 
 
 @pytest.mark.parametrize(
-    "value,encoded",
+    ("value", "encoded"),
     (
         (b"\xb5\xee\x0e\x01\x10U", "te4OARBV"),
         (b"\xb5\xee\x0e\x01\x10U\xaa", "te4OARBVqg=="),
@@ -140,7 +140,7 @@ def test_json_serializable_bytes(value: bytes, encoded: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "value,validated",
+    ("value", "validated"),
     (
         ("a", "A"),
         ("abc", "ABC"),
@@ -176,5 +176,5 @@ def test_serial(value: str, validated: str) -> None:
 )
 def test_serial_errors(value: str) -> None:
     """Test invalid values for the Serial type alias."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         SerialModel(value=value)

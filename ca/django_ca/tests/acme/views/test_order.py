@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name  # because of fixtures
 
-from collections.abc import Iterator
 from http import HTTPStatus
 from typing import Optional
 from unittest import mock
@@ -51,13 +50,13 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 @pytest.fixture
-def url(order: AcmeOrder) -> Iterator[str]:
+def url(order: AcmeOrder) -> str:
     """URL under test."""
     return root_reverse("acme-order", slug=order.slug)
 
 
 @pytest.fixture
-def message() -> Iterator[bytes]:
+def message() -> bytes:
     """Yield an empty bytestring, since this is a POST-AS-GET request."""
     return b""
 

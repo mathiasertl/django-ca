@@ -34,11 +34,11 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
         )
         with self.settings(CACHES={}):
             errors = check_cache([app_config])
-        self.assertEqual(errors, [expected])
+        assert errors == [expected]
 
         with self.settings(CACHES={}):
             errors = check_cache(None)
-        self.assertEqual(errors, [expected])
+        assert errors == [expected]
 
     def test_loc_mem_cache(self) -> None:
         """Test what happens if LocMemCache is used."""
@@ -55,16 +55,16 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
         }
         with self.settings(CACHES=setting):
             errors = check_cache([app_config])
-        self.assertEqual(errors, [expected])
+        assert errors == [expected]
         with self.settings(CACHES=setting):
             errors = check_cache(None)
-        self.assertEqual(errors, [expected])
+        assert errors == [expected]
 
     def test_django_ca_not_checked(self) -> None:
         """Test that no checks are run if django_ca is not checked."""
         app_config = apps.get_app_config("auth")
         errors = check_cache([app_config])
-        self.assertEqual(errors, [])
+        assert not errors
 
     def test_redis_cache(self) -> None:
         """Test if redis cache backend is used."""
@@ -76,4 +76,4 @@ class SystemChecksTestCase(TestCaseMixin, TestCase):
         }
         with self.settings(CACHES=setting):
             errors = check_cache([app_config])
-        self.assertEqual(errors, [])
+        assert not errors

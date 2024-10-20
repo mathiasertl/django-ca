@@ -60,16 +60,16 @@ class AddCertificateSeleniumTestCase(
 
     def assertModified(self) -> None:  # pylint: disable=invalid-name
         """Assert that the field was modified."""
-        self.assertEqual(self.key_value_field.get_attribute("data-modified"), "true")
+        assert self.key_value_field.get_attribute("data-modified") == "true"
 
     def assertNotModified(self) -> None:  # pylint: disable=invalid-name
         """Assert that the field was not modified."""
-        self.assertNotEqual(self.key_value_field.get_attribute("data-modified"), "true")
+        assert self.key_value_field.get_attribute("data-modified") != "true"
 
     def assertChapterHasValue(self, chapter: WebElement, value: Any) -> None:  # pylint: disable=invalid-name
         """Assert that the given chapter has the given value."""
         loaded_value = json.loads(chapter.get_attribute("data-value"))  # type: ignore[arg-type]
-        self.assertEqual(loaded_value, value)
+        assert loaded_value == value
 
     def initialize(self) -> None:
         """Load the page and find core elements.
@@ -94,7 +94,7 @@ class AddCertificateSeleniumTestCase(
         """Load the currently displayed value from the key/value list."""
         selects = self.key_value_list.find_elements(By.CSS_SELECTOR, "select")
         inputs = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")
-        self.assertEqual(len(selects), len(inputs))
+        assert len(selects) == len(inputs)
 
         return [
             {

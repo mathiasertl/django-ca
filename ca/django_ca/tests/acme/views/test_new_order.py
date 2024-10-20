@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name  # because of fixtures
 
-from collections.abc import Iterator
 from datetime import timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any
@@ -46,13 +45,13 @@ pytestmark = [pytest.mark.freeze_time(now)]
 
 
 @pytest.fixture
-def url() -> Iterator[str]:
+def url() -> str:
     """URL under test."""
     return root_reverse("acme-new-order")
 
 
 @pytest.fixture
-def message() -> Iterator[NewOrder]:
+def message() -> NewOrder:
     """Default message sent to the server."""
     return NewOrder(identifiers=[{"type": "dns", "value": SERVER_NAME}])
 
@@ -187,7 +186,7 @@ def test_no_identifiers(client: Client, url: str, root: CertificateAuthority, ki
 
 @pytest.mark.usefixtures("account")
 @pytest.mark.parametrize(
-    "values,expected",
+    ("values", "expected"),
     (
         ({"not_before": now - timedelta(days=1)}, "Certificate cannot be valid before now."),
         ({"not_after": now + timedelta(days=3650)}, "Certificate cannot be valid that long."),
@@ -201,7 +200,6 @@ def test_invalid_not_before_after(
     client: Client, url: str, root: CertificateAuthority, kid: str, values: dict[str, Any], expected: str
 ) -> None:
     """Test invalid not_before/not_after dates."""
-    print(values)
     message = NewOrder(identifiers=[{"type": "dns", "value": SERVER_NAME}], **values)
     resp = acme_request(client, url, root, message, kid=kid)
     assert_malformed(resp, root, expected)

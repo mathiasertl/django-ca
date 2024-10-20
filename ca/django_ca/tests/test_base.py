@@ -23,6 +23,8 @@ from cryptography.x509.oid import ExtensionOID
 from django.conf import settings
 from django.test import TestCase
 
+import pytest
+
 from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
@@ -39,7 +41,7 @@ class TestDjangoCATestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_override_tmpcadir(self) -> None:
         """Test override_tmpcadir as decorator."""
-        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
+        assert settings.CA_DIR.startswith(tempfile.gettempdir())
 
     @override_tmpcadir()
     def test_assert_extensions(self) -> None:
@@ -92,25 +94,25 @@ class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
     @override_tmpcadir()
     def test_a(self) -> None:
         # add three tests to make sure that every test case sees a different dir
-        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
-        self.assertNotIn(settings.CA_DIR, self.seen_dirs)
+        assert settings.CA_DIR.startswith(tempfile.gettempdir())
+        assert settings.CA_DIR not in self.seen_dirs
         self.seen_dirs.add(settings.CA_DIR)
 
     @override_tmpcadir()
     def test_b(self) -> None:
-        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
-        self.assertNotIn(settings.CA_DIR, self.seen_dirs)
+        assert settings.CA_DIR.startswith(tempfile.gettempdir())
+        assert settings.CA_DIR not in self.seen_dirs
         self.seen_dirs.add(settings.CA_DIR)
 
     @override_tmpcadir()
     def test_c(self) -> None:
-        self.assertTrue(settings.CA_DIR.startswith(tempfile.gettempdir()))
-        self.assertNotIn(settings.CA_DIR, self.seen_dirs)
+        assert settings.CA_DIR.startswith(tempfile.gettempdir())
+        assert settings.CA_DIR not in self.seen_dirs
         self.seen_dirs.add(settings.CA_DIR)
 
     def test_no_classes(self) -> None:
         msg = r"^Only functions can use override_tmpcadir\(\)$"
-        with self.assertRaisesRegex(ValueError, msg):
+        with pytest.raises(ValueError, match=msg):
 
             @override_tmpcadir()
             class Foo:  # pylint: disable=missing-class-docstring,unused-variable
@@ -126,8 +128,8 @@ class CommandTestCase(TestCaseMixin, TestCase):
         """Trivial basic test."""
         stdout, stderr = cmd_e2e(["list_cas"])
         serial = add_colons(self.ca.serial)
-        self.assertEqual(stdout, f"{serial} - {self.ca.name}\n")
-        self.assertEqual(stderr, "")
+        assert stdout == f"{serial} - {self.ca.name}\n"
+        assert stderr == ""
 
 
 class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a subclass of TestCase

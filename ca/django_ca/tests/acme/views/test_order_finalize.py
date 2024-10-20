@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name
 
-from collections.abc import Iterator
 from http import HTTPStatus
 from typing import Optional
 from unittest import mock
@@ -64,7 +63,7 @@ CSR = (
 
 
 @pytest.fixture
-def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
+def order(order: AcmeOrder) -> AcmeOrder:
     """Override the module-level fixture to set the status to ready."""
     order.status = AcmeOrder.STATUS_READY
     order.save()
@@ -72,7 +71,7 @@ def order(order: AcmeOrder) -> Iterator[AcmeOrder]:
 
 
 @pytest.fixture
-def authz(authz: AcmeAuthorization) -> Iterator[AcmeAuthorization]:
+def authz(authz: AcmeAuthorization) -> AcmeAuthorization:
     """Override the module-level fixture to set the status to valid."""
     authz.status = AcmeAuthorization.STATUS_VALID
     authz.save()
@@ -80,13 +79,13 @@ def authz(authz: AcmeAuthorization) -> Iterator[AcmeAuthorization]:
 
 
 @pytest.fixture
-def url(order: AcmeOrder) -> Iterator[str]:
+def url(order: AcmeOrder) -> str:
     """URL under test."""
     return root_reverse("acme-order-finalize", slug=order.slug)
 
 
 @pytest.fixture
-def message() -> Iterator[CertificateRequest]:
+def message() -> CertificateRequest:
     """Default message sent to the server."""
     req = X509Req.from_cryptography(CSR)
     return CertificateRequest(csr=jose.util.ComparableX509(req))

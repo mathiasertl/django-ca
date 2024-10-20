@@ -41,7 +41,7 @@ def test_doctests() -> None:
 
 
 @pytest.mark.parametrize(
-    "typ,value,encoded",
+    ("typ", "value", "encoded"),
     (
         ("UTF8", "example", b"\x0c\x07example"),
         ("UTF8String", "example", b"\x0c\x07example"),
@@ -126,7 +126,7 @@ def test_other_name_octetstring_type_errors() -> None:
 
 
 @pytest.mark.parametrize(
-    "value,match",
+    ("value", "match"),
     (
         (b"123", r"Value error, could not parse asn1 data: .*"),
         (b"\x03\x02\x04P", "3: Unknown otherName type found."),
@@ -145,7 +145,7 @@ def test_othername_general_errors(value: bytes, match: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "parameters,name,discriminated",
+    ("parameters", "name", "discriminated"),
     (
         ({"type": "DNS", "value": "example.com"}, dns("example.com"), str),  # 0
         ({"type": "DNS", "value": "xn--exmple-cua.com"}, dns("xn--exmple-cua.com"), str),  # 1
@@ -186,7 +186,7 @@ def test_general_name(parameters: dict[str, Any], name: x509.GeneralName, discri
 
 
 @pytest.mark.parametrize(
-    "typ,value,errors",
+    ("typ", "value", "errors"),
     (
         ("URI", 123, [("string_type", ("value", "str"), "Input should be a valid string")]),
         ("email", 123, [("string_type", ("value", "str"), "Input should be a valid string")]),

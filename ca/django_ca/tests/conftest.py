@@ -18,7 +18,6 @@
 import importlib.metadata
 import os
 import sys
-from collections.abc import Iterator
 from typing import Any
 
 import coverage
@@ -143,7 +142,7 @@ def user(
 
 
 @pytest.fixture
-def user_client(user: "User", client: Client) -> Iterator[Client]:
+def user_client(user: "User", client: Client) -> Client:
     """A Django test client logged in as a normal user."""
     client.force_login(user)  # type: ignore[arg-type]  # django-stubs 5.1.0 thinks user is AbstractUser
     return client

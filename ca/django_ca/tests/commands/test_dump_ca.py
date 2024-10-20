@@ -41,7 +41,7 @@ def test_basic(root: CertificateAuthority) -> None:
     assert stdout.decode() == root.pub.pem
 
 
-@pytest.mark.parametrize("encoding", [Encoding.PEM, Encoding.DER])
+@pytest.mark.parametrize("encoding", (Encoding.PEM, Encoding.DER))
 def test_format(root: CertificateAuthority, encoding: Encoding) -> None:
     """Test encoding parameter."""
     stdout = dump_ca(root.serial, format=encoding)

@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name  # because of fixtures
 
-from collections.abc import Iterator
 from http import HTTPStatus
 
 import josepy as jose
@@ -41,13 +40,13 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 @pytest.fixture
-def url(authz: AcmeAuthorization) -> Iterator[str]:
+def url(authz: AcmeAuthorization) -> str:
     """URL under test."""
     return root_reverse("acme-authz", slug=authz.slug)
 
 
 @pytest.fixture
-def message() -> Iterator[bytes]:
+def message() -> bytes:
     """Yield an empty bytestring, since this is a POST-AS-GET request."""
     return b""
 

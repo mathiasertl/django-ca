@@ -39,7 +39,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, X509CertMixin
 from django_ca.pydantic.general_name import GeneralNameModelList
 from django_ca.signals import post_issue_cert, post_revoke_cert, pre_revoke_cert, pre_sign_cert
-from django_ca.tests.base.assertions import assert_revoked
+from django_ca.tests.base.assertions import assert_extension_equal, assert_revoked
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AdminTestCaseMixin
 from django_ca.tests.base.mocks import mock_signal
@@ -80,7 +80,7 @@ class AdminActionTestCaseMixin(
 
         for obj in self.get_objects():
             response = self.client.post(self.changelist_url, self.data)
-            self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+            assert response.status_code == HTTPStatus.FORBIDDEN
             self.assertFailedRequest(response, obj)
 
     def test_insufficient_permissions(self) -> None:
@@ -117,7 +117,7 @@ class AdminActionTestCaseMixin(
 
         for obj in self.get_objects():
             response = self.client.post(self.changelist_url, self.data)
-            self.assertEqual(response.status_code, HTTPStatus.OK)
+            assert response.status_code == HTTPStatus.OK
             self.assertFailedRequest(response, obj)
 
     def test_required_permissions(self) -> None:
@@ -166,7 +166,7 @@ class AdminChangeActionTestCaseMixin(
         self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
     ) -> None:
         """Assert that the action returned HTTP 403 (Forbidden)."""
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        assert response.status_code == HTTPStatus.FORBIDDEN
         self.assertFailedRequest(response, obj=obj)
 
     @contextmanager
@@ -206,7 +206,7 @@ class AdminChangeActionTestCaseMixin(
         for obj in self.get_objects():
             with self.assertNoSignals():
                 response = self.client.get(self.get_url(obj=obj))
-            self.assertEqual(response.status_code, HTTPStatus.OK)
+            assert response.status_code == HTTPStatus.OK
 
     def test_anonymous(self) -> None:
         """Test performing action as anonymous user."""
@@ -303,9 +303,9 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
     ) -> None:
         """Assert that the form validation failed with the given errors."""
         self.assertNotRevoked(cert)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        assert response.status_code == HTTPStatus.OK
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
-        self.assertEqual(response.context["form"].errors, errors)
+        assert response.context["form"].errors == errors
 
     def assertSuccessfulRequest(
         self,
@@ -399,7 +399,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
 
     def assertFailedRequest(self, response: "HttpResponse", obj: Optional[Certificate] = None) -> None:
         obj = obj or self.cert
-        self.assertEqual(self.model.objects.filter(cn=obj.cn).count(), 1)
+        assert self.model.objects.filter(cn=obj.cn).count() == 1
 
     def assertSuccessfulRequest(
         self,
@@ -410,13 +410,13 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         obj.refresh_from_db()
         resigned = Certificate.objects.filter(cn=obj.cn).exclude(pk=obj.pk).get()
 
-        self.assertFalse(resigned.revoked)
-        self.assertFalse(obj.revoked)
-        self.assertEqual(obj.cn, resigned.cn)
-        self.assertEqual(obj.csr, resigned.csr)
-        self.assertEqual(obj.profile, resigned.profile)
-        self.assertEqual(obj.cn, resigned.cn)
-        self.assertEqual(obj.algorithm, resigned.algorithm)
+        assert not resigned.revoked
+        assert not obj.revoked
+        assert obj.cn == resigned.cn
+        assert obj.csr == resigned.csr
+        assert obj.profile == resigned.profile
+        assert obj.cn == resigned.cn
+        assert obj.algorithm == resigned.algorithm
 
         for oid in [
             ExtensionOID.EXTENDED_KEY_USAGE,
@@ -424,11 +424,11 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
             ExtensionOID.KEY_USAGE,
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
         ]:
-            self.assertEqual(obj.extensions.get(oid), resigned.extensions.get(oid))
+            assert_extension_equal(obj.extensions.get(oid), resigned.extensions.get(oid))
 
         # Some properties are obviously *not* equal
-        self.assertNotEqual(obj.pub, resigned.pub)
-        self.assertNotEqual(obj.serial, resigned.serial)
+        assert obj.pub != resigned.pub
+        assert obj.serial != resigned.serial
 
     @property
     def data(self) -> dict[str, Any]:  # type: ignore[override]
@@ -488,7 +488,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         form.submit().follow()
 
         resigned = Certificate.objects.filter(cn=self.cert.cn).exclude(pk=self.cert.pk).get()
-        self.assertEqual(resigned.profile, model_settings.CA_DEFAULT_PROFILE)
+        assert resigned.profile == model_settings.CA_DEFAULT_PROFILE
 
     @override_tmpcadir()
     def test_webtest_basic(self) -> None:

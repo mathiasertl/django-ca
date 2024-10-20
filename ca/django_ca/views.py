@@ -147,9 +147,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
 
     def fetch_crl(self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
-        print(self.scope)
         if self.scope is not _NOT_SET:
-            print(2)
             warnings.warn(
                 "The scope parameter is deprecated and will be removed in django-ca 2.3.0, use "
                 "`only_contains_{ca,user,attribute}_cert` instead.",

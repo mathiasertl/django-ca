@@ -11,10 +11,10 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-# TYPEHINT NOTE: mypy-django typehints assertFieldOutput complete wrong.
-# type: ignore
-
 """Test custom Django form fields."""
+
+# TYPEHINT NOTE: mypy-django typehints assertFieldOutput completely wrong.
+# mypy: ignore-errors
 
 import html
 import json
@@ -69,21 +69,21 @@ class FieldTestCaseMixin(TestCaseMixin):
         field = self.field_class(required=True)
         error_required = [field.error_messages["required"]]
 
-        with self.assertRaises(ValidationError) as context_manager:
+        with pytest.raises(ValidationError) as context_manager:
             field.clean(value)
-        self.assertEqual(context_manager.exception.messages, error_required)
+        assert context_manager.exception.messages == error_required
 
 
 @pytest.mark.parametrize("critical", (True, False))
 @pytest.mark.parametrize("required", (True, False))
 @pytest.mark.parametrize(
-    "field_class,extension_type",
+    ("field_class", "extension_type"),
     (
         (fields.IssuerAlternativeNameField, x509.IssuerAlternativeName),
         (fields.SubjectAlternativeNameField, x509.SubjectAlternativeName),
     ),
 )
-@pytest.mark.parametrize("value,general_names", (([SER_D1], [DNS1]), ([SER_D1, SER_D2], [DNS1, DNS2])))
+@pytest.mark.parametrize(("value", "general_names"), (([SER_D1], [DNS1]), ([SER_D1, SER_D2], [DNS1, DNS2])))
 def test_alternative_name_fields(
     critical: bool,
     required: bool,
@@ -101,14 +101,14 @@ def test_alternative_name_fields(
 @pytest.mark.parametrize("critical", (True, False))
 @pytest.mark.parametrize("required", (True, False))
 @pytest.mark.parametrize(
-    "field_class,extension_type",
+    ("field_class", "extension_type"),
     (
         (fields.CRLDistributionPointField, x509.CRLDistributionPoints),
         (fields.FreshestCRLField, x509.FreshestCRL),
     ),
 )
 @pytest.mark.parametrize(
-    "value,dpoint",
+    ("value", "dpoint"),
     (
         (([SER_D1], "", [], ()), distribution_point([DNS1])),
         (([SER_D1, SER_D2], "", [], ()), (distribution_point([DNS1, DNS2]))),
@@ -169,7 +169,7 @@ def test_distribution_point_fields(
 @pytest.mark.parametrize("critical", (True, False))
 @pytest.mark.parametrize("required", (True, False))
 @pytest.mark.parametrize(
-    "invalid,error",
+    ("invalid", "error"),
     (
         (([SER_D1], f"CN={D1}", [], ()), r"You cannot provide both full_name and relative_name\."),
         (
@@ -210,7 +210,7 @@ def test_crl_distribution_points_field_with_empty_input(
 
     # Test how the field is rendered
     name = "field-name"
-    raw_html = field.widget.render(name, None)
+    raw_html = field.widget.render(name=name, value=None)
     assertInHTML(
         f'<input name="{name}_0" value="" class="full-name key-value-data" {HIDDEN_INPUT_ATTRS}>', raw_html
     )
@@ -228,8 +228,8 @@ def test_crl_distribution_points_field_rendering() -> None:
     field = fields.CRLDistributionPointField()
     reasons = frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.certificate_hold])
     raw_html = field.widget.render(
-        name,
-        crl_distribution_points(distribution_point([DNS1], crl_issuer=[DNS2], reasons=reasons)),
+        name=name,
+        value=crl_distribution_points(distribution_point([DNS1], crl_issuer=[DNS2], reasons=reasons)),
     )
 
     full_name_value = html.escape(json.dumps([SER_D1]))
@@ -298,7 +298,7 @@ def test_crl_distribution_points_field_rendering_with_multiple_dps() -> None:
 @pytest.mark.parametrize("critical", (True, False))
 @pytest.mark.parametrize("required", (True, False))
 @pytest.mark.parametrize(
-    "ser_ca_issuers,ser_ocsp,ca_issuers,ocsp",
+    ("ser_ca_issuers", "ser_ocsp", "ca_issuers", "ocsp"),
     (
         ((SER_D1,), (), (DNS1,), ()),
         ((), (SER_D2,), (), (DNS2,)),
@@ -324,7 +324,7 @@ def test_authority_information_access_field(
 @pytest.mark.parametrize("critical", (True, False))  # make sure that critical flag has no effect
 @pytest.mark.parametrize("required", (True, False))
 @pytest.mark.parametrize(
-    "ser_ca_issuers,ser_ocsp",
+    ("ser_ca_issuers", "ser_ocsp"),
     (("", ""), ("[]", "[]"), (None, None)),
 )
 def test_authority_information_access_field_with_empty_value(
@@ -336,7 +336,7 @@ def test_authority_information_access_field_with_empty_value(
 
 
 @pytest.mark.parametrize(
-    "ser_ca_issuers,ser_ocsp,error",
+    ("ser_ca_issuers", "ser_ocsp", "error"),
     (
         (({"type": "DNS", "value": "http://example.com"},), (), ""),
         (({"type": "IP", "value": "example.com"},), (), "example.com: Could not parse IP address"),
@@ -397,7 +397,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         name = "field-name"
         field = self.field_class()
 
-        raw_html = field.widget.render(name, None)
+        raw_html = field.widget.render(name=name, value=None)
         for choice, text in self.field_class.choices:
             self.assertInHTML(f'<option value="{choice}">{text}</option>', raw_html)
 
@@ -412,7 +412,7 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
             choices = [key_usage_choices[choice] for choice in choices]
 
             ext = key_usage(**{choice: True for choice in choices})
-            raw_html = field.widget.render("unused", ext)
+            raw_html = field.widget.render(name="unused", value=ext)
 
             for choice, text in self.field_class.choices:
                 if choice in choices:

@@ -33,7 +33,7 @@ def test_doctests() -> None:
 
 
 @pytest.mark.parametrize(
-    "parameters,name_attr",
+    ("parameters", "name_attr"),
     (
         (
             {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"},
@@ -81,7 +81,7 @@ def test_name_attribute(parameters: dict[str, Any], name_attr: x509.NameAttribut
 
 
 @pytest.mark.parametrize(
-    "parameters,errors",
+    ("parameters", "errors"),
     (
         (
             {"oid": "foo", "value": "example.com"},
@@ -123,7 +123,7 @@ def test_name_attribute_empty_common_name(oid: Any) -> None:
 
 
 @pytest.mark.parametrize(
-    "serialized,expected",
+    ("serialized", "expected"),
     (
         ([], x509.Name([])),
         (
@@ -150,7 +150,7 @@ def test_name(serialized: list[dict[str, Any]], expected: list[x509.NameAttribut
 
 
 @pytest.mark.parametrize(
-    "value,errors",
+    ("value", "errors"),
     (
         (
             [

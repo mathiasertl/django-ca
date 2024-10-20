@@ -68,13 +68,6 @@ class TestCaseMixin(TestCaseProtocol):
     re_false_password = r"^Could not decrypt private key - bad password\?$"
 
     def setUp(self) -> None:
-        # Add custom equality functions
-        self.addTypeEqualityFunc(x509.AuthorityInformationAccess, self.assertAuthorityInformationAccessEqual)
-        self.addTypeEqualityFunc(x509.ExtendedKeyUsage, self.assertExtendedKeyUsageEqual)
-        self.addTypeEqualityFunc(x509.Extension, self.assertCryptographyExtensionEqual)
-        self.addTypeEqualityFunc(x509.KeyUsage, self.assertKeyUsageEqual)
-        self.addTypeEqualityFunc(x509.TLSFeature, self.assertTLSFeatureEqual)
-
         super().setUp()
         cache.clear()
 
@@ -152,95 +145,18 @@ class TestCaseMixin(TestCaseProtocol):
             name = f"django_ca{name}"
         return f"http://{hostname}{reverse(name, kwargs=kwargs)}"
 
-    def assertAuthorityInformationAccessEqual(  # pylint: disable=invalid-name
-        self,
-        first: x509.AuthorityInformationAccess,
-        second: x509.AuthorityInformationAccess,
-        msg: Optional[str] = None,
-    ) -> None:
-        """Type equality function for x509.AuthorityInformationAccess."""
-
-        def sorter(ad: x509.AccessDescription) -> tuple[str, str]:
-            return ad.access_method.dotted_string, ad.access_location.value
-
-        self.assertEqual(sorted(first, key=sorter), sorted(second, key=sorter), msg=msg)
-
-    def assertCryptographyExtensionEqual(  # pylint: disable=invalid-name
-        self,
-        first: x509.Extension[x509.ExtensionType],
-        second: x509.Extension[x509.ExtensionType],
-        msg: Optional[str] = None,
-    ) -> None:
-        """Type equality function for x509.Extension."""
-        # NOTE: Cryptography in name comes from overriding class in AbstractExtensionTestMixin
-        #       remove once old wrapper classes are removed
-        self.assertEqual(first.oid, second.oid, msg=msg)
-        self.assertEqual(first.critical, second.critical, msg="critical is unequal.")
-        self.assertEqual(first.value, second.value, msg=msg)
-
-    def assertExtendedKeyUsageEqual(  # pylint: disable=invalid-name
-        self, first: x509.ExtendedKeyUsage, second: x509.ExtendedKeyUsage, msg: Optional[str] = None
-    ) -> None:
-        """Type equality function for x509.ExtendedKeyUsage."""
-        self.assertEqual(set(first), set(second), msg=msg)
-
-    def assertKeyUsageEqual(  # pylint: disable=invalid-name
-        self, first: x509.KeyUsage, second: x509.KeyUsage, msg: Optional[str] = None
-    ) -> None:
-        """Type equality function for x509.KeyUsage."""
-        diffs = []
-        for usage in [
-            "content_commitment",
-            "crl_sign",
-            "data_encipherment",
-            "decipher_only",
-            "digital_signature",
-            "encipher_only",
-            "key_agreement",
-            "key_cert_sign",
-            "key_encipherment",
-        ]:
-            try:
-                first_val = getattr(first, usage)
-            except ValueError:
-                first_val = False
-            try:
-                second_val = getattr(second, usage)
-            except ValueError:
-                second_val = False
-
-            if first_val != second_val:  # pragma: no cover  # would only be run in case of error
-                diffs.append(f"  * {usage}: {first_val} -> {second_val}")
-
-        if msg is None:
-            msg = "KeyUsage extensions differ:"
-        if diffs:  # pragma: no cover  # would only be run in case of error
-            raise self.failureException(msg + "\n" + "\n".join(diffs))
-
-    def assertTLSFeatureEqual(  # pylint: disable=invalid-name
-        self, first: x509.TLSFeature, second: x509.TLSFeature, msg: Optional[str] = None
-    ) -> None:
-        """Type equality function for x509.TLSFeature."""
-        self.assertEqual(set(first), set(second), msg=msg)
-
-    def assertIssuer(  # pylint: disable=invalid-name
-        self, issuer: CertificateAuthority, cert: X509CertMixin
-    ) -> None:
-        """Assert that the issuer for `cert` matches the subject of `issuer`."""
-        self.assertEqual(cert.issuer, issuer.subject)
-
     def assertMessages(  # pylint: disable=invalid-name
         self, response: "HttpResponse", expected: list[str]
     ) -> None:
         """Assert given Django messages for `response`."""
         messages = [str(m) for m in list(get_messages(response.wsgi_request))]
-        self.assertEqual(messages, expected)
+        assert messages == expected
 
     def assertNotRevoked(self, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
         """Assert that the certificate is not revoked."""
         cert.refresh_from_db()
-        self.assertFalse(cert.revoked)
-        self.assertEqual(cert.revoked_reason, "")
+        assert not cert.revoked
+        assert cert.revoked_reason == ""
 
     def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
@@ -381,13 +297,13 @@ class TestCaseMixin(TestCaseProtocol):
         # Make sure that all invocations are JSON serializable
         for invocation in mocked.call_args_list:
             # invocation apply_async() has task args as arg[0] and arg[1]
-            self.assertIsInstance(json.dumps(invocation.args[0]), str)
-            self.assertIsInstance(json.dumps(invocation.args[1]), str)
+            assert isinstance(json.dumps(invocation.args[0]), str)
+            assert isinstance(json.dumps(invocation.args[1]), str)
 
         # Make sure that task was called the right number of times
-        self.assertEqual(len(calls), len(mocked.call_args_list))
+        assert len(calls) == len(mocked.call_args_list)
         for expected, actual in zip(calls, mocked.call_args_list):
-            self.assertEqual(expected, actual, actual)
+            assert expected == actual, actual
 
     @contextmanager
     def patch(self, *args: Any, **kwargs: Any) -> Iterator[mock.MagicMock]:
@@ -445,10 +361,10 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         expected_content = "\n".join([e.pub.pem.strip() for e in expected]) + "\n"
 
         response = self.client.get(url, {"format": "PEM"})
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["Content-Type"], "application/pkix-cert")
-        self.assertEqual(response["Content-Disposition"], f"attachment; filename={filename}")
-        self.assertEqual(response.content.decode("utf-8"), expected_content)
+        assert response.status_code == HTTPStatus.OK
+        assert response["Content-Type"] == "application/pkix-cert"
+        assert response["Content-Disposition"] == f"attachment; filename={filename}"
+        assert response.content.decode("utf-8") == expected_content
 
     def assertRequiresLogin(  # pylint: disable=invalid-name
         self, response: "HttpResponse", **kwargs: Any
@@ -511,7 +427,7 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
     def test_model_count(self) -> None:
         """Test that the implementing TestCase actually creates some instances."""
-        self.assertGreater(self.model._default_manager.all().count(), 0)
+        assert self.model._default_manager.all().count() > 0
 
     def test_changelist_view(self) -> None:
         """Test that the changelist view works."""

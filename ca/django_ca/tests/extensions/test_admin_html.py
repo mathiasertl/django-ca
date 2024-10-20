@@ -690,7 +690,7 @@ DistributionPoint:
     def assertAdminHTML(self, name: str, cert: X509CertMixin) -> None:  # pylint: disable=invalid-name
         """Assert that the actual extension HTML is equivalent to the expected HTML."""
         for oid, ext in cert.extensions.items():
-            self.assertIn(oid, self.admin_html[name], (name, oid))
+            assert oid in self.admin_html[name], (name, oid)
             admin_html = self.admin_html[name][oid]
             admin_html = f'\n<div class="django-ca-extension-value">{admin_html}</div>'
             actual = extension_as_admin_html(ext)

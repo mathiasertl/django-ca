@@ -16,7 +16,6 @@
 # pylint: disable=redefined-outer-name  # because of fixtures
 
 import unittest
-from collections.abc import Iterator
 from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Optional, Union
@@ -58,13 +57,13 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.ma
 
 
 @pytest.fixture
-def url() -> Iterator[str]:
+def url() -> str:
     """URL under test."""
     return root_reverse("acme-revoke")
 
 
 @pytest.fixture
-def message() -> Iterator[Revocation]:
+def message() -> Revocation:
     """Default message sent to the server."""
     default_certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
     return Revocation(certificate=jose.util.ComparableX509(X509.from_cryptography(default_certificate)))
@@ -107,7 +106,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         return acme_request(client, url, ca, message, kid=kid)
 
     @pytest.mark.parametrize(
-        "use_tz, timestamp",
+        ("use_tz", "timestamp"),
         ((True, TIMESTAMPS["everything_valid"]), (False, TIMESTAMPS["everything_valid_naive"])),
     )
     def test_basic(
@@ -218,7 +217,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
     CHILD_SLUG = acme_slug()
 
     @pytest.fixture
-    def child_kid_fixture(self, root: CertificateAuthority) -> Iterator[str]:
+    def child_kid_fixture(self, root: CertificateAuthority) -> str:
         """Fixture to set compute the child KID."""
         return self.absolute_uri(":acme-account", serial=root.serial, slug=self.CHILD_SLUG)
 
@@ -287,7 +286,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         pass
 
     @pytest.fixture
-    def kid(self, child_kid_fixture: str) -> Iterator[Optional[str]]:
+    def kid(self, child_kid_fixture: str) -> Optional[str]:
         """Override kid to return the child kid."""
         return child_kid_fixture
 

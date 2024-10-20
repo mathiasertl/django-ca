@@ -15,8 +15,6 @@
 
 # pylint: disable=redefined-outer-name
 
-from collections.abc import Iterator
-
 from django.test import Client
 
 import pytest
@@ -36,32 +34,32 @@ from django_ca.tests.acme.views.utils import absolute_acme_uri
 
 
 @pytest.fixture
-def account_slug() -> Iterator[str]:
+def account_slug() -> str:
     """Fixture for an account slug."""
     return acme_slug()
 
 
 @pytest.fixture
-def order_slug() -> Iterator[str]:
+def order_slug() -> str:
     """Fixture for an order slug."""
     return acme_slug()
 
 
 @pytest.fixture
-def acme_cert_slug() -> Iterator[str]:
+def acme_cert_slug() -> str:
     """Fixture for an ACME certificate slug."""
     return acme_slug()
 
 
 @pytest.fixture
-def client(client: Client) -> Iterator[Client]:
+def client(client: Client) -> Client:
     """Override client fixture to set the default server name."""
     client.defaults["SERVER_NAME"] = SERVER_NAME
     return client
 
 
 @pytest.fixture
-def account(root: CertificateAuthority, account_slug: str, kid: str) -> Iterator[AcmeAccount]:
+def account(root: CertificateAuthority, account_slug: str, kid: str) -> AcmeAccount:
     """Fixture for an account."""
     return AcmeAccount.objects.create(
         ca=root,
@@ -75,25 +73,25 @@ def account(root: CertificateAuthority, account_slug: str, kid: str) -> Iterator
 
 
 @pytest.fixture
-def kid(root: CertificateAuthority, account_slug: str) -> Iterator[str]:
+def kid(root: CertificateAuthority, account_slug: str) -> str:
     """Fixture for a full KID."""
     return absolute_acme_uri(":acme-account", serial=root.serial, slug=account_slug)
 
 
 @pytest.fixture
-def order(account: AcmeAccount, order_slug: str) -> Iterator[AcmeOrder]:
+def order(account: AcmeAccount, order_slug: str) -> AcmeOrder:
     """Fixture for an order."""
     return AcmeOrder.objects.create(account=account, slug=order_slug)
 
 
 @pytest.fixture
-def authz(order: AcmeOrder) -> Iterator[AcmeAuthorization]:
+def authz(order: AcmeOrder) -> AcmeAuthorization:
     """Fixture for an authorization."""
     return AcmeAuthorization.objects.create(order=order, value=HOST_NAME)
 
 
 @pytest.fixture
-def challenge(authz: AcmeAuthorization) -> Iterator[AcmeChallenge]:
+def challenge(authz: AcmeAuthorization) -> AcmeChallenge:
     """Fixture for a challenge."""
     challenge = authz.get_challenges()[0]
     challenge.token = "foobar"
@@ -102,6 +100,6 @@ def challenge(authz: AcmeAuthorization) -> Iterator[AcmeChallenge]:
 
 
 @pytest.fixture
-def acme_cert(root_cert: Certificate, order: AcmeOrder, acme_cert_slug: str) -> Iterator[AcmeCertificate]:
+def acme_cert(root_cert: Certificate, order: AcmeOrder, acme_cert_slug: str) -> AcmeCertificate:
     """Fixture for an ACME certificate."""
     return AcmeCertificate.objects.create(order=order, cert=root_cert, slug=acme_cert_slug)

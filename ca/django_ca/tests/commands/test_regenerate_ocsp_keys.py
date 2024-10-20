@@ -75,14 +75,14 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         priv = typing.cast(
             CertificateIssuerPrivateKeyTypes, load_der_private_key(read_file(priv_path), password)
         )
-        self.assertIsInstance(priv, key_type)
+        assert isinstance(priv, key_type)
         if isinstance(priv, (dsa.DSAPrivateKey, rsa.RSAPrivateKey)):
-            self.assertEqual(priv.key_size, key_size)
+            assert priv.key_size == key_size
         if isinstance(priv, ec.EllipticCurvePrivateKey):
-            self.assertIsInstance(priv.curve, elliptic_curve)
+            assert isinstance(priv.curve, elliptic_curve)
 
         cert = x509.load_pem_x509_certificate(read_file(cert_path))
-        self.assertIsInstance(cert, x509.Certificate)
+        assert isinstance(cert, x509.Certificate)
 
         cert_qs = Certificate.objects.filter(ca=ca).exclude(pk__in=self.existing_certs)
 
@@ -105,7 +105,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
                 if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
             ),
         )
-        self.assertEqual(aia, expected_aia)
+        assert aia == expected_aia
 
         return priv, cert
 
@@ -232,8 +232,8 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)
 
         # Key/Cert should now be different
-        self.assertNotEqual(priv, new_priv)
-        self.assertNotEqual(cert, new_cert)
+        assert priv != new_priv
+        assert cert != new_cert
 
     @override_tmpcadir()
     def test_wrong_serial(self) -> None:

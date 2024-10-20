@@ -867,7 +867,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
         key_backend.get_key(parent, use_options)
 
     # Wrong password doesn't work either
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011  # cryptography controls the error message
         # NOTE: cryptography is notoriously unstable when it comes to the error message here, so we only
         # check the exception class.
         key_backend.get_key(parent, StoragesUsePrivateKeyOptions(password=b"wrong"))
@@ -1483,7 +1483,7 @@ def test_key_size_with_unsupported_key_type(ca_name: str, key_type: str) -> None
 
 @pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (43,), reason="cryptography check was added in version 43")
 @pytest.mark.parametrize(
-    "value,msg",
+    ("value", "msg"),
     (
         ("", r"Attribute's length must be >= 1 and <= 64, but it was 0"),
         ("X" * 65, r"Attribute's length must be >= 1 and <= 64, but it was 65"),

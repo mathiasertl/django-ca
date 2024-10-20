@@ -92,7 +92,7 @@ urlpatterns = [
 
 
 @pytest.fixture
-def default_url(root: CertificateAuthority) -> Iterator[str]:
+def default_url(root: CertificateAuthority) -> str:
     """Fixture for the default URL for the root CA."""
     return reverse("default", kwargs={"serial": root.serial})
 

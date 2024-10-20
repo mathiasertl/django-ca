@@ -337,7 +337,7 @@ def test_ca_acme_cert_validity_timedelta_settings_as_int(settings: SettingsWrapp
 
 @pytest.mark.parametrize("setting", ("CA_ACME_DEFAULT_CERT_VALIDITY", "CA_ACME_MAX_CERT_VALIDITY"))
 @pytest.mark.parametrize(
-    "value,message",
+    ("value", "message"),
     (
         (0.9, "Input should be greater than or equal to 1 day"),
         (timedelta(seconds=1), "Input should be greater than or equal to 1 day"),
@@ -356,7 +356,7 @@ def test_ca_acme_cert_validity_limits(
 
 
 @pytest.mark.parametrize(
-    "value,message",
+    ("value", "message"),
     (
         (timedelta(seconds=59), "Input should be greater than or equal to 1 minute"),
         (timedelta(days=2), "Input should be less than or equal to 1 day"),
@@ -414,7 +414,7 @@ def test_ca_crl_profiles_with_deprecated_scope(settings: SettingsWrapper, scope:
 
 
 @pytest.mark.parametrize(
-    "value,parsed",
+    ("value", "parsed"),
     (
         ("0a:bc", "ABC"),  # leading zero is stripped
         ("0", "0"),  # single zero is *not* stripped
@@ -481,7 +481,7 @@ def test_ca_default_name_order(settings: SettingsWrapper) -> None:
 
 
 @pytest.mark.parametrize(
-    "value,msg",
+    ("value", "msg"),
     (
         (True, r"Input should be a valid tuple"),
         (("invalid-oid",), "invalid-oid: Invalid object identifier"),
@@ -499,7 +499,7 @@ def test_ca_default_profile_not_defined(settings: SettingsWrapper) -> None:
         settings.CA_DEFAULT_PROFILE = "foo"
 
 
-@pytest.mark.parametrize("value,expected", (("SHA-224", hashes.SHA224), ("SHA3/384", hashes.SHA3_384)))
+@pytest.mark.parametrize(("value", "expected"), (("SHA-224", hashes.SHA224), ("SHA3/384", hashes.SHA3_384)))
 def test_ca_default_signature_hash_algorithm(
     settings: SettingsWrapper, value: Any, expected: type[hashes.HashAlgorithm]
 ) -> None:
@@ -516,7 +516,7 @@ def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: Settin
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         # Serialized version
         (
@@ -541,7 +541,7 @@ def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x50
 
 
 @pytest.mark.parametrize(
-    "value,msg",
+    ("value", "msg"),
     (
         ((("CN", ""),), r"Value error, Attribute's length must be >= 1 and <= 64, but it was 0"),
         ((("CN", "X" * 65),), r"Value error, Attribute's length must be >= 1 and <= 64, but it was 65"),
@@ -554,7 +554,7 @@ def test_ca_default_subject_with_invalid_values(settings: SettingsWrapper, value
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     (
         ([("CN", "example.com")], x509.Name([cn("example.com")])),
         ((("C", "AT"), ("CN", "example.com")), x509.Name([country("AT"), cn("example.com")])),
@@ -576,7 +576,7 @@ def test_ca_default_subject_with_deprecated_values(
 
 
 @pytest.mark.parametrize(
-    "value,msg",
+    ("value", "msg"),
     (
         ([("invalid", "wrong")], "invalid: Invalid object identifier"),
         ([["one-element"]], r"Must be lists/tuples with two items, got 1\."),
@@ -646,7 +646,7 @@ def test_ca_profiles_update_description(settings: SettingsWrapper) -> None:
 
 
 @pytest.mark.parametrize(
-    "subject,expected",
+    ("subject", "expected"),
     (
         (False, False),
         ([], x509.Name([])),
@@ -669,7 +669,7 @@ def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsW
 
 
 @pytest.mark.parametrize(
-    "value,msg",
+    ("value", "msg"),
     (
         ("foo", "Input should be a valid dictionary"),  # whole setting is invalid
         ({"client": {"subject": "foo"}}, r"Value error, foo: Must be a list or tuple\."),
@@ -734,7 +734,7 @@ def test_ca_crl_profiles_invalid_scope(settings: SettingsWrapper) -> None:
 
 
 @pytest.mark.parametrize(
-    "base,override",
+    ("base", "override"),
     (
         ("only_contains_ca_certs", "only_contains_user_certs"),
         ("only_contains_user_certs", "only_contains_ca_certs"),

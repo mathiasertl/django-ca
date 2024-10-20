@@ -35,7 +35,7 @@ from django_ca.models import CertificateAuthority
 
 def test_session_with_session_read_only_exception(hsm_backend: HSMBackend) -> None:
     """Test exception message when SessionReadOnly() is raised."""
-    with pytest.raises(pkcs11.PKCS11Error, match=r"^Attempting to write to a read-only session\.$"):
+    with pytest.raises(pkcs11.PKCS11Error, match=r"^Attempting to write to a read-only session\.$"):  # noqa: PT012
         with hsm_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
             with patch.object(session, "get_key", side_effect=pkcs11.SessionReadOnly()):
                 session.get_key()
@@ -43,7 +43,7 @@ def test_session_with_session_read_only_exception(hsm_backend: HSMBackend) -> No
 
 def test_session_with_unknown_pkcs11_exception(hsm_backend: HSMBackend) -> None:
     """Test exception message when a generic PKCS11 error is raised."""
-    with pytest.raises(pkcs11.PKCS11Error, match=r"^Unknown pkcs11 error \(SessionCount\)\.$"):
+    with pytest.raises(pkcs11.PKCS11Error, match=r"^Unknown pkcs11 error \(SessionCount\)\.$"):  # noqa: PT012
         with hsm_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
             with patch.object(session, "get_key", side_effect=pkcs11.SessionCount()):
                 session.get_key()

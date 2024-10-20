@@ -19,7 +19,7 @@ from django_ca.utils import split_str
 
 
 @pytest.mark.parametrize(
-    "value,seperator,expected",
+    ("value", "seperator", "expected"),
     (
         ("foo", "/", ["foo"]),
         ("foo bar", "/", ["foo bar"]),
@@ -37,10 +37,7 @@ from django_ca.utils import split_str
         ("/foo/bar", "/", ["foo", "bar"]),
         ("/foo/bar/", "/", ["foo", "bar"]),
         ("/C=AT/CN=example.com/", "/", ["C=AT", "CN=example.com"]),
-        (r"foo/bar", "/", ["foo", "bar"]),
         # test quoting
-        (r"foo'/'bar", "/", ["foo/bar"]),
-        (r'foo"/"bar', "/", ["foo/bar"]),
         (r'fo"o/b"ar', "/", ["foo/bar"]),
         (r'"foo\"bar"', "/", ['foo"bar']),  # escape quotes inside quotes
         # Test the escape character
@@ -60,12 +57,6 @@ from django_ca.utils import split_str
         (r'"foo\\xbar"', "/", [r"foo\xbar"]),
         # ... but in single quote it's not an escape -> double backslash in result
         (r"'foo\\xbar'", "/", [r"foo\\xbar"]),
-        # No quotes, single backslash preceeding "/" --> "/" is escaped
-        (r"foo\/bar", "/", ["foo/bar"]),
-        # No quotes, but *double* backslash preceeding "/" --> backslash itself is escaped, slash is delimiter
-        (r"foo\\/bar", "/", ["foo\\", "bar"]),
-        # With quotes/double quotes, no backslashes -> slash is inside quoted string -> it's not a delimiter
-        ('"foo/bar"/bla', "/", ["foo/bar", "bla"]),
         ("'foo/bar'/bla", "/", ["foo/bar", "bla"]),
         # With quotes/double quotes, with one backslash
         (r'"foo\/bar"/bla', "/", [r"foo\/bar", "bla"]),
@@ -98,7 +89,7 @@ def test_basic(value: str, seperator: str, expected: list[str]) -> None:
 
 
 @pytest.mark.parametrize(
-    "value,match",
+    ("value", "match"),
     (
         (r"'foo\'bar'", "^No closing quotation$"),
         (r"foo'bar", "^No closing quotation$"),

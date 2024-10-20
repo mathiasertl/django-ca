@@ -15,7 +15,6 @@
 
 import abc
 import typing
-from collections.abc import Iterator
 from http import HTTPStatus
 from typing import Optional, Union
 from unittest import mock
@@ -255,7 +254,7 @@ class AcmeWithAccountViewTestCaseMixin(
     """Mixin that also adds accounts to the database."""
 
     @pytest.fixture
-    def main_account(self, account: AcmeAccount) -> Iterator[AcmeAccount]:
+    def main_account(self, account: AcmeAccount) -> AcmeAccount:
         """Return the main account to be used for this test case.
 
         This is overwritten by the revocation test case.

@@ -55,6 +55,7 @@ from django_ca.tests.admin.assertions import assert_css
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
 from django_ca.tests.base.assertions import (
     assert_authority_key_identifier,
+    assert_count_equal,
     assert_create_cert_signals,
     assert_extensions,
     assert_post_issue_cert,
@@ -174,16 +175,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert = Certificate.objects.get(cn=cname)
         assert_post_issue_cert(post, cert)
-        self.assertEqual(
-            cert.pub.loaded.subject,
-            x509.Name(
-                [
-                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
-                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=cname),
-                ]
-            ),
+        assert cert.pub.loaded.subject == x509.Name(
+            [
+                x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=cname),
+            ]
         )
-        self.assertIssuer(ca, cert)
+        assert cert.issuer == ca.subject
         assert_extensions(
             cert,
             [
@@ -203,24 +201,24 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 ),
             ],
         )
-        self.assertEqual(cert.ca, ca)
-        self.assertEqual(cert.csr.pem, CSR)
-        self.assertEqual(cert.profile, "webserver")
+        assert cert.ca == ca
+        assert cert.csr.pem == CSR
+        assert cert.profile == "webserver"
 
         # Some extensions are NOT set
-        self.assertNotIn(ExtensionOID.ISSUER_ALTERNATIVE_NAME, cert.extensions)
+        assert ExtensionOID.ISSUER_ALTERNATIVE_NAME not in cert.extensions
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        assert response.status_code == HTTPStatus.OK
 
     def _test_get(self) -> "HttpResponse":
         """Do a basic get request (to test CSS etc)."""
         response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        assert response.status_code == HTTPStatus.OK
         templates = [t.name for t in response.templates]
-        self.assertIn("admin/django_ca/certificate/change_form.html", templates)
-        self.assertIn("admin/change_form.html", templates)
+        assert "admin/django_ca/certificate/change_form.html" in templates
+        assert "admin/change_form.html" in templates
         assert_css(response, "django_ca/admin/css/base.css")
         assert_css(response, "django_ca/admin/css/certificateadmin.css")
         return response
@@ -247,14 +245,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         """View add form when the ca key does not exist."""
         storages["django-ca"].delete(self.ca.key_backend_options["path"])
         response = self.client.get(self.add_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        assert response.status_code == HTTPStatus.OK
 
         form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
 
         field = form.fields["ca"]
         bound_field = field.get_bound_field(form, "ca")
-        self.assertNotEqual(bound_field.initial, self.ca)
-        self.assertIsInstance(bound_field.initial, CertificateAuthority)
+        assert bound_field.initial != self.ca
+        assert isinstance(bound_field.initial, CertificateAuthority)
 
     @override_tmpcadir(CA_DEFAULT_CA=CERT_DATA["child"]["serial"])
     def test_cas_expired(self) -> None:
@@ -284,7 +282,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         field = form.fields["ocsp_no_check"]
         bound_field = field.get_bound_field(form, "ocsp_no_check")
-        self.assertEqual(bound_field.initial, ocsp_no_check(critical=True))
+        assert bound_field.initial == ocsp_no_check(critical=True)
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add(self) -> None:
@@ -306,10 +304,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert: Certificate = Certificate.objects.get(cn="")
         assert_post_issue_cert(post, cert)
-        self.assertEqual(cert.subject, x509.Name([]))
-        self.assertEqual(
-            cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME],
-            subject_alternative_name(dns(self.hostname)),
+        assert cert.subject == x509.Name([])
+        assert cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
+            dns(self.hostname)
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -335,16 +332,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         cert: Certificate = Certificate.objects.get(cn=self.hostname)
         assert_post_issue_cert(post, cert)
-        self.assertEqual(
-            cert.subject,
-            x509.Name(
-                [
-                    x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
-                    x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-1"),
-                    x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-2"),
-                    x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
-                ]
-            ),
+        assert cert.subject == x509.Name(
+            [
+                x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
+                x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-1"),
+                x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-2"),
+                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
+            ]
         )
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
@@ -363,17 +357,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "subject_alternative_name_1": True,
                 },
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {
-                "subject_alternative_name": [
-                    "Subject Alternative Name is required if the subject does not contain a Common Name."
-                ]
-            },
-        )
-        self.assertEqual(cert_count, Certificate.objects.all().count())
+        assert response.status_code == HTTPStatus.OK
+        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.errors == {
+            "subject_alternative_name": [
+                "Subject Alternative Name is required if the subject does not contain a Common Name."
+            ]
+        }
+        assert cert_count == Certificate.objects.all().count()
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_subject_with_multiple_country_codes(self) -> None:
@@ -394,10 +385,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ),
                 },
             )
-        self.assertFalse(response.context["adminform"].form.is_valid())
+        assert not response.context["adminform"].form.is_valid()
 
         msg = "Value error, attribute of type countryName must not occur more then once in a name."
-        self.assertEqual(response.context["adminform"].form.errors, {"subject": [msg]})
+        assert response.context["adminform"].form.errors == {"subject": [msg]}
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_subject_with_invalid_country_code(self) -> None:
@@ -417,12 +408,11 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ),
                 },
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"subject": ["Value error, FOO: Must have exactly two characters"]},
-        )
+        assert response.status_code == HTTPStatus.OK
+        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.errors == {
+            "subject": ["Value error, FOO: Must have exactly two characters"]
+        }
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_add_no_key_usage(self) -> None:
@@ -437,11 +427,11 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         self.assertRedirects(response, self.changelist_url)
 
         cert = Certificate.objects.get(cn=self.hostname)
-        self.assertNotIn(ExtensionOID.KEY_USAGE, cert.extensions)  # KeyUsage is not set!
+        assert ExtensionOID.KEY_USAGE not in cert.extensions  # KeyUsage is not set!
 
         # Test that we can view the certificate
         response = self.client.get(cert.admin_change_url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        assert response.status_code == HTTPStatus.OK
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple(), CA_PASSWORDS={})
     def test_add_with_password(self) -> None:
@@ -531,14 +521,13 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         with assert_create_cert_signals(False, False):
             response = self.client.post(self.add_url, data=self.form_data("whatever", ca))
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"csr": [CertificateSigningRequestField.simple_validation_error]},
-        )
+        assert response.status_code == HTTPStatus.OK
+        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.errors == {
+            "csr": [CertificateSigningRequestField.simple_validation_error]
+        }
 
-        with self.assertRaises(Certificate.DoesNotExist):
+        with pytest.raises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=self.hostname)
 
     @override_tmpcadir()
@@ -557,16 +546,16 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "-----BEGIN CERTIFICATE REQUEST-----\nwrong-----END CERTIFICATE REQUEST-----", ca
                 ),
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
-        self.assertFalse(response.context["adminform"].form.is_valid())
+        assert response.status_code == HTTPStatus.OK, response.content
+        assert not response.context["adminform"].form.is_valid()
 
         # Not testing exact error message here, as it the one from cryptography. Instead, just check that
         # there is exactly one message for the "csr" field.
         form = response.context["adminform"].form
-        self.assertEqual(len(form.errors), 1, form.errors)
-        self.assertEqual(len(form.errors["csr"]), 1, form.errors["csr"])
+        assert len(form.errors) == 1, form.errors
+        assert len(form.errors["csr"]) == 1, form.errors["csr"]
 
-        with self.assertRaises(Certificate.DoesNotExist):
+        with pytest.raises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=self.hostname)
 
     @override_tmpcadir()
@@ -579,15 +568,14 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url, data={**self.form_data(CSR, ca), "not_after": expires.strftime("%Y-%m-%d")}
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertIn("Certificate cannot expire in the past.", response.content.decode("utf-8"))
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"not_after": ["Certificate cannot expire in the past."]},
-        )
+        assert response.status_code == HTTPStatus.OK
+        assert "Certificate cannot expire in the past." in response.content.decode("utf-8")
+        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.errors == {
+            "not_after": ["Certificate cannot expire in the past."]
+        }
 
-        with self.assertRaises(Certificate.DoesNotExist):
+        with pytest.raises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=self.hostname)
 
     @override_tmpcadir()
@@ -602,12 +590,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             response = self.client.post(
                 self.add_url, data={**self.form_data(CSR, ca), "not_after": expires.strftime("%Y-%m-%d")}
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertIn(error, response.content.decode("utf-8"))
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(response.context["adminform"].form.errors, {"not_after": [error]})
+        assert response.status_code == HTTPStatus.OK
+        assert error in response.content.decode("utf-8")
+        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.errors == {"not_after": [error]}
 
-        with self.assertRaises(Certificate.DoesNotExist):
+        with pytest.raises(Certificate.DoesNotExist):
             Certificate.objects.get(cn=self.hostname)
 
     @override_tmpcadir()
@@ -629,11 +617,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "not_after": self.default_expires,
                 },
             )
-        self.assertFalse(response.context["adminform"].form.is_valid(), response)
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"algorithm": ["Ed448-based certificate authorities do not use a signature hash algorithm."]},
-        )
+        assert not response.context["adminform"].form.is_valid(), response
+        assert response.context["adminform"].form.errors == {
+            "algorithm": ["Ed448-based certificate authorities do not use a signature hash algorithm."]
+        }
 
         # Test with Ed25519 CA
         csr = CERT_DATA["ed25519-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
@@ -651,11 +638,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "not_after": self.default_expires,
                 },
             )
-        self.assertFalse(response.context["adminform"].form.is_valid(), response)
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"algorithm": ["Ed25519-based certificate authorities do not use a signature hash algorithm."]},
-        )
+        assert not response.context["adminform"].form.is_valid(), response
+        assert response.context["adminform"].form.errors == {
+            "algorithm": ["Ed25519-based certificate authorities do not use a signature hash algorithm."]
+        }
 
         # Test with DSA CA
         csr = CERT_DATA["dsa-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
@@ -673,11 +659,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "not_after": self.default_expires,
                 },
             )
-        self.assertFalse(response.context["adminform"].form.is_valid(), response)
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"algorithm": ["DSA-based certificate authorities require a SHA-256 signature hash algorithm."]},
-        )
+        assert not response.context["adminform"].form.is_valid(), response
+        assert response.context["adminform"].form.errors == {
+            "algorithm": ["DSA-based certificate authorities require a SHA-256 signature hash algorithm."]
+        }
 
         # Test with RSA CA
         with assert_create_cert_signals(False, False):
@@ -694,11 +679,10 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "not_after": self.default_expires,
                 },
             )
-        self.assertFalse(response.context["adminform"].form.is_valid(), response)
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"algorithm": ["RSA-based certificate authorities require a signature hash algorithm."]},
-        )
+        assert not response.context["adminform"].form.is_valid(), response
+        assert response.context["adminform"].form.errors == {
+            "algorithm": ["RSA-based certificate authorities require a signature hash algorithm."]
+        }
 
     @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
     def test_certificate_policies_with_invalid_oid(self) -> None:
@@ -725,13 +709,12 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     "certificate_policies_0": "abc",
                 },
             )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(response.context["adminform"].form.is_valid())
-        self.assertEqual(
-            response.context["adminform"].form.errors,
-            {"certificate_policies": ["abc: The given OID is invalid."]},
-        )
-        self.assertEqual(cert_count, Certificate.objects.all().count())
+        assert response.status_code == HTTPStatus.OK
+        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.errors == {
+            "certificate_policies": ["abc: The given OID is invalid."]
+        }
+        assert cert_count == Certificate.objects.all().count()
 
     def test_add_no_cas(self) -> None:
         """Test adding when all CAs are disabled."""
@@ -843,18 +826,18 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
 
         ku_expected = self.get_expected(profile, ExtensionOID.KEY_USAGE, [])
         ku_selected = [o.get_attribute("value") for o in ku_select.all_selected_options]
-        self.assertCountEqual(ku_expected["value"], ku_selected)
-        self.assertEqual(ku_expected["critical"], ku_critical.is_selected())
+        assert_count_equal(ku_expected["value"], ku_selected)
+        assert ku_expected["critical"] == ku_critical.is_selected()
 
         eku_expected = self.get_expected(profile, ExtensionOID.EXTENDED_KEY_USAGE, [])
         eku_selected = [o.get_attribute("value") for o in eku_select.all_selected_options]
-        self.assertCountEqual(eku_expected["value"], eku_selected)
-        self.assertEqual(eku_expected["critical"], eku_critical.is_selected())
+        assert_count_equal(eku_expected["value"], eku_selected)
+        assert eku_expected["critical"] == eku_critical.is_selected()
 
         tf_selected = [o.get_attribute("value") for o in tf_select.all_selected_options]
         tf_expected = self.get_expected(profile, ExtensionOID.TLS_FEATURE, [])
-        self.assertCountEqual(tf_expected.get("value", []), tf_selected)
-        self.assertEqual(tf_expected.get("critical", False), tf_critical.is_selected())
+        assert_count_equal(tf_expected.get("value", []), tf_selected)
+        assert tf_expected.get("critical", False) == tf_critical.is_selected()
 
     def clear_form(
         self,
@@ -901,10 +884,9 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         tf_critical = self.find("input#id_tls_feature_1")
 
         # test that the default profile is preselected
-        self.assertEqual(
-            [model_settings.CA_DEFAULT_PROFILE],
-            [o.get_attribute("value") for o in select.all_selected_options],
-        )
+        assert [model_settings.CA_DEFAULT_PROFILE] == [
+            o.get_attribute("value") for o in select.all_selected_options
+        ]
 
         # assert that the values from the default profile are preloaded
         self.assertProfile(
@@ -993,22 +975,22 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         ]
 
         # Test the initial state
-        self.assertEqual(self.value, expected_initial_subject)
-        self.assertEqual(self.displayed_value, expected_initial_subject)
+        assert self.value == expected_initial_subject
+        assert self.displayed_value == expected_initial_subject
 
         # Add a row and confirm that it's initially empty and the field is thus not yet modified
         self.key_value_field.find_element(By.CLASS_NAME, "add-row-btn").click()
         self.assertNotModified()
         new_select = Select(self.key_value_list.find_elements(By.CSS_SELECTOR, "select")[-1])
         new_input = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")[-1]
-        self.assertEqual(new_select.all_selected_options, [])
-        self.assertEqual(new_input.get_attribute("value"), "")
+        assert new_select.all_selected_options == []
+        assert new_input.get_attribute("value") == ""
 
         # Enter a value. This marks the field as modified, but the hidden input is *not* updated, as there is
         # no key/OID selected yet
         new_input.send_keys(self.hostname)
         self.assertModified()
-        self.assertEqual(self.value, expected_initial_subject)
+        assert self.value == expected_initial_subject
 
         # Now select common name, and the subject is also updated
         new_select.select_by_value(NameOID.COMMON_NAME.dotted_string)
@@ -1016,15 +998,15 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
             *expected_initial_subject,
             {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
         ]
-        self.assertEqual(self.value, new_subject)
-        self.assertEqual(self.displayed_value, new_subject)  # just to be sure
+        assert self.value == new_subject
+        assert self.displayed_value == new_subject  # just to be sure
 
         # Remove the second row, check the update
         self.key_value_list.find_elements(By.CSS_SELECTOR, ".remove-row-btn")[1].click()
         new_subject.pop(1)
-        self.assertEqual(len(new_subject), 2)
-        self.assertEqual(self.value, new_subject)
-        self.assertEqual(self.displayed_value, new_subject)
+        assert len(new_subject) == 2
+        assert self.value == new_subject
+        assert self.displayed_value == new_subject
 
     @override_tmpcadir()
     def test_csr_integration(self) -> None:
@@ -1123,16 +1105,16 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         )
 
         # Check that the right parts of the CSR chapter is displayed
-        self.assertIs(no_csr.is_displayed(), False)
-        self.assertIs(has_content.is_displayed(), False)
-        self.assertIs(no_content.is_displayed(), True)
+        assert no_csr.is_displayed() is False
+        assert has_content.is_displayed() is False
+        assert no_content.is_displayed() is True
         self.assertNotModified()
 
         # Click the clear button and validate that the subject is cleared
         csr_chapter.find_element(By.CSS_SELECTOR, ".clear-button").click()
         self.assertModified()
-        self.assertEqual(self.value, [])
-        self.assertEqual(self.displayed_value, [])
+        assert self.value == []
+        assert self.displayed_value == []
 
     @override_tmpcadir()
     def test_paste_csr_missing_delimiters(self) -> None:
@@ -1152,9 +1134,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         csr_field.send_keys(csr.public_bytes(Encoding.PEM).decode("ascii")[1:])
 
         # Check that the right parts of the CSR chapter is displayed
-        self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
-        self.assertIs(has_content.is_displayed(), False)
-        self.assertIs(no_content.is_displayed(), False)
+        assert no_csr.is_displayed() is True  # this is displayed as we haven't pasted a CSR
+        assert has_content.is_displayed() is False
+        assert no_content.is_displayed() is False
         self.assertNotModified()
 
     @override_tmpcadir()
@@ -1174,9 +1156,9 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         csr.send_keys("-----BEGIN CERTIFICATE REQUEST-----\nXXX\n-----END CERTIFICATE REQUEST-----")
 
         # Check that the right parts of the CSR chapter is displayed
-        self.assertIs(no_csr.is_displayed(), True)  # this is displayed as we haven't pasted a CSR
-        self.assertIs(has_content.is_displayed(), False)
-        self.assertIs(no_content.is_displayed(), False)
+        assert no_csr.is_displayed() is True  # this is displayed as we haven't pasted a CSR
+        assert has_content.is_displayed() is False
+        assert no_content.is_displayed() is False
         self.assertNotModified()
 
     @override_tmpcadir(
@@ -1224,10 +1206,10 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         # Test the initial state (webserver subject, since it's the default profile
         self.assertNotModified()
         self.assertChapterHasValue(chapter, webserver_subject)
-        self.assertEqual(self.value, webserver_subject)
-        self.assertEqual(self.displayed_value, webserver_subject)
-        self.assertIs(has_content.is_displayed(), True)
-        self.assertIs(no_content.is_displayed(), False)
+        assert self.value == webserver_subject
+        assert self.displayed_value == webserver_subject
+        assert has_content.is_displayed() is True
+        assert no_content.is_displayed() is False
 
         profile_select = Select(self.selenium.find_element(By.ID, "id_profile"))
 
@@ -1235,10 +1217,10 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         profile_select.select_by_value("client")
         self.assertNotModified()
         self.assertChapterHasValue(chapter, client_subject)
-        self.assertEqual(self.value, client_subject)
-        self.assertEqual(self.displayed_value, client_subject)
-        self.assertIs(has_content.is_displayed(), True)
-        self.assertIs(no_content.is_displayed(), False)
+        assert self.value == client_subject
+        assert self.displayed_value == client_subject
+        assert has_content.is_displayed() is True
+        assert no_content.is_displayed() is False
 
         # Change one field and check modification
         st_input = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")[1]
@@ -1247,24 +1229,24 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         new_subject = deepcopy(client_subject)
         new_subject[1]["value"] = "Styria"
         self.assertModified()
-        self.assertEqual(self.value, new_subject)
-        self.assertEqual(self.displayed_value, new_subject)
+        assert self.value == new_subject
+        assert self.displayed_value == new_subject
 
         # Switch back to the old profile. Since you made changes, it's not automatically updated
         profile_select.select_by_value("webserver")
         self.assertModified()
         self.assertChapterHasValue(chapter, webserver_subject)
-        self.assertEqual(self.value, new_subject)
-        self.assertEqual(self.displayed_value, new_subject)
+        assert self.value == new_subject
+        assert self.displayed_value == new_subject
 
         # Copy the profile subject and check the state
         chapter.find_element(By.CLASS_NAME, "copy-button").click()
         self.assertNotModified()
         self.assertChapterHasValue(chapter, webserver_subject)
-        self.assertEqual(self.value, webserver_subject)
-        self.assertEqual(self.displayed_value, webserver_subject)
-        self.assertIs(has_content.is_displayed(), True)
-        self.assertIs(no_content.is_displayed(), False)
+        assert self.value == webserver_subject
+        assert self.displayed_value == webserver_subject
+        assert has_content.is_displayed() is True
+        assert no_content.is_displayed() is False
 
         # Modify subject again (so that we can check the modified flag of the clear button)
         st_input = self.key_value_list.find_elements(By.CSS_SELECTOR, "input")[1]
@@ -1272,24 +1254,24 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         st_input.send_keys("Styria")
         new_subject[2]["value"] = "webserver"
         self.assertModified()
-        self.assertEqual(self.value, new_subject)
-        self.assertEqual(self.displayed_value, new_subject)
+        assert self.value == new_subject
+        assert self.displayed_value == new_subject
 
         # Switch to the profile with no subject and check the state
         profile_select.select_by_value("no-subject")
         self.assertModified()
         self.assertChapterHasValue(chapter, [])
-        self.assertEqual(self.value, new_subject)
-        self.assertEqual(self.displayed_value, new_subject)
-        self.assertIs(has_content.is_displayed(), False)
-        self.assertIs(no_content.is_displayed(), True)
+        assert self.value == new_subject
+        assert self.displayed_value == new_subject
+        assert has_content.is_displayed() is False
+        assert no_content.is_displayed() is True
 
         # Click the clear button
         chapter.find_element(By.CLASS_NAME, "clear-button").click()
         self.assertNotModified()
         self.assertChapterHasValue(chapter, [])
-        self.assertEqual(self.value, [])
-        self.assertEqual(self.displayed_value, [])
+        assert self.value == []
+        assert self.displayed_value == []
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
@@ -1318,7 +1300,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["authority_information_access_0"] = "[]"
         form["authority_information_access_1"] = "[]"
         response = form.submit()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Fill in the bare minimum fields
         form = response.forms["certificate_form"]
@@ -1331,18 +1313,15 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         # Submit the form
         response = form.submit().follow()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         cert = Certificate.objects.get(cn="test-empty-form.example.com")
 
         # Cert has minimal extensions, since we cleared the form earlier
-        self.assertEqual(
-            cert.sorted_extensions,
-            [
-                cert.ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                subject_key_identifier(cert),
-            ],
-        )
+        assert cert.sorted_extensions == [
+            cert.ca.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            subject_key_identifier(cert),
+        ]
 
     @override_tmpcadir(
         CA_PROFILES={
@@ -1361,20 +1340,17 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["csr"] = CSR
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         cert: Certificate = Certificate.objects.get(cn=self.hostname)
-        self.assertEqual(
-            cert.sorted_extensions,
-            [
-                cert.ca.sign_authority_information_access,
-                cert.ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                cert.ca.sign_crl_distribution_points,
-                subject_alternative_name(dns("example.com")),
-                subject_key_identifier(cert),
-            ],
-        )
+        assert cert.sorted_extensions == [
+            cert.ca.sign_authority_information_access,
+            cert.ca.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            cert.ca.sign_crl_distribution_points,
+            subject_alternative_name(dns("example.com")),
+            subject_key_identifier(cert),
+        ]
 
     @override_tmpcadir(CA_PROFILES={"nothing": {}}, CA_DEFAULT_PROFILE="nothing")
     def test_only_ca_prefill(self) -> None:
@@ -1516,8 +1492,8 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         fields would not show up in the signed certificate.
         """
         # Make sure that the CA has sign_* field values set.
-        self.assertIsNotNone(self.ca.sign_authority_information_access)
-        self.assertIsNotNone(self.ca.sign_crl_distribution_points)
+        assert self.ca.sign_authority_information_access is not None
+        assert self.ca.sign_crl_distribution_points is not None
         self.ca.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
@@ -1536,56 +1512,50 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["csr"] = CSR
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
         response = form.submit().follow()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Check that we get all the extensions from the CA
         cert = Certificate.objects.get(cn=self.hostname)
-        self.assertEqual(cert.profile, "everything")
-        self.assertEqual(
-            cert.sorted_extensions,
-            [
-                authority_information_access(
-                    ca_issuers=[uri("http://profile.issuers.example.com")],
-                    ocsp=[
-                        uri("http://profile.ocsp.example.com"),
-                        uri("http://profile.ocsp-backup.example.com"),
-                    ],
-                    critical=False,
+        assert cert.profile == "everything"
+        assert cert.sorted_extensions == [
+            authority_information_access(
+                ca_issuers=[uri("http://profile.issuers.example.com")],
+                ocsp=[uri("http://profile.ocsp.example.com"), uri("http://profile.ocsp-backup.example.com")],
+                critical=False,
+            ),
+            cert.ca.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            crl_distribution_points(
+                distribution_point(
+                    full_name=[uri("http://crl.profile.example.com")],
+                    crl_issuer=[uri("http://crl-issuer.profile.example.com")],
                 ),
-                cert.ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                crl_distribution_points(
-                    distribution_point(
-                        full_name=[uri("http://crl.profile.example.com")],
-                        crl_issuer=[uri("http://crl-issuer.profile.example.com")],
-                    ),
-                    critical=True,
+                critical=True,
+            ),
+            certificate_policies(
+                x509.PolicyInformation(
+                    policy_identifier=CertificatePoliciesOID.CPS_USER_NOTICE, policy_qualifiers=["text1"]
                 ),
-                certificate_policies(
-                    x509.PolicyInformation(
-                        policy_identifier=CertificatePoliciesOID.CPS_USER_NOTICE, policy_qualifiers=["text1"]
-                    ),
-                    critical=True,
+                critical=True,
+            ),
+            extended_key_usage(
+                ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
+            ),
+            freshest_crl(
+                distribution_point(
+                    full_name=[uri("http://freshest-crl.profile.example.com")],
+                    crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
                 ),
-                extended_key_usage(
-                    ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH, critical=True
-                ),
-                freshest_crl(
-                    distribution_point(
-                        full_name=[uri("http://freshest-crl.profile.example.com")],
-                        crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
-                    ),
-                    critical=False,
-                ),
-                issuer_alternative_name(
-                    uri("http://ian1.example.com"), uri("http://ian2.example.com"), critical=True
-                ),
-                key_usage(key_agreement=True, key_cert_sign=True),
-                ocsp_no_check(critical=True),
-                subject_key_identifier(cert),
-                tls_feature(x509.TLSFeatureType.status_request, critical=True),
-            ],
-        )
+                critical=False,
+            ),
+            issuer_alternative_name(
+                uri("http://ian1.example.com"), uri("http://ian2.example.com"), critical=True
+            ),
+            key_usage(key_agreement=True, key_cert_sign=True),
+            ocsp_no_check(critical=True),
+            subject_key_identifier(cert),
+            tls_feature(x509.TLSFeatureType.status_request, critical=True),
+        ]
 
     @override_tmpcadir(
         CA_PROFILES={
@@ -1640,13 +1610,10 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
 
         with self.assertLogs("django_ca") as logcm:
             response = self.app.get(self.add_url, user=self.user.username)
-        self.assertEqual(
-            logcm.output,
-            [
-                "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
-                "changed in the web interface."
-            ],
-        )
+        assert logcm.output == [
+            "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
+            "changed in the web interface."
+        ]
         form = response.forms["certificate_form"]
         # default value for form field is on import time, so override settings does not change
         # profile field
@@ -1655,41 +1622,38 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
         response = form.submit()
         response = response.follow()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Check that we get all the extensions from the CA
         cert: Certificate = Certificate.objects.get(cn="test-only-ca.example.com")
-        self.assertEqual(cert.profile, "everything")
-        self.assertEqual(
-            cert.sorted_extensions,
-            [
-                cert.ca.get_authority_key_identifier_extension(),
-                basic_constraints(),
-                x509.Extension(
-                    oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-                    critical=True,
-                    value=x509.CRLDistributionPoints(
-                        [
-                            x509.DistributionPoint(
-                                full_name=[uri("http://crl.profile.example.com")],
-                                relative_name=None,
-                                reasons=None,
-                                crl_issuer=[uri("http://crl-issuer.profile.example.com")],
-                            ),
-                            x509.DistributionPoint(
-                                full_name=[uri("http://crl2.profile.example.com")],
-                                relative_name=None,
-                                reasons=None,
-                                crl_issuer=[uri("http://crl-issuer2.profile.example.com")],
-                            ),
-                        ]
-                    ),
+        assert cert.profile == "everything"
+        assert cert.sorted_extensions == [
+            cert.ca.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            x509.Extension(
+                oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                critical=True,
+                value=x509.CRLDistributionPoints(
+                    [
+                        x509.DistributionPoint(
+                            full_name=[uri("http://crl.profile.example.com")],
+                            relative_name=None,
+                            reasons=None,
+                            crl_issuer=[uri("http://crl-issuer.profile.example.com")],
+                        ),
+                        x509.DistributionPoint(
+                            full_name=[uri("http://crl2.profile.example.com")],
+                            relative_name=None,
+                            reasons=None,
+                            crl_issuer=[uri("http://crl-issuer2.profile.example.com")],
+                        ),
+                    ]
                 ),
-                self.freshest_crl(
-                    [uri("http://freshest-crl.profile.example.com")],
-                    crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
-                    critical=False,
-                ),
-                subject_key_identifier(cert),
-            ],
-        )
+            ),
+            self.freshest_crl(
+                [uri("http://freshest-crl.profile.example.com")],
+                crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
+                critical=False,
+            ),
+            subject_key_identifier(cert),
+        ]
