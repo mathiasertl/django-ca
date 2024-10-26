@@ -250,7 +250,7 @@ def _subject_validator(value: Any) -> Any:
 Subject = Annotated[x509.Name, BeforeValidator(_subject_validator)]
 
 
-class CertificateRevociationListBaseModel(BaseModel):
+class CertificateRevocationListBaseModel(BaseModel):
     """Base model for CRL profiles and overrides."""
 
     encodings: Optional[Any] = None
@@ -298,14 +298,14 @@ class CertificateRevociationListBaseModel(BaseModel):
         return self
 
 
-class CertificateRevocationListProfileOverride(CertificateRevociationListBaseModel):
+class CertificateRevocationListProfileOverride(CertificateRevocationListBaseModel):
     """Model for overriding fields of a CRL Profile."""
 
     expires: Optional[timedelta] = None
     skip: bool = False
 
 
-class CertificateRevocationListProfile(CertificateRevociationListBaseModel):
+class CertificateRevocationListProfile(CertificateRevocationListBaseModel):
     """Model for profiles for CRL generation."""
 
     expires: timedelta = timedelta(days=1)
