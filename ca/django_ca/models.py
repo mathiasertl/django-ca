@@ -862,8 +862,6 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
             Hash algorithm used for signing the OCSP key. Defaults to the algorithm the certificate authority
             was signed with.
-        password : bytes, optional
-            The password to the CA as bytes, if its private key is encrypted.
         key_size : int, optional
             The key size of the private key, defaults to :ref:`CA_DEFAULT_KEY_SIZE
             <settings-ca-default-key-size>`.
