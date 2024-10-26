@@ -76,6 +76,8 @@ Views
 
 * The :class:`~django_ca.views.CertificateRevocationListView` has numerous updates:
 
+  * **BACKWARDS INCOMPATIBLE:** The `password` parameter was removed. Use the
+    :ref:`CA_PASSWORDS <settings-ca-passwords>` setting instead (deprecated since django-ca 1.29.0).
   * The `expires` parameter now has a default of ``86400`` (from ``600``) to align with defaults elsewhere.
   * The `scope` parameter is deprecated and will be removed in django-ca 2.3.0. Use `only_contains_ca_certs`
     and `only_contains_user_certs` instead.

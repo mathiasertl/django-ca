@@ -52,7 +52,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import constants
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
-from django_ca.deprecation import RemovedInDjangoCA210Warning, RemovedInDjangoCA230Warning
+from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.typehints import CertificateRevocationListEncodings
@@ -76,10 +76,6 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
     slug_field = "serial"
     slug_url_kwarg = "serial"
     queryset = CertificateAuthority.objects.all().prefetch_related("certificate_set")
-
-    password = None
-    """Password used to load the private key of the certificate authority. If not set, the private key is
-    assumed to be unencrypted."""
 
     # parameters for the CRL itself
     type: CertificateRevocationListEncodings = Encoding.DER
@@ -137,13 +133,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         If a custom CA backend needs transient parameters (e.g. passwords), a view overriding this method
         must be implemented.
         """
-        if self.password is not None:  # pragma: no cover
-            warnings.warn(
-                "Configuring a password in views is deprecated, use the CA_PASSWORDS setting instead.",
-                RemovedInDjangoCA210Warning,
-                stacklevel=2,
-            )
-        return ca.key_backend.get_use_private_key_options(ca, {"password": self.password})
+        return ca.key_backend.get_use_private_key_options(ca, {})
 
     def fetch_crl(self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
