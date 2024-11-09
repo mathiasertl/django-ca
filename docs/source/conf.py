@@ -18,7 +18,6 @@ import sys
 from datetime import date
 from typing import Any
 
-import sphinx_rtd_theme
 from sphinx.addnodes import document, pending_xref
 from sphinx.application import Sphinx
 
@@ -383,7 +382,6 @@ rst_epilog = f"""
 """
 
 html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # reusable variables for contexts below
 _ca_default_hostname = "ca.example.com"

@@ -2,5 +2,5 @@
 pre-commit==4.0.1
 pylint-django==2.6.1
 pylint==3.3.1
-ruff==0.7.0
+ruff==0.7.3
 setuptools>=65
