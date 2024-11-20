@@ -236,6 +236,14 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "Options for how the automatically configured OCSP responder behaves.",
         )
         group.add_argument(
+            "--ocsp-key-backend",
+            choices=list(model_settings.CA_KEY_BACKENDS),
+            default=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND,
+            help="The backend used for storing private keys for OCSP responder delegate certificates. "
+            "Depending on the backend, you have to choose different options below for private keys. "
+            "(default: %(default)s).",
+        )
+        group.add_argument(
             "--ocsp-responder-key-validity",
             action=IntegerRangeAction,
             min=1,

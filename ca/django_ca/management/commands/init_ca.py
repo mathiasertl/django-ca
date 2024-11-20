@@ -337,6 +337,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
+        ocsp_key_backend: str,
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
         # subject_format will be removed in django-ca 2.2
@@ -563,6 +564,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 sign_certificate_policies=sign_certificate_policies_ext,
                 sign_crl_distribution_points=sign_crl_distribution_points_ext,
                 sign_issuer_alternative_name=sign_issuer_alternative_name_ext,
+                ocsp_key_backend_alias=ocsp_key_backend,
                 ocsp_response_validity=ocsp_response_validity,
                 ocsp_responder_key_validity=ocsp_responder_key_validity,
                 **kwargs,

@@ -397,6 +397,7 @@ class SettingsModel(BaseModel):
         x509.NameOID.EMAIL_ADDRESS,
         x509.NameOID.SERIAL_NUMBER,
     )
+    CA_DEFAULT_OCSP_KEY_BACKEND: str = "default"
     CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = "RSA"
     CA_DEFAULT_PROFILE: str = "webserver"
     CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA512()
@@ -407,6 +408,7 @@ class SettingsModel(BaseModel):
     CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
     CA_MIN_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = 2048
     CA_NOTIFICATION_DAYS: tuple[int, ...] = (14, 7, 3, 1)
+    CA_OCSP_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
 
     # The minimum value comes from the fact that the renewal task only runs every hour by default.
     CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = timedelta(days=1)
@@ -461,6 +463,21 @@ class SettingsModel(BaseModel):
 
         # pylint: disable-next=unsupported-membership-test  # pylint this this is a Field()
         elif self.CA_DEFAULT_KEY_BACKEND not in self.CA_KEY_BACKENDS:
+            raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
+        return self
+
+    @model_validator(mode="after")
+    def check_ca_ocsp_key_backends(self) -> "SettingsModel":
+        """Set the default OCSP key backend if not set, and validate that the default is configured."""
+        if not self.CA_OCSP_KEY_BACKENDS:
+            # pylint: disable-next=unsupported-assignment-operation  # pylint this this is a Field()
+            self.CA_OCSP_KEY_BACKENDS[self.CA_DEFAULT_OCSP_KEY_BACKEND] = KeyBackendConfigurationModel(
+                BACKEND=constants.DEFAULT_OCSP_KEY_BACKEND,
+                OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
+            )
+
+        # pylint: disable-next=unsupported-membership-test  # pylint this this is a Field()
+        elif self.CA_DEFAULT_OCSP_KEY_BACKEND not in self.CA_OCSP_KEY_BACKENDS:
             raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
         return self
 

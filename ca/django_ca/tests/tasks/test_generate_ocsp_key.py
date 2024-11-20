@@ -33,7 +33,6 @@ def test_with_no_parameters(usable_root: CertificateAuthority) -> None:
     storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
     generate_ocsp_key(usable_root.serial)
     assert storage.exists(f"ocsp/{usable_root.serial}.key") is True
-    assert storage.exists(f"ocsp/{usable_root.serial}.pem") is True
 
 
 def test_responder_key_validity(usable_root: CertificateAuthority) -> None:
@@ -55,7 +54,6 @@ def test_with_explicit_password(usable_pwd: CertificateAuthority) -> None:
         usable_pwd.serial, key_backend_options={usable_pwd.serial: {"password": CERT_DATA["pwd"]["password"]}}
     )
     assert storage.exists(f"ocsp/{usable_pwd.serial}.key") is True
-    assert storage.exists(f"ocsp/{usable_pwd.serial}.pem") is True
 
 
 def test_no_renewal_required(usable_root: CertificateAuthority) -> None:

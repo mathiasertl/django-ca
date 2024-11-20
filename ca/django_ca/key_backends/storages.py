@@ -13,6 +13,9 @@
 
 """Storages."""
 
+import base64
+import logging
+import os
 import typing
 from collections.abc import Sequence
 from datetime import datetime
@@ -24,7 +27,7 @@ from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
@@ -42,7 +45,11 @@ from django.core.files.storage import storages
 
 from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel, KeyBackend
+from django_ca.key_backends.base import (
+    CreatePrivateKeyOptionsBaseModel,
+    CryptographyOCSPKeyBackend,
+    KeyBackend,
+)
 from django_ca.management.actions import PasswordAction
 from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias
 from django_ca.typehints import (
@@ -52,10 +59,12 @@ from django_ca.typehints import (
     EllipticCurves,
     ParsableKeyType,
 )
-from django_ca.utils import generate_private_key, get_cert_builder
+from django_ca.utils import generate_private_key, get_cert_builder, read_file
 
 if typing.TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
+
+log = logging.getLogger(__name__)
 
 
 class StoragesCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
@@ -385,20 +394,69 @@ class StoragesBackend(
     ) -> x509.CertificateRevocationList:
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)
 
-    def get_ocsp_key_size(
-        self, ca: "CertificateAuthority", use_private_key_options: StoragesUsePrivateKeyOptions
-    ) -> int:
-        """Get the default key size for OCSP keys. This is only called for RSA or DSA keys."""
-        key = self.get_key(ca, use_private_key_options)
-        if not isinstance(key, (rsa.RSAPrivateKey, dsa.DSAPrivateKey)):
-            raise ValueError("This function should only be called with RSA/DSA CAs.")
-        return key.key_size
 
-    def get_ocsp_key_elliptic_curve(
-        self, ca: "CertificateAuthority", use_private_key_options: StoragesUsePrivateKeyOptions
-    ) -> ec.EllipticCurve:
-        """Get the default elliptic curve for OCSP keys. This is only called for elliptic curve keys."""
-        key = self.get_key(ca, use_private_key_options)
-        if not isinstance(key, ec.EllipticCurvePrivateKey):
-            raise ValueError("This function should only be called with EllipticCurve-based CAs.")
-        return key.curve
+class StoragesOCSPBackend(CryptographyOCSPKeyBackend):
+    """OCSP key backend storing files on the local filesystem."""
+
+    # Backend options
+    storage_alias: str
+    path: str
+    encrypt_private_key: bool
+
+    def __init__(
+        self, alias: str, storage_alias: str, path: str = "ocsp/", encrypt_private_key: bool = True
+    ) -> None:
+        if storage_alias not in settings.STORAGES:
+            raise ValueError(f"{alias}: {storage_alias}: Storage alias is not configured.")
+        if not path.endswith("/"):
+            path += "/"
+        super().__init__(
+            alias, storage_alias=storage_alias, path=path, encrypt_private_key=encrypt_private_key
+        )
+
+    def create_private_key(
+        self,
+        ca: "CertificateAuthority",
+        key_type: ParsableKeyType,
+        key_size: Optional[int],
+        elliptic_curve: Optional[ec.EllipticCurve],
+    ) -> x509.CertificateSigningRequest:
+        # Generate the private key.
+        private_key = generate_private_key(key_size, key_type, elliptic_curve)
+
+        if self.encrypt_private_key is True:
+            random_password = os.urandom(32)
+            encoded_password = base64.b64encode(random_password).decode()
+            ca.ocsp_key_backend_options["private_key"]["password"] = encoded_password
+            encryption: serialization.KeySerializationEncryption = serialization.BestAvailableEncryption(
+                random_password
+            )
+        else:
+            encryption = serialization.NoEncryption()
+
+        # Serialize and store the key on the filesystem.
+        private_der = private_key.private_bytes(
+            encoding=Encoding.DER,
+            format=PrivateFormat.PKCS8,
+            encryption_algorithm=encryption,
+        )
+        storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
+        private_key_path = storage.save(f"{self.path}{ca.serial}.key", ContentFile(private_der))
+
+        # Set private key path in model, so that it can be loaded later.
+        ca.ocsp_key_backend_options["private_key"]["path"] = private_key_path
+
+        # Generate the CSR to return to the caller.
+        csr_builder = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([]))
+        csr_algorithm = self.get_csr_algorithm(key_type)
+        csr = csr_builder.sign(private_key, csr_algorithm)
+        return csr
+
+    def get_private_key_password(self, ca: "CertificateAuthority") -> Optional[bytes]:
+        if encoded_password := ca.ocsp_key_backend_options["private_key"].get("password"):
+            return base64.b64decode(encoded_password)
+        return None
+
+    def load_private_key_data(self, ca: "CertificateAuthority") -> bytes:
+        private_key_path = ca.ocsp_key_backend_options["private_key"]["path"]
+        return read_file(private_key_path)

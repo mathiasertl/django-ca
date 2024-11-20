@@ -464,6 +464,13 @@ def test_ca_default_key_backend_is_not_configured(settings: SettingsWrapper) -> 
         settings.CA_DEFAULT_KEY_BACKEND = "other-backend"
 
 
+def test_ca_default_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+    """Test error when CA_DEFAULT_OCSP_KEY_BACKEND refers to a backend that is *not* configured."""
+    settings.CA_OCSP_KEY_BACKENDS = {"default": {"BACKEND": "foo.bar"}}
+    with assert_improperly_configured(r"The default key backend is not configured\."):
+        settings.CA_DEFAULT_OCSP_KEY_BACKEND = "other-backend"
+
+
 def test_ca_default_key_size_with_larger_ca_min_key_size(settings: SettingsWrapper) -> None:
     """Test error when ``A_DEFAULT_KEY_SIZE`` is smaller then minimum key size."""
     with assert_improperly_configured("CA_DEFAULT_KEY_SIZE cannot be lower then 8192"):

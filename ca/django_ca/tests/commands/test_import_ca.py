@@ -338,10 +338,9 @@ def test_bogus_private_key(ca_name: str) -> None:
         import_ca(ca_name, Path(__file__).resolve(), pem_path)
 
 
-def test_invalid_private_key_type(tmp_path: Path, ca_name: str) -> None:
+def test_invalid_private_key_type(tmp_path: Path, ca_name: str, x448_private_key: X448PrivateKey) -> None:
     """Test importing a CA with an invalid private key type."""
-    private_key = X448PrivateKey.generate()
-    private_key_der = private_key.private_bytes(
+    private_key_der = x448_private_key.private_bytes(
         Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
     )
     private_key_path = tmp_path / "x448.key"

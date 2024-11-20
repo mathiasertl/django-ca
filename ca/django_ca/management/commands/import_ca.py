@@ -104,6 +104,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         sign_crl_full_names: Optional[list[x509.GeneralName]],
         sign_crl_distribution_points_critical: bool,
         # OCSP responder configuration
+        ocsp_key_backend: str,
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
         **options: Any,
@@ -195,6 +196,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         ca = CertificateAuthority(
             name=name,
             key_backend_alias=key_backend.alias,
+            ocsp_key_backend_alias=ocsp_key_backend,
             parent=parent,
             sign_authority_information_access=sign_authority_information_access_ext,
             sign_certificate_policies=sign_certificate_policies_ext,

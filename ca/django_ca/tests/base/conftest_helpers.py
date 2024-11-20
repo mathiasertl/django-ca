@@ -281,6 +281,7 @@ def load_ca(
         name=name,
         key_backend_alias=model_settings.CA_DEFAULT_KEY_BACKEND,
         key_backend_options={"path": f"{name}.key"},
+        ocsp_key_backend_alias="default",
         parent=parent,
         **kwargs,
     )

@@ -248,6 +248,7 @@ class TestCaseMixin(TestCaseProtocol):
             parent=parent,
             key_backend_alias="default",
             key_backend_options=key_backend_options,
+            ocsp_key_backend_alias="default",
             **kwargs,
         )
         ca.update_certificate(CERT_DATA[name]["pub"]["parsed"])  # calculates serial etc

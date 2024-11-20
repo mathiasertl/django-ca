@@ -41,6 +41,7 @@ from cryptography.x509 import (
     load_pem_x509_certificate,
     ocsp,
 )
+from cryptography.x509.ocsp import OCSPResponse, OCSPResponseBuilder
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
@@ -55,7 +56,7 @@ from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
 from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
-from django_ca.typehints import CertificateRevocationListEncodings
+from django_ca.typehints import AllowedHashTypes, CertificateRevocationListEncodings
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
@@ -359,6 +360,25 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
+    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> OCSPResponse:
+        """Sign the OCSP request using cryptography keys."""
+        # get key/cert for OCSP responder
+        try:
+            responder_key = self.get_responder_key()
+            responder_cert = self.get_responder_cert()
+        except Exception as ex:  # pylint: disable=broad-except; we really need to catch everything here
+            raise Exception(f"Could not read responder key/cert: {ex}") from ex
+
+        # Set the responder certificate as signer of the response
+        builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
+        builder = builder.certificates([responder_cert])
+
+        # The hash algorithm may be different from the signature hash algorithm of the responder certificate,
+        # but must be None for Ed448/Ed25519 certificates. Since delegate certificates are ephemeral anyway,
+        # configuring the hash algorithm is not supported, instead the user is expected to generate new keys
+        # with a different private key type or hash algorithm if desired.
+        return builder.sign(responder_key, responder_cert.signature_hash_algorithm)
+
     def get_expires(self, now: datetime) -> datetime:
         """Get the timestamp when the OCSP response expires."""
         return now + timedelta(seconds=self.expires)
@@ -405,14 +425,6 @@ class OCSPView(View):
             log.warning("%s: OCSP request for unknown cert received.", cert_serial)
             return self.fail()
 
-        # get key/cert for OCSP responder
-        try:
-            responder_key = self.get_responder_key()
-            responder_cert = self.get_responder_cert()
-        except Exception:  # pylint: disable=broad-except; we really need to catch everything here
-            log.error("Could not read responder key/cert.")
-            return self.fail()
-
         # get the certificate status
         if cert.revoked:
             status = ocsp.OCSPCertStatus.REVOKED
@@ -433,10 +445,7 @@ class OCSPView(View):
             next_update=expires,
             revocation_time=cert.get_revocation_time(),
             revocation_reason=cert.get_revocation_reason(),
-        ).responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
-
-        # Add the responder/delegate certificate to the response
-        builder = builder.certificates([responder_cert])
+        )
 
         # Add OCSP nonce if present
         try:
@@ -445,11 +454,12 @@ class OCSPView(View):
         except ExtensionNotFound:
             pass
 
-        # The hash algorithm may be different from the signature hash algorithm of the responder certificate,
-        # but must be None for Ed448/Ed25519 certificates. Since delegate certificates are ephemeral anyway,
-        # configuring the hash algorithm is not supported, instead the user is expected to generate new keys
-        # with a different private key type or hash algorithm if desired.
-        response = builder.sign(responder_key, responder_cert.signature_hash_algorithm)
+        # Get the signed OCSP response.
+        try:
+            response = self.get_ocsp_response(builder)
+        except Exception as ex:
+            log.exception(ex)
+            return self.fail()
 
         return self.http_response(response.public_bytes(Encoding.DER))
 
@@ -486,12 +496,20 @@ class GenericOCSPView(OCSPView):
     def get_expires(self, now: datetime) -> datetime:
         return now + timedelta(seconds=self.auto_ca.ocsp_response_validity)
 
-    def get_responder_key_data(self) -> bytes:
-        serial = self.auto_ca.serial.replace(":", "")
-        return read_file(f"ocsp/{serial}.key")
+    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> OCSPResponse:
+        """Sign the OCSP request using cryptography keys."""
+        # Load public key
+        responder_pem = self.auto_ca.ocsp_key_backend_options["certificate"]["pem"]
+        responder_certificate = x509.load_pem_x509_certificate(responder_pem.encode("ascii"))
 
-    def get_responder_cert(self) -> x509.Certificate:
-        return self.auto_ca.ocsp_responder_certificate
+        # Set the responder certificate as signer of the response
+        builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, responder_certificate)
+        builder = builder.certificates([responder_certificate])
+
+        # TYPEHINT NOTE: Certificates are always generated with a supported algorithm, so we do not check.
+        algorithm = cast(Optional[AllowedHashTypes], responder_certificate.signature_hash_algorithm)
+
+        return self.auto_ca.ocsp_key_backend.sign_ocsp_response(self.auto_ca, builder, algorithm)
 
 
 class GenericCAIssuersView(View):

@@ -25,6 +25,7 @@ from typing import cast
 from unittest import mock
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID, NameOID
 
 from django.conf import settings
@@ -513,3 +514,9 @@ def usable_cert(request: "SubRequest") -> Certificate:
     cert.test_name = name
     request.getfixturevalue(f"usable_{cert.ca.name}")
     return cert  # type: ignore[no-any-return]
+
+
+@pytest.fixture(scope="session")
+def x448_private_key():
+    """Session fixture for an x448 private key."""
+    return X448PrivateKey.generate()

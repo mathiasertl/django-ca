@@ -91,21 +91,3 @@ def test_is_usable_no_path_configured(root: CertificateAuthority) -> None:
     root.key_backend_options = {}
     root.save()
     assert root.is_usable(StoragesUsePrivateKeyOptions(password=None)) is False
-
-
-def test_get_ocsp_key_size_with_invalid_key_type(usable_ec: CertificateAuthority) -> None:
-    """Test getting key size for a non-RSA/DSA CA."""
-    with pytest.raises(ValueError, match=r"^This function should only be called with RSA/DSA CAs\.$"):
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND].get_ocsp_key_size(
-            usable_ec, StoragesUsePrivateKeyOptions(password=None)
-        )
-
-
-def test_get_ocsp_key_elliptic_curve_invalid_key_type(usable_root: CertificateAuthority) -> None:
-    """Test getting elliptic key curve for a non-EC CA."""
-    with pytest.raises(
-        ValueError, match=r"^This function should only be called with EllipticCurve-based CAs\.$"
-    ):
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND].get_ocsp_key_elliptic_curve(
-            usable_root, StoragesUsePrivateKeyOptions(password=None)
-        )

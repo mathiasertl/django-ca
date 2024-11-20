@@ -72,6 +72,7 @@ CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES: MappingProxyType[
 ] = MappingProxyType({v: k for k, v in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES.items()})
 
 DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
+DEFAULT_OCSP_KEY_BACKEND = "django_ca.key_backends.storages.StoragesOCSPBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurves, type[ec.EllipticCurve]] = MappingProxyType(

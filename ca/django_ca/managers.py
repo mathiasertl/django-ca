@@ -251,6 +251,7 @@ class CertificateAuthorityManager(
         sign_certificate_policies: Optional[x509.Extension[x509.CertificatePolicies]] = None,
         sign_crl_distribution_points: Optional[x509.Extension[x509.CRLDistributionPoints]] = None,
         sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]] = None,
+        ocsp_key_backend_alias: str = "default",
         ocsp_responder_key_validity: Optional[int] = None,
         ocsp_response_validity: Optional[int] = None,
         api_enabled: Optional[bool] = None,
@@ -347,6 +348,8 @@ class CertificateAuthorityManager(
             Add the given CRL Distribution Points extension when signing certificates.
         sign_issuer_alternative_name : :py:class:`~cg:cryptography.x509.Extension`, optional
             Add the given Issuer Alternative Name extension when signing certificates.
+        ocsp_key_backend_alias : str, optional
+            The OCSP key backend to use, defaults to "default".
         ocsp_responder_key_validity : int, optional
             How long (in days) OCSP responder keys should be valid.
         ocsp_response_validity : int, optional
@@ -493,6 +496,7 @@ class CertificateAuthorityManager(
             sign_crl_distribution_points=sign_crl_distribution_points,
             sign_issuer_alternative_name=sign_issuer_alternative_name,
             key_backend_alias=key_backend.alias,
+            ocsp_key_backend_alias=ocsp_key_backend_alias,
         )
 
         # Set fields with a default value

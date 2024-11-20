@@ -116,8 +116,3 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper, root: Certif
 
     backend = key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
     assert backend.add_use_private_key_arguments(None) is None  # type: ignore[func-returns-value,arg-type]
-    assert backend.get_ocsp_key_size(root, DummyModel()) == model_settings.CA_DEFAULT_KEY_SIZE
-    assert isinstance(
-        backend.get_ocsp_key_elliptic_curve(root, DummyModel()),
-        type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE),
-    )

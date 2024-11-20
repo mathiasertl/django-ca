@@ -30,14 +30,17 @@ from django_ca.tests.base.constants import TIMESTAMPS
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-def test_generate_ocsp_keys_all(usable_cas: list[CertificateAuthority]) -> None:
+def test_generate_ocsp_keys(usable_cas: list[CertificateAuthority]) -> None:
     """Test creating all keys at once."""
     generate_ocsp_keys()
     storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
 
     for ca in usable_cas:
-        assert storage.exists(f"ocsp/{ca.serial}.key") is True
-        assert storage.exists(f"ocsp/{ca.serial}.pem") is True
+        ca.refresh_from_db()  # models from fixture have old data
+        assert ca.ocsp_key_backend_options["private_key"]["path"] == f"ocsp/{ca.serial}.key"
+        assert "password" in ca.ocsp_key_backend_options["private_key"]
+        assert ca.ocsp_key_backend_options["certificate"]["pem"].startswith("-----BEGIN CERTIFICATE-----\n")
+        assert storage.exists(ca.ocsp_key_backend_options["private_key"]["path"]) is True
 
 
 @pytest.mark.usefixtures("root")
@@ -56,5 +59,6 @@ def test_with_invalid_password(usable_pwd: CertificateAuthority) -> None:
     password = base64.b64encode(b"wrong").decode()
     storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
     generate_ocsp_keys([usable_pwd.serial], {usable_pwd.serial: {"password": password}})
-    assert storage.exists(f"ocsp/{usable_pwd.serial}.key") is False
+    usable_pwd.refresh_from_db()  # models from fixture have old data
+    assert usable_pwd.ocsp_key_backend_options == {}
     assert storage.exists(f"ocsp/{usable_pwd.serial}.pem") is False

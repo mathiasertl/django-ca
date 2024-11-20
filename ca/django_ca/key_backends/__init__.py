@@ -13,6 +13,6 @@
 
 """Public exports of the backend module."""
 
-from django_ca.key_backends.base import KeyBackend, key_backends
+from django_ca.key_backends.base import KeyBackend, OCSPKeyBackend, key_backends, ocsp_key_backends
 
-__all__ = ["KeyBackend", "key_backends"]
+__all__ = ["KeyBackend", "OCSPKeyBackend", "key_backends", "ocsp_key_backends"]

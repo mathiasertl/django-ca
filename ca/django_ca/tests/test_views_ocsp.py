@@ -14,6 +14,7 @@
 """Test OCSP related views."""
 
 import base64
+import re
 import typing
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
@@ -27,7 +28,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, load_der_private_key
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.x509 import ocsp
 from cryptography.x509.oid import OCSPExtensionOID, SignatureAlgorithmOID
 
@@ -39,7 +40,7 @@ from freezegun import freeze_time
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesOCSPBackend, StoragesUsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DIR, TIMESTAMPS
@@ -298,11 +299,11 @@ class OCSPViewTestMixin(TestCaseMixin):
     ) -> tuple[CertificateIssuerPrivateKeyTypes, Certificate]:
         """Generate an OCSP key for the given CA and return private kay and public key model instance."""
         key_backend_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[ca.name].get("password"))
-        priv_path, _cert_path, ocsp_cert = ca.generate_ocsp_key(key_backend_options)  # type: ignore[misc]
-        with storages["django-ca"].open(priv_path, "rb") as stream:
-            private_key = typing.cast(
-                CertificateIssuerPrivateKeyTypes, load_der_private_key(stream.read(), None)
-            )
+        ocsp_cert = ca.generate_ocsp_key(key_backend_options)
+        assert ocsp_cert is not None
+        ocsp_key_backend = ca.ocsp_key_backend
+        assert isinstance(ocsp_key_backend, StoragesOCSPBackend)
+        private_key = typing.cast(CertificateIssuerPrivateKeyTypes, ocsp_key_backend.load_private_key(ca))
         return private_key, ocsp_cert
 
     def ocsp_get(
@@ -522,6 +523,24 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
 
     @override_tmpcadir()
+    def test_private_key_as_pem(self) -> None:
+        """Test unreadable OCSP private key."""
+        data = base64.b64encode(req1).decode("utf-8")
+
+        with (
+            self.assertLogs() as logcm,
+            self.patch(
+                "cryptography.hazmat.primitives.serialization.load_der_private_key",
+                spec_set=True,
+                side_effect=ValueError("wrong"),  # usually would be an unsupported key type
+            ),
+        ):
+            response = self.client.get(reverse("get", kwargs={"data": data}))
+        ocsp_response = ocsp.load_der_ocsp_response(response.content)
+        assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
+        assert "Could not read responder key/cert: Could not decrypt private key." in logcm.output[0]
+
+    @override_tmpcadir()
     def test_bad_private_key_type(self) -> None:
         """Test that we log an error when the private key is of an unsupported type."""
         data = base64.b64encode(req1).decode("utf-8")
@@ -537,10 +556,8 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
             response = self.client.get(reverse("get", kwargs={"data": data}))
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
-        assert logcm.output == [
-            "ERROR:django_ca.views:<class 'str'>: Unsupported private key type.",
-            "ERROR:django_ca.views:Could not read responder key/cert.",
-        ]
+        assert logcm.output[0] == "ERROR:django_ca.views:<class 'str'>: Unsupported private key type."
+        assert re.match("ERROR:django_ca.views:Could not read responder key/cert: ", logcm.output[1])
 
     def test_bad_responder_cert(self) -> None:
         """Test the error when the private key cannot be read.
@@ -554,7 +571,10 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         assert response.status_code == HTTPStatus.OK
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
-        assert logcm.output == ["ERROR:django_ca.views:Could not read responder key/cert."]
+        assert re.match(
+            r"ERROR:django_ca.views:Could not read responder key/cert: .* No such file or directory:",
+            logcm.output[0],
+        )
 
     def test_bad_request(self) -> None:
         """Try making a bad request."""
@@ -604,23 +624,22 @@ class OCSPManualViewTestCaseMixin(OCSPViewTestMixin):
         assert response.status_code == HTTPStatus.OK
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
-        assert logcm.output == ["ERROR:django_ca.views:Could not read responder key/cert."]
+        assert re.match("ERROR:django_ca.views:Could not read responder key/cert: ", logcm.output[0])
 
     @override_tmpcadir()
     def test_bad_responder_pem(self) -> None:
         """Try configuring a bad responder cert."""
         data = base64.b64encode(req1).decode("utf-8")
-        msg = "ERROR:django_ca.views:Could not read responder key/cert."
 
         with self.assertLogs() as logcm:
             response = self.client.get(reverse("false-pem-serial", kwargs={"data": data}))
-        assert logcm.output == [msg]
+        assert re.match("ERROR:django_ca.views:Could not read responder key/cert:", logcm.output[0])
         assert response.status_code == HTTPStatus.OK
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
         with self.assertLogs() as logcm:
             response = self.client.get(reverse("false-pem-full", kwargs={"data": data}))
-        assert logcm.output == [msg]
+        assert re.match("ERROR:django_ca.views:Could not read responder key/cert:", logcm.output[0])
         assert response.status_code == HTTPStatus.OK
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
@@ -699,7 +718,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
 
         # Overwrite key with PEM format
         storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
-        private_path = storage.generate_filename(f"ocsp/{self.ca.serial.replace(':', '')}.key")
+        private_path = storage.generate_filename(f"ocsp/{self.ca.serial}.key")
         pem_private_key = private_key.private_bytes(
             Encoding.PEM,
             format=PrivateFormat.PKCS8,
@@ -707,6 +726,9 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
         )
         with storage.open(private_path, "wb") as stream:
             stream.write(pem_private_key)
+
+        self.ca.ocsp_key_backend_options["private_key"]["password"] = None
+        self.ca.save()
 
         response = self.ocsp_get(self.cert, hash_algorithm=hashes.SHA512)
 
@@ -770,7 +792,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
     @override_tmpcadir()
     def test_invalid_responder_key(self) -> None:
         """Test the OCSP responder error when there is an invalid responder."""
-        private_key, ocsp_cert = self.generate_ocsp_key(self.ca)
+        self.generate_ocsp_key(self.ca)
 
         # Overwrite key with PEM format
         storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
@@ -780,7 +802,7 @@ class GenericOCSPViewTestCase(OCSPViewTestMixin, TestCase):
 
         with self.assertLogs() as logcm:
             response = self.ocsp_get(self.cert, hash_algorithm=hashes.SHA512)
-        assert logcm.output == ["ERROR:django_ca.views:Could not read responder key/cert."]
+        assert re.match(r"ERROR:django_ca\.views:Could not decrypt private key\.", logcm.output[0])
         assert response.status_code == HTTPStatus.OK
         ocsp_response = ocsp.load_der_ocsp_response(response.content)
         assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
