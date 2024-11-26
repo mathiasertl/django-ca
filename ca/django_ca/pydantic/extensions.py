@@ -203,7 +203,7 @@ class BaseExtensionModel(ExtensionModel[ExtensionTypeTypeVar], metaclass=abc.ABC
             https://github.com/python/mypy/issues/5144
         """
         private_attr = cast(ModelPrivateAttr, cls._extension_type)
-        return private_attr.default  # type: ignore[no-any-return]
+        return private_attr.default  # type: ignore[return-value]
 
 
 class NoValueExtensionModel(BaseExtensionModel[NoValueExtensionTypeVar]):

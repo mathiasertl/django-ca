@@ -807,7 +807,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         return signed_cert
 
     @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
-    def generate_ocsp_key(  # pylint: disable=too-many-locals
+    def generate_ocsp_key(
         self,
         key_backend_options: BaseModel,
         key_type: Optional[ParsableKeyType] = None,

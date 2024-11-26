@@ -366,8 +366,8 @@ class OCSPView(View):
         try:
             responder_key = self.get_responder_key()
             responder_cert = self.get_responder_cert()
-        except Exception as ex:  # pylint: disable=broad-except; we really need to catch everything here
-            raise Exception(f"Could not read responder key/cert: {ex}") from ex
+        except Exception as ex:
+            raise ValueError(f"Could not read responder key/cert: {ex}") from ex
 
         # Set the responder certificate as signer of the response
         builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
@@ -457,7 +457,7 @@ class OCSPView(View):
         # Get the signed OCSP response.
         try:
             response = self.get_ocsp_response(builder)
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-exception-caught
             log.exception(ex)
             return self.fail()
 

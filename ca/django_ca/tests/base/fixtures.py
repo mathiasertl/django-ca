@@ -517,6 +517,6 @@ def usable_cert(request: "SubRequest") -> Certificate:
 
 
 @pytest.fixture(scope="session")
-def x448_private_key():
+def x448_private_key() -> X448PrivateKey:
     """Session fixture for an x448 private key."""
     return X448PrivateKey.generate()

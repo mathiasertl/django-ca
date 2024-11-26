@@ -20,7 +20,6 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
-from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.utils import DummyBackend, DummyModel
 
@@ -105,7 +104,7 @@ def test_key_backends_class_is_not_key_backend(settings: SettingsWrapper) -> Non
         key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
 
 
-def test_key_backend_overwritten_methods(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
     """Test methods usually overwritten by StoragesBackend."""
     settings.CA_KEY_BACKENDS = {
         model_settings.CA_DEFAULT_KEY_BACKEND: {

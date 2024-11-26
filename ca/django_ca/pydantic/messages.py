@@ -93,7 +93,7 @@ class SignCertificateMessage(BaseModel):
         json_schema_extra={"example": DATETIME_EXAMPLE},
     )
     extensions: Optional[list[ConfigurableExtensionModel]] = Field(
-        default_factory=list,
+        default_factory=list,  # type: ignore[arg-type]  # false positive
         description="**Optional** additional extensions to add to the certificate.",
     )
     profile: str = Field(

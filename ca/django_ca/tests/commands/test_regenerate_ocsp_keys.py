@@ -61,7 +61,6 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         ca: CertificateAuthority,
         key_type: Optional[type[CertificateIssuerPrivateKeyTypes]] = None,
         key_size: Optional[int] = 2048,
-        password: Optional[bytes] = None,
         excludes: Optional[Iterable[int]] = None,
         elliptic_curve: type[ec.EllipticCurve] = ec.SECP256R1,
     ) -> tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:

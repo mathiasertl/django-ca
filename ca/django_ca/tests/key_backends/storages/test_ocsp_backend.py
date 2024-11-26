@@ -66,7 +66,7 @@ def test_unsupported_private_key(x448_private_key: X448PrivateKey, root: Certifi
     root.save()
 
     with pytest.raises(ValueError, match=r"Unsupported private key type\.$"):
-        root.ocsp_key_backend.load_private_key(root)
+        root.ocsp_key_backend.load_private_key(root)  # type: ignore[attr-defined]
 
 
 def test_get_default_key_size(ec: CertificateAuthority) -> None:

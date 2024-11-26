@@ -77,25 +77,25 @@ class CreatePrivateKeyOptionsBaseModel(BaseModel):
 
 
 class KeyBackendBase:
-    """Base class for backend classes to create private keys (CAs or OCSP delegate responder certificates)."""
+    """Base class for backends that create private keys (CAs or OCSP delegate responder certificates)."""
 
     #: Alias under which this backend is configured under settings.KEY_BACKENDS.
     alias: str
 
     #: Private key types supported by the key backend. This defines the choices for the ``--key-type``
     #: argument and the `key_type` parameter in
-    #: :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options` is guaranteed to be
+    #: :py:func:`~django_ca.key_backends.KeyBackend.get_create_private_key_options` is guaranteed to be
     #: one of the named values.
     supported_key_types: tuple[str, ...]
 
     #: Hash algorithms supported by the key backend. This defines the choices for the ``--algorithm`` argument
-    #: and the `algorithm` argument in :py:func:`~django_ca.key_backends.base.KeyBackend.sign_certificate` is
+    #: and the `algorithm` argument in :py:func:`~django_ca.key_backends.KeyBackend.sign_certificate` is
     #: guaranteed to be one of the named values.
     supported_hash_algorithms: tuple[HashAlgorithms, ...] = tuple(constants.HASH_ALGORITHM_TYPES)
 
     #: Elliptic curves supported by this backend for elliptic curve keys. This defines the choices for the
     #: ``--elliptic-curve`` parameter and the `elliptic_curve` parameter in
-    #: :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options` is guaranteed to be
+    #: :py:func:`~django_ca.key_backends.KeyBackend.get_create_private_key_options` is guaranteed to be
     #: one of the named values if ``--key-type=EC`` is passed.
     supported_elliptic_curves: tuple[str, ...]
 
@@ -144,9 +144,9 @@ class KeyBackend(
         """Add an argument group for arguments for private key generation with this backend.
 
         By default, the title and description of the argument group is based on
-        :py:attr:`~django_ca.key_backends.base.KeyBackend.alias`,
-        :py:attr:`~django_ca.key_backends.base.KeyBackend.title` and
-        :py:attr:`~django_ca.key_backends.base.KeyBackend.description`.
+        :py:attr:`~django_ca.key_backends.base.KeyBackendBase.alias`,
+        :py:attr:`~django_ca.key_backends.KeyBackend.title` and
+        :py:attr:`~django_ca.key_backends.KeyBackend.description`.
 
         Return ``None`` if you don't need to create such a group.
         """
@@ -159,7 +159,7 @@ class KeyBackend(
         """Add an argument group for storing private keys (when importing an existing CA).
 
         By default, this method adds the same group as
-        :py:func:`~django_ca.key_backends.base.KeyBackend.add_create_private_key_group`
+        :py:func:`~django_ca.key_backends.KeyBackend.add_create_private_key_group`
         """
         return self.add_create_private_key_group(parser)
 
@@ -167,8 +167,8 @@ class KeyBackend(
         """Add an argument group for arguments required for using a private key stored with this backend.
 
         By default, the title and description of the argument group is based on
-        :py:attr:`~django_ca.key_backends.base.KeyBackend.alias` and
-        :py:attr:`~django_ca.key_backends.base.KeyBackend.title`.
+        :py:attr:`~django_ca.key_backends.base.KeyBackendBase.alias` and
+        :py:attr:`~django_ca.key_backends.KeyBackend.title`.
 
         Return ``None`` if you don't need to create such a group.
         """
@@ -183,7 +183,7 @@ class KeyBackend(
 
         Add arguments that can be used for generating private keys with your backend to `group`. The arguments
         you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.key_backends.base.KeyBackend.get_create_private_key_options`.
+        :py:func:`~django_ca.key_backends.KeyBackend.get_create_private_key_options`.
         """
 
     @abc.abstractmethod
@@ -191,7 +191,7 @@ class KeyBackend(
         """Add arguments for loading the private key of a parent certificate authority.
 
         The arguments you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_parent_private_key_options`.
+        :py:func:`~django_ca.key_backends.KeyBackend.get_use_parent_private_key_options`.
         """
 
     @abc.abstractmethod
@@ -203,7 +203,7 @@ class KeyBackend(
         """Add arguments required for using private key stored with this backend.
 
         The arguments you add here are expected to be loaded (and validated) using
-        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_parent_private_key_options`.
+        :py:func:`~django_ca.key_backends.KeyBackend.get_use_parent_private_key_options`.
         """
         return None
 
@@ -219,7 +219,7 @@ class KeyBackend(
 
         `options` is the dictionary of arguments from :command:`manage.py init_ca` (including default values).
         The returned model will be passed to
-        :py:func:`~django_ca.key_backends.base.KeyBackend.create_private_key`.
+        :py:func:`~django_ca.key_backends.KeyBackend.create_private_key`.
         """
 
     @abc.abstractmethod
@@ -262,7 +262,7 @@ class KeyBackend(
         """Boolean returning if the given `ca` can be used to sign new certificates (or CRLs).
 
         The `options` are the options returned by
-        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_private_key_options`. It may be ``None`` in
+        :py:func:`~django_ca.key_backends.KeyBackend.get_use_private_key_options`. It may be ``None`` in
         cases where key options cannot (yet) be loaded. If ``None``, the backend should return ``False`` if it
         knows for sure that it will not be usable, and ``True`` if usability cannot be determined.
         """
@@ -274,7 +274,7 @@ class KeyBackend(
         """Check if the given CA is usable, raise ValueError if not.
 
         The `options` are the options returned by
-        :py:func:`~django_ca.key_backends.base.KeyBackend.get_use_private_key_options`. It may be ``None`` in
+        :py:func:`~django_ca.key_backends.KeyBackend.get_use_private_key_options`. It may be ``None`` in
         cases where key options cannot (yet) be loaded. If ``None``, the backend should return ``False`` if it
         knows for sure that it will not be usable, and ``True`` if usability cannot be determined.
         """
@@ -394,8 +394,8 @@ class OCSPKeyBackend(KeyBackendBase):
         """Helper function to get a usable signing algorithm for the given key type.
 
         This function can be used to get a default signing algorithm when creating a CSR in
-        :func:`~django_ca.key_backends.OCSPKeyBackend.create_private_key`. You are not obliged to use this
-        function, it is here merely for convenience.
+        :py:func:`~django_ca.key_backends.OCSPKeyBackend.create_private_key`. You are not obliged to use
+        this function, it is here merely for convenience.
         """
         if key_type in ("Ed25519", "Ed448"):
             return None
@@ -459,13 +459,15 @@ class CryptographyOCSPKeyBackend(OCSPKeyBackend):
         """Load the raw private key as bytes. Both PEM and DER representations are supported."""
 
     # COVERAGE NOTE: Function is implemented in all subclasses.`
+    # pylint: disable-next=unused-argument
     def get_private_key_password(self, ca: "CertificateAuthority") -> Optional[bytes]:  # pragma: no cover
         """Get the private key password. The default implementation never returns a password."""
         return None
 
     def load_private_key(self, ca: "CertificateAuthority") -> CertificateIssuerPrivateKeyTypes:
+        """Function to load the private key and return the raw private key."""
         raw_private_key = self.load_private_key_data(ca)
-        password = self.get_private_key_password(ca)
+        password = self.get_private_key_password(ca)  # pylint: disable=assignment-from-none
 
         try:
             loaded_key = serialization.load_der_private_key(raw_private_key, password)

@@ -472,8 +472,12 @@ qualname_overrides = {
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
+    "cryptography.hazmat.bindings._rust.x509.Certificate": "cg:cryptography.x509.Certificate",
+    "cryptography.hazmat.bindings._rust.x509.CertificateRevocationList": "cg:cryptography.x509.CertificateRevocationList",  # noqa: E501
+    "cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest": "cg:cryptography.x509.CertificateSigningRequest",  # noqa: E501
     "cryptography.hazmat.primitives._serialization.Encoding.PEM": "cg:cryptography.hazmat.primitives.serialization.Encoding.PEM",  # noqa: E501
     "cryptography.hazmat.primitives._serialization.Encoding.DER": "cg:cryptography.hazmat.primitives.serialization.Encoding.DER",  # noqa: E501
+    "cryptography.hazmat.bindings._rust.ocsp.OCSPResponse": "cg:cryptography.x509.ocsp.OCSPResponse",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
     # These only happen when building on GitHub actions (2024-06-27)

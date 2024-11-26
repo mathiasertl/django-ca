@@ -32,6 +32,7 @@ pytest.register_assert_rewrite(
     "django_ca.tests.acme.views.assertions",
     "django_ca.tests.admin.assertions",
     "django_ca.tests.pydantic.base",
+    "django_ca.tests.views.assertions",
 )
 
 

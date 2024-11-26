@@ -145,7 +145,15 @@ example, let's demonstrate this for creating private keys, skipping some paramet
 Base class documentation
 ************************
 
-.. autoclass:: django_ca.key_backends.base.KeyBackend
+.. autoclass:: django_ca.key_backends.base.KeyBackendBase
+   :members:
+   :exclude-members: class_path
+
+.. autoclass:: django_ca.key_backends.KeyBackend
+   :members:
+   :exclude-members: class_path
+
+.. autoclass:: django_ca.key_backends.OCSPKeyBackend
    :members:
    :exclude-members: class_path
 
@@ -155,3 +163,5 @@ Implementations
 .. autoclass:: django_ca.key_backends.storages.StoragesBackend
 
 .. autoclass:: django_ca.key_backends.hsm.HSMBackend
+
+.. autoclass:: django_ca.key_backends.storages.StoragesOCSPBackend
