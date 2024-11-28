@@ -10,9 +10,9 @@ build-backend = "setuptools.build_meta"
 python = ["3.9", "3.10", "3.11", "3.12"]
 # https://www.djangoproject.com/download/
 django = ["4.2", "5.0", "5.1"]
-cryptography = ["43"]
+cryptography = ["43", "44"]
 acme = ["2.11"]
-pydantic = ["2.9"]
+pydantic = ["2.9", "2.10"]
 
 # https://alpinelinux.org/releases/
 alpine = [
@@ -439,7 +439,6 @@ ignore = [
     "D401",  # First line of docstring should be in imperative mood
     "PLR2004",  # Magic value used in comparison - not disabled in default pylint
     "PLW2901",  # redefined-loop-name - not disabled in default pylint
-    "PT004",  # pytest-missing-fixture-name-underscore - deprecated even in ruff
 ]
 unfixable = [
     "PLW1510",  # `subprocess.run` without explicit `check` argument - not deemed safe

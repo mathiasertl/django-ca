@@ -35,6 +35,7 @@ Settings
 Dependencies
 ************
 
+* Add support for ``cryptography~=44.0`` and ``pydantic~=2.10.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.7.0``, ``pydantic~=2.8.0``,
   ``cryptography~=42.0`` and ``acme~=2.10.0``.
 

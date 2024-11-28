@@ -18,8 +18,8 @@ from django_ca.openssh.extensions import SshHostCaExtension, SshHostCaType, SshU
 
 __all__ = (
     "OpenSshCertificateType",
-    "SshHostCaType",
     "SshHostCaExtension",
-    "SshUserCaType",
+    "SshHostCaType",
     "SshUserCaExtension",
+    "SshUserCaType",
 )
