@@ -23,7 +23,6 @@ from cryptography.x509.oid import (
     AuthorityInformationAccessOID,
     CertificatePoliciesOID,
     ExtendedKeyUsageOID,
-    ExtensionOID,
     NameOID,
     SubjectInformationAccessOID,
 )
@@ -31,16 +30,21 @@ from cryptography.x509.oid import (
 import pytest
 
 from django_ca import constants
+from django_ca.constants import ExtensionOID
 from django_ca.pydantic.extension_attributes import (
     AccessDescriptionModel,
+    AdmissionModel,
     BasicConstraintsValueModel,
     DistributionPointModel,
     IssuingDistributionPointValueModel,
+    NamingAuthorityModel,
+    ProfessionInfoModel,
     SignedCertificateTimestampModel,
     UnrecognizedExtensionValueModel,
 )
 from django_ca.pydantic.extensions import (
     EXTENSION_MODEL_OIDS,
+    AdmissionsModel,
     AlternativeNameBaseModel,
     AuthorityInformationAccessModel,
     AuthorityKeyIdentifierModel,
@@ -73,9 +77,9 @@ from django_ca.pydantic.extensions import (
     TLSFeatureModel,
     UnrecognizedExtensionModel,
 )
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.doctest import doctest_module
-from django_ca.tests.base.utils import dns, key_usage
+from django_ca.tests.base.utils import dns, key_usage, uri
 from django_ca.tests.pydantic.base import (
     ExpectedErrors,
     assert_cryptography_model,
@@ -180,6 +184,190 @@ def test_critical_validation() -> None:
     # Finally, if we pass validate_required_critical=False, we can instantiate this model
     model = PrecertPoisonModel.model_validate(ext, context={"validate_required_critical": False})
     assert model.critical is False
+
+
+if CRYPTOGRAPHY_VERSION >= (44, 0):  # pragma: only cryptography>=44.0
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected"),
+        (
+            ({}, x509.NamingAuthority(id=None, url=None, text=None)),
+            (
+                {"id": "1.2.3", "url": "https://example.com", "text": "example"},
+                x509.NamingAuthority(
+                    id=x509.ObjectIdentifier("1.2.3"), url="https://example.com", text="example"
+                ),
+            ),
+        ),
+    )
+    def test_naming_authority_model(parameters: dict[str, Any], expected: x509.NamingAuthority) -> None:
+        """Test the NamingAuthorityModel."""
+        assert_cryptography_model(NamingAuthorityModel, parameters, expected)
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected"),
+        (
+            (
+                {"profession_items": ["example_profession_items"]},
+                x509.ProfessionInfo(
+                    naming_authority=None,
+                    profession_items=["example_profession_items"],
+                    profession_oids=None,
+                    registration_number=None,
+                    add_profession_info=None,
+                ),
+            ),
+            (
+                {
+                    "naming_authority": {},
+                    "profession_items": ["example_profession_items"],
+                    "profession_oids": ["1.2.3"],
+                    "registration_number": "example_registration_number",
+                    "add_profession_info": b"example_add_profession_info",
+                },
+                x509.ProfessionInfo(
+                    naming_authority=x509.NamingAuthority(id=None, url=None, text=None),
+                    profession_items=["example_profession_items"],
+                    profession_oids=[x509.ObjectIdentifier("1.2.3")],
+                    registration_number="example_registration_number",
+                    add_profession_info=b"example_add_profession_info",
+                ),
+            ),
+        ),
+    )
+    def test_profession_info_model(parameters: dict[str, Any], expected: x509.ProfessionInfo) -> None:
+        """Test the ProfessionInfoModel."""
+        assert_cryptography_model(ProfessionInfoModel, parameters, expected)
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected_errors"),
+        (
+            (
+                {
+                    "naming_authority": {},
+                    "profession_items": ["example_profession_items"],
+                    "profession_oids": ["1.2.3", "1.2.4"],
+                    "registration_number": "example_registration_number",
+                    "add_profession_info": b"example_add_profession_info",
+                },
+                [
+                    (
+                        "value_error",
+                        (),
+                        "Value error, if present, profession_oids must have the same length as "
+                        "profession_items.",
+                    )
+                ],
+            ),
+        ),
+    )
+    def test_profession_info_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
+        """Test validation errors for the ProfessionInfoModel."""
+        assert_validation_errors(ProfessionInfoModel, parameters, expected_errors)
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected"),
+        (
+            (
+                {"profession_infos": [{"profession_items": ["example_profession_items"]}]},
+                x509.Admission(
+                    admission_authority=None,
+                    naming_authority=None,
+                    profession_infos=[
+                        x509.ProfessionInfo(
+                            naming_authority=None,
+                            profession_items=["example_profession_items"],
+                            profession_oids=None,
+                            registration_number=None,
+                            add_profession_info=None,
+                        )
+                    ],
+                ),
+            ),
+            (
+                {
+                    "admission_authority": {"type": "URI", "value": "https://example.com"},
+                    "naming_authority": {},
+                    "profession_infos": [
+                        {"profession_items": ["example_profession_items"]},
+                        {
+                            "naming_authority": {},
+                            "profession_items": ["example_profession_items"],
+                            "profession_oids": ["1.2.3"],
+                            "registration_number": "example_registration_number",
+                            "add_profession_info": b"example_add_profession_info",
+                        },
+                    ],
+                },
+                x509.Admission(
+                    admission_authority=uri("https://example.com"),
+                    naming_authority=x509.NamingAuthority(id=None, url=None, text=None),
+                    profession_infos=[
+                        x509.ProfessionInfo(
+                            naming_authority=None,
+                            profession_items=["example_profession_items"],
+                            profession_oids=None,
+                            registration_number=None,
+                            add_profession_info=None,
+                        ),
+                        x509.ProfessionInfo(
+                            naming_authority=x509.NamingAuthority(id=None, url=None, text=None),
+                            profession_items=["example_profession_items"],
+                            profession_oids=[x509.ObjectIdentifier("1.2.3")],
+                            registration_number="example_registration_number",
+                            add_profession_info=b"example_add_profession_info",
+                        ),
+                    ],
+                ),
+            ),
+        ),
+    )
+    def test_admission_model(parameters: dict[str, Any], expected: x509.Admission) -> None:
+        """Test the AdmissionModel."""
+        assert_cryptography_model(AdmissionModel, parameters, expected)
+
+    @pytest.mark.parametrize("critical", (False, True, None))
+    @pytest.mark.parametrize(
+        ("parameters", "admissions"),
+        (
+            ({}, x509.Admissions(authority=None, admissions=[])),
+            (
+                {"authority": {"type": "URI", "value": "https://example.com"}, "admissions": []},
+                x509.Admissions(authority=uri("https://example.com"), admissions=[]),
+            ),
+            (
+                {
+                    "authority": {"type": "URI", "value": "https://example.com"},
+                    "admissions": [
+                        {"profession_infos": [{"profession_items": ["example_profession_items"]}]},
+                    ],
+                },
+                x509.Admissions(
+                    authority=uri("https://example.com"),
+                    admissions=[
+                        x509.Admission(
+                            admission_authority=None,
+                            naming_authority=None,
+                            profession_infos=[
+                                x509.ProfessionInfo(
+                                    naming_authority=None,
+                                    profession_items=["example_profession_items"],
+                                    profession_oids=None,
+                                    registration_number=None,
+                                    add_profession_info=None,
+                                )
+                            ],
+                        )
+                    ],
+                ),
+            ),
+        ),
+    )
+    def test_admissions(
+        critical: Optional[bool], parameters: dict[str, Any], admissions: x509.Admissions
+    ) -> None:
+        """Test the Admissions extension."""
+        assert_extension_model(AdmissionsModel, parameters, admissions, critical)
 
 
 @pytest.mark.parametrize(

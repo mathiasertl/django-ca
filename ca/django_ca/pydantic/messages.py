@@ -118,6 +118,4 @@ class SignCertificateMessage(BaseModel):
         if self.extensions is None:
             return []
         extensions = [ext.cryptography for ext in self.extensions]
-
-        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
         return extensions

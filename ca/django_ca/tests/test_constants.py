@@ -18,9 +18,10 @@ from typing import Any, TypeVar, get_args
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import ExtensionOID
 
 from django_ca import constants, typehints
+from django_ca.constants import ExtensionOID
+from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.typehints import GeneralNames, HashAlgorithms
 
 
@@ -70,7 +71,12 @@ def test_certificate_extension_keys_typehints() -> None:
         et for et in get_args(typehints.CertificateExtensionType) if et != x509.UnrecognizedExtension
     ]
     expected = sorted((ext.oid for ext in extension_types), key=oid_sorter)
-    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS, key=oid_sorter) == expected
+
+    actual = sorted(constants.CERTIFICATE_EXTENSION_KEYS, key=oid_sorter)
+    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
+        actual.remove(ExtensionOID.ADMISSIONS)
+
+    assert actual == expected
 
 
 def test_configurable_extension_keys_typehints() -> None:
@@ -81,7 +87,11 @@ def test_configurable_extension_keys_typehints() -> None:
 
     # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
     expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionType)), key=oid_sorter)
-    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS, key=oid_sorter) == expected
+
+    actual = sorted(constants.CONFIGURABLE_EXTENSION_KEYS, key=oid_sorter)
+    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
+        actual.remove(ExtensionOID.ADMISSIONS)
+    assert actual == expected
 
 
 def test_elliptic_curves() -> None:
@@ -108,7 +118,11 @@ def test_end_entity_certificate_extension_keys_typehints() -> None:
     expected = sorted(
         (ext.oid for ext in get_args(typehints.EndEntityCertificateExtensionType)), key=oid_sorter
     )
-    assert sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS, key=oid_sorter) == expected
+
+    actual = sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS, key=oid_sorter)
+    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
+        actual.remove(ExtensionOID.ADMISSIONS)
+    assert actual == expected
 
 
 def test_extended_key_usage_human_readable_names() -> None:

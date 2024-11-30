@@ -17,7 +17,10 @@ import enum
 from collections import defaultdict
 from types import MappingProxyType
 
+import packaging.version
+
 import asn1crypto.core
+import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
@@ -30,7 +33,7 @@ from cryptography.x509.certificate_transparency import LogEntryType
 from cryptography.x509.oid import (
     AuthorityInformationAccessOID,
     ExtendedKeyUsageOID as _ExtendedKeyUsageOID,
-    ExtensionOID,
+    ExtensionOID as _ExtensionOID,
     NameOID,
     SubjectInformationAccessOID,
 )
@@ -54,6 +57,16 @@ from django_ca.typehints import (
     OtherNames,
     ParsableKeyType,
 )
+
+CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
+
+
+class ExtensionOID(_ExtensionOID):
+    """Extend the ExtensionOID object with any OIDs not known to cryptography."""
+
+    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
+        ADMISSIONS = x509.ObjectIdentifier("1.3.36.8.3.3")
+
 
 ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = MappingProxyType(
     {
@@ -176,6 +189,7 @@ EXTENSION_DESCRIPTIONS = MappingProxyType(
 #: Map of ExtensionOIDs to a human-readable text describing if the extension should/must/... be critical.
 EXTENSION_CRITICAL_HELP = MappingProxyType(
     {
+        ExtensionOID.ADMISSIONS: _("may or may not be critical"),
         ExtensionOID.AUTHORITY_INFORMATION_ACCESS: _("MUST be non-critical"),
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: _("MUST be non-critical"),
         ExtensionOID.BASIC_CONSTRAINTS: _("MUST usually be critical, but allows non-critical in some cases"),
@@ -212,6 +226,7 @@ EXTENSION_CRITICAL_HELP = MappingProxyType(
 #: Map of ExtensionOIDs to the default critical values as defined in the RFC where they are defined.
 EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
     {
+        ExtensionOID.ADMISSIONS: False,  # Common PKI v2 doesn't really say
         ExtensionOID.AUTHORITY_INFORMATION_ACCESS: False,  # MUST mark this extension as non-critical.
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: False,  # MUST mark this extension as non-critical
         ExtensionOID.BASIC_CONSTRAINTS: True,  # RFC 5280 is more complex here, True is a good efault
@@ -243,6 +258,7 @@ EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
 CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ConfigurableExtensionKeys] = (
     MappingProxyType(
         {
+            ExtensionOID.ADMISSIONS: "admissions",
             ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "authority_information_access",
             ExtensionOID.CERTIFICATE_POLICIES: "certificate_policies",
             ExtensionOID.CRL_DISTRIBUTION_POINTS: "crl_distribution_points",
@@ -319,6 +335,7 @@ EXTENSION_KEY_OIDS: MappingProxyType[ExtensionKeys, x509.ObjectIdentifier] = Map
 #: Map of ExtensionOIDs to human-readable names as they appear in the RFC where they are defined.
 EXTENSION_NAMES = MappingProxyType(
     {
+        ExtensionOID.ADMISSIONS: "Admissions",
         ExtensionOID.AUTHORITY_INFORMATION_ACCESS: "Authority Information Access",
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "Authority Key Identifier",
         ExtensionOID.BASIC_CONSTRAINTS: "Basic Constraints",

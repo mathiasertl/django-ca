@@ -66,13 +66,16 @@ def pytest_generate_tests(metafunc: Any) -> None:
 def assert_parsed(key: str, serialized: Any, extension_type: CertificateExtensionType, name: str) -> None:
     """Assert that the given `serialized` value parses to the given `extension_type`."""
     oid = extension_type.oid
-    ext = x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type)
+    ext = cast(
+        CertificateExtension,
+        x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type),
+    )
     assert parse_extension(key, {"value": serialized}) == ext, name
 
-    ext = x509.Extension(oid=oid, critical=True, value=extension_type)
+    ext = x509.Extension(oid=oid, critical=True, value=extension_type)  # type: ignore[assignment]
     assert parse_extension(key, {"value": serialized, "critical": True}) == ext, name
 
-    ext = cast(CertificateExtension, x509.Extension(oid=oid, critical=False, value=extension_type))
+    ext = x509.Extension(oid=oid, critical=False, value=extension_type)  # type: ignore[assignment]
     assert parse_extension(key, {"value": serialized, "critical": False}) == ext, name
 
     assert parse_extension(key, ext) is ext

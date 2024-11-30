@@ -15,8 +15,9 @@
 
 import base64
 from datetime import datetime
-from typing import Annotated, Any, Literal, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn, Optional, Union
 
+from annotated_types import MaxLen, MinLen
 from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
 
 from cryptography import x509
@@ -28,12 +29,144 @@ from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
-from django_ca.pydantic.type_aliases import NonEmptyOrderedSet, OIDType
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet, OIDType
 from django_ca.typehints import DistributionPointReasons, LogEntryTypes
+
+if TYPE_CHECKING:  # pragma: only cryptography<44
+    # NOTE: we can use bases directly once instances are supported in every versoin
+    NamingAuthorityBase = CryptographyModel[x509.NamingAuthority]
+    ProfessionInfoBase = CryptographyModel[x509.ProfessionInfo]
+    AdmissionBase = CryptographyModel[x509.Admission]
+    AdmissionsValueModelBase = CryptographyModel[x509.Admissions]
+else:
+    NamingAuthorityBase = ProfessionInfoBase = AdmissionBase = AdmissionsValueModelBase = CryptographyModel
 
 _NOTICE_REFERENCE_DESCRIPTION = (
     "A NoticeReferenceModel consists of an optional *organization* and an optional list of *notice_numbers*."
 )
+
+
+class NamingAuthorityModel(NamingAuthorityBase):  # pragma: only cryptography>=44.0
+    """Pydantic model wrapping :py:class:`~cg:cryptography.x509.NamingAuthority`.
+
+    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
+
+    .. versionadded:: 2.1.0
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: Optional[OIDType] = None
+    url: Optional[Annotated[str, MaxLen(128)]] = None
+    text: Optional[Annotated[str, MaxLen(128)]] = None
+
+    @property
+    def cryptography(self) -> "x509.NamingAuthority":
+        """Convert to a :py:class:`~cg:cryptography.x509.NamingAuthority` instance."""
+        oid = None
+        if self.id is not None:
+            oid = x509.ObjectIdentifier(self.id)
+        return x509.NamingAuthority(id=oid, url=self.url, text=self.text)
+
+
+class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.0
+    """Pydantic model wrapping :py:class:`~cg:cryptography.x509.ProfessionInfo`.
+
+    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
+
+    .. versionadded:: 2.1.0
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    naming_authority: Optional[NamingAuthorityModel] = None
+    profession_items: Annotated[list[Annotated[str, MaxLen(128)]], MinLen(1)]
+    profession_oids: Optional[list[OIDType]] = None
+    registration_number: Optional[Annotated[str, MaxLen(128)]] = None
+    add_profession_info: Optional[Base64EncodedBytes] = None
+
+    @property
+    def cryptography(self) -> "x509.ProfessionInfo":
+        naming_authority = profession_oids = None
+        if self.naming_authority is not None:
+            naming_authority = self.naming_authority.cryptography
+        if self.profession_oids is not None:
+            profession_oids = [x509.ObjectIdentifier(oid) for oid in self.profession_oids]
+
+        return x509.ProfessionInfo(
+            naming_authority=naming_authority,
+            profession_items=self.profession_items,
+            profession_oids=profession_oids,
+            registration_number=self.registration_number,
+            add_profession_info=self.add_profession_info,
+        )
+
+    @model_validator(mode="after")
+    def check_consistency(self) -> "ProfessionInfoModel":
+        """Verify that profession_oids has the same length as profession_items if set."""
+        if self.profession_oids is not None and len(self.profession_items) != len(self.profession_oids):
+            raise ValueError("if present, profession_oids must have the same length as profession_items.")
+        return self
+
+
+class AdmissionModel(AdmissionBase):  # pragma: only cryptography>=44.0
+    """Pydantic model wrapping :py:class:`~cg:cryptography.x509.Admission`.
+
+    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
+
+    .. versionadded:: 2.1.0
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    admission_authority: Optional[GeneralNameModel] = None
+    naming_authority: Optional[NamingAuthorityModel] = None
+    profession_infos: Annotated[list[ProfessionInfoModel], MinLen(1)]
+
+    @property
+    def cryptography(self) -> "x509.Admission":
+        admission_authority = naming_authority = None
+        if self.admission_authority is not None:
+            admission_authority = self.admission_authority.cryptography
+        if self.naming_authority is not None:
+            naming_authority = self.naming_authority.cryptography
+
+        return x509.Admission(
+            admission_authority=admission_authority,
+            naming_authority=naming_authority,
+            profession_infos=[pi.cryptography for pi in self.profession_infos],
+        )
+
+
+class AdmissionsValueModel(AdmissionsValueModelBase):  # pragma: only cryptography>=44.0
+    """Pydantic model wrapping :py:class:`~cg:cryptography.x509.Admissions`.
+
+    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
+
+    .. versionadded:: 2.1.0
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    authority: Optional[GeneralNameModel] = None
+    admissions: list[AdmissionModel] = Field(default_factory=list)
+
+    @property
+    def cryptography(self) -> "x509.Admissions":
+        authority = None
+        if self.authority is not None:
+            authority = self.authority.cryptography
+        return x509.Admissions(
+            authority=authority, admissions=[admission.cryptography for admission in self.admissions]
+        )
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_cryptography(cls, data: Any) -> Any:
+        """Parse cryptography instance."""
+        if isinstance(data, x509.Admissions):
+            return {"authority": data.authority, "admissions": data._admissions}  # pylint: disable=protected-access
+        return data
 
 
 class AccessDescriptionModel(CryptographyModel[x509.AccessDescription]):

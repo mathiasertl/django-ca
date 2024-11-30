@@ -19,6 +19,9 @@ import sys
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, TypeVar, Union
 
+import packaging.version
+
+import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -42,6 +45,8 @@ if sys.version_info < (3, 11):  # pragma: only py<3.11
     from typing_extensions import Self as Self  # noqa: PLC0414
 else:  # pragma: only py>=3.11
     from typing import Self as Self  # noqa: PLC0414
+
+CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 
 # pylint: disable-next=invalid-name
 JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]
@@ -170,6 +175,7 @@ AccessMethods = Literal["ocsp", "ca_issuers", "ca_repository"]
 
 #: Extension keys for extensions that may be configured by the user when issuing certificates.
 ConfigurableExtensionKeys = Literal[
+    "admissions",
     "authority_information_access",
     "certificate_policies",
     "crl_distribution_points",
@@ -311,21 +317,42 @@ CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 ################
 # Type aliases #
 ################
-#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
-ConfigurableExtensionType = Union[
-    x509.AuthorityInformationAccess,
-    x509.CertificatePolicies,
-    x509.CRLDistributionPoints,
-    x509.ExtendedKeyUsage,
-    x509.FreshestCRL,
-    x509.IssuerAlternativeName,
-    x509.KeyUsage,
-    x509.MSCertificateTemplate,
-    x509.OCSPNoCheck,
-    x509.PrecertPoison,
-    x509.SubjectAlternativeName,
-    x509.TLSFeature,
-]
+if TYPE_CHECKING:  # pragma: only cryptography<44  # remove special handling once cg43 support is dropped
+    ConfigurableExtensionType = Union[
+        x509.Admissions,
+        x509.AuthorityInformationAccess,
+        x509.CertificatePolicies,
+        x509.CRLDistributionPoints,
+        x509.ExtendedKeyUsage,
+        x509.FreshestCRL,
+        x509.IssuerAlternativeName,
+        x509.KeyUsage,
+        x509.MSCertificateTemplate,
+        x509.OCSPNoCheck,
+        x509.PrecertPoison,
+        x509.SubjectAlternativeName,
+        x509.TLSFeature,
+    ]
+else:
+    #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
+    ConfigurableExtensionType = Union[
+        x509.AuthorityInformationAccess,
+        x509.CertificatePolicies,
+        x509.CRLDistributionPoints,
+        x509.ExtendedKeyUsage,
+        x509.FreshestCRL,
+        x509.IssuerAlternativeName,
+        x509.KeyUsage,
+        x509.MSCertificateTemplate,
+        x509.OCSPNoCheck,
+        x509.PrecertPoison,
+        x509.SubjectAlternativeName,
+        x509.TLSFeature,
+    ]
+
+    if CRYPTOGRAPHY_VERSION >= (44, 0):  # pragma: cryptography>=44 branch
+        ConfigurableExtensionType = Union[ConfigurableExtensionType, x509.Admissions]  # type: ignore[misc]
+
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
 #:
 #: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension types
@@ -353,20 +380,39 @@ CertificateExtensionType = Union[
     x509.UnrecognizedExtension,
 ]
 
-ConfigurableExtension = Union[
-    x509.Extension[x509.AuthorityInformationAccess],
-    x509.Extension[x509.CertificatePolicies],
-    x509.Extension[x509.CRLDistributionPoints],
-    x509.Extension[x509.ExtendedKeyUsage],
-    x509.Extension[x509.FreshestCRL],
-    x509.Extension[x509.IssuerAlternativeName],
-    x509.Extension[x509.KeyUsage],
-    x509.Extension[x509.MSCertificateTemplate],
-    x509.Extension[x509.OCSPNoCheck],
-    x509.Extension[x509.PrecertPoison],
-    x509.Extension[x509.SubjectAlternativeName],
-    x509.Extension[x509.TLSFeature],
-]
+if TYPE_CHECKING:  # pragma: only cryptography<44  # remove special handling once cg43 support is dropped
+    ConfigurableExtension = Union[
+        x509.Extension[x509.Admissions],
+        x509.Extension[x509.AuthorityInformationAccess],
+        x509.Extension[x509.CertificatePolicies],
+        x509.Extension[x509.CRLDistributionPoints],
+        x509.Extension[x509.ExtendedKeyUsage],
+        x509.Extension[x509.FreshestCRL],
+        x509.Extension[x509.IssuerAlternativeName],
+        x509.Extension[x509.KeyUsage],
+        x509.Extension[x509.MSCertificateTemplate],
+        x509.Extension[x509.OCSPNoCheck],
+        x509.Extension[x509.PrecertPoison],
+        x509.Extension[x509.SubjectAlternativeName],
+        x509.Extension[x509.TLSFeature],
+    ]
+else:
+    ConfigurableExtension = Union[
+        x509.Extension[x509.AuthorityInformationAccess],
+        x509.Extension[x509.CertificatePolicies],
+        x509.Extension[x509.CRLDistributionPoints],
+        x509.Extension[x509.ExtendedKeyUsage],
+        x509.Extension[x509.FreshestCRL],
+        x509.Extension[x509.IssuerAlternativeName],
+        x509.Extension[x509.KeyUsage],
+        x509.Extension[x509.MSCertificateTemplate],
+        x509.Extension[x509.OCSPNoCheck],
+        x509.Extension[x509.PrecertPoison],
+        x509.Extension[x509.SubjectAlternativeName],
+        x509.Extension[x509.TLSFeature],
+    ]
+    if CRYPTOGRAPHY_VERSION >= (44, 0):  # pragma: cryptography>=44 branch
+        ConfigurableExtension = Union[ConfigurableExtension, x509.Extension[x509.Admissions]]  # type: ignore[misc]
 
 EndEntityCertificateExtension = Union[
     ConfigurableExtension,

@@ -455,13 +455,11 @@ class SettingsModel(BaseModel):
     def check_ca_key_backends(self) -> "SettingsModel":
         """Set the default key backend if not set, and validate that the default key backend is configured."""
         if not self.CA_KEY_BACKENDS:
-            # pylint: disable-next=unsupported-assignment-operation  # pylint this this is a Field()
             self.CA_KEY_BACKENDS[self.CA_DEFAULT_KEY_BACKEND] = KeyBackendConfigurationModel(
                 BACKEND=constants.DEFAULT_STORAGE_BACKEND,
                 OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
             )
 
-        # pylint: disable-next=unsupported-membership-test  # pylint this this is a Field()
         elif self.CA_DEFAULT_KEY_BACKEND not in self.CA_KEY_BACKENDS:
             raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
         return self
@@ -470,13 +468,11 @@ class SettingsModel(BaseModel):
     def check_ca_ocsp_key_backends(self) -> "SettingsModel":
         """Set the default OCSP key backend if not set, and validate that the default is configured."""
         if not self.CA_OCSP_KEY_BACKENDS:
-            # pylint: disable-next=unsupported-assignment-operation  # pylint this this is a Field()
             self.CA_OCSP_KEY_BACKENDS[self.CA_DEFAULT_OCSP_KEY_BACKEND] = KeyBackendConfigurationModel(
                 BACKEND=constants.DEFAULT_OCSP_KEY_BACKEND,
                 OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
             )
 
-        # pylint: disable-next=unsupported-membership-test  # pylint this this is a Field()
         elif self.CA_DEFAULT_OCSP_KEY_BACKEND not in self.CA_OCSP_KEY_BACKENDS:
             raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
         return self
@@ -484,7 +480,6 @@ class SettingsModel(BaseModel):
     @model_validator(mode="after")
     def check_ca_default_profile(self) -> "SettingsModel":
         """Validate that the default profile is also configured."""
-        # pylint: disable-next=unsupported-membership-test  # pylint this this is a Field()
         if self.CA_DEFAULT_PROFILE not in self.CA_PROFILES:
             raise ValueError(f"{self.CA_DEFAULT_PROFILE}: CA_DEFAULT_PROFILE is not defined as a profile.")
         return self

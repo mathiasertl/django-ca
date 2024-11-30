@@ -91,13 +91,14 @@ from pydantic.fields import ModelPrivateAttr
 from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, SubjectInformationAccessOID
+from cryptography.x509.oid import AuthorityInformationAccessOID, SubjectInformationAccessOID
 
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES
+from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ExtensionOID
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.extension_attributes import (
     AccessDescriptionModel,
+    AdmissionsValueModel,
     AuthorityKeyIdentifierValueModel,
     BasicConstraintsValueModel,
     DistributionPointModel,
@@ -127,6 +128,7 @@ if TYPE_CHECKING:
     from typing import Self
 
     from pydantic.main import IncEx
+
 
 ###############
 # Base models #
@@ -319,6 +321,31 @@ class SignedCertificateTimestampBaseModel(ExtensionModel[SignedCertificateTimest
 ########################
 # ExtensionType models #
 ########################
+
+if TYPE_CHECKING:
+    AdmissionsModelBase = ExtensionModel[x509.Admissions]
+else:
+    AdmissionsModelBase = ExtensionModel
+
+
+class AdmissionsModel(AdmissionsModelBase):  # pragma: only cryptography>=44.0
+    """Pydantic model for a :py:class:`~cg:cryptography.x509.Admissions` extension.
+
+    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
+
+    .. versionadded:: 2.1.0
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    type: Literal["admissions"] = Field(default="admissions", repr=False)
+    critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ADMISSIONS]
+    value: AdmissionsValueModel
+
+    @property
+    def extension_type(self) -> "x509.Admissions":
+        """Convert to a :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier` instance."""
+        return self.value.cryptography
 
 
 class AuthorityInformationAccessModel(InformationAccessBaseModel[x509.AuthorityInformationAccess]):
@@ -924,6 +951,7 @@ class UnrecognizedExtensionModel(ExtensionModel[x509.UnrecognizedExtension]):
 
 EXTENSION_MODEL_OIDS: "MappingProxyType[type[ExtensionModel[Any]], x509.ObjectIdentifier]" = MappingProxyType(
     {
+        AdmissionsModel: ExtensionOID.ADMISSIONS,
         AuthorityInformationAccessModel: ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
         AuthorityKeyIdentifierModel: ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
         BasicConstraintsModel: ExtensionOID.BASIC_CONSTRAINTS,
@@ -970,6 +998,7 @@ def validate_cryptography_extensions(v: Any, info: ValidationInfo) -> Any:
 ConfigurableExtensionModel = Annotated[
     Annotated[
         Union[
+            AdmissionsModel,
             AuthorityInformationAccessModel,
             CertificatePoliciesModel,
             CRLDistributionPointsModel,
@@ -992,6 +1021,7 @@ ConfigurableExtensionModel = Annotated[
 CertificateExtensionModel = Annotated[
     Annotated[
         Union[
+            AdmissionsModel,
             AuthorityInformationAccessModel,
             AuthorityKeyIdentifierModel,
             BasicConstraintsModel,
