@@ -44,17 +44,17 @@ def globs(usable_root: CertificateAuthority, root_cert: Certificate) -> dict[str
 
 def test_python_intro(globs: dict[str, Any]) -> None:
     """Test python/intro.rst."""
-    failures, _tests = doctest.testfile(os.path.join(BASE, "python", "intro.rst"), globs=globs)
+    failures, *_tests = doctest.testfile(os.path.join(BASE, "python", "intro.rst"), globs=globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 def test_python_models(globs: dict[str, Any]) -> None:
     """Test python/models.rst."""
-    failures, _tests = doctest.testfile(os.path.join(BASE, "python", "models.rst"), globs=globs)
+    failures, *_tests = doctest.testfile(os.path.join(BASE, "python", "models.rst"), globs=globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 def test_python_pydantic_models(globs: dict[str, Any]) -> None:
     """Test python/models.rst."""
-    failures, _tests = doctest.testfile(os.path.join(BASE, "python", "pydantic.rst"), globs=globs)
+    failures, *_tests = doctest.testfile(os.path.join(BASE, "python", "pydantic.rst"), globs=globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."

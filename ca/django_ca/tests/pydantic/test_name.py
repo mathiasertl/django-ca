@@ -28,7 +28,7 @@ from django_ca.tests.pydantic.base import ExpectedErrors, assert_cryptography_mo
 
 def test_doctests() -> None:
     """Run doctests for this module."""
-    failures, _tests = doctest_module("django_ca.pydantic.name")
+    failures, *_tests = doctest_module("django_ca.pydantic.name")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 

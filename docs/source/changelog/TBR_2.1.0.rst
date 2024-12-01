@@ -35,7 +35,7 @@ Settings
 Dependencies
 ************
 
-* Add support for ``cryptography~=44.0`` and ``pydantic~=2.10.0``.
+* Add support for Python 3.13, ``cryptography~=44.0`` and ``pydantic~=2.10.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.7.0``, ``pydantic~=2.8.0``,
   ``cryptography~=42.0`` and ``acme~=2.10.0``.
 
@@ -83,3 +83,11 @@ Views
   * The `scope` parameter is deprecated and will be removed in django-ca 2.3.0. Use `only_contains_ca_certs`
     and `only_contains_user_certs` instead.
   * The `include_issuing_distribution_point` no longer has any effect and will be removed in django-ca 2.3.0.
+
+*******************
+Deprecation notices
+*******************
+
+Please also see the :doc:`deprecation timeline </deprecation>` for previous deprecation notices.
+
+* This will be the last release to support ``django~=5.0.0``.

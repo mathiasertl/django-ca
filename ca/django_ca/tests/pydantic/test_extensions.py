@@ -145,13 +145,13 @@ def assert_extension_model(
 
 def test_doctests() -> None:
     """Load doctests."""
-    failures, _tests = doctest_module("django_ca.pydantic.extensions")
+    failures, *_tests = doctest_module("django_ca.pydantic.extensions")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 def test_doctest_extension_attributes() -> None:
     """Load doctests."""
-    failures, _tests = doctest_module("django_ca.pydantic.extension_attributes")
+    failures, *_tests = doctest_module("django_ca.pydantic.extension_attributes")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 

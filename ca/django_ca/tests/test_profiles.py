@@ -83,13 +83,13 @@ def create_cert(
 
 def test_doctests_module(doctest_globs: dict[str, Any]) -> None:  # pylint: disable=redefined-outer-name
     """Run doctests for this module."""
-    failures, _tests = doctest_module("django_ca.profiles", globs=doctest_globs)
+    failures, *_tests = doctest_module("django_ca.profiles", globs=doctest_globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
 def test_doctest_documentation(doctest_globs: dict[str, Any]) -> None:  # pylint: disable=redefined-outer-name
     """Test python/profiles.rst."""
-    failures, _tests = doctest.testfile("../../../docs/source/python/profiles.rst", globs=doctest_globs)
+    failures, *_tests = doctest.testfile("../../../docs/source/python/profiles.rst", globs=doctest_globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 

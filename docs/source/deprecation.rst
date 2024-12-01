@@ -66,6 +66,11 @@ Python API
 
 * ``django_ca.utils.get_storage()`` will be removed (deprecated since 2.0).
 
+Dependencies
+============
+
+* Support ``django~=5.0.0`` will be dropped.
+
 ***********
 2.1.0 (TBR)
 ***********

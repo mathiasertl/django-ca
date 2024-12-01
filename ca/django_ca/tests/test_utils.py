@@ -61,7 +61,7 @@ SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=type[object])
 
 def test_doctests() -> None:
     """Load doctests."""
-    failures, _tests = doctest_module("django_ca.utils")
+    failures, *_tests = doctest_module("django_ca.utils")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 

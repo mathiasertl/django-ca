@@ -21,7 +21,7 @@ from django_ca.tests.base.doctest import doctest_module
 
 def test_doctests() -> None:
     """Load doctests."""
-    failures, _tests = doctest_module("django_ca.pydantic.validators")
+    failures, *_tests = doctest_module("django_ca.pydantic.validators")
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
