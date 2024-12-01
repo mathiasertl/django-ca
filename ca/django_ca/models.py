@@ -95,6 +95,7 @@ from django_ca.typehints import (
     ConfigurableExtension,
     ConfigurableExtensionDict,
     EndEntityCertificateExtension,
+    OCSPKeyBackendDict,
     ParsableKeyType,
 )
 from django_ca.utils import (
@@ -150,6 +151,14 @@ def pem_validator(value: str) -> None:
         raise ValidationError(_("Not a valid PEM."))
     if not value.endswith("\n-----END PUBLIC KEY-----"):
         raise ValidationError(_("Not a valid PEM."))
+
+
+def ocsp_key_backend_options_default() -> OCSPKeyBackendDict:
+    """Default value for the `ocsp_key_backend` field."""
+    return {
+        "private_key": {},
+        "certificate": {},
+    }
 
 
 class ReasonEncoder(json.JSONEncoder):
@@ -546,7 +555,9 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         max_length=256, help_text=_("Backend to handle private keys for OCSP responder certificates.")
     )
     ocsp_key_backend_options = models.JSONField(
-        default=dict, blank=True, help_text=_("Key backend options for using OCSP responder private keys.")
+        default=ocsp_key_backend_options_default,
+        blank=True,
+        help_text=_("Key backend options for using OCSP responder private keys."),
     )
     ocsp_responder_key_validity = models.PositiveSmallIntegerField(
         _("OCSP responder key validity"),

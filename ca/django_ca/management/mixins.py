@@ -229,7 +229,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             help="Require email address during ACME account registration.",
         )
 
-    def add_ocsp_group(self, parser: CommandParser) -> None:
+    def add_ocsp_group(self, parser: CommandParser, default_ocsp_key_backend: Optional[str] = None) -> None:
         """Add arguments for automatic OCSP configuration."""
         group = parser.add_argument_group(
             "OCSP responder configuration",
@@ -237,8 +237,8 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         )
         group.add_argument(
             "--ocsp-key-backend",
-            choices=list(model_settings.CA_KEY_BACKENDS),
-            default=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND,
+            choices=list(model_settings.CA_OCSP_KEY_BACKENDS),
+            default=default_ocsp_key_backend,
             help="The backend used for storing private keys for OCSP responder delegate certificates. "
             "Depending on the backend, you have to choose different options below for private keys. "
             "(default: %(default)s).",

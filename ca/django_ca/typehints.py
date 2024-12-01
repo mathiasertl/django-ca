@@ -51,6 +51,14 @@ CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 # pylint: disable-next=invalid-name
 JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]
 
+
+class OCSPKeyBackendDict(TypedDict):
+    """Data structure stored in the `ocsp_key_backend` field of CertificateAuthority."""
+
+    private_key: dict[str, JSON]
+    certificate: dict[str, JSON]
+
+
 #: Hash algorithms that can be used for signing certificates.
 #: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
 AllowedHashTypes = Union[

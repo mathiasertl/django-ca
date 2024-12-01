@@ -238,7 +238,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         )
 
         self.add_acme_group(parser)
-        self.add_ocsp_group(parser)
+        self.add_ocsp_group(parser, default_ocsp_key_backend=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND)
         self.add_rest_api_group(parser)
 
         self.add_authority_information_access_group(parser)

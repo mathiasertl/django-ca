@@ -73,7 +73,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         )
 
         self.add_acme_group(parser)
-        self.add_ocsp_group(parser)
+        self.add_ocsp_group(parser, default_ocsp_key_backend=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND)
         self.add_rest_api_group(parser)
         self.add_certificate_authority_sign_extension_groups(parser)
 

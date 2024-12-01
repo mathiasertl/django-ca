@@ -70,6 +70,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         # Issuer Alternative Name extension  for certificates
         sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
         # OCSP responder configuration
+        ocsp_key_backend: Optional[str],
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
         **options: Any,
@@ -130,6 +131,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                 ca.api_enabled = api_enabled
 
         # Set OCSP responder options
+        if ocsp_key_backend is not None:
+            ca.ocsp_key_backend_alias = ocsp_key_backend
         if ocsp_responder_key_validity is not None:
             ca.ocsp_responder_key_validity = ocsp_responder_key_validity
         if ocsp_response_validity is not None:
