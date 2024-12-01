@@ -1,0 +1,79 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+{% load i18n django_ca %}
+
+{# Admissions extension #}
+{% block content %}{% spaceless %}
+<ul>
+    {% if value.authority %}<li>Authority: {{ value.authority|format_general_name }}</li>{% endif %}
+    <li>Admissions:
+        <ul>
+        {% for admission in value|admissions %}
+
+            {% if admission.admission_authority %}
+                <li>Admission Authority: {{ admission.admission_authority|format_general_name }}</li>
+            {% endif %}
+
+            {% if admission.naming_authority %}
+                <li>Naming Authority:
+                    {% if admission.naming_authority.id or admission.naming_authority.url or admission.naming_authority.text %}
+                    <ul>
+                        {% if admission.naming_authority.id %}<li>ID: {{ admission.naming_authority.id.dotted_string }}</li>{% endif %}
+                        {% if admission.naming_authority.url %}<li>URL: {{ admission.naming_authority.url }}</li>{% endif %}
+                        {% if admission.naming_authority.text %}<li>Text: {{ admission.naming_authority.url }}</li>{% endif %}
+                    </ul>
+                    {% else %}
+                        No values.
+                    {% endif %}
+                </li>
+            {% endif %}
+
+            <li>Profession Infos:
+                <ul>
+                {% for info in admission.profession_infos %}
+                    <li>Profession Info:
+                        <ul>
+                            {% if info.naming_authority %}
+                            <li>Naming Authority:
+                                {% if info.naming_authority.id or info.naming_authority.url or info.naming_authority.text %}
+                                <ul>
+                                    {% if info.naming_authority.id %}<li>ID: {{ info.naming_authority.id.dotted_string }}</li>{% endif %}
+                                    {% if info.naming_authority.url %}<li>URL: {{ info.naming_authority.url }}</li>{% endif %}
+                                    {% if info.naming_authority.text %}<li>Text: {{ info.naming_authority.text }}</li>{% endif %}
+                                </ul>
+                                {% else %}
+                                    No values.
+                                {% endif %}
+                            </li>
+                            {% endif %}
+
+                            <li>Profession items:
+                                <ul>
+                                {% for item in info.profession_items %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                                </ul>
+                            </li>
+
+                            {% if info.profession_oids %}
+                            <li>Profession OIDs:
+                                <ul>
+                                {% for item in info.profession_oids %}
+                                    <li>{{ item.dotted_string }}</li>
+                                {% endfor %}
+                                </ul>
+                            </li>
+                            {% endif %}
+
+                            {% if info.registration_number %}<li>Registration number: {{ info.registration_number }}</li>{% endif %}
+                            {% if info.add_profession_info %}<li>Add Profession Info: {{ info.add_profession_info|as_hex }}</li>{% endif %}
+                        </ul>
+                    </li>
+                {% endfor %}
+                </ul>
+            </li>
+
+        </ul>
+        {% endfor %}
+    </li>
+</ul>
+{% endspaceless %}{% endblock content %}

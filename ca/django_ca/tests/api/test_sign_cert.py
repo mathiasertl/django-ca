@@ -59,6 +59,8 @@ from django_ca.tests.base.utils import (
     uri,
 )
 
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+
 path = reverse_lazy("django_ca:api:sign_certificate", kwargs={"serial": CERT_DATA["root"]["serial"]})
 default_subject = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "api.example.com"}]
 csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
@@ -144,7 +146,6 @@ def sign_certificate(
     return cert
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_sign_ca_values(
     api_user: AbstractUser,
     api_client: Client,
@@ -171,7 +172,6 @@ def test_sign_ca_values(
     assert extensions[ExtensionOID.CRL_DISTRIBUTION_POINTS] == usable_root.sign_crl_distribution_points
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_private_key_unavailable(
     api_user: AbstractUser,
     api_client: Client,
@@ -198,7 +198,6 @@ def test_private_key_unavailable(
     assert response.json() == expected_response
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_key_backend_options(
     settings: SettingsWrapper,
     api_client: Client,
@@ -231,7 +230,6 @@ def test_key_backend_options(
     assert cert.serial
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_key_backend_configuration_not_required_on_frontend(
     api_user: AbstractUser,
     api_client: Client,
@@ -263,7 +261,6 @@ def test_key_backend_configuration_not_required_on_frontend(
     assert response.json() == expected_response
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_sign_certificate_with_parameters(
     api_user: AbstractUser,
     api_client: Client,
@@ -293,7 +290,6 @@ def test_sign_certificate_with_parameters(
     assert cert.not_after == not_after
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_sign_certificate_with_extensions(
     api_user: AbstractUser,
     api_client: Client,
@@ -452,7 +448,106 @@ def test_sign_certificate_with_extensions(
     assert exts[ExtensionOID.TLS_FEATURE] == tls_feature(x509.TLSFeatureType.status_request)
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
+if hasattr(x509, "Admissions"):
+
+    @pytest.mark.parametrize(
+        ("data", "expected"),
+        (
+            ({"admissions": []}, x509.Admissions(authority=None, admissions=[])),
+            (
+                {
+                    "authority": {"type": "URI", "value": "https://auth.example.com"},
+                    "admissions": [
+                        {
+                            "admission_authority": {
+                                "type": "URI",
+                                "value": "https://auth.admission.example.com",
+                            },
+                            "naming_authority": {
+                                "id": "1.2.3",
+                                "url": "https://url.example.com",
+                                "text": "text example",
+                            },
+                            "profession_infos": [
+                                {"profession_items": ["prof item"]},
+                                {
+                                    "naming_authority": {
+                                        "id": "1.2.3.4",
+                                        "url": "https://url.prof-info.example.com",
+                                        "text": "text prof-info example",
+                                    },
+                                    "profession_items": ["prof item2"],
+                                    "profession_oids": ["1.2.3.5"],
+                                    "registration_number": "reg number",
+                                    "add_profession_info": "Zm9vYmFy",
+                                },
+                            ],
+                        }
+                    ],
+                },
+                x509.Admissions(
+                    authority=uri("https://auth.example.com"),
+                    admissions=[
+                        x509.Admission(
+                            admission_authority=uri("https://auth.admission.example.com"),
+                            naming_authority=x509.NamingAuthority(
+                                id=x509.ObjectIdentifier("1.2.3"),
+                                url="https://url.example.com",
+                                text="text example",
+                            ),
+                            profession_infos=[
+                                x509.ProfessionInfo(
+                                    naming_authority=None,
+                                    profession_items=["prof item"],
+                                    profession_oids=None,
+                                    registration_number=None,
+                                    add_profession_info=None,
+                                ),
+                                x509.ProfessionInfo(
+                                    naming_authority=x509.NamingAuthority(
+                                        id=x509.ObjectIdentifier("1.2.3.4"),
+                                        url="https://url.prof-info.example.com",
+                                        text="text prof-info example",
+                                    ),
+                                    profession_items=["prof item2"],
+                                    profession_oids=[x509.ObjectIdentifier("1.2.3.5")],
+                                    registration_number="reg number",
+                                    add_profession_info=b"foobar",
+                                ),
+                            ],
+                        )
+                    ],
+                ),
+            ),
+        ),
+    )
+    def test_sign_certificate_with_admissions_extension(
+        api_user: AbstractUser,
+        api_client: Client,
+        usable_root: CertificateAuthority,
+        expected_response: dict[str, Any],
+        django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+        data: dict[str, Any],
+        expected: "x509.Admission",
+    ) -> None:
+        """Test signing certificates with extensions."""
+        cert = sign_certificate(
+            django_capture_on_commit_callbacks,
+            api_user,
+            api_client,
+            ca=usable_root,
+            data={
+                "subject": default_subject,
+                "extensions": [{"type": "admissions", "value": data}],
+            },
+            expected_response=expected_response,
+        )
+
+        # Test extensions
+        exts = cert.extensions
+        assert exts[ExtensionOID.ADMISSIONS].value == expected
+
+
 def test_sign_certificate_with_subject_alternative_name(
     api_user: AbstractUser,
     api_client: Client,
@@ -519,7 +614,6 @@ def test_invalid_csr_with_valid_headers(api_client: Client) -> None:
 
 
 @pytest.mark.usefixtures("tmpcadir")
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_crldp_with_full_name_and_relative_name(api_client: Client) -> None:
     """Test sending a CRL Distribution point with a full_name and a relative_name."""
     response = request(
@@ -581,7 +675,6 @@ def test_crldp_with_no_full_name_or_relative_name(api_client: Client) -> None:
 
 
 @pytest.mark.usefixtures("tmpcadir")
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_with_invalid_algorithm(api_client: Client) -> None:
     """Test sending an invalid key usage."""
     response = request(api_client, {"csr": csr, "subject": default_subject, "algorithm": "foo"})
@@ -601,7 +694,6 @@ def test_with_invalid_algorithm(api_client: Client) -> None:
 
 
 @pytest.mark.usefixtures("tmpcadir")
-@freeze_time(TIMESTAMPS["everything_valid"])
 def test_with_invalid_key_usage(api_client: Client) -> None:
     """Test sending an invalid key usage."""
     response = request(

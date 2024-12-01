@@ -45,7 +45,42 @@ PWD_PATHLEN = 2
 DSA_PATHLEN = 3
 
 
-def recreate_fixtures(  # pylint: disable=too-many-locals
+def recreate_crls(dest: Path) -> None:
+    """Recreate CRLs for the root CA."""
+    # pylint: disable=import-outside-toplevel  # django-ca needs to be set up.
+    from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+    from django_ca.models import CertificateAuthority, CertificateRevocationList
+
+    root = CertificateAuthority.objects.get(name="root")
+    key_backend_options = StoragesUsePrivateKeyOptions.model_validate(
+        {}, context={"ca": root, "backend": root.key_backend}
+    )
+    crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+        ca=root, key_backend_options=key_backend_options
+    )
+    with open(dest / "root.crl", "wb") as stream:
+        stream.write(crl_obj.data)  # type: ignore[arg-type]
+
+    ca_crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+        ca=root, key_backend_options=key_backend_options, only_contains_ca_certs=True
+    )
+    with open(dest / "root.ca.crl", "wb") as stream:
+        stream.write(ca_crl_obj.data)  # type: ignore[arg-type]
+
+    user_crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+        ca=root, key_backend_options=key_backend_options, only_contains_user_certs=True
+    )
+    with open(dest / "root.user.crl", "wb") as stream:
+        stream.write(user_crl_obj.data)  # type: ignore[arg-type]
+
+    attr_crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+        ca=root, key_backend_options=key_backend_options, only_contains_attribute_certs=True
+    )
+    with open(dest / "root.attribute.crl", "wb") as stream:
+        stream.write(attr_crl_obj.data)  # type: ignore[arg-type]
+
+
+def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
     dest: Path,
     delay: bool,
     only_contrib: bool,
@@ -167,7 +202,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
                     oid=ExtensionOID.NAME_CONSTRAINTS,
                     critical=True,  # required by RFC 5280
                     value=x509.NameConstraints(
-                        permitted_subtrees=[x509.DNSName(".org")], excluded_subtrees=None
+                        permitted_subtrees=[x509.DNSName(".com")], excluded_subtrees=None
                     ),
                 ),
             },
@@ -506,6 +541,71 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
         },
     }
 
+    # NOTE: always add Admissions extension once support for cryptography<44 is dropped.
+    if hasattr(ExtensionOID, "ADMISSIONS"):  # pragma: only cryptography<44.0
+        data["all-extensions"]["extensions"]["admissions"] = x509.Extension(
+            oid=ExtensionOID.ADMISSIONS,
+            critical=False,
+            value=x509.Admissions(
+                authority=x509.UniformResourceIdentifier("https://default-authority.admissions.example.com"),
+                admissions=[
+                    x509.Admission(
+                        admission_authority=x509.UniformResourceIdentifier(
+                            "https://authority.admissions.example.com"
+                        ),
+                        naming_authority=x509.NamingAuthority(
+                            id=x509.ObjectIdentifier("1.2.3"),
+                            url="https://naming-auth.admissions.example.com",
+                            text="naming-auth.admissions.example.com text",
+                        ),
+                        profession_infos=[
+                            x509.ProfessionInfo(
+                                naming_authority=x509.NamingAuthority(
+                                    id=None,
+                                    url="https://naming-auth.profession-info.admissions.example.com",
+                                    text="naming-auth.profession-info.admissions.example.com text",
+                                ),
+                                profession_items=["prof_item"],
+                                profession_oids=[x509.ObjectIdentifier("1.2.3.5")],
+                                registration_number="registration-number",
+                                add_profession_info=b"add-profession-info",
+                            ),
+                            x509.ProfessionInfo(
+                                naming_authority=x509.NamingAuthority(id=None, url=None, text=None),
+                                profession_items=["prof_item_minimal"],
+                                profession_oids=None,
+                                registration_number=None,
+                                add_profession_info=None,
+                            ),
+                        ],
+                    )
+                ],
+            ),
+        )
+        data["alt-extensions"]["extensions"]["admissions"] = x509.Extension(
+            oid=ExtensionOID.ADMISSIONS,
+            critical=False,
+            value=x509.Admissions(
+                authority=None,
+                admissions=[
+                    # Add a minimal admission extension here
+                    x509.Admission(
+                        admission_authority=None,
+                        naming_authority=None,
+                        profession_infos=[
+                            x509.ProfessionInfo(
+                                naming_authority=None,
+                                profession_items=["prof_item"],
+                                profession_oids=None,
+                                registration_number=None,
+                                add_profession_info=None,
+                            )
+                        ],
+                    )
+                ],
+            ),
+        )
+
     # Auto-compute some values (name, filenames, ...) based on the dict key
     for cert_name, cert_values in data.items():
         cert_values["name"] = cert_name
@@ -573,9 +673,13 @@ def recreate_fixtures(  # pylint: disable=too-many-locals
             create_certs(dest, ca_instances, now, delay, data)
             create_special_certs(dest, now, delay, data)
 
+            # Rebuild CRLs
+            recreate_crls(dest)
+
         # Rebuild example OCSP requests
         if regenerate_ocsp:
             ocsp_data = regenerate_ocsp_files(dest, data)
+
     else:
         # updating only contrib, so remove existing data
         data = {}

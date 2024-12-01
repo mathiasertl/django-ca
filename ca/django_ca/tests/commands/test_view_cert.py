@@ -514,6 +514,8 @@ Digest:
 * No watchers
 
 Certificate extensions:
+* Admissions:
+{admissions_text}
 * Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
 * Authority Key Identifier{authority_key_identifier_critical}:
@@ -564,6 +566,8 @@ Digest:
 * No watchers
 
 Certificate extensions:
+* Admissions:
+{admissions_text}
 * Authority Information Access{authority_information_access_critical}:
 {authority_information_access_text}
 * Authority Key Identifier{authority_key_identifier_critical}:

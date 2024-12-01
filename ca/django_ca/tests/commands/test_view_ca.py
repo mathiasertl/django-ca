@@ -179,7 +179,7 @@ Certificate extensions:
 {key_usage_text}
 * Name Constraints (critical):
   Permitted:
-    * DNS:.org
+    * DNS:.com
 * Subject Key Identifier{subject_key_identifier_critical}:
 {subject_key_identifier_text}
 

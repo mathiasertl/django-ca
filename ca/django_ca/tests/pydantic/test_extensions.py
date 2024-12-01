@@ -1726,12 +1726,19 @@ def test_extension_model_oids() -> None:
 
 def test_fixture_certs(any_cert: str) -> None:
     """Test Pydantic models with fixture data."""
-    public_key = CERT_DATA[any_cert]["pub"]["parsed"]
+    public_key: x509.Certificate = CERT_DATA[any_cert]["pub"]["parsed"]
     serialized_extensions = CERT_DATA[any_cert][("extensions")]
+    actual_extensions = list(public_key.extensions)
+
+    # Remove Admissions extension for older cryptography versions
+    if not hasattr(x509, "Admissions"):  # pragma: only cryptography<44
+        serialized_extensions = [ext for ext in serialized_extensions if ext["type"] != "admissions"]
+        actual_extensions = [ext for ext in actual_extensions if ext.oid != ExtensionOID.ADMISSIONS]
+
     expected = CertificateExtensionModelList.validate_python(
         serialized_extensions, context={"validate_required_critical": False}
     )
     actual = CertificateExtensionModelList.validate_python(
-        list(public_key.extensions), context={"validate_required_critical": False}
+        actual_extensions, context={"validate_required_critical": False}
     )
     assert expected == actual

@@ -43,7 +43,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -57,7 +57,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "sswSuh/X3HFA2rJqHYsAqEW0fX4=\n"
+                    "value": "t0ZaoII9QNg2lE4gmcfWnF8wLVA="
                 },
                 {
                     "critical": false,
@@ -139,6 +139,59 @@
                 },
                 {
                     "critical": false,
+                    "type": "admissions",
+                    "value": {
+                        "admissions": [
+                            {
+                                "admission_authority": {
+                                    "type": "URI",
+                                    "value": "https://authority.admissions.example.com"
+                                },
+                                "naming_authority": {
+                                    "id": "1.2.3",
+                                    "text": "naming-auth.admissions.example.com text",
+                                    "url": "https://naming-auth.admissions.example.com"
+                                },
+                                "profession_infos": [
+                                    {
+                                        "add_profession_info": "YWRkLXByb2Zlc3Npb24taW5mbw==",
+                                        "naming_authority": {
+                                            "id": null,
+                                            "text": "naming-auth.profession-info.admissions.example.com text",
+                                            "url": "https://naming-auth.profession-info.admissions.example.com"
+                                        },
+                                        "profession_items": [
+                                            "prof_item"
+                                        ],
+                                        "profession_oids": [
+                                            "1.2.3.5"
+                                        ],
+                                        "registration_number": "registration-number"
+                                    },
+                                    {
+                                        "add_profession_info": null,
+                                        "naming_authority": {
+                                            "id": null,
+                                            "text": null,
+                                            "url": null
+                                        },
+                                        "profession_items": [
+                                            "prof_item_minimal"
+                                        ],
+                                        "profession_oids": null,
+                                        "registration_number": null
+                                    }
+                                ]
+                            }
+                        ],
+                        "authority": {
+                            "type": "URI",
+                            "value": "https://default-authority.admissions.example.com"
+                        }
+                    }
+                },
+                {
+                    "critical": false,
                     "type": "crl_distribution_points",
                     "value": [
                         {
@@ -146,7 +199,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -161,14 +214,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -180,9 +233,9 @@
             "key_type": "RSA",
             "name": "all-extensions",
             "pub_filename": "all-extensions.pub",
-            "serial": "53FF2B6A47B595065895C88E8519C1F1448C768D",
-            "sha256": "56:E4:87:20:6F:A0:19:06:73:3B:FB:53:11:33:25:15:EA:DB:20:58:07:14:17:A3:3A:1B:06:E7:1E:88:8E:76",
-            "sha512": "63:8A:2D:4B:6F:A6:FC:AA:F2:D6:DA:0E:1B:51:70:DC:C6:B7:A3:30:54:C0:51:BD:DA:4E:17:C8:70:58:0B:8D:E2:46:9F:7E:1D:AE:05:E8:31:E7:3D:39:F4:A9:9E:7D:53:FB:0A:BF:C4:E8:19:44:4C:B7:AC:1D:9B:88:62:36",
+            "serial": "6B5515705C14DEDD4EFD773DE0BF2793D3F21ACE",
+            "sha256": "F6:15:F2:2E:88:EA:77:27:D4:75:AC:B7:B3:67:F5:8E:8F:A5:10:B0:9F:D5:7C:D2:4C:74:11:23:CE:96:30:23",
+            "sha512": "DB:ED:2E:3E:39:FE:AB:26:EC:F5:93:89:C9:3B:6D:9A:A0:C9:33:0F:71:DF:D8:EE:F9:A0:AC:43:BA:AF:95:B0:FB:AD:0D:37:E5:74:44:F9:BD:BC:B9:C2:6C:9E:2A:55:B9:C5:94:1D:31:96:9B:39:20:83:CA:20:CD:25:7A:19",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -258,7 +311,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -272,7 +325,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "2W85q1jLs8HMzxDLFpGC+nt+ITw=\n"
+                    "value": "zaf3AzpBd1zB2KnVwOi34ePRz/M="
                 },
                 {
                     "critical": true,
@@ -387,19 +440,43 @@
                 },
                 {
                     "critical": false,
+                    "type": "admissions",
+                    "value": {
+                        "admissions": [
+                            {
+                                "admission_authority": null,
+                                "naming_authority": null,
+                                "profession_infos": [
+                                    {
+                                        "add_profession_info": null,
+                                        "naming_authority": null,
+                                        "profession_items": [
+                                            "prof_item"
+                                        ],
+                                        "profession_oids": null,
+                                        "registration_number": null
+                                    }
+                                ]
+                            }
+                        ],
+                        "authority": null
+                    }
+                },
+                {
+                    "critical": false,
                     "type": "authority_information_access",
                     "value": [
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -411,9 +488,9 @@
             "key_type": "RSA",
             "name": "alt-extensions",
             "pub_filename": "alt-extensions.pub",
-            "serial": "7C5840ABD722A5F27DDF2E417C8F2BD5DB892391",
-            "sha256": "52:E6:46:EE:A1:1A:4B:B0:55:5D:E7:75:69:C5:5B:A1:2D:07:8F:FF:27:33:84:1F:B6:93:8E:0C:9A:07:4B:50",
-            "sha512": "83:48:E8:01:EF:A0:02:09:9A:CE:0E:00:59:40:3B:8D:34:3B:D8:1C:70:8A:21:CF:07:95:57:89:98:A3:45:39:4F:65:5C:09:AF:6D:EA:F7:FB:A8:74:CF:46:93:E9:1A:3E:51:45:0C:DE:B7:AE:FE:31:95:71:CE:FD:F2:61:A4",
+            "serial": "77263EC7CF3F53A4DE32F01A0DFFAAA3BF337133",
+            "sha256": "47:06:91:43:6B:4B:75:95:04:5D:2C:3C:90:D2:74:24:09:01:FB:73:79:D1:83:B3:E4:A1:A9:D2:C0:77:BC:7A",
+            "sha512": "05:EF:0E:79:CE:8E:D1:1F:DA:92:AD:1D:EA:E8:5A:EC:6D:93:C3:18:A1:4D:6C:F7:0C:0D:9F:39:4A:6C:85:2C:BF:13:18:F2:D5:45:69:A7:61:9B:02:41:A1:1D:2C:F1:B0:3A:23:74:59:CD:32:89:6A:DE:3E:3E:E6:61:08:FB",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -472,14 +549,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/58C5572B5C808B34B865072C8AAAADDFDCA71CC9/ca/"
+                                "value": "http://localhost:8000/django_ca/ocsp/57873F8EB84C039A89B704E7638D1C468BCF6655/ca/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -494,7 +571,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/ca/58C5572B5C808B34B865072C8AAAADDFDCA71CC9/"
+                                    "value": "http://localhost:8000/django_ca/crl/ca/57873F8EB84C039A89B704E7638D1C468BCF6655/"
                                 }
                             ],
                             "reasons": null,
@@ -513,7 +590,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                    "value": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                 },
                 {
                     "critical": false,
@@ -521,7 +598,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "YMLXK6SBTt/20MlJM5qPP5oGxbQ=\n"
+                        "key_identifier": "QGH46cM0U3cAMWFTweM71nL//0k="
                     }
                 }
             ],
@@ -533,9 +610,9 @@
             "parent": "root",
             "path_length": 0,
             "pub_filename": "child.pub",
-            "serial": "C00BA925085F52F9F5A7331F81DD83318D1C0CC",
-            "sha256": "81:C9:ED:29:0E:2A:9B:A5:6A:38:AF:1D:D8:7E:BC:DA:20:E0:AC:DB:D6:A8:19:8F:EF:2C:93:60:F3:46:4B:20",
-            "sha512": "2C:86:8F:FA:EB:00:A6:D7:EE:51:24:1E:52:D0:61:96:AE:B0:F4:1E:52:AD:92:FC:40:15:C2:31:D1:E6:F7:28:E6:B3:A8:6E:2A:B2:77:99:0E:78:6A:22:9E:71:2C:5F:93:60:C6:97:9D:6E:D7:A3:17:C5:BB:DF:63:14:79:E1",
+            "serial": "2C0544B5F4DBA47C785EBE37C67EFE46959D1091",
+            "sha256": "9A:35:59:A1:EE:0A:9D:FF:82:B5:78:27:52:35:C9:66:09:CB:71:D1:A4:5A:98:13:E2:3B:99:28:F3:B1:37:A2",
+            "sha512": "28:7F:53:25:83:AB:E1:DE:65:50:10:F3:D7:D0:46:4E:A8:44:8B:D1:38:C9:BE:E4:DE:A2:55:9D:BB:4C:86:3B:A1:E7:1E:D5:EF:55:CF:85:3D:65:D3:99:73:72:ED:44:05:C6:5D:6A:77:FD:39:1B:00:B3:59:40:34:2A:5D:98",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -543,14 +620,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                            "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -565,7 +642,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                             }
                         ],
                         "reasons": null,
@@ -600,7 +677,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -614,7 +691,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "uUztWSsvjC1mo9gKSP8TuUG9hE4=\n"
+                    "value": "HuTSbwi+IG2CMvGI4eFPQ4AUXfU="
                 },
                 {
                     "critical": false,
@@ -652,7 +729,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -667,14 +744,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -686,9 +763,9 @@
             "key_type": "RSA",
             "name": "child-cert",
             "pub_filename": "child-cert.pub",
-            "serial": "BA7AB54385941EF6F2C2CADB34DE1B246ECD83F",
-            "sha256": "65:28:F0:30:68:8F:0E:72:B8:35:4B:86:AC:C4:C8:96:0E:81:6C:2B:3D:44:87:49:54:F2:54:A5:6A:2A:EA:FE",
-            "sha512": "29:41:A2:FA:61:F5:E7:31:EB:73:56:BD:94:C6:52:DD:EA:20:BE:A4:8C:5A:A4:F8:AF:98:A2:DF:D9:4A:B3:B8:9D:C5:53:2A:61:DA:BE:00:14:34:14:BA:8B:F1:F8:2F:F6:3D:58:4E:2D:D5:08:38:8B:00:23:49:13:3D:FF:8A",
+            "serial": "51A30290DA41BC7C1F054860EEBBD79C3EC9D2EB",
+            "sha256": "BD:0F:28:70:4D:7C:07:11:81:06:1D:E1:28:F4:28:F8:B6:52:43:18:58:D6:79:46:F7:96:E1:19:E3:C3:8F:A5",
+            "sha512": "78:00:30:C8:36:88:8A:E6:E4:21:E2:66:69:4B:B4:02:28:63:AF:8D:07:86:B4:66:21:86:F2:A1:C4:58:1F:1C:D3:15:13:65:B1:61:1F:58:2E:25:8F:DC:8C:24:35:7B:3B:A0:C2:0D:47:91:DA:F9:0E:94:82:66:D1:6B:69:5B",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -725,7 +802,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "u69+Aj36pvE8hI6t7jiY7NkyMtQ=\n"
+                    "value": "u69+Aj36pvE8hI6t7jiY7NkyMtQ="
                 },
                 {
                     "critical": true,
@@ -789,13 +866,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "u69+Aj36pvE8hI6t7jiY7NkyMtQ=\n"
+                        "key_identifier": "u69+Aj36pvE8hI6t7jiY7NkyMtQ="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "kK9qOpRaC9iQ6hJWc99DtDoo2uc=\n"
+                    "value": "kK9qOpRaC9iQ6hJWc99DtDoo2uc="
                 },
                 {
                     "critical": true,
@@ -920,13 +997,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "kK9qOpRaC9iQ6hJWc99DtDoo2uc=\n"
+                        "key_identifier": "kK9qOpRaC9iQ6hJWc99DtDoo2uc="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "8ssf6W7VQ+OFdZhfl3ywWX/VwMA=\n"
+                    "value": "8ssf6W7VQ+OFdZhfl3ywWX/VwMA="
                 },
                 {
                     "critical": true,
@@ -1056,13 +1133,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "u69+Aj36pvE8hI6t7jiY7NkyMtQ=\n"
+                        "key_identifier": "u69+Aj36pvE8hI6t7jiY7NkyMtQ="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "Odr/yigUiqh0Ewi55A6p0vp+nWk=\n"
+                    "value": "Odr/yigUiqh0Ewi55A6p0vp+nWk="
                 },
                 {
                     "critical": true,
@@ -1176,13 +1253,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "Odr/yigUiqh0Ewi55A6p0vp+nWk=\n"
+                        "key_identifier": "Odr/yigUiqh0Ewi55A6p0vp+nWk="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "RD5zMOsLG6ennQ/aeZZNGofpnSE=\n"
+                    "value": "RD5zMOsLG6ennQ/aeZZNGofpnSE="
                 },
                 {
                     "critical": true,
@@ -1281,19 +1358,19 @@
                     "value": [
                         {
                             "entry_type": "precertificate",
-                            "log_id": "pLkJkLQYWBSHuxOizGdwCjw1mAT5G9+443fNDsgN3BA=\n",
+                            "log_id": "pLkJkLQYWBSHuxOizGdwCjw1mAT5G9+443fNDsgN3BA=",
                             "timestamp": "2018-03-14T14:23:09.403000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "VhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ0N0=\n",
+                            "log_id": "VhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ0N0=",
                             "timestamp": "2018-03-14T14:23:08.912000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/cs=\n",
+                            "log_id": "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/cs=",
                             "timestamp": "2018-03-14T14:23:09.352000",
                             "version": "v1"
                         }
@@ -1390,7 +1467,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "sT7DaQP4v0cB1JgmGggC72NkK8M=\n"
+                    "value": "sT7DaQP4v0cB1JgmGggC72NkK8M="
                 },
                 {
                     "critical": false,
@@ -1398,7 +1475,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "sT7DaQP4v0cB1JgmGggC72NkK8M=\n"
+                        "key_identifier": "sT7DaQP4v0cB1JgmGggC72NkK8M="
                     }
                 }
             ],
@@ -1457,7 +1534,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "A95QNVbRTLtm8KPiGxvDl7I90VU=\n"
+                    "value": "A95QNVbRTLtm8KPiGxvDl7I90VU="
                 },
                 {
                     "critical": false,
@@ -1465,7 +1542,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "A95QNVbRTLtm8KPiGxvDl7I90VU=\n"
+                        "key_identifier": "A95QNVbRTLtm8KPiGxvDl7I90VU="
                     }
                 }
             ],
@@ -1574,7 +1651,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "UWj/kK8CB3U8zNllZGKiErhZcjs=\n"
+                    "value": "UWj/kK8CB3U8zNllZGKiErhZcjs="
                 },
                 {
                     "critical": false,
@@ -1582,7 +1659,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "sT7DaQP4v0cB1JgmGggC72NkK8M=\n"
+                        "key_identifier": "sT7DaQP4v0cB1JgmGggC72NkK8M="
                     }
                 }
             ],
@@ -1628,13 +1705,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "UWj/kK8CB3U8zNllZGKiErhZcjs=\n"
+                        "key_identifier": "UWj/kK8CB3U8zNllZGKiErhZcjs="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "VvdF1ITRPJWtWBQu9NHMLxHAc/Y=\n"
+                    "value": "VvdF1ITRPJWtWBQu9NHMLxHAc/Y="
                 },
                 {
                     "critical": false,
@@ -1912,13 +1989,13 @@
                     "value": [
                         {
                             "entry_type": "precertificate",
-                            "log_id": "Y/Lbzeg7zCzPC3KEJ1drM6SNYXePvXWmOLHHaFRL2I0=\n",
+                            "log_id": "Y/Lbzeg7zCzPC3KEJ1drM6SNYXePvXWmOLHHaFRL2I0=",
                             "timestamp": "2019-02-01T15:35:06.188000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "b1N2rDHwMRnYmQCkURX/dxUcEdkCwQApBo2yCJo32RM=\n",
+                            "log_id": "b1N2rDHwMRnYmQCkURX/dxUcEdkCwQApBo2yCJo32RM=",
                             "timestamp": "2019-02-01T15:35:06.526000",
                             "version": "v1"
                         }
@@ -2036,7 +2113,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "D4BhHIIxYdUvKOeNRji0LOHG2eI=\n"
+                    "value": "D4BhHIIxYdUvKOeNRji0LOHG2eI="
                 },
                 {
                     "critical": false,
@@ -2044,7 +2121,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "A95QNVbRTLtm8KPiGxvDl7I90VU=\n"
+                        "key_identifier": "A95QNVbRTLtm8KPiGxvDl7I90VU="
                     }
                 }
             ],
@@ -2086,13 +2163,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "D4BhHIIxYdUvKOeNRji0LOHG2eI=\n"
+                        "key_identifier": "D4BhHIIxYdUvKOeNRji0LOHG2eI="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "CNdTnYAL+rA5fnTYVd2n68i+Fpw=\n"
+                    "value": "CNdTnYAL+rA5fnTYVd2n68i+Fpw="
                 },
                 {
                     "critical": false,
@@ -2238,13 +2315,13 @@
                     "value": [
                         {
                             "entry_type": "precertificate",
-                            "log_id": "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/cs=\n",
+                            "log_id": "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/cs=",
                             "timestamp": "2019-06-07T08:47:02.367000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "h3W/51l8+IxDmV+9827/Vo1HVjb/SrVgwbTq/16ggw8=\n",
+                            "log_id": "h3W/51l8+IxDmV+9827/Vo1HVjb/SrVgwbTq/16ggw8=",
                             "timestamp": "2019-06-07T08:47:02.566000",
                             "version": "v1"
                         }
@@ -2314,7 +2391,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "ppMcrkaspJ5unIbr5sHw0ZbPmV4=\n"
+                    "value": "iu9nx7XqeQXXAJaLuvT9uAj7m7g="
                 },
                 {
                     "critical": false,
@@ -2322,7 +2399,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "ppMcrkaspJ5unIbr5sHw0ZbPmV4=\n"
+                        "key_identifier": "iu9nx7XqeQXXAJaLuvT9uAj7m7g="
                     }
                 }
             ],
@@ -2333,9 +2410,9 @@
             "name": "dsa",
             "path_length": 3,
             "pub_filename": "dsa.pub",
-            "serial": "2F76BB14B679D441129601671BC82481468B666C",
-            "sha256": "86:3D:A7:11:20:A9:6D:F2:AC:B0:A5:AF:EF:FF:B0:78:53:11:FA:52:01:E2:70:20:59:15:F8:38:76:47:3B:98",
-            "sha512": "7D:48:33:E8:61:F3:15:C0:1E:E6:2D:52:71:A0:DB:CD:F9:D9:DF:53:0A:06:7D:84:69:AD:2C:B0:80:7B:7E:FF:8E:4F:D3:98:0E:60:F1:35:48:74:7C:12:50:D0:14:4F:84:F9:D6:C0:15:C9:80:46:93:AF:50:6F:54:3B:AF:01",
+            "serial": "3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A",
+            "sha256": "DA:01:31:68:47:E7:5A:C5:52:B5:38:38:CA:90:0C:4B:9E:6D:55:FA:AE:A5:19:3A:52:C7:3B:D0:20:53:CF:9C",
+            "sha512": "49:C3:7B:3D:36:61:B3:27:C2:CD:C3:50:13:E8:09:87:66:99:0C:82:5A:0D:A9:39:1C:89:B9:41:B7:6B:CF:08:74:88:C5:98:03:5B:A2:D4:A3:CF:CC:9B:68:9F:BF:B7:D9:E6:D6:AB:FE:56:C7:55:81:3E:88:93:0B:B5:6E:AD",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -2343,14 +2420,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/2F76BB14B679D441129601671BC82481468B666C/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/2F76BB14B679D441129601671BC82481468B666C.der"
+                            "value": "http://localhost:8000/django_ca/issuer/3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -2365,7 +2442,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/2F76BB14B679D441129601671BC82481468B666C/"
+                                "value": "http://localhost:8000/django_ca/crl/3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A/"
                             }
                         ],
                         "reasons": null,
@@ -2400,7 +2477,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "ppMcrkaspJ5unIbr5sHw0ZbPmV4=\n"
+                        "key_identifier": "iu9nx7XqeQXXAJaLuvT9uAj7m7g="
                     }
                 },
                 {
@@ -2414,7 +2491,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "evR683JfC3BHrU7hZf4ICbpdDQA=\n"
+                    "value": "HRA40HQruXQJxficYNSn6LDQ1NY="
                 },
                 {
                     "critical": false,
@@ -2452,7 +2529,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/2F76BB14B679D441129601671BC82481468B666C/"
+                                    "value": "http://localhost:8000/django_ca/crl/3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A/"
                                 }
                             ],
                             "reasons": null,
@@ -2467,14 +2544,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/2F76BB14B679D441129601671BC82481468B666C/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/2F76BB14B679D441129601671BC82481468B666C.der"
+                                "value": "http://localhost:8000/django_ca/issuer/3C2D34519DB24DC0AF6A3133F6E8B0E936679A0A.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -2486,9 +2563,9 @@
             "key_type": "DSA",
             "name": "dsa-cert",
             "pub_filename": "dsa-cert.pub",
-            "serial": "38A9C8AA8AD1BD7D8A12B3811AC570E6FF3D2466",
-            "sha256": "69:63:AD:11:69:52:52:6F:19:F4:4D:C2:6F:1C:D1:F3:5D:08:15:92:53:4F:C7:FC:5A:27:39:2A:29:DB:4A:7D",
-            "sha512": "C4:90:A7:1F:73:70:A3:10:F2:5E:AD:16:CC:11:71:DD:3D:A5:B2:37:DE:DD:BA:15:9E:E5:F8:45:30:83:27:98:DE:BB:02:87:21:A2:BB:ED:0A:EE:50:F7:B2:B7:B1:37:51:3C:0D:91:20:1F:82:0E:C3:9F:0B:1D:7A:9D:69:06",
+            "serial": "30DEF536C290CCDF6513014714BF2D5AAE20E18D",
+            "sha256": "BB:59:7C:56:76:54:59:16:77:C9:49:B5:53:B9:4C:F3:A1:9E:C0:B8:CC:90:CD:BF:D9:32:06:56:F0:B2:85:C8",
+            "sha512": "1D:70:BD:AC:AC:AF:CD:F4:C1:04:92:2E:55:A2:8D:06:81:A2:B7:94:00:81:EC:D5:80:CD:1D:1A:8C:D4:32:E1:69:79:FF:41:82:41:02:17:5E:54:A7:6D:B1:AD:18:8F:90:56:DB:CE:6B:1B:85:3A:F2:AB:17:3E:C0:19:B0:D4",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -2541,7 +2618,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "xKexpHsscfrb4UuQdf/EFWCFiRA=\n"
+                    "value": "xKexpHsscfrb4UuQdf/EFWCFiRA="
                 }
             ],
             "key_filename": false,
@@ -2596,7 +2673,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "ZKV73GZbDRl/aW60xWyn4UA/X/g=\n"
+                    "value": "wrHL7XuRQGKegIverEvdtCgqZgk="
                 },
                 {
                     "critical": false,
@@ -2604,7 +2681,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "ZKV73GZbDRl/aW60xWyn4UA/X/g=\n"
+                        "key_identifier": "wrHL7XuRQGKegIverEvdtCgqZgk="
                     }
                 }
             ],
@@ -2614,9 +2691,9 @@
             "name": "ec",
             "path_length": 1,
             "pub_filename": "ec.pub",
-            "serial": "3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D",
-            "sha256": "94:E7:92:49:A2:D2:F4:74:C6:98:82:6C:CB:30:BE:17:1F:97:8C:63:DE:BD:60:28:DE:3C:FD:D0:8F:CF:67:E1",
-            "sha512": "7A:40:77:54:DE:06:4F:84:F1:AC:5F:B8:CA:95:11:8A:EE:18:97:C1:6B:5F:7F:B9:E4:07:BF:61:EE:71:A0:6B:16:8E:23:08:F8:39:20:06:CD:AD:67:EC:41:5C:6B:FE:09:86:CA:D6:88:D8:A4:77:EC:A5:AA:25:92:C3:96:F0",
+            "serial": "5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4",
+            "sha256": "C2:79:4A:2E:82:26:A1:F4:25:49:C8:51:D8:A1:C5:DE:DE:2A:01:D3:C3:7A:73:F9:57:50:77:5F:7B:6C:75:79",
+            "sha512": "34:5B:0D:CC:53:5E:B7:6F:A8:67:66:94:1F:81:74:10:BD:09:F0:56:1F:53:10:17:27:4D:AA:40:79:25:FC:04:63:9C:93:7C:35:FD:61:E6:02:F2:01:3D:8D:BF:12:11:E5:BA:6F:7B:B2:AC:E9:B2:FD:4F:6F:1D:BE:EF:5C:6A",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -2624,14 +2701,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D.der"
+                            "value": "http://localhost:8000/django_ca/issuer/5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -2646,7 +2723,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D/"
+                                "value": "http://localhost:8000/django_ca/crl/5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4/"
                             }
                         ],
                         "reasons": null,
@@ -2681,7 +2758,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "ZKV73GZbDRl/aW60xWyn4UA/X/g=\n"
+                        "key_identifier": "wrHL7XuRQGKegIverEvdtCgqZgk="
                     }
                 },
                 {
@@ -2695,7 +2772,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "a6WRCo5oHgZPTl1d/HLcqoNmJKo=\n"
+                    "value": "jiRMo9eb3EqDXG3HhUldxd1UCEI="
                 },
                 {
                     "critical": false,
@@ -2733,7 +2810,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D/"
+                                    "value": "http://localhost:8000/django_ca/crl/5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4/"
                                 }
                             ],
                             "reasons": null,
@@ -2748,14 +2825,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/3B9D3A8331091B4B77C30DE61B25B3A3CDA0F14D.der"
+                                "value": "http://localhost:8000/django_ca/issuer/5A73001A660E0C5BFB938E46E7E5FA0FDDCE1EF4.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -2766,9 +2843,9 @@
             "key_type": "EC",
             "name": "ec-cert",
             "pub_filename": "ec-cert.pub",
-            "serial": "7A6C3D116011F963E57F85879C5CE9D12E55AA8B",
-            "sha256": "E6:1F:25:BF:1E:86:54:22:AC:0F:46:0A:89:F4:CA:D8:CC:31:A6:75:D8:4A:05:68:D8:3E:99:B2:1D:BD:B8:76",
-            "sha512": "BA:A1:7C:69:5B:EA:E8:75:84:88:2F:B5:73:F2:8A:91:98:61:A4:56:A6:72:E0:78:E0:F7:1E:5A:17:6C:54:BE:8A:46:D7:D6:83:E2:AF:85:61:03:75:4F:E9:C7:E7:62:C8:03:37:0F:DE:82:C9:4B:72:11:54:56:85:D0:BB:2B",
+            "serial": "2422AB6D4C7FB2CE6B9AC71DDC9588CD460186B2",
+            "sha256": "31:D0:C7:D6:BD:9E:29:31:F2:D9:8D:76:EC:B1:7F:30:48:DF:B5:AA:BF:03:6F:6D:2B:B1:31:22:CF:8E:B6:90",
+            "sha512": "23:8F:05:DA:1C:52:CD:0D:8D:8E:BA:6A:8C:2F:04:86:E7:D9:04:F3:F3:46:4D:CE:3C:50:03:3E:9B:5F:F2:18:F9:8C:F6:26:E2:6D:9B:44:7F:11:00:52:F1:23:F5:DA:88:81:DA:C8:F0:40:F1:EA:0A:14:15:6F:79:C5:A8:C5",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -2858,7 +2935,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "vEZR0VAluV4EpuRo5I/SkjZ+NYo=\n"
+                    "value": "UZ19K+Fp94kXHyOUVDZFZ1nK1Fg="
                 },
                 {
                     "critical": false,
@@ -2866,7 +2943,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "vEZR0VAluV4EpuRo5I/SkjZ+NYo=\n"
+                        "key_identifier": "UZ19K+Fp94kXHyOUVDZFZ1nK1Fg="
                     }
                 }
             ],
@@ -2876,9 +2953,9 @@
             "name": "ed25519",
             "path_length": 1,
             "pub_filename": "ed25519.pub",
-            "serial": "46859C4431F820364693BE60B5F2B006ADD06BE5",
-            "sha256": "3F:CB:E5:A1:62:F2:78:16:1A:07:3A:50:4D:29:9F:90:7E:01:0C:7B:71:C1:1B:EB:F5:FE:56:47:1F:A4:19:1C",
-            "sha512": "AD:5B:27:FE:A2:8F:45:A1:87:EF:7F:35:BB:B1:35:03:53:4C:8C:E8:C1:AB:AA:F7:9A:01:8F:08:D0:28:EB:7B:3B:4B:CF:70:1A:A7:5E:7E:19:CE:A6:31:1C:7E:32:2B:1A:D3:36:5B:45:B2:E9:63:7A:2D:DC:44:18:89:04:93",
+            "serial": "476201EE3B86EE7FB4F033A70B8280DB11835E63",
+            "sha256": "02:01:47:B2:A5:B5:14:FA:96:B4:3B:95:CE:51:51:B7:33:2B:87:E4:5B:3A:BC:1F:49:FA:E6:E2:47:CE:C9:18",
+            "sha512": "16:11:A2:56:60:7E:22:37:1C:78:FD:70:8A:16:59:71:51:31:6E:19:D7:2C:50:82:1B:49:14:D5:25:D4:FD:2C:57:CF:02:EE:0F:DD:2F:55:94:CD:F6:47:F4:10:A9:49:FE:9F:11:E3:35:76:BD:A5:F6:B1:0F:C3:31:55:F0:BA",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -2886,14 +2963,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/46859C4431F820364693BE60B5F2B006ADD06BE5/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/476201EE3B86EE7FB4F033A70B8280DB11835E63/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/46859C4431F820364693BE60B5F2B006ADD06BE5.der"
+                            "value": "http://localhost:8000/django_ca/issuer/476201EE3B86EE7FB4F033A70B8280DB11835E63.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -2908,7 +2985,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/46859C4431F820364693BE60B5F2B006ADD06BE5/"
+                                "value": "http://localhost:8000/django_ca/crl/476201EE3B86EE7FB4F033A70B8280DB11835E63/"
                             }
                         ],
                         "reasons": null,
@@ -2943,7 +3020,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "vEZR0VAluV4EpuRo5I/SkjZ+NYo=\n"
+                        "key_identifier": "UZ19K+Fp94kXHyOUVDZFZ1nK1Fg="
                     }
                 },
                 {
@@ -2957,7 +3034,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "S2dG74UbQfc75pwUfHry0FeqJhE=\n"
+                    "value": "zTgG0HJbvPdhQznUszQi4mtKN3A="
                 },
                 {
                     "critical": false,
@@ -2995,7 +3072,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/46859C4431F820364693BE60B5F2B006ADD06BE5/"
+                                    "value": "http://localhost:8000/django_ca/crl/476201EE3B86EE7FB4F033A70B8280DB11835E63/"
                                 }
                             ],
                             "reasons": null,
@@ -3010,14 +3087,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/46859C4431F820364693BE60B5F2B006ADD06BE5/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/476201EE3B86EE7FB4F033A70B8280DB11835E63/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/46859C4431F820364693BE60B5F2B006ADD06BE5.der"
+                                "value": "http://localhost:8000/django_ca/issuer/476201EE3B86EE7FB4F033A70B8280DB11835E63.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -3028,9 +3105,9 @@
             "key_type": "Ed25519",
             "name": "ed25519-cert",
             "pub_filename": "ed25519-cert.pub",
-            "serial": "65C4ECF72D2A034BF95B9EBB6DA039F4EF0C0E08",
-            "sha256": "A4:C6:D1:9D:23:30:36:D6:8E:73:C7:BF:F7:DE:D0:38:1D:43:3A:1E:B9:B9:E4:CB:B9:4B:34:48:B0:00:42:38",
-            "sha512": "59:8D:15:1B:4C:74:F2:B1:0A:F5:B1:0E:25:6B:EA:A5:21:AF:47:C5:5D:F6:DA:73:26:9D:00:76:5E:48:70:24:8C:14:E1:4C:B4:ED:A4:5F:FC:49:43:16:9C:91:5A:78:06:88:CD:09:E3:38:4D:CF:F5:A0:82:EE:E9:6E:24:43",
+            "serial": "12396C1BFA3610210D04F4489B407BB3D8C94CC2",
+            "sha256": "83:54:83:3B:0A:A2:5A:F7:FE:04:A9:E6:AC:11:53:7B:F3:ED:8F:DE:C8:8D:57:9F:1E:00:23:EF:1B:90:6E:43",
+            "sha512": "6F:FD:16:05:4D:43:A3:B3:EB:0F:FC:7F:2D:BB:22:74:E3:52:F5:01:12:B7:15:53:9B:E7:0B:79:C4:7A:F8:88:3A:F8:C3:04:E3:BC:E8:B6:7E:15:3D:16:05:AC:79:B9:2E:50:E8:C1:DC:BC:73:D4:5E:02:87:80:D7:C4:93:60",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -3078,7 +3155,7 @@
                         "permitted_subtrees": [
                             {
                                 "type": "DNS",
-                                "value": ".org"
+                                "value": ".com"
                             }
                         ]
                     }
@@ -3102,7 +3179,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "Lk0weitpx91WZqmIYZzYplsiEFI=\n"
+                    "value": "5anc476XRHl0TSPTlqN3CAn0GgQ="
                 },
                 {
                     "critical": false,
@@ -3110,7 +3187,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "Lk0weitpx91WZqmIYZzYplsiEFI=\n"
+                        "key_identifier": "5anc476XRHl0TSPTlqN3CAn0GgQ="
                     }
                 }
             ],
@@ -3120,9 +3197,9 @@
             "name": "ed448",
             "path_length": 1,
             "pub_filename": "ed448.pub",
-            "serial": "72510EFF4EC7FA175A9D01FAA5F6088BA80F082D",
-            "sha256": "7C:A9:8C:21:BF:B3:7A:91:ED:62:13:6D:84:98:C2:57:0C:B4:33:9D:46:25:41:C5:60:5B:B4:46:15:9E:95:BA",
-            "sha512": "2F:E5:2E:84:BD:76:4B:C9:50:6F:EC:93:5B:86:0B:C2:A9:A7:55:24:C0:1E:66:8F:5D:86:FB:A7:7C:31:55:EF:D6:43:FF:F6:4B:3D:0B:92:B5:59:04:C4:D7:B2:70:A5:0A:CE:B6:67:4E:C5:CF:3C:09:D7:14:56:DE:EC:0E:E7",
+            "serial": "30957230D0ABCF53E509ED2AC684DDD5E0392488",
+            "sha256": "A1:A1:4E:C6:42:95:9F:6E:98:45:83:88:ED:54:7A:36:6E:94:69:5E:E3:3A:F9:FE:C3:0A:75:AB:E2:48:D1:18",
+            "sha512": "1C:6C:95:6F:3A:0E:ED:71:5D:26:B6:BF:78:23:E4:AA:2B:50:6D:7E:55:B3:41:57:17:55:E3:6C:AE:A1:0D:25:C3:E6:65:57:38:C3:5F:89:96:5E:9B:01:9B:BF:75:C5:42:00:09:30:55:E3:FE:8B:70:44:A5:10:62:45:21:D9",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -3130,14 +3207,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/72510EFF4EC7FA175A9D01FAA5F6088BA80F082D/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/30957230D0ABCF53E509ED2AC684DDD5E0392488/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/72510EFF4EC7FA175A9D01FAA5F6088BA80F082D.der"
+                            "value": "http://localhost:8000/django_ca/issuer/30957230D0ABCF53E509ED2AC684DDD5E0392488.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -3152,7 +3229,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/72510EFF4EC7FA175A9D01FAA5F6088BA80F082D/"
+                                "value": "http://localhost:8000/django_ca/crl/30957230D0ABCF53E509ED2AC684DDD5E0392488/"
                             }
                         ],
                         "reasons": null,
@@ -3187,7 +3264,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "Lk0weitpx91WZqmIYZzYplsiEFI=\n"
+                        "key_identifier": "5anc476XRHl0TSPTlqN3CAn0GgQ="
                     }
                 },
                 {
@@ -3201,7 +3278,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "0e6M9dgDXuiYeaPdTjTcZCOJ0II=\n"
+                    "value": "52nc9/Jq6N2SU+BoQMAxeSt3owo="
                 },
                 {
                     "critical": false,
@@ -3239,7 +3316,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/72510EFF4EC7FA175A9D01FAA5F6088BA80F082D/"
+                                    "value": "http://localhost:8000/django_ca/crl/30957230D0ABCF53E509ED2AC684DDD5E0392488/"
                                 }
                             ],
                             "reasons": null,
@@ -3254,14 +3331,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/72510EFF4EC7FA175A9D01FAA5F6088BA80F082D/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/30957230D0ABCF53E509ED2AC684DDD5E0392488/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/72510EFF4EC7FA175A9D01FAA5F6088BA80F082D.der"
+                                "value": "http://localhost:8000/django_ca/issuer/30957230D0ABCF53E509ED2AC684DDD5E0392488.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -3272,9 +3349,9 @@
             "key_type": "Ed448",
             "name": "ed448-cert",
             "pub_filename": "ed448-cert.pub",
-            "serial": "3C18FFCFD13A4DAA724E8064ECCCA558EF1A6879",
-            "sha256": "D1:28:AE:98:98:AB:78:E7:E2:17:0C:D6:A2:BA:E0:DE:18:3B:E1:08:C9:B3:74:DD:98:CB:E1:7E:2F:B6:16:C5",
-            "sha512": "81:43:3B:9B:D3:3A:E8:25:B7:90:05:03:EE:6E:E3:96:C1:1A:4B:64:09:AE:F9:08:1A:DB:2F:6D:93:FF:22:EB:4D:A4:1B:AE:1E:B6:20:00:AD:52:49:9C:7A:21:94:AB:84:6B:F3:66:F0:59:4C:4A:3B:A9:E7:7A:89:F2:EF:CD",
+            "serial": "3399B5C82BE6894980AB0821F2C2D1ACE22A07A7",
+            "sha256": "D0:5E:FE:5A:42:48:6F:49:93:DB:01:C7:C5:DF:39:2B:37:27:5F:11:22:C8:F1:E7:C3:FD:EB:B9:A1:AB:CE:6A",
+            "sha512": "8F:8D:C4:CC:7C:31:09:C7:70:68:05:0F:D3:27:C4:E3:52:66:FD:DF:EB:E0:40:16:B9:6E:25:2F:87:D6:D0:39:0C:5D:E7:9D:9D:F6:A7:C7:78:CC:E8:53:AD:55:B4:C8:8F:D4:32:C8:4F:E7:0A:01:07:63:EE:4E:37:1C:6A:A1",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -3326,9 +3403,9 @@
             "key_type": "RSA",
             "name": "empty-subject",
             "pub_filename": "empty-subject.pub",
-            "serial": "384E8CEBAB5524A4EEECD65E37A31DB183C59BB7",
-            "sha256": "8A:EC:8B:9B:28:CA:79:1D:F1:E6:DC:7F:2F:84:85:93:80:02:E3:70:2A:63:3E:99:68:98:94:08:D0:61:F8:82",
-            "sha512": "08:08:BB:F6:4B:9B:FD:D8:C4:18:38:38:43:E2:D0:86:15:6F:7B:5C:AF:CF:06:26:32:20:BB:4D:07:5C:14:E0:17:A0:CC:FD:BE:7E:B2:85:74:A2:7F:25:07:7B:42:8E:DA:BD:7F:69:FF:4F:50:98:55:FB:C5:D8:11:3E:1A:F2",
+            "serial": "3E699C65C3AD77940E7FFDA4267B2EFB574D660E",
+            "sha256": "6B:68:7D:D0:D0:96:98:52:57:19:D2:EF:21:89:DF:D0:ED:47:EA:25:D1:6F:8D:16:44:C3:09:8C:AD:11:1F:9B",
+            "sha512": "2C:29:C3:5C:A6:21:9C:98:05:CF:32:8A:15:09:85:D2:58:58:E1:5B:85:D8:F5:97:3A:76:C5:F9:BF:FE:66:26:89:8F:BE:97:3B:0D:9A:A8:6C:74:E5:C9:38:27:F5:C9:C9:1D:74:BD:CD:E3:61:61:07:74:75:37:FA:B0:BF:F5",
             "subject": [],
             "type": "cert"
         },
@@ -3348,7 +3425,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "wHqYaI2J+6sFZAwRfap9ZbjKzE4=\n"
+                    "value": "wHqYaI2J+6sFZAwRfap9ZbjKzE4="
                 },
                 {
                     "critical": false,
@@ -3356,7 +3433,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "wHqYaI2J+6sFZAwRfap9ZbjKzE4=\n"
+                        "key_identifier": "wHqYaI2J+6sFZAwRfap9ZbjKzE4="
                     }
                 }
             ],
@@ -3410,7 +3487,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "YHtmGkUNl8qJUC99BM00qP/8/Us=\n"
+                    "value": "YHtmGkUNl8qJUC99BM00qP/8/Us="
                 }
             ],
             "key_filename": false,
@@ -3467,7 +3544,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "6k581IAt5RWBhiaMgm3AmKTPlw8=\n"
+                    "value": "6k581IAt5RWBhiaMgm3AmKTPlw8="
                 },
                 {
                     "critical": false,
@@ -3517,7 +3594,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "YHtmGkUNl8qJUC99BM00qP/8/Us=\n"
+                        "key_identifier": "YHtmGkUNl8qJUC99BM00qP/8/Us="
                     }
                 }
             ],
@@ -3647,7 +3724,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "UlpFW9SdrGUwvWeAbNGhPgn3/ZI=\n"
+                    "value": "UlpFW9SdrGUwvWeAbNGhPgn3/ZI="
                 },
                 {
                     "critical": false,
@@ -3655,7 +3732,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "6k581IAt5RWBhiaMgm3AmKTPlw8=\n"
+                        "key_identifier": "6k581IAt5RWBhiaMgm3AmKTPlw8="
                     }
                 }
             ],
@@ -3704,7 +3781,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "m+IHV2ccHsBqBt5ZtJot39wZhi4=\n"
+                    "value": "m+IHV2ccHsBqBt5ZtJot39wZhi4="
                 },
                 {
                     "critical": false,
@@ -3729,7 +3806,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m+IHV2ccHsBqBt5ZtJot39wZhi4=\n"
+                        "key_identifier": "m+IHV2ccHsBqBt5ZtJot39wZhi4="
                     }
                 }
             ],
@@ -3783,7 +3860,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "QMK9J47MNIMwojPX+2yz8LQsgM4=\n"
+                    "value": "QMK9J47MNIMwojPX+2yz8LQsgM4="
                 },
                 {
                     "critical": false,
@@ -3791,7 +3868,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "OpqFBxBnKLbv9r0FQW4gwZTaD94=\n"
+                        "key_identifier": "OpqFBxBnKLbv9r0FQW4gwZTaD94="
                     }
                 },
                 {
@@ -3964,7 +4041,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "QMK9J47MNIMwojPX+2yz8LQsgM4=\n"
+                        "key_identifier": "QMK9J47MNIMwojPX+2yz8LQsgM4="
                     }
                 },
                 {
@@ -4172,7 +4249,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "LjAaRkHw6BtyAllBis+dG/qYjZ4=\n"
+                    "value": "LjAaRkHw6BtyAllBis+dG/qYjZ4="
                 },
                 {
                     "critical": false,
@@ -4180,19 +4257,19 @@
                     "value": [
                         {
                             "entry_type": "precertificate",
-                            "log_id": "pLkJkLQYWBSHuxOizGdwCjw1mAT5G9+443fNDsgN3BA=\n",
+                            "log_id": "pLkJkLQYWBSHuxOizGdwCjw1mAT5G9+443fNDsgN3BA=",
                             "timestamp": "2019-03-27T09:13:54.342000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/cs=\n",
+                            "log_id": "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/cs=",
                             "timestamp": "2019-03-27T09:13:55.237000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "RJRlLrDuzq/EQAfYqP4owNrmgr7YyzG1P9MzlrW2gag=\n",
+                            "log_id": "RJRlLrDuzq/EQAfYqP4owNrmgr7YyzG1P9MzlrW2gag=",
                             "timestamp": "2019-03-27T09:13:56.485000",
                             "version": "v1"
                         }
@@ -4244,7 +4321,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "OpqFBxBnKLbv9r0FQW4gwZTaD94=\n"
+                    "value": "OpqFBxBnKLbv9r0FQW4gwZTaD94="
                 }
             ],
             "key_filename": false,
@@ -4314,7 +4391,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "d8K4UJpndnaxLcKG0IOgfqZ+uks=\n"
+                    "value": "d8K4UJpndnaxLcKG0IOgfqZ+uks="
                 },
                 {
                     "critical": false,
@@ -4322,7 +4399,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m+IHV2ccHsBqBt5ZtJot39wZhi4=\n"
+                        "key_identifier": "m+IHV2ccHsBqBt5ZtJot39wZhi4="
                     }
                 },
                 {
@@ -4447,7 +4524,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "Hw2m6uorbpYbXJm1wz1vX0sNvp8=\n"
+                    "value": "Hw2m6uorbpYbXJm1wz1vX0sNvp8="
                 },
                 {
                     "critical": true,
@@ -4463,7 +4540,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "d8K4UJpndnaxLcKG0IOgfqZ+uks=\n"
+                        "key_identifier": "d8K4UJpndnaxLcKG0IOgfqZ+uks="
                     }
                 },
                 {
@@ -4555,7 +4632,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "7UQZwNPwBovupHu+QucmVMiONnY=\n"
+                    "value": "7UQZwNPwBovupHu+QucmVMiONnY="
                 }
             ],
             "key_filename": false,
@@ -4632,7 +4709,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "xKexpHsscfrb4UuQdf/EFWCFiRA=\n"
+                        "key_identifier": "xKexpHsscfrb4UuQdf/EFWCFiRA="
                     }
                 },
                 {
@@ -4684,7 +4761,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "qEpqYwR93brm0Tm3pkVl7/Oo7KE=\n"
+                    "value": "qEpqYwR93brm0Tm3pkVl7/Oo7KE="
                 }
             ],
             "key_filename": false,
@@ -4746,7 +4823,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "9PO49UOQLqJ/3VFKXz6s+/Ez7pU=\n"
+                    "value": "9PO49UOQLqJ/3VFKXz6s+/Ez7pU="
                 },
                 {
                     "critical": false,
@@ -4754,7 +4831,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "qEpqYwR93brm0Tm3pkVl7/Oo7KE=\n"
+                        "key_identifier": "qEpqYwR93brm0Tm3pkVl7/Oo7KE="
                     }
                 },
                 {
@@ -4873,7 +4950,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "xKexpHsscfrb4UuQdf/EFWCFiRA=\n"
+                        "key_identifier": "xKexpHsscfrb4UuQdf/EFWCFiRA="
                     }
                 },
                 {
@@ -4912,7 +4989,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "qEpqYwR93brm0Tm3pkVl7/Oo7KE=\n"
+                    "value": "qEpqYwR93brm0Tm3pkVl7/Oo7KE="
                 }
             ],
             "key_filename": false,
@@ -4974,7 +5051,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "dzct/IkiEaBh4Kxs9B2YMRuys4g=\n"
+                    "value": "dzct/IkiEaBh4Kxs9B2YMRuys4g="
                 },
                 {
                     "critical": false,
@@ -4982,7 +5059,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "qEpqYwR93brm0Tm3pkVl7/Oo7KE=\n"
+                        "key_identifier": "qEpqYwR93brm0Tm3pkVl7/Oo7KE="
                     }
                 },
                 {
@@ -5073,13 +5150,13 @@
                     "value": [
                         {
                             "entry_type": "precertificate",
-                            "log_id": "b1N2rDHwMRnYmQCkURX/dxUcEdkCwQApBo2yCJo32RM=\n",
+                            "log_id": "b1N2rDHwMRnYmQCkURX/dxUcEdkCwQApBo2yCJo32RM=",
                             "timestamp": "2019-06-25T03:40:03.920000",
                             "version": "v1"
                         },
                         {
                             "entry_type": "precertificate",
-                            "log_id": "KTxRllTIOWW6qlD8WAfUt2+/WHopctykwwz05UVH9Hg=\n",
+                            "log_id": "KTxRllTIOWW6qlD8WAfUt2+/WHopctykwwz05UVH9Hg=",
                             "timestamp": "2019-06-25T03:40:03.862000",
                             "version": "v1"
                         }
@@ -5121,9 +5198,9 @@
             "key_type": "RSA",
             "name": "no-extensions",
             "pub_filename": "no-extensions.pub",
-            "serial": "1A473A08CBB197B89EC1474F8FB86E14C2EDAF0E",
-            "sha256": "46:13:EF:3B:BC:DE:58:6A:BC:E9:0C:BA:1D:8A:CA:5E:4E:12:00:37:D4:C3:6A:B1:04:C7:B6:06:27:00:EF:5A",
-            "sha512": "2F:A5:C7:5E:D7:A6:84:AF:7A:2D:9C:2F:58:86:53:3E:0C:FF:4F:E5:A8:F6:01:94:35:C8:45:82:1C:D5:02:02:B7:8F:0F:6C:35:5F:1C:38:D4:06:AB:62:22:59:0C:83:62:38:42:0F:B3:C2:50:89:B9:DE:CB:1F:5E:A6:16:82",
+            "serial": "D7A36E0943C5388ED345EA3C05F2FF439B2340F",
+            "sha256": "14:29:3A:6A:C3:24:FF:03:BE:B5:0E:E4:47:87:16:E6:A3:C1:67:2F:F8:E3:2F:07:4D:9C:00:9D:6C:D6:3B:AF",
+            "sha512": "E9:81:F5:62:B9:07:5D:D6:48:49:F9:99:93:11:2D:CE:E7:FC:9A:6A:51:DC:74:25:05:92:BB:64:64:D1:6E:A5:D7:BD:74:E7:38:C3:C6:1D:48:90:B7:41:40:99:4E:7A:25:22:CB:9D:66:38:8E:E4:EA:4D:89:AB:43:71:8D:CA",
             "subject": [
                 {
                     "oid": "2.5.4.3",
@@ -5151,7 +5228,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -5165,7 +5242,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "T41SAl0WU9eg5b/CFXfI/fQGubs=\n"
+                    "value": "hj/62QkF+LrX3CmaB21DNZNcUek="
                 },
                 {
                     "critical": false,
@@ -5200,7 +5277,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -5215,14 +5292,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -5235,9 +5312,9 @@
             "name": "profile-client",
             "profile": "client",
             "pub_filename": "profile-client.pub",
-            "serial": "2EA3FA20AD4A3CC5361482AD27DDDB1C3E05BBCC",
-            "sha256": "42:C6:3D:56:F4:6E:54:4E:6E:A0:86:3A:6B:0D:00:7D:90:26:66:C1:B8:C6:01:0C:35:21:20:98:39:C5:B3:04",
-            "sha512": "0B:D9:7D:47:DB:62:ED:9D:35:EF:FB:E0:02:BE:EE:5A:60:57:33:7A:25:8C:4D:F8:82:9B:2A:32:E5:A6:7B:C8:93:DB:DB:4A:67:64:28:E7:5E:10:7B:8E:29:34:4E:34:7C:5F:E8:D9:B5:11:D6:DA:E2:0C:87:EB:20:50:F1:A5",
+            "serial": "9E629E387203A04D1455BCFC4078185DD054110",
+            "sha256": "EA:B1:8F:BF:D0:DE:30:02:5B:61:37:EC:0B:6C:C9:B9:FF:47:31:F8:2D:02:12:CE:80:57:14:84:FC:B9:C3:E3",
+            "sha512": "4A:1D:FE:13:2B:24:44:75:28:E1:EE:24:FC:4E:0E:F1:31:9A:DB:D9:7C:08:5B:B1:FD:A4:28:4C:99:CF:44:A7:C7:7D:28:A4:AA:22:F8:89:46:57:21:2F:DE:D5:EF:C5:70:49:31:57:5A:62:26:79:77:8E:5C:FB:67:DF:9E:AC",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -5285,7 +5362,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -5299,7 +5376,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "FOz29Y12wDMN21rDAhslgaA4cgQ=\n"
+                    "value": "wUYuUKluc+NWK8Ogykn7Gv81M6Q="
                 },
                 {
                     "critical": true,
@@ -5328,7 +5405,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -5343,14 +5420,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -5363,9 +5440,9 @@
             "name": "profile-enduser",
             "profile": "enduser",
             "pub_filename": "profile-enduser.pub",
-            "serial": "7E1906BD7ED6F9E9358BDDD456C07313E9D7DABA",
-            "sha256": "26:C1:DF:FF:56:9F:0B:AC:D8:C4:8D:EE:C3:9D:F9:58:44:96:DC:AB:58:B0:33:31:C4:90:4E:60:CC:EB:48:E6",
-            "sha512": "6E:A8:21:48:D9:14:C4:45:1E:2B:95:3F:43:4B:65:65:E7:B9:A6:52:00:1E:F6:49:72:2E:C4:BA:4E:45:DF:8E:DB:2E:72:80:50:1C:77:52:50:BD:2F:61:75:5F:8D:8A:AB:2C:4C:E0:97:FC:09:56:3E:3F:76:2E:B4:B7:20:88",
+            "serial": "49608C7EA8118AA2F60766EC407C6DBCA88998D0",
+            "sha256": "18:3D:EB:7A:FB:C9:5C:16:2B:51:E8:49:3B:54:AE:5B:41:25:61:18:6E:A0:6D:F7:C9:02:7D:37:E8:ED:16:C6",
+            "sha512": "5A:D7:B2:EB:55:AB:8D:DC:5D:F5:61:3E:A4:55:7E:B4:B2:0A:49:59:E9:45:F1:81:C3:5F:BF:4E:09:8C:98:64:F3:1F:77:7A:6E:BE:B7:66:EB:A6:81:85:C8:D7:24:D7:79:C9:4B:61:47:21:A2:17:27:DE:14:5C:E8:DC:B2:DA",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -5413,7 +5490,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -5427,7 +5504,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "6pBm81o+q3VROMef0EDM9udrM7I=\n"
+                    "value": "30wYC7t6WWhJFvnNVRNHVX3HIvs="
                 },
                 {
                     "critical": true,
@@ -5459,7 +5536,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -5474,7 +5551,7 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -5487,9 +5564,9 @@
             "name": "profile-ocsp",
             "profile": "ocsp",
             "pub_filename": "profile-ocsp.pub",
-            "serial": "6CDB121F52AF02B6C3EB5778940C5DA696C9EF55",
-            "sha256": "65:13:B0:6C:A6:19:6A:9F:36:C9:F1:04:06:F9:0B:90:BC:F8:C4:F3:35:EE:78:07:99:1B:9A:A6:54:9A:40:63",
-            "sha512": "01:8D:A7:18:93:40:16:50:5F:C0:D3:B3:9A:8E:47:9B:D5:3A:BD:B4:E4:92:BE:A6:01:82:C9:6E:6E:D6:AE:F2:ED:4F:40:47:62:93:72:B9:9A:C5:0F:64:97:F4:08:2A:0A:B1:A0:6F:A3:7B:99:A3:13:68:14:6E:F5:F0:11:1E",
+            "serial": "66322B941C304C91A2905F5C86AD4F94B10D0210",
+            "sha256": "2D:26:2B:F3:DE:28:42:03:23:A9:2C:DD:28:8B:E3:E9:81:ED:68:26:81:32:FD:EE:20:34:3B:A7:7C:7D:06:38",
+            "sha512": "ED:27:10:2F:AB:8F:B9:99:F8:71:8E:10:64:7F:4A:ED:44:5A:79:83:AF:68:2A:BE:B4:B0:FD:A2:5E:A9:E8:B1:32:9D:37:6A:C2:BA:44:C5:55:4A:91:63:4F:9C:8A:80:1F:73:8D:1D:D7:12:80:8A:7B:4E:7F:6A:DC:A9:A3:25",
             "subject": [
                 {
                     "oid": "2.5.4.3",
@@ -5517,7 +5594,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -5531,7 +5608,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "84LdBkVzA60a193SsuM2t6yWQ1g=\n"
+                    "value": "X+hOrOAr1NF1Y1KfOInHNRzy9NA="
                 },
                 {
                     "critical": false,
@@ -5569,7 +5646,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -5584,14 +5661,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -5604,9 +5681,9 @@
             "name": "profile-server",
             "profile": "server",
             "pub_filename": "profile-server.pub",
-            "serial": "4853CA69EDE6C1549F9B6B43F4E5A25C30E3AC85",
-            "sha256": "DD:90:CF:D0:12:C3:2C:A2:04:D6:B8:A8:5A:88:4B:59:28:74:02:EC:9E:44:22:B1:7C:E0:9D:A5:6B:3D:01:F3",
-            "sha512": "DC:4F:89:36:30:55:6E:01:00:26:54:D2:E3:D9:61:00:2E:EE:EA:80:1A:17:DD:0C:79:A9:F8:BF:56:F0:E9:A3:CB:1C:2D:62:8D:69:FE:DB:7E:34:CA:2D:2E:D4:70:13:3B:61:94:0C:02:32:1A:D3:D8:15:B2:BD:3F:FC:1A:CC",
+            "serial": "4726045130D665E78B4818F6EE3F77176FF32C1",
+            "sha256": "D4:8F:0A:37:02:61:24:15:38:19:8A:DF:E9:5C:16:05:8A:D3:B9:93:3D:19:19:CA:F1:99:AD:52:BA:81:13:8E",
+            "sha512": "7C:D0:39:FF:19:52:70:D7:71:55:06:E9:87:1F:CF:D0:08:C2:64:7B:9D:AD:A6:9D:1C:7C:CC:A3:9A:BC:67:F7:4B:C8:2C:8C:69:0E:68:51:2A:2F:5E:35:04:A3:2F:FB:DF:A4:36:EF:52:F7:FB:26:DA:DE:69:8F:6D:25:ED:AB",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -5654,7 +5731,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "m/T8ZgUtc2JgTICaP60V6Uwd64M=\n"
+                        "key_identifier": "zchpmNx88mWmFXI7GqjIW7SfyF4="
                     }
                 },
                 {
@@ -5668,7 +5745,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "lDwOe/8Um1rly9Xkc20nvBa4zh4=\n"
+                    "value": "RfMPUOdzaKGAWoToeZefv4mjJmA="
                 },
                 {
                     "critical": false,
@@ -5705,7 +5782,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/C00BA925085F52F9F5A7331F81DD83318D1C0CC/"
+                                    "value": "http://localhost:8000/django_ca/crl/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/"
                                 }
                             ],
                             "reasons": null,
@@ -5720,14 +5797,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/C00BA925085F52F9F5A7331F81DD83318D1C0CC/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/2C0544B5F4DBA47C785EBE37C67EFE46959D1091/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -5740,9 +5817,9 @@
             "name": "profile-webserver",
             "profile": "webserver",
             "pub_filename": "profile-webserver.pub",
-            "serial": "13095455955B1BFED1594FE85622247DB0A0C83",
-            "sha256": "7D:F8:42:DF:FD:27:17:57:EE:60:2C:76:23:7A:74:0C:10:CB:AB:85:28:05:D2:CF:89:A6:97:CD:CF:14:E6:13",
-            "sha512": "C7:F6:3A:BA:DA:55:95:42:0F:D8:9A:FD:35:88:17:11:AB:22:26:20:AC:61:B1:26:35:74:FF:46:75:29:79:4C:50:F3:5B:3D:79:24:1B:0E:07:74:7E:2A:C8:CA:15:E5:E2:51:AE:83:8E:13:C5:01:A7:06:0B:23:05:2E:2B:6C",
+            "serial": "1794053389AB04BE14D4D1A4ECC1B886A699AB8C",
+            "sha256": "41:34:B9:0F:E3:E8:C9:FB:08:59:7A:91:EA:5D:76:BE:A1:8D:D5:6C:1A:B8:AA:8B:04:EC:5A:EF:A8:63:5A:A7",
+            "sha512": "CF:6C:F0:88:35:FF:90:D3:BF:4A:0F:A9:FC:76:D5:66:B3:C3:80:55:A4:29:71:CD:47:11:C3:CE:D6:C2:3E:71:81:63:71:32:67:62:6B:F8:55:39:F2:74:E4:91:4C:C7:F8:E5:4F:1F:D6:53:2D:C7:15:7E:C4:64:46:A0:3C:A1",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -5801,7 +5878,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "cdYt8DrmiV0OUIbpr0y23MB1TD0=\n"
+                    "value": "hSdKUG+tCFk8aI7/gjMebggLQho="
                 },
                 {
                     "critical": false,
@@ -5809,7 +5886,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "cdYt8DrmiV0OUIbpr0y23MB1TD0=\n"
+                        "key_identifier": "hSdKUG+tCFk8aI7/gjMebggLQho="
                     }
                 }
             ],
@@ -5821,9 +5898,9 @@
             "password": "testpassword",
             "path_length": 2,
             "pub_filename": "pwd.pub",
-            "serial": "463F4BD23415FED4B5DC9CD522F006222CF25F7E",
-            "sha256": "D9:FE:F3:BF:88:07:7B:96:D9:06:9E:78:0F:CA:75:00:6A:5F:0C:18:BE:A9:27:CC:55:2B:92:43:2B:59:D6:B6",
-            "sha512": "C7:6C:2E:20:15:B0:99:74:7E:FE:A1:E7:24:13:DB:DD:AD:3E:7F:80:51:D9:92:C1:CE:46:C6:6F:71:BE:CA:88:40:72:DA:F4:63:27:C2:5D:82:DB:28:3C:03:EE:0E:B4:B9:F3:87:51:65:51:CD:EE:03:A2:A0:AD:B3:A2:08:59",
+            "serial": "3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B",
+            "sha256": "26:39:07:F9:3A:6D:06:B4:46:B3:95:A5:10:1F:BF:EC:56:4E:4C:1B:02:20:BA:38:33:42:C2:F3:E5:E5:88:40",
+            "sha512": "30:7C:17:E2:68:2E:FE:ED:86:52:60:B6:A8:14:EC:73:4F:FE:72:0D:A3:B0:60:6B:89:68:40:E9:08:44:0B:18:7F:8B:5E:15:54:92:96:E9:FD:55:BA:F3:DD:34:CC:84:0F:3E:D2:64:D8:16:81:8C:7D:56:72:02:D4:2B:5C:49",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -5831,14 +5908,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/463F4BD23415FED4B5DC9CD522F006222CF25F7E/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/463F4BD23415FED4B5DC9CD522F006222CF25F7E.der"
+                            "value": "http://localhost:8000/django_ca/issuer/3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -5853,7 +5930,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/463F4BD23415FED4B5DC9CD522F006222CF25F7E/"
+                                "value": "http://localhost:8000/django_ca/crl/3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B/"
                             }
                         ],
                         "reasons": null,
@@ -5888,7 +5965,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "cdYt8DrmiV0OUIbpr0y23MB1TD0=\n"
+                        "key_identifier": "hSdKUG+tCFk8aI7/gjMebggLQho="
                     }
                 },
                 {
@@ -5902,7 +5979,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "sMmpbKA0ze+xsSGGEPF30z2J7gY=\n"
+                    "value": "JrevllpDBp6w0OMdKw8m+Uxpzto="
                 },
                 {
                     "critical": false,
@@ -5940,7 +6017,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/463F4BD23415FED4B5DC9CD522F006222CF25F7E/"
+                                    "value": "http://localhost:8000/django_ca/crl/3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B/"
                                 }
                             ],
                             "reasons": null,
@@ -5955,14 +6032,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/463F4BD23415FED4B5DC9CD522F006222CF25F7E/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/463F4BD23415FED4B5DC9CD522F006222CF25F7E.der"
+                                "value": "http://localhost:8000/django_ca/issuer/3493032D6BD8CD9125ABE0E7EF8C3390E9A0666B.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -5974,9 +6051,9 @@
             "key_type": "RSA",
             "name": "pwd-cert",
             "pub_filename": "pwd-cert.pub",
-            "serial": "3F7C6F8FC5DEC19D051AD20E417169D456195DE1",
-            "sha256": "A3:0F:11:8A:8B:7C:27:84:25:BB:5C:AC:57:86:F3:BC:5A:DC:02:B5:1D:1E:1D:DF:A1:13:2B:CD:5C:7B:D1:96",
-            "sha512": "C7:9E:39:E8:67:02:4D:88:FC:D6:E2:2E:9B:25:6B:B7:CF:19:62:B6:2D:41:FF:C0:D1:CE:BB:66:44:4C:5F:5B:E9:14:2D:1D:69:44:98:3C:7B:E8:D7:E5:78:99:B7:55:81:23:A1:3B:95:DA:2B:2A:60:02:66:FB:C8:4E:29:90",
+            "serial": "694D019065F45E8D5813B84E449DEA9FF9232EC7",
+            "sha256": "D1:65:E5:0A:C9:C9:70:EC:20:B1:42:B3:EF:A7:67:1F:68:17:63:39:AD:46:EA:E4:03:5E:4D:72:A2:AF:94:14",
+            "sha512": "0F:94:AC:90:0B:F8:59:B6:03:03:0D:36:2C:D4:38:6F:B2:8E:71:35:E9:40:BF:33:52:BA:87:5A:6B:61:21:1A:FF:31:B2:77:F5:18:15:D3:24:ED:A7:91:8D:06:C0:38:4D:CD:18:7C:4E:8C:85:40:63:A0:06:4C:96:A0:5D:FB",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -6016,13 +6093,13 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "wHqYaI2J+6sFZAwRfap9ZbjKzE4=\n"
+                        "key_identifier": "wHqYaI2J+6sFZAwRfap9ZbjKzE4="
                     }
                 },
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "w5zz/NNGCDS7zkZ/oHxb8+IIy1k=\n"
+                    "value": "w5zz/NNGCDS7zkZ/oHxb8+IIy1k="
                 },
                 {
                     "critical": true,
@@ -6121,7 +6198,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "w5zz/NNGCDS7zkZ/oHxb8+IIy1k=\n"
+                        "key_identifier": "w5zz/NNGCDS7zkZ/oHxb8+IIy1k="
                     }
                 },
                 {
@@ -6247,7 +6324,7 @@
             "children": [
                 [
                     "child",
-                    "C00BA925085F52F9F5A7331F81DD83318D1C0CC"
+                    "2C0544B5F4DBA47C785EBE37C67EFE46959D1091"
                 ]
             ],
             "csr_filename": false,
@@ -6277,7 +6354,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "YMLXK6SBTt/20MlJM5qPP5oGxbQ=\n"
+                    "value": "QGH46cM0U3cAMWFTweM71nL//0k="
                 },
                 {
                     "critical": false,
@@ -6285,7 +6362,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "YMLXK6SBTt/20MlJM5qPP5oGxbQ=\n"
+                        "key_identifier": "QGH46cM0U3cAMWFTweM71nL//0k="
                     }
                 }
             ],
@@ -6295,9 +6372,9 @@
             "name": "root",
             "path_length": null,
             "pub_filename": "root.pub",
-            "serial": "58C5572B5C808B34B865072C8AAAADDFDCA71CC9",
-            "sha256": "2F:B5:76:BD:11:CB:BF:FD:DC:FC:C0:DC:34:50:9B:A4:6E:32:67:DA:FF:30:2E:5E:6B:90:07:C8:3D:46:F6:36",
-            "sha512": "0A:3F:19:88:44:BC:F1:B8:6F:BF:CA:57:A5:DE:92:90:B5:65:70:1E:98:5A:81:CB:3F:8C:76:BA:21:36:20:F1:25:A5:B0:B7:4B:94:8B:7C:71:DA:3F:9D:51:B9:83:37:48:A0:7E:12:34:BE:B9:00:4D:6D:BD:B7:33:CF:B5:88",
+            "serial": "57873F8EB84C039A89B704E7638D1C468BCF6655",
+            "sha256": "41:5E:24:3D:E8:4F:73:3B:27:0E:F3:6B:76:B4:63:8B:20:19:FB:4F:07:E6:23:7C:8A:51:E4:50:29:3A:DB:E1",
+            "sha512": "F8:51:B3:00:75:42:6B:FB:33:38:D7:87:B7:3C:77:ED:50:8F:CE:BE:F6:95:14:21:8B:93:D7:8A:66:9E:CA:D0:7E:7B:63:19:73:29:D3:52:8F:3F:5A:0E:8F:44:50:1E:B9:45:4D:C6:BA:26:6C:16:C6:23:01:BC:56:06:77:71",
             "sign_authority_information_access": {
                 "critical": false,
                 "type": "authority_information_access",
@@ -6305,14 +6382,14 @@
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/ocsp/58C5572B5C808B34B865072C8AAAADDFDCA71CC9/cert/"
+                            "value": "http://localhost:8000/django_ca/ocsp/57873F8EB84C039A89B704E7638D1C468BCF6655/cert/"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.1"
                     },
                     {
                         "access_location": {
                             "type": "URI",
-                            "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                            "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                         },
                         "access_method": "1.3.6.1.5.5.7.48.2"
                     }
@@ -6327,7 +6404,7 @@
                         "full_name": [
                             {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/crl/58C5572B5C808B34B865072C8AAAADDFDCA71CC9/"
+                                "value": "http://localhost:8000/django_ca/crl/57873F8EB84C039A89B704E7638D1C468BCF6655/"
                             }
                         ],
                         "reasons": null,
@@ -6362,7 +6439,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "YMLXK6SBTt/20MlJM5qPP5oGxbQ=\n"
+                        "key_identifier": "QGH46cM0U3cAMWFTweM71nL//0k="
                     }
                 },
                 {
@@ -6376,7 +6453,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "RxcjOJVTOmmEe2OFJspSV9BYofQ=\n"
+                    "value": "xsM0pqkKXH47vi1caGJdF1vabC8="
                 },
                 {
                     "critical": false,
@@ -6414,7 +6491,7 @@
                             "full_name": [
                                 {
                                     "type": "URI",
-                                    "value": "http://localhost:8000/django_ca/crl/58C5572B5C808B34B865072C8AAAADDFDCA71CC9/"
+                                    "value": "http://localhost:8000/django_ca/crl/57873F8EB84C039A89B704E7638D1C468BCF6655/"
                                 }
                             ],
                             "reasons": null,
@@ -6429,14 +6506,14 @@
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/ocsp/58C5572B5C808B34B865072C8AAAADDFDCA71CC9/cert/"
+                                "value": "http://localhost:8000/django_ca/ocsp/57873F8EB84C039A89B704E7638D1C468BCF6655/cert/"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.1"
                         },
                         {
                             "access_location": {
                                 "type": "URI",
-                                "value": "http://localhost:8000/django_ca/issuer/58C5572B5C808B34B865072C8AAAADDFDCA71CC9.der"
+                                "value": "http://localhost:8000/django_ca/issuer/57873F8EB84C039A89B704E7638D1C468BCF6655.der"
                             },
                             "access_method": "1.3.6.1.5.5.7.48.2"
                         }
@@ -6449,9 +6526,9 @@
             "name": "root-cert",
             "path_length": null,
             "pub_filename": "root-cert.pub",
-            "serial": "497F9F706AB47674B7846BC68BAD1F65C231B07F",
-            "sha256": "88:36:55:C7:AF:6B:CC:4F:96:08:4D:39:30:47:E8:23:EE:AD:C1:F2:5A:9F:FE:63:1F:68:DA:BD:36:07:3C:80",
-            "sha512": "D1:A4:D7:5D:83:09:02:86:8A:CB:DC:04:84:7E:08:72:D7:CA:F0:CC:92:2C:75:7D:5B:F3:64:42:00:27:79:9A:88:27:5D:F7:98:AC:9E:D9:80:11:E2:45:69:CA:7F:9A:F8:63:A0:CF:08:22:77:D3:B0:2B:0E:92:F6:48:90:1D",
+            "serial": "47E157FF0C892B2AF6A9AAEC2272BFDB3013BB2E",
+            "sha256": "9D:B6:F9:54:C5:28:2D:B3:13:F6:45:33:E3:73:BF:9D:6C:15:46:D3:84:02:8F:17:C3:E8:E1:75:68:11:BE:CF",
+            "sha512": "7C:82:3A:2A:63:3F:2C:C3:3B:2C:4D:1A:C9:E8:5E:42:E3:EF:87:2E:08:94:2C:31:12:A4:11:EC:C7:AE:1B:A6:C5:3D:7C:9E:18:1B:FA:F6:4A:04:E6:68:8C:0F:5B:C6:97:E2:2F:68:F7:B3:05:D0:47:4A:83:7D:D5:C9:C9:85",
             "subject": [
                 {
                     "oid": "2.5.4.6",
@@ -6504,7 +6581,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "EdsjRf1UzGpxb4SKA9e+9wEvJoY=\n"
+                    "value": "EdsjRf1UzGpxb4SKA9e+9wEvJoY="
                 },
                 {
                     "critical": false,
@@ -6512,7 +6589,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI=\n"
+                        "key_identifier": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI="
                     }
                 },
                 {
@@ -6629,7 +6706,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "x6rZpPC80cEbBdIZcQqG+FgP8Jk=\n"
+                    "value": "x6rZpPC80cEbBdIZcQqG+FgP8Jk="
                 },
                 {
                     "critical": false,
@@ -6637,7 +6714,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "EdsjRf1UzGpxb4SKA9e+9wEvJoY=\n"
+                        "key_identifier": "EdsjRf1UzGpxb4SKA9e+9wEvJoY="
                     }
                 },
                 {
@@ -6833,7 +6910,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "sT8cknuSsFolszj7nAekJlAy41E=\n"
+                    "value": "sT8cknuSsFolszj7nAekJlAy41E="
                 },
                 {
                     "critical": false,
@@ -6841,7 +6918,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI=\n"
+                        "key_identifier": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI="
                     }
                 },
                 {
@@ -6920,7 +6997,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "8HJlXiGqFnYsb9BjUwxo1YlQKnM=\n"
+                    "value": "8HJlXiGqFnYsb9BjUwxo1YlQKnM="
                 },
                 {
                     "critical": false,
@@ -6928,7 +7005,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "sT8cknuSsFolszj7nAekJlAy41E=\n"
+                        "key_identifier": "sT8cknuSsFolszj7nAekJlAy41E="
                     }
                 },
                 {
@@ -7070,7 +7147,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI=\n"
+                    "value": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI="
                 },
                 {
                     "critical": false,
@@ -7078,7 +7155,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI=\n"
+                        "key_identifier": "TgvvGqRAW6UXaYcwyjRoQ9BBrvI="
                     }
                 },
                 {
@@ -7108,7 +7185,7 @@
                     "type": "unknown",
                     "value": {
                         "oid": "2.16.840.1.113730.1.1",
-                        "value": "AwIABw==\n"
+                        "value": "AwIABw=="
                     }
                 },
                 {
@@ -7116,7 +7193,7 @@
                     "type": "unknown",
                     "value": {
                         "oid": "2.16.840.1.113730.1.13",
-                        "value": "FilTdGFydENvbSBGcmVlIFNTTCBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eQ==\n"
+                        "value": "FilTdGFydENvbSBGcmVlIFNTTCBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eQ=="
                     }
                 }
             ],
@@ -7181,7 +7258,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "7UQZwNPwBovupHu+QucmVMiONnY=\n"
+                        "key_identifier": "7UQZwNPwBovupHu+QucmVMiONnY="
                     }
                 },
                 {
@@ -7254,7 +7331,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "olYkPNDUFbnov3ijExBYSC4WVOE=\n"
+                    "value": "olYkPNDUFbnov3ijExBYSC4WVOE="
                 }
             ],
             "key_filename": false,
@@ -7327,7 +7404,7 @@
                     "value": {
                         "authority_cert_issuer": null,
                         "authority_cert_serial_number": null,
-                        "key_identifier": "olYkPNDUFbnov3ijExBYSC4WVOE=\n"
+                        "key_identifier": "olYkPNDUFbnov3ijExBYSC4WVOE="
                     }
                 },
                 {
@@ -7406,7 +7483,7 @@
                 {
                     "critical": false,
                     "type": "subject_key_identifier",
-                    "value": "vlnwKSdL/AqBUnzfzQLYj6jlwiQ=\n"
+                    "value": "vlnwKSdL/AqBUnzfzQLYj6jlwiQ="
                 },
                 {
                     "critical": false,
@@ -7459,8 +7536,8 @@
         "nonce": {
             "filename": "nonce.req",
             "name": "nonce",
-            "nonce": "36:5C:88:7C:1F:41:57:CC:40:E6:A8:FC:6F:70:08:02"
+            "nonce": "17:36:53:6A:E0:CE:EE:2E:93:6C:5F:BC:BA:E4:69:45"
         }
     },
-    "timestamp": "2024-05-01T17:00:00+00:00"
+    "timestamp": "2024-11-06T13:00:00+00:00"
 }

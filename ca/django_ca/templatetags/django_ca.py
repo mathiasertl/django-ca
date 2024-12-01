@@ -26,7 +26,13 @@ from django.utils.translation import gettext as _
 
 from django_ca.constants import EXTENDED_KEY_USAGE_NAMES, EXTENSION_CRITICAL_HELP, EXTENSION_RFC_DEFINITION
 from django_ca.extensions.utils import key_usage_items, signed_certificate_timestamp_values
-from django_ca.utils import add_colons, bytes_to_hex, format_general_name, int_to_hex, name_for_display
+from django_ca.utils import (
+    add_colons,
+    bytes_to_hex,
+    format_general_name as _format_general_name,
+    int_to_hex,
+    name_for_display,
+)
 
 register = template.Library()
 
@@ -34,6 +40,12 @@ register = template.Library()
 register.filter("name_for_display", name_for_display)
 register.filter("key_usage_items", key_usage_items)
 register.filter("signed_certificate_timestamp_values", signed_certificate_timestamp_values)
+
+
+@register.filter
+def admissions(value: "x509.Admissions") -> list["x509.Admission"]:  # pragma: only cryptography>=44
+    """Return list of admissions (templates cannot contain underscores in variables)."""
+    return value._admissions  # pylint: disable=protected-access; only way to get admissions
 
 
 @register.filter
@@ -85,12 +97,15 @@ def enum(mod: Any, cls_name_and_member: str) -> Any:
 
 
 @register.filter
-def format_general_names(value: Iterable[x509.GeneralName]) -> list[str]:
-    """A template tag to format general names.
+def format_general_name(value: x509.GeneralName) -> str:  # pragma: only cryptography>=44
+    """A template tag to format general name."""
+    return _format_general_name(value)
 
-    Note that currently general names always occur as list.
-    """
-    return [format_general_name(v) for v in value]
+
+@register.filter
+def format_general_names(value: Iterable[x509.GeneralName]) -> list[str]:
+    """A template tag to format general names."""
+    return [_format_general_name(v) for v in value]
 
 
 @register.filter

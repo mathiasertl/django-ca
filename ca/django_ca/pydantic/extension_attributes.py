@@ -164,7 +164,8 @@ class AdmissionsValueModel(AdmissionsValueModelBase):  # pragma: only cryptograp
     @classmethod
     def parse_cryptography(cls, data: Any) -> Any:
         """Parse cryptography instance."""
-        if isinstance(data, x509.Admissions):
+        # pragma: only cryptography<44  # remove hasattr() call when cg<44 is dropped
+        if hasattr(x509, "Admissions") and isinstance(data, x509.Admissions):
             return {"authority": data.authority, "admissions": data._admissions}  # pylint: disable=protected-access
         return data
 

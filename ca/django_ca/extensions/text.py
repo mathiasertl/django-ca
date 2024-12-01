@@ -24,6 +24,59 @@ from django_ca.extensions.utils import key_usage_items, signed_certificate_times
 from django_ca.utils import bytes_to_hex, format_general_name
 
 
+def _naming_authority_as_text(value: "x509.NamingAuthority") -> str:  # pragma: only cryptography>=44
+    lines = ["* Naming Authority:"]
+    if value.id is None:
+        lines.append("* id: None")
+    else:
+        lines.append(f"* id: {value.id.dotted_string}")
+    lines += [f"* URL: {value.url}", f"* text: {value.text}"]
+    return "\n".join(lines)
+
+
+def _profession_info_as_text(value: "x509.ProfessionInfo") -> str:  # pragma: only cryptography>=44
+    lines = []
+
+    if value.naming_authority is not None:
+        lines.append(_naming_authority_as_text(value.naming_authority))
+
+    lines.append("* Profession items:")
+    for item in value.profession_items:
+        lines.append(f"  * {item}")
+
+    if value.profession_oids:
+        lines.append("* Profession OIDs:")
+        for oid in value.profession_oids:
+            lines.append(f"  * {oid.dotted_string}")
+
+    if value.registration_number:
+        lines.append(f"* Registration Number: {value.registration_number}")
+    if value.add_profession_info:
+        lines.append(f"* Add Profession Info: {bytes_to_hex(value.add_profession_info)}")
+    return "\n".join(lines)
+
+
+def _admissions_as_text(value: "x509.Admissions") -> str:  # pragma: only cryptography>=44
+    lines = []
+    if value.authority:
+        lines.append(f"* Authority: {format_general_name(value.authority)}")
+
+    lines.append("* Admissions:")
+    for admission in value._admissions:  # pylint: disable=protected-access; only way to get admissions
+        if admission.admission_authority is not None:
+            lines.append(f"  * Admission Authority: {format_general_name(admission.admission_authority)}")
+
+        if admission.naming_authority is not None:
+            lines.append(textwrap.indent(_naming_authority_as_text(admission.naming_authority), "  "))
+
+        lines.append("  * ProfessionInfos:")
+        for info in admission.profession_infos:
+            lines.append("    * ProfessionInfo:")
+            lines.append(textwrap.indent(_profession_info_as_text(info), "      "))
+
+    return "\n".join(lines)
+
+
 def _authority_information_access_as_text(value: typehints.InformationAccessExtensionType) -> str:
     lines = []
     issuers = [ad for ad in value if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS]
@@ -186,6 +239,8 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # noqa: PLR0911
         return _signed_certificate_timestamps_as_text(value)
     if isinstance(value, (x509.AuthorityInformationAccess, x509.SubjectInformationAccess)):
         return _authority_information_access_as_text(value)
+    if hasattr(x509, "Admissions") and isinstance(value, x509.Admissions):  # pragma: only cryptography>=44
+        return _admissions_as_text(value)
     if isinstance(value, x509.AuthorityKeyIdentifier):
         return _authority_key_identifier_as_text(value)
     if isinstance(value, x509.BasicConstraints):
