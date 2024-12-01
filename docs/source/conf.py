@@ -519,6 +519,7 @@ nitpick_ignore = [
     # Pydantic root model signature does not currently work
     ("py:class", "RootModelRootType"),
     ("py:class", "pathlib._local.Path"),
+    ("py:class", "JSON"),
 ]
 
 

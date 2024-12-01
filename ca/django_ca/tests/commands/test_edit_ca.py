@@ -176,10 +176,22 @@ def test_rest_api_arguments_mutually_exclusive(root: CertificateAuthority) -> No
     assert root.api_enabled is False  # state unchanged
 
 
-def test_ocsp_responder_arguments(root: CertificateAuthority) -> None:
+def test_ocsp_responder_arguments(root: CertificateAuthority, settings: SettingsWrapper) -> None:
     """Test ACME arguments."""
-    edit_ca(root, ocsp_responder_key_validity=10, ocsp_response_validity=3600)
+    settings.CA_OCSP_KEY_BACKENDS = {
+        "default": {
+            "BACKEND": "django_ca.key_backends.storages.StoragesOCSPBackend",
+            "OPTIONS": {"storage_alias": "django-ca"},
+        },
+        "other": {
+            "BACKEND": "django_ca.key_backends.storages.StoragesOCSPBackend",
+            "OPTIONS": {"storage_alias": "django-ca"},
+        },
+    }
 
+    edit_ca(root, ocsp_key_backend="other", ocsp_responder_key_validity=10, ocsp_response_validity=3600)
+
+    assert root.ocsp_key_backend_alias == "other"
     assert root.ocsp_responder_key_validity == 10
     assert root.ocsp_response_validity == 3600
 

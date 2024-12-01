@@ -60,5 +60,5 @@ def test_with_invalid_password(usable_pwd: CertificateAuthority) -> None:
     storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
     generate_ocsp_keys([usable_pwd.serial], {usable_pwd.serial: {"password": password}})
     usable_pwd.refresh_from_db()  # models from fixture have old data
-    assert usable_pwd.ocsp_key_backend_options == {}
+    assert usable_pwd.ocsp_key_backend_options == {"private_key": {}, "certificate": {}}
     assert storage.exists(f"ocsp/{usable_pwd.serial}.pem") is False

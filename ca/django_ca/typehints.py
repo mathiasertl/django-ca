@@ -48,8 +48,9 @@ else:  # pragma: only py>=3.11
 
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 
-# pylint: disable-next=invalid-name
-JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]
+
+#: JSON serializable data.
+JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]  # pylint: disable=invalid-name
 
 
 class OCSPKeyBackendDict(TypedDict):
