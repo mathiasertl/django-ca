@@ -103,7 +103,7 @@ class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.
 
     @model_validator(mode="after")
     def check_consistency(self) -> "ProfessionInfoModel":
-        """Verify that profession_oids has the same length as profession_items if set."""
+        """Verify that `profession_oids` has the same length as `profession_items` if set."""
         if self.profession_oids is not None and len(self.profession_items) != len(self.profession_oids):
             raise ValueError("if present, profession_oids must have the same length as profession_items.")
         return self

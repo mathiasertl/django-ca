@@ -19,7 +19,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5.0.0
         with:
-          python-version: "3.13"
+          # Python 3.13 currently fails
+          python-version: "3.12"
           architecture: x64
 
       - name: Apply caching of dependencies

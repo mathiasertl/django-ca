@@ -70,6 +70,8 @@ class MagicWordsFilter(Filter):  # type: ignore[misc]
         "otherName",
         "PEM",
         "DER",
+        "DSA",
+        "RSA",
     }
 
     words: typing.ClassVar[set[str]] = (

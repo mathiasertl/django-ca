@@ -126,7 +126,7 @@ class StoragesBackend(
     name = "storages"
     title = "Store private keys using the Django file storage API"
     description = (
-        "It is most commonly used to store private keys on the filesystem. Custom file storage backends can "
+        "It is most commonly used to store private keys on the file system. Custom file storage backends can "
         "be used to store keys on other systems (e.g. a cloud storage system)."
     )
     use_model = StoragesUsePrivateKeyOptions
@@ -290,7 +290,8 @@ class StoragesBackend(
         storage = storages[self.storage_alias]
         path = ca.key_backend_options["path"]
 
-        # Load encoded private key data from the filesystem
+        # Load encoded private key data from the file system
+        # Load encoded private key data from the file system
         stream = storage.open(path, mode="rb")
         try:
             key_data: bytes = stream.read()
@@ -396,7 +397,7 @@ class StoragesBackend(
 
 
 class StoragesOCSPBackend(CryptographyOCSPKeyBackend):
-    """OCSP key backend storing files on the local filesystem."""
+    """OCSP key backend storing files on the local file system."""
 
     # Backend options
     storage_alias: str
@@ -434,7 +435,7 @@ class StoragesOCSPBackend(CryptographyOCSPKeyBackend):
         else:
             encryption = serialization.NoEncryption()
 
-        # Serialize and store the key on the filesystem.
+        # Serialize and store the key on the file system.
         private_der = private_key.private_bytes(
             encoding=Encoding.DER,
             format=PrivateFormat.PKCS8,

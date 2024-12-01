@@ -1,6 +1,8 @@
 AllowedHashTypes
 DER
 PEM
+DSA
+RSA
 Parametrized
 Psycopg
 Pydantic
