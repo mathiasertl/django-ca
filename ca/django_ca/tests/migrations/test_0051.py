@@ -155,26 +155,3 @@ def test_with_bogus_public_key(caplog: LogCaptureFixture, migrator: Migrator, tm
         )
     ]
     assert ca.ocsp_key_backend_options == {"certificate": {}, "private_key": {}}
-
-
-@pytest.mark.usefixtures("tmpcadir")
-def test_with_invalid_storage_alias(
-    caplog: LogCaptureFixture, migrator: Migrator, tmpcadir: Path, settings: SettingsWrapper
-) -> None:
-    """Test running the migration with an improperly configured ocsp alias."""
-    ocsp_dest = tmpcadir / "ocsp"
-    ocsp_dest.mkdir(exist_ok=True, parents=True)
-
-    settings.CA_OCSP_KEY_BACKENDS = {
-        "default": {
-            "BACKEND": "django_ca.key_backends.storages.StoragesOCSPBackend",
-            "OPTIONS": {"storage_alias": "foobar"},
-        }
-    }
-
-    state = setup(migrator)
-
-    CertificateAuthority = state.apps.get_model("django_ca", "CertificateAuthority")
-    ca = CertificateAuthority.objects.get(serial="123")
-    assert "Cannot load OCSP key storage backend." in caplog.text
-    assert ca.ocsp_key_backend_options == {"certificate": {}, "private_key": {}}

@@ -3,11 +3,12 @@ on:
   push:
   pull_request:
 
-jobs:
+env:
+  UV_SYSTEM_PYTHON: 1
 
+jobs:
   run:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ ubuntu-latest ]
@@ -35,16 +36,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-      - name: Apply caching of dependencies
-        uses: actions/cache@v4.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          path: ~/.cache/pip
-          key: os=${{ matrix.os }}-python=${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements-*.txt') }}
+          enable-cache: true
+          cache-dependency-glob: "requirements.txt"
+
+      - name: Update setuptools/wheel
+        run: uv pip install -U setuptools wheel
 
       - name: Install dependencies
-        run: |
-          pip install -U pip setuptools wheel
-          pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }} pydantic~=${{ matrix.pydantic-version }}
+        run: uv pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }} pydantic~=${{ matrix.pydantic-version }}
 
       - name: Initialize demo
         run: python dev.py init-demo
