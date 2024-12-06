@@ -613,6 +613,19 @@ def test_ca_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
     }
 
 
+def test_ca_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+    """Test that the default key backend is configured."""
+    # Note: setting value to None (=removing the value) does not currently call settings_changed, so our
+    # settings module is not reloaded.
+    settings.CA_OCSP_KEY_BACKENDS = {}
+    assert model_settings.CA_OCSP_KEY_BACKENDS == {
+        "default": KeyBackendConfigurationModel(
+            BACKEND="django_ca.key_backends.storages.StoragesOCSPBackend",
+            OPTIONS={"storage_alias": "django-ca"},
+        )
+    }
+
+
 def test_ca_ocsp_responder_certificate_renewal(settings: SettingsWrapper) -> None:
     """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
     settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = 7200

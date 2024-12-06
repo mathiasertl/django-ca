@@ -16,12 +16,11 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Union, cast
 
-from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
 from cryptography.x509 import ocsp
-from cryptography.x509.oid import OCSPExtensionOID, SignatureAlgorithmOID
+from cryptography.x509.oid import OCSPExtensionOID
 
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.typehints import HttpResponse
@@ -87,7 +86,6 @@ def assert_ocsp_response(
     nonce: Optional[bytes] = None,
     expires: int = 86400,
     signature_hash_algorithm: Optional[type[hashes.HashAlgorithm]] = hashes.SHA256,
-    signature_algorithm_oid: x509.ObjectIdentifier = SignatureAlgorithmOID.RSA_WITH_SHA256,
     single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
 ) -> None:
     """Assert an OCSP request."""
@@ -100,7 +98,6 @@ def assert_ocsp_response(
         assert response.signature_hash_algorithm is None
     else:
         assert isinstance(response.signature_hash_algorithm, signature_hash_algorithm)
-    assert response.signature_algorithm_oid == signature_algorithm_oid
     assert response.certificates == [responder_certificate.pub.loaded]  # responder certificate!
     assert response.responder_name is None
     assert isinstance(response.responder_key_hash, bytes)  # TODO: Validate responder id

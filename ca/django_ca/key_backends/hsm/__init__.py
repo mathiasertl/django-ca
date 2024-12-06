@@ -14,5 +14,6 @@
 """HSM backend module."""
 
 from django_ca.key_backends.hsm.backend import HSMBackend
+from django_ca.key_backends.hsm.ocsp_backend import HSMOCSPBackend
 
-__all__ = ("HSMBackend",)
+__all__ = ("HSMBackend", "HSMOCSPBackend")

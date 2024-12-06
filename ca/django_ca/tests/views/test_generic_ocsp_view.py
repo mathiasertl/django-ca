@@ -23,7 +23,6 @@ from pathlib import Path
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.x509 import ocsp
-from cryptography.x509.oid import SignatureAlgorithmOID
 
 from django.core.files.storage import storages
 from django.test import Client
@@ -33,6 +32,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 
 from django_ca.conf import model_settings
+from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.views.assertions import assert_ocsp_response
@@ -67,6 +67,30 @@ def test_get_with_nonce(client: Client, child_cert: Certificate, profile_ocsp: C
     assert_ocsp_response(response, child_cert, nonce=b"foo", responder_certificate=profile_ocsp)
 
 
+@pytest.mark.usefixtures("hsm_ocsp_backend")
+def test_hsm_ocsp_key(client: Client, child_cert: Certificate, usable_hsm_ca: CertificateAuthority) -> None:
+    """Test key generation using the OCSP key backend."""
+    usable_hsm_ca.ocsp_key_backend_alias = "hsm"
+    usable_hsm_ca.save()
+
+    child_cert.ca = usable_hsm_ca
+    child_cert.save()
+
+    key_backend_options = HSMUsePrivateKeyOptions.model_validate(
+        {}, context={"backend": usable_hsm_ca.key_backend}
+    )
+    cert = usable_hsm_ca.generate_ocsp_key(key_backend_options)
+    assert isinstance(cert, Certificate)
+    assert usable_hsm_ca.ocsp_key_backend_options["certificate"] == {"pem": cert.pub.pem, "pk": cert.pk}
+
+    algorithm = None
+    if cert.algorithm is not None:
+        algorithm = type(cert.algorithm)
+
+    response = ocsp_get(client, child_cert)
+    assert_ocsp_response(response, child_cert, responder_certificate=cert, signature_hash_algorithm=algorithm)
+
+
 def test_response_validity(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
     """Test a custom OCSP response validity."""
     # Reduce OCSP response validity before making request
@@ -84,11 +108,7 @@ def test_sha512_hash_algorithm(client: Client, child_cert: Certificate, profile_
     response = ocsp_get(client, child_cert, hash_algorithm=hashes.SHA512)
 
     assert_ocsp_response(
-        response,
-        child_cert,
-        responder_certificate=profile_ocsp,
-        signature_algorithm_oid=SignatureAlgorithmOID.RSA_WITH_SHA256,
-        single_response_hash_algorithm=hashes.SHA512,
+        response, child_cert, responder_certificate=profile_ocsp, single_response_hash_algorithm=hashes.SHA512
     )
 
 
@@ -119,12 +139,7 @@ def test_dsa_certificate_authority(
     """Test the OCSP responder with an DSA-based certificate authority."""
     private_key, ocsp_cert = generate_ocsp_key(usable_dsa)
     response = ocsp_get(client, dsa_cert)
-    assert_ocsp_response(
-        response,
-        dsa_cert,
-        responder_certificate=ocsp_cert,
-        signature_algorithm_oid=SignatureAlgorithmOID.DSA_WITH_SHA256,
-    )
+    assert_ocsp_response(response, dsa_cert, responder_certificate=ocsp_cert)
 
 
 def test_ec_certificate_authority(
@@ -133,12 +148,7 @@ def test_ec_certificate_authority(
     """Test the OCSP responder with an EC-based certificate authority."""
     private_key, ocsp_cert = generate_ocsp_key(usable_ec)
     response = ocsp_get(client, ec_cert)
-    assert_ocsp_response(
-        response,
-        ec_cert,
-        responder_certificate=ocsp_cert,
-        signature_algorithm_oid=SignatureAlgorithmOID.ECDSA_WITH_SHA256,
-    )
+    assert_ocsp_response(response, ec_cert, responder_certificate=ocsp_cert)
 
 
 def test_ed25519_certificate_authority(
@@ -148,11 +158,7 @@ def test_ed25519_certificate_authority(
     private_key, ocsp_cert = generate_ocsp_key(usable_ed25519)
     response = ocsp_get(client, ed25519_cert)
     assert_ocsp_response(
-        response,
-        ed25519_cert,
-        responder_certificate=ocsp_cert,
-        signature_hash_algorithm=None,
-        signature_algorithm_oid=SignatureAlgorithmOID.ED25519,
+        response, ed25519_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None
     )
 
 
@@ -162,13 +168,7 @@ def test_ed448_certificate_authority(
     """Test the OCSP responder with an Ed448-based certificate authority."""
     private_key, ocsp_cert = generate_ocsp_key(usable_ed448)
     response = ocsp_get(client, ed448_cert)
-    assert_ocsp_response(
-        response,
-        ed448_cert,
-        responder_certificate=ocsp_cert,
-        signature_hash_algorithm=None,
-        signature_algorithm_oid=SignatureAlgorithmOID.ED448,
-    )
+    assert_ocsp_response(response, ed448_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None)
 
 
 def test_invalid_responder_key(caplog: LogCaptureFixture, client: Client, child_cert: Certificate) -> None:

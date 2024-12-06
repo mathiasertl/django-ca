@@ -222,6 +222,21 @@ CA_KEY_BACKENDS = {
     },
 }
 
+CA_OCSP_KEY_BACKENDS = {
+    "default": {
+        "BACKEND": "django_ca.key_backends.storages.StoragesOCSPBackend",
+        "OPTIONS": {"storage_alias": "django-ca"},
+    },
+    "hsm": {
+        "BACKEND": "django_ca.key_backends.hsm.HSMOCSPBackend",
+        "OPTIONS": {
+            "library_path": PKCS11_PATH,
+            "token": PKCS11_TOKEN_LABEL,
+            "user_pin": PKCS11_USER_PIN,
+        },
+    },
+}
+
 # Custom settings
 CA_DEFAULT_SUBJECT = (
     {"oid": "C", "value": "AT"},

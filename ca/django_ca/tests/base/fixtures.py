@@ -38,8 +38,8 @@ from _pytest.fixtures import SubRequest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
-from django_ca.key_backends import key_backends
-from django_ca.key_backends.hsm import HSMBackend
+from django_ca.key_backends import key_backends, ocsp_key_backends
+from django_ca.key_backends.hsm import HSMBackend, HSMOCSPBackend
 from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
 from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
@@ -382,6 +382,12 @@ def softhsm_token(  # pragma: hsm
     settings.CA_KEY_BACKENDS = key_backend_config
     key_backends._reset()  # pylint: disable=protected-access
 
+    # Update key backend configuration
+    key_backend_config = copy.deepcopy(settings.CA_OCSP_KEY_BACKENDS)
+    key_backend_config["hsm"]["OPTIONS"].update({"user_pin": pin})
+    settings.CA_OCSP_KEY_BACKENDS = key_backend_config
+    ocsp_key_backends._reset()  # pylint: disable=protected-access
+
     args = ("softhsm2-util", "--init-token", "--free", "--label", token, "--so-pin", so_pin, "--pin", pin)
     subprocess.run(args, check=True)
 
@@ -398,6 +404,14 @@ def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:  # pragma: hsm
     request.getfixturevalue("softhsm_token")
     yield cast(HSMBackend, key_backends["hsm"])
     key_backends._reset()  # pylint: disable=protected-access  # in case we manipulated the object
+
+
+@pytest.fixture
+def hsm_ocsp_backend(request: "SubRequest") -> Iterator[HSMOCSPBackend]:  # pragma: hsm
+    """Fixture providing a HSMBackend with the current token and (randomized) passwords."""
+    request.getfixturevalue("softhsm_token")
+    yield cast(HSMOCSPBackend, ocsp_key_backends["hsm"])
+    ocsp_key_backends._reset()  # pylint: disable=protected-access  # in case we manipulated the object
 
 
 @pytest.fixture(params=HSMBackend.supported_key_types)
