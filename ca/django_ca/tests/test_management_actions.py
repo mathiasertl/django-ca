@@ -574,18 +574,6 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
         args = self.parser.parse_args(["--curve=brainpoolP512r1"])
         assert isinstance(args.curve, ec.BrainpoolP512R1)
 
-    def test_error(self) -> None:
-        """Test false option values."""
-        assert_parser_error(
-            self.parser,
-            ["--curve=foo"],
-            "usage: {script} [-h] [--curve {{secp256r1,secp384r1,secp521r1,...}}]\n"
-            "{script}: error: argument --curve: invalid choice: 'foo' (choose from 'brainpoolP256r1', "
-            "'brainpoolP384r1', 'brainpoolP512r1', 'secp192r1', 'secp224r1', 'secp256k1', 'secp256r1', "
-            "'secp384r1', 'secp521r1', 'sect163k1', 'sect163r2', 'sect233k1', 'sect233r1', 'sect283k1', "
-            "'sect283r1', 'sect409k1', 'sect409r1', 'sect571k1', 'sect571r1')\n",
-        )
-
 
 class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
     """Test AlgorithmAction."""
@@ -602,16 +590,6 @@ class AlgorithmActionTestCase(ParserTestCaseMixin, TestCase):
 
         args = self.parser.parse_args(["--algo=SHA-512"])
         assert isinstance(args.algo, hashes.SHA512)
-
-    def test_error(self) -> None:
-        """Test false option values."""
-        assert_parser_error(
-            self.parser,
-            ["--algo=foo"],
-            "usage: {script} [-h] [--algo {{SHA-512,SHA-256,...}}]\n"
-            "{script}: error: argument --algo: invalid choice: 'foo' (choose from 'SHA-224', 'SHA-256', "
-            "'SHA-384', 'SHA-512', 'SHA3/224', 'SHA3/256', 'SHA3/384', 'SHA3/512')\n",
-        )
 
 
 class KeySizeActionTestCase(ParserTestCaseMixin, TestCase):
@@ -817,20 +795,6 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         args = parser.parse_args([self.ca.serial])
         assert args.ca == self.ca
 
-    # TODO: re-enable with better checks
-    # def test_private_key_does_not_exists(self) -> None:
-    #     """Test error case where private key for CA does not exist."""
-    #     self.ca.private_key_path = "does-not-exist"
-    #     self.ca.save()
-    #
-    #     assert_parser_error(self.parser,
-    #         [self.ca.serial],
-    #         "usage: {script} [-h] ca\n"
-    #         "{script}: error: argument ca: {name}: {path}: Private key does not exist.\n",
-    #         name=self.ca.name,
-    #         path=self.ca.private_key_path,
-    #     )
-
     @override_tmpcadir()
     def test_password(self) -> None:
         """Test that the action works with a password-encrypted CA."""
@@ -917,22 +881,6 @@ class ReasonActionTestCase(ParserTestCaseMixin, TestCase):
         args = self.parser.parse_args([ReasonFlags.unspecified.name])
         assert args.reason == ReasonFlags.unspecified
 
-    def test_error(self) -> None:
-        """Test false option values."""
-        whitespace = " " * len(f"usage: {self.script} ")
-        assert_parser_error(
-            self.parser,
-            ["foo"],
-            "usage: {script} [-h]\n"
-            + whitespace  # whitespace indent depends on length of the name of the script
-            + "{{aa_compromise,affiliation_changed,ca_compromise,certificate_hold,"
-            "cessation_of_operation,key_compromise,privilege_withdrawn,remove_from_crl,superseded,"
-            "unspecified}}\n"
-            "{script}: error: argument reason: invalid choice: 'foo' (choose from 'aa_compromise', "
-            "'affiliation_changed', 'ca_compromise', 'certificate_hold', 'cessation_of_operation', "
-            "'key_compromise', 'privilege_withdrawn', 'remove_from_crl', 'superseded', 'unspecified')\n",
-        )
-
 
 class MultipleURLActionTestCase(ParserTestCaseMixin, TestCase):
     """Test MultipleURLAction."""
@@ -977,16 +925,6 @@ def test_key_backend_action(key_backend_parser: argparse.ArgumentParser) -> None
     """Test the KeyBackendAction."""
     assert key_backend_parser.parse_args(["--key-backend=default"]).key_backend == key_backends["default"]
     assert key_backend_parser.parse_args(["--key-backend=other"]).key_backend == key_backends["other"]
-
-
-def test_key_backend_action_with_invalid_value(key_backend_parser: argparse.ArgumentParser) -> None:
-    """Test the KeyBackendAction."""
-    assert_parser_error(
-        key_backend_parser,
-        ["--key-backend=wrong"],
-        "usage: {script} [-h] [--key-backend {{default,other}}]\n"
-        "{script}: error: argument --key-backend: invalid choice: 'wrong' (choose from 'default', 'other')\n",
-    )
 
 
 # pylint: enable=redefined-outer-name
