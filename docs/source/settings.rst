@@ -405,6 +405,23 @@ CA_OCSP_URLS
 
    Configuration for OCSP responders. See :doc:`/ocsp` for more information.
 
+.. _settings-ca-ocsp-key-backends:
+
+CA_OCSP_KEY_BACKENDS
+   Default:
+
+   .. tab:: Python
+
+      .. literalinclude:: /include/config/settings_default_ca_ocsp_key_backends.py
+         :language: python
+
+   .. tab:: YAML
+
+      .. literalinclude:: /include/config/settings_default_ca_ocsp_key_backends.yaml
+         :language: YAML
+
+    Configuration for storing OCSP keys. See :ref:`ocsp_key_backends` for more information.
+
 .. _settings-ca-ocsp-responder-certificate-renewal:
 
 CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL

@@ -10,6 +10,13 @@ Certificate Revocation Lists
   :class:`~django_ca.models.CertificateRevocationList` model. This makes CRL functionality more robust, as
   clearing the cache will no longer cause an error.
 
+*******************
+OCSP responder keys
+*******************
+
+* Private keys for OCSP responders are now stored using configurable backends, just like private keys for
+  certificate authorities. See :ref:`ocsp_key_backends` for more information.
+
 **********************
 Command-line utilities
 **********************

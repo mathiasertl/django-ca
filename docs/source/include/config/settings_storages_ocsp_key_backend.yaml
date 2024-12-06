@@ -1,0 +1,12 @@
+CA_OCSP_KEY_BACKENDS:
+    default:
+        BACKEND: django_ca.key_backends.storages.StoragesOCSPBackend
+        OPTIONS:
+            storage_alias: django-ca
+
+            # Store OCSP keys in a sub-path of the configured storage backend.
+            # By default, keys are stored in the "ocsp" subfolder.
+            #path: ocsp
+
+            # Disable private key encryption
+            #encrypt_private_key: False

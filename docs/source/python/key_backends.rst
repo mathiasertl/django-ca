@@ -164,4 +164,11 @@ Implementations
 
 .. autoclass:: django_ca.key_backends.hsm.HSMBackend
 
+
+
+OCSP key backends
+=================
+
 .. autoclass:: django_ca.key_backends.storages.StoragesOCSPBackend
+
+.. autoclass:: django_ca.key_backends.hsm.HSMOCSPBackend
