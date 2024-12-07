@@ -13,6 +13,7 @@
 
 """Test key backend base class."""
 
+import argparse
 from unittest.mock import patch
 
 import pytest
@@ -56,6 +57,7 @@ def test_key_backends_iter(settings: SettingsWrapper) -> None:
         key_backends[model_settings.CA_DEFAULT_KEY_BACKEND],
         key_backends["secondary"],
         key_backends["hsm"],
+        key_backends["db"],
     ]
 
     settings.CA_KEY_BACKENDS = {
@@ -113,5 +115,10 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
         },
     }
 
+    parser = argparse.ArgumentParser()
+    group = parser.add_argument_group("group")
+
     backend = key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
-    assert backend.add_use_private_key_arguments(None) is None  # type: ignore[func-returns-value,arg-type]
+    assert backend.add_use_private_key_arguments(group) is None  # type: ignore[func-returns-value]
+    assert backend.add_create_private_key_arguments(group) is None  # type: ignore[func-returns-value]
+    assert backend.add_store_private_key_arguments(group) is None  # type: ignore[func-returns-value]

@@ -41,6 +41,8 @@ from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends import key_backends
+from django_ca.key_backends.db import DBBackend
+from django_ca.key_backends.db.models import DBUsePrivateKeyOptions
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
 from django_ca.key_backends.storages import StoragesBackend
@@ -1066,6 +1068,40 @@ def test_hsm_backend(
     assert ca.key_backend_options["key_type"] == key_type
     assert isinstance(ca.pub.loaded, x509.Certificate)
     assert isinstance(ca.pub.loaded.public_key(), constants.PUBLIC_KEY_TYPE_MAPPING[key_type])
+
+    # Sign a certificate to make sure that the key is actually usable
+    cert_data = CERT_DATA["root-cert"]
+    csr = cert_data["csr"]["parsed"]
+    cert = Certificate.objects.create_cert(
+        ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
+    )
+    assert_signature([ca], cert)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+@pytest.mark.parametrize("key_type", DBBackend.supported_key_types)
+def test_db_backend(
+    ca_name: str, rfc4514_subject: str, key_type: ParsableKeyType, subject: x509.Name
+) -> None:
+    """Basic test for creating a key in the database."""
+    ca = init_ca_e2e(
+        ca_name, rfc4514_subject, f"--key-type={key_type}", "--key-backend=db", "--ocsp-key-backend=db"
+    )
+
+    assert ca.key_backend_alias == "db"
+    assert ca.key_backend.is_usable(ca, DBUsePrivateKeyOptions())
+    assert ca.key_backend.check_usable(ca, DBUsePrivateKeyOptions()) is None
+
+    assert ca.key_type == key_type
+    assert isinstance(ca.pub.loaded, x509.Certificate)
+    assert isinstance(ca.pub.loaded.public_key(), constants.PUBLIC_KEY_TYPE_MAPPING[key_type])
+
+    ocsp_key: Certificate = ca.certificate_set.get()
+
+    assert ca.ocsp_key_backend_alias == "db"
+    assert "pem" in ca.ocsp_key_backend_options["private_key"]
+    assert ca.ocsp_key_backend_options["certificate"] == {"pem": ocsp_key.pub.pem, "pk": ocsp_key.pk}
 
     # Sign a certificate to make sure that the key is actually usable
     cert_data = CERT_DATA["root-cert"]

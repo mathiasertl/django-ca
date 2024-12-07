@@ -16,6 +16,16 @@ OCSP responder keys
 
 * Private keys for OCSP responders are now stored using configurable backends, just like private keys for
   certificate authorities. See :ref:`ocsp_key_backends` for more information.
+* Add a :ref:`key_backends_ocsp_hsm_backend` to allow storing OCSP keys in a HSM (Hardware Security Module).
+* Add a :ref:`key_backends_ocsp_db_backend` to allow storing OCSP keys in the database.
+
+************
+Key backends
+************
+
+* Add a :ref:`db_backend` to allow storing private keys in the database. This backend makes the private key
+  accessible to any frontend-facing web server and is thus less secure then other backends, but is an
+  option if your environment has no file system available.
 
 **********************
 Command-line utilities

@@ -17,6 +17,7 @@
 
 import logging
 import shutil
+import typing
 from http import HTTPStatus
 from pathlib import Path
 
@@ -33,6 +34,7 @@ from _pytest.logging import LogCaptureFixture
 
 from django_ca.conf import model_settings
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.views.assertions import assert_ocsp_response
@@ -69,7 +71,7 @@ def test_get_with_nonce(client: Client, child_cert: Certificate, profile_ocsp: C
 
 @pytest.mark.usefixtures("hsm_ocsp_backend")
 def test_hsm_ocsp_key(client: Client, child_cert: Certificate, usable_hsm_ca: CertificateAuthority) -> None:
-    """Test key generation using the OCSP key backend."""
+    """Test fetching an OCSP response when using the HSM OCSP key backend."""
     usable_hsm_ca.ocsp_key_backend_alias = "hsm"
     usable_hsm_ca.save()
 
@@ -89,6 +91,22 @@ def test_hsm_ocsp_key(client: Client, child_cert: Certificate, usable_hsm_ca: Ce
 
     response = ocsp_get(client, child_cert)
     assert_ocsp_response(response, child_cert, responder_certificate=cert, signature_hash_algorithm=algorithm)
+
+
+def test_db_ocsp_key(client: Client, root_cert: Certificate, usable_root: CertificateAuthority) -> None:
+    """Test fetching an OCSP response when using the database OCSP key backend."""
+    usable_root.ocsp_key_backend_alias = "db"
+    usable_root.save()
+
+    key_backend_options = StoragesUsePrivateKeyOptions.model_validate(
+        {}, context={"backend": usable_root.key_backend, "ca": usable_root}
+    )
+    cert = typing.cast(Certificate, usable_root.generate_ocsp_key(key_backend_options))
+
+    response = ocsp_get(client, root_cert)
+    assert_ocsp_response(
+        response, root_cert, responder_certificate=cert, signature_hash_algorithm=hashes.SHA256
+    )
 
 
 def test_response_validity(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:

@@ -220,6 +220,7 @@ CA_KEY_BACKENDS = {
             "user_pin": PKCS11_USER_PIN,
         },
     },
+    "db": {"BACKEND": "django_ca.key_backends.db.DBBackend"},
 }
 
 CA_OCSP_KEY_BACKENDS = {
@@ -235,6 +236,7 @@ CA_OCSP_KEY_BACKENDS = {
             "user_pin": PKCS11_USER_PIN,
         },
     },
+    "db": {"BACKEND": "django_ca.key_backends.db.DBOCSPBackend"},
 }
 
 # Custom settings
