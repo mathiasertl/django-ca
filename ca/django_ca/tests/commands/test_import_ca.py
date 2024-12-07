@@ -32,6 +32,7 @@ import pytest
 
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
+from django_ca.key_backends.db.models import DBUsePrivateKeyOptions
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.keys import PKCS11EllipticCurvePrivateKey, PKCS11RSAPrivateKey
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
@@ -323,6 +324,26 @@ def test_hsm_store_key_with_dsa_keys() -> None:
 
     with assert_command_error(r"^DSA: Not supported by the hsm key backend\.$"):
         import_ca("dsa", key_path, pem_path, key_backend=key_backends["hsm"], hsm_key_label="dsa")
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # b/c of signature validation in the end.
+def test_with_db_backend(usable_ca_name_by_type: str, subject: x509.Name) -> None:
+    """Test storing ED448/Ed25519 keys in the HSM, which is not supported."""
+    cert_data = CERT_DATA[usable_ca_name_by_type]
+    key_path = cert_data["key_path"]
+    pem_path = cert_data["pub_path"]
+
+    import_ca(usable_ca_name_by_type, key_path, pem_path, key_backend=key_backends["db"])
+
+    ca = CertificateAuthority.objects.get(name=usable_ca_name_by_type)
+    assert ca.key_backend.is_usable(ca) is True
+    assert ca.key_backend.check_usable(ca, DBUsePrivateKeyOptions()) is None
+
+    # Sign a certificate to make sure that the key is actually usable
+    cert_data = CERT_DATA[f"{usable_ca_name_by_type}-cert"]
+    csr = cert_data["csr"]["parsed"]
+    cert = Certificate.objects.create_cert(ca, DBUsePrivateKeyOptions(), csr, subject=subject)
+    assert_signature([ca], cert)
 
 
 def test_bogus_public_key(ca_name: str) -> None:

@@ -309,6 +309,7 @@ def load_cert(
 usable_ca_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and conf.get("key_filename")
 ]
+usable_ca_names_by_type = ["dsa", "root", "ed448", "ed25519", "ec"]
 contrib_ca_names = [
     name for name, conf in CERT_DATA.items() if conf["type"] == "ca" and conf["cat"] == "sphinx-contrib"
 ]

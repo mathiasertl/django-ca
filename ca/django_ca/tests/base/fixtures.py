@@ -39,6 +39,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends, ocsp_key_backends
+from django_ca.key_backends.db.backend import DBBackend
 from django_ca.key_backends.hsm import HSMBackend, HSMOCSPBackend
 from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
 from django_ca.key_backends.hsm.session import SessionPool
@@ -53,6 +54,7 @@ from django_ca.tests.base.conftest_helpers import (
     signed_certificate_timestamp_cert_names,
     signed_certificate_timestamps_cert_names,
     usable_ca_names,
+    usable_ca_names_by_type,
     usable_cert_names,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -414,6 +416,12 @@ def hsm_ocsp_backend(request: "SubRequest") -> Iterator[HSMOCSPBackend]:  # prag
     ocsp_key_backends._reset()  # pylint: disable=protected-access  # in case we manipulated the object
 
 
+@pytest.fixture
+def db_backend() -> DBBackend:
+    """Fixture providing a DB backend."""
+    return cast(DBBackend, key_backends["db"])
+
+
 @pytest.fixture(params=HSMBackend.supported_key_types)
 def usable_hsm_ca(  # pragma: hsm
     request: "SubRequest", ca_name: str, subject: x509.Name, hsm_backend: HSMBackend
@@ -498,6 +506,12 @@ def ca(request: "SubRequest") -> CertificateAuthority:
 @pytest.fixture(params=usable_ca_names)
 def usable_ca_name(request: "SubRequest") -> CertificateAuthority:
     """Parametrized fixture for the name of every usable CA."""
+    return request.param  # type: ignore[no-any-return]
+
+
+@pytest.fixture(params=usable_ca_names_by_type)
+def usable_ca_name_by_type(request: "SubRequest") -> CertificateAuthority:
+    """Parametrized fixture for the name of a CA of every type (``"dsa"``, ``"rsa"``, ...)."""
     return request.param  # type: ignore[no-any-return]
 
 

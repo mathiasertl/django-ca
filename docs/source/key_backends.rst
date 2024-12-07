@@ -165,6 +165,31 @@ default backend):
 
    user@host:~$ python manage.py init_ca --so-pin=1234 --user-pin="" ...
 
+.. _db_backend:
+
+Database backend
+================
+
+The database backend allows you to store private keys in the database. It is a good choice if you have no
+local file system available.
+
+.. WARNING::
+
+   Using this backend negates any security benefit of using a Celery worker on a different host, as the
+   private key will always be accessible to the web server.
+
+This backend takes no options and is thus very simple to configure:
+
+.. tab:: Python
+
+   .. literalinclude:: /include/config/settings_db_backend.py
+      :language: python
+
+.. tab:: YAML
+
+   .. literalinclude:: /include/config/settings_db_backend.yaml
+      :language: YAML
+
 .. _ocsp_key_backends:
 
 *****************
@@ -173,7 +198,7 @@ OCSP Key backends
 
 Just like for certificate authorities, **django-ca** allows you to store private keys for OCSP responder
 certificates using different backends. By default, private keys are stored on the file system, but they can
-also be stored in a Hardware Security Module.
+also be stored using any of the backends documented below.
 
 Note that the OCSP key storage method does not have to match the method used for storing the private key of
 the certificate authority.
@@ -195,7 +220,7 @@ The available key backends can be configured using the :ref:`CA_OCSP_KEY_BACKEND
 The OCSP key backend that is used for a specific certificate authority can be configured using the admin
 interface or with the `--ocsp-key-backend` option to :command:`manage.py init_ca`,
 :command:`manage.py edit_ca` and :command:`manage.py import_ca`. Note that when you change the backend,
-you must manually regenerate OCSP keys (e.g. using :command:`manage.py regenerate_ocsp_keys`.
+you must manually regenerate OCSP keys (e.g. using :command:`manage.py regenerate_ocsp_keys`).
 
 :spelling:word:`Storages` OCSP key backend
 ==========================================
@@ -219,6 +244,8 @@ to disable encryption of private keys with a random password:
    .. literalinclude:: /include/config/settings_storages_ocsp_key_backend.yaml
       :language: YAML
 
+.. _key_backends_ocsp_hsm_backend:
+
 HSM (Hardware Security Module) OCSP key backend
 ===============================================
 
@@ -233,4 +260,22 @@ backend:
 .. tab:: YAML
 
    .. literalinclude:: /include/config/settings_hsm_ocsp_key_backend.yaml
+      :language: YAML
+
+.. _key_backends_ocsp_db_backend:
+
+Database OCSP key backend
+==========================
+
+The database OCSP key backend is equivalent to the :ref:`db_backend` and stores OCSP private keys in the
+database. It also takes no options:
+
+.. tab:: Python
+
+   .. literalinclude:: /include/config/settings_db_ocsp_key_backend.py
+      :language: python
+
+.. tab:: YAML
+
+   .. literalinclude:: /include/config/settings_db_ocsp_key_backend.yaml
       :language: YAML
