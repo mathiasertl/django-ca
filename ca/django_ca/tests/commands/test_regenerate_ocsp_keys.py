@@ -26,7 +26,8 @@ from django.core.files.storage import storages
 from django.test import TestCase
 
 from django_ca.conf import model_settings
-from django_ca.key_backends.storages import StoragesOCSPBackend, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesOCSPBackend
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA

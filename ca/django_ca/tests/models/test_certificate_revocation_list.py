@@ -22,7 +22,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.constants import ReasonFlags
-from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.tests.base.assertions import assert_issuing_distribution_point
 from django_ca.tests.base.constants import TIMESTAMPS

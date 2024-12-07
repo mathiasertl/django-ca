@@ -33,7 +33,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.key_backends import key_backends
-from django_ca.key_backends.storages import StoragesCreatePrivateKeyOptions
+from django_ca.key_backends.storages.models import StoragesCreatePrivateKeyOptions
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.utils import (

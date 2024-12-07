@@ -36,7 +36,7 @@ but is designed to provide defaults that work in most cases::
    >>> from datetime import datetime, timedelta, timezone
    >>> from cryptography.x509.oid import NameOID
    >>> from django_ca.key_backends import key_backends
-   >>> from django_ca.key_backends.storages import (
+   >>> from django_ca.key_backends.storages.models import (
    ...     StoragesCreatePrivateKeyOptions,
    ...     StoragesUsePrivateKeyOptions,
    ... )

@@ -31,8 +31,8 @@ from pytest_django.fixtures import SettingsWrapper
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.deprecation import RemovedInDjangoCA230Warning
-from django_ca.key_backends.storages import (
-    StoragesBackend,
+from django_ca.key_backends.storages import StoragesBackend
+from django_ca.key_backends.storages.models import (
     StoragesCreatePrivateKeyOptions,
     StoragesUsePrivateKeyOptions,
 )

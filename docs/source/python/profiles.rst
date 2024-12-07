@@ -11,7 +11,7 @@ the ``webserver`` profile::
    # Note: "csr" is a predefined variable, see https://cryptography.io/en/latest/x509/tutorial/
    >>> from cryptography import x509
    >>> from cryptography.x509.oid import NameOID
-   >>> from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+   >>> from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
    >>> from django_ca.models import Certificate
    >>> from django_ca.profiles import profiles
    >>> subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])

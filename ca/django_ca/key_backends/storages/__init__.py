@@ -11,9 +11,9 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Key backend using HSMs."""
+"""Key backend using the Django Storages subsystem."""
 
-from django_ca.key_backends.hsm.backend import HSMBackend
-from django_ca.key_backends.hsm.ocsp_backend import HSMOCSPBackend
+from django_ca.key_backends.storages.backend import StoragesBackend
+from django_ca.key_backends.storages.ocsp_backend import StoragesOCSPBackend
 
-__all__ = ("HSMBackend", "HSMOCSPBackend")
+__all__ = ("StoragesBackend", "StoragesOCSPBackend")

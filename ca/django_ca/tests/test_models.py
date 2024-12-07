@@ -30,7 +30,7 @@ from django.utils import timezone
 import pytest
 from freezegun import freeze_time
 
-from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.modelfields import LazyCertificate, LazyCertificateSigningRequest
 from django_ca.models import (
     AcmeAccount,

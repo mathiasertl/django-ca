@@ -48,7 +48,7 @@ DSA_PATHLEN = 3
 def recreate_crls(dest: Path) -> None:
     """Recreate CRLs for the root CA."""
     # pylint: disable=import-outside-toplevel  # django-ca needs to be set up.
-    from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+    from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
     from django_ca.models import CertificateAuthority, CertificateRevocationList
 
     root = CertificateAuthority.objects.get(name="root")

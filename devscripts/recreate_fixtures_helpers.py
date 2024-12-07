@@ -45,7 +45,10 @@ from freezegun import freeze_time
 from devscripts import config
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
-from django_ca.key_backends.storages import StoragesCreatePrivateKeyOptions, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages.models import (
+    StoragesCreatePrivateKeyOptions,
+    StoragesUsePrivateKeyOptions,
+)
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
 from django_ca.pydantic.extensions import (

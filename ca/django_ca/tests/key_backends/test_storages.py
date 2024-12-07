@@ -20,8 +20,8 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
-from django_ca.key_backends.storages import (
-    StoragesBackend,
+from django_ca.key_backends.storages import StoragesBackend
+from django_ca.key_backends.storages.models import (
     StoragesCreatePrivateKeyOptions,
     StoragesUsePrivateKeyOptions,
 )

@@ -44,9 +44,9 @@ creates a minimal CA using the file system storage backend::
 
    >>> from datetime import datetime, timedelta, timezone
    >>> from django_ca.key_backends import key_backends
-   >>> from django_ca.key_backends.storages import (
+   >>> from django_ca.key_backends.storages.models import (
    ...     StoragesCreatePrivateKeyOptions,
-   ...     StoragesUsePrivateKeyOptions
+   ...     StoragesUsePrivateKeyOptions,
    ... )
    >>> from django_ca.models import CertificateAuthority
    >>> from django_ca.utils import x509_name

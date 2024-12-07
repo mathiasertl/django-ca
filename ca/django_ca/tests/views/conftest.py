@@ -27,7 +27,8 @@ from cryptography.x509 import ocsp
 from django.test import Client
 from django.urls import reverse
 
-from django_ca.key_backends.storages import StoragesOCSPBackend, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesOCSPBackend
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.typehints import HttpResponse

@@ -34,7 +34,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,

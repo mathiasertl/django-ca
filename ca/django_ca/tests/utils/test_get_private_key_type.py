@@ -15,7 +15,8 @@
 
 import pytest
 
-from django_ca.key_backends.storages import StoragesBackend, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
 from django_ca.utils import get_private_key_type
 

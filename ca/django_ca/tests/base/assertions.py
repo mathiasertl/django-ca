@@ -39,7 +39,7 @@ import pytest
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA220Warning, RemovedInDjangoCA230Warning
-from django_ca.key_backends.storages import StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
 from django_ca.tests.base.mocks import mock_signal

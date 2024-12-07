@@ -61,7 +61,7 @@ except ModuleNotFoundError as django_ex:
 # pylint: disable=wrong-import-position # django_setup needs to be called first
 from django_ca.conf import model_settings  # noqa: E402
 from django_ca.key_backends import key_backends  # noqa: E402
-from django_ca.key_backends.storages import (  # noqa: E402
+from django_ca.key_backends.storages.models import (  # noqa: E402
     StoragesCreatePrivateKeyOptions,
     StoragesUsePrivateKeyOptions,
 )

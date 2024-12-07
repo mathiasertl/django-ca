@@ -35,7 +35,8 @@ from django_ca.key_backends import key_backends
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.keys import PKCS11EllipticCurvePrivateKey, PKCS11RSAPrivateKey
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
-from django_ca.key_backends.storages import StoragesBackend, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_signature
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS

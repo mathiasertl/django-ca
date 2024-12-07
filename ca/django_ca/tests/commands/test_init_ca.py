@@ -43,7 +43,8 @@ from django_ca.constants import ExtendedKeyUsageOID
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
-from django_ca.key_backends.storages import StoragesBackend, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesBackend
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.signals import post_create_ca
 from django_ca.tests.base.assertions import (

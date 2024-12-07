@@ -41,7 +41,8 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.deprecation import RemovedInDjangoCA230Warning
-from django_ca.key_backends.storages import StoragesOCSPBackend, StoragesUsePrivateKeyOptions
+from django_ca.key_backends.storages import StoragesOCSPBackend
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic import CertificatePoliciesModel
 from django_ca.tests.base.assertions import (
