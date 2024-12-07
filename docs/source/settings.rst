@@ -420,7 +420,7 @@ CA_OCSP_KEY_BACKENDS
       .. literalinclude:: /include/config/settings_default_ca_ocsp_key_backends.yaml
          :language: YAML
 
-    Configuration for storing OCSP keys. See :ref:`ocsp_key_backends` for more information.
+   Configuration for storing OCSP keys. See :ref:`ocsp_key_backends` for more information.
 
 .. _settings-ca-ocsp-responder-certificate-renewal:
 
