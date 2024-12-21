@@ -1,13 +1,15 @@
--rrequirements/requirements-docs.txt
--rrequirements/requirements-dist.txt
--rrequirements/requirements-test.txt
--rrequirements/requirements-lint.txt
--rrequirements/requirements-mypy.txt
+-r requirements/requirements-docs.txt
+-r requirements/requirements-dist.txt
+-r requirements/requirements-test.txt
+-r requirements/requirements-lint.txt
+-r requirements/requirements-mypy.txt
 ipython>=7.28.0
 docker==7.1.0
 pip>=23
 
 tox>=4.18.0
+tox-uv==1.16.2
+
 # pytest-xdist allows running tests in parallel ("pytest -n 3")
 pytest-xdist==3.6.1
 

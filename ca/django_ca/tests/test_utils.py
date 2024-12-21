@@ -547,11 +547,11 @@ class ValidatePrivateKeyParametersTest(TestCase):
 
         for key_type in ("Ed448", "Ed25519"):
             with pytest.raises(ValueError, match=rf"^Key size is not supported for {key_type} keys\.$"):
-                validate_private_key_parameters(key_type, key_size, None)  # type: ignore
+                validate_private_key_parameters(key_type, key_size, None)
             with pytest.raises(
                 ValueError, match=rf"^Elliptic curves are not supported for {key_type} keys\.$"
             ):
-                validate_private_key_parameters(key_type, None, elliptic_curve)  # type: ignore
+                validate_private_key_parameters(key_type, None, elliptic_curve)
 
 
 class ValidatePublicKeyParametersTest(TestCase):
@@ -561,7 +561,7 @@ class ValidatePublicKeyParametersTest(TestCase):
         """Test valid parameters."""
         for key_type in ("RSA", "DSA", "EC"):
             for algorithm in (hashes.SHA256(), hashes.SHA512()):
-                validate_public_key_parameters(key_type, algorithm)  # type: ignore[arg-type]
+                validate_public_key_parameters(key_type, algorithm)
         for key_type in ("Ed448", "Ed25519"):
             validate_public_key_parameters(key_type, None)  # type: ignore[arg-type]
 
