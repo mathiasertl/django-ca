@@ -85,7 +85,18 @@ def test_name_attribute(parameters: dict[str, Any], name_attr: x509.NameAttribut
     (
         (
             {"oid": "foo", "value": "example.com"},
-            [("value_error", ("oid",), "Value error, foo: Invalid object identifier")],
+            [
+                (
+                    "value_error",
+                    ("oid", "chain[str,function-plain[str_loader()]]"),
+                    "Value error, foo: Not a valid dotted string.",
+                ),
+                (
+                    "is_instance_of",
+                    ("oid", "is-instance[ObjectIdentifier]"),
+                    "Input should be an instance of ObjectIdentifier",
+                ),
+            ],
         ),
     ),
 )

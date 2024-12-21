@@ -17,7 +17,7 @@ import re
 import typing
 from typing import Any, TypeVar, Union
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 import pytest
 
@@ -34,9 +34,6 @@ def assert_cryptography_model(
     """Test that a cryptography model matches the expected value."""
     model = model_class(**parameters)
     assert model.cryptography == expected
-    print(1, expected)
-    print(2, model)
-    print(3, model_class.model_validate(expected))
     assert model == model_class.model_validate(expected), (model, expected)
     assert model == model_class.model_validate_json(model.model_dump_json())  # test JSON serialization
     return model  # for any further tests on the model
@@ -44,7 +41,7 @@ def assert_cryptography_model(
 
 @typing.overload
 def assert_validation_errors(
-    model_class: type[CryptographyModelTypeVar],
+    model_class: type[BaseModel],
     parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None: ...
@@ -59,7 +56,7 @@ def assert_validation_errors(
 
 
 def assert_validation_errors(
-    model_class: Union[type[CryptographyModelTypeVar], type[CryptographyRootModelTypeVar]],
+    model_class: type[BaseModel],
     parameters: Union[list[dict[str, Any]], dict[str, Any]],
     expected_errors: ExpectedErrors,
 ) -> None:

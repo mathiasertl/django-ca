@@ -25,7 +25,7 @@ from cryptography.x509.oid import NameOID
 from django_ca import constants
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
-from django_ca.pydantic.type_aliases import OIDType
+from django_ca.pydantic.type_aliases import ObjectIdentifierPydanticType
 
 _NAME_ATTRIBUTE_OID_DESCRIPTION = (
     "A dotted string representing the OID or a known alias as described in "
@@ -58,7 +58,9 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
         },
     )
 
-    oid: Annotated[OIDType, BeforeValidator(validators.name_oid_dotted_string_parser)] = Field(
+    oid: Annotated[
+        ObjectIdentifierPydanticType, BeforeValidator(validators.name_oid_dotted_string_parser)
+    ] = Field(
         title="Object identifier",
         description=_NAME_ATTRIBUTE_OID_DESCRIPTION,
         json_schema_extra={"example": NameOID.COMMON_NAME.dotted_string},
@@ -80,14 +82,11 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
     @model_validator(mode="after")
     def validate_name_attribute(self) -> "NameAttributeModel":
         """Validate that country code OIDs have exactly two characters."""
-        country_code_oids = (
-            NameOID.COUNTRY_NAME.dotted_string,
-            NameOID.JURISDICTION_COUNTRY_NAME.dotted_string,
-        )
+        country_code_oids = (NameOID.COUNTRY_NAME, NameOID.JURISDICTION_COUNTRY_NAME)
         if self.oid in country_code_oids and len(self.value) != 2:
             raise ValueError(f"{self.value}: Must have exactly two characters")
 
-        if self.oid == NameOID.COMMON_NAME.dotted_string and not self.value:
+        if self.oid == NameOID.COMMON_NAME and not self.value:
             name = constants.NAME_OID_NAMES[NameOID.COMMON_NAME]
             raise ValueError(f"{name} must not be an empty value")
         return self
@@ -95,12 +94,11 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
     @property
     def cryptography(self) -> x509.NameAttribute:
         """The :py:class:`~cg:cryptography.x509.NameAttribute` instance for this model."""
-        oid = x509.ObjectIdentifier(self.oid)
-        if oid == NameOID.X500_UNIQUE_IDENTIFIER:
+        if self.oid == NameOID.X500_UNIQUE_IDENTIFIER:
             value = base64.b64decode(self.value)
-            return x509.NameAttribute(oid=oid, value=value, _type=_ASN1Type.BitString)
+            return x509.NameAttribute(oid=self.oid, value=value, _type=_ASN1Type.BitString)
 
-        return x509.NameAttribute(oid=oid, value=self.value)
+        return x509.NameAttribute(oid=self.oid, value=self.value)
 
 
 class NameModel(CryptographyRootModel[list[NameAttributeModel], x509.Name]):
@@ -137,9 +135,7 @@ class NameModel(CryptographyRootModel[list[NameAttributeModel], x509.Name]):
         seen = set()
 
         # for oid in set(oids):
-        for attr in self.root:
-            oid = x509.ObjectIdentifier(attr.oid)
-
+        for oid in [attr.oid for attr in self.root]:
             # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
             if oid in seen and oid not in constants.MULTIPLE_OIDS:
                 name = constants.NAME_OID_NAMES.get(oid, oid.dotted_string)

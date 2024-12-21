@@ -217,7 +217,8 @@ def test_general_name(parameters: dict[str, Any], name: x509.GeneralName, discri
                 (
                     "value_error",
                     (),
-                    "Value error, root=[NameAttributeModel(oid='1.2.3', value='example.com')]: Must be an "
+                    "Value error, root=[NameAttributeModel(oid=<ObjectIdentifier(oid=1.2.3, "
+                    "name=Unknown OID)>, value='example.com')]: Must be an "
                     "IPAddress/IPNetwork for type IP",
                 )
             ],

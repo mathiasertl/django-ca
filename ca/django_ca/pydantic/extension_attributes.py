@@ -29,7 +29,11 @@ from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet, OIDType
+from django_ca.pydantic.type_aliases import (
+    Base64EncodedBytes,
+    NonEmptyOrderedSet,
+    ObjectIdentifierPydanticType,
+)
 from django_ca.typehints import DistributionPointReasons, LogEntryTypes
 
 if TYPE_CHECKING:  # pragma: only cryptography<44
@@ -56,17 +60,14 @@ class NamingAuthorityModel(NamingAuthorityBase):  # pragma: only cryptography>=4
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[OIDType] = None
+    id: Optional[ObjectIdentifierPydanticType] = None
     url: Optional[Annotated[str, MaxLen(128)]] = None
     text: Optional[Annotated[str, MaxLen(128)]] = None
 
     @property
     def cryptography(self) -> "x509.NamingAuthority":
         """Convert to a :py:class:`~cg:cryptography.x509.NamingAuthority` instance."""
-        oid = None
-        if self.id is not None:
-            oid = x509.ObjectIdentifier(self.id)
-        return x509.NamingAuthority(id=oid, url=self.url, text=self.text)
+        return x509.NamingAuthority(id=self.id, url=self.url, text=self.text)
 
 
 class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.0
@@ -81,22 +82,20 @@ class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.
 
     naming_authority: Optional[NamingAuthorityModel] = None
     profession_items: Annotated[list[Annotated[str, MaxLen(128)]], MinLen(1)]
-    profession_oids: Optional[list[OIDType]] = None
+    profession_oids: Optional[list[ObjectIdentifierPydanticType]] = None
     registration_number: Optional[Annotated[str, MaxLen(128)]] = None
     add_profession_info: Optional[Base64EncodedBytes] = None
 
     @property
     def cryptography(self) -> "x509.ProfessionInfo":
-        naming_authority = profession_oids = None
+        naming_authority = None
         if self.naming_authority is not None:
             naming_authority = self.naming_authority.cryptography
-        if self.profession_oids is not None:
-            profession_oids = [x509.ObjectIdentifier(oid) for oid in self.profession_oids]
 
         return x509.ProfessionInfo(
             naming_authority=naming_authority,
             profession_items=self.profession_items,
-            profession_oids=profession_oids,
+            profession_oids=self.profession_oids,
             registration_number=self.registration_number,
             add_profession_info=self.add_profession_info,
         )
@@ -337,7 +336,10 @@ class DistributionPointModel(CryptographyModel[x509.DistributionPoint]):
     ... )  # doctest: +STRIP_WHITESPACE
     DistributionPointModel(
         full_name=None,
-        relative_name=NameModel(root=[NameAttributeModel(oid='2.5.4.3', value='example.com')]),
+        relative_name=NameModel(root=[NameAttributeModel(
+            oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>,
+            value='example.com'
+        )]),
         crl_issuer=[GeneralNameModel(type='URI', value='https://ca.example.com/issuer')],
         reasons={'key_compromise'}
     )
@@ -538,12 +540,16 @@ class MSCertificateTemplateValueModel(CryptographyModel[x509.MSCertificateTempla
     The `template_id` parameter is a dotted-string object identifier, while `major_version` and
     `minor_version` are optional integers:
 
-    >>> MSCertificateTemplateValueModel(template_id="1.2.3", major_version=1)
-    MSCertificateTemplateValueModel(template_id='1.2.3', major_version=1, minor_version=None)
+    >>> MSCertificateTemplateValueModel(template_id="1.2.3", major_version=1)  # doctest: +STRIP_WHITESPACE
+    MSCertificateTemplateValueModel(
+        template_id=<ObjectIdentifier(oid=1.2.3, name=Unknown OID)>,
+        major_version=1,
+        minor_version=None
+    )
     """
 
     model_config = ConfigDict(from_attributes=True)
-    template_id: OIDType
+    template_id: ObjectIdentifierPydanticType
     major_version: Optional[int] = None
     minor_version: Optional[int] = None
 
@@ -551,9 +557,7 @@ class MSCertificateTemplateValueModel(CryptographyModel[x509.MSCertificateTempla
     def cryptography(self) -> x509.MSCertificateTemplate:
         """Convert to a :py:class:`~cg:cryptography.x509.MSCertificateTemplate` instance."""
         return x509.MSCertificateTemplate(
-            template_id=x509.ObjectIdentifier(self.template_id),
-            major_version=self.major_version,
-            minor_version=self.minor_version,
+            template_id=self.template_id, major_version=self.major_version, minor_version=self.minor_version
         )
 
 
@@ -691,8 +695,11 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
 
     In its simplest for, this model requires only a `policy_identifier`:
 
-    >>> PolicyInformationModel(policy_identifier="2.5.29.32.0")
-    PolicyInformationModel(policy_identifier='2.5.29.32.0', policy_qualifiers=None)
+    >>> PolicyInformationModel(policy_identifier="1.3.6.1.5.5.7.2.1")  # doctest: +STRIP_WHITESPACE
+    PolicyInformationModel(
+        policy_identifier=<ObjectIdentifier(oid=1.3.6.1.5.5.7.2.1, name=id-qt-cps)>,
+        policy_qualifiers=None
+    )
 
     A list of `policy_qualifiers` may also be passed, with elements being either a ``str`` or a
     :py:class:`~django_ca.pydantic.extension_attributes.UserNoticeModel`:
@@ -703,7 +710,7 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
     ...     policy_qualifiers=["https://ca.example.com/cps", notice]
     ... )  # doctest: +STRIP_WHITESPACE
     PolicyInformationModel(
-        policy_identifier='1.3.6.1.5.5.7.2.1',
+        policy_identifier=<ObjectIdentifier(oid=1.3.6.1.5.5.7.2.1, name=id-qt-cps)>,
         policy_qualifiers=[
             'https://ca.example.com/cps',
             UserNoticeModel(notice_reference=None, explicit_text='my text')
@@ -719,7 +726,7 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
         },
     )
 
-    policy_identifier: OIDType = Field(
+    policy_identifier: ObjectIdentifierPydanticType = Field(
         description="An object identifier (OID) as dotted string.",
         json_schema_extra={"example": CertificatePoliciesOID.ANY_POLICY.dotted_string},
     )
@@ -732,7 +739,6 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
     @property
     def cryptography(self) -> x509.PolicyInformation:
         """Convert to a :py:class:`~cg:cryptography.x509.PolicyInformation` instance."""
-        oid = x509.ObjectIdentifier(self.policy_identifier)
         policy_qualifiers: Optional[list[Union[str, x509.UserNotice]]] = None
         if self.policy_qualifiers is not None:
             policy_qualifiers = []
@@ -741,7 +747,9 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
                     policy_qualifiers.append(qualifier)
                 else:
                     policy_qualifiers.append(qualifier.cryptography)
-        return x509.PolicyInformation(policy_identifier=oid, policy_qualifiers=policy_qualifiers)
+        return x509.PolicyInformation(
+            policy_identifier=self.policy_identifier, policy_qualifiers=policy_qualifiers
+        )
 
 
 class UnrecognizedExtensionValueModel(CryptographyModel[x509.UnrecognizedExtension]):
@@ -750,10 +758,10 @@ class UnrecognizedExtensionValueModel(CryptographyModel[x509.UnrecognizedExtensi
     The `value` a base64 encoded bytes value, and the `oid` is any dotted string:
 
     >>> UnrecognizedExtensionValueModel(value=b"MTIz", oid="1.2.3")
-    UnrecognizedExtensionValueModel(oid='1.2.3', value=b'123')
+    UnrecognizedExtensionValueModel(oid=<ObjectIdentifier(oid=1.2.3, name=Unknown OID)>, value=b'123')
     """
 
-    oid: OIDType
+    oid: ObjectIdentifierPydanticType
     value: Base64Bytes
 
     @model_validator(mode="before")
@@ -767,4 +775,4 @@ class UnrecognizedExtensionValueModel(CryptographyModel[x509.UnrecognizedExtensi
     @property
     def cryptography(self) -> x509.UnrecognizedExtension:
         """The :py:class:`~cg:cryptography.x509.UnrecognizedExtension` instance."""
-        return x509.UnrecognizedExtension(value=self.value, oid=x509.ObjectIdentifier(self.oid))
+        return x509.UnrecognizedExtension(value=self.value, oid=self.oid)

@@ -23,7 +23,7 @@ instance into a cryptography instance:
     >>> attr = x509.NameAttribute(oid=NameOID.COMMON_NAME, value="example.com")
     >>> model = NameAttributeModel.model_validate(attr)
     >>> model
-    NameAttributeModel(oid='2.5.4.3', value='example.com')
+    NameAttributeModel(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')
     >>> model.cryptography == attr
     True
 
