@@ -5,6 +5,6 @@ freezegun==1.5.1
 pyOpenSSL>=23
 pyrfc3339==2.0.1
 pytest-env==1.1.5
-pytest-freezer==0.4.8
+pytest-freezer==0.4.9
 pytest-random-order==1.1.1
 requests-mock==1.12.1
