@@ -13,10 +13,12 @@
 
 """Test type aliases for Pydantic from django_ca.pydantic.type_aliases."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 import pytest
 
@@ -25,8 +27,10 @@ from django_ca.pydantic.type_aliases import (
     Base64EncodedBytes,
     EllipticCurveTypeAlias,
     HashAlgorithmTypeAlias,
+    ObjectIdentifierPydanticType,
     Serial,
 )
+from django_ca.tests.pydantic.base import assert_validation_errors
 
 
 class EllipticCurveTypeAliasModel(BaseModel):
@@ -51,6 +55,12 @@ class SerialModel(BaseModel):
     """Test class to test the Serial type alias."""
 
     value: Serial
+
+
+class OIDTypeModel(BaseModel):
+    """Test."""
+
+    value: ObjectIdentifierPydanticType = Field(examples=[NameOID.COMMON_NAME.dotted_string])
 
 
 @pytest.mark.parametrize(("name", "curve_cls"), constants.ELLIPTIC_CURVE_TYPES.items())
@@ -178,3 +188,51 @@ def test_serial_errors(value: str) -> None:
     """Test invalid values for the Serial type alias."""
     with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         SerialModel(value=value)
+
+
+def test_oid_type() -> None:
+    """Test ``django_ca.pydantic.type_aliases.ObjectIdentifierPydanticType``."""
+    dotted_string = "1.2.3"
+    oid = x509.ObjectIdentifier("1.2.3")
+
+    obj = OIDTypeModel(value=dotted_string)
+    assert obj.value == oid
+    assert obj.model_dump() == {"value": oid}
+    assert obj.model_dump(context={"request": "foo"}) == {"value": dotted_string}
+    assert obj.model_dump(context={}) == {"value": oid}
+    assert obj.model_dump(mode="json") == {"value": dotted_string}
+
+    obj = OIDTypeModel(value=oid)
+    assert obj.value == oid
+
+    # Check model_validate()
+    assert OIDTypeModel.model_validate({"value": dotted_string}).value == oid
+    assert OIDTypeModel.model_validate({"value": oid}).value == oid
+    assert OIDTypeModel.model_validate({"value": dotted_string}, strict=True).value == oid
+
+    # Check that we also work in strict mode
+    assert OIDTypeModel.model_validate({"value": dotted_string}, strict=True).value == oid
+
+    assert_validation_errors(
+        OIDTypeModel,
+        {"value": "abc"},
+        [
+            (
+                "value_error",
+                ("value", "chain[str,function-plain[str_loader()]]"),
+                "Value error, abc: Not a valid dotted string.",
+            ),
+            (
+                "is_instance_of",
+                ("value", "is-instance[ObjectIdentifier]"),
+                "Input should be an instance of ObjectIdentifier",
+            ),
+        ],
+    )
+
+    # Test that we can generate a JSON schema:
+    assert OIDTypeModel.model_json_schema()["properties"]["value"] == {
+        "title": "Value",
+        "type": "string",
+        "examples": [NameOID.COMMON_NAME.dotted_string],
+    }

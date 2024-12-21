@@ -28,7 +28,7 @@ from django_ca import constants
 from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.name import NameModel
-from django_ca.pydantic.type_aliases import OIDType
+from django_ca.pydantic.type_aliases import ObjectIdentifierPydanticType
 from django_ca.typehints import GeneralNames, IPAddressType, OtherNames
 
 ip_address_classes = (
@@ -88,7 +88,7 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
     <OtherName(type_id=<ObjectIdentifier(oid=1.2.3, name=Unknown OID)>, value=b'\\x16\\x0bsome string')>
     """
 
-    oid: OIDType
+    oid: ObjectIdentifierPydanticType
     type: Annotated[OtherNames, BeforeValidator(other_name_type_aliases)]
     value: Optional[Union[str, bool, datetime, int]]
 
@@ -160,7 +160,7 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
         else:  # pragma: no cover  # we cover all cases
             raise ValueError(f"{self.type}: Unknown type")
 
-        return x509.OtherName(type_id=x509.ObjectIdentifier(self.oid), value=value)
+        return x509.OtherName(type_id=self.oid, value=value)
 
 
 class GeneralNameModel(CryptographyModel[x509.GeneralName]):

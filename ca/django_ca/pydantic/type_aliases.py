@@ -17,7 +17,14 @@ import base64
 from collections.abc import Hashable
 from typing import Annotated, Any, Callable, Optional, TypeVar, Union
 
-from pydantic import AfterValidator, BeforeValidator, Field, GetPydanticSchema, PlainSerializer
+from pydantic import (
+    AfterValidator,
+    BeforeValidator,
+    Field,
+    GetPydanticSchema,
+    PlainSerializer,
+    SerializationInfo,
+)
 from pydantic_core import core_schema
 from pydantic_core.core_schema import IsInstanceSchema, LiteralSchema
 
@@ -31,8 +38,6 @@ from django_ca.pydantic.validators import (
     int_to_hex_parser,
     is_power_two_validator,
     non_empty_validator,
-    oid_parser,
-    oid_validator,
     reason_flag_crl_scope_validator,
     reason_flag_validator,
     serial_validator,
@@ -143,10 +148,48 @@ Serial = Annotated[
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 
-#: A string that will convert :py:class:`~cg:cryptography.x509.ObjectIdentifier` objects.
+
+def _get_oid_schema() -> GetPydanticSchema:
+    def serializer(
+        value: x509.ObjectIdentifier, info: SerializationInfo
+    ) -> Union[str, x509.ObjectIdentifier]:
+        if info.mode == "json":
+            return value.dotted_string
+
+        context = info.context
+        if context is not None:
+            if "request" in context:
+                return value.dotted_string
+
+        return value
+
+    def str_loader(value: str) -> x509.ObjectIdentifier:
+        try:
+            return x509.ObjectIdentifier(value)
+        except ValueError as ex:
+            raise ValueError(f"{value}: Not a valid dotted string.") from ex
+
+    json_schema = core_schema.chain_schema(
+        [
+            core_schema.str_schema(),
+            core_schema.no_info_plain_validator_function(str_loader),
+        ]
+    )
+    python_schema = core_schema.is_instance_schema(x509.ObjectIdentifier)
+
+    return GetPydanticSchema(
+        lambda tp, handler: core_schema.json_or_python_schema(
+            json_schema=json_schema,
+            python_schema=core_schema.union_schema([json_schema, python_schema]),
+            serialization=core_schema.plain_serializer_function_ser_schema(serializer, info_arg=True),
+        )
+    )
+
+
+#: Annotated type for :py:class:`~cg:cryptography.x509.ObjectIdentifier`.
 #:
-#: This type alias will also validate the x509 dotted string format.
-OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
+#: This annotated type will accept dotted strings as input and will always serialize to a dotted string.
+ObjectIdentifierPydanticType = Annotated[x509.ObjectIdentifier, _get_oid_schema()]
 
 UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])
 UniqueElementsTuple = Annotated[UniqueTupleTypeVar, AfterValidator(unique_validator)]
