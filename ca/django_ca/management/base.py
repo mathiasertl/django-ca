@@ -84,6 +84,16 @@ class BinaryOutputWrapper(OutputWrapper):
     def __init__(self, out: typing.BinaryIO, ending: bytes = b"\n") -> None:
         super().__init__(out, ending=ending)  # type: ignore[arg-type]
 
+    def flush(self) -> None:
+        """Overwritten from base class so we don't try to flush when the stream is already closed.
+
+        Starting with Python 3.13, we see some untraceable teardown code call flush() despite the stream
+        already being closed.
+        """
+        if self._out.closed is True:  # pragma: only py>=3.13
+            return
+        super().flush()
+
     def write(  # type: ignore[override]
         self,
         msg: Union[str, bytes] = b"",
