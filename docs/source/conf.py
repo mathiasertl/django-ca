@@ -468,6 +468,11 @@ jinja_filters = {
     "basename": os.path.basename,
 }
 
+# Warnings
+suppress_warnings = [
+    "config.cache",  # jinja_filters has unpickable objects
+]
+
 qualname_overrides = {
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
@@ -500,7 +505,10 @@ qualname_overrides = {
 # Ignore (not so important) classes where the documented name does not match the documented name.
 nitpick_ignore = [
     ("py:class", "NoneType"),
+    ("py:class", "lambda"),
+    ("py:class", "locals>.<lambda"),
     # TypeVars for classes that make no sense in documenting.
+    ("py:class", "django_ca.pydantic.validators.T"),
     ("py:class", "django_ca.key_backends.base.CreatePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.StorePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.UsePrivateKeyOptionsTypeVar"),

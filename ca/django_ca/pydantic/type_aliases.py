@@ -143,6 +143,9 @@ Serial = Annotated[
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 
+#: A string that will convert :py:class:`~cg:cryptography.x509.ObjectIdentifier` objects.
+#:
+#: This type alias will also validate the x509 dotted string format.
 OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
 
 UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])

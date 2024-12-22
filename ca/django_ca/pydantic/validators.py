@@ -214,9 +214,9 @@ def serial_validator(value: str) -> str:
 
 
 def timedelta_as_number_parser(unit: Literal["seconds", "hours", "days"] = "seconds") -> Callable[[Any], Any]:
-    """Validator for timedeltas.
+    """Validator for ``timedelta``.
 
-    .. WARNING:: This validator differs in that it has to be called with a unit for timedeltas.
+    .. WARNING:: This validator differs in that it has to be called with a unit for ``timedeltas``.
     """
 
     def validator(value: Any) -> Any:
