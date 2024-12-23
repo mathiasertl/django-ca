@@ -10,7 +10,7 @@ commands:
           DJANGO_CA_VERSION: "{{ django_ca_version }}"
     - command: docker compose ps
       wait_for:
-          - command: docker compose exec backend nc -z {{ postgres_host }}:5432
+          - command: docker compose exec backend nc -z {{ postgres_host }} 5432
           - command: docker compose exec -e PGPASSWORD={{ postgres_password }} backend psql -U postgres -h {{ postgres_host }} -p 5432 postgres -c "SELECT count(*) from auth_user"
       display_output: |
           Name                       Command               State         Ports

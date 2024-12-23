@@ -59,6 +59,15 @@ def _test_alpine_version(docker_tag: str, alpine_version: str) -> int:
     return ok(f"Docker image uses Alpine Linux {actual_release}.")
 
 
+def _test_debian_version(docker_tag: str, debian_version: str) -> int:
+    proc = utils.docker_run(docker_tag, "lsb_release", "-cs", capture_output=True, text=True)
+    actual_release = proc.stdout.strip()
+
+    if actual_release != debian_version:
+        return err(f"Docker image uses outdated Debian Linux version {actual_release}.")
+    return ok(f"Docker image uses Debian Linux {actual_release}.")
+
+
 def _test_extras(docker_tag: str) -> int:
     cwd = os.getcwd()
     utils.docker_run(
@@ -125,7 +134,8 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
     _test_clean(docker_tag)
     if release is not None:
         errors += _test_version(docker_tag, release)
-    errors += _test_alpine_version(docker_tag, config.ALPINE_RELEASES[-1])
+    # errors += _test_alpine_version(docker_tag, config.ALPINE_RELEASES[-1])
+    errors += _test_debian_version(docker_tag, config.DEBIAN_RELEASES[-1])
     errors += _test_extras(docker_tag)
 
     context = {

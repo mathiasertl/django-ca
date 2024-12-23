@@ -61,7 +61,7 @@ fi
 # Wait for connections to be up (in this case the database), as the subsequent commands require access to it
 if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
     for conn in ${WAIT_FOR_CONNECTIONS}; do
-        conn=${conn/:/ }
+        conn=$(echo $conn | sed 's/:/ /')
         while ! nc -z $conn; do
             echo "Wait for $conn..."
             sleep 0.1 # wait for 1/10 of the second before check again

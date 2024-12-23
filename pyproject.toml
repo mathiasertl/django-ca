@@ -27,6 +27,17 @@ docker-image-blacklist = [
     "python:3.9-alpine3.20",
     "python:3.9-alpine3.19",
     "python:3.9-alpine3.18",
+    "python:3.9-slim-bullseye",
+    "python:3.9-slim-bookworm",
+
+    # Some image tags are no longer being built
+    "python:3.13-alpine3.18",
+
+     # uWSGI does not compile on bullseye
+    "python:3.13-slim-bullseye",
+    "python:3.12-slim-bullseye",
+    "python:3.11-slim-bullseye",
+    "python:3.10-slim-bullseye",
 ]
 
 # List of tested Debian releases:
@@ -42,6 +53,7 @@ ubuntu-releases = [
     "focal",  # 20.04, until 2025-04-23
     "jammy",  # 22.04, until 2027-04-21
     "noble",  # 24.04, until 2029-05-31
+    "oracular",  # 24.10, until 2025-07
 ]
 
 [django-ca.release.github]

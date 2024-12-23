@@ -271,9 +271,11 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
 
     with start_tutorial("quickstart_with_docker_compose", context) as tut:
         cwd = Path(os.getcwd())
+        print("# Running in ", cwd)
         tut.write_template("docker-compose.override.yml.jinja")
         tut.write_template(".env.jinja")
         shutil.copy(docker_compose_yml, cwd)
+        input("enter 1:")
 
         # Convert DER certificates from fixtures to PEM (requests needs PEM certificates).
         ca_pub_pem = cwd / "root.pem"

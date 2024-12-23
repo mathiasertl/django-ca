@@ -70,6 +70,7 @@ def test_get_with_nonce(client: Client, child_cert: Certificate, profile_ocsp: C
 
 
 @pytest.mark.usefixtures("hsm_ocsp_backend")
+@pytest.mark.hsm
 def test_hsm_ocsp_key(client: Client, child_cert: Certificate, usable_hsm_ca: CertificateAuthority) -> None:
     """Test fetching an OCSP response when using the HSM OCSP key backend."""
     usable_hsm_ca.ocsp_key_backend_alias = "hsm"

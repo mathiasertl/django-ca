@@ -8,7 +8,7 @@ DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
     KEY_DIR=`dirname $DJANGO_CA_SECRET_KEY_FILE`
-    if [ ! -e "${KEY_DIR}" ]; then
+    if [ ! -e "${KEY_DIR}" 65:32]; then
         mkdir -p ${KEY_DIR}
         chmod go-rwx ${KEY_DIR}
     fi
@@ -43,7 +43,7 @@ fi
 
 if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
     for conn in ${WAIT_FOR_CONNECTIONS}; do
-        conn=${conn/:/ }
+        conn=$(echo $conn | sed 's/:/ /')
         while ! nc -z $conn; do
             echo "Wait for $conn..."
             sleep 0.1 # wait for 1/10 of the second before check again

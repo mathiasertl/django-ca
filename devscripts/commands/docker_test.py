@@ -14,9 +14,12 @@
 """The docker-test subcommand generates the Docker image using various base images."""
 
 import argparse
-import os
+import functools
+import shlex
 import subprocess
 import sys
+from multiprocessing.pool import Pool
+from pathlib import Path
 from typing import TypedDict
 
 from devscripts import config
@@ -32,6 +35,91 @@ class DockerRunDict(TypedDict):
     error: str
 
 
+def build_docker_image(cmd: list[str], log_path: Path, output=False) -> int:
+    """Run command to build a Docker image."""
+    env = {"DOCKER_BUILDKIT": "1"}
+
+    with open(log_path, "bw") as stream:
+        if output:
+            stdout = subprocess.PIPE
+        else:
+            stdout = stream
+        stream.write(f"+ {shlex.join(cmd)}\n".encode())
+
+        with subprocess.Popen(cmd, stdout=stdout, stderr=subprocess.STDOUT, env=env) as proc:
+            if output:
+                while True:
+                    data = proc.stdout.read(16)  # type: ignore[union-attr]  # not None due to arguments
+                    if data:
+                        sys.stdout.buffer.write(data)
+                        sys.stdout.flush()
+                        stream.write(data)
+                        # logfile.flush()
+                    else:
+                        break
+
+    return proc.returncode
+
+
+def handle_image(image: str, no_cache: bool, keep_image: bool, output: bool) -> DockerRunDict:
+    """Build an image."""
+    info(f"### Testing {image} ###")
+    tag = f"django-ca-test-{image}"
+
+    cmd = ["docker", "build", "--build-arg", f"IMAGE={image}", "-t", tag]
+
+    if "alpine" in image:
+        cmd += ["-f", "Dockerfile.alpine"]
+
+    if no_cache:
+        cmd.append("--no-cache")
+
+    cmd.append(".")
+
+    if output:
+        print(shlex.join(cmd))
+
+    logdir = Path(".docker")
+    logdir.mkdir(exist_ok=True, parents=True)
+    logpath = logdir / f"{image}.log"
+
+    try:
+        returncode = build_docker_image(cmd, logpath, output=output)
+
+        if returncode == 0:
+            ok(f"{image} passed.")
+            return {"image": image, "success": True, "error": ""}
+        else:
+            failed_str = f"{image} failed: return code {returncode}."
+
+            # pylint: disable-next=consider-using-f-string  # just more convenient
+            err(failed_str)
+            return {"image": image, "success": False, "error": f"return code: {returncode}"}
+
+    except Exception as ex:  # pylint: disable=broad-except; to make sure we test all images
+        msg = f"{image}: {type(ex).__name__} {ex}"
+        return {"image": image, "success": False, "error": msg}
+        err(f"\n{msg}\n")
+    finally:
+        if not keep_image:
+            subprocess.run(
+                ["docker", "image", "rm", tag],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+
+def handle_parallel(
+    images: list[str], processes: int, no_cache: bool, keep_image: bool
+) -> list[DockerRunDict]:
+    """Handle images in parallel."""
+    with Pool(processes) as pool:
+        worker = functools.partial(handle_image, no_cache=no_cache, keep_image=keep_image, output=False)
+        docker_runs = pool.map(worker, images)
+    return docker_runs
+
+
 class Command(DevCommand):
     """Class implementing the ``dev.py docker-test`` command."""
 
@@ -44,15 +132,6 @@ class Command(DevCommand):
         )
 
         parser.add_argument(
-            "-i",
-            "--image",
-            action="append",
-            dest="images",
-            choices=config.ALPINE_IMAGES,
-            metavar=image_metavar,
-            help="Base images to test on, may be given multiple times.",
-        )
-        parser.add_argument(
             "--no-cache", default=False, action="store_true", help="Use Docker cache to speed up builds."
         )
         parser.add_argument(
@@ -60,83 +139,51 @@ class Command(DevCommand):
         )
         parser.add_argument("--keep-image", action="store_true", default=False, help="Do not remove images.")
         parser.add_argument("-l", "--list", action="store_true", help="List images and exit.")
+        parser.add_argument(
+            "-p", "--parallel", type=int, metavar="N", help="Build N images in parallel (implies -q)."
+        )
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", default=False, help="Do not print output to terminal."
+        )
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "-i",
+            "--image",
+            action="append",
+            dest="images",
+            choices=config.ALPINE_IMAGES + config.DEBIAN_IMAGES,
+            metavar=image_metavar,
+            help="Base images to test on, may be given multiple times.",
+        )
+        group.add_argument("--debian", action="store_true", help="Only test Debian-based images.")
+        group.add_argument("--alpine", action="store_true", help="Only test Alpine-based images.")
 
     def handle(self, args: argparse.Namespace) -> None:
         docker_runs: list[DockerRunDict] = []
 
-        images = args.images or config.ALPINE_IMAGES
+        if args.images:
+            images: tuple[str] = tuple(args.images)
+        elif args.debian:
+            images = config.DEBIAN_IMAGES
+        elif args.alpine:
+            images = config.ALPINE_IMAGES
+        else:
+            images = config.ALPINE_IMAGES + config.DEBIAN_IMAGES
 
         if args.list:
             for image in images:
                 print(image)
             return
 
-        for image in images:
-            info(f"### Testing {image} ###")
-            tag = f"django-ca-test-{image}"
-
-            cmd = ["docker", "build"]
-
-            if args.no_cache:
-                cmd.append("--no-cache")
-            if image != "default":
-                cmd += ["--build-arg", f"IMAGE={image}"]
-
-            cmd += [
-                "-t",
-                tag,
-            ]
-            cmd.append(".")
-
-            print(" ".join(cmd))
-
-            logdir = ".docker"
-            logpath = os.path.join(logdir, f"{image}.log")
-            if not os.path.exists(logdir):
-                os.makedirs(logdir)
-
-            env = dict(os.environ, DOCKER_BUILDKIT="1")
-
-            try:
-                with (
-                    subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env) as proc,
-                    open(logpath, "bw") as stream,
-                ):
-                    while True:
-                        byte = proc.stdout.read(1)  # type: ignore[union-attr]  # not None due to arguments
-                        if byte:
-                            sys.stdout.buffer.write(byte)
-                            sys.stdout.flush()
-                            stream.write(byte)
-                            # logfile.flush()
-                        else:
-                            break
-
-                if proc.returncode == 0:
-                    ok(f"{image} passed.")
-                    docker_runs.append({"image": image, "success": True, "error": ""})
-                else:
-                    failed_str = f"# {image} failed: return code {proc.returncode}. #"
-
-                    # pylint: disable-next=consider-using-f-string  # just more convenient
-                    err("{}\n{}\n{}\n\n".format("#" * len(failed_str), failed_str, "#" * len(failed_str)))
-                    docker_runs.append(
-                        {
-                            "image": image,
-                            "success": False,
-                            "error": f"return code: {proc.returncode}",
-                        }
-                    )
-
-            except Exception as ex:  # pylint: disable=broad-except; to make sure we test all images
-                msg = f"{image}: {type(ex).__name__} {ex}"
-                docker_runs.append({"image": image, "success": False, "error": msg})
-                err(f"\n{msg}\n")
-                if args.fail_fast:
-                    sys.exit(1)
-            finally:
-                if not args.keep_image:
-                    self.run("docker", "image", "rm", tag, check=False)
+        if args.parallel is None:
+            for image in images:
+                result = handle_image(image, args.no_cache, args.keep_image, output=not args.quiet)
+                docker_runs.append(result)
+        else:
+            docker_runs = handle_parallel(
+                images, args.parallel, no_cache=args.no_cache, keep_image=args.keep_image
+            )
 
         print("\nSummary of test runs:")
         for run in docker_runs:

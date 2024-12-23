@@ -1,6 +1,7 @@
 **/*.backup
 **/*.log
 **/*.py[co]
+**/.ruff_cache
 **/*.sqlite3
 **/*.sw[a-z]
 **/__pycache__
@@ -18,7 +19,6 @@
 /.mypy_cache/
 /.pytest_cache/
 /.python-version
-/.ruff_cache/
 /.tox/
 /bin/
 /ca/*.crl

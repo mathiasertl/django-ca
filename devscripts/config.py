@@ -63,7 +63,7 @@ UBUNTU_RELEASES = tuple(typing.cast(list[str], _release_config["ubuntu-releases"
 GITHUB_CONFIG = _release_config["github"]
 
 # Compute list of valid alpine images
-_alpine_images = ["default"]
+_alpine_images = []
 for python_version in reversed(PYTHON_RELEASES):
     for alpine_version in reversed(ALPINE_RELEASES):
         image_name = f"python:{python_version}-alpine{alpine_version}"  # pylint: disable=invalid-name
@@ -74,3 +74,15 @@ for python_version in reversed(PYTHON_RELEASES):
 
         _alpine_images.append(image_name)
 ALPINE_IMAGES = tuple(_alpine_images)
+
+_debian_images = []
+for python_version in reversed(PYTHON_RELEASES):
+    for debian_version in reversed(DEBIAN_RELEASES):
+        image_name = f"python:{python_version}-slim-{debian_version}"
+
+        # Skip images that are just no longer built upstream
+        if image_name in _release_config["docker-image-blacklist"]:
+            continue
+
+        _debian_images.append(image_name)
+DEBIAN_IMAGES = tuple(_debian_images)

@@ -61,6 +61,10 @@ unwanted: list[Path] = []
 for pattern in patterns:
     unwanted += path.rglob(pattern)
 
+# Ignore the virtualenv, it's not our job to clean it up.
+venv_path = Path("/usr/src/django-ca/.venv/")
+unwanted = [path for path in unwanted if not path.is_relative_to(venv_path)]
+
 if unwanted:
     print("Image contains unwanted files:")
     for path in sorted(unwanted):
