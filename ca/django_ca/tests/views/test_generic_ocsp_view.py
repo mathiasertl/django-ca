@@ -220,9 +220,7 @@ def test_certificate_never_generated(
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["profile_certs_expired"])
-def test_certificate_expired(
-    caplog: LogCaptureFixture, client: Client, child_cert: Certificate, profile_ocsp: Certificate
-) -> None:
+def test_certificate_expired(caplog: LogCaptureFixture, client: Client, child_cert: Certificate) -> None:
     """Test error log when the key has expired."""
     response = ocsp_get(client, child_cert, hash_algorithm=hashes.SHA512)
     assert caplog.record_tuples == [

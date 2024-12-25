@@ -15,12 +15,13 @@
 
 import argparse
 import functools
+import io
 import shlex
 import subprocess
 import sys
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, Union
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -35,13 +36,13 @@ class DockerRunDict(TypedDict):
     error: str
 
 
-def build_docker_image(cmd: list[str], log_path: Path, output=False) -> int:
+def build_docker_image(cmd: list[str], log_path: Path, output: bool = False) -> int:
     """Run command to build a Docker image."""
     env = {"DOCKER_BUILDKIT": "1"}
 
     with open(log_path, "bw") as stream:
         if output:
-            stdout = subprocess.PIPE
+            stdout: Union[int, io.BufferedWriter] = subprocess.PIPE
         else:
             stdout = stream
         stream.write(f"+ {shlex.join(cmd)}\n".encode())
@@ -89,17 +90,14 @@ def handle_image(image: str, no_cache: bool, keep_image: bool, output: bool) -> 
         if returncode == 0:
             ok(f"{image} passed.")
             return {"image": image, "success": True, "error": ""}
-        else:
-            failed_str = f"{image} failed: return code {returncode}."
 
-            # pylint: disable-next=consider-using-f-string  # just more convenient
-            err(failed_str)
-            return {"image": image, "success": False, "error": f"return code: {returncode}"}
+        failed_str = f"{image} failed: return code {returncode}."
+        err(failed_str)
+        return {"image": image, "success": False, "error": f"return code: {returncode}"}
 
     except Exception as ex:  # pylint: disable=broad-except; to make sure we test all images
         msg = f"{image}: {type(ex).__name__} {ex}"
         return {"image": image, "success": False, "error": msg}
-        err(f"\n{msg}\n")
     finally:
         if not keep_image:
             subprocess.run(
@@ -111,7 +109,7 @@ def handle_image(image: str, no_cache: bool, keep_image: bool, output: bool) -> 
 
 
 def handle_parallel(
-    images: list[str], processes: int, no_cache: bool, keep_image: bool
+    images: tuple[str, ...], processes: int, no_cache: bool, keep_image: bool
 ) -> list[DockerRunDict]:
     """Handle images in parallel."""
     with Pool(processes) as pool:
@@ -163,7 +161,7 @@ class Command(DevCommand):
         docker_runs: list[DockerRunDict] = []
 
         if args.images:
-            images: tuple[str] = tuple(args.images)
+            images: tuple[str, ...] = tuple(args.images)
         elif args.debian:
             images = config.DEBIAN_IMAGES
         elif args.alpine:

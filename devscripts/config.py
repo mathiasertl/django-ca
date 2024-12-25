@@ -78,7 +78,7 @@ ALPINE_IMAGES = tuple(_alpine_images)
 _debian_images = []
 for python_version in reversed(PYTHON_RELEASES):
     for debian_version in reversed(DEBIAN_RELEASES):
-        image_name = f"python:{python_version}-slim-{debian_version}"
+        image_name = f"python:{python_version}-slim-{debian_version}"  # pylint: disable=invalid-name
 
         # Skip images that are just no longer built upstream
         if image_name in _release_config["docker-image-blacklist"]:
