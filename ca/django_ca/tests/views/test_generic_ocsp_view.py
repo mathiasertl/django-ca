@@ -204,6 +204,39 @@ def test_invalid_responder_key(caplog: LogCaptureFixture, client: Client, child_
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
 
 
+def test_certificate_never_generated(
+    caplog: LogCaptureFixture, client: Client, root_cert: Certificate
+) -> None:
+    """Test error log when the key was never generated."""
+    assert "pem" not in root_cert.ca.ocsp_key_backend_options["certificate"]  # assert initial state
+
+    response = ocsp_get(client, root_cert, hash_algorithm=hashes.SHA512)
+    assert caplog.record_tuples == [
+        ("django_ca.views", logging.ERROR, "OCSP responder certificate not found, please regenerate it.")
+    ]
+    assert response.status_code == HTTPStatus.OK
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["profile_certs_expired"])
+def test_certificate_expired(
+    caplog: LogCaptureFixture, client: Client, child_cert: Certificate, profile_ocsp: Certificate
+) -> None:
+    """Test error log when the key has expired."""
+    response = ocsp_get(client, child_cert, hash_algorithm=hashes.SHA512)
+    assert caplog.record_tuples == [
+        (
+            "django_ca.views",
+            logging.ERROR,
+            "OCSP responder certificate is not currently valid. Please regenerate it.",
+        )
+    ]
+    assert response.status_code == HTTPStatus.OK
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
+
+
 def test_method_not_allowed(client: Client) -> None:
     """Try HTTP methods that are not allowed."""
     url = reverse("django_ca:ocsp-cert-post", kwargs={"serial": "00AA"})

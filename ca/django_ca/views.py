@@ -360,7 +360,7 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
-    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> OCSPResponse:
+    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # get key/cert for OCSP responder
         try:
@@ -461,6 +461,9 @@ class OCSPView(View):
             log.exception(ex)
             return self.fail()
 
+        if isinstance(response, HttpResponse):
+            return response
+
         return self.http_response(response.public_bytes(Encoding.DER))
 
 
@@ -496,11 +499,26 @@ class GenericOCSPView(OCSPView):
     def get_expires(self, now: datetime) -> datetime:
         return now + timedelta(seconds=self.auto_ca.ocsp_response_validity)
 
-    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> OCSPResponse:
+    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # Load public key
-        responder_pem = self.auto_ca.ocsp_key_backend_options["certificate"]["pem"]
+        try:
+            responder_pem = self.auto_ca.ocsp_key_backend_options["certificate"]["pem"]
+        except KeyError:
+            # The OCSP responder certificate has never been created. `manage.py init_ca` usually creates them,
+            # so this can only happen if the system is misconfigured (e.g. Celery task is never acted upon),
+            # or the CA was created using the Python API.
+            log.error("OCSP responder certificate not found, please regenerate it.")
+            return self.fail()
+
         responder_certificate = x509.load_pem_x509_certificate(responder_pem.encode("ascii"))
+
+        now = datetime.now(tz=tz.utc)
+        if not (
+            responder_certificate.not_valid_before_utc <= now <= responder_certificate.not_valid_after_utc
+        ):
+            log.error("OCSP responder certificate is not currently valid. Please regenerate it.")
+            return self.fail()
 
         # Set the responder certificate as signer of the response
         builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, responder_certificate)
