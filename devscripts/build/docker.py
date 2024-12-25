@@ -50,4 +50,4 @@ class Command(DevCommand):
         #   https://github.com/docker/docker-py/issues/2230
         self.run("docker", "build", "-t", tag, ".", env={"DOCKER_BUILDKIT": "1"}, cwd=config.ROOT_DIR)
 
-        return args.release, tag
+        return release, tag

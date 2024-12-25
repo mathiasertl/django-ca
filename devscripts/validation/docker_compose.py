@@ -152,7 +152,9 @@ def _validate_secret_key() -> int:
     return 0
 
 
-def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
+def _validate_crl_ocsp(
+    ca_file: str, cert_file: str, cert_subject: str, already_revoked: bool = False
+) -> None:
     """Test OpenSSL CRL and OCSP validation.
 
     This only tests the CRL for the root CA. It's the test suites job to test the views in more detail.
@@ -168,14 +170,17 @@ def _validate_crl_ocsp(ca_file: str, cert_file: str, cert_subject: str) -> None:
     ocsp_ad = next(ad for ad in aia if ad.access_method == AuthorityInformationAccessOID.OCSP)
     ocsp_url = ocsp_ad.access_location.value
 
-    _openssl_verify(ca_file, cert_file)
-    _openssl_ocsp(ca_file, cert_file, ocsp_url)
+    if not already_revoked:
+        _openssl_verify(ca_file, cert_file)
+        _openssl_ocsp(ca_file, cert_file, ocsp_url)
 
-    _manage("frontend", "revoke_cert", cert_subject)
+        _manage("frontend", "revoke_cert", cert_subject)
 
-    # Still okay, because CRL is cached
-    _openssl_verify("root.pem", cert_file)
-    _manage("frontend", "cache_crls")
+        # Still okay, because CRL is cached
+        _openssl_verify(ca_file, cert_file)
+
+    # Re-cache CRLs
+    _manage("backend", "cache_crls")
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
@@ -275,7 +280,6 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
         tut.write_template("docker-compose.override.yml.jinja")
         tut.write_template(".env.jinja")
         shutil.copy(docker_compose_yml, cwd)
-        input("enter 1:")
 
         # Convert DER certificates from fixtures to PEM (requests needs PEM certificates).
         ca_pub_pem = cwd / "root.pem"
@@ -393,6 +397,7 @@ def test_update(release: str) -> int:
     errors = 0
     # Get the last release, so we can update
     last_release = utils.get_previous_release(current_release=release)
+
     with tempfile.TemporaryDirectory() as tmpdir:
         last_release_dest = utils.git_archive(last_release, tmpdir)
         shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
@@ -422,6 +427,19 @@ POSTGRES_PASSWORD=mysecretpassword
                 docker_cp(str(standalone_dir / "create-testdata.py"), frontend, standalone_dest)
                 _compose_exec("backend", "./create-testdata.py", "--env", "backend")
                 _compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
+
+                _compose_exec("backend", "manage", "cache_crls")
+                _compose_exec("backend", "manage", "regenerate_ocsp_keys")
+
+                # Write root CA and cert to disk for OpenSSL validation
+                ca_subject = "rsa.example.com"  # created by create-testdata.py
+                with open("ca.pem", "w", encoding="utf-8") as stream:
+                    _manage("backend", "dump_ca", ca_subject, stdout=stream)
+                with open("cert.pem", "w", encoding="utf-8") as stream:
+                    _manage("frontend", "dump_cert", f"cert.{ca_subject}", stdout=stream)
+
+                # Test CRL and OCSP validation
+                _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
 
             old_postgres_version = get_postgres_version("docker-compose.yml")
             new_postgres_version = get_postgres_version(config.ROOT_DIR / "docker-compose.yml")
@@ -480,6 +498,9 @@ POSTGRES_PASSWORD=mysecretpassword
                 docker_cp(str(validation_script), frontend, standalone_dest)
                 _compose_exec("backend", "./validate-testdata.py", "--env", "backend")
                 _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend")
+
+                # Test CRL and OCSP validation
+                _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}", already_revoked=True)
 
                 ok("Testdata still present after update.")
 
