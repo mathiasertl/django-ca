@@ -38,7 +38,7 @@ import pytest
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA220Warning, RemovedInDjangoCA230Warning
+from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
@@ -500,13 +500,6 @@ def assert_system_exit(code: int) -> Iterator[None]:
     with pytest.raises(SystemExit, match=rf"^{code}$") as excm:
         yield
     assert excm.value.args == (code,)
-
-
-@contextmanager
-def assert_removed_in_220(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
-    """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
-    with pytest.warns(RemovedInDjangoCA220Warning, match=match):
-        yield
 
 
 @contextmanager

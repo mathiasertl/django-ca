@@ -18,7 +18,7 @@ import warnings
 from collections.abc import Iterable
 from datetime import timedelta
 from importlib.util import find_spec
-from typing import Annotated, Any, Literal, Optional, Union, cast
+from typing import Annotated, Any, Literal, Optional, Union
 
 from annotated_types import Ge, Le
 from pydantic import (
@@ -33,7 +33,6 @@ from pydantic import (
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.x509.oid import NameOID
 
 from django.conf import settings as _settings
 from django.core.exceptions import ImproperlyConfigured
@@ -41,7 +40,7 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
-from django_ca.deprecation import RemovedInDjangoCA220Warning, RemovedInDjangoCA230Warning
+from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.type_aliases import (
     CertificateRevocationListReasonCode,
@@ -175,76 +174,8 @@ _DEFAULT_CA_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
-def _check_name(name: x509.Name) -> None:
-    # WARNING: This function is a duplicate of the function in utils.
-
-    multiple_oids = (NameOID.DOMAIN_COMPONENT, NameOID.ORGANIZATIONAL_UNIT_NAME, NameOID.STREET_ADDRESS)
-
-    seen = set()
-
-    for attr in name:
-        oid = attr.oid
-
-        # Check if any fields are duplicate where this is not allowed (e.g. multiple CommonName fields)
-        if oid in seen and oid not in multiple_oids:
-            raise ImproperlyConfigured(
-                f'{name}: Contains multiple "{constants.NAME_OID_NAMES[attr.oid]}" fields.'
-            )
-
-        value = attr.value
-        if oid == NameOID.COMMON_NAME and (not value or len(value) > 64):  # pragma: only cryptography<43
-            # Imitate message from cryptography 43
-            raise ImproperlyConfigured(
-                f"Value error, Attribute's length must be >= 1 and <= 64, but it was {len(attr.value)}"
-            )
-
-        seen.add(oid)
-
-
-def _parse_deprecated_name_value(value: Any) -> Optional[x509.Name]:
-    if not isinstance(value, (list, tuple)):
-        raise ValueError(f"{value}: Must be a list or tuple.")
-
-    name_attributes: list[x509.NameAttribute] = []
-    for elem in value:
-        if isinstance(elem, x509.NameAttribute):
-            name_attributes.append(elem)
-        elif isinstance(elem, (tuple, list)):
-            if len(elem) != 2:
-                raise ImproperlyConfigured(f"{elem}: Must be lists/tuples with two items, got {len(elem)}.")
-            if not isinstance(elem[1], str):
-                raise ImproperlyConfigured(f"{elem[1]}: Item values must be strings.")
-
-            if isinstance(elem[0], x509.ObjectIdentifier):
-                name_oid = elem[0]
-            elif isinstance(elem[0], str):
-                # name_oid_parser() always returns x509.ObjectedIdentifier for strings
-                name_oid = cast(x509.ObjectIdentifier, name_oid_parser(elem[0]))
-            else:
-                raise ValueError(f"{elem[0]}: Must be a x509.ObjectIdentifier or str.")
-
-            name_attribute = x509.NameAttribute(oid=name_oid, value=elem[1])
-            name_attributes.append(name_attribute)
-        else:
-            raise ImproperlyConfigured(f"{elem}: Items must be a x509.NameAttribute, list or tuple.")
-
-    normalized_name = x509.Name(name_attributes)
-    _check_name(normalized_name)
-    return normalized_name
-
-
 def _subject_validator(value: Any) -> Any:
-    try:
-        return NameModel(value).cryptography
-    except ValueError:
-        parsed_value = _parse_deprecated_name_value(value)
-        warnings.warn(
-            f"{value}: Support for two-element tuples as subject is deprecated and will be removed in "
-            f"django-ca 2.2.",
-            RemovedInDjangoCA220Warning,
-            stacklevel=2,
-        )
-        return parsed_value
+    return NameModel(value).cryptography
 
 
 Subject = Annotated[x509.Name, BeforeValidator(_subject_validator)]

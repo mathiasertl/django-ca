@@ -39,13 +39,9 @@ from ca.settings_utils import (
 )
 from django_ca import conf
 from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
-from django_ca.tests.base.assertions import (
-    assert_improperly_configured,
-    assert_removed_in_220,
-    assert_removed_in_230,
-)
+from django_ca.tests.base.assertions import assert_improperly_configured, assert_removed_in_230
 from django_ca.tests.base.constants import FIXTURES_DIR
-from django_ca.tests.base.utils import cn, country, state
+from django_ca.tests.base.utils import country, state
 
 SCOPE_ERROR = (
     r"Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` "
@@ -550,53 +546,15 @@ def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x50
 @pytest.mark.parametrize(
     ("value", "msg"),
     (
-        ((("CN", ""),), r"Value error, Attribute's length must be >= 1 and <= 64, but it was 0"),
-        ((("CN", "X" * 65),), r"Value error, Attribute's length must be >= 1 and <= 64, but it was 65"),
+        ([{"oid": "CN", "value": ""}], r"Value error, commonName must not be an empty value"),
+        (
+            [{"oid": "CN", "value": "X" * 65}],
+            r"Value error, Attribute's length must be >= 1 and <= 64, but it was 65",
+        ),
     ),
 )
 def test_ca_default_subject_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:
     """Test the check for empty common names."""
-    with assert_improperly_configured(msg):
-        settings.CA_DEFAULT_SUBJECT = value
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    (
-        ([("CN", "example.com")], x509.Name([cn("example.com")])),
-        ((("C", "AT"), ("CN", "example.com")), x509.Name([country("AT"), cn("example.com")])),
-        ([country("AT"), ("CN", "example.com")], x509.Name([country("AT"), cn("example.com")])),
-        (
-            [country("AT"), (NameOID.COMMON_NAME, "example.com")],
-            x509.Name([country("AT"), cn("example.com")]),
-        ),
-    ),
-)
-def test_ca_default_subject_with_deprecated_values(
-    settings: SettingsWrapper, value: Any, expected: x509.Name
-) -> None:
-    """Test CA_DEFAULT_SUBJECT with deprecated lists."""
-    msg = r"Support for two-element tuples as subject is deprecated and will be removed in django-ca 2\.2\."
-    with assert_removed_in_220(msg):
-        settings.CA_DEFAULT_SUBJECT = value
-        assert model_settings.CA_DEFAULT_SUBJECT == expected
-
-
-@pytest.mark.parametrize(
-    ("value", "msg"),
-    (
-        ([("invalid", "wrong")], "invalid: Invalid object identifier"),
-        ([["one-element"]], r"Must be lists/tuples with two items, got 1\."),
-        ([(True, "foo")], r"True: Must be a x509.ObjectIdentifier or str\."),
-        ([("CN", True)], r"True: Item values must be strings\."),
-        (["foo"], r"foo: Items must be a x509.NameAttribute, list or tuple\."),
-        ((("C", "AT"), ("C", "DE")), r'<Name\(C=AT,C=DE\)>: Contains multiple "countryName" fields\.'),
-    ),
-)
-def test_ca_default_subject_with_deprecated_invalid_values(
-    settings: SettingsWrapper, value: Any, msg: str
-) -> None:
-    """Test invalid values in the deprecated format."""
     with assert_improperly_configured(msg):
         settings.CA_DEFAULT_SUBJECT = value
 
@@ -692,8 +650,6 @@ def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsW
     ("value", "msg"),
     (
         ("foo", "Input should be a valid dictionary"),  # whole setting is invalid
-        ({"client": {"subject": "foo"}}, r"Value error, foo: Must be a list or tuple\."),
-        ({"client": {"subject": [True]}}, r"True: Items must be a x509.NameAttribute, list or tuple\."),
     ),
 )
 def test_ca_profiles_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:

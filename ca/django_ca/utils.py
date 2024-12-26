@@ -33,13 +33,12 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
-from django.core.files.storage import Storage, storages
+from django.core.files.storage import storages
 from django.utils import timezone
 
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA220Warning, deprecate_function
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
@@ -925,17 +924,6 @@ def get_cert_builder(not_after: datetime, serial: Optional[int] = None) -> x509.
     builder = builder.serial_number(serial)
 
     return builder
-
-
-@deprecate_function(RemovedInDjangoCA220Warning)  # deprecated in 2.0.
-def get_storage() -> Storage:  # pragma: no cover
-    """Get the django-ca storage class.
-
-    .. deprecated:: 2.0
-
-       Use ``storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]`` instead.
-    """
-    return storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
 
 
 def read_file(path: str) -> bytes:
