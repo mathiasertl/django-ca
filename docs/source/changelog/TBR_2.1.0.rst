@@ -8,6 +8,7 @@ Docker image
 
 * The main Docker image is now based off Debian instead of Alpine. The Alpine image is still provided with the
   ``-alpine`` suffix (e.g. ``mathiasertl/django-ca:2.1.0-alpine``).
+* Include the ``hsm`` and ``mysql`` extras in the image.
 * The Alpine image is now based on Alpine 3.21.
 
 ****************************
