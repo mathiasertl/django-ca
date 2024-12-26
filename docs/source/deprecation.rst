@@ -69,5 +69,5 @@ Python API
 Dependencies
 ============
 
-* Support ``django~=5.0.0``, ``cryptography~=43.0`` and ``pydantic~=2.9.0`` will be dropped.
+* Support ``django~=5.0.0``, ``cryptography~=43.0``, ``pydantic~=2.9.0`` and ``acme~=2.9.0`` will be dropped.
 * Support for Ubuntu 20.04 and Alpine 3.18 will be dropped.

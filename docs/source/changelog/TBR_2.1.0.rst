@@ -72,7 +72,7 @@ Settings
 Dependencies
 ************
 
-* Add support for Python 3.13, ``cryptography~=44.0`` and ``pydantic~=2.10.0``.
+* Add support for Python 3.13, ``cryptography~=44.0``, ``pydantic~=2.10.0`` and ``acme~=3.0.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.7.0``, ``pydantic~=2.8.0``,
   ``cryptography~=42.0`` and ``acme~=2.10.0``.
 
@@ -127,6 +127,7 @@ Deprecation notices
 
 Please also see the :doc:`deprecation timeline </deprecation>` for previous deprecation notices.
 
-* This will be the last release to support ``django~=5.0.0``, ``cryptography~=43.0`` and ``pydantic~=2.9.0``.
+* This will be the last release to support ``django~=5.0.0``, ``cryptography~=43.0``, ``pydantic~=2.9.0`` and
+  ``acme~=2.9.0``.
 * This will be the last release to support Ubuntu 20.04 and Alpine 3.18.
 * Support for Python 3.9 and ``django~=4.2.0`` will be dropped in ``django-ca==2.3.0``.
