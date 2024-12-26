@@ -3,6 +3,7 @@ DER
 PEM
 DSA
 RSA
+GitHub
 Parametrized
 Psycopg
 Pydantic
