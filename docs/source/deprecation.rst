@@ -9,7 +9,7 @@ Deprecation timeline
 Dependencies
 ============
 
-* Drop support for Python 3.9.
+* Drop support for Python 3.9 and ``django~=4.2.0``
 
 Command-line
 ============
