@@ -2,13 +2,20 @@
 2.1.0 (TBR)
 ###########
 
+************
+Docker image
+************
+
+* The main Docker image is now based off Debian instead of Alpine. The Alpine image is still provided with the
+  ``-alpine`` suffix (e.g. ``mathiasertl/django-ca:2.1.0-alpine`).
+
 ****************************
 Certificate Revocation Lists
 ****************************
 
 * Certificate Revocation Lists (CRLs) are now stored in the database via the
-  :class:`~django_ca.models.CertificateRevocationList` model. This makes CRL functionality more robust, as
-  clearing the cache will no longer cause an error.
+  :class:`~django_ca.models.CertificateRevocationList` model. This makes CRLs more robust, as clearing the
+  cache will no longer cause an error.
 
 *******************
 OCSP responder keys
@@ -35,8 +42,8 @@ Command-line utilities
 * The ``--scope`` parameter to :command:`manage.py dump_crl` is deprecated and will be removed in django-ca
   2.3.0. Use ``--only-contains-ca-certs``, ``--only-contains-user-certs`` or
   ``--only-contains-attribute-certs`` instead.
-* **BACKWARDS INCOMPATIBLE:** The ``--algorithm`` parameter no longer has any effect and will be removed in
-  django-ca 2.3.0.
+* **BACKWARDS INCOMPATIBLE:**  The ``--algorithm`` parameter to :command:`manage.py dump_crl` no longer has
+  any effect and will be removed in django-ca 2.3.0.
 
 ********
 Settings

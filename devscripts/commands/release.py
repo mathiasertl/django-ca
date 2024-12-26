@@ -142,6 +142,12 @@ class Command(DevCommand):
                 self.run("docker", "tag", docker_tag, revision_tag)
                 self.run("docker", "tag", docker_tag, latest_tag)
 
+                alpine_tag = f"{docker_tag}-alpine"
+                alpine_latest_tag = f"{config.DOCKER_TAG}:latest"
+                alpine_revision_tag = f"{alpine_tag}-1"
+                self.run("docker", "tag", alpine_tag, alpine_revision_tag)
+                self.run("docker", "tag", alpine_tag, alpine_latest_tag)
+
                 # Push GIT tag
                 repo.remotes.origin.push(refspec=git_tag)
 
@@ -152,6 +158,9 @@ class Command(DevCommand):
                 self.run("docker", "push", docker_tag)
                 self.run("docker", "push", revision_tag)
                 self.run("docker", "push", latest_tag)
+                self.run("docker", "push", alpine_tag)
+                self.run("docker", "push", alpine_revision_tag)
+                self.run("docker", "push", alpine_latest_tag)
 
                 ok("Uploaded release artifacts.")
 

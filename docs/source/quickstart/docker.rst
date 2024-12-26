@@ -138,6 +138,10 @@ You thus need to start two containers with slightly different configuration:
    :include: /include/quickstart_with_docker/start-django-ca.yaml
    :context: quickstart-with-docker
 
+You can also use different versions of the Docker image, including images based on Alpine Linux. Please see
+the `Docker Hub page <https://hub.docker.com/r/mathiasertl/django-ca>`_ for more information about available
+tags.
+
 Start NGINX
 ===========
 

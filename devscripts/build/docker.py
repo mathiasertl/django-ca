@@ -24,7 +24,7 @@ from devscripts.out import info
 class Command(DevCommand):
     """Command class implementing the command to build a Python Wheel."""
 
-    help_text = "Build a Docker image."
+    help_text = "Build the Docker image."
     description = "Builds the Docker image."
 
     modules = (("django_ca", "django-ca"),)
@@ -35,6 +35,20 @@ class Command(DevCommand):
             "--prune", dest="docker_prune", default=True, help="Remove Docker data before building image."
         )
         parser.add_argument("--release", help="Version to use (default: current version).")
+        parser.add_argument(
+            "--no-alpine",
+            dest="alpine",
+            action="store_false",
+            default=True,
+            help="Do not build Alpine based image.",
+        )
+        parser.add_argument(
+            "--no-debian",
+            dest="debian",
+            action="store_false",
+            default=True,
+            help="Do not build Debian based image.",
+        )
 
     def handle(self, args: argparse.Namespace) -> tuple[str, str]:  # type: ignore[override]
         if args.release:
@@ -43,11 +57,17 @@ class Command(DevCommand):
             release = self.django_ca.__version__
 
         tag = self.get_docker_tag(release)
-
-        info(f"Building Docker image as {tag} ...")
+        cwd = config.ROOT_DIR
+        env = {"DOCKER_BUILDKIT": "1"}
 
         # NOTE: docker-py does not yet support BuildKit, so we call the CLI directly. See also:
         #   https://github.com/docker/docker-py/issues/2230
-        self.run("docker", "build", "-t", tag, ".", env={"DOCKER_BUILDKIT": "1"}, cwd=config.ROOT_DIR)
+        if args.debian:
+            info(f"Building Debian based image as {tag}...")
+            self.run("docker", "build", "-t", tag, ".", env=env, cwd=cwd)
+        if args.alpine:
+            alpine_tag = f"{tag}-alpine"
+            info(f"Building Alpine based image as {alpine_tag}...")
+            self.run("docker", "build", "-t", alpine_tag, "-f", "Dockerfile.alpine", ".", env=env, cwd=cwd)
 
         return release, tag
