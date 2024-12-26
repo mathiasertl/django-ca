@@ -103,11 +103,11 @@ The release script will:
 * Test the various tutorials.
 * Upload Python Wheel and Docker image.
 
-************************
-Create release on GitHub
-************************
+Update Github/Docker Hub
+========================
 
-Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
+* Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
+* Update `Docker Hub <https://hub.docker.com/r/mathiasertl/django-ca>`_.
 
 ***************
 After a release

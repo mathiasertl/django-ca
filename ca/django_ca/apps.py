@@ -32,14 +32,17 @@ class DjangoCAConfig(AppConfig):
 
     def ready(self) -> None:
         # pylint: disable=import-outside-toplevel  # that's how checks work
-        import logging
-
-        from django.conf import settings
 
         from django_ca import checks  # NOQA: F401  # import already registers the checks
 
-        log = logging.getLogger("django_ca")
-        log.info(
-            "Loaded settings from files: %s",
-            ", ".join(str(path) for path in getattr(settings, "SETTINGS_FILES", [])),
-        )
+        # log_settings_files = os.environ.get("CA_LOG_SETTINGS_FILES", "").lower()
+        # if log_settings_files in ("1", "true", "yes"):
+        #     import logging
+        #
+        #     from django.conf import settings
+        #
+        #     log = logging.getLogger("django_ca")
+        #     log.info(
+        #         "Loaded settings from files: %s",
+        #         ", ".join(str(path) for path in getattr(settings, "SETTINGS_FILES", [])),
+        #     )
