@@ -125,4 +125,5 @@ Deprecation notices
 
 Please also see the :doc:`deprecation timeline </deprecation>` for previous deprecation notices.
 
-* This will be the last release to support ``django~=5.0.0``.
+* This will be the last release to support ``django~=5.0.0``, ``cryptography~=43.0`` and ``pydantic~=2.9.0``.
+* Support for Python 3.9 will be dropped in ``django-ca==2.3.0``.

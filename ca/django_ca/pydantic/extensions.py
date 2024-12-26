@@ -322,13 +322,8 @@ class SignedCertificateTimestampBaseModel(ExtensionModel[SignedCertificateTimest
 # ExtensionType models #
 ########################
 
-if TYPE_CHECKING:
-    AdmissionsModelBase = ExtensionModel[x509.Admissions]
-else:
-    AdmissionsModelBase = ExtensionModel
 
-
-class AdmissionsModel(AdmissionsModelBase):  # pragma: only cryptography>=44.0
+class AdmissionsModel(ExtensionModel["x509.Admissions"]):  # pragma: only cryptography>=44.0
     """Pydantic model for a :py:class:`~cg:cryptography.x509.Admissions` extension.
 
     .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.

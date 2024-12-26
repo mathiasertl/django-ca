@@ -9,7 +9,7 @@ Deprecation timeline
 Dependencies
 ============
 
-* Remove support for django 5.0.
+* Drop support for Python 3.9.
 
 Command-line
 ============
@@ -69,20 +69,4 @@ Python API
 Dependencies
 ============
 
-* Support ``django~=5.0.0`` will be dropped.
-
-***********
-2.1.0 (TBR)
-***********
-
-Views
-=====
-
-* Configuring a password in a certificate revocation list view will be removed. Use the ``CA_PASSWORDS``
-  setting instead (deprecated since 1.29.0).
-
-Dependencies
-============
-
-* Support ``pydantic~=2.7.0``, ``pydantic~=2.8.0``, ``cryptography~=42.0`` and ``acme~=2.10.0`` will be
-  dropped.
+* Support ``django~=5.0.0``, ``cryptography~=43.0`` and ``pydantic~=2.9.0`` will be dropped.

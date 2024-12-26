@@ -2,7 +2,6 @@ from django_ca.pydantic import (
     AdmissionModel,
     AdmissionsModel,
     AdmissionsValueModel,
-    GeneralNameModel,
     ProfessionInfoModel,
 )
 
