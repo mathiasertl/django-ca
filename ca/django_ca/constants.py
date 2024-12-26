@@ -62,10 +62,11 @@ CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 
 
 class ExtensionOID(_ExtensionOID):
-    """Extend the ExtensionOID object with any OIDs not known to cryptography."""
+    """Extend the ExtensionOID object with any OIDs not known to cryptography.
 
-    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
-        ADMISSIONS = x509.ObjectIdentifier("1.3.36.8.3.3")
+    This subclass is usually empty but can be used in cases where some ExtensionOIDs are not supported in all
+    currently supported versions of cryptography.
+    """
 
 
 ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = MappingProxyType(

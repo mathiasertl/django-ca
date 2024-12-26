@@ -15,7 +15,7 @@
 
 import base64
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn, Optional, Union
+from typing import Annotated, Any, Literal, NoReturn, Optional, Union
 
 from annotated_types import MaxLen, MinLen
 from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
@@ -32,24 +32,13 @@ from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet, OIDType
 from django_ca.typehints import DistributionPointReasons, LogEntryTypes
 
-if TYPE_CHECKING:  # pragma: only cryptography<44
-    # NOTE: we can use bases directly once instances are supported in every versoin
-    NamingAuthorityBase = CryptographyModel[x509.NamingAuthority]
-    ProfessionInfoBase = CryptographyModel[x509.ProfessionInfo]
-    AdmissionBase = CryptographyModel[x509.Admission]
-    AdmissionsValueModelBase = CryptographyModel[x509.Admissions]
-else:
-    NamingAuthorityBase = ProfessionInfoBase = AdmissionBase = AdmissionsValueModelBase = CryptographyModel
-
 _NOTICE_REFERENCE_DESCRIPTION = (
     "A NoticeReferenceModel consists of an optional *organization* and an optional list of *notice_numbers*."
 )
 
 
-class NamingAuthorityModel(NamingAuthorityBase):  # pragma: only cryptography>=44.0
+class NamingAuthorityModel(CryptographyModel[x509.NamingAuthority]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.NamingAuthority`.
-
-    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
 
     .. versionadded:: 2.1.0
     """
@@ -69,10 +58,8 @@ class NamingAuthorityModel(NamingAuthorityBase):  # pragma: only cryptography>=4
         return x509.NamingAuthority(id=oid, url=self.url, text=self.text)
 
 
-class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.0
+class ProfessionInfoModel(CryptographyModel[x509.ProfessionInfo]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.ProfessionInfo`.
-
-    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
 
     .. versionadded:: 2.1.0
     """
@@ -86,7 +73,8 @@ class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.
     add_profession_info: Optional[Base64EncodedBytes] = None
 
     @property
-    def cryptography(self) -> "x509.ProfessionInfo":
+    def cryptography(self) -> x509.ProfessionInfo:
+        """Convert to a :py:class:`~cg:cryptography.x509.ProfessionInfo` instance."""
         naming_authority = profession_oids = None
         if self.naming_authority is not None:
             naming_authority = self.naming_authority.cryptography
@@ -109,10 +97,8 @@ class ProfessionInfoModel(ProfessionInfoBase):  # pragma: only cryptography>=44.
         return self
 
 
-class AdmissionModel(AdmissionBase):  # pragma: only cryptography>=44.0
+class AdmissionModel(CryptographyModel[x509.Admission]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.Admission`.
-
-    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
 
     .. versionadded:: 2.1.0
     """
@@ -124,7 +110,8 @@ class AdmissionModel(AdmissionBase):  # pragma: only cryptography>=44.0
     profession_infos: Annotated[list[ProfessionInfoModel], MinLen(1)]
 
     @property
-    def cryptography(self) -> "x509.Admission":
+    def cryptography(self) -> x509.Admission:
+        """Convert to a :py:class:`~cg:cryptography.x509.Admission` instance."""
         admission_authority = naming_authority = None
         if self.admission_authority is not None:
             admission_authority = self.admission_authority.cryptography
@@ -138,10 +125,8 @@ class AdmissionModel(AdmissionBase):  # pragma: only cryptography>=44.0
         )
 
 
-class AdmissionsValueModel(AdmissionsValueModelBase):  # pragma: only cryptography>=44.0
+class AdmissionsValueModel(CryptographyModel[x509.Admissions]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.Admissions`.
-
-    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
 
     .. versionadded:: 2.1.0
     """
@@ -152,7 +137,8 @@ class AdmissionsValueModel(AdmissionsValueModelBase):  # pragma: only cryptograp
     admissions: list[AdmissionModel] = Field(default_factory=list)
 
     @property
-    def cryptography(self) -> "x509.Admissions":
+    def cryptography(self) -> x509.Admissions:
+        """Convert to a :py:class:`~cg:cryptography.x509.Admissions` instance."""
         authority = None
         if self.authority is not None:
             authority = self.authority.cryptography
@@ -164,8 +150,7 @@ class AdmissionsValueModel(AdmissionsValueModelBase):  # pragma: only cryptograp
     @classmethod
     def parse_cryptography(cls, data: Any) -> Any:
         """Parse cryptography instance."""
-        # pragma: only cryptography<44  # remove hasattr() call when cg<44 is dropped
-        if hasattr(x509, "Admissions") and isinstance(data, x509.Admissions):
+        if isinstance(data, x509.Admissions):
             return {"authority": data.authority, "admissions": data._admissions}  # pylint: disable=protected-access
         return data
 

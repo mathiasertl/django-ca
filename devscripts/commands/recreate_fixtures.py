@@ -541,70 +541,68 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
         },
     }
 
-    # NOTE: always add Admissions extension once support for cryptography<44 is dropped.
-    if hasattr(ExtensionOID, "ADMISSIONS"):  # pragma: only cryptography<44.0
-        data["all-extensions"]["extensions"]["admissions"] = x509.Extension(
-            oid=ExtensionOID.ADMISSIONS,
-            critical=False,
-            value=x509.Admissions(
-                authority=x509.UniformResourceIdentifier("https://default-authority.admissions.example.com"),
-                admissions=[
-                    x509.Admission(
-                        admission_authority=x509.UniformResourceIdentifier(
-                            "https://authority.admissions.example.com"
-                        ),
-                        naming_authority=x509.NamingAuthority(
-                            id=x509.ObjectIdentifier("1.2.3"),
-                            url="https://naming-auth.admissions.example.com",
-                            text="naming-auth.admissions.example.com text",
-                        ),
-                        profession_infos=[
-                            x509.ProfessionInfo(
-                                naming_authority=x509.NamingAuthority(
-                                    id=None,
-                                    url="https://naming-auth.profession-info.admissions.example.com",
-                                    text="naming-auth.profession-info.admissions.example.com text",
-                                ),
-                                profession_items=["prof_item"],
-                                profession_oids=[x509.ObjectIdentifier("1.2.3.5")],
-                                registration_number="registration-number",
-                                add_profession_info=b"add-profession-info",
+    data["all-extensions"]["extensions"]["admissions"] = x509.Extension(
+        oid=ExtensionOID.ADMISSIONS,
+        critical=False,
+        value=x509.Admissions(
+            authority=x509.UniformResourceIdentifier("https://default-authority.admissions.example.com"),
+            admissions=[
+                x509.Admission(
+                    admission_authority=x509.UniformResourceIdentifier(
+                        "https://authority.admissions.example.com"
+                    ),
+                    naming_authority=x509.NamingAuthority(
+                        id=x509.ObjectIdentifier("1.2.3"),
+                        url="https://naming-auth.admissions.example.com",
+                        text="naming-auth.admissions.example.com text",
+                    ),
+                    profession_infos=[
+                        x509.ProfessionInfo(
+                            naming_authority=x509.NamingAuthority(
+                                id=None,
+                                url="https://naming-auth.profession-info.admissions.example.com",
+                                text="naming-auth.profession-info.admissions.example.com text",
                             ),
-                            x509.ProfessionInfo(
-                                naming_authority=x509.NamingAuthority(id=None, url=None, text=None),
-                                profession_items=["prof_item_minimal"],
-                                profession_oids=None,
-                                registration_number=None,
-                                add_profession_info=None,
-                            ),
-                        ],
-                    )
-                ],
-            ),
-        )
-        data["alt-extensions"]["extensions"]["admissions"] = x509.Extension(
-            oid=ExtensionOID.ADMISSIONS,
-            critical=False,
-            value=x509.Admissions(
-                authority=None,
-                admissions=[
-                    # Add a minimal admission extension here
-                    x509.Admission(
-                        admission_authority=None,
-                        naming_authority=None,
-                        profession_infos=[
-                            x509.ProfessionInfo(
-                                naming_authority=None,
-                                profession_items=["prof_item"],
-                                profession_oids=None,
-                                registration_number=None,
-                                add_profession_info=None,
-                            )
-                        ],
-                    )
-                ],
-            ),
-        )
+                            profession_items=["prof_item"],
+                            profession_oids=[x509.ObjectIdentifier("1.2.3.5")],
+                            registration_number="registration-number",
+                            add_profession_info=b"add-profession-info",
+                        ),
+                        x509.ProfessionInfo(
+                            naming_authority=x509.NamingAuthority(id=None, url=None, text=None),
+                            profession_items=["prof_item_minimal"],
+                            profession_oids=None,
+                            registration_number=None,
+                            add_profession_info=None,
+                        ),
+                    ],
+                )
+            ],
+        ),
+    )
+    data["alt-extensions"]["extensions"]["admissions"] = x509.Extension(
+        oid=ExtensionOID.ADMISSIONS,
+        critical=False,
+        value=x509.Admissions(
+            authority=None,
+            admissions=[
+                # Add a minimal admission extension here
+                x509.Admission(
+                    admission_authority=None,
+                    naming_authority=None,
+                    profession_infos=[
+                        x509.ProfessionInfo(
+                            naming_authority=None,
+                            profession_items=["prof_item"],
+                            profession_oids=None,
+                            registration_number=None,
+                            add_profession_info=None,
+                        )
+                    ],
+                )
+            ],
+        ),
+    )
 
     # Auto-compute some values (name, filenames, ...) based on the dict key
     for cert_name, cert_values in data.items():

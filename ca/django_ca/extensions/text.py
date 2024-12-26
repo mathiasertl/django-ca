@@ -24,7 +24,7 @@ from django_ca.extensions.utils import key_usage_items, signed_certificate_times
 from django_ca.utils import bytes_to_hex, format_general_name
 
 
-def _naming_authority_as_text(value: "x509.NamingAuthority") -> str:  # pragma: only cryptography>=44
+def _naming_authority_as_text(value: "x509.NamingAuthority") -> str:
     lines = ["* Naming Authority:"]
     if value.id is None:
         lines.append("* id: None")
@@ -34,7 +34,7 @@ def _naming_authority_as_text(value: "x509.NamingAuthority") -> str:  # pragma: 
     return "\n".join(lines)
 
 
-def _profession_info_as_text(value: "x509.ProfessionInfo") -> str:  # pragma: only cryptography>=44
+def _profession_info_as_text(value: "x509.ProfessionInfo") -> str:
     lines = []
 
     if value.naming_authority is not None:
@@ -56,7 +56,7 @@ def _profession_info_as_text(value: "x509.ProfessionInfo") -> str:  # pragma: on
     return "\n".join(lines)
 
 
-def _admissions_as_text(value: "x509.Admissions") -> str:  # pragma: only cryptography>=44
+def _admissions_as_text(value: "x509.Admissions") -> str:
     lines = []
     if value.authority:
         lines.append(f"* Authority: {format_general_name(value.authority)}")
@@ -239,7 +239,7 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # noqa: PLR0911
         return _signed_certificate_timestamps_as_text(value)
     if isinstance(value, (x509.AuthorityInformationAccess, x509.SubjectInformationAccess)):
         return _authority_information_access_as_text(value)
-    if hasattr(x509, "Admissions") and isinstance(value, x509.Admissions):  # pragma: only cryptography>=44
+    if isinstance(value, x509.Admissions):
         return _admissions_as_text(value)
     if isinstance(value, x509.AuthorityKeyIdentifier):
         return _authority_key_identifier_as_text(value)

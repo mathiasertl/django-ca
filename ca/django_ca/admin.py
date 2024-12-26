@@ -359,7 +359,7 @@ class CertificateMixin(
 class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], CertificateAuthorityAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.CertificateAuthority`."""
 
-    if django.VERSION >= (5, 0):  # pragma: django>=5.0 branch
+    if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
         formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
 
     fieldsets = (
@@ -1151,7 +1151,7 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
     class AcmeAccountAdmin(AcmeAccountAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAccount`."""
 
-        if django.VERSION >= (5, 0):  # pragma: django>=5.0 branch
+        if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
             formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
 
         list_display = ("first_contact", "ca", "slug", "status", "created", "terms_of_service_agreed")

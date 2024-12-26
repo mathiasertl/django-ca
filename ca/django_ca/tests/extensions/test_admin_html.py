@@ -30,8 +30,7 @@ from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.utils import bytes_to_hex
 
-if hasattr(x509, "Admissions"):  # pragma: only cryptography<44.0
-    ALL_EXTENSIONS_ADMISSIONS = """
+ALL_EXTENSIONS_ADMISSIONS = """
 <ul>
     <li>Authority: URI:https://default-authority.admissions.example.com</li>
     <li>Admissions:
@@ -84,7 +83,7 @@ if hasattr(x509, "Admissions"):  # pragma: only cryptography<44.0
         </ul>
     </li>
 </ul>"""
-    ALT_EXTENSIONS_ADMISSIONS = """
+ALT_EXTENSIONS_ADMISSIONS = """
 <ul>
     <li>Admissions:
         <ul>
@@ -104,23 +103,6 @@ if hasattr(x509, "Admissions"):  # pragma: only cryptography<44.0
         </ul>
     </li>
 </ul>"""
-else:
-    ALL_EXTENSIONS_ADMISSIONS = (
-        "30:82:01:9B:86:30:68:74:74:70:73:3A:2F:2F:64:65:66:61:75:6C:74:2D:61:75:74:68:6F:72:69:74:79:2E:61:"
-        "64:6D:69:73:73:69:6F:6E:73:2E:65:78:61:6D:70:6C:65:2E:63:6F:6D:30:82:01:65:30:82:01:61:A0:2A:86:28:"
-        "68:74:74:70:73:3A:2F:2F:61:75:74:68:6F:72:69:74:79:2E:61:64:6D:69:73:73:69:6F:6E:73:2E:65:78:61:6D:"
-        "70:6C:65:2E:63:6F:6D:A1:5B:30:59:06:02:2A:03:16:2A:68:74:74:70:73:3A:2F:2F:6E:61:6D:69:6E:67:2D:61:"
-        "75:74:68:2E:61:64:6D:69:73:73:69:6F:6E:73:2E:65:78:61:6D:70:6C:65:2E:63:6F:6D:0C:27:6E:61:6D:69:6E:"
-        "67:2D:61:75:74:68:2E:61:64:6D:69:73:73:69:6F:6E:73:2E:65:78:61:6D:70:6C:65:2E:63:6F:6D:20:74:65:78:"
-        "74:30:81:D5:30:81:B7:A0:77:30:75:16:3A:68:74:74:70:73:3A:2F:2F:6E:61:6D:69:6E:67:2D:61:75:74:68:2E:"
-        "70:72:6F:66:65:73:73:69:6F:6E:2D:69:6E:66:6F:2E:61:64:6D:69:73:73:69:6F:6E:73:2E:65:78:61:6D:70:6C:"
-        "65:2E:63:6F:6D:0C:37:6E:61:6D:69:6E:67:2D:61:75:74:68:2E:70:72:6F:66:65:73:73:69:6F:6E:2D:69:6E:66:"
-        "6F:2E:61:64:6D:69:73:73:69:6F:6E:73:2E:65:78:61:6D:70:6C:65:2E:63:6F:6D:20:74:65:78:74:30:0B:0C:09:"
-        "70:72:6F:66:5F:69:74:65:6D:30:05:06:03:2A:03:05:13:13:72:65:67:69:73:74:72:61:74:69:6F:6E:2D:6E:75:"
-        "6D:62:65:72:04:13:61:64:64:2D:70:72:6F:66:65:73:73:69:6F:6E:2D:69:6E:66:6F:30:19:A0:02:30:00:30:13:"
-        "0C:11:70:72:6F:66:5F:69:74:65:6D:5F:6D:69:6E:69:6D:61:6C"
-    )
-    ALT_EXTENSIONS_ADMISSIONS = "30:15:30:13:30:11:30:0F:30:0D:30:0B:0C:09:70:72:6F:66:5F:69:74:65:6D"
 
 
 class CertificateExtensionTestCase(TestCaseMixin, TestCase):

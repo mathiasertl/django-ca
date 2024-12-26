@@ -43,7 +43,7 @@ register.filter("signed_certificate_timestamp_values", signed_certificate_timest
 
 
 @register.filter
-def admissions(value: "x509.Admissions") -> list["x509.Admission"]:  # pragma: only cryptography>=44
+def admissions(value: "x509.Admissions") -> list["x509.Admission"]:
     """Return list of admissions (templates cannot contain underscores in variables)."""
     return value._admissions  # pylint: disable=protected-access; only way to get admissions
 
@@ -97,7 +97,7 @@ def enum(mod: Any, cls_name_and_member: str) -> Any:
 
 
 @register.filter
-def format_general_name(value: x509.GeneralName) -> str:  # pragma: only cryptography>=44
+def format_general_name(value: x509.GeneralName) -> str:
     """A template tag to format general name."""
     return _format_general_name(value)
 

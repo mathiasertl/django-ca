@@ -20,8 +20,6 @@ from cryptography import x509
 import pytest
 
 from django_ca import constants, typehints
-from django_ca.constants import ExtensionOID
-from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.test_constants import oid_sorter
 
 
@@ -34,8 +32,6 @@ def test_configurable_extension_keys() -> None:
     keys = get_args(typehints.ConfigurableExtensionKeys)
     expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionType)), key=oid_sorter)
     actual = sorted((constants.CONFIGURABLE_EXTENSION_KEY_OIDS[v] for v in keys), key=oid_sorter)
-    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
-        actual.remove(ExtensionOID.ADMISSIONS)
     assert actual == expected
 
 
@@ -48,8 +44,6 @@ def test_end_entity_certificate_extension_keys() -> None:
         (get_args(ext)[0].oid for ext in get_args(typehints.EndEntityCertificateExtension)), key=oid_sorter
     )
     actual = sorted((constants.END_ENTITY_CERTIFICATE_EXTENSION_KEY_OIDS[v] for v in keys), key=oid_sorter)
-    if CRYPTOGRAPHY_VERSION < (44, 0):  # pragma: cryptography<44 branch
-        actual.remove(ExtensionOID.ADMISSIONS)
     assert actual == expected
 
 
