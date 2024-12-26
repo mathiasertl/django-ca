@@ -54,6 +54,8 @@ Extensions
 
 .. automodule:: django_ca.pydantic.extensions
 
+.. autoclass:: django_ca.pydantic.AdmissionsModel
+
 .. autoclass:: django_ca.pydantic.AuthorityInformationAccessModel
 
 .. autoclass:: django_ca.pydantic.AuthorityKeyIdentifierModel

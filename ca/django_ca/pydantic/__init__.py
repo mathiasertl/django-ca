@@ -15,18 +15,23 @@
 
 from django_ca.pydantic.extension_attributes import (
     AccessDescriptionModel,
+    AdmissionModel,
+    AdmissionsValueModel,
     AuthorityKeyIdentifierValueModel,
     BasicConstraintsValueModel,
     DistributionPointModel,
     MSCertificateTemplateValueModel,
     NameConstraintsValueModel,
+    NamingAuthorityModel,
     NoticeReferenceModel,
     PolicyConstraintsValueModel,
     PolicyInformationModel,
+    ProfessionInfoModel,
     UnrecognizedExtensionValueModel,
     UserNoticeModel,
 )
 from django_ca.pydantic.extensions import (
+    AdmissionsModel,
     AuthorityInformationAccessModel,
     AuthorityKeyIdentifierModel,
     BasicConstraintsModel,
@@ -57,6 +62,9 @@ from django_ca.pydantic.name import NameAttributeModel, NameModel
 
 __all__ = (
     "AccessDescriptionModel",
+    "AdmissionModel",
+    "AdmissionsModel",
+    "AdmissionsValueModel",
     "AuthorityInformationAccessModel",
     "AuthorityKeyIdentifierModel",
     "AuthorityKeyIdentifierValueModel",
@@ -79,6 +87,7 @@ __all__ = (
     "NameConstraintsModel",
     "NameConstraintsValueModel",
     "NameModel",
+    "NamingAuthorityModel",
     "NoticeReferenceModel",
     "OCSPNoCheckModel",
     "OtherNameModel",
@@ -87,6 +96,7 @@ __all__ = (
     "PolicyInformationModel",
     "PrecertPoisonModel",
     "PrecertificateSignedCertificateTimestampsModel",
+    "ProfessionInfoModel",
     "SignedCertificateTimestampsModel",
     "SubjectAlternativeNameModel",
     "SubjectInformationAccessModel",

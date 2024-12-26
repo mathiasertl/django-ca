@@ -7,7 +7,7 @@ Docker image
 ************
 
 * The main Docker image is now based off Debian instead of Alpine. The Alpine image is still provided with the
-  ``-alpine`` suffix (e.g. ``mathiasertl/django-ca:2.1.0-alpine`).
+  ``-alpine`` suffix (e.g. ``mathiasertl/django-ca:2.1.0-alpine``).
 
 ****************************
 Certificate Revocation Lists
@@ -33,6 +33,8 @@ Key backends
 * Add a :ref:`db_backend` to allow storing private keys in the database. This backend makes the private key
   accessible to any frontend-facing web server and is thus less secure then other backends, but is an
   option if your environment has no file system available.
+* Remove the ``get_ocsp_key_size()` and ``get_ocsp_key_elliptic_curve`` from the core key backend interface,
+  as they are now handled by :ref:`ocsp_key_backends`.
 
 **********************
 Command-line utilities
@@ -44,6 +46,15 @@ Command-line utilities
   ``--only-contains-attribute-certs`` instead.
 * **BACKWARDS INCOMPATIBLE:**  The ``--algorithm`` parameter to :command:`manage.py dump_crl` no longer has
   any effect and will be removed in django-ca 2.3.0.
+
+********
+REST API
+********
+
+* When requesting a new certificate, validate the submitted CSR before relaying the order to the backend
+  (fixes `#152 <https://github.com/mathiasertl/django-ca/issues/152>`_).
+* Support for the :py:class:`Admissions extension <django_ca.pydantic.extensions.AdmissionsModel>` when
+  ``cryptography>=44`` is used.
 
 ********
 Settings

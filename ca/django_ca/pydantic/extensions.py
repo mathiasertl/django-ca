@@ -334,6 +334,18 @@ class AdmissionsModel(AdmissionsModelBase):  # pragma: only cryptography>=44.0
     .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<44``.
 
     .. versionadded:: 2.1.0
+
+    The `value` is a :py:class:`~django_ca.pydantic.extension_attributes.AdmissionsValueModel`:
+
+    .. pydantic-model:: admissions_model
+
+    The model supports an arbitrary number of :py:class:`Admission
+    <django_ca.pydantic.extension_attributes.AdmissionModel>` and :py:class:`ProfessionInfo
+    <django_ca.pydantic.extension_attributes.ProfessionInfoModel>` instances:
+
+    .. pydantic-model:: admissions_model_complex
+
+    test
     """
 
     model_config = ConfigDict(from_attributes=True)
