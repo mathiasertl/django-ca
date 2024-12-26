@@ -11,7 +11,8 @@ Preparation
 Run these steps when you begin to create a new release:
 
 * Double-check that the changelog is up to date.
-* Update requirements in :file:`requirements*.txt` and :file:`pyproject.toml` (use :command:`pip list -o`).
+* Update requirements in :file:`requirements*.txt` and :file:`pyproject.toml` (use
+  :command:`uv pip list --outdated`).
 * Check versions of major software dependencies and:
 
   * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.

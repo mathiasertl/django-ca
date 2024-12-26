@@ -19,11 +19,13 @@ alpine = [
     "3.18",  # until 2025-05-09
     "3.19",  # until 2025-11-01
     "3.20",  # until 2026-04-01
+    "3.21",  # until 2026-11-01
 ]
 
 # Blacklist images that we don't want to build for
 docker-image-blacklist = [
     # Python 3.8/3.9 images don't work with pinned requirements that include Django 5.0.
+    "python:3.9-alpine3.21",
     "python:3.9-alpine3.20",
     "python:3.9-alpine3.19",
     "python:3.9-alpine3.18",

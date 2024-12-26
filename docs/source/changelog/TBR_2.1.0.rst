@@ -8,6 +8,7 @@ Docker image
 
 * The main Docker image is now based off Debian instead of Alpine. The Alpine image is still provided with the
   ``-alpine`` suffix (e.g. ``mathiasertl/django-ca:2.1.0-alpine``).
+* The Alpine image is now based on Alpine 3.21.
 
 ****************************
 Certificate Revocation Lists
@@ -126,4 +127,5 @@ Deprecation notices
 Please also see the :doc:`deprecation timeline </deprecation>` for previous deprecation notices.
 
 * This will be the last release to support ``django~=5.0.0``, ``cryptography~=43.0`` and ``pydantic~=2.9.0``.
+* This will be the last release to support Ubuntu 20.04 and Alpine 3.18.
 * Support for Python 3.9 and ``django~=4.2.0`` will be dropped in ``django-ca==2.3.0``.
