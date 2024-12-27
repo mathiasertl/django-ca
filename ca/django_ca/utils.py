@@ -39,19 +39,14 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
+from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_function
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
     is_power_two_validator,
     url_validator,
 )
-from django_ca.typehints import (
-    AllowedHashTypes,
-    ParsableGeneralName,
-    ParsableKeyType,
-    ParsableName,
-    SerializedName,
-)
+from django_ca.typehints import AllowedHashTypes, ParsableGeneralName, ParsableKeyType, SerializedName
 
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
@@ -130,23 +125,18 @@ def _serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
     return name_attribute.value
 
 
+@deprecate_function(RemovedInDjangoCA230Warning)
 def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> SerializedName:
     """Serialize a :py:class:`~cg:cryptography.x509.Name`.
+
+    .. deprecated:: 2.2.0
+
+       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
 
     The value also accepts a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
 
     The returned value is a list of tuples, each consisting of two strings. If an attribute contains
     ``bytes``, it is converted using :py:func:`~django_ca.utils.bytes_to_hex`.
-
-    Examples::
-
-        >>> serialize_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
-        [{'oid': '2.5.4.3', 'value': 'example.com'}]
-        >>> serialize_name(x509.RelativeDistinguishedName([
-        ...     x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT'),
-        ...     x509.NameAttribute(NameOID.COMMON_NAME, 'example.com'),
-        ... ]))
-        [{'oid': '2.5.4.6', 'value': 'AT'}, {'oid': '2.5.4.3', 'value': 'example.com'}]
     """
     return [{"oid": attr.oid.dotted_string, "value": _serialize_name_attribute_value(attr)} for attr in name]
 
@@ -169,15 +159,17 @@ def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> 
     ]
 
 
+@deprecate_function(RemovedInDjangoCA230Warning)
 def parse_serialized_name_attributes(name: SerializedName) -> list[x509.NameAttribute]:
     """Parse a serialized list of name attributes into a list of NameAttributes.
+
+    .. deprecated:: 2.2.0
+
+       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
 
     This function takes care of parsing hex-encoded byte values name attributes that are known to use bytes
     (currently only :py:attr:`NameOID.X500_UNIQUE_IDENTIFIER
     <cg:cryptography.x509.oid.NameOID.X500_UNIQUE_IDENTIFIER>`).
-
-    >>> parse_serialized_name_attributes([{"oid": "2.5.4.3", "value": "example.com"}])
-    [<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>]
 
     This function is more or less the inverse of :py:func:`~django_ca.utils.serialize_name`, except that it
     returns a list of :py:class:`~cg:cryptography.x509.NameAttribute` instances (``serialize_name()`` takes a
@@ -308,9 +300,13 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-# @deprecate_function(RemovedInDjangoCA200Warning)
-def parse_name_x509(name: ParsableName) -> tuple[x509.NameAttribute, ...]:
+@deprecate_function(RemovedInDjangoCA230Warning)
+def parse_name_x509(name: Union[str, Iterable[tuple[str, str]]]) -> tuple[x509.NameAttribute, ...]:
     """Parses a subject string as used in OpenSSLs command line utilities.
+
+    .. deprecated:: 2.2.0
+
+       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
 
     .. versionchanged:: 1.20.0
 
@@ -320,16 +316,6 @@ def parse_name_x509(name: ParsableName) -> tuple[x509.NameAttribute, ...]:
     ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
     on deviations from the format, object identifiers are case-insensitive, whitespace at the start and end is
     stripped and the subject does not have to start with a slash (``/``).
-
-    >>> parse_name_x509([("CN", "example.com")])
-    (<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>,)
-    >>> parse_name_x509(
-    ...     [("c", "AT"), ("l", "Vienna"), ("o", "quoting/works"), ("CN", "example.com")]
-    ... )  # doctest: +NORMALIZE_WHITESPACE
-    (<NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.6, name=countryName)>, value='AT')>,
-     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.7, name=localityName)>, value='Vienna')>,
-     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.10, name=organizationName)>, value='quoting/works')>,
-     <NameAttribute(oid=<ObjectIdentifier(oid=2.5.4.3, name=commonName)>, value='example.com')>)
     """
     if isinstance(name, str):
         # TYPE NOTE: mypy detects t.split() as Tuple[str, ...] and does not recognize the maxsplit parameter
@@ -344,12 +330,13 @@ def parse_name_x509(name: ParsableName) -> tuple[x509.NameAttribute, ...]:
     return tuple(x509.NameAttribute(oid, value) for oid, value in items)
 
 
-# @deprecate_function(RemovedInDjangoCA200Warning)
-def x509_name(name: ParsableName) -> x509.Name:
+@deprecate_function(RemovedInDjangoCA230Warning)
+def x509_name(name: Union[str, Iterable[tuple[str, str]]]) -> x509.Name:
     """Parses a string or iterable of two-tuples into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
-    >>> x509_name([('C', 'AT'), ('CN', 'example.com')])
-    <Name(C=AT,CN=example.com)>
+    .. deprecated:: 2.2.0
+
+       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
     """
     return check_name(x509.Name(parse_name_x509(name)))
 
@@ -938,6 +925,7 @@ def read_file(path: str) -> bytes:
         stream.close()
 
 
+@deprecate_function(RemovedInDjangoCA230Warning)
 def split_str(val: str, sep: str) -> Iterator[str]:
     """Split a character on the given set of characters."""
     lex = shlex.shlex(val, posix=True)

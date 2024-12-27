@@ -18,6 +18,7 @@ from cryptography.x509.oid import NameOID
 
 import pytest
 
+from django_ca.tests.base.assertions import assert_removed_in_230
 from django_ca.utils import parse_name_x509
 
 
@@ -152,10 +153,11 @@ from django_ca.utils import parse_name_x509
 )
 def test_parse_name_x509(value: str, expected: list[tuple[x509.ObjectIdentifier, str]]) -> None:
     """Some basic tests."""
-    assert parse_name_x509(value) == tuple(x509.NameAttribute(oid, value) for oid, value in expected)
+    with assert_removed_in_230():
+        assert parse_name_x509(value) == tuple(x509.NameAttribute(oid, value) for oid, value in expected)
 
 
 def test_unknown() -> None:
     """Test unknown field."""
-    with pytest.raises(ValueError, match=r"^Unknown x509 name field: ABC$"):
+    with assert_removed_in_230(), pytest.raises(ValueError, match=r"^Unknown x509 name field: ABC$"):
         parse_name_x509("/ABC=example.com")

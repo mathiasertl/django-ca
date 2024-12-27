@@ -51,6 +51,7 @@ from django_ca.key_backends.storages.models import (
 )
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import profiles
+from django_ca.pydantic import NameModel
 from django_ca.pydantic.extensions import (
     EXTENSION_MODELS,
     AuthorityInformationAccessModel,
@@ -60,7 +61,7 @@ from django_ca.pydantic.extensions import (
 )
 from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
-from django_ca.utils import bytes_to_hex, parse_serialized_name_attributes, serialize_name
+from django_ca.utils import bytes_to_hex
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
@@ -174,7 +175,7 @@ def _copy_cert(dest: Path, cert: Certificate, data: CertFixtureData, key_path: P
     with open(dest / data["pub_filename"], "wb") as stream:
         stream.write(cert.pub.der)
 
-    data["subject"] = serialize_name(cert.subject)
+    data["subject"] = [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in cert.subject]
     data["parsed_cert"] = cert
 
     _update_cert_data(cert, data)
@@ -196,7 +197,7 @@ def _update_contrib(
         "key_filename": False,
         "csr_filename": False,
         "serial": cert.serial,
-        "subject": serialize_name(cert.subject),
+        "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in cert.subject],
         "md5": cert.get_fingerprint(hashes.MD5()),
         "sha1": cert.get_fingerprint(hashes.SHA1()),
         "sha256": cert.get_fingerprint(hashes.SHA256()),
@@ -295,7 +296,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 data[name]["name"],
                 key_backend,
                 key_backend_options,
-                subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
+                subject=NameModel.model_validate(data[name]["subject"]).cryptography,
                 expires=datetime.now(tz=tz.utc) + data[name]["not_after"],
                 key_type=data[name]["key_type"],
                 algorithm=data[name].get("algorithm"),
@@ -322,7 +323,7 @@ def create_certs(
         name = f"{ca.name}-cert"
         key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
         csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
-        csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+        csr_subject = NameModel.model_validate(data[name]["csr_subject"]).cryptography
         csr = _create_csr(
             key_path,
             csr_path,
@@ -355,7 +356,7 @@ def create_certs(
 
         key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
         csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
-        csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+        csr_subject = NameModel.model_validate(data[name]["csr_subject"]).cryptography
         csr = _create_csr(
             key_path,
             csr_path,
@@ -393,7 +394,7 @@ def create_special_certs(  # noqa: PLR0915
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
-    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+    csr_subject = NameModel.model_validate(data[name]["csr_subject"]).cryptography
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     freeze_now = now
@@ -402,7 +403,7 @@ def create_special_certs(  # noqa: PLR0915
     with freeze_time(freeze_now):
         no_ext_now = datetime.now(tz=tz.utc).replace(tzinfo=None)
         pwd = data[ca.name].get("password")
-        subject = x509.Name(parse_serialized_name_attributes(data[name]["subject"]))
+        subject = NameModel.model_validate(data[name]["subject"]).cryptography
 
         builder = x509.CertificateBuilder()
         builder = builder.not_valid_before(no_ext_now)
@@ -435,7 +436,7 @@ def create_special_certs(  # noqa: PLR0915
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
-    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+    csr_subject = NameModel.model_validate(data[name]["csr_subject"]).cryptography
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     with freeze_time(now + data[name]["delta"]):
@@ -445,7 +446,7 @@ def create_special_certs(  # noqa: PLR0915
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
+            subject=NameModel.model_validate(data[name]["subject"]).cryptography,
             expires=data[name]["not_after"],
             extensions=data[name]["extensions"].values(),
         )
@@ -457,7 +458,7 @@ def create_special_certs(  # noqa: PLR0915
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
-    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+    csr_subject = NameModel.model_validate(data[name]["csr_subject"]).cryptography
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     with freeze_time(now + data[name]["delta"]):
@@ -467,7 +468,7 @@ def create_special_certs(  # noqa: PLR0915
             csr=csr,
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
-            subject=x509.Name(parse_serialized_name_attributes(data[name]["subject"])),
+            subject=NameModel.model_validate(data[name]["subject"]).cryptography,
             expires=data[name]["not_after"],
             extensions=data[name]["extensions"].values(),
         )
@@ -478,7 +479,7 @@ def create_special_certs(  # noqa: PLR0915
     ca = CertificateAuthority.objects.get(name=data[name]["ca"])
     key_path = Path(os.path.join(settings.CA_DIR, f"{name}.key"))
     csr_path = Path(os.path.join(settings.CA_DIR, f"{name}.csr"))
-    csr_subject = x509.Name(parse_serialized_name_attributes(data[name]["csr_subject"]))
+    csr_subject = NameModel.model_validate(data[name]["csr_subject"]).cryptography
     csr = _create_csr(key_path, csr_path, subject=csr_subject)
 
     freeze_now = now

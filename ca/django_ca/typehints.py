@@ -73,7 +73,7 @@ AllowedHashTypes = Union[
     hashes.SHA3_512,
 ]
 
-ParsableName = Union[str, Iterable[tuple[str, str]]]
+ParsableName = Union[str, Iterable[tuple[str, str]]]  # TODO: remove?
 
 ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[

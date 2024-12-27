@@ -49,7 +49,6 @@ creates a minimal CA using the file system storage backend::
    ...     StoragesUsePrivateKeyOptions,
    ... )
    >>> from django_ca.models import CertificateAuthority
-   >>> from django_ca.utils import x509_name
    >>> key_backend = key_backends["default"]
    >>> key_backend_options = StoragesCreatePrivateKeyOptions(
    ...     key_type="RSA", key_size=1024, password=None, path="ca"
@@ -80,7 +79,6 @@ Django model::
 Much like with certificate authorities, creating a new certificate requires a manager method,
 :py:func:`Certificate.objects.create_cert() <django_ca.managers.CertificateManager.create_cert>`::
 
-   >>> from django_ca.utils import x509_name
    >>> Certificate.objects.create_cert(
    ...     ca,
    ...     StoragesUsePrivateKeyOptions(password=None),

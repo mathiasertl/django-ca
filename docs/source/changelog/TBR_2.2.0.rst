@@ -36,3 +36,11 @@ Deprecation notices
 
 * ``django_ca.extensions.parse_extension()`` is deprecated and will be removed in ``django-ca==2.3.0``. Use
   :doc:`Pydantic models </python/pydantic>` instead.
+* Functions related to the old OpenSSL style subject format are deprecated and will be removed in
+  ``django_ca==2.3.0``:
+
+  * ``django_ca.utils.parse_name_x509()``
+  * ``django_ca.utils.parse_serialized_name_attributes()``
+  * ``django_ca.utils.serialize_name()``
+  * ``django_ca.utils.split_str()``
+  * ``django_ca.utils.x509_name()``

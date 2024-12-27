@@ -17,7 +17,6 @@ import ipaddress
 import itertools
 import os
 import typing
-import unittest
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
@@ -37,7 +36,7 @@ from freezegun import freeze_time
 
 from django_ca import utils
 from django_ca.conf import model_settings
-from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
+from django_ca.tests.base.assertions import assert_removed_in_230
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.utils import cn, country, dns
 from django_ca.typehints import SerializedObjectIdentifier
@@ -98,7 +97,8 @@ def test_parse_serialized_name_attributes(
     serialized: list[SerializedObjectIdentifier] = [
         {"oid": attr[0].dotted_string, "value": attr[1]} for attr in attributes
     ]
-    assert parse_serialized_name_attributes(serialized) == expected
+    with assert_removed_in_230():
+        assert parse_serialized_name_attributes(serialized) == expected
 
 
 class GeneratePrivateKeyTestCase(TestCase):
@@ -147,19 +147,23 @@ class SerializeName(TestCase):
 
     def test_name(self) -> None:
         """Test passing a standard Name."""
-        assert serialize_name(x509.Name([cn("example.com")])) == [{"oid": "2.5.4.3", "value": "example.com"}]
-        assert serialize_name(x509.Name([country("AT"), cn("example.com")])) == [
-            {"oid": "2.5.4.6", "value": "AT"},
-            {"oid": "2.5.4.3", "value": "example.com"},
-        ]
+        with assert_removed_in_230():
+            assert serialize_name(x509.Name([cn("example.com")])) == [
+                {"oid": "2.5.4.3", "value": "example.com"}
+            ]
+        with assert_removed_in_230():
+            assert serialize_name(x509.Name([country("AT"), cn("example.com")])) == [
+                {"oid": "2.5.4.6", "value": "AT"},
+                {"oid": "2.5.4.3", "value": "example.com"},
+            ]
 
-    @unittest.skipIf(CRYPTOGRAPHY_VERSION < (37, 0), "cg<36 does not yet have bytes.")
     def test_bytes(self) -> None:
         """Test names with byte values - probably never happens."""
         name = x509.Name(
             [x509.NameAttribute(NameOID.X500_UNIQUE_IDENTIFIER, b"example.com", _type=_ASN1Type.BitString)]
         )
-        assert serialize_name(name) == [{"oid": "2.5.4.45", "value": "65:78:61:6D:70:6C:65:2E:63:6F:6D"}]
+        with assert_removed_in_230():
+            assert serialize_name(name) == [{"oid": "2.5.4.45", "value": "65:78:61:6D:70:6C:65:2E:63:6F:6D"}]
 
 
 @pytest.mark.parametrize(
@@ -354,13 +358,20 @@ class X509NameTestCase(TestCase):
             ("CN", "example.com"),
             ("emailAddress", "user@example.com"),
         ]
-        assert x509_name(subject) == self.name
+        with assert_removed_in_230():
+            assert x509_name(subject) == self.name
 
     def test_multiple_other(self) -> None:
         """Test multiple other tokens (only OUs work)."""
-        with pytest.raises(ValueError, match='^Subject contains multiple "countryName" fields$'):
+        with (
+            assert_removed_in_230(),
+            pytest.raises(ValueError, match='^Subject contains multiple "countryName" fields$'),
+        ):
             x509_name([("C", "AT"), ("C", "DE")])
-        with pytest.raises(ValueError, match='^Subject contains multiple "commonName" fields$'):
+        with (
+            assert_removed_in_230(),
+            pytest.raises(ValueError, match='^Subject contains multiple "commonName" fields$'),
+        ):
             x509_name([("CN", "AT"), ("CN", "FOO")])
 
 

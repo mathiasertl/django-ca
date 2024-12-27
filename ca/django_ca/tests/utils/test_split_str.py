@@ -15,6 +15,7 @@
 
 import pytest
 
+from django_ca.tests.base.assertions import assert_removed_in_230
 from django_ca.utils import split_str
 
 
@@ -85,7 +86,8 @@ from django_ca.utils import split_str
 )
 def test_basic(value: str, seperator: str, expected: list[str]) -> None:
     """Some basic split_str() test cases."""
-    assert list(split_str(value, seperator)) == expected
+    with assert_removed_in_230():
+        assert list(split_str(value, seperator)) == expected
 
 
 @pytest.mark.parametrize(
@@ -100,5 +102,5 @@ def test_basic(value: str, seperator: str, expected: list[str]) -> None:
 )
 def test_quotation_errors(value: str, match: str) -> None:
     """Test quoting."""
-    with pytest.raises(ValueError, match=match):
+    with assert_removed_in_230(), pytest.raises(ValueError, match=match):
         list(split_str(value, "/"))

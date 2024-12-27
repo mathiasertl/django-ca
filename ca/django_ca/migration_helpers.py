@@ -17,14 +17,29 @@ This module collects functions that are used in data migrations. The functions a
 that they are tested properly.
 """
 
+import shlex
 import typing
 import warnings
+from collections.abc import Iterator
 from typing import Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-from django_ca.utils import format_general_name, parse_general_name, split_str
+from django_ca.utils import format_general_name, parse_general_name
+
+
+def split_str(val: str, sep: str) -> Iterator[str]:
+    """Split a character on the given set of characters.
+
+    This function was originally in ``django_ca.utils`` but has since been deprecated/removed. We keep a copy
+    here so that the function keeps working.
+    """
+    lex = shlex.shlex(val, posix=True)
+    lex.commenters = ""
+    lex.whitespace = sep
+    lex.whitespace_split = True
+    yield from lex
 
 
 class Migration0040Helper:
