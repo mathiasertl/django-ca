@@ -44,7 +44,6 @@ from django_ca.typehints import (
     CertificateExtension,
     CertificateExtensionType,
     ParsableKeyType,
-    SubjectFormats,
 )
 from django_ca.utils import format_general_name, parse_general_name
 
@@ -190,7 +189,6 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             default=timedelta(365 * 10),
             help="CA certificate expires in DAYS days (default: %(default)s).",
         )
-        self.add_subject_format_option(general_group)
         self.add_algorithm(
             general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
@@ -340,8 +338,6 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         ocsp_key_backend: str,
         ocsp_responder_key_validity: Optional[int],
         ocsp_response_validity: Optional[int],
-        # subject_format will be removed in django-ca 2.2
-        subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
         # Make sure that selected private key options are supported by the selected key backend
@@ -423,7 +419,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             raise CommandError(f"{responder_value}: CA issuer cannot be added to root CAs.")
 
         # Parse the subject
-        parsed_subject = self.parse_x509_name(subject, subject_format)
+        parsed_subject = self.parse_x509_name(subject)
 
         # We require a valid common name
         common_name = next((attr.value for attr in parsed_subject if attr.oid == NameOID.COMMON_NAME), False)

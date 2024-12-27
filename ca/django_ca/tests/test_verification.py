@@ -123,15 +123,7 @@ def sign_cert(ca: CertificateAuthority, hostname: str = "example.com", **kwargs:
 
     with tempfile.TemporaryDirectory() as tempdir:
         out_path = os.path.join(tempdir, f"{hostname}.pem")
-        cmd(
-            "sign_cert",
-            ca=ca,
-            subject_format="rfc4514",
-            subject=subject,
-            out=out_path,
-            stdin=stdin,
-            **kwargs,
-        )
+        cmd("sign_cert", ca=ca, subject=subject, out=out_path, stdin=stdin, **kwargs)
         yield out_path
 
 

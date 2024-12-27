@@ -2,6 +2,14 @@
 2.2.0 (TBR)
 ###########
 
+**********************
+Command-line utilities
+**********************
+
+* Drop support for old OpenSSL-style subject formats in :command:`manage.py init_ca`,
+  :command:`manage.py sign_cert` and :command:`manage.py resign_cert`` (default switched in 2.0.0,
+  deprecated since 1.27.0). Use RFC 4514 subjects instead.
+
 ********
 Settings
 ********

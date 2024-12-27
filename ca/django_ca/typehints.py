@@ -174,8 +174,6 @@ HashAlgorithms = Literal[
     "SHA-224", "SHA-256", "SHA-384", "SHA-512", "SHA3/224", "SHA3/256", "SHA3/384", "SHA3/512"
 ]
 
-SubjectFormats = Literal["openssl", "rfc4514"]  # pragma: only django-ca<=2.2  # will be removed in 2.2
-
 #: Serialized values of :py:class:`~cg:cryptography.x509.certificate_transparency.LogEntryType` instances.
 LogEntryTypes = Literal["precertificate", "x509_certificate"]
 

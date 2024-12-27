@@ -30,11 +30,7 @@ from django_ca.conf import model_settings
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
-from django_ca.typehints import (
-    AllowedHashTypes,
-    ConfigurableExtension,
-    SubjectFormats,
-)
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtension
 
 
 class Command(BaseSignCertCommand):
@@ -107,8 +103,6 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
-        # subject_format will be removed in django-ca 2.2
-        subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
@@ -159,7 +153,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Parse the subject
         parsed_subject = None
         if subject is not None:
-            parsed_subject = self.parse_x509_name(subject, subject_format)
+            parsed_subject = self.parse_x509_name(subject)
 
         cname = None
         if parsed_subject is not None:

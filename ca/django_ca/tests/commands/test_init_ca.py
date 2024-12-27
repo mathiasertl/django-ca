@@ -1556,23 +1556,3 @@ def test_get_use_private_key_options_raises_exception(ca_name: str, key_backend:
     with pytest.raises(Exception, match=rf"^{msg}$"):
         with patch.object(key_backend, "get_use_private_key_options", side_effect=exc):
             init_ca(ca_name, key_backend=key_backend)
-
-
-@pytest.mark.django_db
-@pytest.mark.usefixtures("tmpcadir")
-def test_deprecated_subject_format(hostname: str, ca_name: str) -> None:
-    """Test passing a subject in the deprecated OpenSSL-style format."""
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-
-    with assert_create_ca_signals():
-        out, err = cmd(
-            "init_ca", ca_name, f"/CN={hostname}", subject_format="openssl", stdout=stdout, stderr=stderr
-        )
-    assert out == ""
-    # message is too long, just make sure it's there:
-    assert f"WARNING: /CN={hostname}: openssl-style format is deprecated" in err
-
-    ca: CertificateAuthority = CertificateAuthority.objects.get(name=ca_name)
-    assert ca.cn == hostname
-    assert ca.pub.loaded.subject == x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])

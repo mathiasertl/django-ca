@@ -48,9 +48,8 @@ from django_ca.typehints import (
     ArgumentGroup,
     ConfigurableExtension,
     ConfigurableExtensionType,
-    SubjectFormats,
 )
-from django_ca.utils import add_colons, format_name_rfc4514, name_for_display, parse_name_rfc4514, x509_name
+from django_ca.utils import add_colons, name_for_display, parse_name_rfc4514
 
 if typing.TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
@@ -413,36 +412,12 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             x509.Extension(oid=value.oid, critical=critical, value=value)  # type: ignore[arg-type]
         )
 
-    def add_subject_format_option(self, parser: ActionsContainer) -> None:
-        """Add the --subject-format option."""
-        parser.add_argument(
-            "--subject-format",
-            choices=("openssl", "rfc4514"),
-            default="rfc4514",
-            help='Format for parsing the subject. Use "openssl" (the default before django-ca 2.0) to pass '
-            'slash-separated subjects (e.g. "/C=AT/O=Org/CN=example.com") and "rfc4514" to pass RFC 4514 '
-            'conforming strings (e.g. "C=AT,O=Org,CN=example.com"). The default is %(default)s, support for '
-            "openssl-style strings will be removed in django-ca 2.2.",
-        )
-
-    def parse_x509_name(self, value: str, name_format: SubjectFormats) -> x509.Name:
+    def parse_x509_name(self, value: str) -> x509.Name:
         """Parse a `name` in the given `format`."""
-        if name_format == "openssl":
-            name = x509_name(value)
-            self.stderr.write(
-                f"WARNING: {value}: openssl-style format is deprecated, use --subject-format=rfc4514 "
-                "and pass an RFC 4514 compatible subject string instead. It will become default in "
-                "django-ca 2.0, and support for the old format will be removed in django-ca 2.2. "
-                f"The given subject looks like this in RFC4514:\n\n    {format_name_rfc4514(name)}"
-            )
-            return name
-        if name_format == "rfc4514":
-            try:
-                return parse_name_rfc4514(value)
-            except ValueError as ex:
-                raise CommandError(ex) from ex
-        # COVERAGE NOTE: Already covered by argparse
-        raise ValueError(f"{name_format}: Unknown subject format.")  # pragma: no cover
+        try:
+            return parse_name_rfc4514(value)
+        except ValueError as ex:
+            raise CommandError(ex) from ex
 
     def add_extended_key_usage_group(self, parser: CommandParser) -> None:
         """Add argument group for the Extended Key Usage extension."""
@@ -585,9 +560,6 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
     def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""
         group = parser.add_argument_group("Certificate subject", self.subject_help)
-
-        # Add the --subject-format option
-        self.add_subject_format_option(group)
 
         # NOTE: Don't set the default value here because it would mask the user not setting anything at all.
         self.add_subject(

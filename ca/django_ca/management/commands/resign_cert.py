@@ -30,7 +30,7 @@ from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtension, SubjectFormats
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtension
 
 
 class Command(BaseSignCertCommand):
@@ -98,8 +98,6 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         # TLSFeature extension
         tls_feature: Optional[x509.TLSFeature],
         tls_feature_critical: bool,
-        # subject_format will be removed in django-ca 2.2
-        subject_format: SubjectFormats,
         **options: Any,
     ) -> None:
         if ca is None:
@@ -121,7 +119,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         if subject is None:
             parsed_subject = cert.subject
         else:
-            parsed_subject = self.parse_x509_name(subject, subject_format)
+            parsed_subject = self.parse_x509_name(subject)
 
         # Process any extensions given via the command-line
         extensions: list[ConfigurableExtension] = []
