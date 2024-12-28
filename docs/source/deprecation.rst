@@ -39,35 +39,19 @@ Python API
   django-ca 2.1.0).
 * :func:`django_ca.models.CertificateAuthority.get_crl_certs` and
   :func:`django_ca.models.CertificateAuthority.get_crl` will be removed (deprecated since django-ca 2.1.0).
+* ``django_ca.extensions.parse_extension()`` is deprecated and will be removed (deprecated since
+  ``django-ca==2.2.0``). Use :doc:`Pydantic models </python/pydantic>` instead.
+* Functions related to the old OpenSSL style subject format will be removed in (deprecated since
+  ``django_ca==2.2.0``):
+
+  * ``django_ca.utils.parse_name_x509()``
+  * ``django_ca.utils.parse_serialized_name_attributes()``
+  * ``django_ca.utils.serialize_name()``
+  * ``django_ca.utils.split_str()``
+  * ``django_ca.utils.x509_name()``
 
 Views
 =====
 
 * The `scope` and `include_issuing_distribution_point` :class:`~django_ca.views.CertificateRevocationListView`
   parameters will be removed (deprecated since 2.1.0).
-
-***********
-2.2.0 (TBR)
-***********
-
-Command-line
-============
-
-* Remove support for subjects in OpenSSL-style format (default switched in 2.0.0, deprecated since 1.27.0).
-
-Settings
-========
-
-* Support for the old subject format in :ref:`settings-ca-default-subject` and subjects in profiles will be
-  removed in 2.2.0 (deprecated since 1.29.0).
-
-Python API
-==========
-
-* ``django_ca.utils.get_storage()`` will be removed (deprecated since 2.0).
-
-Dependencies
-============
-
-* Support ``django~=5.0.0``, ``cryptography~=43.0``, ``pydantic~=2.9.0`` and ``acme~=2.9.0`` will be dropped.
-* Support for Ubuntu 20.04 and Alpine 3.18 will be dropped.
