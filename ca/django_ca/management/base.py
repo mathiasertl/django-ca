@@ -49,7 +49,7 @@ from django_ca.typehints import (
     ConfigurableExtension,
     ConfigurableExtensionType,
 )
-from django_ca.utils import add_colons, name_for_display, parse_name_rfc4514
+from django_ca.utils import add_colons, name_for_display
 
 if typing.TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
@@ -411,13 +411,6 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
             # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
             x509.Extension(oid=value.oid, critical=critical, value=value)  # type: ignore[arg-type]
         )
-
-    def parse_x509_name(self, value: str) -> x509.Name:
-        """Parse a `name` in the given `format`."""
-        try:
-            return parse_name_rfc4514(value)
-        except ValueError as ex:
-            raise CommandError(ex) from ex
 
     def add_extended_key_usage_group(self, parser: CommandParser) -> None:
         """Add argument group for the Extended Key Usage extension."""

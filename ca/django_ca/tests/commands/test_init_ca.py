@@ -1534,7 +1534,7 @@ def test_invalid_common_name(value: str, msg: str) -> None:
 
 def test_unparsable_subject(ca_name: str) -> None:
     """Test error when you pass an unparsable subject."""
-    with assert_command_error(r"^/CN=example\.com: Could not parse name as RFC 4514 string\.$"):
+    with assert_command_error(r"/CN=example\.com: Could not parse name as RFC 4514 string\.$"):
         cmd("init_ca", ca_name, "/CN=example.com")
 
 

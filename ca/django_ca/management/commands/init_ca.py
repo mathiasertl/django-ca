@@ -282,7 +282,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
         self,
         name: str,
-        subject: str,
+        subject: x509.Name,
         parent: Optional[CertificateAuthority],
         expires: timedelta,
         # private key storage options
@@ -418,11 +418,8 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             responder_value = format_general_name(ca_issuer.access_location)
             raise CommandError(f"{responder_value}: CA issuer cannot be added to root CAs.")
 
-        # Parse the subject
-        parsed_subject = self.parse_x509_name(subject)
-
         # We require a valid common name
-        common_name = next((attr.value for attr in parsed_subject if attr.oid == NameOID.COMMON_NAME), False)
+        common_name = next((attr.value for attr in subject if attr.oid == NameOID.COMMON_NAME), False)
         if not common_name:
             raise CommandError("Subject must contain a common name (CN=...).")
 
@@ -545,7 +542,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
                 name=name,
                 key_backend=key_backend,
                 key_backend_options=key_backend_options,
-                subject=parsed_subject,
+                subject=subject,
                 not_after=not_after_datetime,
                 algorithm=algorithm,
                 parent=parent,

@@ -90,7 +90,7 @@ that these two will give the same CommonName and ``SubjectAlternativeName``:
 
 .. code-block:: console
 
-   $ python manage.py sign_cert --subject-format=rfc4514 --subject C=AT,...,CN=example.com
+   $ python manage.py sign_cert --subject C=AT,...,CN=example.com
    $ python manage.py sign_cert --alt example.com
 
 A given CommonName is only added to the ``SubjectAlternativeName`` extension if it is a valid :ref:`name
@@ -105,7 +105,7 @@ You can also disable adding the CommonName as ``subjectAlternativeName``:
 
 .. code-block:: console
 
-   $ python manage.py sign_cert --cn-not-in-san --subject-format=rfc4514 --subject C=AT,...,CN=example.com --alt=example.net
+   $ python manage.py sign_cert --cn-not-in-san --subject C=AT,...,CN=example.com --alt=example.net
 
 ... this will only have "example.net" but not example.com as ``subjectAlternativeName``.
 
@@ -117,7 +117,7 @@ in :manpage:`ASN1_GENERATE_NCONF(3SSL)`:
 
 .. code-block:: console
 
-   $ python manage.py sign_cert --subject-format=rfc4514 --subject CN=example.com --alt="otherName:1.3.6.1.4.1.311.20.2.3;UTF8:dummy@domain.tld"
+   $ python manage.py sign_cert --subject CN=example.com --alt="otherName:1.3.6.1.4.1.311.20.2.3;UTF8:dummy@domain.tld"
 
 Note that currently only UTF8 strings are supported.
 

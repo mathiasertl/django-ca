@@ -11,8 +11,8 @@ the admin interface) and create a root and intermediate CA:
 
    {% filter wordwrap(width=90, wrapstring=" \\\n   >     ", break_on_hyphens=False) %}root@host:{{ path|default('~') }}# {{ manage }} createsuperuser{% endfilter %}
    ...
-   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ", break_on_hyphens=False) %}root@host:{{ path|default('~') }}# {{ manage }} init_ca --path-length=1 --subject-format=rfc4514 Root "CN=Root"{% endfilter %}
-   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ", break_on_hyphens=False) %}root@host:{{ path|default('~') }}# {{ manage }} init_ca {% if shared %}--path=ca/shared/ {% endif %} --acme-enable --parent="Root" --subject-format=rfc4514 Intermediate "CN=Intermediate"{% endfilter %}
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ", break_on_hyphens=False) %}root@host:{{ path|default('~') }}# {{ manage }} init_ca --path-length=1 Root "CN=Root"{% endfilter %}
+   {% filter wordwrap(width=90, wrapstring=" \\\n   >     ", break_on_hyphens=False) %}root@host:{{ path|default('~') }}# {{ manage }} init_ca {% if shared %}--path=ca/shared/ {% endif %} --acme-enable --parent="Root" Intermediate "CN=Intermediate"{% endfilter %}
 {% endif %}
 
 There are a few things to break down in the above commands:
