@@ -537,7 +537,7 @@ class GenericCAIssuersView(View):
     :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension.
     """
 
-    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
+    async def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
-        ca = CertificateAuthority.objects.get(serial=serial)
+        ca = await CertificateAuthority.objects.aget(serial=serial)
         return HttpResponse(ca.pub.der, content_type="application/pkix-cert")
