@@ -18,12 +18,14 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from typing import Any, Generic, Optional, TypeVar, Union
 
+from asgiref.sync import sync_to_async
 from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
+import django
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models.functions import Coalesce
@@ -881,7 +883,7 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         )
 
         # Create database object (as late as possible so any exception above would not hit the database)
-        obj = self.create(
+        obj: CertificateRevocationList = self.create(
             ca=ca,
             number=Coalesce(models.Subquery(number_subquery, default=1), 0),
             only_contains_ca_certs=only_contains_ca_certs,
@@ -894,7 +896,12 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
 
         # Refresh the object from the database, since we need to access the number. See:
         # https://docs.djangoproject.com/en/5.1/ref/models/expressions/#f-assignments-persist-after-model-save
-        obj.refresh_from_db()
+        if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
+            # Assure that ``ca`` is loaded already
+            obj.refresh_from_db(from_queryset=self.model.objects.select_related("ca"))
+        else:  # pragma: django<5.1 branch
+            # The `from_queryset` argument was added in Django 5.0.
+            obj = self.model.objects.select_related("ca").get(pk=obj.pk)
 
         # Add the CRL Number extension
         builder = builder.add_extension(x509.CRLNumber(crl_number=obj.number), critical=False)
@@ -909,6 +916,8 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         obj.save()
 
         return obj
+
+    acreate_certificate_revocation_list = sync_to_async(create_certificate_revocation_list)
 
 
 class AcmeAccountManager(AcmeAccountManagerBase):

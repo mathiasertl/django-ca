@@ -49,7 +49,6 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpR
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
-from django.views.generic.detail import SingleObjectMixin
 
 from django_ca import constants
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
@@ -64,19 +63,11 @@ log = logging.getLogger(__name__)
 if typing.TYPE_CHECKING:
     from django.http.response import HttpResponseBase
 
-    SingleObjectMixinBase = SingleObjectMixin[CertificateAuthority]
-else:
-    SingleObjectMixinBase = SingleObjectMixin
-
 _NOT_SET = object()
 
 
-class CertificateRevocationListView(View, SingleObjectMixinBase):
+class CertificateRevocationListView(View):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
-
-    slug_field = "serial"
-    slug_url_kwarg = "serial"
-    queryset = CertificateAuthority.objects.all().prefetch_related("certificate_set")
 
     # parameters for the CRL itself
     type: CertificateRevocationListEncodings = Encoding.DER
@@ -136,7 +127,9 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         """
         return ca.key_backend.get_use_private_key_options(ca, {})
 
-    def fetch_crl(self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings) -> bytes:
+    async def fetch_crl(
+        self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings
+    ) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
         if self.scope is not _NOT_SET:
             warnings.warn(
@@ -183,7 +176,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
 
         # CRL is not cached, try to retrieve it from the database.
         if encoded_crl is None:
-            crl_obj: Optional[CertificateRevocationList] = (
+            crl_qs = (
                 CertificateRevocationList.objects.scope(
                     ca=ca,
                     only_contains_ca_certs=only_contains_ca_certs,
@@ -192,14 +185,15 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                     only_some_reasons=self.only_some_reasons,
                 )
                 .filter(data__isnull=False)  # only objects that have CRL data associated with it
-                .newest()
+                .select_related("ca")
             )
+            crl_obj: Optional[CertificateRevocationList] = await crl_qs.anewest()
 
             # CRL was not found in the database either, so we try to regenerate it.
             if crl_obj is None:
                 key_backend_options = self.get_key_backend_options(ca)
                 expires = datetime.now(tz=tz.utc) + timedelta(seconds=self.expires)
-                crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+                crl_obj = await CertificateRevocationList.objects.acreate_certificate_revocation_list(
                     ca=ca,
                     key_backend_options=key_backend_options,
                     next_update=expires,
@@ -210,7 +204,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
                 )
 
             # Cache the CRL.
-            crl_obj.cache()
+            await crl_obj.acache()
 
             # Get object in the right encoding.
             if encoding == Encoding.PEM:
@@ -220,7 +214,7 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
 
         return encoded_crl
 
-    def get(self, request: HttpRequest, serial: str) -> HttpResponse:  # pylint: disable=unused-argument
+    async def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
             if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
@@ -232,9 +226,10 @@ class CertificateRevocationListView(View, SingleObjectMixinBase):
         else:
             encoding = self.type
 
-        ca = self.get_object()
+        ca = await CertificateAuthority.objects.aget(serial=serial)
+
         try:
-            crl = self.fetch_crl(ca, encoding)
+            crl = await self.fetch_crl(ca, encoding)
         except Exception:  # pylint: disable=broad-exception-caught
             log.exception("Error generating a CRL")
             return HttpResponseServerError("Error while retrieving the CRL.", content_type="text/plain")

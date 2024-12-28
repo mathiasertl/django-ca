@@ -256,9 +256,9 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
 class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
     """Queryset for :class:`~django_ca.models.CertificateRevocationList`."""
 
-    def newest(self) -> Optional["CertificateRevocationList"]:
+    async def anewest(self) -> Optional["CertificateRevocationList"]:
         """Get the instance with the highest CRL number."""
-        return self.order_by("-number").first()
+        return await self.order_by("-number").afirst()
 
     def reasons(
         self, only_some_reasons: Optional[frozenset[x509.ReasonFlags]]
