@@ -24,6 +24,7 @@ import random
 import re
 import typing
 from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from typing import Literal, Optional, Union
 
@@ -450,6 +451,20 @@ class X509CertMixin(DjangoCAModel):
 
         return revoked_cert.build()
 
+    @contextmanager
+    def _revoke(
+        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
+    ) -> Iterator[None]:
+        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
+
+        self.revoked = True
+        self.revoked_date = timezone.now()
+        self.revoked_reason = reason.name
+        self.compromised = compromised
+        yield
+
+        post_revoke_cert.send(sender=self.__class__, cert=self)
+
     def revoke(
         self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
     ) -> None:
@@ -464,15 +479,15 @@ class X509CertMixin(DjangoCAModel):
         compromised : datetime, optional
             When this certificate was compromised.
         """
-        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
+        with self._revoke(reason, compromised):
+            self.save()
 
-        self.revoked = True
-        self.revoked_date = timezone.now()
-        self.revoked_reason = reason.name
-        self.compromised = compromised
-        self.save()
-
-        post_revoke_cert.send(sender=self.__class__, cert=self)
+    async def arevoke(
+        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
+    ) -> None:
+        """Revoke the current certificate (async version)."""
+        with self._revoke(reason, compromised):
+            await self.asave()
 
 
 class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missing]
