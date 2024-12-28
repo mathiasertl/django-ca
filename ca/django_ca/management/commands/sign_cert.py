@@ -70,7 +70,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
         self,
         ca: CertificateAuthority,
-        subject: Optional[str],
+        subject: Optional[x509.Name],
         expires: Optional[timedelta],
         watch: list[str],
         csr_path: str,
@@ -150,14 +150,9 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         if tls_feature is not None:
             self.add_extension(extensions, tls_feature, tls_feature_critical)
 
-        # Parse the subject
-        parsed_subject = None
-        if subject is not None:
-            parsed_subject = self.parse_x509_name(subject)
-
         cname = None
-        if parsed_subject is not None:
-            cname = parsed_subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        if subject is not None:
+            cname = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         if not cname and subject_alternative_name is None:
             raise CommandError(
                 "Must give at least a Common Name in --subject or one or more "
@@ -190,7 +185,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 profile=profile_obj,
                 not_after=expires,
                 extensions=extensions,
-                subject=parsed_subject,
+                subject=subject,
                 algorithm=algorithm,
             )
         except Exception as ex:

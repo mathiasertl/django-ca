@@ -217,13 +217,13 @@ with explicitly given values taking precedence. For example, given the following
 
 .. code-block:: console
 
-   $ manage.py sign_cert --subject-format rfc4514 --subject "CN=example.com" ...
+   $ manage.py sign_cert --subject "CN=example.com" ...
 
 will give the certificate a subject of ``C=AT,ST=Vienna,CN=example.com``. If you sign with
 
 .. code-block:: console
 
-   $ manage.py sign_cert --subject-format rfc4514 --subject "ST=Styria,L=Graz,CN=graz.example.com" ...
+   $ manage.py sign_cert --subject "ST=Styria,L=Graz,CN=graz.example.com" ...
 
 you will get ``C=AT,ST=Styria,L=Graz,CN=graz.example.com`` as a subject.
 

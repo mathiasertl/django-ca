@@ -38,6 +38,7 @@ from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.utils import (
     cmd,
+    cn,
     crl_distribution_points,
     distribution_point,
     override_tmpcadir,
@@ -119,7 +120,7 @@ def dumped(*certificates: X509CertMixin) -> Iterator[list[str]]:
 def sign_cert(ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any) -> Iterator[str]:
     """Create a signed certificate in a temporary directory."""
     stdin = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
-    subject = f"CN={hostname}"
+    subject = x509.Name([cn(hostname)])
 
     with tempfile.TemporaryDirectory() as tempdir:
         out_path = os.path.join(tempdir, f"{hostname}.pem")

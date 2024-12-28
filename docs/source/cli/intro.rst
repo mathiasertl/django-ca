@@ -101,7 +101,7 @@ to create a certificate authority with a country, organization and common name i
 
 .. code-block:: console
 
-   $ python manage.py init_ca --subject-format=rfc4514 \
+   $ python manage.py init_ca \
    >     NameOfCA C=AT,O=MyOrg,CN=ca.example.com
 
 ... but you can also use more special fields named in :py:attr:`~django_ca.constants.NAME_OID_NAMES`, e.g. a
@@ -109,7 +109,7 @@ more verbose common name and an email address:
 
 .. code-block:: console
 
-   $ python manage.py init_ca --subject-format=rfc4514 \
+   $ python manage.py init_ca \
    >     NameOfCA C=AT,O=MyOrg,commonName=ca.example.com,emailAddress=admin@ca.example.com
 
 As defined in RFC 4514, you can also use dotted strings to name arbitrary attributes. This example uses the
@@ -119,7 +119,7 @@ valid dotted string could be used as well):
 
 .. code-block:: console
 
-   $ python manage.py init_ca --subject-format=rfc4514 \
+   $ python manage.py init_ca \
    >     NameOfCA C=AT,organizationName=MyOrg,2.5.4.3=ca.example.com
 
 

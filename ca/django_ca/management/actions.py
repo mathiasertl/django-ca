@@ -36,7 +36,7 @@ from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic.validators import is_power_two_validator
 from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType, EllipticCurves
-from django_ca.utils import parse_encoding, parse_general_name
+from django_ca.utils import parse_encoding, parse_general_name, parse_name_rfc4514
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
 ParseType = typing.TypeVar("ParseType")  # pylint: disable=invalid-name
@@ -479,7 +479,7 @@ class ReasonAction(SingleValueAction[str, ReasonFlags]):
         return ReasonFlags[value]
 
 
-class NameAction(SingleValueAction[str, str]):
+class NameAction(SingleValueAction[str, x509.Name]):
     """Action to parse a string into a :py:class:`cg:~cryptography.x509.Name`.
 
     Note that this action does *not* take care of sorting the subject in any way.
@@ -491,11 +491,10 @@ class NameAction(SingleValueAction[str, str]):
     Namespace(name=CN=example.com)
     """
 
-    def parse_value(self, value: str) -> str:
-        # TODO: In django-ca 2.0, parse subject here directly using parse_name_rfc4514().
+    def parse_value(self, value: str) -> x509.Name:
         try:
-            return value
-        except ValueError as ex:  # pragma: no cover  # pragma: only django-ca<2.0
+            return parse_name_rfc4514(value)
+        except ValueError as ex:
             raise argparse.ArgumentError(self, str(ex)) from ex
 
 

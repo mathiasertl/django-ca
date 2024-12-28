@@ -635,7 +635,7 @@ class ResignCertTestCase(TestCaseMixin, TestCase):
             r"--subject-alternative-name/--name arguments\.$"
         )
         with assert_create_cert_signals(False, False), assert_command_error(msg):
-            cmd("resign_cert", cert, subject=subject.rfc4514_string())
+            cmd("resign_cert", cert, subject=subject)
 
     @override_tmpcadir()
     def test_error(self) -> None:

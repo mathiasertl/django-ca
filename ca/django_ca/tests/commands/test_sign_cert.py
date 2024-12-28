@@ -48,6 +48,7 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     cmd,
     cmd_e2e,
+    cn,
     crl_distribution_points,
     distribution_point,
     dns,
@@ -66,17 +67,17 @@ csr: bytes = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-def sign_cert(ca: CertificateAuthority, subject: str, **kwargs: Any) -> tuple[str, str]:
+def sign_cert(ca: CertificateAuthority, subject: x509.Name, **kwargs: Any) -> tuple[str, str]:
     """Shortcut for the sign_cert command."""
     return cmd("sign_cert", ca=ca, subject=subject, **kwargs)
 
 
-def test_usable_cas(usable_ca: CertificateAuthority, subject: x509.Name, rfc4514_subject: str) -> None:
+def test_usable_cas(usable_ca: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing with all usable CAs."""
     password = CERT_DATA[usable_ca.name].get("password")
 
     with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = sign_cert(usable_ca, rfc4514_subject, password=password, stdin=csr)
+        stdout, stderr = sign_cert(usable_ca, subject, password=password, stdin=csr)
     assert stderr == ""
 
     cert = Certificate.objects.get(ca=usable_ca)
@@ -95,20 +96,20 @@ def test_usable_cas(usable_ca: CertificateAuthority, subject: x509.Name, rfc4514
     assert_authority_key_identifier(usable_ca, cert)
 
 
-def test_with_bundle(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_with_bundle(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test outputting the whole certificate bundle."""
-    stdout, stderr = sign_cert(usable_root, rfc4514_subject, bundle=True, stdin=csr)
+    stdout, stderr = sign_cert(usable_root, subject, bundle=True, stdin=csr)
     cert = Certificate.objects.get()
     assert stdout == f"Please paste the CSR:\n{cert.bundle_as_pem}"
     assert stderr == ""
     assert isinstance(cert.algorithm, hashes.SHA256)
 
 
-def test_from_file(usable_root: CertificateAuthority, subject: x509.Name, rfc4514_subject: str) -> None:
+def test_from_file(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test reading CSR from file."""
     csr_path = FIXTURES_DIR / CERT_DATA["root-cert"]["csr_filename"]
     with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = sign_cert(usable_root, rfc4514_subject, csr=csr_path)
+        stdout, stderr = sign_cert(usable_root, subject, csr=csr_path)
     assert stderr == ""
 
     cert = Certificate.objects.get()
@@ -126,11 +127,11 @@ def test_from_file(usable_root: CertificateAuthority, subject: x509.Name, rfc451
     assert ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in actual
 
 
-def test_to_file(tmp_path: Path, usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_to_file(tmp_path: Path, usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test writing PEM to file."""
     out_path = os.path.join(tmp_path, "test.pem")
     with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = sign_cert(usable_root, rfc4514_subject, out=out_path, stdin=csr)
+        stdout, stderr = sign_cert(usable_root, subject, out=out_path, stdin=csr)
     assert stdout == "Please paste the CSR:\n"
     assert stderr == ""
 
@@ -144,10 +145,10 @@ def test_to_file(tmp_path: Path, usable_root: CertificateAuthority, rfc4514_subj
     assert cert.pub.pem == from_file
 
 
-def test_with_rsa_with_algorithm(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_with_rsa_with_algorithm(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test creating a CA with a custom algorithm."""
     assert isinstance(usable_root.algorithm, hashes.SHA256)  # make sure that default is different
-    sign_cert(usable_root, rfc4514_subject, stdin=csr, algorithm=hashes.SHA3_256())
+    sign_cert(usable_root, subject, stdin=csr, algorithm=hashes.SHA3_256())
     cert = Certificate.objects.get()
     assert isinstance(cert.algorithm, hashes.SHA3_256)
 
@@ -211,10 +212,10 @@ def test_subject_sort_with_no_common_name(
     )
 
 
-def test_no_san(usable_root: CertificateAuthority, subject: x509.Name, rfc4514_subject: str) -> None:
+def test_no_san(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing without passing any SANs."""
     with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = sign_cert(usable_root, rfc4514_subject, stdin=csr)
+        stdout, stderr = sign_cert(usable_root, subject, stdin=csr)
     cert = Certificate.objects.get()
     assert cert.pub.loaded.subject == subject
     assert_post_issue_cert(post, cert)
@@ -265,12 +266,7 @@ def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuth
         ]
     )
     with assert_create_cert_signals() as (pre, post):
-        sign_cert(
-            usable_root,
-            subject_alternative_name=san.value,
-            stdin=csr,
-            subject=subject.rfc4514_string(),
-        )
+        sign_cert(usable_root, subject_alternative_name=san.value, stdin=csr, subject=subject)
 
     cert = Certificate.objects.get(cn="CommonName2")
     assert_post_issue_cert(post, cert)
@@ -541,7 +537,7 @@ def test_no_subject(settings: SettingsWrapper, usable_root: CertificateAuthority
 
 
 @pytest.mark.usefixtures("tmpcadir")
-def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_secondary_backend(pwd: CertificateAuthority, subject: x509.Name) -> None:
     """Sign a certificate with a CA in the secondary backend."""
     # Prepare root so that it is usable with the secondary backend.
     secondary_location = storages["secondary"].location  # type: ignore[attr-defined]
@@ -550,43 +546,43 @@ def test_secondary_backend(pwd: CertificateAuthority, rfc4514_subject: str) -> N
     pwd.save()
 
     with assert_create_cert_signals() as (pre, post):
-        sign_cert(pwd, rfc4514_subject, secondary_password=CERT_DATA["pwd"]["password"], stdin=csr)
+        sign_cert(pwd, subject, secondary_password=CERT_DATA["pwd"]["password"], stdin=csr)
     cert = Certificate.objects.get()
     assert_signature([pwd], cert)
 
 
 @pytest.mark.hsm
-def test_hsm_backend(usable_hsm_ca: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_hsm_backend(usable_hsm_ca: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing a certificate with a CA that is in a HSM."""
     with assert_create_cert_signals() as (pre, post):
-        sign_cert(usable_hsm_ca, rfc4514_subject, stdin=csr)
+        sign_cert(usable_hsm_ca, subject, stdin=csr)
     cert = Certificate.objects.get()
     assert_signature([usable_hsm_ca], cert)
 
 
 def test_encrypted_ca_with_settings(
-    usable_pwd: CertificateAuthority, rfc4514_subject: str, settings: SettingsWrapper
+    usable_pwd: CertificateAuthority, subject: x509.Name, settings: SettingsWrapper
 ) -> None:
     """Sign a certificate with an encrypted CA, with the password in CA_PASSWORDS."""
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA[usable_pwd.name]["password"]}
     with assert_create_cert_signals():
-        sign_cert(usable_pwd, rfc4514_subject, stdin=csr)
+        sign_cert(usable_pwd, subject, stdin=csr)
     cert = Certificate.objects.get()
     assert_signature([usable_pwd], cert)
 
 
-def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing with a CA that is not protected with a password, but giving a password."""
     with (
         assert_command_error(r"^Password was given but private key is not encrypted\.$"),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(usable_root, rfc4514_subject, password=b"there-is-no-password", stdin=csr)
+        sign_cert(usable_root, subject, password=b"there-is-no-password", stdin=csr)
     assert Certificate.objects.exists() is False
 
 
 def test_encrypted_ca_with_no_password(
-    usable_pwd: CertificateAuthority, rfc4514_subject: str, settings: SettingsWrapper
+    usable_pwd: CertificateAuthority, subject: x509.Name, settings: SettingsWrapper
 ) -> None:
     """Test signing with a CA that is protected with a password, but not giving a password."""
     settings.CA_PASSWORDS = {}
@@ -594,21 +590,21 @@ def test_encrypted_ca_with_no_password(
         assert_command_error(r"^Password was not given but private key is encrypted$"),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(usable_pwd, rfc4514_subject, stdin=csr)
+        sign_cert(usable_pwd, subject, stdin=csr)
     assert Certificate.objects.exists() is False
 
 
-def test_encrypted_ca_with_wrong_password(usable_pwd: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_encrypted_ca_with_wrong_password(usable_pwd: CertificateAuthority, subject: x509.Name) -> None:
     """Test that passing the wrong password raises an error."""
     with (
         assert_command_error(r"^Could not decrypt private key - bad password\?$"),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(usable_pwd, rfc4514_subject, stdin=csr, password=b"wrong")
+        sign_cert(usable_pwd, subject, stdin=csr, password=b"wrong")
     assert Certificate.objects.exists() is False
 
 
-def test_unparsable_private_key(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_unparsable_private_key(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test creating a cert where the CA private key contains bogus data."""
     path = storages["django-ca"].path(usable_root.key_backend_options["path"])
     with open(path, "wb") as stream:
@@ -618,7 +614,7 @@ def test_unparsable_private_key(usable_root: CertificateAuthority, rfc4514_subje
         assert_command_error(r"^Could not decrypt private key - bad password\?$"),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(usable_root, rfc4514_subject, stdin=csr)
+        sign_cert(usable_root, subject, stdin=csr)
 
 
 def test_unsortable_subject_with_no_profile_subject(
@@ -632,12 +628,9 @@ def test_unsortable_subject_with_no_profile_subject(
     "correct" location from the SubjectAlternativeName extension).
     """
     settings.CA_PROFILES = {model_settings.CA_DEFAULT_PROFILE: {"subject": False}}
+    subject = x509.Name([x509.NameAttribute(NameOID.INN, "weird"), cn(hostname)])
     with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = sign_cert(
-            usable_root,
-            subject=f"inn=weird,CN={hostname}",
-            stdin=csr,
-        )
+        stdout, stderr = sign_cert(usable_root, subject=subject, stdin=csr)
     assert stderr == ""
 
     cert = Certificate.objects.get(cn=hostname)
@@ -662,8 +655,11 @@ def test_unsortable_subject_with_profile_subject(
     """
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = ({"oid": "C", "value": "AT"},)
-    subject = f"inn=weird,CN={hostname}"
-    with assert_command_error(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(False, False):
+    subject = x509.Name([x509.NameAttribute(NameOID.INN, "weird"), cn(hostname)])
+    with (
+        assert_command_error(rf"^inn=weird,CN={hostname}: Unsortable name$"),
+        assert_create_cert_signals(False, False),
+    ):
         sign_cert(usable_root, subject, stdin=csr)
 
 
@@ -676,14 +672,14 @@ def test_unsortable_subject_with_no_common_name(
     """
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = None
-    subject = "inn=weird"
+    subject = x509.Name([x509.NameAttribute(NameOID.INN, "weird")])
     san = subject_alternative_name(dns(hostname)).value
-    with assert_command_error(rf"^{subject}: Unsortable name$"), assert_create_cert_signals(False, False):
+    with assert_command_error(r"^inn=weird: Unsortable name$"), assert_create_cert_signals(False, False):
         # NOTE: pass SAN as otherwise check for missing common name or san would fire
         sign_cert(usable_root, subject, subject_alternative_name=san, stdin=csr)
 
 
-def test_expiry_too_late(usable_root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_expiry_too_late(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing with an expiry after the CA expires."""
     time_left = (usable_root.not_after - timezone.now()).days
     expires = timedelta(days=time_left + 3)
@@ -694,10 +690,10 @@ def test_expiry_too_late(usable_root: CertificateAuthority, rfc4514_subject: str
         ),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(usable_root, rfc4514_subject, expires=expires, stdin=csr)
+        sign_cert(usable_root, subject, expires=expires, stdin=csr)
 
 
-def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_revoked_ca(root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing with a revoked CA."""
     root.revoke()
 
@@ -705,13 +701,13 @@ def test_revoked_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
         assert_command_error(r"^Certificate authority is revoked\.$"),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(root, rfc4514_subject, stdin=csr)
+        sign_cert(root, subject, stdin=csr)
 
 
-def test_invalid_algorithm(ed_ca: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_invalid_algorithm(ed_ca: CertificateAuthority, subject: x509.Name) -> None:
     """Test passing an invalid algorithm."""
     with assert_command_error(r"^Ed(448|25519) keys do not allow an algorithm for signing\.$"):
-        sign_cert(ed_ca, rfc4514_subject, algorithm=hashes.SHA512())
+        sign_cert(ed_ca, subject, algorithm=hashes.SHA512())
 
 
 def test_no_cn_or_san(usable_root: CertificateAuthority, hostname: str) -> None:
@@ -724,29 +720,29 @@ def test_no_cn_or_san(usable_root: CertificateAuthority, hostname: str) -> None:
         ),
         assert_create_cert_signals(False, False),
     ):
-        sign_cert(usable_root, subject.rfc4514_string())
+        sign_cert(usable_root, subject)
 
 
-def test_unusable_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_unusable_ca(root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing with an unusable CA."""
     msg = r"root.key: Private key file not found\.$"
     with assert_command_error(msg), assert_create_cert_signals(False, False):
-        sign_cert(root, rfc4514_subject, stdin=csr)
+        sign_cert(root, subject, stdin=csr)
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
-def test_expired_ca(root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_expired_ca(root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing with an expired CA."""
     msg = r"^Certificate authority has expired\.$"
     with assert_command_error(msg), assert_create_cert_signals(False, False):
-        sign_cert(root, rfc4514_subject, stdin=csr)
+        sign_cert(root, subject, stdin=csr)
 
 
 def test_add_any_policy(root: CertificateAuthority) -> None:
     """Test adding the anyPolicy, which is an error for end-entity certificates."""
     cmdline = [
         "sign_cert",
-        "--subject=/CN=example.com",
+        "--subject=CN=example.com",
         f"--ca={root.serial}",
         "--policy-identifier=anyPolicy",
     ]
@@ -760,11 +756,11 @@ def test_add_any_policy(root: CertificateAuthority) -> None:
     assert "anyPolicy is not allowed in this context." in actual_stderr.getvalue()
 
 
-def test_model_validation_error(root: CertificateAuthority, rfc4514_subject: str) -> None:
+def test_model_validation_error(root: CertificateAuthority, subject: x509.Name) -> None:
     """Test model validation is tested properly.
 
     NOTE: This example is contrived for the default backend, as the type of the password would already be
     checked by argparse. Other backends however might have other validation mechanisms.
     """
     with assert_command_error(r"^password: Input should be a valid bytes$"):
-        sign_cert(root, rfc4514_subject, password=123)
+        sign_cert(root, subject, password=123)

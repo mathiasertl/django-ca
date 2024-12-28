@@ -48,8 +48,8 @@ that has ACMEv2 enabled, simply use:
 
 .. code-block:: console
 
-   $ python manage.py init_ca --path-length=1 --subject-format=rfc4514 Root CN=Root
-   $ python manage.py init_ca --parent=Root --acme-enable --subject-format=rfc4514 Intermediate CN=Intermediate
+   $ python manage.py init_ca --path-length=1 Root CN=Root
+   $ python manage.py init_ca --parent=Root --acme-enable Intermediate CN=Intermediate
 
 .. NOTE::
 
@@ -321,19 +321,19 @@ add it by default.
 
    This option must be given `after` the mandatory ``name`` and ``subject`` arguments::
 
-       $ python manage.py init_ca --subject-format=rfc4514 NameOfCa CN=example.com --key-usage ...
+       $ python manage.py init_ca NameOfCa CN=example.com --key-usage ...
 
    The option has a variable number of values and parsing the command-line would not be unambiguous otherwise.
 
 The extension can be added using the ``--extended-key-usage`` option. Valid values are given by the values of
 the :py:attr:`~django_ca.constants.EXTENDED_KEY_USAGE_NAMES` mapping. For example::
 
-    $ python manage.py init_ca --subject-format=rfc4514 NameOfCa CN=example.com --extended-key-usage clientAuth serverAuth
+    $ python manage.py init_ca NameOfCa CN=example.com --extended-key-usage clientAuth serverAuth
 
 If you need to add OIDs not understood by **django-ca**, you can also pass any valid OID as a dotted string
 instead. In this example, the OID for ``serverAuth`` is used::
 
-    $ python manage.py init_ca --subject-format=rfc4514 NameOfCa CN=example.com --extended-key-usage 1.3.6.1.5.5.7.3.1
+    $ python manage.py init_ca NameOfCa CN=example.com --extended-key-usage 1.3.6.1.5.5.7.3.1
 
 Inhibit anyPolicy
 -----------------
@@ -372,7 +372,7 @@ certificate authorities.
 
    This option must be given `after` the mandatory ``name`` and ``subject`` arguments::
 
-       $ python manage.py init_ca --subject-format=rfc4514 NameOfCa CN=example.com --key-usage ...
+       $ python manage.py init_ca NameOfCa CN=example.com --key-usage ...
 
    The option has a variable number of values and parsing the command-line would not be unambiguous otherwise.
 
@@ -381,7 +381,7 @@ not append to) the default, so you have to name the default values as well. Vali
 values of the :py:attr:`~django_ca.constants.KEY_USAGE_NAMES` mapping. For example, to also set the
 `digitalSignature` flag::
 
-    $ python manage.py init_ca --subject-format=rfc4514 Name CN=example.com \
+    $ python manage.py init_ca Name CN=example.com \
     >    --key-usage keyCertSign cRLSign digitalSignature \
     >    ...
 
@@ -445,7 +445,7 @@ certificate authority to include at least the same features. This is not commonl
 
    This option must be given `after` the mandatory ``name`` and ``subject`` arguments::
 
-       $ python manage.py init_ca --subject-format=rfc4514 NameOfCa CN=example.com --key-usage ...
+       $ python manage.py init_ca NameOfCa CN=example.com --key-usage ...
 
    The option has a variable number of values and parsing the command-line would not be unambiguous otherwise.
 
@@ -454,7 +454,7 @@ any certificate signed by it (or any intermediate CA) will also have to set ``st
 
 You can set the TLS Feature extension with ``--tls-feature``::
 
-    $ python manage.py init_ca --subject-format=rfc4514 NameOfCA CN=example.com --tls-feature status_request ...
+    $ python manage.py init_ca NameOfCA CN=example.com --tls-feature status_request ...
 
 .. _cli_cas_string_formatting:
 
@@ -477,7 +477,7 @@ Authority Information Access extension, but also specifies a second URI that inc
     >     --ca-issuer http://example.com/{CA_ISSUER_PATH} \
     >     --ca-issuer http://ca-issuer.example.com/{SERIAL}/ \
     >     --parent 00:11:22... \
-    >     --subject-format=rfc4514 \
+    >     \
     >     NameOfCA CN=example.com
 
 The following variables are available:
@@ -520,7 +520,7 @@ Here is a shell session that illustrates the respective :command:`manage.py` com
    >     --crl-url=http://ca.example.com/crl \
    >     --ocsp-url=http://ocsp.ca.example.com \
    >     --issuer-url=http://ca.example.com/ca.crt \
-   >     --subject-format=rfc4514 \
+   >     \
    >     TestCA C=AT,L=Vienna,L=Vienna,O=Example,OU=ExampleUnit,CN=ca.example.com
    $ python manage.py list_cas
    BD:5B:AB:5B:A2:1C:49:0D:9A:B2:AA:BC:68:ED:ED:7D - TestCA

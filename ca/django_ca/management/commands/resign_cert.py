@@ -68,7 +68,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         self,
         cert: Certificate,
         ca: Optional[CertificateAuthority],
-        subject: Optional[str],
+        subject: Optional[x509.Name],
         expires: Optional[timedelta],
         watch: list[str],
         profile: Optional[str],
@@ -117,9 +117,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             watchers = list(cert.watchers.all())
 
         if subject is None:
-            parsed_subject = cert.subject
-        else:
-            parsed_subject = self.parse_x509_name(subject)
+            subject = cert.subject
 
         # Process any extensions given via the command-line
         extensions: list[ConfigurableExtension] = []
@@ -177,7 +175,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         # NOTE: This can only happen here in two edge cases:
         #   * Pass a subject without common name AND a certificate does *not* have a subject alternative name.
         #   * An imported certificate that has neither Common Name nor subject alternative name.
-        common_names = parsed_subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         has_subject_alternative_name = next(
             (ext for ext in extensions if ext.oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME), None
         )
@@ -194,7 +192,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
                 csr=cert.csr.loaded,
                 profile=profile_obj,
                 not_after=expires,
-                subject=parsed_subject,
+                subject=subject,
                 algorithm=algorithm,
                 extensions=extensions,
             )
