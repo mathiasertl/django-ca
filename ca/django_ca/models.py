@@ -23,7 +23,7 @@ import logging
 import random
 import re
 import typing
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta, timezone as tz
 from typing import Literal, Optional, Union
 
@@ -1237,16 +1237,16 @@ class CertificateRevocationList(DjangoCAModel):
         """The CRL encoded in PEM format."""
         return self.loaded.public_bytes(Encoding.PEM)
 
-    def cache(self) -> None:
-        """Cache this instance."""
+    def _cache_data(self) -> Iterator[tuple[str, bytes, int]]:
         if self.data is None:
             raise ValueError("CRL is not yet generated for this object.")
 
         now = datetime.now(tz=tz.utc)
         if self.loaded.next_update_utc is not None:
-            expires_seconds = (self.loaded.next_update_utc - now).total_seconds()
+            expires_seconds = int((self.loaded.next_update_utc - now).total_seconds())
         else:  # pragma: no cover  # we never generate CRLs without a next_update flag.
             expires_seconds = 86400
+
         for encoding in [Encoding.PEM, Encoding.DER]:
             cache_key = get_crl_cache_key(
                 self.ca.serial,
@@ -1266,7 +1266,18 @@ class CertificateRevocationList(DjangoCAModel):
                 encoded_crl = self.pem
             else:
                 encoded_crl = bytes(self.data)
+
+            yield cache_key, encoded_crl, expires_seconds
+
+    def cache(self) -> None:
+        """Cache this instance."""
+        for cache_key, encoded_crl, expires_seconds in self._cache_data():
             cache.set(cache_key, encoded_crl, expires_seconds)
+
+    async def acache(self) -> None:
+        """Cache this instance."""
+        for cache_key, encoded_crl, expires_seconds in self._cache_data():
+            await cache.aset(cache_key, encoded_crl, expires_seconds)
 
 
 class CertificateOrder(DjangoCAModel):
