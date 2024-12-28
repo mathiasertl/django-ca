@@ -15,6 +15,7 @@
 
 from typing import Literal, Union
 
+from asgiref.sync import sync_to_async
 from ninja.security import HttpBasicAuth
 
 from django.contrib.auth import get_user_model
@@ -41,12 +42,28 @@ class BasicAuth(HttpBasicAuth):
         self.permission = permission
         super().__init__()
 
-    def authenticate(
+    # TODO: async implement call against warnings?
+
+    # PYLINT NOTE: documented in django-ninja docs that this can be async
+    async def authenticate(  # pylint: disable=invalid-overridden-method
         self, request: HttpRequest, username: str, password: str
     ) -> Union[Literal[False], AbstractUser]:
-        user = User.objects.get(username=username)
-        if user.check_password(password) is False:
+        user = await User.objects.aget(username=username)
+
+        if hasattr(user, "acheck_password"):  # pragma: only django>=5.1
+            # Django 5.0 introduced acheckpassword().
+            if await user.acheck_password(password) is False:
+                return False
+        elif user.check_password(password) is False:  # pragma: only django<5.1
             return False
-        if user.has_perm(self.permission) is False:
+
+        # NOTE: ahas_perm() is introduced in Django 5.2.
+        if hasattr(user, "ahasperm"):  # pragma: only django>5.1
+            # TYPEHINT NOTE: mypy will complain on currently released django==5.1.
+            has_perm = await user.ahas_perm(self.permission)  # type: ignore[attr-defined]
+        else:  # pragma: only django<5.2
+            has_perm = await sync_to_async(user.has_perm)(self.permission)
+
+        if has_perm is False:
             raise Forbidden(self.permission)
         return user

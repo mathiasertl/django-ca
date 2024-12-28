@@ -31,14 +31,14 @@ else:
     User = get_user_model()
 
 
-def get_certificate_authority(serial: str, expired: bool = False) -> CertificateAuthority:
+async def get_certificate_authority(serial: str, expired: bool = False) -> CertificateAuthority:
     """Get a certificate authority from the given serial."""
     qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
     if expired is False:
         qs = qs.valid()
 
     try:
-        return qs.get(serial=serial)
+        return await qs.aget(serial=serial)
     except CertificateAuthority.DoesNotExist as ex:
         raise Http404(f"{serial}: Certificate authority not found.") from ex
 
