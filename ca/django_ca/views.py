@@ -275,7 +275,9 @@ class OCSPView(View):
     ca_ocsp = False
     """If set to ``True``, validate child CAs instead."""
 
-    def get(self, request: HttpRequest, data: str) -> HttpResponse:
+    loaded_ca: CertificateAuthority
+
+    async def get(self, request: HttpRequest, data: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
             decoded_data = base64.b64decode(data)
@@ -283,15 +285,15 @@ class OCSPView(View):
             return self.malformed_request()
 
         try:
-            return self.process_ocsp_request(decoded_data)
+            return await self.process_ocsp_request(decoded_data)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
 
-    def post(self, request: HttpRequest) -> HttpResponse:
+    async def post(self, request: HttpRequest) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
-            return self.process_ocsp_request(request.body)
+            return await self.process_ocsp_request(request.body)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
@@ -325,7 +327,7 @@ class OCSPView(View):
         """Read the file containing the private key used to sign OCSP responses."""
         return read_file(self.responder_key)
 
-    def get_responder_cert(self) -> x509.Certificate:
+    async def get_responder_cert(self) -> x509.Certificate:
         """Get the public key used to sign OCSP responses."""
         # User configured a loaded certificate
         if isinstance(self.responder_cert, x509.Certificate):
@@ -335,7 +337,8 @@ class OCSPView(View):
             responder_cert = self.responder_cert.encode("utf-8")
         elif SERIAL_RE.match(self.responder_cert):
             serial = self.responder_cert.replace(":", "")
-            return Certificate.objects.get(serial=serial).pub.loaded
+            cert = await Certificate.objects.aget(serial=serial)
+            return cert.pub.loaded
         else:
             responder_cert = read_file(self.responder_cert)
 
@@ -344,23 +347,25 @@ class OCSPView(View):
         except ValueError:
             return load_pem_x509_certificate(responder_cert)
 
-    def get_ca(self) -> CertificateAuthority:
+    async def get_ca(self) -> CertificateAuthority:
         """Get the certificate authority for the request."""
-        return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
+        return await CertificateAuthority.objects.aget_by_serial_or_cn(self.ca)
 
-    def get_cert(self, ca: CertificateAuthority, serial: str) -> Union[Certificate, CertificateAuthority]:
+    async def get_cert(
+        self, ca: CertificateAuthority, serial: str
+    ) -> Union[Certificate, CertificateAuthority]:
         """Get the certificate that was requested in the OCSP request."""
         if self.ca_ocsp is True:
-            return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
+            return await CertificateAuthority.objects.filter(parent=ca).aget(serial=serial)
 
-        return Certificate.objects.filter(ca=ca).get(serial=serial)
+        return await Certificate.objects.filter(ca=ca).aget(serial=serial)
 
-    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
+    async def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # get key/cert for OCSP responder
         try:
             responder_key = self.get_responder_key()
-            responder_cert = self.get_responder_cert()
+            responder_cert = await self.get_responder_cert()
         except Exception as ex:
             raise ValueError(f"Could not read responder key/cert: {ex}") from ex
 
@@ -386,7 +391,7 @@ class OCSPView(View):
         """Get a response for a malformed request."""
         return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
-    def process_ocsp_request(self, data: bytes) -> HttpResponse:
+    async def process_ocsp_request(self, data: bytes) -> HttpResponse:
         """Process OCSP request data."""
         try:
             ocsp_req = ocsp.load_der_ocsp_request(data)
@@ -402,7 +407,7 @@ class OCSPView(View):
 
         # Get CA and certificate
         try:
-            ca = self.get_ca()
+            ca = self.loaded_ca = await self.get_ca()
         except CertificateAuthority.DoesNotExist:
             log.error("%s: Certificate Authority could not be found.", self.ca)
             return self.fail()
@@ -412,7 +417,7 @@ class OCSPView(View):
         # NOINSPECTION NOTE: PyCharm wrongly things that second except is already covered by the first.
         # noinspection PyExceptClausesOrder
         try:
-            cert = self.get_cert(ca, cert_serial)
+            cert = await self.get_cert(ca, cert_serial)
         except CertificateAuthority.DoesNotExist:
             log.warning("%s: OCSP request for unknown CA received.", cert_serial)
             return self.fail()
@@ -451,7 +456,7 @@ class OCSPView(View):
 
         # Get the signed OCSP response.
         try:
-            response = self.get_ocsp_response(builder)
+            response = await self.get_ocsp_response(builder)
         except Exception as ex:  # pylint: disable=broad-exception-caught
             log.exception(ex)
             return self.fail()
@@ -471,8 +476,6 @@ class GenericOCSPView(OCSPView):
     argument must be the serial for this CA.
     """
 
-    auto_ca: CertificateAuthority
-
     # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
     def dispatch(self, request: HttpRequest, serial: str, **kwargs: Any) -> "HttpResponseBase":
@@ -485,20 +488,19 @@ class GenericOCSPView(OCSPView):
         if not isinstance(serial, str):  # pragma: no cover
             raise ImproperlyConfigured("View expects a str for a serial")
 
-        self.auto_ca = CertificateAuthority.objects.get(serial=serial)
         return super().dispatch(request, **kwargs)
 
-    def get_ca(self) -> CertificateAuthority:
-        return self.auto_ca
+    async def get_ca(self) -> CertificateAuthority:
+        return await CertificateAuthority.objects.aget(serial=self.kwargs["serial"])
 
     def get_expires(self, now: datetime) -> datetime:
-        return now + timedelta(seconds=self.auto_ca.ocsp_response_validity)
+        return now + timedelta(seconds=self.loaded_ca.ocsp_response_validity)
 
-    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
+    async def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # Load public key
         try:
-            responder_pem = self.auto_ca.ocsp_key_backend_options["certificate"]["pem"]
+            responder_pem = self.loaded_ca.ocsp_key_backend_options["certificate"]["pem"]
         except KeyError:
             # The OCSP responder certificate has never been created. `manage.py init_ca` usually creates them,
             # so this can only happen if the system is misconfigured (e.g. Celery task is never acted upon),
@@ -522,7 +524,7 @@ class GenericOCSPView(OCSPView):
         # TYPEHINT NOTE: Certificates are always generated with a supported algorithm, so we do not check.
         algorithm = cast(Optional[AllowedHashTypes], responder_certificate.signature_hash_algorithm)
 
-        return self.auto_ca.ocsp_key_backend.sign_ocsp_response(self.auto_ca, builder, algorithm)
+        return self.loaded_ca.ocsp_key_backend.sign_ocsp_response(self.loaded_ca, builder, algorithm)
 
 
 class GenericCAIssuersView(View):

@@ -91,11 +91,27 @@ class X509CertMixinQuerySetProtocol(
 
     def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
 
+    def _serial_or_cn_query(self, identifier: str) -> tuple[Q, Q]: ...
+
     def revoked(self) -> "Self": ...
 
 
 class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
     """Mixin with common methods for CertificateAuthority and Certificate models."""
+
+    def _serial_or_cn_query(
+        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
+    ) -> tuple[Q, Q]:
+        identifier = identifier.strip()
+        exact_query = startswith_query = Q(cn=identifier)
+
+        try:
+            serial = sanitize_serial(identifier)
+            exact_query |= Q(serial=serial)
+            startswith_query |= Q(serial__startswith=serial)
+        except ValueError:
+            pass
+        return exact_query, startswith_query
 
     def get_by_serial_or_cn(
         self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
@@ -107,15 +123,7 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
         value. For example, if a CA has the serial ``ABCDE``, it will be found with "ABCDE", "A:BC:DE",
         "0A:BC:DE" or just "0AB" as `identifier`.
         """
-        identifier = identifier.strip()
-        exact_query = startswith_query = Q(cn=identifier)
-
-        try:
-            serial = sanitize_serial(identifier)
-            exact_query |= Q(serial=serial)
-            startswith_query |= Q(serial__startswith=serial)
-        except ValueError:
-            pass
+        exact_query, startswith_query = self._serial_or_cn_query(identifier)
 
         try:
             # Imported CAs might have a shorter serial and there is a chance that it might become impossible
@@ -124,6 +132,20 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
             return self.get(exact_query)
         except self.model.DoesNotExist:
             return self.get(startswith_query)
+
+    async def aget_by_serial_or_cn(
+        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
+    ) -> X509CertMixinTypeVar:
+        """Asynchronous version of :py:func:`~django_ca.querysets.DjangoCAMixin.get_by_serial_or_cn()`."""
+        exact_query, startswith_query = self._serial_or_cn_query(identifier)
+
+        try:
+            # Imported CAs might have a shorter serial and there is a chance that it might become impossible
+            # to select a CA by serial if its serial matches another CA with a longer serial. So we try to
+            # match by exact serial first.
+            return await self.aget(exact_query)
+        except self.model.DoesNotExist:
+            return await self.aget(startswith_query)
 
     def for_certificate_revocation_list(
         self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar],
