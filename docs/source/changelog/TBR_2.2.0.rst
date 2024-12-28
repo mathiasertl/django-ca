@@ -29,3 +29,10 @@ Python API
 **********
 
 * ``django_ca.utils.get_storage()`` was be removed (deprecated since 2.0).
+
+*******************
+Deprecation notices
+*******************
+
+* ``django_ca.extensions.parse_extension()`` is deprecated and will be removed in ``django-ca==2.3.0``. Use
+  :doc:`Pydantic models </python/pydantic>` instead.

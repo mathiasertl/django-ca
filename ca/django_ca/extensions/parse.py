@@ -25,6 +25,7 @@ from django_ca.constants import (
     KEY_USAGE_NAMES,
     TLS_FEATURE_NAMES,
 )
+from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_function
 from django_ca.typehints import (
     CertificateExtension,
     CertificateExtensionType,
@@ -295,6 +296,7 @@ def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509
     return x509.TLSFeature(features=features)
 
 
+@deprecate_function(RemovedInDjangoCA230Warning)
 def parse_extension(  # noqa: PLR0912  # there's just many extensions
     key: str, value: Union[CertificateExtension, CertificateExtensionType, ParsableExtension]
 ) -> CertificateExtension:

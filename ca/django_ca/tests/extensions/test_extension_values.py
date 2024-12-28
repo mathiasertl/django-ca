@@ -28,6 +28,7 @@ from pytest_django.asserts import assertInHTML
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.extensions import extension_as_text, parse_extension
 from django_ca.extensions.utils import extension_as_admin_html
+from django_ca.tests.base.assertions import assert_removed_in_230
 from django_ca.tests.base.utils import dns, rdn, uri
 from django_ca.typehints import (
     CertificateExtension,
@@ -70,16 +71,22 @@ def assert_parsed(key: str, serialized: Any, extension_type: CertificateExtensio
         CertificateExtension,
         x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type),
     )
-    assert parse_extension(key, {"value": serialized}) == ext, name
+
+    with assert_removed_in_230():
+        assert parse_extension(key, {"value": serialized}) == ext, name
 
     ext = x509.Extension(oid=oid, critical=True, value=extension_type)  # type: ignore[assignment]
-    assert parse_extension(key, {"value": serialized, "critical": True}) == ext, name
+    with assert_removed_in_230():
+        assert parse_extension(key, {"value": serialized, "critical": True}) == ext, name
 
     ext = x509.Extension(oid=oid, critical=False, value=extension_type)  # type: ignore[assignment]
-    assert parse_extension(key, {"value": serialized, "critical": False}) == ext, name
+    with assert_removed_in_230():
+        assert parse_extension(key, {"value": serialized, "critical": False}) == ext, name
 
-    assert parse_extension(key, ext) is ext
-    assert parse_extension(key, extension_type).value is extension_type
+    with assert_removed_in_230():
+        assert parse_extension(key, ext) is ext
+    with assert_removed_in_230():
+        assert parse_extension(key, extension_type).value is extension_type
 
 
 class ExtensionTestCaseMixin:
@@ -1346,7 +1353,7 @@ class TestPrecertificateSignedCertificateTimestamps:
     def test_parse(self) -> None:
         """Test parsing."""
         msg = r"^precertificate_signed_certificate_timestamps: Cannot parse extensions of this type\.$"
-        with pytest.raises(ValueError, match=msg):
+        with assert_removed_in_230(), pytest.raises(ValueError, match=msg):
             # TYPE NOTE: what we test
             parse_extension("precertificate_signed_certificate_timestamps", None)  # type: ignore[arg-type]
 

@@ -20,6 +20,7 @@ from django.test import TestCase
 import pytest
 
 from django_ca.extensions import extension_as_text, parse_extension
+from django_ca.tests.base.assertions import assert_removed_in_230
 
 
 class TypeErrorTests(TestCase):
@@ -41,7 +42,10 @@ class TypeErrorTests(TestCase):
 
     def test_parse_unknown_key(self) -> None:
         """Test exception for parsing an extension with an unsupported key."""
-        with pytest.raises(ValueError, match=r"^wrong_key: Unknown extension key\.$"):
+        with (
+            assert_removed_in_230(),
+            pytest.raises(ValueError, match=r"^wrong_key: Unknown extension key\.$"),
+        ):
             parse_extension("wrong_key", {})
 
     def test_no_extension_as_text(self) -> None:
