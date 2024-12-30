@@ -16,7 +16,7 @@
 import typing
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Generic, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar, Union
 
 from asgiref.sync import sync_to_async
 from pydantic import BaseModel
@@ -41,6 +41,7 @@ from django_ca.modelfields import LazyCertificateSigningRequest
 from django_ca.openssh import SshHostCaExtension, SshUserCaExtension
 from django_ca.profiles import Profile, profiles
 from django_ca.pydantic.validators import crl_scope_validator
+from django_ca.querysets import AcmeCertificateQuerySet
 from django_ca.signals import post_create_ca, post_issue_cert, pre_create_ca
 from django_ca.typehints import (
     AllowedHashTypes,
@@ -67,6 +68,7 @@ if typing.TYPE_CHECKING:
     from django_ca.querysets import (
         AcmeAccountQuerySet,
         AcmeAuthorizationQuerySet,
+        AcmeOrderQuerySet,
         CertificateAuthorityQuerySet,
         CertificateQuerySet,
         CertificateRevocationListQuerySet,
@@ -930,11 +932,24 @@ class AcmeAccountManager(AcmeAccountManagerBase):
         #
         # pylint: disable=missing-function-docstring; just defining stubs here
 
+        def url(self) -> "AcmeAccountQuerySet": ...
+
         def viewable(self) -> "AcmeAccountQuerySet": ...
 
 
 class AcmeOrderManager(AcmeOrderManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeOrder`."""
+
+    if TYPE_CHECKING:
+        # See CertificateManagerMixin for description on this branch
+        #
+        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+
+        def account(self, account: "AcmeAccount") -> "AcmeOrderQuerySet": ...
+
+        def url(self) -> "AcmeOrderQuerySet": ...
+
+        def viewable(self) -> "AcmeOrderQuerySet": ...
 
 
 class AcmeAuthorizationManager(AcmeAuthorizationManagerBase):
@@ -962,3 +977,13 @@ class AcmeChallengeManager(AcmeChallengeManagerBase):
 
 class AcmeCertificateManager(AcmeCertificateManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeCertificate`."""
+
+    if typing.TYPE_CHECKING:
+        # See CertificateManagerMixin for description on this branch
+        #
+        # pylint: disable=missing-function-docstring; just defining stubs here
+        def account(self) -> "AcmeCertificateQuerySet": ...
+
+        def url(self) -> "AcmeCertificateQuerySet": ...
+
+        def viewalbe(self) -> "AcmeCertificateQuerySet": ...

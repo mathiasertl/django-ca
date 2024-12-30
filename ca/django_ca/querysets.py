@@ -23,7 +23,7 @@ from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from django_ca.acme.constants import Status
@@ -190,8 +190,6 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
             or not currently valid. Or, if the setting is not set, no CA is currently usable.
         """
         if (serial := model_settings.CA_DEFAULT_CA) is not None:
-            now = timezone.now()
-
             try:
                 # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
                 ca = self.get(serial=serial)
@@ -200,6 +198,8 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
 
             if ca.enabled is False:
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is disabled.")
+
+            now = timezone.now()
             if ca.not_after < now:
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is expired.")
             if ca.not_before > now:  # OK, how could this ever happen? ;-)
@@ -209,6 +209,43 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
         # will just create several CAs that all actually expire on the same day.
         first_ca = self.usable().order_by("-not_after", "serial").first()  # usable == enabled and valid
+        if first_ca is None:
+            raise ImproperlyConfigured("No CA is currently usable.")
+        return first_ca
+
+    async def adefault(self) -> "CertificateAuthority":
+        """Return the default CA to use when no CA is selected.
+
+        This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
+        returned, raises :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`.
+
+        Raises
+        ------
+        :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`
+            When the CA named by :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` is either not found, disabled
+            or not currently valid. Or, if the setting is not set, no CA is currently usable.
+        """
+        if (serial := model_settings.CA_DEFAULT_CA) is not None:
+            try:
+                # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
+                ca = await self.aget(serial=serial)
+            except self.model.DoesNotExist as ex:
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial}: CA not found.") from ex
+
+            if ca.enabled is False:
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is disabled.")
+
+            now = timezone.now()
+            if ca.not_after < now:
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is expired.")
+            if ca.not_before > now:  # OK, how could this ever happen? ;-)
+                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is not yet valid.")
+            return ca
+
+        # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
+        # will just create several CAs that all actually expire on the same day.
+        first_ca_qs = self.usable().order_by("-not_after", "serial")  # usable == enabled and valid
+        first_ca = await first_ca_qs.afirst()
         if first_ca is None:
             raise ImproperlyConfigured("No CA is currently usable.")
         return first_ca
@@ -311,6 +348,10 @@ class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
 class AcmeAccountQuerySet(AcmeAccountQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
 
+    def url(self) -> "AcmeAccountQuerySet":
+        """Assure that returned models can build an ACME URL without additional database queries."""
+        return self.select_related("ca")
+
     def viewable(self) -> "AcmeAccountQuerySet":
         """Filter ACME accounts that can be viewed via the ACME API.
 
@@ -329,6 +370,10 @@ class AcmeOrderQuerySet(AcmeOrderQuerySetBase):
     def account(self, account: "AcmeAccount") -> "AcmeOrderQuerySet":
         """Filter orders belonging to the given account."""
         return self.filter(account=account)
+
+    def url(self) -> "AcmeOrderQuerySet":
+        """Assure that returned models can build an ACME URL without additional database queries."""
+        return self.select_related("account__ca")
 
     def viewable(self) -> "AcmeOrderQuerySet":
         """Filter ACME orders that can be viewed via the ACME API.
@@ -355,9 +400,9 @@ class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
         """Get all authorizations of type DNS."""
         return self.filter(type=self.model.TYPE_DNS)
 
-    def names(self) -> list[str]:
+    def names(self) -> QuerySet["AcmeAuthorization", str]:
         """Get a flat list of names identified by the current queryset."""
-        return list(self.values_list("value", flat=True))
+        return self.values_list("value", flat=True)
 
     def url(self) -> "AcmeAuthorizationQuerySet":
         """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
@@ -414,7 +459,7 @@ class AcmeCertificateQuerySet(AcmeCertificateQuerySetBase):
         return self.filter(order__account=account)
 
     def url(self) -> "AcmeCertificateQuerySet":
-        """Prepare queryset to get the ACME URL of objects without subsequent database lookups."""
+        """Assure that returned models can build an ACME URL without additional database queries."""
         return self.select_related("order__account__ca")
 
     def viewable(self) -> "AcmeCertificateQuerySet":
