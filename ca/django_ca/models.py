@@ -1644,6 +1644,18 @@ class AcmeAuthorization(DjangoCAModel):
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
         ]
 
+    async def aget_challenges(self) -> list["AcmeChallenge"]:
+        """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
+
+        Note that challenges will be created if they don't exist.
+        """
+        qs = AcmeChallenge.objects.url()
+        return [
+            (await qs.aget_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01))[0],
+            # AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_TLS_ALPN_01)[0],
+            (await qs.aget_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01))[0],
+        ]
+
     @property
     def usable(self) -> bool:
         """Boolean defining if an authentication can still can be used in order validation.
