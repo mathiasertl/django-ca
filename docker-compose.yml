@@ -93,7 +93,7 @@ services:
             WAIT_FOR_CONNECTIONS: 'db:5432'
         restart: unless-stopped
         healthcheck:
-            test: ["CMD", "/usr/src/django-ca/ca/uwsgi-health.py"]
+            test: ["CMD", "nc", "-z", "127.0.0.1", "8000"]
             timeout: 3s
             start_period: 25s
             interval: 10s

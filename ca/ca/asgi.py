@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 # This file is part of django-ca (https://github.com/mathiasertl/django-ca).
 #
 # django-ca is free software: you can redistribute it and/or modify it under the terms of the GNU General
@@ -13,30 +11,20 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Stand-alone script to monitor if a uWSGI instance is running. Used in Docker Compose."""
 
-import json
-import socket
-import sys
+"""
+ASGI config for ca project.
 
-READ_SIZE = 4096
+It exposes the ASGI callable as a module-level variable named ``application``.
 
-try:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.3)
-        s.connect(("127.0.0.1", 1717))
+For more information on this file, see
+https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
+"""
 
-        data = b""
-        while True:
-            recv = s.recv(READ_SIZE)
-            data += recv
-            if len(recv) < READ_SIZE:
-                break
-except OSError:
-    print("Error connecting to stats server.")
-    sys.exit(1)
+import os
 
-parsed = json.loads(data.decode("utf-8"))
-if "pid" in parsed:
-    sys.exit(0)
-sys.exit(1)
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
+
+application = get_asgi_application()

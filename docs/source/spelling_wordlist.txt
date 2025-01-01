@@ -96,3 +96,6 @@ virtualenv
 whitespace
 yaml
 yml
+uWSGI
+Gunicorn
+uvicorn

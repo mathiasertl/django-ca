@@ -2,6 +2,21 @@
 2.2.0 (TBR)
 ###########
 
+***********
+Performance
+***********
+
+* All HTTP endpoints (OCSP, CRLs, REST API, ACMEv2) are now asynchronous views to optimize performance.
+
+************
+Docker image
+************
+
+* All uWSGI-related content (files, environment variables, ...) was removed and replaced with Gunicorn and
+  uvicorn equivalents.
+* The Docker image now uses `Gunicorn <https://gunicorn.org/>`_ and `uvicorn <https://www.uvicorn.org/>`_
+  to accommodate the switch to asynchronous views.
+
 **********************
 Command-line utilities
 **********************

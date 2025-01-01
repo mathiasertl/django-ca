@@ -1,5 +1,5 @@
 upstream django_ca_frontend {
-    server unix:///run/django-ca/uwsgi.socket;
+    server frontend:8000 fail_timeout=0;
 }
 
 server {
@@ -35,9 +35,18 @@ server {
     include /opt/django-ca/src/django-ca/nginx/include.d/api.conf;
     include /opt/django-ca/src/django-ca/nginx/include.d/ca.conf;
 
+    location @proxy_to_app {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $http_host;
+        # we don't want nginx trying to do something clever with
+        # redirects, we set the Host: header above already.
+        proxy_redirect off;
+        proxy_pass http://django_ca_frontend;
+    }
+
     location /admin/ {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
+        try_files $uri @proxy_to_app;
     }
     location /static/ {
         root   /opt/django-ca/html/;
