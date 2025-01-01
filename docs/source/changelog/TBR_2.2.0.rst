@@ -7,6 +7,7 @@ Performance
 ***********
 
 * All HTTP endpoints (OCSP, CRLs, REST API, ACMEv2) are now asynchronous views to optimize performance.
+* Optimize number of database queries in performance-sensitive views (OCSP, CRLs, ACMEv2).
 
 ************
 Docker image
