@@ -31,6 +31,7 @@ from django.urls import reverse
 
 import pytest
 from _pytest.logging import LogCaptureFixture
+from pytest_django import DjangoAssertNumQueries
 
 from django_ca.conf import model_settings
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
@@ -57,9 +58,15 @@ def child_cert(tmpcadir: Path, child_cert: Certificate, profile_ocsp: Certificat
     return child_cert
 
 
-def test_get(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+def test_get(
+    django_assert_num_queries: DjangoAssertNumQueries,
+    client: Client,
+    child_cert: Certificate,
+    profile_ocsp: Certificate,
+) -> None:
     """Test getting OCSP responses."""
-    response = ocsp_get(client, child_cert)
+    with django_assert_num_queries(2):
+        response = ocsp_get(client, child_cert)
     assert_ocsp_response(response, child_cert, responder_certificate=profile_ocsp)
 
 
