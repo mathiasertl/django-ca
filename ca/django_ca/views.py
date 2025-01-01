@@ -127,9 +127,7 @@ class CertificateRevocationListView(View):
         """
         return ca.key_backend.get_use_private_key_options(ca, {})
 
-    async def fetch_crl(
-        self, ca: CertificateAuthority, encoding: CertificateRevocationListEncodings
-    ) -> bytes:
+    async def fetch_crl(self, serial: str, encoding: CertificateRevocationListEncodings) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
         if self.scope is not _NOT_SET:
             warnings.warn(
@@ -164,7 +162,7 @@ class CertificateRevocationListView(View):
         )
 
         cache_key = get_crl_cache_key(
-            ca.serial,
+            serial,
             encoding=encoding,
             only_contains_ca_certs=only_contains_ca_certs,
             only_contains_user_certs=only_contains_user_certs,
@@ -172,25 +170,25 @@ class CertificateRevocationListView(View):
             only_some_reasons=self.only_some_reasons,
         )
 
-        encoded_crl: Optional[bytes] = cache.get(cache_key)
+        encoded_crl: Optional[bytes] = await cache.aget(cache_key)
 
         # CRL is not cached, try to retrieve it from the database.
         if encoded_crl is None:
             crl_qs = (
                 CertificateRevocationList.objects.scope(
-                    ca=ca,
+                    serial=serial,
                     only_contains_ca_certs=only_contains_ca_certs,
                     only_contains_user_certs=only_contains_user_certs,
                     only_contains_attribute_certs=only_contains_attribute_certs,
                     only_some_reasons=self.only_some_reasons,
-                )
-                .filter(data__isnull=False)  # only objects that have CRL data associated with it
-                .select_related("ca")
+                ).filter(data__isnull=False)  # Only objects that have CRL data associated with it
             )
             crl_obj: Optional[CertificateRevocationList] = await crl_qs.anewest()
 
             # CRL was not found in the database either, so we try to regenerate it.
             if crl_obj is None:
+                ca = await CertificateAuthority.objects.aget(serial=serial)
+
                 key_backend_options = self.get_key_backend_options(ca)
                 expires = datetime.now(tz=tz.utc) + timedelta(seconds=self.expires)
                 crl_obj = await CertificateRevocationList.objects.acreate_certificate_revocation_list(
@@ -204,7 +202,7 @@ class CertificateRevocationListView(View):
                 )
 
             # Cache the CRL.
-            await crl_obj.acache()
+            await crl_obj.acache(serial)
 
             # Get object in the right encoding.
             if encoding == Encoding.PEM:
@@ -226,10 +224,8 @@ class CertificateRevocationListView(View):
         else:
             encoding = self.type
 
-        ca = await CertificateAuthority.objects.aget(serial=serial)
-
         try:
-            crl = await self.fetch_crl(ca, encoding)
+            crl = await self.fetch_crl(serial, encoding)
         except Exception:  # pylint: disable=broad-exception-caught
             log.exception("Error generating a CRL")
             return HttpResponseServerError("Error while retrieving the CRL.", content_type="text/plain")

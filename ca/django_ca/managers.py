@@ -142,8 +142,6 @@ class CertificateAuthorityManager(
 
         def acme(self) -> "CertificateAuthorityQuerySet": ...
 
-        def default(self) -> "CertificateAuthority": ...
-
         def disabled(self) -> "CertificateAuthorityQuerySet": ...
 
         def enabled(self) -> "CertificateAuthorityQuerySet": ...
@@ -227,6 +225,11 @@ class CertificateAuthorityManager(
                 [x509.DistributionPoint(full_name=[uri], relative_name=None, reasons=None, crl_issuer=None)]
             ),
         )
+
+    # PYLINT NOTE: documented in queryset
+    def default(self) -> "CertificateAuthority":  # pylint: disable=missing-function-docstring
+        # Needs to be here because the async_to_sync version in the queryset does not get mirrored here.
+        return self.all().default()
 
     @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
     def init(  # noqa: PLR0912,PLR0913,PLR0915
@@ -729,7 +732,7 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
 
         def scope(
             self,
-            ca: "CertificateAuthority",
+            serial: str,
             only_contains_ca_certs: bool = False,
             only_contains_user_certs: bool = False,
             only_contains_attribute_certs: bool = False,
@@ -876,7 +879,7 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         # Create subquery for the current CRL number with the given scope.
         number_subquery = (
             self.scope(
-                ca=ca,
+                serial=ca.serial,
                 only_contains_ca_certs=only_contains_ca_certs,
                 only_contains_user_certs=only_contains_user_certs,
                 only_contains_attribute_certs=only_contains_attribute_certs,
@@ -902,7 +905,8 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         # https://docs.djangoproject.com/en/5.1/ref/models/expressions/#f-assignments-persist-after-model-save
         if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
             # Assure that ``ca`` is loaded already
-            obj.refresh_from_db(from_queryset=self.model.objects.select_related("ca"))
+            fields = ("ca", "number")  # only fetch required fields to optimize query
+            obj.refresh_from_db(from_queryset=self.model.objects.select_related("ca"), fields=fields)
         else:  # pragma: django<5.1 branch
             # The `from_queryset` argument was added in Django 5.0.
             obj = self.model.objects.select_related("ca").get(pk=obj.pk)
@@ -917,7 +921,7 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
 
         # Store CRL in the database
         obj.data = crl.public_bytes(Encoding.DER)
-        obj.save()
+        obj.save(update_fields=("data",))  # only update single field to optimize query
 
         return obj
 

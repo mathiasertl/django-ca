@@ -19,6 +19,8 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
+from asgiref.sync import async_to_sync
+
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
@@ -177,42 +179,6 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         """Return usable CAs that have support for the ACME protocol enabled."""
         return self.filter(acme_enabled=True)
 
-    def default(self) -> "CertificateAuthority":
-        """Return the default CA to use when no CA is selected.
-
-        This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
-        returned, raises :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`.
-
-        Raises
-        ------
-        :py:exc:`~django:django.core.exceptions.ImproperlyConfigured`
-            When the CA named by :ref:`CA_DEFAULT_CA <settings-ca-default-ca>` is either not found, disabled
-            or not currently valid. Or, if the setting is not set, no CA is currently usable.
-        """
-        if (serial := model_settings.CA_DEFAULT_CA) is not None:
-            try:
-                # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
-                ca = self.get(serial=serial)
-            except self.model.DoesNotExist as ex:
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial}: CA not found.") from ex
-
-            if ca.enabled is False:
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is disabled.")
-
-            now = timezone.now()
-            if ca.not_after < now:
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is expired.")
-            if ca.not_before > now:  # OK, how could this ever happen? ;-)
-                raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial} is not yet valid.")
-            return ca
-
-        # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
-        # will just create several CAs that all actually expire on the same day.
-        first_ca = self.usable().order_by("-not_after", "serial").first()  # usable == enabled and valid
-        if first_ca is None:
-            raise ImproperlyConfigured("No CA is currently usable.")
-        return first_ca
-
     async def adefault(self) -> "CertificateAuthority":
         """Return the default CA to use when no CA is selected.
 
@@ -249,6 +215,11 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         if first_ca is None:
             raise ImproperlyConfigured("No CA is currently usable.")
         return first_ca
+
+    @async_to_sync
+    async def default(self) -> "CertificateAuthority":
+        """Return the default CA to use when no CA is selected (synchronous version)."""
+        return await self.adefault()
 
     def disabled(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are disabled."""
@@ -330,7 +301,7 @@ class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
 
     def scope(
         self,
-        ca: "CertificateAuthority",
+        serial: str,
         only_contains_ca_certs: bool = False,
         only_contains_user_certs: bool = False,
         only_contains_attribute_certs: bool = False,
@@ -338,7 +309,7 @@ class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
     ) -> "CertificateRevocationListQuerySet":
         """Return CRLs with the given scope."""
         return self.filter(
-            ca=ca,
+            ca__serial=serial,
             only_contains_ca_certs=only_contains_ca_certs,
             only_contains_user_certs=only_contains_user_certs,
             only_contains_attribute_certs=only_contains_attribute_certs,
