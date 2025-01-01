@@ -18,6 +18,8 @@ from http import HTTPStatus
 from django.test import Client
 from django.urls import reverse
 
+import pytest
+from pytest_django import DjangoAssertNumQueries
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.tests.base.constants import CERT_DATA
@@ -25,11 +27,13 @@ from django_ca.tests.base.constants import CERT_DATA
 URL = reverse("django_ca:acme-new-nonce", kwargs={"serial": CERT_DATA["root"]["serial"]})
 
 
-def test_get_nonce(client: Client) -> None:
+@pytest.mark.django_db
+def test_get_nonce(django_assert_num_queries: DjangoAssertNumQueries, client: Client) -> None:
     """Test that getting multiple nonces returns unique nonces."""
     nonces = []
     for _i in range(1, 5):
-        response = client.head(URL)
+        with django_assert_num_queries(0):
+            response = client.head(URL)
         assert response.status_code == HTTPStatus.OK
         assert len(response["replay-nonce"]) == 43
         assert response["cache-control"] == "no-store"
@@ -38,9 +42,11 @@ def test_get_nonce(client: Client) -> None:
     assert len(nonces) == len(set(nonces))
 
 
-def test_get_request(client: Client) -> None:
+@pytest.mark.django_db
+def test_get_request(django_assert_num_queries: DjangoAssertNumQueries, client: Client) -> None:
     """RFC 8555, section 7.2 also specifies a GET request."""
-    response = client.get(URL)
+    with django_assert_num_queries(0):
+        response = client.get(URL)
     assert response.status_code == HTTPStatus.NO_CONTENT
     assert len(response["replay-nonce"]) == 43
     assert response["cache-control"] == "no-store"

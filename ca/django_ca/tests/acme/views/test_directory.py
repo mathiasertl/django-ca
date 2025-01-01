@@ -21,6 +21,7 @@ from django.urls import reverse
 
 import pytest
 from freezegun import freeze_time
+from pytest_django import DjangoAssertNumQueries
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import CertificateAuthority
@@ -33,9 +34,11 @@ RANDOM_URL = "https://community.letsencrypt.org/t/adding-random-entries-to-the-d
 URL = reverse("django_ca:acme-directory")
 
 
-def test_default(client: Client, root: CertificateAuthority) -> None:
+def test_default(
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, root: CertificateAuthority
+) -> None:
     """Test the default directory view."""
-    with mock.patch("secrets.token_bytes", return_value=b"foobar"):
+    with mock.patch("secrets.token_bytes", return_value=b"foobar"), django_assert_num_queries(1):
         response = client.get(URL)
     assert response.status_code == HTTPStatus.OK
     req = response.wsgi_request
@@ -49,10 +52,12 @@ def test_default(client: Client, root: CertificateAuthority) -> None:
     }
 
 
-def test_named_ca(client: Client, root: CertificateAuthority) -> None:
+def test_named_ca(
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, root: CertificateAuthority
+) -> None:
     """Test getting directory for named CA."""
     url = reverse("django_ca:acme-directory", kwargs={"serial": root.serial})
-    with mock.patch("secrets.token_bytes", return_value=b"foobar"):
+    with mock.patch("secrets.token_bytes", return_value=b"foobar"), django_assert_num_queries(1):
         response = client.get(url)
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/json"

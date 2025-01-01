@@ -951,7 +951,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             expires = expires.replace(tzinfo=tz.utc)
 
         authorizations = order.authorizations.url().all()  # type: ignore[attr-defined]
-        async for auth in authorizations:
+        async for auth in authorizations:  # pragma: no branch  # py3.9 does not recognize this.
             if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
