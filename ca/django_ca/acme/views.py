@@ -643,30 +643,33 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
 
     @transaction.atomic
     def acme_request(self, message: messages.Registration, slug: Optional[str] = None) -> AcmeResponseAccount:
-        account = AcmeAccount.objects.get(slug=slug)
+        if slug != self.account.slug:
+            raise AcmeMalformed(message="Account slug does not match account that signed the request.")
 
         if message.status == AcmeAccount.STATUS_DEACTIVATED:
             # RFC 8555, section 7.3.6 - Account Deactivation
-            log.info("Deactivating account %s", account.slug)
-            account.status = AcmeAccount.STATUS_DEACTIVATED
-            account.save()
+            log.info("Deactivating account %s", self.account.slug)
+            self.account.status = AcmeAccount.STATUS_DEACTIVATED
+            self.account.save()
 
             # Cancel all pending operations
-            account.orders.filter(status=AcmeOrder.STATUS_PENDING).update(status=AcmeOrder.STATUS_INVALID)
+            self.account.orders.filter(status=AcmeOrder.STATUS_PENDING).update(
+                status=AcmeOrder.STATUS_INVALID
+            )
             AcmeAuthorization.objects.filter(
-                order__account=account, status=AcmeAuthorization.STATUS_PENDING
+                order__account=self.account, status=AcmeAuthorization.STATUS_PENDING
             ).update(status=AcmeAuthorization.STATUS_DEACTIVATED)
         elif message.contact:
             self.validate_contacts(message)
-            account.contact = "\n".join(message.contact)
-            account.save()
+            self.account.contact = "\n".join(message.contact)
+            self.account.save()
         elif message.terms_of_service_agreed is not None:
-            account.terms_of_service_agreed = message.terms_of_service_agreed
-            account.save()
+            self.account.terms_of_service_agreed = message.terms_of_service_agreed
+            self.account.save()
         else:
             raise AcmeMalformed(message="Only contact information can be updated.")
 
-        return AcmeResponseAccount(self.request, account)
+        return AcmeResponseAccount(self.request, self.account)
 
 
 class AcmeAccountOrdersView(AcmeBaseView):
