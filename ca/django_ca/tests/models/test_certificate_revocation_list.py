@@ -154,6 +154,10 @@ def test_with_reasons(
     idp = crl.extensions.get_extension_for_oid(ExtensionOID.ISSUING_DISTRIBUTION_POINT)
     assert_issuing_distribution_point(idp, only_some_reasons=reasons)  # type: ignore[arg-type]
 
+    # Reload object from database to test decoding of JSON values
+    obj.refresh_from_db()
+    assert obj.only_some_reasons == reasons
+
 
 @pytest.mark.parametrize(
     "reasons",

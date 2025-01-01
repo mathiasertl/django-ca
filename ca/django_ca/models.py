@@ -1252,7 +1252,7 @@ class CertificateRevocationList(DjangoCAModel):
         """The CRL encoded in PEM format."""
         return self.loaded.public_bytes(Encoding.PEM)
 
-    def _cache_data(self) -> Iterator[tuple[str, bytes, int]]:
+    def _cache_data(self, serial: Optional[str] = None) -> Iterator[tuple[str, bytes, int]]:
         if self.data is None:
             raise ValueError("CRL is not yet generated for this object.")
 
@@ -1262,10 +1262,13 @@ class CertificateRevocationList(DjangoCAModel):
         else:  # pragma: no cover  # we never generate CRLs without a next_update flag.
             expires_seconds = 86400
 
+        if serial is None:
+            serial = self.ca.serial
+
         for encoding in [Encoding.PEM, Encoding.DER]:
             cache_key = get_crl_cache_key(
-                self.ca.serial,
-                encoding,
+                serial=serial,
+                encoding=encoding,
                 only_contains_ca_certs=self.only_contains_ca_certs,
                 only_contains_user_certs=self.only_contains_user_certs,
                 only_contains_attribute_certs=self.only_contains_attribute_certs,
@@ -1284,14 +1287,22 @@ class CertificateRevocationList(DjangoCAModel):
 
             yield cache_key, encoded_crl, expires_seconds
 
-    def cache(self) -> None:
-        """Cache this instance."""
-        for cache_key, encoded_crl, expires_seconds in self._cache_data():
+    def cache(self, serial: Optional[str] = None) -> None:
+        """Cache this instance.
+
+        If `serial` is not given, `self.ca` will be accessed (possibly triggering a database query) to
+        generate the cache keys.
+        """
+        for cache_key, encoded_crl, expires_seconds in self._cache_data(serial):
             cache.set(cache_key, encoded_crl, expires_seconds)
 
-    async def acache(self) -> None:
-        """Cache this instance."""
-        for cache_key, encoded_crl, expires_seconds in self._cache_data():
+    async def acache(self, serial: Optional[str] = None) -> None:
+        """Cache this instance (async version).
+
+        If `serial` is not given, `self.ca` will be accessed (possibly triggering a database query) to
+        generate the cache keys.
+        """
+        for cache_key, encoded_crl, expires_seconds in self._cache_data(serial):
             await cache.aset(cache_key, encoded_crl, expires_seconds)
 
 

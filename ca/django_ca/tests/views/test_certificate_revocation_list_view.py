@@ -27,6 +27,7 @@ from django.test import Client
 from django.urls import include, path, re_path, reverse
 
 import pytest
+from pytest_django import DjangoAssertNumQueries
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import constants
@@ -108,17 +109,26 @@ def deprecated_scope() -> Iterator[None]:
         yield
 
 
-def test_full_crl(client: Client, default_url: str, root_crl: CertificateRevocationList) -> None:
+def test_full_crl(
+    django_assert_num_queries: DjangoAssertNumQueries,
+    client: Client,
+    default_url: str,
+    root_crl: CertificateRevocationList,
+) -> None:
     """Fetch a full CRL (= CA and user certs, all reasons)."""
-    response = client.get(default_url)
+    with django_assert_num_queries(0):
+        response = client.get(default_url)
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/pkix-crl"
     assert response.content == root_crl.data
 
 
-def test_ca_crl(client: Client, root_ca_crl: CertificateRevocationList) -> None:
+def test_ca_crl(
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, root_ca_crl: CertificateRevocationList
+) -> None:
     """Fetch a CA CRL."""
-    response = client.get(reverse("ca", kwargs={"serial": root_ca_crl.ca.serial}))
+    with django_assert_num_queries(0):
+        response = client.get(reverse("ca", kwargs={"serial": root_ca_crl.ca.serial}))
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/pkix-crl"
     assert response.content == root_ca_crl.data
@@ -132,18 +142,34 @@ def test_user_crl(client: Client, root_user_crl: CertificateRevocationList) -> N
     assert response.content == root_user_crl.data
 
 
-def test_with_cache_miss(client: Client, default_url: str, root_crl: CertificateRevocationList) -> None:
+def test_with_cache_miss(
+    django_assert_num_queries: DjangoAssertNumQueries,
+    client: Client,
+    default_url: str,
+    root_crl: CertificateRevocationList,
+) -> None:
     """Fetch a full CRL with a cache miss."""
     cache.clear()  # clear the cache to generate a cache miss
-    response = client.get(default_url)
+
+    with django_assert_num_queries(1) as captured:  # Only one query for fetching the CRL required
+        response = client.get(default_url)
+    assert 'FROM "django_ca_certificaterevocationlist" INNER JOIN' in captured.captured_queries[0]["sql"]
+
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/pkix-crl"
     assert response.content == root_crl.data
 
 
-def test_regenerate_full_crl(client: Client, usable_root: CertificateAuthority, default_url: str) -> None:
+def test_regenerate_full_crl(
+    django_assert_num_queries: DjangoAssertNumQueries,
+    client: Client,
+    usable_root: CertificateAuthority,
+    default_url: str,
+) -> None:
     """Fetch a full CRL where the CRL has to be regenerated."""
-    response = client.get(default_url)
+    with django_assert_num_queries(9):  # loads of queries required to regenerate a CRL
+        response = client.get(default_url)
+
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/pkix-crl"
     assert_crl(response.content, expected=[], encoding=Encoding.DER, signer=usable_root)
