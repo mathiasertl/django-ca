@@ -679,22 +679,22 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
     async def acme_request(
         self, message: messages.Registration, slug: Optional[str] = None
     ) -> AcmeResponseAccount:
-        # TODO: does this allow updating other peoples accounts!?
-        account = await AcmeAccount.objects.url().aget(slug=slug)
+        if slug != self.account.slug:
+            raise AcmeMalformed(message="Account slug does not match account that signed the request.")
 
         if message.status == AcmeAccount.STATUS_DEACTIVATED:
-            await sync_to_async(self._deactivate_account)(account)
+            await sync_to_async(self._deactivate_account)(self.account)
         elif message.contact:
             self.validate_contacts(message)
-            account.contact = "\n".join(message.contact)
-            await account.asave()
+            self.account.contact = "\n".join(message.contact)
+            await self.account.asave()
         elif message.terms_of_service_agreed is not None:
-            account.terms_of_service_agreed = message.terms_of_service_agreed
-            await account.asave()
+            self.account.terms_of_service_agreed = message.terms_of_service_agreed
+            await self.account.asave()
         else:
             raise AcmeMalformed(message="Only contact information can be updated.")
 
-        return AcmeResponseAccount(self.request, account)
+        return AcmeResponseAccount(self.request, self.account)
 
 
 class AcmeAccountOrdersView(AcmeBaseView):

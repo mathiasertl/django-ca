@@ -2,6 +2,13 @@
 2.2.0 (TBR)
 ###########
 
+
+******
+ACMEv2
+******
+
+* **Security:** No longer allow clients to update other accounts.
+
 ***********
 Performance
 ***********

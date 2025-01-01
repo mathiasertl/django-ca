@@ -20,15 +20,18 @@ from http import HTTPStatus
 
 from acme.messages import IDENTIFIER_FQDN, Identifier, Registration
 
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
 from django.test import Client
 
 import pytest
+from pytest_django import DjangoAssertNumQueries
 
-from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
+from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority, acme_slug
 from django_ca.tests.acme.views.assertions import assert_malformed
 from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
-from django_ca.tests.acme.views.utils import acme_request
-from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.acme.views.utils import absolute_acme_uri, acme_request
+from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import root_reverse, root_uri
 
 # ACME views require a currently valid certificate authority
@@ -93,6 +96,51 @@ def test_email(client: Client, url: str, root: CertificateAuthority, account: Ac
     account.refresh_from_db()
     assert account.contact == email
     assert account.usable is True
+
+
+def test_update_other_account(
+    django_assert_num_queries: DjangoAssertNumQueries,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    account: AcmeAccount,
+    kid: str,
+) -> None:
+    """Test that you cannot use this URL to update different accounts."""
+    slug_two = acme_slug()
+    kid_two = absolute_acme_uri(":acme-account", serial=root.serial, slug=slug_two)
+    pem_two = (
+        CERT_DATA["child-cert"]["key"]["parsed"]
+        .public_key()
+        .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+        .decode("utf-8")
+        .strip()
+    )
+    account_two = AcmeAccount.objects.create(
+        ca=root,
+        contact="mailto:two@example.com",
+        terms_of_service_agreed=True,
+        slug=slug_two,
+        kid=kid_two,
+        pem=pem_two,
+        thumbprint="abc",
+    )
+    email = "mailto:user.updated@example.com"
+    message = Registration(contact=(email,))
+
+    url = root_reverse("acme-account", slug=slug_two)
+
+    with django_assert_num_queries(2):  # one for the CA, one for the account
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert_malformed(resp, root, "Account slug does not match account that signed the request.")
+
+    account.refresh_from_db()
+    assert account.contact == "mailto:one@example.com"
+    assert account.usable is True
+
+    account_two.refresh_from_db()
+    assert account_two.contact == "mailto:two@example.com"
+    assert account_two.usable is True
 
 
 def test_multiple_emails(
