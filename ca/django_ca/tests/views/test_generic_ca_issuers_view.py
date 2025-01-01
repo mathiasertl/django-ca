@@ -16,12 +16,17 @@
 from django.test import Client
 from django.urls import reverse
 
+from pytest_django import DjangoAssertNumQueries
+
 from django_ca.models import CertificateAuthority
 
 
-def test_generic_ca_issuers_view(usable_root: CertificateAuthority, client: Client) -> None:
+def test_generic_ca_issuers_view(
+    django_assert_num_queries: DjangoAssertNumQueries, usable_root: CertificateAuthority, client: Client
+) -> None:
     """Test the generic ca issuer view."""
     url = reverse("django_ca:issuer", kwargs={"serial": usable_root.serial})
-    resp = client.get(url)
+    with django_assert_num_queries(1):
+        resp = client.get(url)
     assert resp["Content-Type"] == "application/pkix-cert"
     assert resp.content == usable_root.pub.der
