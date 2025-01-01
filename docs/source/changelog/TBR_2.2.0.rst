@@ -2,6 +2,12 @@
 2.2.0 (TBR)
 ###########
 
+***********
+Performance
+***********
+
+* All HTTP endpoints (OCSP, CRLs, REST API, ACMEv2) are now asynchronous views.
+
 **********************
 Command-line utilities
 **********************
