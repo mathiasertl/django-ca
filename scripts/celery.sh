@@ -8,7 +8,7 @@ DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then
     KEY_DIR=`dirname $DJANGO_CA_SECRET_KEY_FILE`
-    if [ ! -e "${KEY_DIR}" 65:32]; then
+    if [ ! -e "${KEY_DIR}" ]; then
         mkdir -p ${KEY_DIR}
         chmod go-rwx ${KEY_DIR}
     fi

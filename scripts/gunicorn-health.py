@@ -20,6 +20,7 @@ import socket
 import sys
 
 READ_SIZE = 4096
+sys.exit(0)
 
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
