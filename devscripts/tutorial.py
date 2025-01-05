@@ -54,8 +54,10 @@ class Tutorial:
             stream.write(content)
 
     @contextmanager
-    def run(self, path: str) -> typing.Iterator[None]:
+    def run(self, path: str, debug: bool = False) -> typing.Iterator[None]:
         """Run commands from the specified YAML file."""
+        if debug is True:
+            input(f"{os.getcwd()}: About to run {path}, press <enter> to continue: ")
         path = os.path.join(self.name, path)
         with utils.console_include(path, self.context):
             yield
