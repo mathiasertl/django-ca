@@ -27,6 +27,7 @@ Pin requirements
 
 Create a file with pinned requirements, so that users can reliably reproduce a setup::
 
+   $ rm requirements-pinned.txt  # uv does not update the file if it exists
    $ uv pip compile pyproject.toml --all-extras -o requirements-pinned.txt
 
 docker-compose

@@ -18,13 +18,13 @@ cached-property==2.0.1
     # via python-pkcs11
 celery==5.4.0
     # via django-ca (pyproject.toml)
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
 cffi==1.17.1
     # via cryptography
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
-click==8.1.7
+click==8.1.8
     # via
     #   celery
     #   click-didyoumean
@@ -78,11 +78,11 @@ psycopg-pool==3.2.4
     # via psycopg
 pycparser==2.22
     # via cffi
-pydantic==2.10.3
+pydantic==2.10.4
     # via
     #   django-ca (pyproject.toml)
     #   django-ninja
-pydantic-core==2.27.1
+pydantic-core==2.27.2
     # via pydantic
 pyopenssl==24.3.0
     # via
@@ -108,7 +108,7 @@ setuptools==75.6.0
     # via acme
 six==1.17.0
     # via python-dateutil
-sqlparse==0.5.2
+sqlparse==0.5.3
     # via django
 typing-extensions==4.12.2
     # via
@@ -119,7 +119,7 @@ tzdata==2024.2
     # via
     #   celery
     #   kombu
-urllib3==2.2.3
+urllib3==2.3.0
     # via requests
 vine==5.1.0
     # via
