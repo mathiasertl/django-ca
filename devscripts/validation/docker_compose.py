@@ -260,6 +260,10 @@ def validate_endpoints(base_url: str, verify: Optional[str] = None) -> None:
     resp = requests.get(f"{base_url}/static/admin/css/base.css", verify=verify, timeout=10)
     resp.raise_for_status()
 
+    # Test (principal) ACME connection
+    resp = requests.get(f"{base_url}/acme/directory/", verify=verify, timeout=10)
+    resp.raise_for_status()
+
 
 def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # noqa: PLR0915
     """Validate the docker compose quickstart tutorial."""
