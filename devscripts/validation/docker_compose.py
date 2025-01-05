@@ -14,6 +14,7 @@
 """Functions for validating docker compose and the respective tutorial."""
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -55,6 +56,20 @@ def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
             down_kwargs["env"] = kwargs["env"]
 
         utils.run(down, **down_kwargs)
+
+
+def compose_status() -> None:
+    """Assert that all containers have started successfully."""
+    proc = utils.run(["docker", "compose", "ps", "-a", "--format=json"], capture_output=True, text=True)
+    errors = 0
+    for line in proc.stdout.splitlines():
+        container_data = json.loads(line)
+        if (exit_code := container_data["ExitCode"]) != 0:
+            errors += err(f"{container_data['Service']}: Exit code {exit_code}")
+
+    if errors != 0:
+        raise RuntimeError(f"{errors} container(s) have not started successfully.")
+    ok("Containers seem to have started properly.")
 
 
 def _compose_exec(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
@@ -299,7 +314,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
         (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
 
         with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"), tut.run("verify-setup.yaml"):
-            ok("Containers seem to have started properly.")
+            compose_status()
 
             # Check that we didn't forget any migrations
             _manage("backend", "makemigrations", "--check")
