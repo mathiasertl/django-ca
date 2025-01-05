@@ -51,20 +51,96 @@ bind to port 80 (HTTP).
    user@host:~$ sudo ls /etc/letsencrypt/live/ca.example.com
    README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 
-.. _docker-compose.yml:
-
 *****************
 Get configuration
 *****************
-
-Docker-compose needs a configuration file, :download:`docker-compose.yml </_files/docker-compose.yml>`. You
-can also download the file for other versions `from github
-<https://github.com/mathiasertl/django-ca/blob/master/docker-compose.yml>`_.
 
 .. NOTE::
 
    Because of how **Docker Compose** works, it is better to put the file in a sub-directory and `not` directly
    into your home directory. We assume you put all files into ``~/ca/`` from now on.
+
+To run **django-ca**, you'll need a couple of files:
+
+* `dhparam.pem <quickstart-docker-compose-dhparam.pem>`_, the DH parameters (required for TLS connections).
+* `localsettings.yaml <quickstart-docker-compose-localsettings.yaml>`_, the configuration for **django-ca**.
+* `docker-compose.yml <quickstart-docker-compose-docker-compose.yml>`_, the configuration for Docker Compose.
+* `docker-compose.override.yml <quickstart-docker-compose-docker-compose.override.yml>`_, system-local
+  configuration overrides for Docker Compose.
+* `.env <quickstart-docker-compose-.env>`_, the environment file for Docker Compose.
+
+Read the sections below how to retrieve or generate all these files.
+
+.. _quickstart-docker-compose-dhparam.pem:
+
+Generate DH parameters
+======================
+
+The TLS configuration requires that you generate a DH parameter file, which used by some TLS ciphers. You can
+generate it with:
+
+.. console-include::
+   :include: /include/quickstart_with_docker_compose/dhparam.yaml
+   :context: quickstart-with-docker-compose
+   :path: ~/ca/
+
+.. _quickstart-docker-compose-localsettings.yaml:
+
+Add configuration file
+======================
+
+**django-ca** is configured via a YAML configuration file. It is not strictly required, as the defaults are
+fine in most cases. Creating at least an empty file is recommended, as it will make any future changes easier.
+
+.. NOTE::
+
+   Do not set ``CA_DEFAULT_HOSTNAME`` and ``CA_URL_PATH`` here! They are set in `.env
+   <quickstart-docker-compose-.env>`_, as the NGINX container also uses them.
+
+Create a file called ``localsettings.yaml``. This example just enables the :doc:`/rest_api`:
+
+.. template-include:: yaml /include/quickstart_with_docker_compose/localsettings.yaml.jinja
+   :caption: localsettings.yaml
+   :context: quickstart-with-docker-compose
+
+Please see :doc:`custom settings </settings>` for available settings and :ref:`settings-yaml-configuration`
+for more examples. Almost all settings can be changed later, if that is not the case, the settings
+documentation mentions it.
+
+Multiple configuration files
+----------------------------
+
+As with the normal Docker container, django-ca will read configuration files in
+``/usr/src/django-ca/ca/conf/`` in alphabetical order, but it will also read files in the subfolder
+``/usr/src/django-ca/conf/ca/compose/``, which provides configuration specific to our Docker Compose setup.
+You can use any number of files as long as you map them into the ``frontend`` and ``backend`` containers as
+shown in the examples below.
+
+Environment variables
+---------------------
+
+If you want to use environment variables for configuration, we recommend you first add them to your
+``docker-compose.override.yml``, for example to `configure a different SMTP server
+<https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
+
+.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-env-example.yml
+   :language: yaml
+   :caption: docker-compose.override.yml
+
+and in your `.env <quickstart-docker-compose-.env>`_ file, set the variable:
+
+.. code-block:: bash
+
+   DJANGO_CA_EMAIL_HOST=smtp.example.com
+
+.. _quickstart-docker-compose-docker-compose.yml:
+
+Add ``docker-compose.yml``
+==========================
+
+Docker-compose needs a configuration file, :download:`docker-compose.yml </_files/docker-compose.yml>`. You
+can also download the file for other versions `from github
+<https://github.com/mathiasertl/django-ca/blob/master/docker-compose.yml>`_.
 
 You can also get versions for specific versions of **django-ca** from the table below, which also shows
 bundled third-party Docker images.
@@ -77,8 +153,8 @@ bundled third-party Docker images.
 ==================================================================================== ===== ========== =======
 Version                                                                              Redis PostgreSQL NGINX
 ==================================================================================== ===== ========== =======
-`2.1.1 <https://github.com/mathiasertl/django-ca/blob/2.0.0/docker-compose.yml>`_    7     16         1.26
-`2.1.0 <https://github.com/mathiasertl/django-ca/blob/2.0.0/docker-compose.yml>`_    7     16         1.26
+`2.1.1 <https://github.com/mathiasertl/django-ca/blob/2.1.1/docker-compose.yml>`_    7     16         1.26
+`2.1.0 <https://github.com/mathiasertl/django-ca/blob/2.1.0/docker-compose.yml>`_    7     16         1.26
 `2.0.0 <https://github.com/mathiasertl/django-ca/blob/2.0.0/docker-compose.yml>`_    7     16         1.26
 `1.29.0 <https://github.com/mathiasertl/django-ca/blob/1.29.0/docker-compose.yml>`_  7     16         1.24
 `1.28.0 <https://github.com/mathiasertl/django-ca/blob/1.28.0/docker-compose.yml>`_  7     **16**     1.24
@@ -87,9 +163,9 @@ Version                                                                         
 `1.25.0 <https://github.com/mathiasertl/django-ca/blob/1.25.0/docker-compose.yml>`_  7     12         **1.24**
 `1.24.0 <https://github.com/mathiasertl/django-ca/blob/1.24.0/docker-compose.yml>`_  7     12         1.23
 `1.23.0 <https://github.com/mathiasertl/django-ca/blob/1.23.0/docker-compose.yml>`_  7     12         **1.23**
-`1.22.0 <https://github.com/mathiasertl/django-ca/blob/1.22.0/docker-compose.yml>`_  **7** 12         1.20
-`1.21.0 <https://github.com/mathiasertl/django-ca/blob/1.21.0/docker-compose.yml>`_  6     12         1.20
 ==================================================================================== ===== ========== =======
+
+.. _quickstart-docker-compose-docker-compose.override.yml:
 
 Add ``docker-compose.override.yml``
 ===================================
@@ -104,9 +180,13 @@ configuration file:
    :caption: docker-compose.override.yml
    :context: quickstart-with-docker-compose
 
+In the above example, we already add
+
 This will work if you get your certificates using ``certbot`` or a similar client. If your private key in
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
 :file:`.env` file below.
+
+.. _quickstart-docker-compose-.env:
 
 Add ``.env`` file
 =================
@@ -120,89 +200,15 @@ For a quick start, there are only a few variables you need to specify:
    :caption: .env
    :context: quickstart-with-docker-compose
 
-Generate DH parameters
-======================
-
-The TLS configuration also requires that you generate a DH parameter file, used by some TLS ciphers. You can
-generate it with:
-
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/dhparam.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
-
-Customization
-=============
-
-Although the defaults are fine for most scenarios, **django-ca** and Django itself support a wide range of
-settings to customize your installation. Django has its settings documented under `Settings
-<https://docs.djangoproject.com/en/4.0/ref/settings/>`_, django-ca settings are documented under :doc:`custom
-settings </settings>`.
-
-Just like when using the plain Docker container, you can configure django-ca using either environment
-variables (set in e.g. ``docker-compose.override.yml``) or using an extra YAML configuration file. For more
-details on how to configure the Docker container, refer to :ref:`docker-configuration`.
-
-.. NOTE::
-
-   In our **docker compose** setup, django-ca is used in both the ``backend`` and ``frontend`` containers.
-   Make sure you configure both of them.
-
-
-Configuration using a YAML configuration file
----------------------------------------------
-
-Using an extra configuration file is the most flexible way to configure django-ca, as it allows you to update
-even complex settings. It has the added advantage that **docker compose** will not recreate the containers if
-you update the configuration.
-
-As with the normal docker container, django-ca will read configuration files in
-``/usr/src/django-ca/ca/conf/`` in alphabetical order, but it will also read files in the subfolder
-``/usr/src/django-ca/conf/ca/compose/``, which provides configuration specific to our **docker compose**
-setup.
-
-To add a configuration file, first add a volume mapping in your ``docker-compose.override.yml``:
-
-.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-localsettings-example.yml
-   :language: yaml
-   :caption: docker-compose.override.yml
-
-... and then simply add a file called ``localsettings.yaml`` in your current directory, for example:
-
-.. literalinclude:: /include/quickstart_with_docker_compose/localsettings.example.yml
-   :language: yaml
-   :caption: localsettings.yaml (example)
-
-Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
-for more YAML configuration examples.
-
-Configuration using environment variables
------------------------------------------
-
-If you want to use environment variables for configuration, we recommend you first add them to your
-``docker-compose.override.yml``, for example to `configure a different SMTP server
-<https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
-
-.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-env-example.yml
-   :language: yaml
-   :caption: docker-compose.override.yml
-
-and in your ``.env`` file, set the variable:
-
-.. code-block:: bash
-
-   DJANGO_CA_EMAIL_HOST=smtp.example.com
-
-
 Recap
 =====
 
-By now, you should have at least four files in ``~/ca/``:
+By now, you should have at least **five** files in ``~/ca/``:
 
 .. code-block:: console
 
    user@host:~/ca/$ ls -A
-   docker-compose.yml docker-compose.override.yml .env dhparam.pem
+   docker-compose.yml docker-compose.override.yml .env dhparam.pem localsettings.yaml
 
 *************
 Start your CA
@@ -302,7 +308,7 @@ Update
 Remember to :ref:`backup your data <docker-compose-backup>` before you perform any update.
 
 In general, updating django-ca is done by getting the :ref:`latest version of docker-compose.yml
-<docker-compose.yml>` and then simply recreating the containers:
+<quickstart-docker-compose-docker-compose.yml>` and then simply recreating the containers:
 
 .. code-block:: console
 

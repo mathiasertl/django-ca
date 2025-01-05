@@ -69,7 +69,7 @@ def compose_status() -> None:
 
     if errors != 0:
         raise RuntimeError(f"{errors} container(s) have not started successfully.")
-    ok("Containers seem to have started properly.")
+    ok("All containers have started successfully.")
 
 
 def _compose_exec(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
@@ -250,7 +250,7 @@ def _sign_certificates(csr: str) -> str:
     return cert_subject
 
 
-def validate_endpoints(base_url: str, verify: Optional[str] = None) -> None:
+def validate_endpoints(base_url: str, api_user: str, api_password: str, verify: Optional[str] = None) -> None:
     """Validate all endpoints of the setup."""
     # Test that HTTPS connection and admin interface is working:
     resp = requests.get(f"{base_url}/admin/", verify=verify, timeout=10)
@@ -258,6 +258,10 @@ def validate_endpoints(base_url: str, verify: Optional[str] = None) -> None:
 
     # Test static files
     resp = requests.get(f"{base_url}/static/admin/css/base.css", verify=verify, timeout=10)
+    resp.raise_for_status()
+
+    # Test the REST API
+    resp = requests.get(f"{base_url}/api/ca/", auth=(api_user, api_password), verify=verify, timeout=10)
     resp.raise_for_status()
 
     # Test (principal) ACME connection
@@ -270,7 +274,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
     info("Validating tutorial...")
     errors = 0
     standalone_dir = config.ROOT_DIR / "devscripts" / "standalone"
-    docker_compose_yml = config.ROOT_DIR / "docker-compose.yml"
+    docker_compose_yml = config.ROOT_DIR / "compose.yaml"
     if not docker_compose_yml.exists():
         return err(f"{docker_compose_yml}: File not found.")
 
@@ -305,8 +309,10 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
 
     with start_tutorial("quickstart_with_docker_compose", context) as tut:
         cwd = Path(os.getcwd())
-        print("# Running in ", cwd)
-        tut.write_template("docker-compose.override.yml.jinja")
+        info(f"# Running in {cwd}")
+        tut.write_template("localsettings.yaml.jinja")
+        shutil.copy(docker_compose_yml, cwd)
+        tut.write_template("compose.override.yaml.jinja")
         tut.write_template(".env.jinja")
         shutil.copy(docker_compose_yml, cwd)
 
@@ -372,7 +378,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
 
                 # Test all endpoints
-                validate_endpoints("https://localhost", verify=str(ca_pub_pem))
+                validate_endpoints("https://localhost", 'user', 'nopass', verify=str(ca_pub_pem))
 
                 # Finally some manual testing
                 info(

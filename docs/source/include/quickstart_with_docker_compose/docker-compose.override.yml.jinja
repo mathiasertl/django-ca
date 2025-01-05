@@ -1,4 +1,10 @@
 services:
+    backend:
+        volumes:
+            - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
+    frontend:
+        volumes:
+            - ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
     webserver:
         volumes:
             - {{ certbot_root }}live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:{{ tls_cert_root }}live/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/
