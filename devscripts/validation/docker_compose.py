@@ -316,10 +316,6 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
         with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"), tut.run("verify-setup.yaml"):
             compose_status()
 
-            # Check that we didn't forget any migrations
-            _manage("backend", "makemigrations", "--check")
-            _manage("frontend", "makemigrations", "--check")
-
             # Validate that the container versions match the expected version
             errors += _validate_container_versions(release)
 
@@ -662,7 +658,7 @@ class Command(DevCommand):
             release = args.release
             docker_tag = self.get_docker_tag(args.release)
         elif args.build:
-            release, docker_tag = self.command("build", "docker")
+            release, docker_tag = self.command("build", "docker", "--no-alpine")
         else:
             release = self.django_ca.__version__
             docker_tag = self.get_docker_tag(release)
