@@ -24,7 +24,7 @@ services:
             - pgdata_16:/var/lib/postgresql/data
 
     backend:
-        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-2.1.0}
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-2.1.1}
         command: ./celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             - cache
@@ -58,7 +58,7 @@ services:
         stop_grace_period: 30s
 
     frontend:
-        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-2.1.0}
+        image: mathiasertl/django-ca:${DJANGO_CA_VERSION:-2.1.1}
         depends_on:
             - cache
             - db
