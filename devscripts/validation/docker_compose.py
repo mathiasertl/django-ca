@@ -250,6 +250,17 @@ def _sign_certificates(csr: str) -> str:
     return cert_subject
 
 
+def validate_endpoints(base_url: str, verify: Optional[str] = None) -> None:
+    """Validate all endpoints of the setup."""
+    # Test that HTTPS connection and admin interface is working:
+    resp = requests.get(f"{base_url}/admin/", verify=verify, timeout=10)
+    resp.raise_for_status()
+
+    # Test static files
+    resp = requests.get(f"{base_url}/static/admin/css/base.css", verify=verify, timeout=10)
+    resp.raise_for_status()
+
+
 def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # noqa: PLR0915
     """Validate the docker compose quickstart tutorial."""
     info("Validating tutorial...")
@@ -296,7 +307,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
         shutil.copy(docker_compose_yml, cwd)
 
         # Convert DER certificates from fixtures to PEM (requests needs PEM certificates).
-        ca_pub_pem = cwd / "root.pem"
+        ca_pub_pem = cwd / "https-root.pem"
         der_certificate_to_pem(ca_pub, ca_pub_pem)
 
         # Set up fake ACME certificates
@@ -324,16 +335,6 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
             # Test connectivity
             errors += _test_connectivity(standalone_dir)
 
-            # Test that HTTPS connection and admin interface is working:
-            resp = requests.get("https://localhost/admin/", verify=str(ca_pub_pem), timeout=10)
-            resp.raise_for_status()
-
-            # Test static files
-            resp = requests.get(
-                "https://localhost/static/admin/css/base.css", verify=str(ca_pub_pem), timeout=10
-            )
-            resp.raise_for_status()
-
             with tut.run("setup-cas.yaml"):  # Creates initial CAs
                 ok("Setup certificate authorities.")
                 with tut.run("list_cas.yaml"):
@@ -352,6 +353,11 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 assert len(certs) == 5, f"Found {len(certs)} certs instead of 5."
                 ok("Signed certificates.")
 
+                # Restart everything to make sure that all data survives a restart.
+                utils.run(["docker", "compose", "down"])
+                utils.run(["docker", "compose", "up", "-d"], env={"DJANGO_CA_VERSION": release})
+                ok("Restarted docker containers.")
+
                 # Write root CA and cert to disk for OpenSSL validation
                 with open("root.pem", "w", encoding="utf-8") as stream:
                     _manage("backend", "dump_ca", "Root", stdout=stream)
@@ -361,9 +367,8 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
 
-                utils.run(["docker", "compose", "down"])
-                utils.run(["docker", "compose", "up", "-d"], env={"DJANGO_CA_VERSION": release})
-                ok("Restarted docker containers.")
+                # Test all endpoints
+                validate_endpoints("https://localhost", verify=str(ca_pub_pem))
 
                 # Finally some manual testing
                 info(
