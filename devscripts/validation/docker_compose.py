@@ -378,7 +378,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
 
                 # Test all endpoints
-                validate_endpoints("https://localhost", 'user', 'nopass', verify=str(ca_pub_pem))
+                validate_endpoints("https://localhost", "user", "nopass", verify=str(ca_pub_pem))
 
                 # Finally some manual testing
                 info(
@@ -444,6 +444,9 @@ POSTGRES_PASSWORD=mysecretpassword
             # Start previous version
             info(f"Start previous version ({last_release}).")
             with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
+                # Make sure old containers started properly
+                compose_status()
+
                 # Make sure we have started the right version
                 _validate_container_versions(last_release)
 
@@ -467,7 +470,7 @@ POSTGRES_PASSWORD=mysecretpassword
                 _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
 
             old_postgres_version = get_postgres_version("docker-compose.yml")
-            new_postgres_version = get_postgres_version(config.ROOT_DIR / "docker-compose.yml")
+            new_postgres_version = get_postgres_version(config.ROOT_DIR / "compose.yaml")
 
             # Backup database if there was a PostgreSQL update
             if old_postgres_version != new_postgres_version:
@@ -482,9 +485,17 @@ POSTGRES_PASSWORD=mysecretpassword
                         env={"DJANGO_CA_VERSION": release},
                         stdout=stream,
                     )
-            # copy new docker-compose file
-            shutil.copy(config.ROOT_DIR / "docker-compose.yml", tmpdir)
-            ok("Updated docker-compose.yml")
+            # Copy new Docker Compose file
+            shutil.copy(config.ROOT_DIR / "compose.yaml", tmpdir)
+            ok("Updated compose.yaml")
+
+            # Remove legacy Docker Compose configuration file
+            docker_compose_yml = Path(tmpdir) / "docker-compose.yml"
+            if docker_compose_yml.exists():
+                os.remove(docker_compose_yml)
+            else:
+                # Remind us in the next version that the old config file does not exist anymore.
+                info(f"{docker_compose_yml}: File does not exist, you can remove this part of the code.")
 
             # Apply backup if there was a PostreSQL update
             if old_postgres_version != new_postgres_version:
@@ -515,6 +526,9 @@ POSTGRES_PASSWORD=mysecretpassword
             # Start and check new version
             info(f"Start current version ({release}).")
             with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
+                # Make sure containers started properly
+                compose_status()
+
                 # Make sure we have the new version
                 _validate_container_versions(release)
 
@@ -536,8 +550,8 @@ def test_acme(release: str, image: str) -> int:
     """Test ACMEv2 validation."""
     info(f"Validating ACMVEv2 implementation on {image}...")
 
-    compose_override = config.DEVSCRIPTS_FILES / "docker-compose.certbot.yaml"
-    compose_files = f"docker-compose.yml:{compose_override}"
+    compose_override = config.DEVSCRIPTS_FILES / "compose.certbot.yaml"
+    compose_files = f"compose.yaml:{compose_override}"
     environ = dict(os.environ, COMPOSE_FILE=compose_files, DJANGO_CA_VERSION=release)
     errors = 0
 

@@ -27,7 +27,7 @@
 /dist
 /dj18/
 /docs/build/
-/docs/source/_files/docker-compose.yml
+/docs/source/_files/compose.yaml
 /docs/source/_files/openapi.json
 /fab.conf
 /include/

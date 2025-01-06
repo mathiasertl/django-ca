@@ -12,7 +12,7 @@ ADD devscripts/files/django-ca-test-validation.sh /usr/local/bin/
 ADD devscripts/files/django-ca-dns-auth.py /usr/local/bin/django-ca-dns-auth
 ADD devscripts/files/django-ca-dns-clean.py /usr/local/bin/django-ca-dns-clean
 
-env DNSMASQ_CONF_DIR=/etc/dnsmasq.d/
+ENV DNSMASQ_CONF_DIR=/etc/dnsmasq.d/
 
 WORKDIR /root/
 ENTRYPOINT ["/usr/local/bin/dnsmasq.sh"]

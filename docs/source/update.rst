@@ -303,7 +303,7 @@ Note that if you have stored private keys in any custom location with the ``--pa
 backup these locations as well.
 
 **Second,** update your :file:`docker-compose.yml` file. Either get the :ref:`latest version of the file
-<quickstart-docker-compose-docker-compose.yml>`, or apply this diff:
+<quickstart-docker-compose-compose.yaml>`, or apply this diff:
 
 .. code-block:: diff
 

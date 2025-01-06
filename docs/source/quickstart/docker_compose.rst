@@ -22,7 +22,7 @@ This tutorial will give you a CA with
 Required software
 =================
 
-To run **django-ca**, you need Docker (at least version 19.03.0) and Docker Compose (at least version 1.27.0).
+To run **django-ca**, you need Docker (at least version 19.03.0) and Docker Compose (at least version 1.28.0).
 You also need certbot to acquire Let's Encrypt certificates for the admin interface. OpenSSL is used to
 generate the DH parameter file. On Debian/Ubuntu, simply do:
 
@@ -64,9 +64,9 @@ To run **django-ca**, you'll need a couple of files:
 
 * `dhparam.pem <quickstart-docker-compose-dhparam.pem>`_, the DH parameters (required for TLS connections).
 * `localsettings.yaml <quickstart-docker-compose-localsettings.yaml>`_, the configuration for **django-ca**.
-* `docker-compose.yml <quickstart-docker-compose-docker-compose.yml>`_, the configuration for Docker Compose.
-* `docker-compose.override.yml <quickstart-docker-compose-docker-compose.override.yml>`_, system-local
-  configuration overrides for Docker Compose.
+* `compose.yaml <quickstart-docker-compose-compose.yaml>`_, the configuration for Docker Compose.
+* `compose.override.yaml <quickstart-docker-compose-compose.override.yaml>`_, system-local configuration
+  overrides for Docker Compose.
 * `.env <quickstart-docker-compose-.env>`_, the environment file for Docker Compose.
 
 Read the sections below how to retrieve or generate all these files.
@@ -120,12 +120,12 @@ Environment variables
 ---------------------
 
 If you want to use environment variables for configuration, we recommend you first add them to your
-``docker-compose.override.yml``, for example to `configure a different SMTP server
+``compose.override.yaml``, for example to `configure a different SMTP server
 <https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
 
 .. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-env-example.yml
    :language: yaml
-   :caption: docker-compose.override.yml
+   :caption: compose.override.yaml
 
 and in your `.env <quickstart-docker-compose-.env>`_ file, set the variable:
 
@@ -133,14 +133,14 @@ and in your `.env <quickstart-docker-compose-.env>`_ file, set the variable:
 
    DJANGO_CA_EMAIL_HOST=smtp.example.com
 
-.. _quickstart-docker-compose-docker-compose.yml:
+.. _quickstart-docker-compose-compose.yaml:
 
-Add ``docker-compose.yml``
-==========================
+Add ``compose.yaml``
+====================
 
-Docker-compose needs a configuration file, :download:`docker-compose.yml </_files/docker-compose.yml>`. You
+Docker-compose needs a configuration file, :download:`compose.yaml </_files/compose.yaml>`. You
 can also download the file for other versions `from github
-<https://github.com/mathiasertl/django-ca/blob/master/docker-compose.yml>`_.
+<https://github.com/mathiasertl/django-ca/blob/master/compose.yaml>`_.
 
 You can also get versions for specific versions of **django-ca** from the table below, which also shows
 bundled third-party Docker images.
@@ -165,22 +165,22 @@ Version                                                                         
 `1.23.0 <https://github.com/mathiasertl/django-ca/blob/1.23.0/docker-compose.yml>`_  7     12         **1.23**
 ==================================================================================== ===== ========== =======
 
-.. _quickstart-docker-compose-docker-compose.override.yml:
+Note that until ``django-ca==2.1.1``, this file was called ``docker-compose.yml``.
 
-Add ``docker-compose.override.yml``
-===================================
+.. _quickstart-docker-compose-compose.override.yaml:
 
-The default :file:`docker-compose.yml` does not offer HTTPS, because too many details (cert location, etc.)
+Add ``compose.override.yaml``
+=============================
+
+The default :file:`compose.yaml` does not offer HTTPS, because too many details (cert location, etc.)
 are different from system to system. We need to add a `docker-compose override file
-<https://docs.docker.com/compose/extends/>`_ to open the port and map the directories with the certificates
-into the container.  Simply add a file called :file:`docker-compose.override.yml` next to your main
-configuration file:
+<https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/>`_ to open the port and map the
+directories with the certificates into the container.  Simply add a file called :file:`compose.override.yaml`
+next to your main configuration file:
 
-.. template-include:: yaml /include/quickstart_with_docker_compose/docker-compose.override.yml.jinja
-   :caption: docker-compose.override.yml
+.. template-include:: yaml /include/quickstart_with_docker_compose/compose.override.yaml.jinja
+   :caption: compose.override.yaml
    :context: quickstart-with-docker-compose
-
-In the above example, we already add
 
 This will work if you get your certificates using ``certbot`` or a similar client. If your private key in
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
@@ -192,7 +192,7 @@ Add ``.env`` file
 =================
 
 Some settings in **django-ca** can be configured with environment variables (except where a more complex
-structure is required). Simply create a file called :file:`.env` next to :file:`docker-compose.yaml`.
+structure is required). Simply create a file called :file:`.env` next to :file:`compose.yaml`.
 
 For a quick start, there are only a few variables you need to specify:
 
@@ -203,12 +203,12 @@ For a quick start, there are only a few variables you need to specify:
 Recap
 =====
 
-By now, you should have at least **five** files in ``~/ca/``:
+By now, you should have **five** files in ``~/ca/``:
 
 .. code-block:: console
 
    user@host:~/ca/$ ls -A
-   docker-compose.yml docker-compose.override.yml .env dhparam.pem localsettings.yaml
+   compose.yaml compose.override.yaml .env dhparam.pem localsettings.yaml
 
 *************
 Start your CA
@@ -307,12 +307,12 @@ Update
 
 Remember to :ref:`backup your data <docker-compose-backup>` before you perform any update.
 
-In general, updating django-ca is done by getting the :ref:`latest version of docker-compose.yml
-<quickstart-docker-compose-docker-compose.yml>` and then simply recreating the containers:
+In general, updating django-ca is done by getting the :ref:`latest version of compose.yaml
+<quickstart-docker-compose-compose.yaml>` and then simply recreating the containers:
 
 .. code-block:: console
 
-   user@host:~/ca/$ curl -O https://.../docker-compose.yml
+   user@host:~/ca/$ curl -O https://.../compose.yaml
    user@host:~/ca/$ docker compose up -d
 
 .. _postgresql_update:
@@ -320,7 +320,7 @@ In general, updating django-ca is done by getting the :ref:`latest version of do
 PostgreSQL update
 =================
 
-When a new version :file:`docker-compose.yml` includes a new version of PostgreSQL, you have to take some
+When a new version :file:`compose.yaml` includes a new version of PostgreSQL, you have to take some
 extra steps to migrate the PostgreSQL database.
 
 **Before you upgrade**, back up your PostgreSQL database as usual:
@@ -331,11 +331,11 @@ extra steps to migrate the PostgreSQL database.
    user@host:~/ca/$ docker compose up -d db
    user@host:~/ca/$ docker compose exec db pg_dump -U postgres -d postgres > backup.sql
 
-Now update :file:`docker-compose.yml` but then **only start the database**:
+Now update :file:`compose.yaml` but then **only start the database**:
 
 .. code-block:: console
 
-   user@host:~/ca/$ curl -O https://.../docker-compose.yml
+   user@host:~/ca/$ curl -O https://.../compose.yaml
    user@host:~/ca/$ docker compose up -d db
 
 Once the database is started, update the database with data from your backup and normally start your setup:
@@ -349,5 +349,5 @@ Forgot to backup?
 -----------------
 
 If you forgot to backup your database and started the update already, don't panic. Whenever we update the
-PostgreSQL version, we use a a new Docker volume. You should be able to reset :file:`docker-compose.yml` and
+PostgreSQL version, we use a a new Docker volume. You should be able to reset :file:`compose.yaml` and
 then proceed to do the backup normally.
