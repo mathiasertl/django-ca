@@ -416,7 +416,7 @@ def get_postgres_version(path: Union[Path, str]) -> str:
     return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
 
 
-def test_update(release: str) -> int:
+def test_update(release: str) -> int:  # noqa: PLR0915
     """Validate updating with docker compose."""
     info("Validating docker compose update...")
     errors = 0

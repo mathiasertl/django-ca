@@ -23,6 +23,7 @@ import josepy as jose
 from django.test import Client
 
 import pytest
+from pytest_django import DjangoAssertNumQueries
 
 from django_ca.models import AcmeAccount, AcmeCertificate, AcmeOrder, CertificateAuthority
 from django_ca.tests.acme.views.assertions import assert_unauthorized
@@ -56,6 +57,7 @@ def message() -> bytes:
 
 
 def test_basic(
+    django_assert_num_queries: DjangoAssertNumQueries,
     client: Client,
     url: str,
     root: CertificateAuthority,
@@ -65,7 +67,8 @@ def test_basic(
     """Basic test case."""
     # acme_cert.order.status = AcmeOrder.STATUS_VALID
     # acme_cert.order.save()
-    resp = acme_request(client, url, root, b"", kid=kid)
+    with django_assert_num_queries(3):
+        resp = acme_request(client, url, root, b"", kid=kid)
     assert resp.status_code == HTTPStatus.OK, resp.content
 
     # Make sure that certbot parses the expected list of PEMs

@@ -17,7 +17,7 @@ from django_ca.models import X509CertMixin
 from django_ca.tests.base.constants import CERT_PEM_REGEX
 
 
-def assert_bundle(chain: list[X509CertMixin], cert: X509CertMixin) -> None:
+def assert_bundle(chain: list[X509CertMixin], bundle: str) -> None:
     """Assert that a bundle contains the expected certificates."""
     encoded_chain = [c.pub.pem.encode() for c in chain]
 
@@ -26,7 +26,6 @@ def assert_bundle(chain: list[X509CertMixin], cert: X509CertMixin) -> None:
     for member in encoded_chain:
         assert member.endswith(b"\n")
 
-    bundle = cert.bundle_as_pem
     assert isinstance(bundle, str)
     assert bundle.endswith("\n")
 

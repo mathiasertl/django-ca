@@ -327,6 +327,11 @@ class X509CertMixin(DjangoCAModel):
         #            means that an abstract "bundle" property here could not be correctly typed.
         return "".join(c.pub.pem for c in self.bundle)  # type:  ignore[attr-defined]
 
+    async def aget_bundle_as_pem(self) -> str:
+        """Get bundle (asynchronous version)."""
+        bundle = await self.aget_bundle()  # type:  ignore[attr-defined]
+        return "".join(c.pub.pem for c in bundle)
+
     @property
     def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
         """Get a JOSE JWK public key for this certificate.
@@ -1108,6 +1113,19 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             ca = ca.parent
         return bundle
 
+    async def aget_bundle(self) -> list["CertificateAuthority"]:
+        """Get bundle for this certificate authority (asynchronous version)."""
+        ca = self
+        bundle = [ca]
+        while ca.parent_id is not None:
+            if CertificateAuthority.parent.is_cached(ca):  # pylint: disable=no-member
+                ca = ca.parent  # type: ignore[assignment]  # checks above make sure it's not None
+            else:
+                ca = await CertificateAuthority.objects.select_related("parent").aget(pk=ca.parent_id)
+            bundle.append(ca)
+
+        return bundle
+
     @property
     def root(self) -> "CertificateAuthority":
         """Get the root CA for this CA."""
@@ -1171,6 +1189,16 @@ class Certificate(X509CertMixin):
     def bundle(self) -> list[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
         return [typing.cast(X509CertMixin, self), *typing.cast(list[X509CertMixin], self.ca.bundle)]
+
+    async def aget_bundle(self) -> list[X509CertMixin]:
+        """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
+        if Certificate.ca.is_cached(self):  # pylint: disable=no-member
+            ca = self.ca
+        else:
+            ca = await CertificateAuthority.objects.select_related("parent").aget(pk=self.ca_id)
+
+        ca_bundle = await ca.aget_bundle()
+        return [typing.cast(X509CertMixin, self), *typing.cast(list[X509CertMixin], ca_bundle)]
 
     @property
     def root(self) -> CertificateAuthority:

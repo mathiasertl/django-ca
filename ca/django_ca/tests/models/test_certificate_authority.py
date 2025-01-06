@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, NoReturn, Optional, Union, cast
 from unittest import mock
 
+from asgiref.sync import async_to_sync
 from pydantic import BaseModel
 
 from cryptography import x509
@@ -37,6 +38,7 @@ from django.db import connection
 
 import pytest
 from freezegun import freeze_time
+from pytest_django import DjangoAssertNumQueries
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
@@ -102,8 +104,28 @@ def test_key_type(usable_cas: list[CertificateAuthority]) -> None:
 
 def test_bundle_as_pem(root: CertificateAuthority, child: CertificateAuthority) -> None:
     """Test bundles of various CAs."""
-    assert_bundle([root], root)
-    assert_bundle([child, root], child)
+    assert_bundle([root], root.bundle_as_pem)
+    assert_bundle([child, root], child.bundle_as_pem)
+
+
+def test_aget_bundle_as_pem_with_root(
+    django_assert_num_queries: DjangoAssertNumQueries, root: CertificateAuthority
+) -> None:
+    """Test Bundle for a root CA."""
+    with django_assert_num_queries(0):
+        assert_bundle([root], async_to_sync(root.aget_bundle_as_pem)())
+
+
+def test_aget_bundle_as_pem_with_child(
+    django_assert_num_queries: DjangoAssertNumQueries, root: CertificateAuthority, child: CertificateAuthority
+) -> None:
+    """Test Bundle for a child CA."""
+    with django_assert_num_queries(0):
+        assert_bundle([child, root], async_to_sync(child.aget_bundle_as_pem)())
+
+    child.refresh_from_db()
+    with django_assert_num_queries(1):
+        assert_bundle([child, root], async_to_sync(child.aget_bundle_as_pem)())
 
 
 def test_path_length(usable_ca: CertificateAuthority) -> None:

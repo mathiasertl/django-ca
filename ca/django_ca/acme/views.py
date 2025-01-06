@@ -999,7 +999,8 @@ class AcmeCertificateView(AcmePostAsGetView):
         # self.prepared['cert'] = slug
         # self.prepared['csr'] = cert.csr
         # self.prepared['order'] = cert.order.slug
-        return HttpResponse(cert.cert.bundle_as_pem, content_type="application/pem-certificate-chain")
+        content = await cert.cert.aget_bundle_as_pem()
+        return HttpResponse(content, content_type="application/pem-certificate-chain")
 
 
 class AcmeAuthorizationView(AcmePostAsGetView):
