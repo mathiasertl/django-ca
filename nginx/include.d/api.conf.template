@@ -1,3 +1,4 @@
 location /${DJANGO_CA_CA_URL_PATH}api/ {
-    include templates/include.d/gunicorn_params.conf;
+    uwsgi_pass django_ca_frontend;
+    include /etc/nginx/uwsgi_params;
 }

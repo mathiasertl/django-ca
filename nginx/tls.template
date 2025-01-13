@@ -1,10 +1,10 @@
-include templates/include.d/upstream.conf;
+include /etc/nginx/templates/include.d/upstream.conf;
 
 server {
     listen       ${NGINX_PORT};
     server_name  ${NGINX_HOST};
 
-    include conf.d/include.d/ca.conf;
+    include /etc/nginx/conf.d/include.d/ca.conf;
 
     # Ability to fulfill ACME challenges
     location /.well-known/acme-challenge/ {
@@ -28,13 +28,13 @@ server {
 
     ssl_certificate_key ${NGINX_PRIVATE_KEY};
     ssl_certificate     ${NGINX_PUBLIC_KEY};
-    include templates/include.d/ssl.conf;
-    include templates/include.d/headers.conf;
+    include /etc/nginx/templates/include.d/ssl.conf;
+    include /etc/nginx/templates/include.d/headers.conf;
 
-    include conf.d/include.d/acme.conf;
-    include templates/include.d/admin.conf;
-    include conf.d/include.d/api.conf;
-    include conf.d/include.d/ca.conf;
+    include /etc/nginx/conf.d/include.d/acme.conf;
+    include /etc/nginx/conf.d/include.d/api.conf;
+    include /etc/nginx/conf.d/include.d/ca.conf;
+    include /etc/nginx/templates/include.d/admin.conf;
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {

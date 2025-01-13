@@ -1,9 +1,12 @@
 location /${DJANGO_CA_CA_URL_PATH}issuer/ {
-    include templates/include.d/gunicorn_params.conf;
+    uwsgi_pass django_ca_frontend;
+    include /etc/nginx/uwsgi_params;
 }
 location /${DJANGO_CA_CA_URL_PATH}crl/ {
-    include templates/include.d/gunicorn_params.conf;
+    uwsgi_pass django_ca_frontend;
+    include /etc/nginx/uwsgi_params;
 }
 location /${DJANGO_CA_CA_URL_PATH}ocsp/ {
-    include templates/include.d/gunicorn_params.conf;
+    uwsgi_pass django_ca_frontend;
+    include /etc/nginx/uwsgi_params;
 }

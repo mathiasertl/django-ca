@@ -123,4 +123,4 @@ WORKDIR /usr/src/django-ca/ca/
 ENV DJANGO_CA_SETTINGS=conf/
 ENV DJANGO_CA_SECRET_KEY_FILE=/var/lib/django-ca/certs/ca/shared/secret_key
 
-CMD ./gunicorn.sh
+CMD ./uwsgi.sh

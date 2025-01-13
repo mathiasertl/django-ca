@@ -55,6 +55,7 @@ from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
 from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
+from django_ca.querysets import CertificateRevocationListQuerySet
 from django_ca.typehints import AllowedHashTypes, CertificateRevocationListEncodings
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
@@ -127,7 +128,7 @@ class CertificateRevocationListView(View):
         """
         return ca.key_backend.get_use_private_key_options(ca, {})
 
-    async def fetch_crl(self, serial: str, encoding: CertificateRevocationListEncodings) -> bytes:
+    def fetch_crl(self, serial: str, encoding: CertificateRevocationListEncodings) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
         if self.scope is not _NOT_SET:
             warnings.warn(
@@ -170,11 +171,11 @@ class CertificateRevocationListView(View):
             only_some_reasons=self.only_some_reasons,
         )
 
-        encoded_crl: Optional[bytes] = await cache.aget(cache_key)
+        encoded_crl: Optional[bytes] = cache.get(cache_key)
 
         # CRL is not cached, try to retrieve it from the database.
         if encoded_crl is None:
-            crl_qs = (
+            crl_qs: CertificateRevocationListQuerySet = (
                 CertificateRevocationList.objects.scope(
                     serial=serial,
                     only_contains_ca_certs=only_contains_ca_certs,
@@ -183,15 +184,15 @@ class CertificateRevocationListView(View):
                     only_some_reasons=self.only_some_reasons,
                 ).filter(data__isnull=False)  # Only objects that have CRL data associated with it
             )
-            crl_obj: Optional[CertificateRevocationList] = await crl_qs.anewest()
+            crl_obj: Optional[CertificateRevocationList] = crl_qs.newest()
 
             # CRL was not found in the database either, so we try to regenerate it.
             if crl_obj is None:
-                ca = await CertificateAuthority.objects.aget(serial=serial)
+                ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
 
                 key_backend_options = self.get_key_backend_options(ca)
                 expires = datetime.now(tz=tz.utc) + timedelta(seconds=self.expires)
-                crl_obj = await CertificateRevocationList.objects.acreate_certificate_revocation_list(
+                crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
                     ca=ca,
                     key_backend_options=key_backend_options,
                     next_update=expires,
@@ -202,7 +203,7 @@ class CertificateRevocationListView(View):
                 )
 
             # Cache the CRL.
-            await crl_obj.acache(serial)
+            crl_obj.cache(serial)
 
             # Get object in the right encoding.
             if encoding == Encoding.PEM:
@@ -212,7 +213,7 @@ class CertificateRevocationListView(View):
 
         return encoded_crl
 
-    async def get(self, request: HttpRequest, serial: str) -> HttpResponse:
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
             if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
@@ -225,7 +226,7 @@ class CertificateRevocationListView(View):
             encoding = self.type
 
         try:
-            crl = await self.fetch_crl(serial, encoding)
+            crl = self.fetch_crl(serial, encoding)
         except Exception:  # pylint: disable=broad-exception-caught
             log.exception("Error generating a CRL")
             return HttpResponseServerError("Error while retrieving the CRL.", content_type="text/plain")
@@ -273,7 +274,7 @@ class OCSPView(View):
 
     loaded_ca: CertificateAuthority
 
-    async def get(self, request: HttpRequest, data: str) -> HttpResponse:
+    def get(self, request: HttpRequest, data: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
             decoded_data = base64.b64decode(data)
@@ -281,15 +282,15 @@ class OCSPView(View):
             return self.malformed_request()
 
         try:
-            return await self.process_ocsp_request(decoded_data)
+            return self.process_ocsp_request(decoded_data)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
 
-    async def post(self, request: HttpRequest) -> HttpResponse:
+    def post(self, request: HttpRequest) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
-            return await self.process_ocsp_request(request.body)
+            return self.process_ocsp_request(request.body)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
@@ -323,7 +324,7 @@ class OCSPView(View):
         """Read the file containing the private key used to sign OCSP responses."""
         return read_file(self.responder_key)
 
-    async def get_responder_cert(self) -> x509.Certificate:
+    def get_responder_cert(self) -> x509.Certificate:
         """Get the public key used to sign OCSP responses."""
         # User configured a loaded certificate
         if isinstance(self.responder_cert, x509.Certificate):
@@ -333,7 +334,7 @@ class OCSPView(View):
             responder_cert = self.responder_cert.encode("utf-8")
         elif SERIAL_RE.match(self.responder_cert):
             serial = self.responder_cert.replace(":", "")
-            cert = await Certificate.objects.aget(serial=serial)
+            cert = Certificate.objects.get(serial=serial)
             return cert.pub.loaded
         else:
             responder_cert = read_file(self.responder_cert)
@@ -343,25 +344,23 @@ class OCSPView(View):
         except ValueError:
             return load_pem_x509_certificate(responder_cert)
 
-    async def get_ca(self) -> CertificateAuthority:
+    def get_ca(self) -> CertificateAuthority:
         """Get the certificate authority for the request."""
-        return await CertificateAuthority.objects.aget_by_serial_or_cn(self.ca)
+        return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
 
-    async def get_cert(
-        self, ca: CertificateAuthority, serial: str
-    ) -> Union[Certificate, CertificateAuthority]:
+    def get_cert(self, ca: CertificateAuthority, serial: str) -> Union[Certificate, CertificateAuthority]:
         """Get the certificate that was requested in the OCSP request."""
         if self.ca_ocsp is True:
-            return await CertificateAuthority.objects.filter(parent=ca).aget(serial=serial)
+            return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
 
-        return await Certificate.objects.filter(ca=ca).aget(serial=serial)
+        return Certificate.objects.filter(ca=ca).get(serial=serial)
 
-    async def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
+    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # get key/cert for OCSP responder
         try:
             responder_key = self.get_responder_key()
-            responder_cert = await self.get_responder_cert()
+            responder_cert = self.get_responder_cert()
         except Exception as ex:
             raise ValueError(f"Could not read responder key/cert: {ex}") from ex
 
@@ -387,7 +386,7 @@ class OCSPView(View):
         """Get a response for a malformed request."""
         return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
-    async def process_ocsp_request(self, data: bytes) -> HttpResponse:
+    def process_ocsp_request(self, data: bytes) -> HttpResponse:
         """Process OCSP request data."""
         try:
             ocsp_req = ocsp.load_der_ocsp_request(data)
@@ -403,7 +402,7 @@ class OCSPView(View):
 
         # Get CA and certificate
         try:
-            ca = self.loaded_ca = await self.get_ca()
+            ca = self.loaded_ca = self.get_ca()
         except CertificateAuthority.DoesNotExist:
             log.error("%s: Certificate Authority could not be found.", self.ca)
             return self.fail()
@@ -413,7 +412,7 @@ class OCSPView(View):
         # NOINSPECTION NOTE: PyCharm wrongly things that second except is already covered by the first.
         # noinspection PyExceptClausesOrder
         try:
-            cert = await self.get_cert(ca, cert_serial)
+            cert = self.get_cert(ca, cert_serial)
         except CertificateAuthority.DoesNotExist:
             log.warning("%s: OCSP request for unknown CA received.", cert_serial)
             return self.fail()
@@ -452,7 +451,7 @@ class OCSPView(View):
 
         # Get the signed OCSP response.
         try:
-            response = await self.get_ocsp_response(builder)
+            response = self.get_ocsp_response(builder)
         except Exception as ex:  # pylint: disable=broad-exception-caught
             log.exception(ex)
             return self.fail()
@@ -485,13 +484,13 @@ class GenericOCSPView(OCSPView):
 
         return super().dispatch(request, **kwargs)
 
-    async def get_ca(self) -> CertificateAuthority:
-        return await CertificateAuthority.objects.aget(serial=self.kwargs["serial"])
+    def get_ca(self) -> CertificateAuthority:
+        return CertificateAuthority.objects.get(serial=self.kwargs["serial"])
 
     def get_expires(self, now: datetime) -> datetime:
         return now + timedelta(seconds=self.loaded_ca.ocsp_response_validity)
 
-    async def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
+    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # Load public key
         try:
@@ -529,7 +528,7 @@ class GenericCAIssuersView(View):
     :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension.
     """
 
-    async def get(self, request: HttpRequest, serial: str) -> HttpResponse:
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
-        ca = await CertificateAuthority.objects.aget(serial=serial)
+        ca = CertificateAuthority.objects.get(serial=serial)
         return HttpResponse(ca.pub.der, content_type="application/pkix-cert")

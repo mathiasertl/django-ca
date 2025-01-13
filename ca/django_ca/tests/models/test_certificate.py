@@ -16,7 +16,6 @@
 from datetime import datetime, timedelta, timezone as tz
 
 import josepy as jose
-from asgiref.sync import async_to_sync
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -25,7 +24,6 @@ from django.utils import timezone
 
 import pytest
 from _pytest.logging import LogCaptureFixture
-from pytest_django import DjangoAssertNumQueries
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.constants import ReasonFlags
@@ -41,23 +39,6 @@ def test_bundle_as_pem(
     """Test bundles of various CAs."""
     assert_bundle([root_cert, root], root_cert.bundle_as_pem)
     assert_bundle([child_cert, child, root], child_cert.bundle_as_pem)
-
-
-def test_aget_bundle_as_pem(
-    django_assert_num_queries: DjangoAssertNumQueries,
-    root: CertificateAuthority,
-    root_cert: Certificate,
-    child: CertificateAuthority,
-    child_cert: Certificate,
-) -> None:
-    """Test asynchronously getting the bundle."""
-    with django_assert_num_queries(0):
-        assert_bundle([root_cert, root], async_to_sync(root_cert.aget_bundle_as_pem)())
-        assert_bundle([child_cert, child, root], async_to_sync(child_cert.aget_bundle_as_pem)())
-
-    child_cert.refresh_from_db()
-    with django_assert_num_queries(1):
-        assert_bundle([child_cert, child, root], async_to_sync(child_cert.aget_bundle_as_pem)())
 
 
 def test_revocation() -> None:

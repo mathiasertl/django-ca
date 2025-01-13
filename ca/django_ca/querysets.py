@@ -19,8 +19,6 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
-from asgiref.sync import async_to_sync
-
 from cryptography import x509
 
 from django.core.exceptions import ImproperlyConfigured
@@ -87,8 +85,6 @@ class X509CertMixinQuerySetProtocol(
 
     model: X509CertMixinTypeVar
 
-    async def aget(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
-
     def filter(self, *args: Any, **kwargs: Any) -> "Self": ...
 
     def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
@@ -135,20 +131,6 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
         except self.model.DoesNotExist:
             return self.get(startswith_query)
 
-    async def aget_by_serial_or_cn(
-        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
-    ) -> X509CertMixinTypeVar:
-        """Asynchronous version of :py:func:`~django_ca.querysets.DjangoCAMixin.get_by_serial_or_cn()`."""
-        exact_query, startswith_query = self._serial_or_cn_query(identifier)
-
-        try:
-            # Imported CAs might have a shorter serial and there is a chance that it might become impossible
-            # to select a CA by serial if its serial matches another CA with a longer serial. So we try to
-            # match by exact serial first.
-            return await self.aget(exact_query)
-        except self.model.DoesNotExist:
-            return await self.aget(startswith_query)
-
     def for_certificate_revocation_list(
         self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar],
         *,
@@ -179,7 +161,7 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         """Return usable CAs that have support for the ACME protocol enabled."""
         return self.filter(acme_enabled=True)
 
-    async def adefault(self) -> "CertificateAuthority":
+    def default(self) -> "CertificateAuthority":
         """Return the default CA to use when no CA is selected.
 
         This function honors the :ref:`CA_DEFAULT_CA <settings-ca-default-ca>`. If no usable CA can be
@@ -194,7 +176,7 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         if (serial := model_settings.CA_DEFAULT_CA) is not None:
             try:
                 # NOTE: Don't prefilter queryset so that we can provide more specialized error messages below.
-                ca = await self.aget(serial=serial)
+                ca = self.get(serial=serial)
             except self.model.DoesNotExist as ex:
                 raise ImproperlyConfigured(f"CA_DEFAULT_CA: {serial}: CA not found.") from ex
 
@@ -211,15 +193,10 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         # NOTE: We add the serial to sorting make *sure* we have deterministic behavior. In many cases, users
         # will just create several CAs that all actually expire on the same day.
         first_ca_qs = self.usable().order_by("-not_after", "serial")  # usable == enabled and valid
-        first_ca = await first_ca_qs.afirst()
+        first_ca = first_ca_qs.first()
         if first_ca is None:
             raise ImproperlyConfigured("No CA is currently usable.")
         return first_ca
-
-    @async_to_sync
-    async def default(self) -> "CertificateAuthority":
-        """Return the default CA to use when no CA is selected (synchronous version)."""
-        return await self.adefault()
 
     def disabled(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are disabled."""
@@ -286,9 +263,9 @@ class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase)
 class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
     """Queryset for :class:`~django_ca.models.CertificateRevocationList`."""
 
-    async def anewest(self) -> Optional["CertificateRevocationList"]:
+    def newest(self) -> Optional["CertificateRevocationList"]:
         """Get the instance with the highest CRL number."""
-        return await self.order_by("-number").afirst()
+        return self.order_by("-number").first()
 
     def reasons(
         self, only_some_reasons: Optional[frozenset[x509.ReasonFlags]]

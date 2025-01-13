@@ -24,7 +24,6 @@ import random
 import re
 import typing
 from collections.abc import Iterable, Iterator
-from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from typing import Literal, Optional, Union
 
@@ -327,11 +326,6 @@ class X509CertMixin(DjangoCAModel):
         #            means that an abstract "bundle" property here could not be correctly typed.
         return "".join(c.pub.pem for c in self.bundle)  # type:  ignore[attr-defined]
 
-    async def aget_bundle_as_pem(self) -> str:
-        """Get bundle (asynchronous version)."""
-        bundle = await self.aget_bundle()  # type:  ignore[attr-defined]
-        return "".join(c.pub.pem for c in bundle)
-
     @property
     def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
         """Get a JOSE JWK public key for this certificate.
@@ -456,20 +450,6 @@ class X509CertMixin(DjangoCAModel):
 
         return revoked_cert.build()
 
-    @contextmanager
-    def _revoke(
-        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
-    ) -> Iterator[None]:
-        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
-
-        self.revoked = True
-        self.revoked_date = timezone.now()
-        self.revoked_reason = reason.name
-        self.compromised = compromised
-        yield
-
-        post_revoke_cert.send(sender=self.__class__, cert=self)
-
     def revoke(
         self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
     ) -> None:
@@ -484,15 +464,15 @@ class X509CertMixin(DjangoCAModel):
         compromised : datetime, optional
             When this certificate was compromised.
         """
-        with self._revoke(reason, compromised):
-            self.save()
+        pre_revoke_cert.send(sender=self.__class__, cert=self, reason=reason)
 
-    async def arevoke(
-        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
-    ) -> None:
-        """Revoke the current certificate (async version)."""
-        with self._revoke(reason, compromised):
-            await self.asave()
+        self.revoked = True
+        self.revoked_date = timezone.now()
+        self.revoked_reason = reason.name
+        self.compromised = compromised
+        self.save()
+
+        post_revoke_cert.send(sender=self.__class__, cert=self)
 
 
 class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missing]
@@ -1113,19 +1093,6 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             ca = ca.parent
         return bundle
 
-    async def aget_bundle(self) -> list["CertificateAuthority"]:
-        """Get bundle for this certificate authority (asynchronous version)."""
-        ca = self
-        bundle = [ca]
-        while ca.parent_id is not None:
-            if CertificateAuthority.parent.is_cached(ca):  # pylint: disable=no-member
-                ca = ca.parent  # type: ignore[assignment]  # checks above make sure it's not None
-            else:
-                ca = await CertificateAuthority.objects.select_related("parent").aget(pk=ca.parent_id)
-            bundle.append(ca)
-
-        return bundle
-
     @property
     def root(self) -> "CertificateAuthority":
         """Get the root CA for this CA."""
@@ -1189,16 +1156,6 @@ class Certificate(X509CertMixin):
     def bundle(self) -> list[X509CertMixin]:
         """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
         return [typing.cast(X509CertMixin, self), *typing.cast(list[X509CertMixin], self.ca.bundle)]
-
-    async def aget_bundle(self) -> list[X509CertMixin]:
-        """The complete certificate bundle. This includes all CAs as well as the certificates itself."""
-        if Certificate.ca.is_cached(self):  # pylint: disable=no-member
-            ca = self.ca
-        else:
-            ca = await CertificateAuthority.objects.select_related("parent").aget(pk=self.ca_id)
-
-        ca_bundle = await ca.aget_bundle()
-        return [typing.cast(X509CertMixin, self), *typing.cast(list[X509CertMixin], ca_bundle)]
 
     @property
     def root(self) -> CertificateAuthority:
@@ -1323,15 +1280,6 @@ class CertificateRevocationList(DjangoCAModel):
         """
         for cache_key, encoded_crl, expires_seconds in self._cache_data(serial):
             cache.set(cache_key, encoded_crl, expires_seconds)
-
-    async def acache(self, serial: Optional[str] = None) -> None:
-        """Cache this instance (async version).
-
-        If `serial` is not given, `self.ca` will be accessed (possibly triggering a database query) to
-        generate the cache keys.
-        """
-        for cache_key, encoded_crl, expires_seconds in self._cache_data(serial):
-            await cache.aset(cache_key, encoded_crl, expires_seconds)
 
 
 class CertificateOrder(DjangoCAModel):
@@ -1681,18 +1629,6 @@ class AcmeAuthorization(DjangoCAModel):
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
             # AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_TLS_ALPN_01)[0],
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
-        ]
-
-    async def aget_challenges(self) -> list["AcmeChallenge"]:
-        """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
-
-        Note that challenges will be created if they don't exist.
-        """
-        qs = AcmeChallenge.objects.url()
-        return [
-            (await qs.aget_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01))[0],
-            # AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_TLS_ALPN_01)[0],
-            (await qs.aget_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01))[0],
         ]
 
     @property

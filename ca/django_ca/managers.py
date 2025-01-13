@@ -18,7 +18,6 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
 from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar, Union
 
-from asgiref.sync import sync_to_async
 from pydantic import BaseModel
 
 from cryptography import x509
@@ -123,8 +122,6 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
         ) -> "CertificateQuerySet": ...
 
         def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar: ...
-
-        async def aget_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar: ...
 
         def valid(self) -> QuerySetTypeVar: ...
 
@@ -726,6 +723,8 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         #
         # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
 
+        def newest(self) -> Optional["CertificateRevocationList"]: ...
+
         def reasons(
             self, only_some_reasons: Optional[frozenset[x509.ReasonFlags]]
         ) -> "CertificateRevocationListQuerySet": ...
@@ -924,8 +923,6 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         obj.save(update_fields=("data",))  # only update single field to optimize query
 
         return obj
-
-    acreate_certificate_revocation_list = sync_to_async(create_certificate_revocation_list)
 
 
 class AcmeAccountManager(AcmeAccountManagerBase):

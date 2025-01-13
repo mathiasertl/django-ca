@@ -1,13 +1,13 @@
-include templates/include.d/upstream.conf;
+include /etc/nginx/templates/include.d/upstream.conf;
 
 server {
     listen       ${NGINX_PORT};
     server_name  ${NGINX_HOST};
 
-    include conf.d/include.d/acme.conf;
-    include templates/include.d/admin.conf;
-    include conf.d/include.d/api.conf;
-    include conf.d/include.d/ca.conf;
+    include /etc/nginx/templates/include.d/admin.conf;
+    include /etc/nginx/conf.d/include.d/acme.conf;
+    include /etc/nginx/conf.d/include.d/api.conf;
+    include /etc/nginx/conf.d/include.d/ca.conf;
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {

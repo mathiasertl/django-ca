@@ -31,7 +31,6 @@ from typing import Generic, Optional, TypeVar, Union, cast
 import acme.jws
 import josepy as jose
 from acme import messages
-from asgiref.sync import sync_to_async
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -146,7 +145,7 @@ class AcmeDirectory(View):
     def _url(self, request: HttpRequest, name: str, ca: CertificateAuthority) -> str:
         return request.build_absolute_uri(reverse(f"django_ca:{name}", kwargs={"serial": ca.serial}))
 
-    async def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
+    def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
@@ -154,13 +153,13 @@ class AcmeDirectory(View):
         if serial is None:
             try:
                 # NOTE: default() already calls usable()
-                ca = await CertificateAuthority.objects.acme().adefault()
+                ca = CertificateAuthority.objects.acme().default()
             except ImproperlyConfigured:
                 return AcmeResponseNotFound(message="No (usable) default CA configured.")
         else:
             try:
                 # NOTE: Serial is already sanitized by URL converter
-                ca = await CertificateAuthority.objects.acme().usable().aget(serial=serial)
+                ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
                 return AcmeResponseNotFound(message=f"{serial}: CA not found.")
 
@@ -206,17 +205,17 @@ class AcmeGetNonceViewMixin:
         """Get the cache key for the given request and nonce."""
         return f"acme-nonce-{self.kwargs['serial']}-{nonce}"
 
-    async def get_nonce(self) -> str:
+    def get_nonce(self) -> str:
         """Get a random Nonce and add it to the cache."""
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.json_util.encode_b64jose(data)
-        await cache.aset(self.get_cache_key(nonce), 0)
+        cache.set(self.get_cache_key(nonce), 0)
         return nonce
 
-    async def validate_nonce(self, nonce: str) -> bool:
+    def validate_nonce(self, nonce: str) -> bool:
         """Validate that the given nonce was issued and was not used before."""
         try:
-            count = await cache.aincr(self.get_cache_key(nonce))
+            count = cache.incr(self.get_cache_key(nonce))
         except ValueError:
             # raised if cache_key is not set
             return False
@@ -238,7 +237,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     jws: acme.jws.JWS
 
     @abc.abstractmethod
-    async def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         """Abstract method expected to implement processing a message.
 
         The `slug` argument is the URL slug that identifies an ACME object and is None for requests that
@@ -299,12 +298,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
-    # TYPEHINT NOTE: Django does not officially support dispatch() being an async method, but in async views,
-    #   it returns a coroutine, just like an async view would. Thus declaring it async should not make much
-    #   difference.
-    async def dispatch(  # type: ignore[override]  # pylint: disable=invalid-overridden-method
-        self, request: HttpRequest, serial: str, slug: Optional[str] = None
-    ) -> "HttpResponseBase":
+    def dispatch(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> "HttpResponseBase":
         if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -315,12 +309,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             raise ImproperlyConfigured("View expects a str for a slug")
 
         try:
-            # TYPEHINT NOTE: super().dispatch() is not an async method but still returns a coroutine, because
-            #   post() is async. We await it and cast it to AcmeResponse (since post already returns that).
-            response = cast(
-                AcmeResponse,
-                await super().dispatch(request, serial=serial, slug=slug),  # type:ignore[misc]
-            )
+            response = cast(AcmeResponse, super().dispatch(request, serial=serial, slug=slug))
         except AcmeException as ex:
             response = ex.get_response()
         except Exception as ex:  # pylint: disable=broad-except
@@ -335,10 +324,10 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         # An ACME server provides nonces to clients using the HTTP Replay-Nonce header field, as specified in
         # Section 6.5.1.  The server MUST include a Replay-Nonce header field in every successful response to
         # a POST request and SHOULD provide it in error responses as well.
-        response["replay-nonce"] = await self.get_nonce()
+        response["replay-nonce"] = self.get_nonce()
         return response
 
-    async def post(  # noqa: PLR0911
+    def post(  # noqa: PLR0911
         self, request: HttpRequest, serial: str, slug: Optional[str] = None
     ) -> AcmeResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
@@ -368,7 +357,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
         # Get certificate authority for this request
         try:
-            self.ca = await CertificateAuthority.objects.acme().usable().aget(serial=serial)
+            self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
         except CertificateAuthority.DoesNotExist:
             return AcmeResponseNotFound(message="The requested CA cannot be found.")
 
@@ -384,7 +373,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # combined.kid is a full URL pointing to the account.
             try:
                 account_qs = AcmeAccount.objects.viewable().url()
-                account = await account_qs.aget(ca=self.ca, kid=combined.kid)
+                account = account_qs.get(ca=self.ca, kid=combined.kid)
             except AcmeAccount.DoesNotExist:
                 return AcmeResponseUnauthorized(message="Account not found.")
 
@@ -422,9 +411,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             return AcmeResponseMalformed(message="JWS signature invalid.")
 
         # self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
-        if combined.nonce is None or not await self.validate_nonce(
-            jose.json_util.encode_b64jose(combined.nonce)
-        ):
+        if combined.nonce is None or not self.validate_nonce(jose.json_util.encode_b64jose(combined.nonce)):
             # ... "nonce"
             return AcmeResponseBadNonce()
 
@@ -434,7 +421,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # match, then the server MUST reject the request as unauthorized."
             return AcmeResponseUnauthorized(message="URL does not match.")
 
-        return await self.process_acme_request(slug=slug)
+        return self.process_acme_request(slug=slug)
 
 
 class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
@@ -443,7 +430,7 @@ class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
     ignore_body = False  # True if we want to ignore the message body
 
     @abc.abstractmethod
-    async def acme_request(self, slug: str) -> AcmeResponse:
+    def acme_request(self, slug: str) -> AcmeResponse:
         """Abstract method to process an ACME post-as-get request.
 
         Actual view subclasses are expected to implement this function.
@@ -452,13 +439,13 @@ class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
         contain no information.
         """
 
-    async def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         if self.ignore_body is False and self.jws.payload != b"":
             return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
         if slug is None:  # pragma: no cover; just a safety measure
             return AcmeResponseError(message="PostAsGet view called with slug.")
 
-        return await self.acme_request(slug=slug)
+        return self.acme_request(slug=slug)
 
 
 class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.ABCMeta):
@@ -467,20 +454,20 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
     message_cls: type[MessageTypeVar]
 
     @abc.abstractmethod
-    async def acme_request(self, message: MessageTypeVar, slug: Optional[str]) -> AcmeResponse:
+    def acme_request(self, message: MessageTypeVar, slug: Optional[str]) -> AcmeResponse:
         """Process ACME request.
 
         Actual view subclasses are expected to implement this function.
         """
 
-    async def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
         try:
             message = self.message_cls.json_loads(self.jws.payload)
             log.debug("ACME message: %s", message)
         except jose.errors.DeserializationError as e:
             return AcmeResponseMalformedPayload(message=", ".join(e.args))
 
-        return await self.acme_request(message, slug)
+        return self.acme_request(message, slug)
 
 
 class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
@@ -506,10 +493,10 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
 
         return super().dispatch(request, serial)
 
-    async def get_headers(self) -> dict[str, str]:
+    def get_headers(self) -> dict[str, str]:
         """Get headers used in responses to both HEAD and GET requests."""
         return {
-            "replay-nonce": await self.get_nonce(),
+            "replay-nonce": self.get_nonce(),
             # RFC 8555, section 7.2:
             #
             #   The server MUST include a Cache-Control header field with the "no-store" directive in
@@ -517,20 +504,20 @@ class AcmeNewNonceView(AcmeGetNonceViewMixin, View):
             "cache-control": "no-store",
         }
 
-    async def head(self, request: HttpRequest, serial: str) -> HttpResponse:
+    def head(self, request: HttpRequest, serial: str) -> HttpResponse:
         """Get a new Nonce with a HEAD request."""
         # pylint: disable=method-hidden; false positive - View.setup() sets head as property if not defined
         # pylint: disable=unused-argument; false positive - really used by AcmeGetNonceViewMixin
-        return HttpResponse(headers=await self.get_headers())
+        return HttpResponse(headers=self.get_headers())
 
-    async def get(self, request: HttpRequest, serial: str) -> HttpResponse:
+    def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         """Get a new Nonce with a GET request.
 
         Note that certbot always does a HEAD request, but RFC 8555, section 7.2 mandates support for GET
         requests.
         """
         # pylint: disable=unused-argument; false positive - really used by AcmeGetNonceViewMixin
-        headers = await self.get_headers()
+        headers = self.get_headers()
         return HttpResponse(status=HTTPStatus.NO_CONTENT, headers=headers)  # 204, unlike HEAD, which has 200
 
 
@@ -545,7 +532,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
     message_cls = messages.Registration
     requires_key = True
 
-    async def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
+    def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
         """Process ACME request."""
         pem = (
             self.jwk.key.public_bytes(
@@ -566,7 +553,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
         #   key (see Section 7.3.1).
         if message.only_return_existing:
             try:
-                account = await account_qs.aget(thumbprint=thumbprint, pem=pem)
+                account = account_qs.get(thumbprint=thumbprint, pem=pem)
                 return AcmeResponseAccount(self.request, account)
             except AcmeAccount.DoesNotExist as ex:
                 # RFC 8555, section 7.3:
@@ -582,7 +569,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
         #   and provide the URL of that account in the Location header field.
         try:
             # NOTE: Filter for thumbprint too b/c index for the field should speed up lookups.
-            account = await account_qs.aget(ca=self.ca, thumbprint=thumbprint, pem=pem)
+            account = account_qs.get(ca=self.ca, thumbprint=thumbprint, pem=pem)
             return AcmeResponseAccount(self.request, account)
         except AcmeAccount.DoesNotExist:
             pass
@@ -617,9 +604,8 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
 
         # Call full_clean() so that model validation can do its magic
         try:
-            # NOTE: full_clean() does not have an async version yet
-            await sync_to_async(account.full_clean)()
-            await account.asave()
+            account.full_clean()
+            account.save()
         except ValidationError as ex:
             # Add a pretty list of validation errors to the detail field in the response
             subproblems = ", ".join(
@@ -676,21 +662,19 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
             order__account=account, status=AcmeAuthorization.STATUS_PENDING
         ).update(status=AcmeAuthorization.STATUS_DEACTIVATED)
 
-    async def acme_request(
-        self, message: messages.Registration, slug: Optional[str] = None
-    ) -> AcmeResponseAccount:
+    def acme_request(self, message: messages.Registration, slug: Optional[str] = None) -> AcmeResponseAccount:
         if slug != self.account.slug:
             raise AcmeMalformed(message="Account slug does not match account that signed the request.")
 
         if message.status == AcmeAccount.STATUS_DEACTIVATED:
-            await sync_to_async(self._deactivate_account)(self.account)
+            self._deactivate_account(self.account)
         elif message.contact:
             self.validate_contacts(message)
             self.account.contact = "\n".join(message.contact)
-            await self.account.asave()
+            self.account.save()
         elif message.terms_of_service_agreed is not None:
             self.account.terms_of_service_agreed = message.terms_of_service_agreed
-            await self.account.asave()
+            self.account.save()
         else:
             raise AcmeMalformed(message="Only contact information can be updated.")
 
@@ -701,7 +685,7 @@ class AcmeAccountOrdersView(AcmeBaseView):
     """View showing orders for an account (not yet implemented)."""
 
     # TODO: implement this view
-    async def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:  # pragma: no cover
+    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:  # pragma: no cover
         raise AcmeException(message="Not Implemented.")
 
 
@@ -734,7 +718,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         ]
         return order, authorizations
 
-    async def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
+    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
         """Process ACME request."""
         now = datetime.now(tz.utc)
 
@@ -761,7 +745,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
             if not_after is not None and timezone.is_aware(not_after):
                 not_after = timezone.make_naive(not_after)
 
-        order, authorizations = await sync_to_async(self._create_order)(not_before, not_after, identifiers)
+        order, authorizations = self._create_order(not_before, not_after, identifiers)
 
         expires = order.expires
         if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
@@ -792,10 +776,10 @@ class AcmeOrderView(AcmePostAsGetView):
     .. seealso:: `RFC 8555, 7.4 <https://tools.ietf.org/html/rfc8555#section-7.4>`_
     """
 
-    async def acme_request(self, slug: str) -> AcmeResponseOrder:
+    def acme_request(self, slug: str) -> AcmeResponseOrder:
         try:
             order_qs = AcmeOrder.objects.viewable().account(self.account).url()
-            order = await order_qs.aget(slug=slug)
+            order = order_qs.get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -815,7 +799,7 @@ class AcmeOrderView(AcmePostAsGetView):
 
         cert_url = None
         try:
-            cert = await AcmeCertificate.objects.select_related("cert").url().aget(order=order)
+            cert = AcmeCertificate.objects.select_related("cert").url().get(order=order)
             if cert.cert and order.status == AcmeOrder.STATUS_VALID:
                 # WARNING: certbot (at least version 0.31.0) will try to fetch the certificate immediately if
                 # we return the URL. That view will fail if the certificate is not yet issued, and certbot
@@ -825,9 +809,6 @@ class AcmeOrderView(AcmePostAsGetView):
                 cert_url = self.request.build_absolute_uri(cert.acme_url)
         except AcmeCertificate.DoesNotExist:
             pass
-
-        # Asynchronously fetch authorizations
-        authorizations = [a async for a in authorizations]
 
         response = AcmeResponseOrder(
             status=order.status,
@@ -919,10 +900,10 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         # https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
         transaction.on_commit(lambda: run_task(acme_issue_certificate, acme_certificate_pk=cert.pk))
 
-    async def acme_request(self, message: CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
+    def acme_request(self, message: CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
         """Process ACME request."""
         try:
-            order = await AcmeOrder.objects.viewable().account(account=self.account).url().aget(slug=slug)
+            order = AcmeOrder.objects.viewable().account(account=self.account).url().get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -951,7 +932,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             expires = expires.replace(tzinfo=tz.utc)
 
         authorizations = order.authorizations.url().all()  # type: ignore[attr-defined]
-        async for auth in authorizations:  # pragma: no branch  # py3.9 does not recognize this.
+        for auth in authorizations:  # pragma: no branch  # py3.9 does not recognize this.
             if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
@@ -962,7 +943,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         # Parse and validate the CSR
         csr = self.validate_csr(message, authorizations)
 
-        await sync_to_async(self.create_certificate)(order, csr)
+        self.create_certificate(order, csr)
 
         response = AcmeResponseOrder(
             status=order.status,
@@ -984,10 +965,10 @@ class AcmeCertificateView(AcmePostAsGetView):
 
     # This is the only view that does not return JSON, thus acme_request() returns the superclass
     # HttpResponse, and not an AcmeResponse (which is always JSON).
-    async def acme_request(self, slug: str) -> HttpResponse:  # type: ignore[override]
+    def acme_request(self, slug: str) -> HttpResponse:  # type: ignore[override]
         cert_qs = AcmeCertificate.objects.viewable().account(self.account).select_related("cert__ca")
         try:
-            cert = await cert_qs.aget(slug=slug)
+            cert: AcmeCertificate = cert_qs.get(slug=slug)
         except AcmeCertificate.DoesNotExist as ex:
             raise AcmeUnauthorized() from ex
 
@@ -999,8 +980,7 @@ class AcmeCertificateView(AcmePostAsGetView):
         # self.prepared['cert'] = slug
         # self.prepared['csr'] = cert.csr
         # self.prepared['order'] = cert.order.slug
-        content = await cert.cert.aget_bundle_as_pem()
-        return HttpResponse(content, content_type="application/pem-certificate-chain")
+        return HttpResponse(cert.cert.bundle_as_pem, content_type="application/pem-certificate-chain")
 
 
 class AcmeAuthorizationView(AcmePostAsGetView):
@@ -1022,12 +1002,12 @@ class AcmeAuthorizationView(AcmePostAsGetView):
     .. seealso:: `RFC 8555, 7.5 <https://tools.ietf.org/html/rfc8555#section-7.5>`_
     """
 
-    async def acme_request(self, slug: str) -> AcmeResponseAuthorization:
+    def acme_request(self, slug: str) -> AcmeResponseAuthorization:
         # TODO: implement deactivating an authorization (section 7.5.2)
 
         auth_qs = AcmeAuthorization.objects.viewable().account(account=self.account).url()
         try:
-            auth = await auth_qs.aget(slug=slug)
+            auth = auth_qs.get(slug=slug)
         except AcmeAuthorization.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -1035,7 +1015,7 @@ class AcmeAuthorizationView(AcmePostAsGetView):
 
         # self.prepared['order'] = auth.order.slug
         # self.prepared['auth'] = auth.slug
-        challenges = await auth.aget_challenges()
+        challenges = auth.get_challenges()
 
         expires = auth.expires
         if expires.tzinfo is None:  # acme.Order requires a timezone-aware object
@@ -1100,10 +1080,10 @@ class AcmeChallengeView(AcmePostAsGetView):
         # https://docs.djangoproject.com/en/2.2/topics/db/transactions/#django.db.transaction.on_commit
         transaction.on_commit(lambda: run_task(acme_validate_challenge, challenge.pk))
 
-    async def acme_request(self, slug: str) -> AcmeResponseChallenge:
+    def acme_request(self, slug: str) -> AcmeResponseChallenge:
         challenge_qs = AcmeChallenge.objects.viewable().account(self.account).url()
         try:
-            challenge = await challenge_qs.aget(slug=slug)
+            challenge = challenge_qs.get(slug=slug)
         except AcmeChallenge.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -1122,7 +1102,7 @@ class AcmeChallengeView(AcmePostAsGetView):
             #   They transition to the "processing" state when the client responds to the challenge
             challenge.status = AcmeChallenge.STATUS_PROCESSING
 
-            await sync_to_async(self.save_challenge)(challenge)
+            self.save_challenge(challenge)
 
         return AcmeResponseChallenge(
             chall=challenge.acme_challenge,
@@ -1143,7 +1123,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
     accepts_kid_or_jwk = True
     message_cls = messages.Revocation
 
-    async def get_certificate(self, serial: str) -> Certificate:
+    def get_certificate(self, serial: str) -> Certificate:
         """Get the certificate that is to be revoked by this request.
 
         This function handles the special authorization requirements for this request (they can be signed by
@@ -1162,7 +1142,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             # This implies that the account used to request the certificate may even be revoked or invalid, as
             # long as the private key is used to sign the request. So we don't look at the ACME account at all
             # here.
-            cert: Certificate = await certs.aget(serial=serial)
+            cert: Certificate = certs.get(serial=serial)
 
             jwk = cert.jwk
 
@@ -1181,7 +1161,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             # NOTE: The base class already makes sure that the account is currently valid.
             certs = certs.filter(acmecertificate__order__account__isnull=False)
             certs = certs.select_related("acmecertificate__order__account")
-            cert = await certs.aget(serial=serial)
+            cert = certs.get(serial=serial)
 
             # If the request is from the account that issued the certificate, the certificate can be revoked.
             # NOTE: self.account is **only** set if the request has no JWK.
@@ -1190,10 +1170,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
 
             # If the account holds authorizations for all the identifiers in the certificate, it can also
             # be revoked, so get a list of all currently valid authorizations that the account holds
-            authz_qs = AcmeAuthorization.objects.dns().valid().account(account=self.account).names()
-
-            # PYLINT NOTE: set() does not allow an async generator, pylint does not detect this.
-            authz = set([auth async for auth in authz_qs])  # pylint: disable=consider-using-set-comprehension
+            authz = set(AcmeAuthorization.objects.dns().valid().account(account=self.account).names())
 
             # Get names from the certificate, first from the CommonName...
             # NOTE: returns empty list if subject does not have a CommonName.
@@ -1216,7 +1193,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
 
         return cert
 
-    async def acme_request(self, message: messages.Revocation, slug: Optional[str]) -> AcmeResponse:
+    def acme_request(self, message: messages.Revocation, slug: Optional[str]) -> AcmeResponse:
         reason_code = message.reason
         if reason_code is None:
             reason_code = 0
@@ -1236,7 +1213,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             raise AcmeMalformed(message="Request did not contain a certificate.")
 
         try:
-            cert = await self.get_certificate(int_to_hex(cg_cert.serial_number))
+            cert = self.get_certificate(int_to_hex(cg_cert.serial_number))
         except Certificate.DoesNotExist as ex:
             raise AcmeUnauthorized(message="Certificate not found.") from ex
 
@@ -1252,5 +1229,5 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             raise AcmeMalformed(typ="alreadyRevoked", message="Certificate was already revoked.")
 
         # Finally actually revoke the certificate
-        await cert.arevoke(reason)
+        cert.revoke(reason)
         return AcmeResponse({})  # No response specified in RFC 8555!
