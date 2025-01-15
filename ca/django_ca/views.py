@@ -77,9 +77,9 @@ class CertificateRevocationListView(View):
     scope: Any = _NOT_SET
     """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
     include both.
-    
+
     .. deprecated:: 2.1.0
-    
+
        This flag is deprecated and will be removed in django-ca 2.3.0. Use `only_contains_ca_certs` and
        `only_contains_user_certs` instead.
     """
@@ -99,12 +99,12 @@ class CertificateRevocationListView(View):
 
     expires = 86400
     """**(deprecated)** CRL not_after in this many seconds.
-    
+
     *Please note* that this value is only used if no current CRL is found in the database (or cache) and the
     CRL is generated locally (which will fail if the view does not have access to the private key).
-    
+
     .. versionchanged:: 2.1.0
-    
+
        The default was changed to one day (from 600) to align with the default elsewhere in the code.
     """
 
@@ -114,9 +114,9 @@ class CertificateRevocationListView(View):
 
     include_issuing_distribution_point: Optional[bool] = None
     """**(deprecated)** Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension.
-    
+
     .. deprecated:: 2.1.0
-    
+
        This parameter no longer has any effect and will be removed in django-ca 2.3.0.
     """
 
@@ -218,7 +218,8 @@ class CertificateRevocationListView(View):
         if get_encoding := request.GET.get("encoding"):
             if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
                 return HttpResponseBadRequest(
-                    f"{get_encoding}: Invalid encoding requested.", content_type="text/plain"
+                    f"{get_encoding}: Invalid encoding requested.",
+                    content_type="text/plain",
                 )
             # TYPEHINT NOTE: type is verified in the previous line
             encoding = cast(CertificateRevocationListEncodings, parse_encoding(get_encoding))
@@ -530,5 +531,11 @@ class GenericCAIssuersView(View):
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
-        ca = CertificateAuthority.objects.get(serial=serial)
-        return HttpResponse(ca.pub.der, content_type="application/pkix-cert")
+        cache_key = f"ca_{serial}_der"
+        der = cache.get(cache_key)
+        if der is None:
+            ca = CertificateAuthority.objects.only("pub").get(serial=serial)
+            der = ca.pub.der
+            cache.set(cache_key, der, timeout=86400)
+
+        return HttpResponse(der, content_type="application/pkix-cert")

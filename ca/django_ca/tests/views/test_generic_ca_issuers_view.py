@@ -30,3 +30,9 @@ def test_generic_ca_issuers_view(
         resp = client.get(url)
     assert resp["Content-Type"] == "application/pkix-cert"
     assert resp.content == usable_root.pub.der
+
+    # Run query again - no database queries now because DER is in the cache.
+    with django_assert_num_queries(0):
+        resp = client.get(url)
+    assert resp["Content-Type"] == "application/pkix-cert"
+    assert resp.content == usable_root.pub.der
