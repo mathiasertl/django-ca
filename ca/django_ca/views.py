@@ -390,6 +390,14 @@ class OCSPView(View):
         """Get a response for a malformed request."""
         return self.fail(ocsp.OCSPResponseStatus.MALFORMED_REQUEST)
 
+    def get_ca_and_cert(
+        self, cert_serial: str
+    ) -> tuple[CertificateAuthority, Union[Certificate, CertificateAuthority]]:
+        """Get CA and certificate for this request."""
+        ca = self.get_ca()
+        cert = self.get_cert(ca, cert_serial)
+        return ca, cert
+
     def process_ocsp_request(self, data: bytes) -> HttpResponse:
         """Process OCSP request data."""
         try:
@@ -406,17 +414,10 @@ class OCSPView(View):
 
         cert_serial = int_to_hex(ocsp_req.serial_number)
 
-        # Get CA and certificate
-        try:
-            ca = self.get_ca()
-        except CertificateAuthority.DoesNotExist:
-            log.error("%s: Certificate Authority could not be found.", self.ca)
-            return self.fail()
-
         # NOINSPECTION NOTE: PyCharm wrongly things that second except is already covered by the first.
         # noinspection PyExceptClausesOrder
         try:
-            cert = self.get_cert(ca, cert_serial)
+            ca, cert = self.get_ca_and_cert(cert_serial)
         except CertificateAuthority.DoesNotExist:
             log.warning("%s: OCSP request for unknown CA received.", cert_serial)
             return self.fail()
@@ -490,6 +491,13 @@ class GenericOCSPView(OCSPView):
 
     def get_ca(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get(serial=self.kwargs["serial"])
+
+    def get_ca_and_cert(
+        self, cert_serial: str
+    ) -> tuple[CertificateAuthority, Union[Certificate, CertificateAuthority]]:
+        ca_serial = self.kwargs["serial"]
+        cert = Certificate.objects.select_related("ca").get(ca__serial=ca_serial, serial=cert_serial)
+        return cert.ca, cert
 
     def get_expires(self, ca: CertificateAuthority, now: datetime) -> datetime:
         return now + timedelta(seconds=ca.ocsp_response_validity)

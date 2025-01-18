@@ -330,9 +330,10 @@ def test_ca_ocsp(
 def test_bad_ca(caplog: LogCaptureFixture, client: Client) -> None:
     """Fetch data for a CA that does not exist."""
     data = base64.b64encode(req1).decode("utf-8")
+    serial = CERT_DATA["child-cert"]["serial"]
     response = client.get(reverse("unknown", kwargs={"data": data}))
     assert caplog.record_tuples == [
-        ("django_ca.views", logging.ERROR, "unknown: Certificate Authority could not be found.")
+        ("django_ca.views", logging.WARNING, f"{serial}: OCSP request for unknown CA received.")
     ]
 
     assert response.status_code == HTTPStatus.OK

@@ -65,7 +65,7 @@ def test_get(
     profile_ocsp: Certificate,
 ) -> None:
     """Test getting OCSP responses."""
-    with django_assert_num_queries(2):
+    with django_assert_num_queries(1):
         response = ocsp_get(client, child_cert)
     assert_ocsp_response(response, child_cert, responder_certificate=profile_ocsp)
 
