@@ -356,7 +356,9 @@ class OCSPView(View):
 
         return Certificate.objects.filter(ca=ca).get(serial=serial)
 
-    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
+    def get_ocsp_response(  # pylint: disable-next=unused-argument  # ca is required by subclasses
+        self, ca: CertificateAuthority, builder: OCSPResponseBuilder
+    ) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # get key/cert for OCSP responder
         try:
@@ -375,7 +377,8 @@ class OCSPView(View):
         # with a different private key type or hash algorithm if desired.
         return builder.sign(responder_key, responder_cert.signature_hash_algorithm)
 
-    def get_expires(self, now: datetime) -> datetime:
+    # pylint: disable-next=unused-argument  # ca is required by subclasses
+    def get_expires(self, ca: CertificateAuthority, now: datetime) -> datetime:
         """Get the timestamp when the OCSP response expires."""
         return now + timedelta(seconds=self.expires)
 
@@ -401,14 +404,14 @@ class OCSPView(View):
                 # It seems impossible to get cryptography to create such a request, so it's not tested
                 return self.malformed_request()
 
+        cert_serial = int_to_hex(ocsp_req.serial_number)
+
         # Get CA and certificate
         try:
-            ca = self.loaded_ca = self.get_ca()
+            ca = self.get_ca()
         except CertificateAuthority.DoesNotExist:
             log.error("%s: Certificate Authority could not be found.", self.ca)
             return self.fail()
-
-        cert_serial = int_to_hex(ocsp_req.serial_number)
 
         # NOINSPECTION NOTE: PyCharm wrongly things that second except is already covered by the first.
         # noinspection PyExceptClausesOrder
@@ -429,7 +432,7 @@ class OCSPView(View):
 
         now = datetime.now(tz=tz.utc)
         builder = ocsp.OCSPResponseBuilder()
-        expires = self.get_expires(now)
+        expires = self.get_expires(ca, now)
         builder = builder.add_response(
             cert=cert.pub.loaded,
             issuer=ca.pub.loaded,
@@ -452,7 +455,7 @@ class OCSPView(View):
 
         # Get the signed OCSP response.
         try:
-            response = self.get_ocsp_response(builder)
+            response = self.get_ocsp_response(ca, builder)
         except Exception as ex:  # pylint: disable=broad-exception-caught
             log.exception(ex)
             return self.fail()
@@ -488,14 +491,16 @@ class GenericOCSPView(OCSPView):
     def get_ca(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get(serial=self.kwargs["serial"])
 
-    def get_expires(self, now: datetime) -> datetime:
-        return now + timedelta(seconds=self.loaded_ca.ocsp_response_validity)
+    def get_expires(self, ca: CertificateAuthority, now: datetime) -> datetime:
+        return now + timedelta(seconds=ca.ocsp_response_validity)
 
-    def get_ocsp_response(self, builder: OCSPResponseBuilder) -> Union[HttpResponse, OCSPResponse]:
+    def get_ocsp_response(
+        self, ca: CertificateAuthority, builder: OCSPResponseBuilder
+    ) -> Union[HttpResponse, OCSPResponse]:
         """Sign the OCSP request using cryptography keys."""
         # Load public key
         try:
-            responder_pem = self.loaded_ca.ocsp_key_backend_options["certificate"]["pem"]
+            responder_pem = ca.ocsp_key_backend_options["certificate"]["pem"]
         except KeyError:
             # The OCSP responder certificate has never been created. `manage.py init_ca` usually creates them,
             # so this can only happen if the system is misconfigured (e.g. Celery task is never acted upon),
@@ -519,7 +524,7 @@ class GenericOCSPView(OCSPView):
         # TYPEHINT NOTE: Certificates are always generated with a supported algorithm, so we do not check.
         algorithm = cast(Optional[AllowedHashTypes], responder_certificate.signature_hash_algorithm)
 
-        return self.loaded_ca.ocsp_key_backend.sign_ocsp_response(self.loaded_ca, builder, algorithm)
+        return ca.ocsp_key_backend.sign_ocsp_response(ca, builder, algorithm)
 
 
 class GenericCAIssuersView(View):
