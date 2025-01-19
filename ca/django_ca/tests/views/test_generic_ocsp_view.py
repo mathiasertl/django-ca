@@ -13,8 +13,9 @@
 
 """Test GenericOCSPView."""
 
-# pylint: disable=redefined-outer-name
+import base64
 
+# pylint: disable=redefined-outer-name
 import logging
 import shutil
 import typing
@@ -45,17 +46,17 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 @pytest.fixture
-def child_cert(tmpcadir: Path, child_cert: Certificate, profile_ocsp: Certificate) -> Certificate:
+def child(tmpcadir: Path, child: CertificateAuthority, profile_ocsp: Certificate) -> CertificateAuthority:
     """Augment the child_cert fixture to add a usable OCSP certificate."""
     shutil.copy(FIXTURES_DIR / "profile-ocsp.key", tmpcadir / "ocsp")
 
-    child_cert.ca.ocsp_key_backend_options = {
+    child.ocsp_key_backend_options = {
         "private_key": {"path": str(tmpcadir / "ocsp")},
         "certificate": {"pem": profile_ocsp.pub.pem},
     }
-    child_cert.ca.save()
+    child.save()
 
-    return child_cert
+    return child
 
 
 def test_get(
@@ -74,6 +75,24 @@ def test_get_with_nonce(client: Client, child_cert: Certificate, profile_ocsp: C
     """Test OCSP responder via GET request while passing a nonce."""
     response = ocsp_get(client, child_cert, nonce=b"foo")
     assert_ocsp_response(response, child_cert, nonce=b"foo", responder_certificate=profile_ocsp)
+
+
+def test_get_with_ca(
+    django_assert_num_queries: DjangoAssertNumQueries,
+    client: Client,
+    child: CertificateAuthority,
+    profile_ocsp: Certificate,
+) -> None:
+    """Test getting OCSP responses for CA OCSP URLs."""
+    # Copy OCSP key config from child to root. This cert is issued by the child, but this is not tested
+    # anyway.
+    assert child.parent is not None  # To make mypy happy
+    child.parent.ocsp_key_backend_options = child.ocsp_key_backend_options
+    child.parent.save()
+
+    with django_assert_num_queries(1):
+        response = ocsp_get(client, child)
+    assert_ocsp_response(response, child, responder_certificate=profile_ocsp)
 
 
 @pytest.mark.usefixtures("hsm_ocsp_backend")
@@ -195,6 +214,20 @@ def test_ed448_certificate_authority(
     private_key, ocsp_cert = generate_ocsp_key(usable_ed448)
     response = ocsp_get(client, ed448_cert)
     assert_ocsp_response(response, ed448_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None)
+
+
+def test_ca_request_with_root_ca(client: Client, root: CertificateAuthority) -> None:
+    """Test fetching a CA OCSP response for a root CA."""
+    builder = ocsp.OCSPRequestBuilder()
+    builder = builder.add_certificate(root.pub.loaded, root.pub.loaded, hashes.SHA512())
+    ocsp_request = builder.build()
+    encoded_ocsp_request = base64.b64encode(ocsp_request.public_bytes(Encoding.DER)).decode("utf-8")
+
+    url = reverse("django_ca:ocsp-ca-get", kwargs={"serial": root.serial, "data": encoded_ocsp_request})
+    response = client.get(url)
+
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
 
 
 def test_invalid_responder_key(caplog: LogCaptureFixture, client: Client, child_cert: Certificate) -> None:

@@ -489,13 +489,17 @@ class GenericOCSPView(OCSPView):
 
         return super().dispatch(request, **kwargs)
 
-    def get_ca(self) -> CertificateAuthority:
-        return CertificateAuthority.objects.get(serial=self.kwargs["serial"])
-
     def get_ca_and_cert(
         self, cert_serial: str
     ) -> tuple[CertificateAuthority, Union[Certificate, CertificateAuthority]]:
         ca_serial = self.kwargs["serial"]
+
+        if self.ca_ocsp:
+            cert_qs = CertificateAuthority.objects.select_related("parent")
+            queried_ca = cert_qs.get(parent__serial=ca_serial, serial=cert_serial)
+            parent = cast(CertificateAuthority, queried_ca.parent)  # parent cannot be None due to filter()
+            return parent, queried_ca
+
         cert = Certificate.objects.select_related("ca").get(ca__serial=ca_serial, serial=cert_serial)
         return cert.ca, cert
 

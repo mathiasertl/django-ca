@@ -16,7 +16,7 @@
 import base64
 import typing
 from http import HTTPStatus
-from typing import Optional
+from typing import Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -47,13 +47,21 @@ def generate_ocsp_key(ca: CertificateAuthority) -> tuple[CertificateIssuerPrivat
 
 def ocsp_get(
     client: Client,
-    certificate: Certificate,
+    certificate: Union[CertificateAuthority, Certificate],
     nonce: Optional[bytes] = None,
     hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
 ) -> "HttpResponse":
     """Make an OCSP get request."""
+    if isinstance(certificate, CertificateAuthority):
+        ca = certificate.parent
+        assert ca is not None, "OCSP queries can only be done for root CAs."
+        url_name = "django_ca:ocsp-ca-get"
+    else:
+        ca = certificate.ca
+        url_name = "django_ca:ocsp-cert-get"
+
     builder = ocsp.OCSPRequestBuilder()
-    builder = builder.add_certificate(certificate.pub.loaded, certificate.ca.pub.loaded, hash_algorithm())
+    builder = builder.add_certificate(certificate.pub.loaded, ca.pub.loaded, hash_algorithm())
 
     if nonce is not None:  # Add Nonce if requested
         builder = builder.add_extension(x509.OCSPNonce(nonce), False)
@@ -61,9 +69,9 @@ def ocsp_get(
     request = builder.build()
 
     url = reverse(
-        "django_ca:ocsp-cert-get",
+        url_name,
         kwargs={
-            "serial": certificate.ca.serial,
+            "serial": ca.serial,
             "data": base64.b64encode(request.public_bytes(Encoding.DER)).decode("utf-8"),
         },
     )

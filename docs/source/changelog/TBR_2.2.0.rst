@@ -8,6 +8,12 @@ Performance
 
 * Optimize number of database queries in performance-sensitive views (OCSP, CRLs, ACMEv2).
 
+**************
+OCSP responder
+**************
+
+* Fix error for OCSP queries for intermediate CAs.
+
 **********************
 Command-line utilities
 **********************
