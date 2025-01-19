@@ -42,7 +42,7 @@ cryptography==44.0.0
     #   acme
     #   josepy
     #   pyopenssl
-django==5.1.4
+django==5.1.5
     # via
     #   django-ca (pyproject.toml)
     #   django-ninja
