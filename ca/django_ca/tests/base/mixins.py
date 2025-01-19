@@ -127,7 +127,7 @@ class TestCaseMixin(TestCaseProtocol):
             try:
                 self.certs[name] = self.load_named_cert(name)
             except CertificateAuthority.DoesNotExist:  # pragma: no cover
-                self.fail(f'{CERT_DATA[name]["ca"]}: Could not load CertificateAuthority.')
+                self.fail(f"{CERT_DATA[name]['ca']}: Could not load CertificateAuthority.")
         return names
 
     def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:

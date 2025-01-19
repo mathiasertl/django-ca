@@ -254,8 +254,7 @@ def test_profession_info_model(parameters: dict[str, Any], expected: x509.Profes
                 (
                     "value_error",
                     (),
-                    "Value error, if present, profession_oids must have the same length as "
-                    "profession_items.",
+                    "Value error, if present, profession_oids must have the same length as profession_items.",
                 )
             ],
         ),

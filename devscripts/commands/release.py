@@ -73,7 +73,7 @@ class Command(DevCommand):
             changelog = stream.read()
         changelog_header = changelog.splitlines(keepends=True)[:3]
         expected = f"""##################
-{release} ({date.today().strftime('%Y-%m-%d')})
+{release} ({date.today().strftime("%Y-%m-%d")})
 ##################\n""".splitlines(keepends=True)
         if changelog_header != expected:
             diff = difflib.unified_diff(changelog_header, expected, fromfile=str(path), tofile="expected")

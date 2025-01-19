@@ -39,7 +39,7 @@ BASE_DIR = os.path.dirname(__file__)
 CA_DIR = os.path.join(os.path.dirname(BASE_DIR), "ca")
 DEFAULT_SETTINGS = "ca.settings"
 
-parser = argparse.ArgumentParser(description="Create testdata for update and integration tests." "")
+parser = argparse.ArgumentParser(description="Create testdata for update and integration tests.")
 parser.add_argument("--settings", help=f"Value for DJANGO_SETTINGS_MODULE (default: {DEFAULT_SETTINGS}).")
 parser.add_argument("--env", choices=["backend", "frontend"], help="The environment to run in.")
 args = parser.parse_args()

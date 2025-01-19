@@ -706,8 +706,7 @@ class CertificateActionTestCase(ParserTestCaseMixin, TestCase):
         assert_parser_error(
             self.parser,
             [serial],
-            "usage: {script} [-h] cert\n"
-            "{script}: error: argument cert: {serial}: Certificate not found.\n",
+            "usage: {script} [-h] cert\n{script}: error: argument cert: {serial}: Certificate not found.\n",
             serial=serial,
         )
 
@@ -757,8 +756,7 @@ class CertificateAuthorityActionTestCase(ParserTestCaseMixin, TestCase):
         assert_parser_error(
             self.parser,
             ["foo"],
-            "usage: {script} [-h] ca\n"
-            "{script}: error: argument ca: foo: Certificate authority not found.\n",
+            "usage: {script} [-h] ca\n{script}: error: argument ca: foo: Certificate authority not found.\n",
         )
 
     def test_multiple(self) -> None:
