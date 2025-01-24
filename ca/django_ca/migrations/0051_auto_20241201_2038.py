@@ -15,11 +15,10 @@
 
 import logging
 
-from celery.exceptions import ImproperlyConfigured
-
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import InvalidStorageError, storages
 from django.db import migrations
 from django.utils import timezone
