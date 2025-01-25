@@ -17,7 +17,7 @@ import hashlib
 from typing import ClassVar, Generic, NoReturn, Optional, TypeVar, Union, cast
 
 import pkcs11
-from pkcs11 import Session
+from pkcs11 import MGF, Mechanism, Session
 from pkcs11.constants import Attribute
 from pkcs11.util.ec import encode_ec_public_key, encode_ecdsa_signature
 from pkcs11.util.rsa import encode_rsa_public_key
@@ -26,7 +26,12 @@ from asn1crypto.core import OctetString
 from asn1crypto.keys import PublicKeyInfo
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed448, ed25519, rsa, utils as asym_utils
-from cryptography.hazmat.primitives.asymmetric.padding import PSS, AsymmetricPadding, PKCS1v15
+from cryptography.hazmat.primitives.asymmetric.padding import (
+    PSS,
+    AsymmetricPadding,
+    PKCS1v15,
+    calculate_max_pss_salt_length,
+)
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
@@ -138,6 +143,46 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
     def key_size(self) -> int:
         return self.public_key().key_size
 
+    def _get_pss_signing_parameters(
+        self, padding: PSS, algorithm: hashes.HashAlgorithm
+    ) -> tuple[Mechanism, MGF, int]:
+        # PYLINT NOTE: No public access available.
+        mgf_algorithm: hashes.HashAlgorithm = padding.mgf._algorithm  # pylint: disable=protected-access
+        if isinstance(mgf_algorithm, hashes.SHA224):
+            pkcs11_mgf_algorithm = MGF.SHA224
+        elif isinstance(mgf_algorithm, hashes.SHA256):
+            pkcs11_mgf_algorithm = MGF.SHA256
+        elif isinstance(mgf_algorithm, hashes.SHA384):
+            pkcs11_mgf_algorithm = MGF.SHA384
+        elif isinstance(mgf_algorithm, hashes.SHA512):
+            pkcs11_mgf_algorithm = MGF.SHA512
+        else:
+            raise ValueError(f"{mgf_algorithm.name}: Hash algorithm not supported.")
+
+        if isinstance(algorithm, hashes.SHA224):
+            pkcs11_algorithm = Mechanism.SHA224
+        elif isinstance(algorithm, hashes.SHA256):
+            pkcs11_algorithm = Mechanism.SHA256
+        elif isinstance(algorithm, hashes.SHA384):
+            pkcs11_algorithm = Mechanism.SHA384
+        elif isinstance(algorithm, hashes.SHA512):
+            pkcs11_algorithm = Mechanism.SHA512
+        else:
+            raise ValueError(f"{algorithm.name}: Hash algorithm not supported.")
+
+        # PYLINT NOTE: No public access available.
+        salt_length = padding._salt_length  # pylint: disable=protected-access
+        if salt_length == PSS.MAX_LENGTH:
+            pkcs11_salt_length = calculate_max_pss_salt_length(self, algorithm)
+        elif salt_length == PSS.DIGEST_LENGTH:
+            raise ValueError("DIGEST_LENGTH is not supported")
+        elif salt_length == PSS.AUTO:
+            raise ValueError("AUTO is not supported when signing.")
+        else:
+            pkcs11_salt_length = cast(int, salt_length)  # it's already an int
+
+        return (pkcs11_algorithm, pkcs11_mgf_algorithm, pkcs11_salt_length)
+
     def sign(
         self,
         data: bytes,
@@ -147,19 +192,24 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         if isinstance(algorithm, asym_utils.Prehashed):
             raise ValueError("Signing of prehashed data is not supported.")
 
+        mechanism_param = None
+        if isinstance(padding, PSS):
+            mechanism_param = self._get_pss_signing_parameters(padding, algorithm)
+
         if isinstance(algorithm, hashes.SHA224) and isinstance(padding, PSS):  # pragma: no cover
+            # NOTE: using Mechanism.RSA_PKCS_PSS as suggested in the docs does not work at all.
             mechanism: hashes.HashAlgorithm = pkcs11.Mechanism.SHA224_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA224) and isinstance(padding, PKCS1v15):
             mechanism = pkcs11.Mechanism.SHA224_RSA_PKCS
-        elif isinstance(algorithm, hashes.SHA256) and isinstance(padding, PSS):  # pragma: no cover
+        elif isinstance(algorithm, hashes.SHA256) and isinstance(padding, PSS):
             mechanism = pkcs11.Mechanism.SHA256_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA256) and isinstance(padding, PKCS1v15):
             mechanism = pkcs11.Mechanism.SHA256_RSA_PKCS
-        elif isinstance(algorithm, hashes.SHA384) and isinstance(padding, PSS):  # pragma: no cover
+        elif isinstance(algorithm, hashes.SHA384) and isinstance(padding, PSS):
             mechanism = pkcs11.Mechanism.SHA384_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA384) and isinstance(padding, PKCS1v15):
             mechanism = pkcs11.Mechanism.SHA384_RSA_PKCS
-        elif isinstance(algorithm, hashes.SHA512) and isinstance(padding, PSS):  # pragma: no cover
+        elif isinstance(algorithm, hashes.SHA512) and isinstance(padding, PSS):
             mechanism = pkcs11.Mechanism.SHA512_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA512) and isinstance(padding, PKCS1v15):
             mechanism = pkcs11.Mechanism.SHA512_RSA_PKCS
@@ -171,7 +221,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
             )
 
         # TYPEHINT NOTE: library is not type-hinted.
-        return self.pkcs11_private_key.sign(data, mechanism=mechanism)  # type: ignore[no-any-return]
+        return self.pkcs11_private_key.sign(data, mechanism=mechanism, mechanism_param=mechanism_param)  # type: ignore[no-any-return]
 
 
 class PKCS11EllipticCurvePrivateKey(PKCS11PrivateKeyMixin, ec.EllipticCurvePrivateKey):

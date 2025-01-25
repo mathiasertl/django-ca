@@ -84,9 +84,6 @@ class HSMCreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel
 class HSMStorePrivateKeyOptions(PinModelMixin, BaseModel):
     """Options for storing a private key."""
 
-    # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
-    model_config = ConfigDict(frozen=True)
-
     key_label: str
 
 
