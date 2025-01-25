@@ -25,7 +25,7 @@ import re
 import typing
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta, timezone as tz
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, cast
 
 import josepy as jose
 from acme import challenges, messages
@@ -34,7 +34,9 @@ from pydantic import BaseModel
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, AsymmetricPadding
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.x509.oid import ExtensionOID, NameOID
 
@@ -816,6 +818,69 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         post_sign_cert.send(sender=self.__class__, ca=self, cert=signed_cert)
 
         return signed_cert
+
+    def sign_data(
+        self,
+        data: bytes,
+        key_backend_options: Optional[BaseModel] = None,
+        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
+        padding: Optional[AsymmetricPadding] = None,
+        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+    ) -> bytes:
+        """Shortcut to sign data using this certificate authority with its key backend.
+
+        All parameters except `data` will use sane default parameters, but they can be overridden in case you
+        need to provide your own parameters for generating the signature.
+
+        Error handling will depend on the key backend used by this certificate authority. For example, a key
+        backend may not support signing data at all or may not support a specific signature algorithm.
+
+        Parameters
+        ----------
+        data : bytes
+            The data to sign.
+        key_backend_options : BaseModel, optional
+            Key backend options, by default a model for the respective key backend will be created without
+            any parameters.
+        algorithm : |HashAlgorithm| or |Prehashed|, optional
+            The algorithm used for signing with RSA and DSA-based keys or |Prehashed| if `data` is already
+            signed. The default is the algorithm is used for signing the CAs certificate.
+        padding : |AsymmetricPadding|, optional
+            The padding used for signing with RSA-based keys. The default is |PSS| padding using the maximum
+            salt length and |MGF1| with the value of `algorithm` as its algorithm.
+        signature_algorithm : |EllipticCurveSignatureAlgorithm|, optional
+            The signature algorithm used for signing with Elliptic Curve based keys. The default is |ECDSA|
+            with SHA512.
+        """
+        key_backend = self.key_backend
+        if key_backend_options is None:
+            key_backend_options = key_backend.get_use_private_key_options(self, {})
+
+        key_type = self.key_type
+        if key_type == "RSA":
+            if algorithm is None:
+                algorithm = cast(hashes.HashAlgorithm, self.algorithm)
+
+            padding_algorithm = algorithm
+            if padding is None:
+                if isinstance(padding_algorithm, Prehashed):
+                    # TYPEHINT NOTE: We know self.algorithm is not None for RSA keys
+                    padding_algorithm = cast(hashes.HashAlgorithm, self.algorithm)
+
+                padding = PSS(mgf=MGF1(padding_algorithm), salt_length=PSS.MAX_LENGTH)
+        elif algorithm is None and key_type == "DSA":
+            algorithm = self.algorithm
+        elif signature_algorithm is None and key_type == "EC":
+            signature_algorithm = ec.ECDSA(hashes.SHA512())
+
+        return key_backend.sign_data(
+            self,
+            key_backend_options,
+            data,
+            algorithm=algorithm,
+            padding=padding,
+            signature_algorithm=signature_algorithm,
+        )
 
     @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
     def generate_ocsp_key(

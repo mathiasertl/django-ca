@@ -13,8 +13,9 @@
 
 """Test the CertificateAuthority model."""
 
-# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
+import hashlib
 
+# pylint: disable=redefined-outer-name  # requested pytest fixtures show up this way.
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -26,8 +27,10 @@ from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, PKCS1v15
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
 
@@ -712,3 +715,69 @@ def test_sign_with_invalid_extensions(
             subject=subject,
             extensions=[extension],  # type: ignore[list-item]  # what we're testing
         )
+
+
+@pytest.mark.parametrize("data", (b"", b"abc"))
+def test_sign_data_with_default_parameters(usable_ca: CertificateAuthority, data: bytes) -> None:
+    """Test signing data with default parameters."""
+    signature = usable_ca.sign_data(data)
+    public_key = usable_ca.pub.loaded.public_key()
+    if isinstance(public_key, rsa.RSAPublicKey):
+        algorithm = cast(hashes.HashAlgorithm, usable_ca.algorithm)  # we know its algorithm for RSA
+        padding = PSS(mgf=MGF1(algorithm), salt_length=PSS.MAX_LENGTH)
+        public_key.verify(signature, data, padding=padding, algorithm=algorithm)
+    elif isinstance(public_key, dsa.DSAPublicKey):
+        algorithm = cast(hashes.HashAlgorithm, usable_ca.algorithm)  # we know its algorithm for DSA
+        public_key.verify(signature, data, algorithm)
+    elif isinstance(public_key, ec.EllipticCurvePublicKey):
+        public_key.verify(signature, data, ec.ECDSA(hashes.SHA512()))
+    elif isinstance(public_key, (ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)):
+        public_key.verify(signature, data)
+    else:
+        raise ValueError("Unknown key type encountered.")
+
+
+@pytest.mark.parametrize("data", (b"", b"abc"))
+def test_sign_data_with_rsa_with_parameters(usable_root: CertificateAuthority, data: bytes) -> None:
+    """Test signing data with an RSA ca and with custom parameters."""
+    algorithm = hashes.SHA224()
+    padding = PKCS1v15()
+    signature = usable_root.sign_data(data, algorithm=algorithm, padding=padding)
+    public_key = cast(rsa.RSAPublicKey, usable_root.pub.loaded.public_key())
+    public_key.verify(signature, data, padding=padding, algorithm=algorithm)
+
+
+def test_sign_data_with_rsa_with_prehashed(usable_root: CertificateAuthority) -> None:
+    """Test signing data with an RSA ca and with prehashed data."""
+    prehashed_msg = hashlib.sha256(b"A message I want to sign").digest()
+    signature = usable_root.sign_data(prehashed_msg, algorithm=Prehashed(hashes.SHA256()))
+    public_key = cast(rsa.RSAPublicKey, usable_root.pub.loaded.public_key())
+
+    padding = PSS(mgf=MGF1(hashes.SHA256()), salt_length=PSS.AUTO)
+    public_key.verify(signature, prehashed_msg, padding=padding, algorithm=Prehashed(hashes.SHA256()))
+
+
+@pytest.mark.parametrize("data", (b"", b"abc"))
+def test_sign_data_with_dsa_with_parameters(usable_dsa: CertificateAuthority, data: bytes) -> None:
+    """Test signing data with an DSA ca and with custom parameters."""
+    algorithm = hashes.SHA224()
+    signature = usable_dsa.sign_data(data, algorithm=algorithm)
+    public_key = cast(dsa.DSAPublicKey, usable_dsa.pub.loaded.public_key())
+    public_key.verify(signature, data, algorithm=algorithm)
+
+
+@pytest.mark.parametrize("data", (b"", b"abc"))
+def test_sign_data_with_ec_with_parameters(usable_ec: CertificateAuthority, data: bytes) -> None:
+    """Test signing data with an EC ca and with custom parameters."""
+    signature_algorithm = ec.ECDSA(hashes.SHA224())
+    signature = usable_ec.sign_data(data, signature_algorithm=signature_algorithm)
+    public_key = cast(ec.EllipticCurvePublicKey, usable_ec.pub.loaded.public_key())
+    public_key.verify(signature, data, signature_algorithm=signature_algorithm)
+
+
+@pytest.mark.parametrize("data", (b"", b"abc"))
+def test_sign_data_with_options(usable_root: CertificateAuthority, data: bytes) -> None:
+    """Test signing data with an EC ca and with custom parameters."""
+    options = StoragesUsePrivateKeyOptions(password=b"wrong password")
+    with pytest.raises(TypeError):
+        usable_root.sign_data(data, key_backend_options=options)

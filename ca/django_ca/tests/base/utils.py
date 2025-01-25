@@ -58,6 +58,7 @@ class DummyModel(BaseModel):
     """Dummy model for the dummy backend."""
 
 
+# pylint: disable-next=abstract-method  # we don't override sign_data to test the base class function.
 class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: no cover
     """Backend with no actions whatsoever."""
 

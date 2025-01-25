@@ -511,7 +511,7 @@ def usable_ca_name(request: "SubRequest") -> CertificateAuthority:
 
 @pytest.fixture(params=usable_ca_names_by_type)
 def usable_ca_name_by_type(request: "SubRequest") -> CertificateAuthority:
-    """Parametrized fixture for the name of a CA of every type (``"dsa"``, ``"rsa"``, ...)."""
+    """Parametrized fixture for the name of a CA of every type (``"dsa"``, ``"root"``, ...)."""
     return request.param  # type: ignore[no-any-return]
 
 

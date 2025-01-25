@@ -175,7 +175,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         if salt_length == PSS.MAX_LENGTH:
             pkcs11_salt_length = calculate_max_pss_salt_length(self, algorithm)
         elif salt_length == PSS.DIGEST_LENGTH:
-            raise ValueError("DIGEST_LENGTH is not supported")
+            raise ValueError("DIGEST_LENGTH is not supported when signing.")
         elif salt_length == PSS.AUTO:
             raise ValueError("AUTO is not supported when signing.")
         else:
@@ -196,7 +196,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         if isinstance(padding, PSS):
             mechanism_param = self._get_pss_signing_parameters(padding, algorithm)
 
-        if isinstance(algorithm, hashes.SHA224) and isinstance(padding, PSS):  # pragma: no cover
+        if isinstance(algorithm, hashes.SHA224) and isinstance(padding, PSS):
             # NOTE: using Mechanism.RSA_PKCS_PSS as suggested in the docs does not work at all.
             mechanism: hashes.HashAlgorithm = pkcs11.Mechanism.SHA224_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA224) and isinstance(padding, PKCS1v15):

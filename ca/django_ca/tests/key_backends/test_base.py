@@ -21,6 +21,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
+from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.utils import DummyBackend, DummyModel
 
@@ -122,3 +123,16 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
     assert backend.add_use_private_key_arguments(group) is None  # type: ignore[func-returns-value]
     assert backend.add_create_private_key_arguments(group) is None  # type: ignore[func-returns-value]
     assert backend.add_store_private_key_arguments(group) is None  # type: ignore[func-returns-value]
+
+
+def test_sign_data_not_implemented(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+    """Test that the default sign_data() method raises NotImplementedError."""
+    settings.CA_KEY_BACKENDS = {
+        model_settings.CA_DEFAULT_KEY_BACKEND: {
+            "BACKEND": f"{DummyModel.__module__}.DummyBackend",
+            "OPTIONS": {},
+        },
+    }
+
+    with pytest.raises(NotImplementedError, match=r"^This backend does not support signing data\.$"):
+        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND].sign_data(root, DummyModel(), b"")

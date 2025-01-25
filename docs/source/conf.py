@@ -378,8 +378,15 @@ rst_epilog = f"""
 .. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
 .. |Name| replace:: :py:class:`~cg:cryptography.x509.Name`
 .. |RelativeDistinguishedName| replace:: :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`
+.. |HashAlgorithm| replace:: :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`
+.. |Prehashed| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.utils.Prehashed`
+.. |AsymmetricPadding| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.padding.AsymmetricPadding`
+.. |PSS| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.padding.PSS`
+.. |MGF1| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.padding.MGF1`
+.. |EllipticCurveSignatureAlgorithm| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurveSignatureAlgorithm`
+.. |ECDSA| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.ECDSA`
 .. _RFC 5280: https://datatracker.ietf.org/doc/html/rfc5280
-"""
+"""  # noqa: E501
 
 html_theme = "sphinx_rtd_theme"
 
@@ -485,6 +492,7 @@ qualname_overrides = {
     "cryptography.hazmat.bindings._rust.ocsp.OCSPResponse": "cg:cryptography.x509.ocsp.OCSPResponse",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
+    "cryptography.hazmat.primitives._asymmetric.AsymmetricPadding": "cg:cryptography.hazmat.primitives.asymmetric.padding.AsymmetricPadding",  # noqa: E501
     # These only happen when building on GitHub actions (2024-06-27)
     "BytesIO": "python:io.BytesIO",
     "StringIO": "python:io.StringIO",

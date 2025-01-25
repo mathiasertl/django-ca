@@ -41,6 +41,7 @@ Python API
 **********
 
 * ``django_ca.utils.get_storage()`` was be removed (deprecated since 2.0).
+* Key backends now expose :py:func:`~django_ca.key_backends.KeyBackend.sign_data` to sign arbitrary data.
 
 *******************
 Deprecation notices

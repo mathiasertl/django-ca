@@ -18,6 +18,8 @@ from unittest.mock import patch
 import pkcs11
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, AsymmetricPadding
 
 from django.conf import settings
 
@@ -30,7 +32,9 @@ from django_ca.key_backends.hsm.models import (
     HSMStorePrivateKeyOptions,
     HSMUsePrivateKeyOptions,
 )
+from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import CertificateAuthority
+from django_ca.tests.key_backends.conftest import KeyBackendTestBase
 
 
 def test_session_with_session_read_only_exception(hsm_backend: HSMBackend) -> None:
@@ -182,3 +186,119 @@ def test_store_private_key_with_unknown_type(
             root_cert_pub,
             options,
         )
+
+
+class TestKeyBackend(KeyBackendTestBase):
+    """Generic tests for the Storages backend."""
+
+    def _convert_ca(
+        self,
+        ca: CertificateAuthority,
+        backend: HSMBackend,
+        store_key_backend_options: HSMStorePrivateKeyOptions,
+    ) -> CertificateAuthority:
+        private_key = ca.key_backend.get_key(ca, StoragesUsePrivateKeyOptions())  # type: ignore[attr-defined]
+        ca._key_backend = None  # pylint: disable=protected-access  # clear cache
+        ca.key_backend_alias = "hsm"
+        backend.store_private_key(ca, private_key, ca.pub.loaded, store_key_backend_options)
+        ca.save()
+        return ca
+
+    @pytest.fixture
+    def usable_root(
+        self,
+        usable_root: CertificateAuthority,
+        hsm_backend: HSMBackend,
+        store_key_backend_options: HSMStorePrivateKeyOptions,
+    ) -> CertificateAuthority:
+        """Override fixture to convert to this backend."""
+        return self._convert_ca(usable_root, hsm_backend, store_key_backend_options)
+
+    @pytest.fixture
+    def usable_ec(
+        self,
+        usable_ec: CertificateAuthority,
+        hsm_backend: HSMBackend,
+        store_key_backend_options: HSMStorePrivateKeyOptions,
+    ) -> CertificateAuthority:
+        """Override fixture to convert to this backend."""
+        return self._convert_ca(usable_ec, hsm_backend, store_key_backend_options)
+
+    @pytest.fixture
+    def usable_ed25519(
+        self,
+        usable_ed25519: CertificateAuthority,
+        hsm_backend: HSMBackend,
+        store_key_backend_options: HSMStorePrivateKeyOptions,
+    ) -> CertificateAuthority:
+        """Override fixture to convert to this backend."""
+        return self._convert_ca(usable_ed25519, hsm_backend, store_key_backend_options)
+
+    @pytest.fixture
+    def usable_ed448(
+        self,
+        usable_ed448: CertificateAuthority,
+        hsm_backend: HSMBackend,
+        store_key_backend_options: HSMStorePrivateKeyOptions,
+    ) -> CertificateAuthority:
+        """Override fixture to convert to this backend."""
+        return self._convert_ca(usable_ed448, hsm_backend, store_key_backend_options)
+
+    @pytest.fixture
+    def store_key_backend_options(self, hsm_backend: HSMBackend) -> HSMStorePrivateKeyOptions:
+        """Fixture to retrieve key backend options."""
+        return HSMStorePrivateKeyOptions.model_validate(
+            {"key_label": "label"}, context={"backend": hsm_backend}
+        )
+
+    @pytest.fixture
+    def use_key_backend_options(self, hsm_backend: HSMBackend) -> HSMUsePrivateKeyOptions:
+        """Fixture to retrieve key backend options."""
+        return HSMUsePrivateKeyOptions.model_validate({}, context={"backend": hsm_backend})
+
+    def sign_data_with_rsa_xfail(self, algorithm: hashes.HashAlgorithm, padding: AsymmetricPadding) -> None:
+        # pylint: disable=protected-access  # no public access available
+        if isinstance(padding, PSS) and algorithm.name != padding.mgf._algorithm.name:
+            pytest.xfail("Signing fails if singing algorithm and MGF1 hash algorithm don't match.")
+        if isinstance(padding, PSS) and padding._salt_length == PSS.DIGEST_LENGTH:
+            pytest.xfail("DIGEST_LENGTH is not supported.")
+
+    def test_sign_data_with_dsa(self) -> None:  # type: ignore[override]
+        pytest.xfail("DSA is not supported for HSMs.")
+
+    def test_sign_data_with_dsa_without_algorithm(self) -> None:  # type: ignore[override]
+        pytest.xfail("DSA is not supported for HSMs.")
+
+    def test_sign_data_with_rsa_with_unsupported_algorithm(
+        self, usable_root: CertificateAuthority, use_key_backend_options: HSMUsePrivateKeyOptions
+    ) -> None:
+        """Try signing data with an unsupported algorithm."""
+        padding = PSS(mgf=MGF1(hashes.SHA256()), salt_length=PSS.MAX_LENGTH)
+        with pytest.raises(ValueError, match=r"^sha3-256: Hash algorithm not supported\.$"):
+            usable_root.key_backend.sign_data(
+                usable_root, use_key_backend_options, b"", algorithm=hashes.SHA3_256(), padding=padding
+            )
+
+    def test_sign_data_with_rsa_with_unsupported_mgf_algorithm(
+        self, usable_root: CertificateAuthority, use_key_backend_options: HSMUsePrivateKeyOptions
+    ) -> None:
+        """Try signing data with an unsupported algorithm in an MGF."""
+        padding = PSS(mgf=MGF1(hashes.SHA3_256()), salt_length=PSS.MAX_LENGTH)
+        with pytest.raises(ValueError, match=r"^sha3-256: Hash algorithm not supported\.$"):
+            usable_root.key_backend.sign_data(
+                usable_root, use_key_backend_options, b"", algorithm=hashes.SHA256(), padding=padding
+            )
+
+    @pytest.mark.parametrize("salt_length", ("AUTO", "DIGEST_LENGTH"))
+    def test_sign_data_with_rsa_with_unsupported_digest_length(
+        self,
+        usable_root: CertificateAuthority,
+        use_key_backend_options: HSMUsePrivateKeyOptions,
+        salt_length: str,
+    ) -> None:
+        """Try signing data with an unsupported algorithm in an MGF."""
+        padding = PSS(mgf=MGF1(hashes.SHA256()), salt_length=getattr(PSS, salt_length))
+        with pytest.raises(ValueError, match=rf"^{salt_length} is not supported when signing\.$"):
+            usable_root.key_backend.sign_data(
+                usable_root, use_key_backend_options, b"", algorithm=hashes.SHA256(), padding=padding
+            )

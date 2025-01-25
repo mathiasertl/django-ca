@@ -19,17 +19,19 @@ import typing
 from collections.abc import Iterator, Sequence
 from datetime import datetime
 from threading import local
-from typing import Annotated, Any, ClassVar, Generic, Optional, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Optional, TypeVar, Union
 
 from pydantic import BaseModel, Field, model_validator
 
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
+from cryptography.hazmat.primitives.asymmetric.padding import AsymmetricPadding
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.x509.ocsp import OCSPResponse, OCSPResponseBuilder
 
 from django.core.exceptions import ImproperlyConfigured
@@ -311,6 +313,26 @@ class KeyBackend(
 
         Note that `ca` is not yet a *saved* database entity, so fields are only partially populated.
         """
+
+    def sign_data(
+        self,
+        ca: "CertificateAuthority",
+        use_private_key_options: UsePrivateKeyOptionsTypeVar,
+        data: bytes,
+        *,
+        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
+        padding: Optional[AsymmetricPadding] = None,
+        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+    ) -> bytes:
+        """Sign arbitrary data.
+
+        The `algorithm` parameter is used when using RSA/DSA keys, `padding` is used for RSA keys and
+        `signature_algorithm` is used for Elliptic Curve keys.
+
+        This function is not used by **django-ca** itself, but may be used by plugins. Backends are not
+        required to implement it, in which case this function raises ``NotImplementedError``.
+        """
+        raise NotImplementedError("This backend does not support signing data.")
 
     @abc.abstractmethod
     def sign_certificate(

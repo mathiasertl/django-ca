@@ -26,6 +26,7 @@ from django_ca.key_backends.storages.models import (
     StoragesUsePrivateKeyOptions,
 )
 from django_ca.models import CertificateAuthority
+from django_ca.tests.key_backends.conftest import KeyBackendTestBase
 
 
 @pytest.mark.parametrize("key_size", (2048, 4096, 8192))
@@ -91,3 +92,12 @@ def test_is_usable_no_path_configured(root: CertificateAuthority) -> None:
     root.key_backend_options = {}
     root.save()
     assert root.is_usable(StoragesUsePrivateKeyOptions(password=None)) is False
+
+
+class TestKeyBackend(KeyBackendTestBase):
+    """Generic tests for the Storages backend."""
+
+    @pytest.fixture
+    def use_key_backend_options(self) -> StoragesUsePrivateKeyOptions:
+        """Fixture to retrieve key backend options."""
+        return StoragesUsePrivateKeyOptions()

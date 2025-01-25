@@ -15,7 +15,7 @@
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Final, Optional
+from typing import TYPE_CHECKING, Any, Final, Optional, Union
 
 import pkcs11
 from pkcs11 import Session
@@ -23,12 +23,14 @@ from pkcs11.util.ec import decode_ec_private_key, decode_ec_public_key
 from pkcs11.util.rsa import decode_rsa_private_key, decode_rsa_public_key
 
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed448, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.padding import AsymmetricPadding
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
 )
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 
 from django.core.management import CommandError
 
@@ -331,6 +333,40 @@ class HSMBackend(
             session.create_object(pub_attrs)
 
         ca.key_backend_options = {"key_id": key_id, "key_label": options.key_label, "key_type": key_type}
+
+    def sign_data(
+        self,
+        ca: "CertificateAuthority",
+        use_private_key_options: HSMUsePrivateKeyOptions,
+        data: bytes,
+        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
+        padding: Optional[AsymmetricPadding] = None,
+        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+    ) -> bytes:
+        kwargs: dict[str, Any] = {}
+
+        with self.session(
+            so_pin=use_private_key_options.so_pin, user_pin=use_private_key_options.user_pin
+        ) as session:
+            private_key = self._get_private_key(ca, session)
+
+            if isinstance(private_key, ec.EllipticCurvePrivateKey):
+                if signature_algorithm is None:
+                    raise ValueError("signature_algorithm is required for elliptic curve keys.")
+                kwargs["signature_algorithm"] = signature_algorithm
+            elif isinstance(private_key, rsa.RSAPrivateKey):
+                if algorithm is None:
+                    raise ValueError("algorithm is required for RSA keys.")
+                if padding is None:
+                    raise ValueError("padding is required for RSA keys.")
+                kwargs["padding"] = padding
+                kwargs["algorithm"] = algorithm
+            elif algorithm is not None or padding is not None or signature_algorithm is not None:
+                raise ValueError(
+                    "algorithm, padding and signature_algorithm are not allowed for this key type."
+                )
+
+            return private_key.sign(data, **kwargs)
 
     def sign_certificate(
         self,
