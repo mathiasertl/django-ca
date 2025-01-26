@@ -2,7 +2,7 @@ build==1.2.2.post1
 # readme-renderer~=44.0 depends on a newer docutils version then supported by sphinx==7.2.6 (readme-renderer
 # is a dependency of twine).
 readme-renderer<44
-twine==6.0.1
+twine==6.1.0
 wheel==0.45.1
 # See pyproject.toml for reasoning for required minimum version
 setuptools>=68.1
