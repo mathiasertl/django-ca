@@ -127,7 +127,7 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
         "ed25519": {
             ExtensionOID.BASIC_CONSTRAINTS: f"CA: True, path length: {CERT_DATA['ed25519']['path_length']}",
             ExtensionOID.INHIBIT_ANY_POLICY: "skip certs: 1",
-            ExtensionOID.NAME_CONSTRAINTS: """Permitted: <ul><li>DNS:.org</li></ul>
+            ExtensionOID.NAME_CONSTRAINTS: """Permitted: <ul><li>DNS:.com</li></ul>
                     Excluded: <ul><li>DNS:.net</li></ul>""",
             ExtensionOID.POLICY_CONSTRAINTS: """<ul>
                     <li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 1</li>

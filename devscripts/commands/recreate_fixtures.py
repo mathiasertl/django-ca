@@ -171,7 +171,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
                     oid=ExtensionOID.NAME_CONSTRAINTS,
                     critical=True,  # required by RFC 5280
                     value=x509.NameConstraints(
-                        permitted_subtrees=[x509.DNSName(".org")],
+                        permitted_subtrees=[x509.DNSName(".com")],
                         excluded_subtrees=[x509.DNSName(".net")],
                     ),
                 ),

@@ -121,7 +121,7 @@ Certificate extensions:
 {key_usage_text}
 * Name Constraints (critical):
   Permitted:
-    * DNS:.org
+    * DNS:.com
   Excluded:
     * DNS:.net
 * Policy Constraints (critical):
