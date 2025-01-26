@@ -33,6 +33,7 @@ from cryptography.hazmat.primitives.asymmetric.padding import (
     calculate_max_pss_salt_length,
 )
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
 EdwardsPublicKeyTypeVar = TypeVar("EdwardsPublicKeyTypeVar", ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)
@@ -144,7 +145,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         return self.public_key().key_size
 
     def _get_pss_signing_parameters(
-        self, padding: PSS, algorithm: hashes.HashAlgorithm
+        self, padding: PSS, algorithm: Union[hashes.HashAlgorithm, Prehashed]
     ) -> tuple[Mechanism, MGF, int]:
         # PYLINT NOTE: No public access available.
         mgf_algorithm: hashes.HashAlgorithm = padding.mgf._algorithm  # pylint: disable=protected-access
@@ -158,6 +159,9 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
             pkcs11_mgf_algorithm = MGF.SHA512
         else:
             raise ValueError(f"{mgf_algorithm.name}: Hash algorithm not supported.")
+
+        if isinstance(algorithm, Prehashed):
+            algorithm = algorithm._algorithm  # pylint: disable=protected-access  # only way to access
 
         if isinstance(algorithm, hashes.SHA224):
             pkcs11_algorithm = Mechanism.SHA224
@@ -189,9 +193,6 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         padding: AsymmetricPadding,
         algorithm: Union[asym_utils.Prehashed, hashes.HashAlgorithm],
     ) -> bytes:
-        if isinstance(algorithm, asym_utils.Prehashed):
-            raise ValueError("Signing of prehashed data is not supported.")
-
         mechanism_param = None
         if isinstance(padding, PSS):
             mechanism_param = self._get_pss_signing_parameters(padding, algorithm)
@@ -213,9 +214,15 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
             mechanism = pkcs11.Mechanism.SHA512_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA512) and isinstance(padding, PKCS1v15):
             mechanism = pkcs11.Mechanism.SHA512_RSA_PKCS
+        elif isinstance(algorithm, Prehashed) and isinstance(padding, PKCS1v15):
+            # NOTE: pkcs11.Mechanism.RSA_PKCS does not work.
+            raise ValueError("Prehashed data with PKCS1v15 is not supported.")
+        elif isinstance(algorithm, Prehashed) and isinstance(padding, PSS):
+            mechanism = pkcs11.Mechanism.RSA_PKCS_PSS
         elif isinstance(algorithm, (hashes.SHA3_224, hashes.SHA3_384, hashes.SHA3_256, hashes.SHA3_512)):
             raise ValueError("SHA3 is not support by the HSM backend.")
         else:
+            assert isinstance(algorithm, hashes.HashAlgorithm)  # Cannot be pre-hashed at this point
             raise ValueError(
                 f"{algorithm.name} with {padding.name} padding: Unknown signing algorithm and/or padding."
             )

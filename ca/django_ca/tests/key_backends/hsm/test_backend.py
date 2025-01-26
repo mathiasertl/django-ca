@@ -19,7 +19,8 @@ import pkcs11
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, AsymmetricPadding
+from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, AsymmetricPadding, PKCS1v15
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 
 from django.conf import settings
 
@@ -269,6 +270,9 @@ class TestKeyBackend(KeyBackendTestBase):
     def test_sign_data_with_dsa_without_algorithm(self) -> None:  # type: ignore[override]
         pytest.xfail("DSA is not supported for HSMs.")
 
+    def test_sign_data_with_rsa_with_pkcs15_prehashed(self) -> None:  # type: ignore[override]
+        pytest.xfail("Prehashed data with PKCS1v15 padding is not supported.")
+
     def test_sign_data_with_rsa_with_unsupported_algorithm(
         self, usable_root: CertificateAuthority, use_key_backend_options: HSMUsePrivateKeyOptions
     ) -> None:
@@ -301,4 +305,15 @@ class TestKeyBackend(KeyBackendTestBase):
         with pytest.raises(ValueError, match=rf"^{salt_length} is not supported when signing\.$"):
             usable_root.key_backend.sign_data(
                 usable_root, use_key_backend_options, b"", algorithm=hashes.SHA256(), padding=padding
+            )
+
+    def test_sign_data_with_rsa_with_prehashed_and_pkcs1v15(
+        self, usable_root: CertificateAuthority, use_key_backend_options: HSMUsePrivateKeyOptions
+    ) -> None:
+        """Try signing pre-hashed data with PKCS1v15, which is not supported.."""
+        padding = PKCS1v15()
+        algo = Prehashed(hashes.SHA256())
+        with pytest.raises(ValueError, match=r"^Prehashed data with PKCS1v15 is not supported\.$"):
+            usable_root.key_backend.sign_data(
+                usable_root, use_key_backend_options, b"", algorithm=algo, padding=padding
             )

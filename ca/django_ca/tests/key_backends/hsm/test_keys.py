@@ -98,13 +98,6 @@ def test_not_implemented_error(key_class: type[PKCS11PrivateKeyTypes]) -> None:
         key.decrypt(b"foo", PKCS1v15())
 
 
-def test_rsa_with_prehashed() -> None:
-    """Test signing data with prehashed data, which we do not support."""
-    key = PKCS11RSAPrivateKey(None, "key_id", "key_label")
-    with pytest.raises(ValueError, match=r"^Signing of prehashed data is not supported\.$"):
-        key.sign(b"", PKCS1v15(), Prehashed(hashes.SHA512()))
-
-
 def test_rsa_with_sha3_error() -> None:
     """Test signing data with SHA3, which is unsupported (by the underlying library)."""
     key = PKCS11RSAPrivateKey(None, "key_id", "key_label")

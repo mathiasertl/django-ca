@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, AsymmetricPadding, PKCS1v15
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 
 import pytest
 
@@ -97,6 +98,53 @@ class KeyBackendTestBase:
         public_key = cast(rsa.RSAPublicKey, usable_root.pub.loaded.public_key())
         assert isinstance(public_key, rsa.RSAPublicKey)
         assert public_key.verify(signature, data, algorithm=algorithm, padding=padding) is None
+
+    @pytest.mark.parametrize("data", (b"", b"abc"))
+    @pytest.mark.parametrize(
+        "algorithm", (hashes.SHA224(), hashes.SHA256(), hashes.SHA384(), hashes.SHA512())
+    )
+    def test_sign_data_with_rsa_with_pss_prehashed(
+        self,
+        usable_root: CertificateAuthority,
+        use_key_backend_options: BaseModel,
+        data: bytes,
+        algorithm: hashes.HashAlgorithm,
+    ) -> None:
+        """Test signing pre-hashed data with PSS padding."""
+        h = hashes.Hash(algorithm)
+        h.update(data)
+        digest = h.finalize()
+        prehashed_alg = Prehashed(algorithm)
+        pss = PSS(mgf=MGF1(algorithm), salt_length=0)
+        signature = usable_root.key_backend.sign_data(
+            usable_root, use_key_backend_options, digest, algorithm=prehashed_alg, padding=pss
+        )
+        public_key = cast(rsa.RSAPublicKey, usable_root.pub.loaded.public_key())
+        assert isinstance(public_key, rsa.RSAPublicKey)
+        public_key.verify(signature, data, pss, algorithm)
+
+    @pytest.mark.parametrize("data", (b"", b"abc"))
+    @pytest.mark.parametrize(
+        "algorithm", (hashes.SHA224(), hashes.SHA256(), hashes.SHA384(), hashes.SHA512())
+    )
+    def test_sign_data_with_rsa_with_pkcs15_prehashed(
+        self,
+        usable_root: CertificateAuthority,
+        use_key_backend_options: BaseModel,
+        data: bytes,
+        algorithm: hashes.HashAlgorithm,
+    ) -> None:
+        """Test signing pre-hashed data with PKCS1v15 padding."""
+        h = hashes.Hash(algorithm)
+        h.update(data)
+        digest = h.finalize()
+        prehashed_alg = Prehashed(algorithm)
+        signature = usable_root.key_backend.sign_data(
+            usable_root, use_key_backend_options, digest, algorithm=prehashed_alg, padding=PKCS1v15()
+        )
+        public_key = cast(rsa.RSAPublicKey, usable_root.pub.loaded.public_key())
+        assert isinstance(public_key, rsa.RSAPublicKey)
+        public_key.verify(signature, data, PKCS1v15(), algorithm)
 
     @pytest.mark.parametrize("data", (b"", b"abc"))
     @pytest.mark.parametrize(
