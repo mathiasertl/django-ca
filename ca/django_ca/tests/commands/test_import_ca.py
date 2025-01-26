@@ -34,7 +34,12 @@ from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.db.models import DBUsePrivateKeyOptions
 from django_ca.key_backends.hsm import HSMBackend
-from django_ca.key_backends.hsm.keys import PKCS11EllipticCurvePrivateKey, PKCS11RSAPrivateKey
+from django_ca.key_backends.hsm.keys import (
+    PKCS11Ed448PrivateKey,
+    PKCS11Ed25519PrivateKey,
+    PKCS11EllipticCurvePrivateKey,
+    PKCS11RSAPrivateKey,
+)
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
@@ -257,7 +262,7 @@ def test_secondary_key_backend(ca_name: str) -> None:
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # b/c of signature validation in the end.
 @pytest.mark.usefixtures("softhsm_token")
-@pytest.mark.parametrize("ca_name", ("root", "ec"))
+@pytest.mark.parametrize("ca_name", ("root", "ec", "ed25519", "ed448"))
 @pytest.mark.hsm
 def test_hsm_store_key(ca_name: str, subject: x509.Name) -> None:
     """Test storing keys in the HSM."""
@@ -284,8 +289,17 @@ def test_hsm_store_key(ca_name: str, subject: x509.Name) -> None:
         private_key = key_backend._get_private_key(ca, session)  # pylint: disable=protected-access
 
         # Assert basic private key properties
-        assert isinstance(private_key, (PKCS11RSAPrivateKey, PKCS11EllipticCurvePrivateKey))
-        assert private_key.key_size == ca_data["pub"]["parsed"].public_key().key_size
+        assert isinstance(
+            private_key,
+            (
+                PKCS11RSAPrivateKey,
+                PKCS11EllipticCurvePrivateKey,
+                PKCS11Ed25519PrivateKey,
+                PKCS11Ed448PrivateKey,
+            ),
+        )
+        if isinstance(private_key, (PKCS11RSAPrivateKey, PKCS11EllipticCurvePrivateKey)):
+            assert private_key.key_size == ca_data["pub"]["parsed"].public_key().key_size
         if isinstance(private_key, PKCS11EllipticCurvePrivateKey):
             assert private_key.curve == ca_data["pub"]["parsed"].public_key().curve
 
@@ -303,17 +317,6 @@ def test_hsm_store_key(ca_name: str, subject: x509.Name) -> None:
             ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN), csr, subject=subject
         )
         assert_signature([ca], cert)
-
-
-@pytest.mark.parametrize("ca_name", ("ed448", "ed25519"))
-def test_hsm_store_key_with_ed_keys(ca_name: str) -> None:
-    """Test storing ED448/Ed25519 keys in the HSM, which is not supported."""
-    cert_data = CERT_DATA[ca_name]
-    key_path = cert_data["key_path"]
-    pem_path = cert_data["pub_path"]
-
-    with assert_command_error(r"^Import of Ed448/Ed25519 keys is not implemented\.$"):
-        import_ca(ca_name, key_path, pem_path, key_backend=key_backends["hsm"], hsm_key_label=ca_name)
 
 
 def test_hsm_store_key_with_dsa_keys() -> None:
@@ -397,6 +400,19 @@ def test_model_command_error(ca_name: str, key_backend: StoragesBackend) -> None
             import_ca(ca_name, key_backend=key_backend, password=123)
 
 
+def test_import_generic_exception(ca_name: str, key_backend: StoragesBackend) -> None:
+    """Test model retrieval raising arbitrary exception."""
+    msg = "some command error"
+    with assert_command_error(rf"^{msg}$"):
+        with mock.patch.object(
+            key_backend,
+            "store_private_key",
+            autospec=True,
+            side_effect=ValueError(msg),
+        ):
+            import_ca(ca_name, key_backend=key_backend, password=None)
+
+
 def test_model_generic_exception(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test model retrieval raising arbitrary exception."""
     msg = "some command error"
@@ -407,4 +423,4 @@ def test_model_generic_exception(ca_name: str, key_backend: StoragesBackend) -> 
             autospec=True,
             side_effect=ValueError(msg),
         ):
-            import_ca(ca_name, key_backend=key_backend, password=123)
+            import_ca(ca_name, key_backend=key_backend)

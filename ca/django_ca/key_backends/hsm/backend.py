@@ -51,6 +51,7 @@ from django_ca.key_backends.hsm.models import (
     HSMUsePrivateKeyOptions,
 )
 from django_ca.key_backends.hsm.typehints import SupportedKeyType
+from django_ca.key_backends.hsm.utils import decode_eddsa_private_key, decode_eddsa_public_key
 from django_ca.typehints import (
     AllowedHashTypes,
     ArgumentGroup,
@@ -315,7 +316,21 @@ class HSMBackend(
             )
             pub_attrs = decode_ec_public_key(pub_der)
         elif isinstance(key, (ed448.Ed448PrivateKey, ed25519.Ed25519PrivateKey)):
-            raise ValueError("Import of Ed448/Ed25519 keys is not implemented.")
+            if isinstance(key, ed448.Ed448PrivateKey):
+                key_type = "Ed448"
+            else:
+                key_type = "Ed25519"
+
+            key_der = key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+            key_attrs = decode_eddsa_private_key(key_der)
+            pub_der = public_key.public_bytes(
+                serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            pub_attrs = decode_eddsa_public_key(pub_der)
         else:
             raise ValueError(f"{key}: Importing a key of this type is not supported.")
 

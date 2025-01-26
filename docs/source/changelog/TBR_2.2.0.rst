@@ -14,6 +14,12 @@ OCSP responder
 
 * Fix error for OCSP queries for intermediate CAs.
 
+***********
+HSM support
+***********
+
+* Add support for storing Ed25519 and Ed448 keys.
+
 **********************
 Command-line utilities
 **********************
