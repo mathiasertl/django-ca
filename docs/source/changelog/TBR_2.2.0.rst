@@ -25,8 +25,8 @@ Command-line utilities
 **********************
 
 * Drop support for old OpenSSL-style subject formats in :command:`manage.py init_ca`,
-  :command:`manage.py sign_cert` and :command:`manage.py resign_cert`` (default switched in 2.0.0,
-  deprecated since 1.27.0). Use RFC 4514 subjects instead.
+  :command:`manage.py sign_cert` and :command:`manage.py resign_cert` (default switched in 2.0.0, deprecated
+  since 1.27.0). Use RFC 4514 subjects instead.
 
 ********
 Settings
@@ -34,6 +34,10 @@ Settings
 
 * Dropped support for the old subject format in :ref:`settings-ca-default-subject` and subjects in profiles
   (deprecated since 1.29.0).
+* Project-level configuration now allows you to append to the projects URL configuration via
+  `EXTEND_URL_PATTERNS <settings-extend-url-patterns>`_ and :ref:`EXTEND_INSTALLED_APPS
+  <settings-extend-installed-apps>`. The latter replaces ``CA_CUSTOM_APPS``, which is deprecated and will be
+  removed in ``django-ca==2.5.0``.
 
 ************
 Dependencies
@@ -46,7 +50,7 @@ Dependencies
 Python API
 **********
 
-* ``django_ca.utils.get_storage()`` was be removed (deprecated since 2.0).
+* ``django_ca.utils.get_storage()`` was removed (deprecated since 2.0).
 * Key backends now expose :py:func:`~django_ca.key_backends.KeyBackend.sign_data` to sign arbitrary data.
 
 *******************
@@ -63,3 +67,6 @@ Deprecation notices
   * ``django_ca.utils.serialize_name()``
   * ``django_ca.utils.split_str()``
   * ``django_ca.utils.x509_name()``
+
+* ``CA_CUSTOM_APPS`, a project-level configuration variable, is deprecated and will be removed in
+  ``django-ca==2.5.0``.

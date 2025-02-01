@@ -13,18 +13,86 @@
 
 """Utility functions for loading settings."""
 
+import importlib
 import logging
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from inspect import isclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any, Optional, Union
+
+from pydantic import BaseModel, BeforeValidator, Field, RootModel
 
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import URLPattern, URLResolver, include, path, re_path
+from django.views import View
 
 try:
     import yaml
 except ImportError:  # pragma: no cover
     yaml = False  # type: ignore[assignment]
+
+
+def url_pattern_type_validator(value: Any) -> Any:
+    """Validator for url pattern type."""
+    if value == "path":
+        return path
+    elif value == "re_path":
+        return re_path
+    return value  # pragma: no cover  # might even be actual function, in theory
+
+
+class ViewModel(BaseModel):
+    """Model for using path() or re_path()."""
+
+    view: str
+    initkwargs: dict[str, Any] = Field(default_factory=dict)
+
+
+class IncludeModel(BaseModel):
+    """Model for using include()."""
+
+    module: str
+    namespace: Optional[str] = None
+
+
+# TYPEHINT NOTE: mypy complains about kwargs. See https://github.com/pydantic/pydantic/issues/3125
+class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
+    """Model used vor validating elements in EXTEND_URL_PATTERNS."""
+
+    func: Annotated[
+        Callable[..., Union[URLPattern, URLResolver]], BeforeValidator(url_pattern_type_validator)
+    ] = path
+    route: str
+    view: Union[ViewModel, IncludeModel]
+    kwargs: dict[str, Any] = Field(default_factory=dict)
+    name: Optional[str] = None
+
+    @property
+    def parsed_view(self) -> Any:
+        if isinstance(self.view, IncludeModel):
+            return include(self.view.module, namespace=self.view.namespace)
+
+        module_name, view_name = self.view.view.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        view = getattr(module, view_name)
+        if isclass(view) and issubclass(view, View):
+            return view.as_view(**self.view.initkwargs)
+
+        return view
+
+    @property
+    def pattern(self) -> Union[URLResolver, URLPattern]:
+        return self.func(self.route, self.parsed_view, kwargs=self.kwargs, name=self.name)
+
+
+class UrlPatternsModel(RootModel[list[UrlPatternModel]]):
+    """Root model used for validating the EXTEND_URL_PATTERNS setting."""
+
+    root: list[UrlPatternModel]
+
+    def __iter__(self) -> Iterator[UrlPatternModel]:  # type: ignore[override]
+        return iter(self.root)
 
 
 def load_secret_key(secret_key: Optional[str], secret_key_file: Optional[str]) -> str:
@@ -40,17 +108,21 @@ def load_secret_key(secret_key: Optional[str], secret_key_file: Optional[str]) -
 
 def get_settings_files(base_dir: Path, paths: str) -> Iterator[Path]:
     """Get relevant settings files."""
-    for path in [base_dir / p for p in paths.split(":")]:
-        if not path.exists():
-            raise ImproperlyConfigured(f"{path}: No such file or directory.")
+    for settings_path in [base_dir / p for p in paths.split(":")]:
+        if not settings_path.exists():
+            raise ImproperlyConfigured(f"{settings_path}: No such file or directory.")
 
-        if path.is_dir():
+        if settings_path.is_dir():
             # exclude files that don't end with '.yaml' and any directories
             yield from sorted(
-                [path / _f.name for _f in path.iterdir() if _f.suffix == ".yaml" and not _f.is_dir()]
+                [
+                    settings_path / _f.name
+                    for _f in settings_path.iterdir()
+                    if _f.suffix == ".yaml" and not _f.is_dir()
+                ]
             )
         else:
-            yield path
+            yield settings_path
 
     settings_yaml = base_dir / "ca" / "settings.yaml"
     if settings_yaml.exists():
@@ -67,6 +139,8 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
     settings_paths = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATION_DIRECTORY", ""))
 
     settings_files = []
+    extend_installed_apps = []
+    extend_url_patterns = []
 
     for full_path in get_settings_files(base_dir, settings_paths):
         with open(full_path, encoding="utf-8") as stream:
@@ -82,7 +156,16 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
             raise ImproperlyConfigured(f"{full_path}: File is not a key/value mapping.")
         else:
             settings_files.append(full_path)
-            yield from data.items()
+            for setting_name, setting_value in data.items():
+                if setting_name == "EXTEND_URL_PATTERNS":
+                    extend_url_patterns += setting_value
+                elif setting_name == "EXTEND_INSTALLED_APPS":
+                    extend_installed_apps += setting_value
+                else:
+                    yield setting_name, setting_value
+
+    yield "EXTEND_INSTALLED_APPS", extend_installed_apps
+    yield "EXTEND_URL_PATTERNS", extend_url_patterns
 
     # ALSO yield the SETTINGS_FILES setting with the loaded files.
     yield "SETTINGS_FILES", tuple(settings_files)

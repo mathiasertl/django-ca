@@ -528,6 +528,12 @@ set ``LOG_LEVEL``, set the ``DJANGO_CA_LOG_LEVEL`` environment variable).
 CA_CUSTOM_APPS
    Default: ``[]``
 
+   .. WARNING::
+
+      This setting is deprecated and will be removed in ``django-ca==2.5.0``. Use
+      settings-extend-installed-apps_ instead.
+
+
    The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
    override that setting instead.
 
@@ -570,6 +576,48 @@ ENABLE_ADMIN
    Default: ``True``
 
    Set to ``False`` to disable the default Django admin interface. The interface is enabled by default.
+
+.. _settings-extend-installed-apps:
+
+EXTEND_INSTALLED_APPS
+   Default: ``[]``
+
+   Append Django applications to `INSTALLED_APPS
+   <https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-INSTALLED_APPS>`_.
+
+   This setting is extended if given in multiple configuration sources, see
+   `EXTEND_* settings <settings-extend-settings>`_ for more information.
+
+   If this setting is an environment variable, it must be a JSON-encoded list:
+
+   .. code-block:: json
+
+      ["myapp", "otherapp.apps.OtherAppConfig"]
+
+.. _settings-extend-url-patterns:
+
+EXTEND_URL_PATTERNS
+   Default: ``[]``
+
+   Append URL patterns to the default `URL configuration <https://docs.djangoproject.com/en/dev/ref/urls/>`_.
+   This allows you to add custom endpoints to your project.
+
+   This setting is extended if given in multiple configuration sources, see
+   `EXTEND_* settings <settings-extend-settings>`_ for more information.
+
+   The syntax is very similar to normal URL configuration. For example:
+
+   .. tab:: in Python
+
+      .. literalinclude:: include/config/setting_extend_url_patterns.py
+         :language: python
+
+   .. tab:: with YAML
+
+      .. literalinclude:: include/config/setting_extend_url_patterns.yaml
+         :language: yaml
+
+   If this setting is an environment variable, it must be a JSON-encoded.
 
 .. _settings-log-format:
 
@@ -805,3 +853,32 @@ The `CA_PROFILES <settings-ca-profiles>`_ setting can also be set using YAML. He
 
 .. literalinclude:: include/yaml-example-ca-profiles.yaml
    :language: yaml
+
+.. _settings-extend-settings:
+
+*********************
+``EXTEND_*`` settings
+*********************
+
+Settings that are prefixed with ``EXTEND_`` are used to extend a different setting. If you use the full
+django-ca project (e.g. if you :doc:`install from source </quickstart/from_source>`, or use :doc:`Docker
+</quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`) and have multiple configuration
+sources, the setting will be extended by all instances in this setting.
+
+For example, if you have:
+
+.. code-block:: yaml
+   :caption: conf/10-enable-first-app.yaml
+
+   EXTEND_INSTALLED_APPS:
+      - first_app
+
+and:
+
+.. code-block:: yaml
+   :caption: conf/20-enable-second-app.yaml
+
+   EXTEND_INSTALLED_APPS:
+      - second_app
+
+... then both ``first_app`` and ``second_app`` will be added to ``INSTALLED_APPS``.

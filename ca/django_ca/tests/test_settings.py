@@ -26,11 +26,15 @@ from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.signals import setting_changed
+from django.http import HttpResponse
+from django.urls import URLPattern, URLResolver, include, path, re_path
+from django.views import View
 
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from ca.settings_utils import (
+    UrlPatternsModel,
     get_settings_files,
     load_secret_key,
     load_settings_from_environment,
@@ -47,6 +51,49 @@ SCOPE_ERROR = (
     r"Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` "
     r"can be set\."
 )
+
+
+def view() -> HttpResponse:
+    """View function used in tests for UrlPatternsModel."""
+    return HttpResponse("OK")
+
+
+class DummyView(View):
+    """Class-based view used in tests for UrlPatternsModel."""
+
+    key: str = ""
+
+
+def assert_url_config(
+    actual: list[Union[URLPattern, URLResolver]], expected: list[Union[URLPattern, URLResolver]]
+) -> None:
+    """Assert that the URL patterns are equal."""
+    assert len(actual) == len(expected)
+
+    for act, exp in zip(actual, expected):
+        # Assert that both have the same type (URLPattern == view(), URLResolver == include())
+        assert type(act) is type(exp)
+
+        # assert both callbacks have `view_class` set (== class-based view) or not.
+        assert hasattr(act.callback, "view_class") is hasattr(exp.callback, "view_class")
+
+        assert isinstance(act, (URLPattern, URLResolver))
+        assert isinstance(exp, (URLPattern, URLResolver))
+        assert str(act.pattern) == str(exp.pattern)  # checks the route
+
+        # Need different tests for class-based and function-based views:
+        if hasattr(act.callback, "view_class"):
+            # TYPEHINT NOTE: mypy does not know about custom attributes set by Django
+            assert act.callback.view_class == exp.callback.view_class  # type: ignore[union-attr]
+            assert act.callback.view_initkwargs == exp.callback.view_initkwargs  # type: ignore[union-attr]
+        else:
+            assert act.callback == exp.callback  # equivalent to view
+
+        if isinstance(act, URLPattern):  # made sure that act/exp are same type above
+            assert act.default_args == exp.default_args  # type: ignore[union-attr]  # equivalent to kwargs
+            assert act.name == exp.name  # type: ignore[union-attr]
+        else:  # both are URLResolver
+            assert act.namespace == exp.namespace  # type: ignore[union-attr]
 
 
 @pytest.mark.parametrize("value", (True, False) * 5)
@@ -81,8 +128,8 @@ def test_with_settings_files() -> None:
     ]
 
     # Assert that all files actually exist
-    for path in settings_files:
-        assert path.exists() is True
+    for _path in settings_files:
+        assert _path.exists() is True
 
 
 def test_load_settings_from_files() -> None:
@@ -93,6 +140,11 @@ def test_load_settings_from_files() -> None:
 
     with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": f"{single_file}:{settings_dir}:{empty_file}"}):
         assert dict(load_settings_from_files(FIXTURES_DIR)) == {
+            "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2"],
+            "EXTEND_URL_PATTERNS": [
+                {"route": "/path1", "view": [{"view": "yourapp1.views.YourView"}]},
+                {"route": "/path2", "view": [{"view": "yourapp2.views.YourView"}]},
+            ],
             "SETTINGS_DIR_ONE": True,
             "SETTINGS_DIR_TWO": True,
             "SINGLE_FILE": True,
@@ -106,27 +158,27 @@ def test_load_settings_from_files() -> None:
 
 def test_load_settings_from_files_file_does_not_exist() -> None:
     """Test loading settings if the file does not exist."""
-    path = "/does-not-exist.yaml"
-    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": path}):
-        with pytest.raises(ImproperlyConfigured, match=rf"^{path}: No such file or directory\.$"):
+    file_path = "/does-not-exist.yaml"
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": file_path}):
+        with pytest.raises(ImproperlyConfigured, match=rf"^{file_path}: No such file or directory\.$"):
             dict(load_settings_from_files(FIXTURES_DIR))
 
 
 def test_load_settings_from_files_with_invalid_yaml(tmp_path: Path) -> None:
     """Test loading settings if the file is not valid YAML."""
-    path = str(tmp_path / "invalid-file.yaml")
-    with open(path, "w", encoding="utf-8") as stream:
+    file_path = str(tmp_path / "invalid-file.yaml")
+    with open(file_path, "w", encoding="utf-8") as stream:
         stream.write("test: 'unbalanced quote")
-    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": path}):
-        with pytest.raises(ImproperlyConfigured, match=rf"^{path}: Invalid YAML\.$"):
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": file_path}):
+        with pytest.raises(ImproperlyConfigured, match=rf"^{file_path}: Invalid YAML\.$"):
             dict(load_settings_from_files(FIXTURES_DIR))
 
 
 def test_load_settings_from_files_with_invalid_type() -> None:
     """Test loading settings if the file has an invalid type."""
-    path = str(FIXTURES_DIR / "settings" / "dirs" / "invalid-type.yaml")
-    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": path}):
-        with pytest.raises(ImproperlyConfigured, match=rf"^{path}: File is not a key/value mapping\.$"):
+    file_path = str(FIXTURES_DIR / "settings" / "dirs" / "invalid-type.yaml")
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": file_path}):
+        with pytest.raises(ImproperlyConfigured, match=rf"^{file_path}: File is not a key/value mapping\.$"):
             dict(load_settings_from_files(FIXTURES_DIR))
 
 
@@ -224,8 +276,7 @@ def test_update_database_setting_from_environment_with_postgres_with_values_from
     """Test loading database settings for PostgreSQL with values from a file."""
     databases = {"default": {"ENGINE": "django.db.backends.postgresql"}}
     for key in ("db", "user", "password"):
-        path = str(tmp_path / key)
-        with open(path, "w", encoding="utf-8") as stream:
+        with open(tmp_path / key, "w", encoding="utf-8") as stream:
             stream.write(f"custom-{key}")
 
     with mock.patch.dict(
@@ -277,8 +328,7 @@ def test_update_database_setting_from_environment_with_mysql_with_values_from_fi
     """Test loading database settings for MySQL with values from a file."""
     databases = {"default": {"ENGINE": "django.db.backends.mysql"}}
     for key in ("db", "user", "password"):
-        path = str(tmp_path / key)
-        with open(path, "w", encoding="utf-8") as stream:
+        with open(tmp_path / key, "w", encoding="utf-8") as stream:
             stream.write(f"custom-{key}")
 
     with mock.patch.dict(
@@ -724,3 +774,49 @@ def test_ca_crl_profiles_invalid_scope_by_override(
     """Test that setting an invalid scope in an override."""
     with assert_improperly_configured(SCOPE_ERROR):
         settings.CA_CRL_PROFILES = {"ca": {base: True, "OVERRIDES": {"123": {override: True}}}}
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    (
+        (  # 0 - most simple case
+            [{"route": "/path0", "view": {"view": "django_ca.tests.test_settings.view"}}],
+            ([path("/path0", view)]),
+        ),
+        (  # 1
+            [
+                {
+                    "func": "path",
+                    "route": "/path1",
+                    "view": {"view": "django_ca.tests.test_settings.view"},
+                    "name": "path1",
+                    "kwargs": {"foo": "bar"},
+                },
+            ],
+            [path("/path1", view, kwargs={"foo": "bar"}, name="path1")],
+        ),
+        (  # 2
+            [
+                {
+                    "func": "re_path",
+                    "route": r"^path2/(?P<username>\w+)/$",
+                    "view": {
+                        "view": "django_ca.tests.test_settings.DummyView",
+                        "initkwargs": {"key": "value"},
+                    },
+                    "name": "path2",
+                },
+            ],
+            [re_path(r"^path2/(?P<username>\w+)/$", DummyView.as_view(key="value"), name="path2")],
+        ),
+        (  # 3
+            [{"route": "/include3/", "view": {"module": "django_ca.urls"}}],
+            [path("/include3/", include("django_ca.urls"))],
+        ),
+    ),
+)
+def test_extend_url_patterns(value: list[dict[str, Any]], expected: list[URLPattern]) -> None:
+    """Test UrlPatternsModel used in EXTEND_URL_PATTERNS setting."""
+    patterns_model = UrlPatternsModel.model_validate(value)
+    actual = [model.pattern for model in patterns_model]
+    assert_url_config(actual, expected)  # type: ignore[arg-type]

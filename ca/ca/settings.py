@@ -13,10 +13,16 @@
 
 """Default settings for the django-ca Django project."""
 
+import json
 import os
+import warnings
 from pathlib import Path
+from typing import Any
+
+from django.core.exceptions import ImproperlyConfigured
 
 from ca.settings_utils import (
+    UrlPatternsModel,
     load_secret_key,
     load_settings_from_environment,
     load_settings_from_files,
@@ -147,6 +153,9 @@ CA_DEFAULT_HOSTNAME = None
 CA_URL_PATH = "django_ca/"
 CA_ENABLE_REST_API = False
 
+EXTEND_INSTALLED_APPS: list[str] = []
+_EXTEND_URL_PATTERNS: list[dict[str, Any]] = []
+
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver
 CA_ENABLE_CLICKJACKING_PROTECTION = True
 
@@ -216,11 +225,21 @@ CELERY_BEAT_SCHEDULE = {
 
 # Load settings from files
 for _setting, _value in load_settings_from_files(BASE_DIR):
+    if _setting == "EXTEND_URL_PATTERNS":
+        _EXTEND_URL_PATTERNS += _value
+    if _setting == "EXTEND_INSTALLED_APPS":
+        EXTEND_INSTALLED_APPS += _value
+
     globals()[_setting] = _value
 
 # Load settings from environment variables
 for _setting, _value in load_settings_from_environment():
-    globals()[_setting] = _value
+    if _setting == "EXTEND_URL_PATTERNS":
+        _EXTEND_URL_PATTERNS += json.loads(_value)
+    elif _setting == "EXTEND_INSTALLED_APPS":
+        EXTEND_INSTALLED_APPS += json.loads(_value)
+    else:
+        globals()[_setting] = _value
 
 # Try to use POSTGRES_* and MYSQL_* environment variables to determine database access credentials.
 # These are the variables set by the standard PostgreSQL/MySQL Docker containers.
@@ -243,9 +262,26 @@ if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:
 if ENABLE_ADMIN is not True and "django.contrib.admin" in INSTALLED_APPS:
     INSTALLED_APPS.remove("django.contrib.admin")
 
-INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
+if CA_CUSTOM_APPS:
+    warnings.warn(
+        "CA_CUSTOM_APPS is deprecated and will be removed in django-ca==2.5.0, "
+        "use EXTEND_INSTALLED_APPS instead.",
+        DeprecationWarning,
+        stacklevel=1,
+    )
+    INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
+
 if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
     INSTALLED_APPS.append("ninja")
+
+# Add additional applications to INSTALLED_APPS
+INSTALLED_APPS += EXTEND_INSTALLED_APPS
+
+# Add additional URL configurations
+try:
+    EXTEND_URL_PATTERNS = UrlPatternsModel.model_validate(_EXTEND_URL_PATTERNS)
+except ValueError as ex:
+    raise ImproperlyConfigured(ex) from ex
 
 if STORAGES is None:
     # Set the default storages argument

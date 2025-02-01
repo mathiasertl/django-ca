@@ -3,6 +3,12 @@ Deprecation timeline
 ####################
 
 ***********
+2.5.0 (TBR)
+***********
+
+* The ``CA_CUSTOM_APPS`` setting will be removed. Use
+
+***********
 2.3.0 (TBR)
 ***********
 

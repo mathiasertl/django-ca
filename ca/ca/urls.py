@@ -13,15 +13,21 @@
 
 """Root URL configuration for the django-ca Django project."""
 
+from typing import Union
+
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import URLPattern, URLResolver, include, path
 
 admin.autodiscover()
 
-urlpatterns = [
+urlpatterns: list[Union[URLPattern, URLResolver]] = [
     path(getattr(settings, "CA_URL_PATH", "django_ca/"), include("django_ca.urls")),
 ]
 
 if getattr(settings, "ENABLE_ADMIN", True):
     urlpatterns.append(path("admin/", admin.site.urls))
+
+# Append additional URL patterns
+for pattern in settings.EXTEND_URL_PATTERNS:
+    urlpatterns.append(pattern.pattern)
