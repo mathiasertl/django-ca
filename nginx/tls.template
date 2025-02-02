@@ -6,6 +6,9 @@ server {
 
     include /etc/nginx/conf.d/include.d/ca.conf;
 
+    # Include any custom extra configuration
+    include /etc/nginx/templates/include.d/http/*.conf;
+
     # Ability to fulfill ACME challenges
     location /.well-known/acme-challenge/ {
         alias /usr/share/django-ca/acme/.well-known/acme-challenge/;
@@ -35,6 +38,9 @@ server {
     include /etc/nginx/conf.d/include.d/api.conf;
     include /etc/nginx/conf.d/include.d/ca.conf;
     include /etc/nginx/templates/include.d/admin.conf;
+
+    # Include any custom extra configuration
+    include /etc/nginx/templates/include.d/https/*.conf;
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {

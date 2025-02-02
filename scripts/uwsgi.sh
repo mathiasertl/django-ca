@@ -45,13 +45,26 @@ if [ -n "${NGINX_TEMPLATE}" ]; then
     # This directory is a Docker volume mapped to /etc/nginx/templates/ in Docker Compose
     NGINX_TEMPLATE_DIR=/var/lib/django-ca/nginx/templates/
 
-    NGINX_TEMPLATE_SOURCE="/usr/src/django-ca/nginx/${NGINX_TEMPLATE}.template"
+    NGINX_TEMPLATE_SOURCE_DIR="/usr/src/django-ca/nginx/"
+    NGINX_TEMPLATE_SOURCE="${NGINX_TEMPLATE_SOURCE_DIR}${NGINX_TEMPLATE}.template"
 
     if [ -r "${NGINX_TEMPLATE_SOURCE}" ]; then
-        mkdir -p ${NGINX_TEMPLATE_DIR}/include.d/
-        cp -pf "${NGINX_TEMPLATE_SOURCE}" ${NGINX_TEMPLATE_DIR}default.conf.template
-        cp -pf /usr/src/django-ca/nginx/include.d/*.conf ${NGINX_TEMPLATE_DIR}/include.d/
-        cp -pf /usr/src/django-ca/nginx/include.d/*.conf.template ${NGINX_TEMPLATE_DIR}/include.d/
+        mkdir -p "${NGINX_TEMPLATE_DIR}/include.d/"
+        cp -pf "${NGINX_TEMPLATE_SOURCE}" "${NGINX_TEMPLATE_DIR}default.conf.template"
+        cp -pf ${NGINX_TEMPLATE_SOURCE_DIR}include.d/*.conf "${NGINX_TEMPLATE_DIR}/include.d/"
+        cp -pf ${NGINX_TEMPLATE_SOURCE_DIR}include.d/*.conf.template "${NGINX_TEMPLATE_DIR}/include.d/"
+
+        # Include http/https directories if they exist. This allows specialized containers to add
+        # their own nginx configuration.
+        if [ -d "${NGINX_TEMPLATE_SOURCE_DIR}include.d/http" ]; then
+          mkdir -p "${NGINX_TEMPLATE_DIR}/include.d/http"
+          cp -rf ${NGINX_TEMPLATE_SOURCE_DIR}include.d/http/* "${NGINX_TEMPLATE_DIR}/include.d/http/"
+        fi
+
+        if [ -d "${NGINX_TEMPLATE_SOURCE_DIR}include.d/https" ]; then
+          mkdir -p "${NGINX_TEMPLATE_DIR}/include.d/https"
+          cp -rf ${NGINX_TEMPLATE_SOURCE_DIR}include.d/https/* "${NGINX_TEMPLATE_DIR}/include.d/https/"
+        fi
     else
         echo "${NGINX_TEMPLATE}: NGINX template not found."
         exit 1

@@ -8,6 +8,9 @@ server {
 
     include /opt/django-ca/src/django-ca/nginx/include.d/ca.conf;
 
+    # Include any custom extra configuration
+    include /etc/nginx/templates/include.d/http/*.conf;
+
     # Ability to fulfill ACME challenges
     location /.well-known/acme-challenge/ {
         alias /opt/django-ca/html/.well-known/acme-challenge/;
@@ -34,6 +37,9 @@ server {
     include /opt/django-ca/src/django-ca/nginx/include.d/acme.conf;
     include /opt/django-ca/src/django-ca/nginx/include.d/api.conf;
     include /opt/django-ca/src/django-ca/nginx/include.d/ca.conf;
+
+    # Include any custom extra configuration
+    include /etc/nginx/templates/include.d/https/*.conf;
 
     location /admin/ {
         uwsgi_pass django_ca_frontend;
