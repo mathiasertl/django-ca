@@ -18,7 +18,7 @@ import warnings
 from collections.abc import Iterable
 from datetime import timedelta
 from importlib.util import find_spec
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Generic, Literal, Optional, TypeVar, Union
 
 from annotated_types import Ge, Le
 from pydantic import (
@@ -423,13 +423,14 @@ class SettingsModel(BaseModel):
         return self
 
 
-class SettingsProxy:
-    """Proxy class to access settings from the model.
+BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 
-    This class exists to enable reloading of settings in test cases.
-    """
 
-    __settings: SettingsModel
+class SettingsProxyBase(Generic[BaseModelTypeVar]):
+    """Base class for a settings model proxy that can be used by extensions."""
+
+    settings_model: type[BaseModelTypeVar]
+    __settings: BaseModelTypeVar
 
     def __init__(self) -> None:
         self.reload()
@@ -442,12 +443,22 @@ class SettingsProxy:
     def reload(self) -> None:
         """Reload settings model from django settings."""
         try:
-            self.__settings = SettingsModel.model_validate(_settings)
+            self.__settings = self.settings_model.model_validate(_settings)
         except ValueError as ex:
             raise ImproperlyConfigured(str(ex)) from ex
 
     def __getattr__(self, item: str) -> Any:
         return getattr(self.__settings, item)
+
+
+class SettingsProxy(SettingsProxyBase[SettingsModel]):
+    """Proxy class to access settings from the model.
+
+    This class exists to enable reloading of settings in test cases.
+    """
+
+    settings_model = SettingsModel
+    __settings: SettingsModel  # pylint: disable=unused-private-member
 
 
 model_settings = SettingsProxy()
