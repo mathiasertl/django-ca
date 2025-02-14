@@ -49,6 +49,9 @@ Python API
 Deprecation notices
 *******************
 
+* ``CA_CUSTOM_APPS`, a project-level configuration variable, is deprecated and will be removed in
+  ``django-ca==2.5.0``.
+* This will be the last release to support Debian 11 (Bullseye) and Alpine 3.19.
 * ``django_ca.extensions.parse_extension()`` is deprecated and will be removed in ``django-ca==2.3.0``. Use
   :doc:`Pydantic models </python/pydantic>` instead.
 * Functions related to the old OpenSSL style subject format are deprecated and will be removed in
@@ -59,6 +62,3 @@ Deprecation notices
   * ``django_ca.utils.serialize_name()``
   * ``django_ca.utils.split_str()``
   * ``django_ca.utils.x509_name()``
-
-* ``CA_CUSTOM_APPS`, a project-level configuration variable, is deprecated and will be removed in
-  ``django-ca==2.5.0``.

@@ -10,6 +10,8 @@ pytest-cov==6.0.0
 pytest-django==4.10.0
 selenium==4.28.1
 semantic-version==2.10.0
+# See pyproject.toml for reasoning for required minimum version
+setuptools>=68.1
 tabulate==0.9.0
 termcolor==2.5.0
 tomli==2.0.1; python_version < '3.11'

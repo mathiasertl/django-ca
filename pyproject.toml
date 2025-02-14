@@ -16,7 +16,6 @@ pydantic = ["2.10"]
 
 # https://alpinelinux.org/releases/
 alpine = [
-    "3.18",  # until 2025-05-09
     "3.19",  # until 2025-11-01
     "3.20",  # until 2026-04-01
     "3.21",  # until 2026-11-01
@@ -24,16 +23,12 @@ alpine = [
 
 # Blacklist images that we don't want to build for
 docker-image-blacklist = [
-    # Python 3.8/3.9 images don't work with pinned requirements that include Django 5.0.
+    # Python 3.9 images don't work with pinned requirements that include Django 5.0.
     "python:3.9-alpine3.21",
     "python:3.9-alpine3.20",
     "python:3.9-alpine3.19",
-    "python:3.9-alpine3.18",
     "python:3.9-slim-bullseye",
     "python:3.9-slim-bookworm",
-
-    # Some image tags are no longer being built
-    "python:3.13-alpine3.18",
 
      # uWSGI does not compile on bullseye
     "python:3.13-slim-bullseye",
@@ -52,7 +47,6 @@ debian-releases = [
 # List of tested Ubuntu releases:
 #   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
 ubuntu-releases = [
-    "focal",  # 20.04, until 2025-04-23
     "jammy",  # 22.04, until 2027-04-21
     "noble",  # 24.04, until 2029-05-31
     "oracular",  # 24.10, until 2025-07

@@ -1,8 +1,5 @@
 -r requirements-dev-common.txt
-# Astroid 3.3.7 does not work, see: https://github.com/pylint-dev/astroid/issues/2662
-astroid>=3.3.6,!=3.3.7
 pre-commit==4.1.0
 pylint-django==2.6.1
 pylint==3.3.4
 ruff==0.9.6
-setuptools>=65

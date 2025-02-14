@@ -37,7 +37,7 @@ def url_pattern_type_validator(value: Any) -> Any:
     """Validator for url pattern type."""
     if value == "path":
         return path
-    elif value == "re_path":
+    if value == "re_path":
         return re_path
     return value  # pragma: no cover  # might even be actual function, in theory
 
@@ -70,6 +70,7 @@ class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
 
     @property
     def parsed_view(self) -> Any:
+        """Returning a parsed view, class or function-based."""
         if isinstance(self.view, IncludeModel):
             return include(self.view.module, namespace=self.view.namespace)
 
@@ -83,6 +84,8 @@ class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
 
     @property
     def pattern(self) -> Union[URLResolver, URLPattern]:
+        """Return the full URL pattern."""
+        # pylint: disable-next=redundant-keyword-arg  # false positive
         return self.func(self.route, self.parsed_view, kwargs=self.kwargs, name=self.name)
 
 
