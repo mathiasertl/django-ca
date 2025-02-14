@@ -3,6 +3,6 @@
 astroid>=3.3.6,!=3.3.7
 pre-commit==4.1.0
 pylint-django==2.6.1
-pylint==3.3.3
-ruff==0.9.3
+pylint==3.3.4
+ruff==0.9.6
 setuptools>=65

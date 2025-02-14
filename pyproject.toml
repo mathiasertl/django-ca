@@ -131,7 +131,7 @@ dependencies = [
     "idna>=3.4",
     "josepy>=1.13.0,<2.0",
     "packaging",
-    "pydantic>=2.6",
+    "pydantic>=2.10",
     "requests",
     # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
     "typing_extensions>=4.6.0;python_version<'3.12'",
