@@ -1,24 +1,16 @@
-###########
-2.2.0 (TBR)
-###########
+##################
+2.2.0 (2025-02-14)
+##################
 
-***********
-Performance
-***********
+.. NOTE::
 
+   This release is ahead of schedule due to customer requirements in downstream plugins.
+
+* Key backends now support signing arbitrary data. This functionality is not used by django-ca itself, but may
+  be used by plugins.
 * Optimize number of database queries in performance-sensitive views (OCSP, CRLs, ACMEv2).
-
-**************
-OCSP responder
-**************
-
 * Fix error for OCSP queries for intermediate CAs.
-
-***********
-HSM support
-***********
-
-* Add support for storing Ed25519 and Ed448 keys.
+* Add support for storing/importing Ed25519 and Ed448 keys into HSMs.
 
 **********************
 Command-line utilities
