@@ -33,10 +33,13 @@ import argparse
 import os
 import sys
 
-from setuptools.config.pyprojecttoml import read_configuration
-
 import django
 from django.conf import settings
+
+try:
+    import tomllib
+except ImportError:  # pragma: py<3.11
+    import tomli as tomllib  # type: ignore[no-redef]
 
 # Add source dir to path if not present. This happens at least when this script started in a Docker image.
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -44,7 +47,8 @@ SRC_DIR = os.path.join(ROOT_DIR, "ca")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-configuration = read_configuration(os.path.join(ROOT_DIR, "pyproject.toml"))
+with open(os.path.join(ROOT_DIR, "pyproject.toml"), 'rb') as stream:
+    configuration = tomllib.load(stream)
 ALL_EXTRAS = list(configuration["project"]["optional-dependencies"])
 
 parser = argparse.ArgumentParser("Test imports.")

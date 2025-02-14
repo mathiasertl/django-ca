@@ -1,5 +1,5 @@
 ##################
-2.2.0 (2025-02-14)
+2.2.0 (2025-02-15)
 ##################
 
 .. NOTE::
@@ -35,8 +35,10 @@ Settings
 Dependencies
 ************
 
+* Add support for ``acme~=3.1.0`` and ``acme~=3.2.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``django~=5.0.0``, ``cryptography~=43.0``, ``acme~=2.11.0``
   and ``pydantic~=2.9.0``.
+* **BACKWARDS INCOMPATIBLE:** Dropped support for Alpine 3.18.
 
 **********
 Python API
@@ -52,6 +54,7 @@ Deprecation notices
 * ``CA_CUSTOM_APPS`, a project-level configuration variable, is deprecated and will be removed in
   ``django-ca==2.5.0``.
 * This will be the last release to support Debian 11 (Bullseye) and Alpine 3.19.
+* This will be the last release to support ``acme~=3.0.0`` and ``acme~=3.1.0``.
 * ``django_ca.extensions.parse_extension()`` is deprecated and will be removed in ``django-ca==2.3.0``. Use
   :doc:`Pydantic models </python/pydantic>` instead.
 * Functions related to the old OpenSSL style subject format are deprecated and will be removed in
