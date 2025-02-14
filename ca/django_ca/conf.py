@@ -36,6 +36,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.conf import settings as _settings
 from django.core.exceptions import ImproperlyConfigured
+from django.core.signals import setting_changed
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
@@ -427,18 +428,37 @@ BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 
 
 class SettingsProxyBase(Generic[BaseModelTypeVar]):
-    """Base class for a settings model proxy that can be used by extensions."""
+    """Reusable Pydantic model proxy that reloads on automatically when settings change.
+
+    Implementers must set `settings_model` to the Pydantic model they want to use.
+
+    Parameters
+    ----------
+    reload_on_change : bool, optional
+        Set to ``False`` if you do not want to reload the underlying model when settings change during
+        testing.
+    """
 
     settings_model: type[BaseModelTypeVar]
     __settings: BaseModelTypeVar
 
-    def __init__(self) -> None:
+    def __init__(self, reload_on_change: bool = True) -> None:
         self.reload()
+
+        # Connect signal handler to reload the underlying Pydantic model when settings change.
+        if reload_on_change is True:  # pragma: no branch
+            self._connect_settings_changed()
 
     def __dir__(self, object: Any = None) -> Iterable[str]:  # pylint: disable=redefined-builtin
         # Used by ipython for tab completion, see:
         #   http://ipython.org/ipython-doc/dev/config/integrating.html
         return list(super().__dir__()) + list(self.__settings.model_fields)
+
+    def _connect_settings_changed(self) -> None:
+        setting_changed.connect(self._reload_from_signal)
+
+    def _reload_from_signal(self, **kwargs: Any) -> None:
+        self.reload()
 
     def reload(self) -> None:
         """Reload settings model from django settings."""

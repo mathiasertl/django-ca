@@ -22,7 +22,7 @@ from django.core.signals import setting_changed
 
 import pytest
 
-from django_ca import conf, profiles
+from django_ca import profiles
 
 # Register assertion helpers for better output in our helpers. See also:
 #   https://docs.pytest.org/en/latest/how-to/writing_plugins.html#assertion-rewriting
@@ -45,7 +45,7 @@ def reload_settings(  # pylint: disable=unused-argument
     #   reloaded modules
     # * Do NOT set module level attributes, as other modules will not see the new instance
 
-    conf.model_settings.reload()
+    # conf.model_settings.reload()
     profiles.profiles._reset()  # pylint: disable=protected-access
 
 
