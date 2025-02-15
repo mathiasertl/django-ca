@@ -47,7 +47,7 @@ SRC_DIR = os.path.join(ROOT_DIR, "ca")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-with open(os.path.join(ROOT_DIR, "pyproject.toml"), 'rb') as stream:
+with open(os.path.join(ROOT_DIR, "pyproject.toml"), "rb") as stream:
     configuration = tomllib.load(stream)
 ALL_EXTRAS = list(configuration["project"]["optional-dependencies"])
 
