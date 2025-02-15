@@ -17,6 +17,8 @@ Dependencies
 ============
 
 * Drop support for Python 3.9 and ``django~=4.2.0``
+* Drop support for Debian 11 (Bullseye) and Alpine 3.19.
+* Drop support for ``josepy~=1.15.0``, ``acme~=3.0.0`` and ``acme~=3.1.0``.
 
 Command-line
 ============
