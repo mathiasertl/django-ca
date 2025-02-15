@@ -27,7 +27,7 @@ from devscripts.commands import DevCommand
 from devscripts.out import info, ok
 
 
-def run(release: str, image: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
+def run(release: str, image: str, python_version: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
     """Actually run a given wheel test."""
     wheel = f"dist/django_ca-{release}-py3-none-any.whl"
     command = "devscripts/standalone/test-imports.py"
@@ -36,10 +36,14 @@ def run(release: str, image: str, extra: str = "") -> "subprocess.CompletedProce
         wheel += f"[{extra}]"
         command += f" --extra={extra}"
 
+    dependencies = "wheel"
+    if python_version in ("3.9", "3.10"):  # pragma: only py<3.11
+        # We read pyproject.toml, so older python versions need an extra library.
+        dependencies += " tomli"
+
     commands = [
         "python -m venv /tmp/venv",
-        # NOTE: We require at least setuptools>=68.1 for reading package configuration from pyproject.toml
-        "/tmp/venv/bin/pip install -U pip 'setuptools>=68.1' wheel",
+        f"/tmp/venv/bin/pip install -U pip {dependencies}",
         f"/tmp/venv/bin/pip install {wheel}",
         f"/tmp/venv/bin/python {command}",
     ]
@@ -115,11 +119,11 @@ class Command(DevCommand):
 
             if test_no_extras:
                 info("Test with no extras", indent="    ")
-                run(release, image.id)
+                run(release, image.id, python_version=pyver)
 
             for extra in extras:
                 info(f"Test extra: {extra}", indent="    ")
-                run(release, image.id, extra=extra)
+                run(release, image.id, extra=extra, python_version=pyver)
 
             time.sleep(1)
             image.remove(force=True)
