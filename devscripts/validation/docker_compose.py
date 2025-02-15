@@ -625,7 +625,7 @@ def _validate_default_version(path: Union[str, "os.PathLike[str]"], release: str
         services = yaml.safe_load(stream)["services"]
 
     errors = 0
-    expected_image = f"{config.DOCKER_TAG}:${{DJANGO_CA_VERSION:-{release}}}"
+    expected_image = f"${{DJANGO_CA_IMAGE:-{config.DOCKER_TAG}}}:${{DJANGO_CA_VERSION:-{release}}}"
     if services["backend"]["image"] != expected_image:
         errors += err(f"{path}: {services['backend']['image']} does not match {expected_image}")
     if services["frontend"]["image"] != expected_image:
@@ -637,7 +637,7 @@ def _validate_default_version(path: Union[str, "os.PathLike[str]"], release: str
 def validate_docker_compose_files(release: str) -> int:
     """Validate the state of docker compose files when releasing."""
     errors = 0
-    errors += _validate_default_version("docker-compose.yml", release)
+    errors += _validate_default_version("compose.yaml", release)
     return errors
 
 
