@@ -15,7 +15,7 @@
 
 import logging
 import typing
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, model_validator
 from pydantic_core.core_schema import ValidationInfo
@@ -35,8 +35,8 @@ log = logging.getLogger(__name__)
 class PinModelMixin:
     """Mixin providing so/user pin and validation."""
 
-    so_pin: Optional[str] = None
-    user_pin: Optional[str] = None
+    so_pin: str | None = None
+    user_pin: str | None = None
 
     @model_validator(mode="after")
     def validate_pins(self, info: ValidationInfo) -> "typing.Self":
@@ -68,7 +68,7 @@ class HSMCreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel
 
     key_label: str
     key_type: SupportedKeyType  # overwrites field from the base model
-    elliptic_curve: Optional[EllipticCurves]
+    elliptic_curve: EllipticCurves | None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "HSMCreatePrivateKeyOptions":

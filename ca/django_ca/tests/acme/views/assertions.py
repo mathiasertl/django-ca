@@ -15,7 +15,7 @@
 
 import re
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from requests.utils import parse_header_links
 
@@ -44,7 +44,7 @@ def assert_acme_problem(
     status: int,
     message: str,
     ca: CertificateAuthority,
-    link_relations: Optional[dict[str, str]] = None,
+    link_relations: dict[str, str] | None = None,
     regex: bool = False,
 ) -> None:
     """Assert that an HTTP response confirms to an ACME problem report.
@@ -67,7 +67,7 @@ def assert_acme_problem(
 def assert_acme_response(
     response: "HttpResponse",
     ca: CertificateAuthority,
-    link_relations: Optional[dict[str, str]] = None,
+    link_relations: dict[str, str] | None = None,
 ) -> None:
     """Assert basic Acme Response properties (Content-Type & Link header)."""
     link_relations = link_relations or {}

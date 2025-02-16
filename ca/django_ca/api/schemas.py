@@ -15,7 +15,6 @@
 
 import abc
 from datetime import datetime
-from typing import Optional
 
 from ninja import Field, ModelSchema, Schema
 from pydantic import field_serializer
@@ -84,25 +83,25 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
     """
 
     name: str = Field(description="The human-readable name of the certificate authority.")
-    sign_authority_information_access: Optional[AuthorityInformationAccessModel] = Field(
+    sign_authority_information_access: AuthorityInformationAccessModel | None = Field(
         default=None,
         json_schema_extra={
             "description": "The Authority Information Access extension added to newly signed certificates."
         },
     )
-    sign_certificate_policies: Optional[CertificatePoliciesModel] = Field(
+    sign_certificate_policies: CertificatePoliciesModel | None = Field(
         default=None,
         json_schema_extra={
             "description": "The Certificate Policies extension added to newly signed certificates."
         },
     )
-    sign_crl_distribution_points: Optional[CRLDistributionPointsModel] = Field(
+    sign_crl_distribution_points: CRLDistributionPointsModel | None = Field(
         default=None,
         json_schema_extra={
             "description": "The CRL Distribution Points extension added to newly signed certificates."
         },
     )
-    sign_issuer_alternative_name: Optional[IssuerAlternativeNameModel] = Field(
+    sign_issuer_alternative_name: IssuerAlternativeNameModel | None = Field(
         default=None,
         json_schema_extra={
             "description": "The Issuer Alternative Name extension added to newly signed certificates."
@@ -157,7 +156,7 @@ class CertificateAuthorityUpdateSchema(CertificateAuthorityBaseSchema):
 
     # TYPE NOTE: fields_optional does not capture explicitly named fields, so we repeat this
     # with Optional[str], which is an incompatible override
-    name: Optional[str] = Field(  # type: ignore[assignment]
+    name: str | None = Field(  # type: ignore[assignment]
         description="The human-readable name of the certificate authority.",
         default=None,
         json_schema_extra={"required": False},
@@ -171,7 +170,7 @@ class CertificateOrderSchema(ModelSchema):
     """Schema for certificate orders."""
 
     user: str = Field(alias="user.get_username", description="Username of the user.")
-    serial: Optional[str] = Field(alias="certificate.serial", default=None)
+    serial: str | None = Field(alias="certificate.serial", default=None)
     created: datetime = Field(
         description="When the order was created.", json_schema_extra={"example": DATETIME_EXAMPLE}
     )
@@ -204,7 +203,7 @@ class CertificateFilterSchema(Schema):
         default=False, description="Include auto-generated certificates (e.g. OCSP responder certificates)."
     )
     expired: bool = Field(default=False, description="Include expired certificates.")
-    profile: Optional[str] = Field(
+    profile: str | None = Field(
         description="Only return certificates generated with the given profile.",
         default=None,
         json_schema_extra={"enum": list(sorted(model_settings.CA_PROFILES))},
@@ -215,7 +214,7 @@ class CertificateFilterSchema(Schema):
 class RevokeCertificateSchema(Schema):
     """Schema for revoking certificates."""
 
-    compromised: Optional[datetime] = Field(default=None, description="When the certificate was compromised.")
+    compromised: datetime | None = Field(default=None, description="When the certificate was compromised.")
 
     reason: ReasonFlags = Field(
         default=ReasonFlags.unspecified,

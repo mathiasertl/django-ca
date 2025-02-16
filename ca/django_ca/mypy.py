@@ -16,7 +16,8 @@
 The plugin adds proper type hinting to attribute access on ``django_ca.conf.model_settings``.
 """
 
-from typing import Callable, Optional, cast
+from collections.abc import Callable
+from typing import cast
 
 from mypy.checker import TypeChecker
 from mypy.errorcodes import ATTR_DEFINED
@@ -104,7 +105,7 @@ class DjangoCaPlugin(Plugin):
         ctx.api.fail(f'Undefined setting "{attr_name}"', member_expr)
         return AnyType(TypeOfAny.from_error)
 
-    def get_attribute_hook(self, fullname: str) -> Optional[Callable[[AttributeContext], Type]]:
+    def get_attribute_hook(self, fullname: str) -> Callable[[AttributeContext], Type] | None:
         """Hook called by mypy to get the type for attributes."""
         if fullname.startswith("django_ca.conf.SettingsProxy"):
             return self.settings_proxy_attribute_callback

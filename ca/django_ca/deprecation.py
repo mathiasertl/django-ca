@@ -17,7 +17,7 @@ import functools
 import typing
 import warnings
 from inspect import signature
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 # IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
 
@@ -70,7 +70,7 @@ def deprecate_function(category: DeprecationWarningType, stacklevel: int = 2) ->
 
 
 def deprecate_argument(
-    arg: str, category: DeprecationWarningType, stacklevel: int = 2, replacement: Optional[str] = None
+    arg: str, category: DeprecationWarningType, stacklevel: int = 2, replacement: str | None = None
 ) -> typing.Callable[[F], F]:
     """Decorator to mark an argument as deprecated.
 
@@ -100,7 +100,7 @@ def deprecate_argument(
 
 def deprecate_type(
     arg: str,
-    types: Union[type[Any], tuple[type[Any], ...]],
+    types: type[Any] | tuple[type[Any], ...],
     category: DeprecationWarningType,
     stacklevel: int = 2,
 ) -> typing.Callable[[F], F]:

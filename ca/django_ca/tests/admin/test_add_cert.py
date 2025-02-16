@@ -17,7 +17,7 @@ import json
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -98,7 +98,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
     def form_data(
         self, csr: str, ca: CertificateAuthority, algorithm: str = "SHA-256"
-    ) -> dict[str, Union[str, bool, int, list[str]]]:
+    ) -> dict[str, str | bool | int | list[str]]:
         """Get basic form data to submit to the admin interface."""
         crldp = CRLDistributionPointsModel.model_validate(ca.sign_crl_distribution_points).model_dump(
             mode="json"

@@ -14,7 +14,7 @@
 """Private key implementations that use an HSM in the background."""
 
 import hashlib
-from typing import ClassVar, Generic, NoReturn, Optional, TypeVar, Union, cast
+from typing import ClassVar, Generic, NoReturn, TypeVar, Union, cast
 
 import pkcs11
 from pkcs11 import MGF, Mechanism, Session
@@ -51,8 +51,8 @@ class PKCS11PrivateKeyMixin:
         session: Session,
         key_id: str,
         key_label: str,
-        pkcs11_private_key: Optional[pkcs11.PrivateKey] = None,
-        pkcs11_public_key: Optional[pkcs11.PublicKey] = None,
+        pkcs11_private_key: pkcs11.PrivateKey | None = None,
+        pkcs11_public_key: pkcs11.PublicKey | None = None,
     ) -> None:
         self._session = session
         self._key_id = key_id.encode()
@@ -145,7 +145,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         return self.public_key().key_size
 
     def _get_pss_signing_parameters(
-        self, padding: PSS, algorithm: Union[hashes.HashAlgorithm, Prehashed]
+        self, padding: PSS, algorithm: hashes.HashAlgorithm | Prehashed
     ) -> tuple[Mechanism, MGF, int]:
         # PYLINT NOTE: No public access available.
         mgf_algorithm: hashes.HashAlgorithm = padding.mgf._algorithm  # pylint: disable=protected-access
@@ -191,7 +191,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         self,
         data: bytes,
         padding: AsymmetricPadding,
-        algorithm: Union[asym_utils.Prehashed, hashes.HashAlgorithm],
+        algorithm: asym_utils.Prehashed | hashes.HashAlgorithm,
     ) -> bytes:
         mechanism_param = None
         if isinstance(padding, PSS):

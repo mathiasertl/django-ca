@@ -16,7 +16,7 @@ import json
 import logging
 import typing
 from collections.abc import Iterable
-from typing import Any, Optional, Union
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -36,7 +36,7 @@ from django_ca.typehints import AlternativeNameTypeVar, KeyUsages
 log = logging.getLogger(__name__)
 
 
-ExtensionWidgetsType = tuple[Union[type[forms.Widget], forms.Widget], ...]
+ExtensionWidgetsType = tuple[type[forms.Widget] | forms.Widget, ...]
 
 
 class DjangoCaWidgetMixin:
@@ -83,8 +83,8 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
 
     css_classes = ("django-ca-multiwidget",)
     template_name = "django_ca/forms/widgets/multiwidget.html"
-    labels: tuple[Optional[str], ...] = ()
-    help_texts: tuple[Optional[str], ...] = ()
+    labels: tuple[str | None, ...] = ()
+    help_texts: tuple[str | None, ...] = ()
 
     class Media:
         css: typing.ClassVar[dict[str, tuple[str, ...]]] = {
@@ -95,9 +95,9 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
         ctx: dict[str, Any] = super().get_context(*args, **kwargs)
-        for widget, label in zip(ctx["widget"]["subwidgets"], self.labels):
+        for widget, label in zip(ctx["widget"]["subwidgets"], self.labels, strict=False):
             widget["label"] = label
-        for widget, help_text in zip(ctx["widget"]["subwidgets"], self.help_texts):
+        for widget, help_text in zip(ctx["widget"]["subwidgets"], self.help_texts, strict=False):
             widget["help_text"] = help_text
         return ctx
 
@@ -117,7 +117,7 @@ class KeyValueWidget(widgets.TextInput):
             value = []
         return json.dumps(value)
 
-    def get_context(self, name: str, value: Any, attrs: Optional[dict[str, Any]]) -> dict[str, Any]:
+    def get_context(self, name: str, value: Any, attrs: dict[str, Any] | None) -> dict[str, Any]:
         context = super().get_context(name, value, attrs)
 
         # Set the input type to "hidden" in the context. This must *not* be done via a widgets.HiddenInput
@@ -292,11 +292,11 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
     Subclasses of this class are expected to set the `extension_widgets` attribute or implement `get_widgets`.
     """
 
-    extension_widgets: Optional[ExtensionWidgetsType]
+    extension_widgets: ExtensionWidgetsType | None
     oid: x509.ObjectIdentifier
     css_classes = ("extension",)
 
-    def __init__(self, attrs: Optional[dict[str, str]] = None, **kwargs: Any) -> None:
+    def __init__(self, attrs: dict[str, str] | None = None, **kwargs: Any) -> None:
         sub_widgets = (*self.get_widgets(**kwargs), CriticalInput(oid=self.oid))
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
@@ -315,7 +315,7 @@ class AlternativeNameWidget(ExtensionWidget, typing.Generic[AlternativeNameTypeV
     extension_widgets = (GeneralNameKeyValueWidget(),)
 
     def decompress(
-        self, value: Optional[x509.Extension[AlternativeNameTypeVar]]
+        self, value: x509.Extension[AlternativeNameTypeVar] | None
     ) -> tuple[list[x509.GeneralName], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
@@ -339,7 +339,7 @@ class DistributionPointWidget(ExtensionWidget):
     )
 
     def decompress(
-        self, value: Optional[x509.Extension[x509.CRLDistributionPoints]]
+        self, value: x509.Extension[x509.CRLDistributionPoints] | None
     ) -> tuple[str, str, str, list[str], bool]:
         full_name = relative_name = crl_issuer = ""
         reasons: list[str] = []
@@ -389,7 +389,7 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
     oid = ExtensionOID.AUTHORITY_INFORMATION_ACCESS
 
     def decompress(
-        self, value: Optional[x509.Extension[x509.AuthorityInformationAccess]]
+        self, value: x509.Extension[x509.AuthorityInformationAccess] | None
     ) -> tuple[list[x509.GeneralName], list[x509.GeneralName], bool]:
         if value is None:
             return [], [], EXTENSION_DEFAULT_CRITICAL[self.oid]
@@ -430,7 +430,7 @@ class CertificatePoliciesWidget(ExtensionWidget):
     )
 
     def decompress(
-        self, value: Optional[x509.Extension[x509.CertificatePolicies]]
+        self, value: x509.Extension[x509.CertificatePolicies] | None
     ) -> tuple[str, str, str, bool]:
         if value is None:
             return "", "", "", EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES]
@@ -478,7 +478,7 @@ class ExtendedKeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.EXTENDED_KEY_USAGE
 
-    def decompress(self, value: Optional[x509.Extension[x509.ExtendedKeyUsage]]) -> tuple[list[str], bool]:
+    def decompress(self, value: x509.Extension[x509.ExtendedKeyUsage] | None) -> tuple[list[str], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = [oid.dotted_string for oid in value.value]
@@ -496,7 +496,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.KEY_USAGE
 
-    def decompress(self, value: Optional[x509.Extension[x509.KeyUsage]]) -> tuple[list[KeyUsages], bool]:
+    def decompress(self, value: x509.Extension[x509.KeyUsage] | None) -> tuple[list[KeyUsages], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = []
@@ -527,7 +527,7 @@ class OCSPNoCheckWidget(ExtensionWidget):
     extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
     oid = ExtensionOID.OCSP_NO_CHECK
 
-    def decompress(self, value: Optional[x509.Extension[x509.OCSPNoCheck]]) -> tuple[bool, bool]:
+    def decompress(self, value: x509.Extension[x509.OCSPNoCheck] | None) -> tuple[bool, bool]:
         if value is None:
             return False, EXTENSION_DEFAULT_CRITICAL[self.oid]
         return True, value.critical
@@ -544,7 +544,7 @@ class TLSFeatureWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.TLS_FEATURE
 
-    def decompress(self, value: Optional[x509.Extension[x509.TLSFeature]]) -> tuple[list[str], bool]:
+    def decompress(self, value: x509.Extension[x509.TLSFeature] | None) -> tuple[list[str], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         return [feature.name for feature in value.value], value.critical

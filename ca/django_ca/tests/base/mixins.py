@@ -20,7 +20,7 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 from unittest import mock
 from urllib.parse import quote
 
@@ -57,8 +57,8 @@ else:
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: Union[str, tuple[str, ...]] = tuple()
-    load_certs: Union[str, tuple[str, ...]] = tuple()
+    load_cas: str | tuple[str, ...] = tuple()
+    load_certs: str | tuple[str, ...] = tuple()
     default_ca = "child"
     default_cert = "child-cert"
     cas: dict[str, CertificateAuthority]
@@ -92,7 +92,7 @@ class TestCaseMixin(TestCaseProtocol):
                 self.fail(f"{self.default_cert}: Not in {self.load_certs}.")
             self.cert = self.certs[self.default_cert]
 
-    def load_named_cas(self, cas: Union[str, tuple[str, ...]]) -> tuple[str, ...]:
+    def load_named_cas(self, cas: str | tuple[str, ...]) -> tuple[str, ...]:
         """Load CAs by the given name."""
         if cas == "__all__":
             cas = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "ca")
@@ -109,7 +109,7 @@ class TestCaseMixin(TestCaseProtocol):
             self.cas[name] = self.load_ca(name)
         return cas
 
-    def load_named_certs(self, names: Union[str, tuple[str, ...]]) -> tuple[str, ...]:
+    def load_named_certs(self, names: str | tuple[str, ...]) -> tuple[str, ...]:
         """Load certs by the given name."""
         if names == "__all__":
             names = tuple(k for k, v in CERT_DATA.items() if v.get("type") == "cert")
@@ -130,7 +130,7 @@ class TestCaseMixin(TestCaseProtocol):
                 self.fail(f"{CERT_DATA[name]['ca']}: Could not load CertificateAuthority.")
         return names
 
-    def absolute_uri(self, name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
+    def absolute_uri(self, name: str, hostname: str | None = None, **kwargs: Any) -> str:
         """Build an absolute uri for the given request.
 
         The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
@@ -164,10 +164,10 @@ class TestCaseMixin(TestCaseProtocol):
 
     def crl_distribution_points(
         self,
-        full_name: Optional[Iterable[x509.GeneralName]] = None,
-        relative_name: Optional[x509.RelativeDistinguishedName] = None,
-        reasons: Optional[frozenset[x509.ReasonFlags]] = None,
-        crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
+        full_name: Iterable[x509.GeneralName] | None = None,
+        relative_name: x509.RelativeDistinguishedName | None = None,
+        reasons: frozenset[x509.ReasonFlags] | None = None,
+        crl_issuer: Iterable[x509.GeneralName] | None = None,
         critical: bool = False,
     ) -> x509.Extension[x509.CRLDistributionPoints]:
         """Shortcut for getting a CRLDistributionPoints extension."""
@@ -182,10 +182,10 @@ class TestCaseMixin(TestCaseProtocol):
 
     def freshest_crl(
         self,
-        full_name: Optional[Iterable[x509.GeneralName]] = None,
-        relative_name: Optional[x509.RelativeDistinguishedName] = None,
-        reasons: Optional[frozenset[x509.ReasonFlags]] = None,
-        crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
+        full_name: Iterable[x509.GeneralName] | None = None,
+        relative_name: x509.RelativeDistinguishedName | None = None,
+        reasons: frozenset[x509.ReasonFlags] | None = None,
+        crl_issuer: Iterable[x509.GeneralName] | None = None,
         critical: bool = False,
     ) -> x509.Extension[x509.FreshestCRL]:
         """Shortcut for getting a CRLDistributionPoints extension."""
@@ -210,8 +210,8 @@ class TestCaseMixin(TestCaseProtocol):
 
     @contextmanager
     def freeze_time(
-        self, timestamp: Union[datetime]
-    ) -> Iterator[Union[FrozenDateTimeFactory, StepTickTimeFactory]]:
+        self, timestamp: datetime
+    ) -> Iterator[FrozenDateTimeFactory | StepTickTimeFactory]:
         """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `TIMESTAMPS` dict (e.g. "everything-valid"), use that
@@ -225,7 +225,7 @@ class TestCaseMixin(TestCaseProtocol):
         cls,
         name: str,
         enabled: bool = True,
-        parent: Optional[CertificateAuthority] = None,
+        parent: CertificateAuthority | None = None,
         **kwargs: Any,
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
@@ -303,7 +303,7 @@ class TestCaseMixin(TestCaseProtocol):
 
         # Make sure that task was called the right number of times
         assert len(calls) == len(mocked.call_args_list)
-        for expected, actual in zip(calls, mocked.call_args_list):
+        for expected, actual in zip(calls, mocked.call_args_list, strict=False):
             assert expected == actual, actual
 
     @contextmanager
@@ -375,7 +375,7 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         qs = quote(response.wsgi_request.get_full_path())
         self.assertRedirects(response, f"{path}?next={qs}", **kwargs)
 
-    def change_url(self, obj: Optional[DjangoCAModel] = None) -> str:
+    def change_url(self, obj: DjangoCAModel | None = None) -> str:
         """Shortcut for the change URL of the given instance."""
         obj = obj or self.obj
         return obj.admin_change_url
@@ -392,12 +392,12 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
 
-    def get_changelist_view(self, data: Optional[dict[str, str]] = None) -> "HttpResponse":
+    def get_changelist_view(self, data: dict[str, str] | None = None) -> "HttpResponse":
         """Get the response to a changelist view for the given model."""
         return self.client.get(self.changelist_url, data)
 
     def get_change_view(
-        self, obj: DjangoCAModelTypeVar, data: Optional[dict[str, str]] = None
+        self, obj: DjangoCAModelTypeVar, data: dict[str, str] | None = None
     ) -> "HttpResponse":
         """Get the response to a change view for the given model instance."""
         return self.client.get(self.change_url(obj), data)

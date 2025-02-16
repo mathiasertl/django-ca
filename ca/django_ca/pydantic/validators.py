@@ -14,9 +14,9 @@
 """Validators for Pydantic models."""
 
 import base64
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import timedelta
-from typing import Any, Callable, Literal, Optional, TypeVar, Union
+from typing import Any, Literal, TypeVar
 from urllib.parse import urlsplit
 
 import idna
@@ -46,7 +46,7 @@ def crl_scope_validator(
     only_contains_ca_certs: bool,
     only_contains_user_certs: bool,
     only_contains_attribute_certs: bool,
-    only_some_reasons: Optional[Iterable[x509.ReasonFlags]],
+    only_some_reasons: Iterable[x509.ReasonFlags] | None,
 ) -> None:
     """Validate the scope of a certificate revocation list (CRL)."""
     contains = (only_contains_ca_certs, only_contains_user_certs, only_contains_attribute_certs)
@@ -166,7 +166,7 @@ def non_empty_validator(value: list[str]) -> list[str]:
     return value
 
 
-def oid_parser(value: Union[str, x509.ObjectIdentifier]) -> str:
+def oid_parser(value: str | x509.ObjectIdentifier) -> str:
     """Validate a :py:class:`~cryptography.x509.ObjectIdentifier`."""
     if isinstance(value, x509.ObjectIdentifier):
         return value.dotted_string
@@ -227,7 +227,7 @@ def timedelta_as_number_parser(unit: Literal["seconds", "hours", "days"] = "seco
     return validator
 
 
-def tls_feature_validator(value: Union[str, x509.TLSFeatureType]) -> str:
+def tls_feature_validator(value: str | x509.TLSFeatureType) -> str:
     """Validate a :py:class:`~cryptography.x509.TLSFeatureType`."""
     if isinstance(value, x509.TLSFeatureType):
         return constants.TLS_FEATURE_KEYS[value]

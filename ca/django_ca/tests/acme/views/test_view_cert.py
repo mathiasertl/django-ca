@@ -16,7 +16,6 @@
 # pylint: disable=redefined-outer-name  # for to fixtures
 
 from http import HTTPStatus
-from typing import Optional
 
 import josepy as jose
 
@@ -61,7 +60,7 @@ def test_basic(
     client: Client,
     url: str,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
     acme_cert: AcmeCertificate,
 ) -> None:
     """Basic test case."""
@@ -78,7 +77,7 @@ def test_basic(
 
 
 @pytest.mark.usefixtures("account")
-def test_not_found(client: Client, root: CertificateAuthority, kid: Optional[str]) -> None:
+def test_not_found(client: Client, root: CertificateAuthority, kid: str | None) -> None:
     """Test fetching a cert that simply does not exist."""
     url = root_reverse("acme-cert", slug="abc")
     resp = acme_request(client, url, root, b"", kid=kid)
@@ -86,7 +85,7 @@ def test_not_found(client: Client, root: CertificateAuthority, kid: Optional[str
 
 
 def test_wrong_account(
-    client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: Optional[str]
+    client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: str | None
 ) -> None:
     """Test fetching a certificate for a different account."""
     account = AcmeAccount.objects.create(
@@ -100,7 +99,7 @@ def test_wrong_account(
 
 
 def test_no_cert_issued(
-    client: Client, url: str, root: CertificateAuthority, acme_cert: AcmeCertificate, kid: Optional[str]
+    client: Client, url: str, root: CertificateAuthority, acme_cert: AcmeCertificate, kid: str | None
 ) -> None:
     """Test when no cert is issued.
 

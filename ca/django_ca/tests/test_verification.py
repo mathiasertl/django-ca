@@ -21,7 +21,7 @@ import tempfile
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -49,7 +49,7 @@ pytestmark = [pytest.mark.usefixtures("tmpcadir"), pytest.mark.django_db]
 
 
 def assert_full_name(
-    parsed_crl: x509.CertificateRevocationList, expected: Optional[list[x509.GeneralName]] = None
+    parsed_crl: x509.CertificateRevocationList, expected: list[x509.GeneralName] | None = None
 ) -> None:
     """Assert that the full name of the Issuing Distribution Point of the CRL matches `expected`."""
     idp = parsed_crl.extensions.get_extension_for_class(x509.IssuingDistributionPoint).value
@@ -148,8 +148,8 @@ def openssl(command: str, *args: str, code: int = 0, **kwargs: str) -> None:
 def verify(
     command: str,
     *args: str,
-    untrusted: Optional[Iterable[str]] = None,
-    crl_path: Optional[Iterable[str]] = None,
+    untrusted: Iterable[str] | None = None,
+    crl_path: Iterable[str] | None = None,
     code: int = 0,
     **kwargs: str,
 ) -> None:

@@ -13,7 +13,6 @@
 
 """Test the cache_crls management command."""
 
-from typing import Optional
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -30,7 +29,7 @@ from django_ca.tests.base.utils import cmd, crl_cache_key, get_idp
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.usefixtures("clear_cache")]
 
 
-def assert_crl_by_ca(ca: CertificateAuthority, expected: Optional[list[Certificate]] = None) -> None:
+def assert_crl_by_ca(ca: CertificateAuthority, expected: list[Certificate] | None = None) -> None:
     """Assert all cached CRLs for the given CA."""
     key = crl_cache_key(ca.serial, only_contains_ca_certs=True)
     crl = cache.get(key)

@@ -20,7 +20,7 @@ import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, AnyStr, Optional, Union
+from typing import Any, AnyStr, Union
 from unittest.mock import Mock
 
 from cryptography import x509
@@ -67,12 +67,12 @@ def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509Cert
 def assert_ca_properties(
     ca: CertificateAuthority,
     name: str,
-    parent: Optional[CertificateAuthority] = None,
+    parent: CertificateAuthority | None = None,
     private_key_type: type[CertificateIssuerPrivateKeyTypes] = rsa.RSAPrivateKey,
     acme_enabled: bool = False,
-    acme_profile: Optional[str] = None,
+    acme_profile: str | None = None,
     acme_requires_contact: bool = True,
-    password: Optional[bytes] = None,
+    password: bytes | None = None,
 ) -> None:
     """Assert some basic properties of a CA."""
     parent_ca = parent or ca
@@ -121,10 +121,10 @@ def assert_ca_properties(
 
 
 def assert_certificate(
-    cert: Union[x509.Certificate, CertificateAuthority, Certificate],
+    cert: x509.Certificate | CertificateAuthority | Certificate,
     subject: x509.Name,
     algorithm: type[hashes.HashAlgorithm] = hashes.SHA512,
-    signer: Optional[Union[CertificateAuthority, x509.Certificate]] = None,
+    signer: CertificateAuthority | x509.Certificate | None = None,
 ) -> None:
     """Assert certificate properties."""
     if isinstance(cert, CertificateAuthority):
@@ -187,17 +187,17 @@ def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[
 
 
 def assert_crl(  # noqa: PLR0913
-    crl: Union[bytes, x509.CertificateRevocationList],
-    expected: Optional[typing.Sequence[X509CertMixin]] = None,
-    signer: Optional[CertificateAuthority] = None,
+    crl: bytes | x509.CertificateRevocationList,
+    expected: typing.Sequence[X509CertMixin] | None = None,
+    signer: CertificateAuthority | None = None,
     expires: int = 86400,
-    algorithm: Optional[hashes.HashAlgorithm] = None,
+    algorithm: hashes.HashAlgorithm | None = None,
     encoding: Encoding = Encoding.PEM,
-    idp: Optional[x509.Extension[x509.IssuingDistributionPoint]] = None,
-    extensions: Optional[list[x509.Extension[x509.ExtensionType]]] = None,
+    idp: x509.Extension[x509.IssuingDistributionPoint] | None = None,
+    extensions: list[x509.Extension[x509.ExtensionType]] | None = None,
     crl_number: int = 0,
-    entry_extensions: Optional[tuple[list[x509.Extension[x509.ExtensionType]]]] = None,
-    last_update: Optional[datetime] = None,
+    entry_extensions: tuple[list[x509.Extension[x509.ExtensionType]]] | None = None,
+    last_update: datetime | None = None,
 ) -> None:
     """Test the given CRL.
 
@@ -313,7 +313,7 @@ def assert_e2e_error(
 
 
 def assert_extension_equal(
-    first: Optional[x509.Extension[x509.ExtensionType]], second: Optional[x509.Extension[x509.ExtensionType]]
+    first: x509.Extension[x509.ExtensionType] | None, second: x509.Extension[x509.ExtensionType] | None
 ) -> None:
     """Compare two extensions for equality (or if both are None).
 
@@ -341,9 +341,9 @@ def assert_extension_equal(
 
 
 def assert_extensions(
-    cert: Union[X509CertMixin, x509.Certificate],
+    cert: X509CertMixin | x509.Certificate,
     extensions: Iterable[x509.Extension[x509.ExtensionType]],
-    signer: Optional[CertificateAuthority] = None,
+    signer: CertificateAuthority | None = None,
     expect_defaults: bool = True,
 ) -> None:
     """Assert that `cert` has the given extensions."""
@@ -409,11 +409,11 @@ def assert_improperly_configured(msg: str) -> Iterator[None]:
 
 def assert_issuing_distribution_point(
     extension: x509.Extension[x509.IssuingDistributionPoint],
-    full_name: Optional[Iterable[x509.GeneralName]] = None,
-    relative_name: Optional[x509.RelativeDistinguishedName] = None,
+    full_name: Iterable[x509.GeneralName] | None = None,
+    relative_name: x509.RelativeDistinguishedName | None = None,
     only_contains_user_certs: bool = False,
     only_contains_ca_certs: bool = False,
-    only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None,
+    only_some_reasons: frozenset[x509.ReasonFlags] | None = None,
     indirect_crl: bool = False,
     only_contains_attribute_certs: bool = False,
     critical: bool = True,
@@ -440,7 +440,7 @@ def assert_post_issue_cert(post: Mock, cert: Certificate) -> None:
 
 
 def assert_revoked(
-    cert: X509CertMixin, reason: Optional[str] = None, compromised: Optional[datetime] = None
+    cert: X509CertMixin, reason: str | None = None, compromised: datetime | None = None
 ) -> None:
     """Assert that the certificate is now revoked."""
     if isinstance(cert, CertificateAuthority):
@@ -469,7 +469,7 @@ def assert_sign_cert_signals(pre: bool = True, post: bool = True) -> Iterator[tu
 
 
 def assert_signature(
-    chain: Iterable[CertificateAuthority], cert: Union[Certificate, CertificateAuthority]
+    chain: Iterable[CertificateAuthority], cert: Certificate | CertificateAuthority
 ) -> None:
     """Assert that `cert` is properly signed by `chain`.
 
@@ -503,7 +503,7 @@ def assert_system_exit(code: int) -> Iterator[None]:
 
 
 @contextmanager
-def assert_removed_in_230(match: Optional[Union[str, "re.Pattern[str]"]] = None) -> Iterator[None]:
+def assert_removed_in_230(match: Union[str, "re.Pattern[str]"] | None = None) -> Iterator[None]:
     """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
     with pytest.warns(RemovedInDjangoCA230Warning, match=match):
         yield

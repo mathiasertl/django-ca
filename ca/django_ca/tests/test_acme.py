@@ -16,7 +16,7 @@
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 import acme
@@ -44,7 +44,7 @@ urlpatterns = [
 
 
 def assert_no_reverse_match(
-    name: str, args: Optional[typing.Sequence[Any]] = None, kwargs: Optional[dict[str, Any]] = None
+    name: str, args: typing.Sequence[Any] | None = None, kwargs: dict[str, Any] | None = None
 ) -> None:
     """Context manager asserting that the given URL pattern is **not** found."""
     urlname = name
@@ -90,7 +90,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
     @contextmanager
     def assertLogMessages(  # pylint: disable=invalid-name  # unittest standard
-        self, *messages: str, challenge: Optional[AcmeChallenge] = None
+        self, *messages: str, challenge: AcmeChallenge | None = None
     ) -> Iterator[None]:
         """Assert log messages."""
         with self.assertLogs("django_ca.acme.validation", level="DEBUG") as logcm:

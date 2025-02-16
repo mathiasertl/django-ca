@@ -15,7 +15,7 @@
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Final, Optional, Union
+from typing import TYPE_CHECKING, Any, Final
 
 import pkcs11
 from pkcs11 import Session
@@ -108,17 +108,17 @@ class HSMBackend(
             help="User %(metavar)s to access the HSM.",
         )
 
-    def _get_pins(self, options: dict[str, Any], prefix: str = "") -> tuple[Optional[str], Optional[str]]:
+    def _get_pins(self, options: dict[str, Any], prefix: str = "") -> tuple[str | None, str | None]:
         options_prefix = f"{self.options_prefix}{prefix.replace('-', '_')}"
         argparse_prefix = f"{self.argparse_prefix}{prefix}"
 
-        so_pin: Optional[str] = options.get(f"{options_prefix}so_pin")
+        so_pin: str | None = options.get(f"{options_prefix}so_pin")
         if so_pin is None:
             so_pin = self.so_pin
         elif so_pin == "":
             so_pin = None
 
-        user_pin: Optional[str] = options.get(f"{options_prefix}user_pin")
+        user_pin: str | None = options.get(f"{options_prefix}user_pin")
         if user_pin is None:
             user_pin = self.user_pin
         elif user_pin == "":
@@ -165,8 +165,8 @@ class HSMBackend(
     def get_create_private_key_options(
         self,
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[str],
+        key_size: int | None,
+        elliptic_curve: str | None,
         options: dict[str, Any],
     ) -> HSMCreatePrivateKeyOptions:
         key_label = options[f"{self.options_prefix}key_label"]
@@ -220,7 +220,7 @@ class HSMBackend(
     def is_usable(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: Optional[HSMUsePrivateKeyOptions] = None,
+        use_private_key_options: HSMUsePrivateKeyOptions | None = None,
     ) -> bool:
         if not ca.key_backend_options or not isinstance(ca.key_backend_options, dict):
             return False
@@ -354,9 +354,9 @@ class HSMBackend(
         ca: "CertificateAuthority",
         use_private_key_options: HSMUsePrivateKeyOptions,
         data: bytes,
-        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
-        padding: Optional[AsymmetricPadding] = None,
-        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+        algorithm: hashes.HashAlgorithm | Prehashed | None = None,
+        padding: AsymmetricPadding | None = None,
+        signature_algorithm: ec.EllipticCurveSignatureAlgorithm | None = None,
     ) -> bytes:
         kwargs: dict[str, Any] = {}
 
@@ -389,7 +389,7 @@ class HSMBackend(
         use_private_key_options: HSMUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -413,7 +413,7 @@ class HSMBackend(
         ca: "CertificateAuthority",
         use_private_key_options: HSMUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
     ) -> x509.CertificateRevocationList:
         with self.session(
             so_pin=use_private_key_options.so_pin, user_pin=use_private_key_options.user_pin

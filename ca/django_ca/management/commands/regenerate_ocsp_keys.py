@@ -18,7 +18,7 @@
 
 from collections.abc import Iterable
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -81,12 +81,12 @@ class Command(UsePrivateKeyMixin, BaseCommand):
     def handle(  # pylint: disable=too-many-locals
         self,
         serials: Iterable[str],
-        profile: Optional[str],
+        profile: str | None,
         expires: timedelta,
-        algorithm: Optional[AllowedHashTypes],
-        key_type: Optional[ParsableKeyType],
-        key_size: Optional[int],
-        elliptic_curve: Optional[ec.EllipticCurve],
+        algorithm: AllowedHashTypes | None,
+        key_type: ParsableKeyType | None,
+        key_size: int | None,
+        elliptic_curve: ec.EllipticCurve | None,
         quiet: bool,
         force: bool,
         **options: Any,
@@ -138,11 +138,11 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             if ca_key_type is None:
                 ca_key_type = ca.key_type
 
-            ca_key_size: Optional[int] = None
+            ca_key_size: int | None = None
             if ca_key_type in ("RSA", "DSA") and key_size is not None:
                 ca_key_size = key_size
 
-            ca_elliptic_curve: Optional[ec.EllipticCurve] = None
+            ca_elliptic_curve: ec.EllipticCurve | None = None
             if ca_key_type == "EC" and elliptic_curve is not None:
                 ca_elliptic_curve = elliptic_curve
 

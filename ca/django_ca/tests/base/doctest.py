@@ -16,7 +16,6 @@
 import doctest
 import importlib
 import re
-from typing import Optional
 
 STRIP_WHITESPACE = doctest.register_optionflag("STRIP_WHITESPACE")
 
@@ -33,12 +32,12 @@ class OutputChecker(doctest.OutputChecker):
 
 def doctest_module(
     module: str,
-    name: Optional[str] = None,
-    globs: Optional[dict[str, str]] = None,
-    verbose: Optional[bool] = False,
+    name: str | None = None,
+    globs: dict[str, str] | None = None,
+    verbose: bool | None = False,
     report: bool = False,
     optionflags: int = 0,
-    extraglobs: Optional[dict[str, str]] = None,
+    extraglobs: dict[str, str] | None = None,
     raise_on_error: bool = False,
     exclude_empty: bool = False,
 ) -> doctest.TestResults:
