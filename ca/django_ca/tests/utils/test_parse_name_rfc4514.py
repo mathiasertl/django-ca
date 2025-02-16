@@ -18,7 +18,6 @@ from cryptography.x509.oid import NameOID
 
 import pytest
 
-from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.utils import cn, country
 from django_ca.utils import parse_name_rfc4514
 
@@ -31,7 +30,7 @@ from django_ca.utils import parse_name_rfc4514
         ("C=AT,CN=example.com", x509.Name([country("AT"), cn("example.com")])),
     ),
 )
-def test_parse_name_rfc4514(value: str, expected: x509.Name) -> None:
+def test_valid_values(value: str, expected: x509.Name) -> None:
     """Test the parse_name_rfc4514 function."""
     assert parse_name_rfc4514(value) == expected
 
@@ -39,23 +38,17 @@ def test_parse_name_rfc4514(value: str, expected: x509.Name) -> None:
 @pytest.mark.parametrize(
     ("value", "expected"),
     (
-        (
-            "C=FOO",
-            r"^Country name must be a 2 character country code$"
-            if CRYPTOGRAPHY_VERSION < (43,)
-            else r"^Attribute's length must be >= 2 and <= 2, but it was 3$",
-        ),
+        ("C=FOO", r"^Attribute's length must be >= 2 and <= 2, but it was 3$"),
         ("/CN=example.com", r"^/CN=example\.com: Could not parse name as RFC 4514 string\.$"),
         ("XXX=example.com", r"^XXX=example\.com: Could not parse name as RFC 4514 string\.$"),
     ),
 )
-def test_parse_name_rfc4514_with_error(value: str, expected: str) -> None:
+def test_with_error(value: str, expected: str) -> None:
     """Test various errors."""
     with pytest.raises(ValueError, match=expected):
         assert parse_name_rfc4514(value)
 
 
-@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (43,), reason="cryptography check was added in version 43")
 @pytest.mark.parametrize(
     ("value", "expected"),
     (
@@ -63,7 +56,13 @@ def test_parse_name_rfc4514_with_error(value: str, expected: str) -> None:
         (f"CN={'x' * 65}", r"^Attribute's length must be >= 1 and <= 64, but it was 65$"),
     ),
 )
-def test_parse_name_rfc4514_with_invalid_common_name(value: str, expected: str) -> None:
+def test_with_invalid_common_name(value: str, expected: str) -> None:
     """Test checks added in cryptography 43."""
     with pytest.raises(ValueError, match=expected):
         assert parse_name_rfc4514(value)
+
+
+def test_with_multiple_common_names() -> None:
+    """Test parsing a subject with multiple common names."""
+    with pytest.raises(ValueError, match=r'^Subject contains multiple "commonName" fields$'):
+        assert parse_name_rfc4514("CN=example.com,CN=example.net")

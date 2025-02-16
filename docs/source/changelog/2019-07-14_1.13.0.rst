@@ -57,7 +57,7 @@ Python API
   ``django_ca.managers.CertificateManager.sign_cert()`` to allow overriding or disabling the default
   values from the CA. This can also be used to pass extensions that do not just contain the URL using the
   ``extra_extensions`` parameter.
-* Add the :py:func:`~django_ca.models.CertificateAuthority.get_crl` function to get a CRL for the CA.
+* Add the ``~django_ca.models.CertificateAuthority.get_crl`` function to get a CRL for the CA.
 * Add the :py:func:`~django_ca.models.CertificateAuthority.generate_ocsp_key` function to generate OCSP keys
   that are automatically picked up by the generic OCSP views.
 * Both :py:class:`~django_ca.models.CertificateAuthority` and
@@ -88,5 +88,4 @@ CRLs
   compromised.
 * CRL entries will no longer include a `Reason Code <https://tools.ietf.org/html/rfc5280#section-5.3.1>`_ if
   the reason is unspecified (recommended in RFC 5280).
-* Expose an API for creating CRLs via :py:func:`CertificateAuthority.get_crl()
-  <django_ca.models.CertificateAuthority.get_crl>`.
+* Expose an API for creating CRLs via ``CertificateAuthority.get_crl()``.

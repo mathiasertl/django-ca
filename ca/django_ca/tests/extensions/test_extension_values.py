@@ -22,22 +22,13 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.utils.functional import classproperty
 from django.utils.safestring import mark_safe
 
-import pytest
 from pytest_django.asserts import assertInHTML
 
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
-from django_ca.extensions import extension_as_text, parse_extension
+from django_ca.extensions import extension_as_text
 from django_ca.extensions.utils import extension_as_admin_html
-from django_ca.tests.base.assertions import assert_removed_in_230
 from django_ca.tests.base.utils import dns, rdn, uri
-from django_ca.typehints import (
-    CertificateExtension,
-    CertificateExtensionType,
-    CRLExtensionType,
-    ParsableDistributionPoint,
-    ParsablePolicyInformation,
-    SerializedObjectIdentifier,
-)
+from django_ca.typehints import CertificateExtension, CertificateExtensionType, CRLExtensionType
 
 
 class _ExtensionExampleDict(typing.TypedDict):
@@ -62,31 +53,6 @@ def pytest_generate_tests(metafunc: Any) -> None:
     if hasattr(metafunc.cls, "test_values"):
         func_arg_list = metafunc.cls.test_values
         metafunc.parametrize("name,config", tuple(func_arg_list.items()))
-
-
-def assert_parsed(key: str, serialized: Any, extension_type: CertificateExtensionType, name: str) -> None:
-    """Assert that the given `serialized` value parses to the given `extension_type`."""
-    oid = extension_type.oid
-    ext = cast(
-        CertificateExtension,
-        x509.Extension(oid=oid, critical=EXTENSION_DEFAULT_CRITICAL[oid], value=extension_type),
-    )
-
-    with assert_removed_in_230():
-        assert parse_extension(key, {"value": serialized}) == ext, name
-
-    ext = x509.Extension(oid=oid, critical=True, value=extension_type)  # type: ignore[assignment]
-    with assert_removed_in_230():
-        assert parse_extension(key, {"value": serialized, "critical": True}) == ext, name
-
-    ext = x509.Extension(oid=oid, critical=False, value=extension_type)  # type: ignore[assignment]
-    with assert_removed_in_230():
-        assert parse_extension(key, {"value": serialized, "critical": False}) == ext, name
-
-    with assert_removed_in_230():
-        assert parse_extension(key, ext) is ext
-    with assert_removed_in_230():
-        assert parse_extension(key, extension_type).value is extension_type
 
 
 class ExtensionTestCaseMixin:
@@ -117,13 +83,6 @@ class ExtensionTestCaseMixin:
         for extension_type in config.get("extension_type_alternatives", []):
             assert extension_as_text(extension_type) == config["text"], name
 
-    def test_parse(self, name: str, config: ExtensionExampleDict) -> None:
-        """Test parsing the extension."""
-        assert_parsed(self.ext_class_key, config["serialized"], config["extension_type"], name)
-
-        for serialized in config.get("serialized_alternatives", []):
-            assert_parsed(self.ext_class_key, serialized, config["extension_type"], name)
-
 
 class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     """Base mixin for test cases for CRL based extensions."""
@@ -153,24 +112,22 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     @classproperty  # pylint: disable-next=no-self-argument
     def test_values(cls) -> TestValues:  # type: ignore[override]  # similar enough
         """Overwritten because we access ext_class_type, so we can use subclasses."""
-        rdn1: list[SerializedObjectIdentifier] = [
-            {"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}
-        ]
+        rdn1 = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}]
 
-        s1: ParsableDistributionPoint = {"full_name": [f"URI:{cls.uri1}"]}
-        s2: ParsableDistributionPoint = {"full_name": [f"URI:{cls.uri1}", f"DNS:{cls.dns1}"]}
-        s3: ParsableDistributionPoint = {"relative_name": rdn1}
-        s4: ParsableDistributionPoint = {
+        s1 = {"full_name": [f"URI:{cls.uri1}"]}
+        s2 = {"full_name": [f"URI:{cls.uri1}", f"DNS:{cls.dns1}"]}
+        s3 = {"relative_name": rdn1}
+        s4 = {
             "full_name": [f"URI:{cls.uri2}"],
             "crl_issuer": [f"URI:{cls.uri3}"],
             "reasons": ["ca_compromise", "key_compromise"],
         }
-        s5: ParsableDistributionPoint = {
+        s5 = {
             "full_name": [f"URI:{cls.uri2}"],
             "crl_issuer": [f"URI:{cls.uri3}"],
             "reasons": [x509.ReasonFlags.ca_compromise, x509.ReasonFlags.key_compromise],
         }
-        s6: ParsableDistributionPoint = {
+        s6 = {
             "full_name": [f"URI:{cls.uri2}"],
             "crl_issuer": [f"URI:{cls.uri3}"],
             "reasons": ["cACompromise", "keyCompromise"],
@@ -470,33 +427,33 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     xpi6 = x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=None)
     xpi7 = x509.PolicyInformation(policy_identifier=x509.ObjectIdentifier(oid), policy_qualifiers=[xun7])
 
-    un1: ClassVar[ParsablePolicyInformation] = {
+    un1: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [text1],
     }
-    un1_1: ClassVar[ParsablePolicyInformation] = {
+    un1_1: ClassVar[dict[str, Any]] = {
         "policy_identifier": x509.ObjectIdentifier(oid),
         "policy_qualifiers": [text1],
     }
-    un2: ClassVar[ParsablePolicyInformation] = {
+    un2: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [{"explicit_text": text2}],
     }
-    un2_1: ClassVar[ParsablePolicyInformation] = {
+    un2_1: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [x509.UserNotice(explicit_text=text2, notice_reference=None)],
     }
-    un3: ClassVar[ParsablePolicyInformation] = {
+    un3: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [{"notice_reference": {"organization": text3, "notice_numbers": [1]}}],
     }
-    un3_1: ClassVar[ParsablePolicyInformation] = {
+    un3_1: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {"notice_reference": x509.NoticeReference(organization=text3, notice_numbers=[1])}
         ],
     }
-    un4: ClassVar[ParsablePolicyInformation] = {
+    un4: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             text4,
@@ -509,8 +466,8 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
             },
         ],
     }
-    un6: ClassVar[ParsablePolicyInformation] = {"policy_identifier": oid, "policy_qualifiers": None}
-    un7: ClassVar[ParsablePolicyInformation] = {
+    un6: ClassVar[dict[str, Any]] = {"policy_identifier": oid, "policy_qualifiers": None}
+    un7: ClassVar[dict[str, Any]] = {
         "policy_identifier": oid,
         "policy_qualifiers": [
             {
@@ -1349,13 +1306,6 @@ class TestPrecertificateSignedCertificateTimestamps:
 
         for extension_type in config.get("extension_type_alternatives", []):
             assert extension_as_text(extension_type) == config["text"], name
-
-    def test_parse(self) -> None:
-        """Test parsing."""
-        msg = r"^precertificate_signed_certificate_timestamps: Cannot parse extensions of this type\.$"
-        with assert_removed_in_230(), pytest.raises(ValueError, match=msg):
-            # TYPE NOTE: what we test
-            parse_extension("precertificate_signed_certificate_timestamps", None)  # type: ignore[arg-type]
 
 
 class TestSubjectAlternativeName(TestIssuerAlternativeName):

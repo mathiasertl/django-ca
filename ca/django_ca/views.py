@@ -23,7 +23,6 @@ import base64
 import binascii
 import logging
 import typing
-import warnings
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
 from typing import Any, cast
@@ -52,7 +51,6 @@ from django.views.generic.base import View
 
 from django_ca import constants
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
-from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.querysets import CertificateRevocationListQuerySet
@@ -64,8 +62,6 @@ log = logging.getLogger(__name__)
 if typing.TYPE_CHECKING:
     from django.http.response import HttpResponseBase
 
-_NOT_SET = object()
-
 
 class CertificateRevocationListView(View):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
@@ -73,16 +69,6 @@ class CertificateRevocationListView(View):
     # parameters for the CRL itself
     type: CertificateRevocationListEncodings = Encoding.DER
     """Encoding for CRL."""
-
-    scope: Any = _NOT_SET
-    """Set to ``"user"`` to limit CRL to certificates or ``"ca"`` to certificate authorities or ``None`` to
-    include both.
-
-    .. deprecated:: 2.1.0
-
-       This flag is deprecated and will be removed in django-ca 2.3.0. Use `only_contains_ca_certs` and
-       `only_contains_user_certs` instead.
-    """
 
     only_contains_ca_certs: bool = False
     """Set to ``True`` to only include CA certificates in the CRL."""
@@ -112,14 +98,6 @@ class CertificateRevocationListView(View):
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
-    include_issuing_distribution_point: bool | None = None
-    """**(deprecated)** Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension.
-
-    .. deprecated:: 2.1.0
-
-       This parameter no longer has any effect and will be removed in django-ca 2.3.0.
-    """
-
     def get_key_backend_options(self, ca: CertificateAuthority) -> BaseModel:
         """Method to get the key backend options to access the private key.
 
@@ -130,44 +108,19 @@ class CertificateRevocationListView(View):
 
     def fetch_crl(self, serial: str, encoding: CertificateRevocationListEncodings) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
-        if self.scope is not _NOT_SET:
-            warnings.warn(
-                "The scope parameter is deprecated and will be removed in django-ca 2.3.0, use "
-                "`only_contains_{ca,user,attribute}_cert` instead.",
-                RemovedInDjangoCA230Warning,
-                stacklevel=2,
-            )
-
-        if self.scope == "user":
-            only_contains_ca_certs = False
-            only_contains_user_certs = True
-            only_contains_attribute_certs = False
-        elif self.scope == "ca":
-            only_contains_ca_certs = True
-            only_contains_user_certs = False
-            only_contains_attribute_certs = False
-        elif self.scope == "attribute":
-            only_contains_ca_certs = False
-            only_contains_user_certs = False
-            only_contains_attribute_certs = True
-        else:  # scope is none or not set, defaults from self are fine.
-            only_contains_ca_certs = self.only_contains_ca_certs
-            only_contains_user_certs = self.only_contains_user_certs
-            only_contains_attribute_certs = self.only_contains_attribute_certs
-
         crl_scope_validator(
-            only_contains_ca_certs=only_contains_ca_certs,
-            only_contains_user_certs=only_contains_user_certs,
-            only_contains_attribute_certs=only_contains_attribute_certs,
+            only_contains_ca_certs=self.only_contains_ca_certs,
+            only_contains_user_certs=self.only_contains_user_certs,
+            only_contains_attribute_certs=self.only_contains_attribute_certs,
             only_some_reasons=self.only_some_reasons,
         )
 
         cache_key = get_crl_cache_key(
             serial,
             encoding=encoding,
-            only_contains_ca_certs=only_contains_ca_certs,
-            only_contains_user_certs=only_contains_user_certs,
-            only_contains_attribute_certs=only_contains_attribute_certs,
+            only_contains_ca_certs=self.only_contains_ca_certs,
+            only_contains_user_certs=self.only_contains_user_certs,
+            only_contains_attribute_certs=self.only_contains_attribute_certs,
             only_some_reasons=self.only_some_reasons,
         )
 
@@ -178,9 +131,9 @@ class CertificateRevocationListView(View):
             crl_qs: CertificateRevocationListQuerySet = (
                 CertificateRevocationList.objects.scope(
                     serial=serial,
-                    only_contains_ca_certs=only_contains_ca_certs,
-                    only_contains_user_certs=only_contains_user_certs,
-                    only_contains_attribute_certs=only_contains_attribute_certs,
+                    only_contains_ca_certs=self.only_contains_ca_certs,
+                    only_contains_user_certs=self.only_contains_user_certs,
+                    only_contains_attribute_certs=self.only_contains_attribute_certs,
                     only_some_reasons=self.only_some_reasons,
                 ).filter(data__isnull=False)  # Only objects that have CRL data associated with it
             )
@@ -196,9 +149,9 @@ class CertificateRevocationListView(View):
                     ca=ca,
                     key_backend_options=key_backend_options,
                     next_update=expires,
-                    only_contains_ca_certs=only_contains_ca_certs,
-                    only_contains_user_certs=only_contains_user_certs,
-                    only_contains_attribute_certs=only_contains_attribute_certs,
+                    only_contains_ca_certs=self.only_contains_ca_certs,
+                    only_contains_user_certs=self.only_contains_user_certs,
+                    only_contains_attribute_certs=self.only_contains_attribute_certs,
                     only_some_reasons=self.only_some_reasons,
                 )
 

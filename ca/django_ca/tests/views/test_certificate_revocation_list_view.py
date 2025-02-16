@@ -15,7 +15,6 @@
 
 # pylint: disable=redefined-outer-name  # because of test fixtures
 
-from collections.abc import Iterator
 from http import HTTPStatus
 
 from cryptography import x509
@@ -32,7 +31,7 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca import constants
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
-from django_ca.tests.base.assertions import assert_crl, assert_removed_in_230
+from django_ca.tests.base.assertions import assert_crl
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import get_idp
 from django_ca.views import CertificateRevocationListView
@@ -69,26 +68,6 @@ urlpatterns = [
         CertificateRevocationListView.as_view(content_type="foo/bar", expires=321, type=Encoding.PEM),
         name="advanced",
     ),
-    re_path(  # pragma: only django-ca<2.3.0
-        r"^deprecated-full-scope/(?P<serial>[0-9A-F:]+)/$",
-        CertificateRevocationListView.as_view(scope=None),
-        name="deprecated-full-scope",
-    ),
-    re_path(  # pragma: only django-ca<2.3.0
-        r"^deprecated-ca-scope/(?P<serial>[0-9A-F:]+)/$",
-        CertificateRevocationListView.as_view(scope="ca"),
-        name="deprecated-ca-scope",
-    ),
-    re_path(  # pragma: only django-ca<2.3.0
-        r"^deprecated-user-scope/(?P<serial>[0-9A-F:]+)/$",
-        CertificateRevocationListView.as_view(scope="user"),
-        name="deprecated-user-scope",
-    ),
-    re_path(  # pragma: only django-ca<2.3.0
-        r"^deprecated-attribute-scope/(?P<serial>[0-9A-F:]+)/$",
-        CertificateRevocationListView.as_view(scope="attribute"),
-        name="deprecated-attribute-scope",
-    ),
 ]
 
 
@@ -96,17 +75,6 @@ urlpatterns = [
 def default_url(root: CertificateAuthority) -> str:
     """Fixture for the default URL for the root CA."""
     return reverse("default", kwargs={"serial": root.serial})
-
-
-@pytest.fixture
-def deprecated_scope() -> Iterator[None]:
-    """Warning for deprecated scope parameter."""
-    msg = (
-        "The scope parameter is deprecated and will be removed in django-ca 2.3.0, use "
-        "`only_contains_{ca,user,attribute}_cert` instead."
-    )
-    with assert_removed_in_230(msg):
-        yield
 
 
 def test_full_crl(
@@ -270,39 +238,6 @@ def test_view_configuration(client: Client, usable_root: CertificateAuthority) -
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "foo/bar"
     assert_crl(response.content, expires=321, algorithm=hashes.SHA256(), signer=usable_root)
-
-
-@pytest.mark.usefixtures("deprecated_scope")
-def test_deprecated_full_scope(client: Client, root_crl: CertificateRevocationList) -> None:
-    """Test fetching deprecated `scope` parameter with value `None`."""
-    response = client.get(reverse("deprecated-full-scope", kwargs={"serial": ROOT_SERIAL}))
-    assert response.status_code == HTTPStatus.OK
-    assert response.content == root_crl.data
-
-
-@pytest.mark.usefixtures("deprecated_scope")
-def test_deprecated_ca_scope(client: Client, root_ca_crl: CertificateRevocationList) -> None:
-    """Test fetching deprecated `scope` parameter with value `ca`."""
-    response = client.get(reverse("deprecated-ca-scope", kwargs={"serial": ROOT_SERIAL}))
-    assert response.status_code == HTTPStatus.OK
-    assert response.content == root_ca_crl.data
-
-
-@pytest.mark.usefixtures("deprecated_scope")
-def test_deprecated_user_scope(client: Client, root_user_crl: CertificateRevocationList) -> None:
-    """Test fetching deprecated `scope` parameter with value `user`."""
-    response = client.get(reverse("deprecated-user-scope", kwargs={"serial": ROOT_SERIAL}))
-    assert response.status_code == HTTPStatus.OK
-    assert response.content == root_user_crl.data
-
-
-@pytest.mark.django_db
-@pytest.mark.usefixtures("deprecated_scope")
-def test_deprecated_attribute_scope(client: Client, root_attribute_crl: CertificateRevocationList) -> None:
-    """Test fetching deprecated `scope` parameter with value `user`."""
-    response = client.get(reverse("deprecated-attribute-scope", kwargs={"serial": ROOT_SERIAL}))
-    assert response.status_code == HTTPStatus.OK
-    assert response.content == root_attribute_crl.data
 
 
 @pytest.mark.django_db

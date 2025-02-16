@@ -16,12 +16,8 @@
 import argparse
 import ipaddress
 import sys
-from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar
 
-import packaging.version
-
-import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -45,8 +41,6 @@ if sys.version_info < (3, 11):  # pragma: only py<3.11
     from typing_extensions import Self as Self  # noqa: PLC0414
 else:  # pragma: only py>=3.11
     from typing import Self as Self  # noqa: PLC0414
-
-CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 
 
 #: JSON serializable data.
@@ -73,97 +67,12 @@ AllowedHashTypes = (
     | hashes.SHA3_512
 )
 
-ParsableName = str | Iterable[tuple[str, str]]  # TODO: remove?
-
-ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
-ParsableSubject = (
-    str
-    | Mapping[
-        x509.ObjectIdentifier, str | Iterable[str]
-    ]  # Union for keys is not supported| see: https://github.com/python/mypy/issues/6001
-    | Mapping[str, str | Iterable[str]]
-    | x509.Name
-    | Iterable[tuple[x509.ObjectIdentifier | str | str | Iterable[str]]]
-)
-
-# GeneralNameList
-ParsableGeneralName = x509.GeneralName | str
-ParsableGeneralNameList = Iterable[ParsableGeneralName]
-
-
-class SerializedObjectIdentifier(TypedDict):
-    """Parsable version of an object identifier."""
-
-    oid: str
-    value: str
-
-
-SerializedName = list[SerializedObjectIdentifier]
-
-
-# Looser variants of the above for incoming arguments
-class ParsableNoticeReference(TypedDict, total=False):
-    """Parsable version of a Notice Reference."""
-
-    organization: str
-    notice_numbers: Iterable[int]
-
-
-class ParsableUserNotice(TypedDict, total=False):
-    """Parsable version of a User Notice."""
-
-    notice_reference: x509.NoticeReference | ParsableNoticeReference
-    explicit_text: str
-
-
-# Parsable arguments
-class ParsableDistributionPoint(TypedDict, total=False):
-    """Parsable version of a Distribution Point."""
-
-    full_name: ParsableGeneralNameList | None
-    relative_name: SerializedName | x509.RelativeDistinguishedName
-    crl_issuer: ParsableGeneralNameList
-    reasons: Iterable[str | x509.ReasonFlags]
-
-
-ParsablePolicyQualifier = str | x509.UserNotice | ParsableUserNotice
-ParsablePolicyIdentifier = str | x509.ObjectIdentifier
-
-
-class ParsablePolicyInformation(TypedDict, total=False):
-    """Parsable version of the Policy Information extension."""
-
-    policy_identifier: ParsablePolicyIdentifier
-    policy_qualifiers: Sequence[ParsablePolicyQualifier] | None
-
-
-PolicyQualifier = str | x509.UserNotice
-
-
-class ParsableExtension(TypedDict, total=False):
-    """Base for all extensions."""
-
-    critical: bool
-    value: Any
-
-
-class BasicConstraintsBase(TypedDict):
-    """Base for BasicConstraints extension."""
-
-    ca: bool
-
-
-class ParsableAuthorityKeyIdentifierDict(TypedDict, total=False):
-    """Parsable version of the ParsableAuthorityKeyIdentifier extension."""
-
-    key_identifier: bytes | None
-    authority_cert_issuer: Iterable[str]
-    authority_cert_serial_number: int | None
-
 
 ############
 # Literals #
 ############
+
+ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 
 #: Valid types of general names.
 GeneralNames = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName"]
@@ -317,7 +226,6 @@ EllipticCurves = Literal[
     "brainpoolP512r1",
 ]
 
-CertificateRevocationListScopes = Literal["ca", "user", "attribute"]
 CertificateRevocationListEncodings = Literal[Encoding.PEM, Encoding.DER]
 CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 
@@ -420,8 +328,6 @@ ActionsContainer = CommandParser | ArgumentGroup
 # pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
 X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
 
-ExtensionTypeVar = TypeVar("ExtensionTypeVar", bound=x509.Extension[x509.ExtensionType])
-
 # A TypeVar bound to :py:class:`~cg:cryptography.x509.ExtensionType`.
 ExtensionTypeTypeVar = TypeVar("ExtensionTypeTypeVar", bound=x509.ExtensionType)
 
@@ -519,49 +425,6 @@ class SerializedPolicyInformation(TypedDict):
 
     policy_identifier: str
     policy_qualifiers: SerializedPolicyQualifiers | None
-
-
-###################
-# Parsable values #
-###################
-# Collect typehints for values that can be parsed back into cryptography values. Typehints in this section
-# start with "Parsable...".
-
-ParsableAuthorityKeyIdentifier = str | bytes | ParsableAuthorityKeyIdentifierDict
-
-
-class ParsableAuthorityInformationAccess(TypedDict, total=False):
-    """Parsable Authority Information Access extension."""
-
-    ocsp: ParsableGeneralNameList | None
-    issuers: ParsableGeneralNameList | None
-
-
-class ParsableBasicConstraints(BasicConstraintsBase, total=False):
-    """Serialized representation of a BasicConstraints extension.
-
-    A value of this type is a dictionary with a ``"ca"`` key with a boolean value. If ``True``, it also
-    has a ``"path_length"`` value that is either ``None`` or an int.
-    """
-
-    path_length: int | str
-
-
-class ParsableNameConstraints(TypedDict, total=False):
-    """Parsable NameConstraints extension."""
-
-    permitted: ParsableGeneralNameList
-    excluded: ParsableGeneralNameList
-
-
-class ParsablePolicyConstraints(TypedDict, total=False):
-    """Parsable PolicyConstriants extension."""
-
-    require_explicit_policy: int
-    inhibit_policy_mapping: int
-
-
-ParsableSubjectKeyIdentifier = str | bytes | x509.SubjectKeyIdentifier
 
 
 #####################

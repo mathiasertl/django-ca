@@ -43,7 +43,7 @@ from ca.settings_utils import (
 )
 from django_ca import conf
 from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
-from django_ca.tests.base.assertions import assert_improperly_configured, assert_removed_in_230
+from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.utils import country, state
 
@@ -434,29 +434,6 @@ def test_ca_crl_profiles_with_invalid_reason_codes(
     message = r"unspecified and remove_from_crl are not valid for `only_some_reasons`\."
     with assert_improperly_configured(message):
         settings.CA_CRL_PROFILES = {"ca": {"only_some_reasons": [reason]}}
-
-
-def test_ca_crl_profiles_with_deprecated_encodings(settings: SettingsWrapper) -> None:
-    """Test that `encodings` in CA_CRL_PROFILES creates a warning."""
-    msg = r"^encodings: Setting has no effect starting with django-ca 2\.1\.0\.$"
-    with assert_removed_in_230(msg):
-        settings.CA_CRL_PROFILES = {"ca": {"encodings": ["PEM"]}}
-    with assert_removed_in_230(msg):
-        assert model_settings.CA_CRL_PROFILES == {"ca": CertificateRevocationListProfile(encodings=["PEM"])}
-
-
-@pytest.mark.parametrize("scope", ("user", "ca", "attribute"))
-def test_ca_crl_profiles_with_deprecated_scope(settings: SettingsWrapper, scope: str) -> None:
-    """Set deprecated ca scope."""
-    msg = (
-        r"^scope: Setting is deprecated and will be removed in django-ca 2\.3\.0\. Use "
-        r"`only_contains_ca_certs` and `only_contains_user_certs` instead\.$"
-    )
-    with assert_removed_in_230(msg):
-        settings.CA_CRL_PROFILES = {"ca": {"scope": scope}}
-    assert model_settings.CA_CRL_PROFILES == {
-        "ca": CertificateRevocationListProfile(**{f"only_contains_{scope}_certs": True})
-    }
 
 
 @pytest.mark.parametrize(

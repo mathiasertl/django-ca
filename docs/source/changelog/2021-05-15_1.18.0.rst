@@ -59,7 +59,7 @@ Deprecation notices
 * This is the last release to support cryptography 3.0, 3.1 and 3.2.
 * Passing a ``str`` or ``bytes`` to :py:func:`~django_ca.managers.CertificateManager.create_cert` will be
   removed in django-ca 1.20.0.
-* Passing a ``str`` as an algorithm in :py:func:`~django_ca.models.CertificateAuthority.get_crl`,
+* Passing a ``str`` as an algorithm in ``django_ca.models.CertificateAuthority.get_crl()``,
   :py:func:`~django_ca.profiles.Profile.create_cert` is deprecated and will no longer work in django-ca
   1.20.0. Pass a :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instance instead.
 * ``django_ca.utils.parse_csr()`` is no longer useful and will be removed in django-ca 1.20.0.

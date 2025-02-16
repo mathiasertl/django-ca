@@ -43,17 +43,11 @@ from freezegun import freeze_time
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
-from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages import StoragesOCSPBackend
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic import CertificatePoliciesModel
-from django_ca.tests.base.assertions import (
-    assert_certificate,
-    assert_crl,
-    assert_removed_in_230,
-    assert_sign_cert_signals,
-)
+from django_ca.tests.base.assertions import assert_certificate, assert_crl, assert_sign_cert_signals
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -67,7 +61,6 @@ from django_ca.tests.base.utils import (
     uri,
 )
 from django_ca.tests.models.base import assert_bundle
-from django_ca.typehints import PolicyQualifier
 
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
@@ -118,17 +111,6 @@ def test_root(root: CertificateAuthority, child: CertificateAuthority) -> None:
     """Test the root attribute."""
     assert root.root == root
     assert child.root == root
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-@pytest.mark.usefixtures("clear_cache")
-@pytest.mark.usefixtures("child")  # to make sure that they don't show up when they're not revoked.
-@pytest.mark.usefixtures("root_cert")  # to make sure that they don't show up when they're not revoked.
-def test_get_crl(usable_root: CertificateAuthority) -> None:
-    """Test getting the CRL for a CertificateAuthority."""
-    with assert_removed_in_230(r"^get_crl\(\) is deprecated and will be removed in django-ca 2\.3\.$"):
-        crl = usable_root.get_crl(key_backend_options)
-    assert_crl(crl, signer=usable_root)
 
 
 @pytest.mark.usefixtures("clear_cache")
@@ -359,31 +341,6 @@ def test_force_regenerate_ocsp_responder_certificate(usable_root: CertificateAut
         assert cert_renewed.serial != cert.serial
 
 
-def test_regenerate_ocsp_key_with_deprecated_expires(usable_root: CertificateAuthority) -> None:
-    """Test calling generate_ocsp_key() with deprecated expires parameter."""
-    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
-        certificate = usable_root.generate_ocsp_key(key_backend_options, expires=not_after)
-    assert certificate is not None
-    assert certificate.not_after == not_after.replace(second=0, microsecond=0)
-
-
-def test_regenerate_ocsp_key_with_not_after_and_expires(root: CertificateAuthority) -> None:
-    """Test calling generate_ocsp_key() with both not_after and (deprecated) expires, which is an error."""
-    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    with (
-        pytest.warns(RemovedInDjangoCA230Warning, match=warning),
-        pytest.raises(ValueError, match=r"^`not_before` and `expires` cannot both be set\.$"),
-    ):
-        root.generate_ocsp_key(key_backend_options, not_after=not_after, expires=not_after)
-
-
 def test_empty_extensions_for_certificate(root: CertificateAuthority) -> None:
     """Test extensions_for_certificate property when no values are set."""
     root.sign_certificate_policies = None
@@ -511,7 +468,7 @@ def test_sign_certificate_policies_with_serialized_model(
     assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
 
 
-def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> str | dict[str, Any]:
+def _old_serialize_policy_qualifier(qualifier: str | x509.UserNotice) -> str | dict[str, Any]:
     """Duplicate of old CertificatePolicies serialization."""
     if isinstance(qualifier, str):
         return qualifier
@@ -651,36 +608,6 @@ def test_sign_with_non_default_values(subject: x509.Name, usable_root: Certifica
 
     assert_certificate(cert, subject, hashes.SHA256, signer=usable_root)
     assert cert.not_valid_after_utc == not_after
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_sign_with_deprecated_expires(subject: x509.Name, usable_root: CertificateAuthority) -> None:
-    """Pass non-default parameters."""
-    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    algorithm = hashes.SHA256()
-    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
-        cert = usable_root.sign(
-            key_backend_options, csr, subject=subject, algorithm=algorithm, expires=not_after
-        )
-    assert cert.not_valid_after_utc == not_after
-
-
-def test_sign_with_not_after_and_expires(root: CertificateAuthority, subject: x509.Name) -> None:
-    """Test error when passing extensions that may not be passed to this function."""
-    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
-    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    with (
-        pytest.warns(RemovedInDjangoCA230Warning, match=warning),
-        pytest.raises(ValueError, match=r"^`not_before` and `expires` cannot both be set\.$"),
-    ):
-        root.sign(key_backend_options, csr, subject=subject, not_after=not_after, expires=not_after)
 
 
 @pytest.mark.parametrize(

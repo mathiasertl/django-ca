@@ -26,7 +26,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.name import _ASN1Type
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase, override_settings
@@ -36,10 +35,8 @@ from freezegun import freeze_time
 
 from django_ca import utils
 from django_ca.conf import model_settings
-from django_ca.tests.base.assertions import assert_removed_in_230
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.utils import cn, country, dns
-from django_ca.typehints import SerializedObjectIdentifier
 from django_ca.utils import (
     bytes_to_hex,
     format_general_name,
@@ -47,12 +44,9 @@ from django_ca.utils import (
     get_cert_builder,
     merge_x509_names,
     parse_encoding,
-    parse_serialized_name_attributes,
     read_file,
-    serialize_name,
     validate_private_key_parameters,
     validate_public_key_parameters,
-    x509_name,
 )
 
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=type[object])
@@ -74,31 +68,6 @@ def test_read_file(tmpcadir: Path) -> None:
 
     assert read_file(name) == data
     assert read_file(path) == data
-
-
-@pytest.mark.parametrize(
-    ("attributes", "expected"),
-    (
-        ([(NameOID.COMMON_NAME, "example.com")], [cn("example.com")]),
-        (
-            [(NameOID.COUNTRY_NAME, "AT"), (NameOID.COMMON_NAME, "example.com")],
-            [country("AT"), cn("example.com")],
-        ),
-        (
-            [(NameOID.X500_UNIQUE_IDENTIFIER, "65:78:61:6D:70:6C:65")],
-            [x509.NameAttribute(NameOID.X500_UNIQUE_IDENTIFIER, b"example", _type=_ASN1Type.BitString)],
-        ),
-    ),
-)
-def test_parse_serialized_name_attributes(
-    attributes: list[tuple[x509.ObjectIdentifier, str]], expected: list[x509.NameAttribute]
-) -> None:
-    """Test :py:func:`django_ca.utils.parse_serialized_name_attributes`."""
-    serialized: list[SerializedObjectIdentifier] = [
-        {"oid": attr[0].dotted_string, "value": attr[1]} for attr in attributes
-    ]
-    with assert_removed_in_230():
-        assert parse_serialized_name_attributes(serialized) == expected
 
 
 class GeneratePrivateKeyTestCase(TestCase):
@@ -140,30 +109,6 @@ class GeneratePrivateKeyTestCase(TestCase):
 def test_format_general_name(general_name: x509.GeneralName, expected: str) -> None:
     """Test :py:func:`django_ca.utils.format_general_name`."""
     assert format_general_name(general_name) == expected
-
-
-class SerializeName(TestCase):
-    """Test the serialize_name function."""
-
-    def test_name(self) -> None:
-        """Test passing a standard Name."""
-        with assert_removed_in_230():
-            assert serialize_name(x509.Name([cn("example.com")])) == [
-                {"oid": "2.5.4.3", "value": "example.com"}
-            ]
-        with assert_removed_in_230():
-            assert serialize_name(x509.Name([country("AT"), cn("example.com")])) == [
-                {"oid": "2.5.4.6", "value": "AT"},
-                {"oid": "2.5.4.3", "value": "example.com"},
-            ]
-
-    def test_bytes(self) -> None:
-        """Test names with byte values - probably never happens."""
-        name = x509.Name(
-            [x509.NameAttribute(NameOID.X500_UNIQUE_IDENTIFIER, b"example.com", _type=_ASN1Type.BitString)]
-        )
-        with assert_removed_in_230():
-            assert serialize_name(name) == [{"oid": "2.5.4.45", "value": "65:78:61:6D:70:6C:65:2E:63:6F:6D"}]
 
 
 @pytest.mark.parametrize(
@@ -330,49 +275,6 @@ class SanitizeSerialTestCase(TestCase):
         """Test some input that raises an exception."""
         with pytest.raises(ValueError, match=r"^ABCXY: Serial has invalid characters$"):
             utils.sanitize_serial("ABCXY")
-
-
-class X509NameTestCase(TestCase):
-    """Test :py:func:`django_ca.utils.x509_name`."""
-
-    name = x509.Name(
-        [
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Vienna"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "Vienna"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "O"),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "OU"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-            x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.com"),
-        ]
-    )
-
-    def test_str(self) -> None:
-        """Test passing a string."""
-        subject = [
-            ("C", "AT"),
-            ("ST", "Vienna"),
-            ("L", "Vienna"),
-            ("O", "O"),
-            ("OU", "OU"),
-            ("CN", "example.com"),
-            ("emailAddress", "user@example.com"),
-        ]
-        with assert_removed_in_230():
-            assert x509_name(subject) == self.name
-
-    def test_multiple_other(self) -> None:
-        """Test multiple other tokens (only OUs work)."""
-        with (
-            assert_removed_in_230(),
-            pytest.raises(ValueError, match='^Subject contains multiple "countryName" fields$'),
-        ):
-            x509_name([("C", "AT"), ("C", "DE")])
-        with (
-            assert_removed_in_230(),
-            pytest.raises(ValueError, match='^Subject contains multiple "commonName" fields$'),
-        ):
-            x509_name([("CN", "AT"), ("CN", "FOO")])
 
 
 class MergeX509NamesTestCase(TestCase):

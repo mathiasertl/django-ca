@@ -207,7 +207,7 @@ def test_root_ca_cert(ca_name: str) -> None:
                 verify("-CAfile {0} -crl_check_all {cert}", *paths, crl_path=[crl_path, crl2_path], cert=cert)
 
         # Try a single CRL with a global scope
-        with crl(ca, scope=None) as (crl_global_path, crl_global):
+        with crl(ca) as (crl_global_path, crl_global):
             assert_no_issuing_distribution_point(crl_global)
             verify("-CAfile {0} -crl_check_all {cert}", *paths, crl_path=[crl_global_path], cert=cert)
 

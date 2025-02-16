@@ -33,7 +33,6 @@ from django_ca.constants import (
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     HASH_ALGORITHM_NAMES,
 )
-from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_argument
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.pydantic.extensions import (
     CertificateExtension,
@@ -182,15 +181,13 @@ class Profile:
             else:
                 extensions.setdefault(oid, ext)
 
-    @deprecate_argument("expires", RemovedInDjangoCA230Warning, replacement="not_after")
-    def create_cert(  # noqa: PLR0912, PLR0913  # pylint: disable=too-many-locals
+    def create_cert(  # noqa: PLR0913  # pylint: disable=too-many-locals
         self,
         ca: "CertificateAuthority",
         key_backend_options: BaseModel,
         csr: x509.CertificateSigningRequest,
         *,
         subject: x509.Name | None = None,
-        expires: datetime | timedelta | None = None,
         not_after: datetime | timedelta | None = None,
         algorithm: AllowedHashTypes | None = None,
         extensions: Iterable[ConfigurableExtension] | None = None,
@@ -278,11 +275,6 @@ class Profile:
         cryptography.x509.Certificate
             The signed certificate.
         """
-        if not_after is not None and expires is not None:
-            raise ValueError("`not_before` and `expires` cannot both be set.")
-        if expires is not None:
-            not_after = expires
-
         # Get overrides values from profile if not passed as parameter
         if add_crl_url is None:
             add_crl_url = self.add_crl_url

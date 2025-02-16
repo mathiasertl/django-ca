@@ -24,12 +24,6 @@ from typing import Any, TypeVar, cast
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-class RemovedInDjangoCA230Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca~=2.3.0."""
-
-    version = "2.3"
-
-
 class RemovedInDjangoCA240Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in django-ca~=2.4.0."""
 
@@ -37,15 +31,21 @@ class RemovedInDjangoCA240Warning(PendingDeprecationWarning):
 
 
 class RemovedInDjangoCA250Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca~=2.4.0."""
+    """Warning if a feature will be removed in django-ca~=2.5.0."""
 
     version = "2.5"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA230Warning
+class RemovedInDjangoCA260Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca~=2.6.0."""
+
+    version = "2.6"
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA240Warning
 
 DeprecationWarningType = (
-    type[RemovedInDjangoCA230Warning] | type[RemovedInDjangoCA240Warning] | type[RemovedInDjangoCA250Warning]
+    type[RemovedInDjangoCA240Warning] | type[RemovedInDjangoCA250Warning] | type[RemovedInDjangoCA260Warning]
 )
 
 
@@ -76,7 +76,7 @@ def deprecate_argument(
     the argument is passed.
     """
     message = f"Argument `{arg}` is deprecated and will be removed in django-ca {category.version}"
-    if replacement is not None:
+    if replacement is not None:  # pragma: no cover
         message += f", use `{replacement}` instead."
     else:
         message += "."

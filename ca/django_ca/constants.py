@@ -81,9 +81,6 @@ ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = Ma
 CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES: MappingProxyType[
     CertificateRevocationListEncodingNames, CertificateRevocationListEncodings
 ] = MappingProxyType({"PEM": Encoding.PEM, "DER": Encoding.DER})
-CERTIFICATE_REVOCATION_LIST_ENCODING_NAMES: MappingProxyType[
-    CertificateRevocationListEncodings, CertificateRevocationListEncodingNames
-] = MappingProxyType({v: k for k, v in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES.items()})
 
 DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
 DEFAULT_OCSP_KEY_BACKEND = "django_ca.key_backends.storages.StoragesOCSPBackend"

@@ -35,7 +35,6 @@ from django_ca.tests.base.assertions import (
     assert_command_error,
     assert_crl,
     assert_e2e_command_error,
-    assert_removed_in_230,
     assert_revoked,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -89,7 +88,7 @@ def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: Cer
     """Test creating a CRL for a CA with a password without giving a password."""
     settings.CA_PASSWORDS = {}
     with assert_command_error(r"^Password was not given but private key is encrypted$"):
-        dump_crl(ca=usable_pwd, scope="user")
+        dump_crl(ca=usable_pwd)
 
 
 @pytest.mark.usefixtures("usable_pwd")
@@ -121,7 +120,7 @@ def test_pwd_ca_with_password_in_settings(
 def test_no_scope_with_root_ca(usable_root: CertificateAuthority) -> None:
     """Test no-scope CRL for root CA."""
     # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
-    stdout = dump_crl(ca=usable_root, scope=None)
+    stdout = dump_crl(ca=usable_root)
     assert_crl(
         stdout, encoding=Encoding.PEM, expires=86400, signer=usable_root, algorithm=usable_root.algorithm
     )
@@ -129,7 +128,7 @@ def test_no_scope_with_root_ca(usable_root: CertificateAuthority) -> None:
 
 def test_no_scope_with_child_ca(usable_child: CertificateAuthority) -> None:
     """Test full CRL for child CA."""
-    stdout = dump_crl(ca=usable_child, scope=None)
+    stdout = dump_crl(ca=usable_child)
     assert_crl(
         stdout, encoding=Encoding.PEM, expires=86400, signer=usable_child, algorithm=usable_child.algorithm
     )
@@ -235,38 +234,6 @@ def test_only_some_reasons(usable_root: CertificateAuthority) -> None:
         only_some_reasons=frozenset([x509.ReasonFlags.key_compromise, x509.ReasonFlags.aa_compromise])
     )
     assert_crl(stdout, signer=usable_root, idp=idp)
-
-
-@pytest.mark.parametrize("scope", ("ca", "user", "attribute"))
-def test_deprecated_scope(usable_root: CertificateAuthority, scope: str) -> None:
-    """Test passing the deprecated scope parameter."""
-    with assert_removed_in_230(
-        r"^--scope is deprecated and will be removed in django-ca 2\.3\.0\. Use "
-        r"--only-contains-{ca,user,attribute}-certs instead\.$"
-    ):
-        stdout = dump_crl(ca=usable_root, scope=scope)
-    # pylint: disable-next=unexpected-keyword-arg
-    idp = get_idp(**{f"only_contains_{scope}_certs": True})  # type: ignore[arg-type]
-    assert_crl(stdout, signer=usable_root, idp=idp)
-
-
-def test_deprecated_algorithm(usable_root: CertificateAuthority) -> None:
-    """Test passing the deprecated algorithm parameter."""
-    with assert_removed_in_230(
-        r"^--algorithm no longer has any effect and will be removed in django-ca 2\.3\.0\.$"
-    ):
-        stdout = dump_crl(ca=usable_root, algorithm="SHA-256")
-    assert_crl(stdout, signer=usable_root)
-
-
-def test_deprecated_include_issuing_distribution_point(usable_root: CertificateAuthority) -> None:
-    """Test passing the deprecated include_issuing_distribution_point parameter."""
-    with assert_removed_in_230(
-        r"^--include-issuing-distribution-point and --exclude-issuing-distribution-point no longer "
-        r"have any effect and will be removed in django-ca 2\.3\.0\.$"
-    ):
-        stdout = dump_crl(ca=usable_root, include_issuing_distribution_point=True)
-    assert_crl(stdout, signer=usable_root)
 
 
 def test_unknown_error(usable_root: CertificateAuthority) -> None:

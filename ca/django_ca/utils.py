@@ -15,9 +15,8 @@
 
 import binascii
 import re
-import shlex
 import typing
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from datetime import datetime, timezone as tz
 from ipaddress import ip_address, ip_network
 
@@ -29,8 +28,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.name import _ASN1Type
-from cryptography.x509.oid import NameOID
 
 from django.core.files.storage import storages
 from django.utils import timezone
@@ -38,22 +35,19 @@ from django.utils import timezone
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import MULTIPLE_OIDS, NAME_OID_DISPLAY_NAMES
-from django_ca.deprecation import RemovedInDjangoCA230Warning, deprecate_function
 from django_ca.pydantic.validators import (
     dns_validator,
     email_validator,
     is_power_two_validator,
     url_validator,
 )
-from django_ca.typehints import AllowedHashTypes, ParsableGeneralName, ParsableKeyType, SerializedName
+from django_ca.typehints import AllowedHashTypes, ParsableKeyType
 
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
 
 #: Regular expression matching certificate serials as hex
 SERIAL_RE = re.compile("^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$")
-
-UNSAFE_NAME_CHARS = re.compile(r'[\\/\'"]')
 
 SAN_NAME_MAPPINGS = {
     x509.DNSName: "DNS",
@@ -64,9 +58,6 @@ SAN_NAME_MAPPINGS = {
     x509.RegisteredID: "RID",
     x509.OtherName: "otherName",
 }
-
-# uppercase values as keys for normalizing case
-NAME_CASE_MAPPINGS = {k.upper(): v for k, v in constants.NAME_OID_TYPES.items()}
 
 
 def parse_name_rfc4514(value: str) -> x509.Name:
@@ -101,6 +92,7 @@ def format_name_rfc4514(subject: x509.Name | x509.RelativeDistinguishedName) -> 
     and *not* in reverse order (which is not used anywhere else). It also adds OID name mappings from
     :py:attr:`~django_ca.constants.NAME_OID_NAMES` to the output string.
 
+    >>> from cryptography.x509.oid import NameOID
     >>> format_name_rfc4514(
     ...     x509.Name(
     ...         [
@@ -124,22 +116,6 @@ def _serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
     return name_attribute.value
 
 
-@deprecate_function(RemovedInDjangoCA230Warning)
-def serialize_name(name: x509.Name | x509.RelativeDistinguishedName) -> SerializedName:
-    """Serialize a :py:class:`~cg:cryptography.x509.Name`.
-
-    .. deprecated:: 2.2.0
-
-       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
-
-    The value also accepts a :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`.
-
-    The returned value is a list of tuples, each consisting of two strings. If an attribute contains
-    ``bytes``, it is converted using :py:func:`~django_ca.utils.bytes_to_hex`.
-    """
-    return [{"oid": attr.oid.dotted_string, "value": _serialize_name_attribute_value(attr)} for attr in name]
-
-
 def name_for_display(name: x509.Name | x509.RelativeDistinguishedName) -> list[tuple[str, str]]:
     """Convert a |Name| or |RelativeDistinguishedName| into a list of key/value pairs for display.
 
@@ -149,6 +125,7 @@ def name_for_display(name: x509.Name | x509.RelativeDistinguishedName) -> list[t
     The function converts the OID into a readable string (e.g. "commonName (CN)") with any unknown OIDs
     converted to a dotted string. If the value is not a string, it is converted to a hex string.
 
+    >>> from cryptography.x509.oid import NameOID
     >>> name_for_display(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')]))
     [('commonName (CN)', 'example.com')]
     """
@@ -156,36 +133,6 @@ def name_for_display(name: x509.Name | x509.RelativeDistinguishedName) -> list[t
         (NAME_OID_DISPLAY_NAMES.get(attr.oid, attr.oid.dotted_string), _serialize_name_attribute_value(attr))
         for attr in name
     ]
-
-
-@deprecate_function(RemovedInDjangoCA230Warning)
-def parse_serialized_name_attributes(name: SerializedName) -> list[x509.NameAttribute]:
-    """Parse a serialized list of name attributes into a list of NameAttributes.
-
-    .. deprecated:: 2.2.0
-
-       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
-
-    This function takes care of parsing hex-encoded byte values name attributes that are known to use bytes
-    (currently only :py:attr:`NameOID.X500_UNIQUE_IDENTIFIER
-    <cg:cryptography.x509.oid.NameOID.X500_UNIQUE_IDENTIFIER>`).
-
-    This function is more or less the inverse of :py:func:`~django_ca.utils.serialize_name`, except that it
-    returns a list of :py:class:`~cg:cryptography.x509.NameAttribute` instances (``serialize_name()`` takes a
-    :py:class:`~cg:cryptography.x509.Name` or :py:class:`~cg:cryptography.x509.RelativeDistinguishedName`)
-    and byte-values for unknown OIDs will **not** be correctly parsed.
-    """
-    attrs: list[x509.NameAttribute] = []
-    for attr_dict in name:
-        oid = x509.ObjectIdentifier(attr_dict["oid"])
-        value = attr_dict["value"]
-
-        if oid == NameOID.X500_UNIQUE_IDENTIFIER:
-            attrs.append(x509.NameAttribute(oid=oid, value=hex_to_bytes(value), _type=_ASN1Type.BitString))
-        else:
-            attrs.append(x509.NameAttribute(oid=oid, value=value))
-
-    return attrs
 
 
 def format_general_name(name: x509.GeneralName) -> str:
@@ -299,47 +246,6 @@ def sanitize_serial(value: str) -> str:
     return serial
 
 
-@deprecate_function(RemovedInDjangoCA230Warning)
-def parse_name_x509(name: str | Iterable[tuple[str, str]]) -> tuple[x509.NameAttribute, ...]:
-    """Parses a subject string as used in OpenSSLs command line utilities.
-
-    .. deprecated:: 2.2.0
-
-       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
-
-    .. versionchanged:: 1.20.0
-
-       This function no longer returns the subject in pseudo-sorted order.
-
-    The ``name`` is expected to be close to the subject format commonly used by OpenSSL, for example
-    ``/C=AT/L=Vienna/CN=example.com/emailAddress=user@example.com``. The function does its best to be lenient
-    on deviations from the format, object identifiers are case-insensitive, whitespace at the start and end is
-    stripped and the subject does not have to start with a slash (``/``).
-    """
-    if isinstance(name, str):
-        # TYPE NOTE: mypy detects t.split() as Tuple[str, ...] and does not recognize the maxsplit parameter
-        name = tuple(tuple(t.split("=", 1)) for t in split_str(name.strip(), "/"))  # type: ignore[misc]
-
-    # TODO: allow dotted strings!
-    try:
-        items = tuple((NAME_CASE_MAPPINGS[t[0].strip().upper()], t[1].strip()) for t in name)
-    except KeyError as e:
-        raise ValueError(f"Unknown x509 name field: {e.args[0]}") from e
-
-    return tuple(x509.NameAttribute(oid, value) for oid, value in items)
-
-
-@deprecate_function(RemovedInDjangoCA230Warning)
-def x509_name(name: str | Iterable[tuple[str, str]]) -> x509.Name:
-    """Parses a string or iterable of two-tuples into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
-
-    .. deprecated:: 2.2.0
-
-       This function is deprecated and will be removed in ``django-ca==2.3.0``. Use Pydantic models instead.
-    """
-    return check_name(x509.Name(parse_name_x509(name)))
-
-
 def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
     """Merge two :py:class:`x509.Name <cg:cryptography.x509.Name>` instances.
 
@@ -352,6 +258,8 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
 
     Example::
 
+        >>> from cryptography import x509
+        >>> from cryptography.x509.oid import NameOID
         >>> base = x509.Name([
         ...     x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
         ...     x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Example Org"),
@@ -728,8 +636,12 @@ def format_other_name(other_name: x509.OtherName) -> str:
     return f"{oid};{typ}:{value}"
 
 
-def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: PLR0911
+def parse_general_name(name: str) -> x509.GeneralName:  # noqa: PLR0911
     """Parse a general name from user input.
+
+    .. versionchanged:: 2.3.0
+
+       `name` can no longer by a `GeneralName` instance.
 
     This function will do its best to detect the intended type of any value passed to it:
 
@@ -781,8 +693,6 @@ def parse_general_name(name: ParsableGeneralName) -> x509.GeneralName:  # noqa: 
     ValueError: Invalid domain: bar com: ...
 
     """
-    if isinstance(name, x509.GeneralName):
-        return name
     if not isinstance(name, str):
         raise ValueError(
             f"Cannot parse general name {name}: Must be of type str (was: {type(name).__name__})."
@@ -922,16 +832,6 @@ def read_file(path: str) -> bytes:
         return data
     finally:
         stream.close()
-
-
-@deprecate_function(RemovedInDjangoCA230Warning)
-def split_str(val: str, sep: str) -> Iterator[str]:
-    """Split a character on the given set of characters."""
-    lex = shlex.shlex(val, posix=True)
-    lex.commenters = ""
-    lex.whitespace = sep
-    lex.whitespace_split = True
-    yield from lex
 
 
 def get_crl_cache_key(

@@ -297,7 +297,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 key_backend,
                 key_backend_options,
                 subject=NameModel.model_validate(data[name]["subject"]).cryptography,
-                expires=datetime.now(tz=tz.utc) + data[name]["not_after"],
+                not_after=datetime.now(tz=tz.utc) + data[name]["not_after"],
                 key_type=data[name]["key_type"],
                 algorithm=data[name].get("algorithm"),
                 path_length=data[name]["path_length"],
@@ -342,7 +342,7 @@ def create_certs(
                 key_backend_options=StoragesUsePrivateKeyOptions(password=pwd),
                 csr=csr,
                 profile=profiles["server"],
-                expires=data[name]["not_after"],
+                not_after=data[name]["not_after"],
                 algorithm=data[name]["algorithm"],
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
                 extensions=data[name].get("extensions", {}).values(),
@@ -376,7 +376,7 @@ def create_certs(
                 csr=csr,
                 profile=profiles[profile],
                 algorithm=data[name]["algorithm"],
-                expires=data[name]["not_after"],
+                not_after=data[name]["not_after"],
                 subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, data[name]["cn"])]),
                 extensions=data[name].get("extensions", {}).values(),
             )
@@ -447,7 +447,7 @@ def create_special_certs(  # noqa: PLR0915
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
             subject=NameModel.model_validate(data[name]["subject"]).cryptography,
-            expires=data[name]["not_after"],
+            not_after=data[name]["not_after"],
             extensions=data[name]["extensions"].values(),
         )
     _copy_cert(dest, cert, data[name], key_path, csr_path)
@@ -469,7 +469,7 @@ def create_special_certs(  # noqa: PLR0915
             profile=profiles["webserver"],
             algorithm=data[name].get("algorithm"),
             subject=NameModel.model_validate(data[name]["subject"]).cryptography,
-            expires=data[name]["not_after"],
+            not_after=data[name]["not_after"],
             extensions=data[name]["extensions"].values(),
         )
     _copy_cert(dest, cert, data[name], key_path, csr_path)

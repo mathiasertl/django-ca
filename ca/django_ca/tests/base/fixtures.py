@@ -289,25 +289,6 @@ def root_user_crl(root: CertificateAuthority) -> CertificateRevocationList:
 
 
 @pytest.fixture
-def root_attribute_crl(root: CertificateAuthority) -> CertificateRevocationList:
-    """Fixture for the attribute CRL object for the Root CA."""
-    with open(constants.FIXTURES_DIR / "root.attribute.crl", "rb") as stream:
-        crl_data = stream.read()
-    last_update = TIMESTAMPS["everything_valid"]
-    next_update = last_update + timedelta(seconds=86400)
-    crl = CertificateRevocationList.objects.create(
-        ca=root,
-        number=0,
-        last_update=last_update,
-        next_update=next_update,
-        data=crl_data,
-        only_contains_attribute_certs=True,
-    )
-    crl.cache()
-    return crl
-
-
-@pytest.fixture
 def secondary_backend(request: "SubRequest") -> StoragesBackend:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for the secondary key backend."""
     request.getfixturevalue("tmpcadir")
