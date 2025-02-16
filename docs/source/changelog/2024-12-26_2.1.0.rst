@@ -102,10 +102,10 @@ Database models
 * Rename the ``valid_from`` to ``not_before`` and ``expires`` to ``not_after`` to align with the terminology
   used in `RFC 5280`_. The previous read-only property was removed.
 * Add the :class:`~django_ca.models.CertificateRevocationList` model to store generated CRLs.
-* :func:`django_ca.models.CertificateAuthority.get_crl_certs` and
-  :func:`django_ca.models.CertificateAuthority.get_crl` are deprecated and will be removed in django-ca 2.3.0.
+* ``django_ca.models.CertificateAuthority.get_crl_certs()`` and
+  ``django_ca.models.CertificateAuthority.get_crl()`` are deprecated and will be removed in django-ca 2.3.0.
 * **BACKWARDS INCOMPATIBLE:** The `algorithm`, `counter`, `full_name`, `relative_name` and
-  `include_issuing_distribution_point` parameters for :func:`django_ca.models.CertificateAuthority.get_crl`
+  `include_issuing_distribution_point` parameters for ``django_ca.models.CertificateAuthority.get_crl()``
   no longer have any effect.
 
 *****

@@ -14,7 +14,7 @@
 """Test :py:mod:`django_ca.profiles`."""
 
 import doctest
-from datetime import datetime, timedelta, timezone as tz
+from datetime import timedelta
 from typing import Any
 
 from cryptography import x509
@@ -30,7 +30,6 @@ from django_ca.constants import (
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     EXTENSION_DEFAULT_CRITICAL,
 )
-from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
@@ -680,37 +679,6 @@ def test_create_cert_with_no_valid_cn_in_san(usable_root: CertificateAuthority) 
         cert = create_cert(prof, usable_root, csr, extensions=[san])
     assert pre.call_count == 1
     assert cert.subject == model_settings.CA_DEFAULT_SUBJECT
-
-
-def test_create_cert_with_deprecated_expires(usable_root: CertificateAuthority, subject: x509.Name) -> None:
-    """Create a certificate with the deprecated expires parameter."""
-    not_after = datetime.now(tz=tz.utc) + timedelta(days=12)
-    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-
-    prof = Profile("example")
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
-        cert = create_cert(prof, usable_root, csr, subject=subject, expires=not_after)
-    assert cert.not_after == not_after
-    assert cert.pub.loaded.not_valid_after_utc == not_after
-
-
-def test_create_cert_with_not_after_and_deprecated_expires(
-    usable_root: CertificateAuthority, subject: x509.Name
-) -> None:
-    """Create a certificate with the not_after AND deprecated expires parameter, which is an error."""
-    not_after = datetime.now(tz=tz.utc) + timedelta(days=12)
-    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    error = r"^`not_before` and `expires` cannot both be set\.$"
-
-    prof = Profile("example")
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning), pytest.raises(ValueError, match=error):
-        create_cert(prof, usable_root, csr, subject=subject, expires=not_after, not_after=not_after)
 
 
 def test_create_cert_with_unknown_signature_hash_algorithm() -> None:

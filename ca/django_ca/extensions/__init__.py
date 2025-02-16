@@ -21,7 +21,6 @@ from cryptography import x509
 from cryptography.hazmat._oid import _OID_NAMES as OID_NAMES
 
 from django_ca.constants import EXTENSION_NAMES
-from django_ca.extensions.parse import parse_extension
 from django_ca.extensions.text import extension_as_text
 
 
@@ -41,4 +40,4 @@ def get_extension_name(oid: x509.ObjectIdentifier) -> str:
     return OID_NAMES.get(oid, f"Unknown extension ({oid.dotted_string})")
 
 
-__all__ = ["extension_as_text", "get_extension_name", "parse_extension"]
+__all__ = ["extension_as_text", "get_extension_name"]

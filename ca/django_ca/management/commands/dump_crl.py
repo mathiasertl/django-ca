@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
-import warnings
 from datetime import datetime, timedelta, timezone as tz
 from typing import Any
 
@@ -26,7 +24,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.management.actions import ExpiresAction
 from django_ca.management.base import BinaryCommand
 from django_ca.management.mixins import UsePrivateKeyMixin
@@ -53,12 +50,6 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
 
         scope_group = parser.add_argument_group("Scope", "Options that affect the scope of the CRL.")
         only_certs_group = scope_group.add_mutually_exclusive_group()
-        only_certs_group.add_argument(
-            "-s",
-            "--scope",
-            choices=["ca", "user", "attribute"],
-            help="Limit the scope for the CRL (default: %(default)s).",
-        )
         only_certs_group.add_argument(
             "--only-contains-ca-certs",
             action="store_true",
@@ -91,20 +82,6 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
             "times to include multiple reasons.",
         )
 
-        include_idp_group = parser.add_mutually_exclusive_group()
-        include_idp_group.add_argument(
-            "--include-issuing-distribution-point",
-            action="store_true",
-            default=None,
-            help="Force inclusion of an IssuingDistributionPoint extension.",
-        )
-        include_idp_group.add_argument(
-            "--exclude-issuing-distribution-point",
-            action="store_false",
-            dest="include_issuing_distribution_point",
-            help="Force exclusion of an IssuingDistributionPoint extension.",
-        )
-        self.add_algorithm(parser)
         self.add_format(parser)
         self.add_ca(parser, allow_disabled=True)
         self.add_use_private_key_arguments(parser)
@@ -115,45 +92,14 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
         path: str,
         ca: CertificateAuthority,
         encoding: Encoding,
-        scope: typing.Literal["ca", "user", "attribute"] | None,
         only_contains_ca_certs: bool,
         only_contains_user_certs: bool,
         only_contains_attribute_certs: bool,
-        include_issuing_distribution_point: bool | None,
         expires: timedelta,
         reasons: list[str] | None,
         **options: Any,
     ) -> None:
         key_backend_options, _algorithm = self.get_signing_options(ca, ca.algorithm, options)
-
-        if include_issuing_distribution_point is not None:
-            warnings.warn(
-                "--include-issuing-distribution-point and --exclude-issuing-distribution-point no longer "
-                "have any effect and will be removed in django-ca 2.3.0.",
-                RemovedInDjangoCA230Warning,
-                stacklevel=1,
-            )
-        if options.get("algorithm"):
-            warnings.warn(
-                "--algorithm no longer has any effect and will be removed in django-ca 2.3.0.",
-                RemovedInDjangoCA230Warning,
-                stacklevel=1,
-            )
-        if scope is not None:
-            warnings.warn(
-                "--scope is deprecated and will be removed in django-ca 2.3.0. Use "
-                "--only-contains-{ca,user,attribute}-certs instead.",
-                RemovedInDjangoCA230Warning,
-                stacklevel=1,
-            )
-
-        # Handle deprecated scope parameter.
-        if scope == "user":
-            only_contains_user_certs = True
-        elif scope == "ca":
-            only_contains_ca_certs = True
-        elif scope == "attribute":
-            only_contains_attribute_certs = True
 
         next_update = datetime.now(tz=tz.utc) + expires
         only_some_reasons = None

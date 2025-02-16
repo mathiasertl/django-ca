@@ -29,7 +29,6 @@ from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
-from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.key_backends.storages.models import (
     StoragesCreatePrivateKeyOptions,
@@ -484,41 +483,10 @@ def test_init_with_unknown_profile(ca_name: str, subject: x509.Name, key_backend
         )
 
 
-def test_init_with_not_after_and_expires(
-    ca_name: str, subject: x509.Name, key_backend: StoragesBackend
-) -> None:
-    """Create a CA with both not_after and expires, which is an error."""
-    not_after = datetime.now(tz=tz.utc) + timedelta(days=10)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    error = r"^`not_before` and `expires` cannot both be set\.$"
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning), pytest.raises(ValueError, match=error):
-        CertificateAuthority.objects.init(
-            ca_name, key_backend, key_backend_options, subject, not_after=not_after, expires=not_after
-        )
-
-
 def test_init_with_not_after_is_none(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Pass ``None`` for not_after, which is checked until 2.3.0."""
     with pytest.raises(TypeError, match=r"^Missing required argument: 'not_after'$"):
         CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject, not_after=None)
-
-
-@pytest.mark.django_db
-def test_init_with_deprecated_expires(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
-    """Create a CA with deprecated expires parameter."""
-    not_after = datetime.now(tz=tz.utc) + timedelta(days=10)
-    not_after = not_after.replace(microsecond=0, second=0)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning):
-        ca = CertificateAuthority.objects.init(
-            ca_name, key_backend, key_backend_options, subject, expires=not_after
-        )
-    assert ca.not_after == not_after
-    assert ca.pub.loaded.not_valid_after_utc == not_after
 
 
 @pytest.mark.django_db
@@ -665,43 +633,6 @@ def test_create_cert_with_wrong_profile_type(root: CertificateAuthority, subject
             add_issuer_url=False,
         )
     assert Certificate.objects.exists() is False
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_create_cert_with_deprecated_expires(usable_root: CertificateAuthority, subject: x509.Name) -> None:
-    """Test creating a certificate with the deprecated expires parameter."""
-    not_after = datetime.now(tz=tz.utc) + timedelta(days=12)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    csr = CERT_DATA["root-cert"]["csr"]["parsed"]
-    profile = profiles[model_settings.CA_DEFAULT_PROFILE]
-    with assert_create_cert_signals(), pytest.warns(RemovedInDjangoCA230Warning, match=warning):
-        cert = Certificate.objects.create_cert(
-            usable_root, key_backend_options, csr, subject=subject, expires=not_after
-        )
-    assert cert.subject == subject
-    assert cert.pub.loaded.not_valid_after_utc == not_after
-    # TYPEHINT NOTE: default profile always has extensions, so override here
-    assert_extensions(cert, list(profile.extensions.values()))  # type: ignore[arg-type]
-
-
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_create_cert_with_expires_and_not_after(root: CertificateAuthority) -> None:
-    """Test passing both not_after and deprecated expires, which is an error."""
-    not_after = datetime.now(tz=tz.utc)
-    warning = (
-        r"^Argument `expires` is deprecated and will be removed in django-ca 2.3, use `not_after` instead\.$"
-    )
-    error = r"^`not_before` and `expires` cannot both be set\.$"
-    with pytest.warns(RemovedInDjangoCA230Warning, match=warning), pytest.raises(ValueError, match=error):
-        Certificate.objects.create_cert(
-            root,
-            key_backend_options,
-            csr=CERT_DATA["root-cert"]["csr"]["parsed"],
-            expires=not_after,
-            not_after=not_after,
-        )
 
 
 class TypingExamples:

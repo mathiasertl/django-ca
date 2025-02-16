@@ -134,14 +134,14 @@ if args.env != "frontend":
     print("* User for admin interface: user / nopass")
     User.objects.create_superuser(username="user", password="nopass")
     key_backend = key_backends["default"]
-    expires = datetime.now(tz=tz.utc) + timedelta(days=365)
+    not_after = datetime.now(tz=tz.utc) + timedelta(days=365)
 
     rsa_root = CertificateAuthority.objects.init(
         "rsa.example.com",
         key_backend,
         StoragesCreatePrivateKeyOptions(key_type="RSA", password=None, path="ca", key_size=2048),
         subject=cn("rsa.example.com"),
-        expires=expires,
+        not_after=not_after,
     )
     ec_root = CertificateAuthority.objects.init(
         "ecc.example.net",
@@ -150,7 +150,7 @@ if args.env != "frontend":
             key_type="EC", password=None, path="ca", elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         ),
         subject=cn("ecc.example.net"),
-        expires=expires,
+        not_after=not_after,
         key_type="EC",
     )
 
@@ -159,7 +159,7 @@ if args.env != "frontend":
         key_backend,
         StoragesCreatePrivateKeyOptions(key_type="RSA", password=None, path="ca/shared/"),
         subject=cn("child.rsa.example.com"),
-        expires=expires,
+        not_after=not_after,
         parent=rsa_root,
         use_parent_private_key_options=StoragesUsePrivateKeyOptions(password=None),
     )
@@ -173,7 +173,7 @@ if args.env != "frontend":
             elliptic_curve=model_settings.CA_DEFAULT_ELLIPTIC_CURVE,
         ),
         subject=cn("child.ecc.example.net"),
-        expires=expires,
+        not_after=not_after,
         key_type="EC",
         parent=ec_root,
         use_parent_private_key_options=StoragesUsePrivateKeyOptions(password=None),
