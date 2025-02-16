@@ -12,13 +12,10 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
-        django-version: [ "4.2.0", "5.1.0" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        django-version: [ "5.1.0" ]
         cryptography-version: [ "44.0" ]
         pydantic-version: [ "2.10.0" ]
-        exclude:
-          - python-version: 3.9
-            django-version: 5.1.0
 
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, pydantic ${{ matrix.pydantic-version }}
     steps:
