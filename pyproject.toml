@@ -7,30 +7,22 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
-python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+python = ["3.10", "3.11", "3.12", "3.13"]
 # https://www.djangoproject.com/download/
-django = ["4.2", "5.1"]
+django = ["5.1"]
 cryptography = ["44"]
-acme = ["3.0", "3.1", "3.2"]
+acme = ["3.2"]
 pydantic = ["2.10"]
 
 # https://alpinelinux.org/releases/
 alpine = [
-    "3.19",  # until 2025-11-01
     "3.20",  # until 2026-04-01
     "3.21",  # until 2026-11-01
 ]
 
 # Blacklist images that we don't want to build for
 docker-image-blacklist = [
-    # Python 3.9 images don't work with pinned requirements that include Django 5.0.
-    "python:3.9-alpine3.21",
-    "python:3.9-alpine3.20",
-    "python:3.9-alpine3.19",
-    "python:3.9-slim-bullseye",
-    "python:3.9-slim-bookworm",
-
-     # uWSGI does not compile on bullseye
+    # uWSGI does not compile on bullseye
     "python:3.13-slim-bullseye",
     "python:3.12-slim-bullseye",
     "python:3.11-slim-bullseye",
@@ -92,14 +84,12 @@ description = "A Django app providing a TLS certificate authority."
 # "
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.1",
     "Framework :: Django",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -114,10 +104,10 @@ classifiers = [
 dynamic = ["version", "readme"]
 
 # Dependency information
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
-    "Django>=4.2",
-    "acme>=3.0",
+    "Django>=5.1",
+    "acme>=3.2",
     "asn1crypto>=1.5",
     "cryptography>=44",
     "django-object-actions>=4.0.0",
