@@ -17,9 +17,8 @@
 """
 
 import abc
-import typing
 from collections.abc import Sequence
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -48,36 +47,34 @@ from django_ca.typehints import (
     SerializedUserNotice,
 )
 
-DecodableCertificate = Union[str, bytes, x509.Certificate]
-DecodableCertificateSigningRequest = Union[str, bytes, x509.CertificateSigningRequest]
-LoadedTypeVar = typing.TypeVar("LoadedTypeVar", x509.CertificateSigningRequest, x509.Certificate)
-DecodableTypeVar = typing.TypeVar(
-    "DecodableTypeVar", DecodableCertificate, DecodableCertificateSigningRequest
-)
+DecodableCertificate = str | bytes | x509.Certificate
+DecodableCertificateSigningRequest = str | bytes | x509.CertificateSigningRequest
+LoadedTypeVar = TypeVar("LoadedTypeVar", x509.CertificateSigningRequest, x509.Certificate)
+DecodableTypeVar = TypeVar("DecodableTypeVar", DecodableCertificate, DecodableCertificateSigningRequest)
 # TYPE NOTE: mypy does not support using generics as bound ("bound=LazyField[DecodableTypeVar, ...]").
 #   If we list concrete subclasses instead, typing functions that take DecodableTypeVar and return a
 #   WrapperTypeVar instance becomes difficult, as mypy has no way of knowing that DecodableTypeVar argument
 #   matches the type in required by the constructor of WrapperTypeVar.
-WrapperTypeVar = typing.TypeVar("WrapperTypeVar", bound="LazyField")  # type: ignore[type-arg]
+WrapperTypeVar = TypeVar("WrapperTypeVar", bound="LazyField")  # type: ignore[type-arg]
 
 # django-stubs models.Field subclasses generic, so we need  a different base when type checking.
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     GenericModelField = models.fields.Field[Any, Any]
 
     class LazyBinaryFieldBase(
-        models.BinaryField[Union[DecodableTypeVar, WrapperTypeVar], WrapperTypeVar],
-        typing.Generic[DecodableTypeVar, WrapperTypeVar],
+        models.BinaryField[DecodableTypeVar | WrapperTypeVar, WrapperTypeVar],
+        Generic[DecodableTypeVar, WrapperTypeVar],
     ):
         """Base class for binary fields with generics for type checking."""
 
 else:
     GenericModelField = models.fields.Field
 
-    class LazyBinaryFieldBase(models.BinaryField, typing.Generic[DecodableTypeVar, WrapperTypeVar]):
+    class LazyBinaryFieldBase(models.BinaryField, Generic[DecodableTypeVar, WrapperTypeVar]):
         """Generic class for binary fields at runtime."""
 
 
-class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta):
+class LazyField(Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta):
     """Abstract base class for lazy field values.
 
     Subclasses of this class can be used by *binary* fields to load a cryptography value when first accessed.
@@ -85,7 +82,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
 
     _bytes: bytes
     _loaded: LoadedTypeVar | None = None
-    _pem_token: typing.ClassVar[bytes]
+    _pem_token: ClassVar[bytes]
     _type: type[LoadedTypeVar]
 
     def __init__(self, value: DecodableTypeVar) -> None:
@@ -186,7 +183,7 @@ class LazyCertificate(LazyField[x509.Certificate, DecodableCertificate]):
 
 
 class LazyBinaryField(
-    LazyBinaryFieldBase[DecodableTypeVar, WrapperTypeVar], typing.Generic[DecodableTypeVar, WrapperTypeVar]
+    LazyBinaryFieldBase[DecodableTypeVar, WrapperTypeVar], Generic[DecodableTypeVar, WrapperTypeVar]
 ):
     """Base class for binary fields that parse the value when first used."""
 
@@ -284,7 +281,7 @@ class CertificateField(LazyBinaryField[DecodableCertificate, LazyCertificate]):
     wrapper = LazyCertificate
 
 
-class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, ExtensionModelTypeVar]):
+class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionModelTypeVar]):
     """Base class for fields storing a `x509.Extension` class.
 
     Since the docs are a bit confusing, here is how the methods are called in some scenarios
@@ -309,7 +306,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
         "invalid-extension-type": _("Expected an instance of %(extension_class)s."),
     }
 
-    if typing.TYPE_CHECKING:
+    if TYPE_CHECKING:
 
         def __get__(  # type: ignore[override]
             self, instance: Any, owner: Any
@@ -318,7 +315,10 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
         def __set__(
             self,
             instance: Any,
-            value: x509.Extension[ExtensionTypeTypeVar] | ExtensionModelTypeVar | SerializedPydanticExtension | None,
+            value: x509.Extension[ExtensionTypeTypeVar]
+            | ExtensionModelTypeVar
+            | SerializedPydanticExtension
+            | None,
         ) -> None: ...
 
     def formfield(
@@ -476,9 +476,7 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
     formfield_class = fields.CertificatePoliciesField
     model_class = CertificatePoliciesModel
 
-    def _parse_notice_reference(
-        self, value: SerializedNoticeReference | None
-    ) -> x509.NoticeReference | None:
+    def _parse_notice_reference(self, value: SerializedNoticeReference | None) -> x509.NoticeReference | None:
         if not value:
             return None
 
@@ -528,7 +526,7 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
         if not isinstance(critical, bool):
             raise self.unparsable(value)
 
-        serialized_certificate_policies: list[SerializedPolicyInformation] = typing.cast(
+        serialized_certificate_policies: list[SerializedPolicyInformation] = cast(
             list[SerializedPolicyInformation], value.get("value")
         )
         if not isinstance(serialized_certificate_policies, list):

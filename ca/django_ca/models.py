@@ -347,7 +347,7 @@ class X509CertMixin(DjangoCAModel):
 
         # JWK.load() may return a private key instead, so we rule this out here for type safety. This branch
         # should normally not happen.
-        if not isinstance(jwk, (jose.jwk.JWKRSA, jose.jwk.JWKEC)):  # pragma: no cover
+        if not isinstance(jwk, jose.jwk.JWKRSA | jose.jwk.JWKEC):  # pragma: no cover
             raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
         return jwk
 

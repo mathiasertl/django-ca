@@ -364,9 +364,7 @@ def test_admission_model(parameters: dict[str, Any], expected: x509.Admission) -
         ),
     ),
 )
-def test_admissions(
-    critical: bool | None, parameters: dict[str, Any], admissions: x509.Admissions
-) -> None:
+def test_admissions(critical: bool | None, parameters: dict[str, Any], admissions: x509.Admissions) -> None:
     """Test the Admissions extension."""
     assert_extension_model(AdmissionsModel, parameters, admissions, critical)
 

@@ -456,7 +456,7 @@ class OCSPKeyBackend(KeyBackendBase):
         :ref:`CA_DEFAULT_KEY_SIZE <settings-ca-default-key-size>` setting otherwise.
         """
         public_key = ca.pub.loaded.public_key()
-        if isinstance(public_key, (rsa.RSAPublicKey, dsa.DSAPublicKey)):
+        if isinstance(public_key, rsa.RSAPublicKey | dsa.DSAPublicKey):
             return public_key.key_size
         return model_settings.CA_DEFAULT_KEY_SIZE
 

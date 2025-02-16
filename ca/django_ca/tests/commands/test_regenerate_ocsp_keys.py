@@ -77,7 +77,7 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
         assert isinstance(ocsp_key_backend, StoragesOCSPBackend)
         priv = typing.cast(CertificateIssuerPrivateKeyTypes, ocsp_key_backend.load_private_key(ca))
         assert isinstance(priv, key_type)
-        if isinstance(priv, (dsa.DSAPrivateKey, rsa.RSAPrivateKey)):
+        if isinstance(priv, dsa.DSAPrivateKey | rsa.RSAPrivateKey):
             assert priv.key_size == key_size
         if isinstance(priv, ec.EllipticCurvePrivateKey):
             assert isinstance(priv.curve, elliptic_curve)

@@ -1287,7 +1287,7 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         form = response.forms["certificate_form"]
         for _key, field_list in form.fields.items():
             for field in field_list:
-                if isinstance(field, (Hidden, Submit)):
+                if isinstance(field, Hidden | Submit):
                     continue
                 if isinstance(field, Checkbox):
                     field.checked = False

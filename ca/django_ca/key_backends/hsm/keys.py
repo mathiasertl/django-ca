@@ -14,7 +14,7 @@
 """Private key implementations that use an HSM in the background."""
 
 import hashlib
-from typing import ClassVar, Generic, NoReturn, TypeVar, Union, cast
+from typing import ClassVar, Generic, NoReturn, TypeVar, cast
 
 import pkcs11
 from pkcs11 import MGF, Mechanism, Session
@@ -219,7 +219,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
             raise ValueError("Prehashed data with PKCS1v15 is not supported.")
         elif isinstance(algorithm, Prehashed) and isinstance(padding, PSS):
             mechanism = pkcs11.Mechanism.RSA_PKCS_PSS
-        elif isinstance(algorithm, (hashes.SHA3_224, hashes.SHA3_384, hashes.SHA3_256, hashes.SHA3_512)):
+        elif isinstance(algorithm, hashes.SHA3_224 | hashes.SHA3_384 | hashes.SHA3_256 | hashes.SHA3_512):
             raise ValueError("SHA3 is not support by the HSM backend.")
         else:
             assert isinstance(algorithm, hashes.HashAlgorithm)  # Cannot be pre-hashed at this point
@@ -264,7 +264,7 @@ class PKCS11EllipticCurvePrivateKey(PKCS11PrivateKeyMixin, ec.EllipticCurvePriva
             hasher = hashlib.sha512()
         elif isinstance(
             signature_algorithm.algorithm,
-            (hashes.SHA3_224, hashes.SHA3_384, hashes.SHA3_256, hashes.SHA3_512),
+            hashes.SHA3_224 | hashes.SHA3_384 | hashes.SHA3_256 | hashes.SHA3_512,
         ):
             raise ValueError("SHA3 is not support by the HSM backend.")
         elif isinstance(signature_algorithm.algorithm, asym_utils.Prehashed):
@@ -295,6 +295,6 @@ class PKCS11Ed448PrivateKey(PKCS11EdwardsPrivateKeyMixin[ed448.Ed448PublicKey], 
     public_key_algorithm = "ed448"
 
 
-PKCS11PrivateKeyTypes = Union[
-    PKCS11RSAPrivateKey, PKCS11Ed25519PrivateKey, PKCS11Ed448PrivateKey, PKCS11EllipticCurvePrivateKey
-]
+PKCS11PrivateKeyTypes = (
+    PKCS11RSAPrivateKey | PKCS11Ed25519PrivateKey | PKCS11Ed448PrivateKey | PKCS11EllipticCurvePrivateKey
+)

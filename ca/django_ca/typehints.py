@@ -17,7 +17,7 @@ import argparse
 import ipaddress
 import sys
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar
 
 import packaging.version
 
@@ -50,7 +50,7 @@ CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 
 
 #: JSON serializable data.
-JSON = Union[dict[str, "JSON"], list["JSON"], str, int, float, bool, None]  # pylint: disable=invalid-name
+JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 
 
 class OCSPKeyBackendDict(TypedDict):
@@ -62,31 +62,32 @@ class OCSPKeyBackendDict(TypedDict):
 
 #: Hash algorithms that can be used for signing certificates.
 #: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
-AllowedHashTypes = Union[
-    hashes.SHA224,
-    hashes.SHA256,
-    hashes.SHA384,
-    hashes.SHA512,
-    hashes.SHA3_224,
-    hashes.SHA3_256,
-    hashes.SHA3_384,
-    hashes.SHA3_512,
-]
+AllowedHashTypes = (
+    hashes.SHA224
+    | hashes.SHA256
+    | hashes.SHA384
+    | hashes.SHA512
+    | hashes.SHA3_224
+    | hashes.SHA3_256
+    | hashes.SHA3_384
+    | hashes.SHA3_512
+)
 
-ParsableName = Union[str, Iterable[tuple[str, str]]]  # TODO: remove?
+ParsableName = str | Iterable[tuple[str, str]]  # TODO: remove?
 
 ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
-ParsableSubject = Union[
-    str,
-    # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001
-    Mapping[x509.ObjectIdentifier, str | Iterable[str]],
-    Mapping[str, str | Iterable[str]],
-    x509.Name,
-    Iterable[tuple[x509.ObjectIdentifier | str, str | Iterable[str]]],
-]
+ParsableSubject = (
+    str
+    | Mapping[
+        x509.ObjectIdentifier, str | Iterable[str]
+    ]  # Union for keys is not supported| see: https://github.com/python/mypy/issues/6001
+    | Mapping[str, str | Iterable[str]]
+    | x509.Name
+    | Iterable[tuple[x509.ObjectIdentifier | str | str | Iterable[str]]]
+)
 
 # GeneralNameList
-ParsableGeneralName = Union[x509.GeneralName, str]
+ParsableGeneralName = x509.GeneralName | str
 ParsableGeneralNameList = Iterable[ParsableGeneralName]
 
 
@@ -125,8 +126,8 @@ class ParsableDistributionPoint(TypedDict, total=False):
     reasons: Iterable[str | x509.ReasonFlags]
 
 
-ParsablePolicyQualifier = Union[str, x509.UserNotice, ParsableUserNotice]
-ParsablePolicyIdentifier = Union[str, x509.ObjectIdentifier]
+ParsablePolicyQualifier = str | x509.UserNotice | ParsableUserNotice
+ParsablePolicyIdentifier = str | x509.ObjectIdentifier
 
 
 class ParsablePolicyInformation(TypedDict, total=False):
@@ -136,7 +137,7 @@ class ParsablePolicyInformation(TypedDict, total=False):
     policy_qualifiers: Sequence[ParsablePolicyQualifier] | None
 
 
-PolicyQualifier = Union[str, x509.UserNotice]
+PolicyQualifier = str | x509.UserNotice
 
 
 class ParsableExtension(TypedDict, total=False):
@@ -202,46 +203,46 @@ ConfigurableExtensionKeys = Literal[
 #: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and adds the keys
 #: for extensions that are either derived from the issuer or the certificates public key or that must not
 #: be configured by a user.
-EndEntityCertificateExtensionKeys = Union[
-    ConfigurableExtensionKeys,
-    Literal[
+EndEntityCertificateExtensionKeys = (
+    ConfigurableExtensionKeys
+    | Literal[
         "authority_key_identifier",  # derived from the issuer
         "basic_constraints",  # must not be configured by a user
         "precertificate_signed_certificate_timestamps",  # added by the CA
         "signed_certificate_timestamps",  # added by the CA
         "subject_information_access",
         "subject_key_identifier",  # derived from the certificates public key
-    ],
-]
+    ]
+)
 
 #: Extension keys for extensions that may occur in any certificate.
 #:
 #: This literal includes keys from :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionKeys` and adds
 #: the keys for extensions only occur in certificate authorities.
-CertificateExtensionKeys = Union[
-    EndEntityCertificateExtensionKeys,
-    Literal[
+CertificateExtensionKeys = (
+    EndEntityCertificateExtensionKeys
+    | Literal[
         "inhibit_any_policy",
         "name_constraints",
         "policy_constraints",
         "unknown",
-    ],
-]
+    ]
+)
 
 #: Extension keys for all known x509 Extensions.
 #:
 #: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and includes
 #: extensions that may occur in certificate authorities or CRLs.
-ExtensionKeys = Union[
-    CertificateExtensionKeys,
-    Literal[
+ExtensionKeys = (
+    CertificateExtensionKeys
+    | Literal[
         "crl_number",
         "delta_crl_indicator",
         "issuing_distribution_point",
         "policy_mappings",
         "subject_directory_attributes",
-    ],
-]
+    ]
+)
 
 #: List of possible values for :py:class:`~cg:cryptography.x509.KeyUsage` instances.
 KeyUsages = Literal[
@@ -325,81 +326,82 @@ CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 # Type aliases #
 ################
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
-ConfigurableExtensionType = Union[
-    x509.Admissions,
-    x509.AuthorityInformationAccess,
-    x509.CertificatePolicies,
-    x509.CRLDistributionPoints,
-    x509.ExtendedKeyUsage,
-    x509.FreshestCRL,
-    x509.IssuerAlternativeName,
-    x509.KeyUsage,
-    x509.MSCertificateTemplate,
-    x509.OCSPNoCheck,
-    x509.PrecertPoison,
-    x509.SubjectAlternativeName,
-    x509.TLSFeature,
-]
+ConfigurableExtensionType = (
+    x509.Admissions
+    | x509.AuthorityInformationAccess
+    | x509.CertificatePolicies
+    | x509.CRLDistributionPoints
+    | x509.ExtendedKeyUsage
+    | x509.FreshestCRL
+    | x509.IssuerAlternativeName
+    | x509.KeyUsage
+    | x509.MSCertificateTemplate
+    | x509.OCSPNoCheck
+    | x509.PrecertPoison
+    | x509.SubjectAlternativeName
+    | x509.TLSFeature
+)
 
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
 #:
 #: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension types
 #: that are either derived from the issuer or the certificates public key or that must not be configured by
 #: the user.
-EndEntityCertificateExtensionType = Union[
-    ConfigurableExtensionType,
-    x509.AuthorityKeyIdentifier,
-    x509.BasicConstraints,
-    x509.PrecertificateSignedCertificateTimestamps,
-    x509.SignedCertificateTimestamps,
-    x509.SubjectInformationAccess,
-    x509.SubjectKeyIdentifier,
-]
+EndEntityCertificateExtensionType = (
+    ConfigurableExtensionType
+    | x509.AuthorityKeyIdentifier
+    | x509.BasicConstraints
+    | x509.PrecertificateSignedCertificateTimestamps
+    | x509.SignedCertificateTimestamps
+    | x509.SubjectInformationAccess
+    | x509.SubjectKeyIdentifier
+)
 
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in any certificate.
 #:
 #: This union is based on :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionType` and adds extension
 #: types that may appear in certificate authorities.
-CertificateExtensionType = Union[
-    EndEntityCertificateExtensionType,
-    x509.InhibitAnyPolicy,
-    x509.NameConstraints,
-    x509.PolicyConstraints,
-    x509.UnrecognizedExtension,
-]
+CertificateExtensionType = (
+    EndEntityCertificateExtensionType
+    | x509.InhibitAnyPolicy
+    | x509.NameConstraints
+    | x509.PolicyConstraints
+    | x509.UnrecognizedExtension
+)
 
-ConfigurableExtension = Union[
-    x509.Extension[x509.Admissions],
-    x509.Extension[x509.AuthorityInformationAccess],
-    x509.Extension[x509.CertificatePolicies],
-    x509.Extension[x509.CRLDistributionPoints],
-    x509.Extension[x509.ExtendedKeyUsage],
-    x509.Extension[x509.FreshestCRL],
-    x509.Extension[x509.IssuerAlternativeName],
-    x509.Extension[x509.KeyUsage],
-    x509.Extension[x509.MSCertificateTemplate],
-    x509.Extension[x509.OCSPNoCheck],
-    x509.Extension[x509.PrecertPoison],
-    x509.Extension[x509.SubjectAlternativeName],
-    x509.Extension[x509.TLSFeature],
-]
 
-EndEntityCertificateExtension = Union[
-    ConfigurableExtension,
-    x509.Extension[x509.AuthorityKeyIdentifier],
-    x509.Extension[x509.BasicConstraints],
-    x509.Extension[x509.PrecertificateSignedCertificateTimestamps],
-    x509.Extension[x509.SignedCertificateTimestamps],
-    x509.Extension[x509.SubjectInformationAccess],
-    x509.Extension[x509.SubjectKeyIdentifier],
-]
-CertificateExtension = Union[
-    EndEntityCertificateExtension,
-    x509.Extension[x509.InhibitAnyPolicy],
-    x509.Extension[x509.NameConstraints],
-    x509.Extension[x509.PolicyConstraints],
-    x509.Extension[x509.UnrecognizedExtension],
-]
+ConfigurableExtension = (
+    x509.Extension[x509.Admissions]
+    | x509.Extension[x509.AuthorityInformationAccess]
+    | x509.Extension[x509.CertificatePolicies]
+    | x509.Extension[x509.CRLDistributionPoints]
+    | x509.Extension[x509.ExtendedKeyUsage]
+    | x509.Extension[x509.FreshestCRL]
+    | x509.Extension[x509.IssuerAlternativeName]
+    | x509.Extension[x509.KeyUsage]
+    | x509.Extension[x509.MSCertificateTemplate]
+    | x509.Extension[x509.OCSPNoCheck]
+    | x509.Extension[x509.PrecertPoison]
+    | x509.Extension[x509.SubjectAlternativeName]
+    | x509.Extension[x509.TLSFeature]
+)
+
+EndEntityCertificateExtension = (
+    ConfigurableExtension
+    | x509.Extension[x509.AuthorityKeyIdentifier]
+    | x509.Extension[x509.BasicConstraints]
+    | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
+    | x509.Extension[x509.SignedCertificateTimestamps]
+    | x509.Extension[x509.SubjectInformationAccess]
+    | x509.Extension[x509.SubjectKeyIdentifier]
+)
+CertificateExtension = (
+    EndEntityCertificateExtension
+    | x509.Extension[x509.InhibitAnyPolicy]
+    | x509.Extension[x509.NameConstraints]
+    | x509.Extension[x509.PolicyConstraints]
+    | x509.Extension[x509.UnrecognizedExtension]
+)
 
 ConfigurableExtensionDict = dict[x509.ObjectIdentifier, ConfigurableExtension]
 EndEntityCertificateExtensionDict = dict[x509.ObjectIdentifier, EndEntityCertificateExtension]
@@ -409,7 +411,7 @@ CertificateExtensionDict = dict[x509.ObjectIdentifier, CertificateExtension]
 ArgumentGroup = argparse._ArgumentGroup  # pylint: disable=protected-access
 
 # An CommandParser (subclass of argparse.ArgumentParser) or an argument group added by add_argument_group().
-ActionsContainer = Union[CommandParser, ArgumentGroup]
+ActionsContainer = CommandParser | ArgumentGroup
 
 
 ############
@@ -508,7 +510,7 @@ class SerializedUserNotice(TypedDict, total=False):
     notice_reference: SerializedNoticeReference
 
 
-SerializedPolicyQualifier = Union[str, SerializedUserNotice]
+SerializedPolicyQualifier = str | SerializedUserNotice
 SerializedPolicyQualifiers = list[SerializedPolicyQualifier]
 
 
@@ -525,7 +527,7 @@ class SerializedPolicyInformation(TypedDict):
 # Collect typehints for values that can be parsed back into cryptography values. Typehints in this section
 # start with "Parsable...".
 
-ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifierDict]
+ParsableAuthorityKeyIdentifier = str | bytes | ParsableAuthorityKeyIdentifierDict
 
 
 class ParsableAuthorityInformationAccess(TypedDict, total=False):
@@ -559,7 +561,7 @@ class ParsablePolicyConstraints(TypedDict, total=False):
     inhibit_policy_mapping: int
 
 
-ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
+ParsableSubjectKeyIdentifier = str | bytes | x509.SubjectKeyIdentifier
 
 
 #####################
@@ -568,14 +570,13 @@ ParsableSubjectKeyIdentifier = Union[str, bytes, x509.SubjectKeyIdentifier]
 # Collect Union[] typehints that occur multiple times, e.g. multiple x509.ExtensionType classes that behave
 # the same way. Typehints in this section are named "...Type".
 
-AlternativeNameExtensionType = Union[x509.SubjectAlternativeName, x509.IssuerAlternativeName]
-CRLExtensionType = Union[x509.FreshestCRL, x509.CRLDistributionPoints]
-InformationAccessExtensionType = Union[x509.AuthorityInformationAccess, x509.SubjectInformationAccess]
-SignedCertificateTimestampType = Union[
-    x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps
-]
+AlternativeNameExtensionType = x509.SubjectAlternativeName | x509.IssuerAlternativeName
+CRLExtensionType = x509.FreshestCRL | x509.CRLDistributionPoints
+InformationAccessExtensionType = x509.AuthorityInformationAccess | x509.SubjectInformationAccess
+SignedCertificateTimestampType = (
+    x509.PrecertificateSignedCertificateTimestamps | x509.SignedCertificateTimestamps
+)
+
 
 #: Union of all IP address types
-IPAddressType = Union[
-    ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network
-]
+IPAddressType = ipaddress.IPv4Address | ipaddress.IPv6Address | ipaddress.IPv4Network | ipaddress.IPv6Network

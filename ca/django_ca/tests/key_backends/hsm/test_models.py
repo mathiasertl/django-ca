@@ -13,7 +13,6 @@
 
 """Tests for models used in the HSM key backend."""
 
-
 import pytest
 from _pytest.logging import LogCaptureFixture
 

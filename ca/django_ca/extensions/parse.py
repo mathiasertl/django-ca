@@ -137,7 +137,7 @@ def _parse_distribution_points(
 def _parse_authority_key_identifier(value: ParsableAuthorityKeyIdentifier) -> x509.AuthorityKeyIdentifier:
     key_id = issuer = serial_number = None
 
-    if isinstance(value, (bytes, str)):
+    if isinstance(value, bytes | str):
         key_id = value
     else:  # dict
         key_id = value.get("key_identifier")

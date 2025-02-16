@@ -60,9 +60,9 @@ class IncludeModel(BaseModel):
 class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
     """Model used vor validating elements in EXTEND_URL_PATTERNS."""
 
-    func: Annotated[
-        Callable[..., URLPattern | URLResolver], BeforeValidator(url_pattern_type_validator)
-    ] = path
+    func: Annotated[Callable[..., URLPattern | URLResolver], BeforeValidator(url_pattern_type_validator)] = (
+        path
+    )
     route: str
     view: ViewModel | IncludeModel
     kwargs: dict[str, Any] = Field(default_factory=dict)

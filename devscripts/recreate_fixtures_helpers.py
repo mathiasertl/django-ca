@@ -119,7 +119,7 @@ def _create_csr(
     key = _create_key(key_path, key_type)
     csr_builder = x509.CertificateSigningRequestBuilder().subject_name(subject)
 
-    if isinstance(key, (ed448.Ed448PrivateKey, ed25519.Ed25519PrivateKey)):
+    if isinstance(key, ed448.Ed448PrivateKey | ed25519.Ed25519PrivateKey):
         csr = csr_builder.sign(key, algorithm=None)
     else:
         csr = csr_builder.sign(key, algorithm=hashes.SHA256())

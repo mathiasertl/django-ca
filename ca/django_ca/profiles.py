@@ -152,7 +152,7 @@ class Profile:
                 raise TypeError(f"Profile {name}, extension {key}: {extension}: Unsupported type")
 
     def __eq__(self, value: object) -> bool:
-        if not isinstance(value, (Profile, DefaultProfileProxy)):
+        if not isinstance(value, Profile | DefaultProfileProxy):
             return False
         algo = isinstance(value.algorithm, type(self.algorithm))
 
@@ -607,7 +607,7 @@ class DefaultProfileProxy:
         return getattr(profiles[model_settings.CA_DEFAULT_PROFILE], name)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (DefaultProfileProxy, Profile)):
+        if not isinstance(other, DefaultProfileProxy | Profile):
             return False
         return profiles[model_settings.CA_DEFAULT_PROFILE] == other
 

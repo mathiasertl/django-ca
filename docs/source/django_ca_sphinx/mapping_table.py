@@ -99,7 +99,7 @@ class MappingDocumentor(DataDocumenter):
         if isinstance(value, str):
             return f'``"{value}"``'
         if isinstance(value, type) and issubclass(
-            value, (hashes.HashAlgorithm, ec.EllipticCurve, x509.GeneralName)
+            value, hashes.HashAlgorithm | ec.EllipticCurve | x509.GeneralName
         ):
             return f":py:class:`~cg:{value.__module__}.{value.__name__}`"
         if isinstance(value, x509.ObjectIdentifier):
