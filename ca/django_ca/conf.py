@@ -14,7 +14,6 @@
 """Application configuration for django-ca."""
 
 import copy
-import warnings
 from collections.abc import Iterable
 from datetime import timedelta
 from importlib.util import find_spec
@@ -41,7 +40,6 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
-from django_ca.deprecation import RemovedInDjangoCA230Warning
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.type_aliases import (
     CertificateRevocationListReasonCode,
@@ -54,7 +52,6 @@ from django_ca.pydantic.type_aliases import (
 from django_ca.pydantic.validators import crl_scope_validator, name_oid_parser, timedelta_as_number_parser
 from django_ca.typehints import (
     AllowedHashTypes,
-    CertificateRevocationListScopes,
     ConfigurableExtension,
     ConfigurableExtensionKeys,
     ParsableKeyType,
@@ -185,42 +182,14 @@ Subject = Annotated[x509.Name, BeforeValidator(_subject_validator)]
 class CertificateRevocationListBaseModel(BaseModel):
     """Base model for CRL profiles and overrides."""
 
-    encodings: Any | None = None
-    scope: CertificateRevocationListScopes | None = None
     only_contains_ca_certs: bool = False
     only_contains_user_certs: bool = False
     only_contains_attribute_certs: bool = False
     only_some_reasons: frozenset[CertificateRevocationListReasonCode] | None = None
 
-    @field_validator("encodings")
-    @classmethod
-    def warn_encodings(cls, v: Any) -> Any:
-        """Validator to warn that encodings is now unused."""
-        warnings.warn(
-            "encodings: Setting has no effect starting with django-ca 2.1.0.",
-            RemovedInDjangoCA230Warning,
-            stacklevel=1,
-        )
-        return v
-
     @model_validator(mode="after")
     def validate_scope(self) -> Self:
         """Validate the scope of the CRL."""
-        if "scope" in self.model_fields_set:
-            warnings.warn(
-                "scope: Setting is deprecated and will be removed in django-ca 2.3.0. Use "
-                "`only_contains_ca_certs` and `only_contains_user_certs` instead.",
-                RemovedInDjangoCA230Warning,
-                stacklevel=1,
-            )
-            if self.scope == "user":
-                self.only_contains_user_certs = True
-            if self.scope == "ca":
-                self.only_contains_ca_certs = True
-            if self.scope == "attribute":
-                self.only_contains_attribute_certs = True
-            self.scope = None
-
         crl_scope_validator(
             self.only_contains_ca_certs,
             self.only_contains_user_certs,
