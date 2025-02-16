@@ -241,7 +241,7 @@ def assert_crl(  # noqa: PLR0913
         algorithm = signer.algorithm
 
     public_key = signer.pub.loaded.public_key()
-    if isinstance(public_key, (x448.X448PublicKey, x25519.X25519PublicKey)):  # pragma: no cover
+    if isinstance(public_key, x448.X448PublicKey | x25519.X25519PublicKey):  # pragma: no cover
         raise TypeError()  # just to make mypy happy
 
     assert isinstance(parsed_crl.signature_hash_algorithm, type(algorithm))
@@ -297,14 +297,14 @@ def assert_e2e_error(
     with assert_system_exit(code):
         cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
 
-    if isinstance(stdout, (str, bytes)):
+    if isinstance(stdout, str | bytes):
         assert stdout == actual_stdout.getvalue()
     elif isinstance(stdout.pattern, str):  # pragma: no cover
         assert stdout.search(actual_stdout.getvalue())
     else:  # pragma: no cover
         raise NotImplementedError
 
-    if isinstance(stderr, (str, bytes)):
+    if isinstance(stderr, str | bytes):
         assert stderr == actual_stderr.getvalue()
     elif isinstance(stderr.pattern, str):
         assert stderr.search(actual_stderr.getvalue())
@@ -468,9 +468,7 @@ def assert_sign_cert_signals(pre: bool = True, post: bool = True) -> Iterator[tu
             assert post_sig.called is post
 
 
-def assert_signature(
-    chain: Iterable[CertificateAuthority], cert: Certificate | CertificateAuthority
-) -> None:
+def assert_signature(chain: Iterable[CertificateAuthority], cert: Certificate | CertificateAuthority) -> None:
     """Assert that `cert` is properly signed by `chain`.
 
     .. seealso:: http://stackoverflow.com/questions/30700348

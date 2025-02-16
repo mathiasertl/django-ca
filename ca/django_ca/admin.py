@@ -20,11 +20,10 @@ import copy
 import functools
 import json
 import logging
-import typing
 from collections.abc import Iterator
 from datetime import date, datetime, timezone as tz
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, Union, cast
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -114,7 +113,7 @@ CERTIFICATE_EXTENSIONS: tuple[EndEntityCertificateExtensionKeys, ...] = tuple(
     )
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     AcmeAccountAdminBase = admin.ModelAdmin[AcmeAccount]
     AcmeAuthorizationAdminBase = admin.ModelAdmin[AcmeAuthorization]
     AcmeCertificateAdminBase = admin.ModelAdmin[AcmeCertificate]
@@ -145,11 +144,11 @@ else:
     MixinBase = object
     CertificateModelForm = ModelForm
 
-FieldSets = Union[
-    list[tuple[Union[str, "StrPromise"] | None, dict[str, Any]]],
-    tuple[tuple[Union[str, "StrPromise"] | None, dict[str, Any]], ...],
-]
-QuerySetTypeVar = typing.TypeVar("QuerySetTypeVar", bound=QuerySet)
+FieldSets = (
+    list[tuple[Union[str, "StrPromise"] | None, dict[str, Any]]]
+    | tuple[tuple[Union[str, "StrPromise"] | None, dict[str, Any]], ...]
+)
+QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=QuerySet)
 
 EXTENSION_FIELDS = tuple(key for key in CERTIFICATE_EXTENSIONS if key != "subject_alternative_name")
 
@@ -159,11 +158,7 @@ class WatcherAdmin(WatcherAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
 
 
-class CertificateMixin(
-    typing.Generic[X509CertMixinTypeVar],
-    MixinBase,
-    metaclass=MediaDefiningClass,
-):
+class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=MediaDefiningClass):
     """Mixin for CA/Certificate."""
 
     form = X509CertMixinAdminForm  # type: ignore[assignment]  # django-stubs false positive
@@ -350,7 +345,7 @@ class CertificateMixin(
         return fields + extension_fields
 
     class Media:  # pylint: disable=missing-class-docstring
-        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {
+        css: ClassVar[dict[str, tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/base.css",),
         }
 
@@ -488,7 +483,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         )
 
     class Media:
-        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {
+        css: ClassVar[dict[str, tuple[str, ...]]] = {
             "all": (
                 "django_ca/admin/css/base.css",
                 "django_ca/admin/css/certificateauthorityadmin.css",
@@ -734,7 +729,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return CreateCertificateForm
 
         # TYPE NOTE: django-stubs does not seem to add typehints for this function
-        return typing.cast(type[CertificateModelForm], super().get_form(request, obj=obj, **kwargs))
+        return cast(type[CertificateModelForm], super().get_form(request, obj=obj, **kwargs))
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
         """Get initial data based on default profile.
@@ -1069,10 +1064,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     oid in (ExtensionOID.CRL_DISTRIBUTION_POINTS, ExtensionOID.FRESHEST_CRL)
                     and oid in extensions
                 ):
-                    profile_ext = typing.cast(CRLExtensionType, ext.value)
+                    profile_ext = cast(CRLExtensionType, ext.value)
 
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
-                        form_ext = typing.cast(x509.Extension[CRLExtensionType], extensions[oid])
+                        form_ext = cast(x509.Extension[CRLExtensionType], extensions[oid])
                         distribution_points = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
                         extension = x509.Extension(
                             oid=oid, critical=form_ext.critical, value=distribution_points
@@ -1109,7 +1104,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             obj.save()
 
     class Media:
-        css: typing.ClassVar[dict[str, tuple[str, ...]]] = {
+        css: ClassVar[dict[str, tuple[str, ...]]] = {
             "all": (
                 "django_ca/admin/css/base.css",
                 "django_ca/admin/css/certificateadmin.css",

@@ -208,15 +208,11 @@ def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> tuple[by
 
 
 @typing.overload
-def cmd(
-    *args: Any, stdout: BytesIO, stderr: StringIO | None = None, **kwargs: Any
-) -> tuple[bytes, str]: ...
+def cmd(*args: Any, stdout: BytesIO, stderr: StringIO | None = None, **kwargs: Any) -> tuple[bytes, str]: ...
 
 
 @typing.overload
-def cmd(
-    *args: Any, stdout: StringIO | None = None, stderr: BytesIO, **kwargs: Any
-) -> tuple[str, bytes]: ...
+def cmd(*args: Any, stdout: StringIO | None = None, stderr: BytesIO, **kwargs: Any) -> tuple[str, bytes]: ...
 
 
 @typing.overload

@@ -57,9 +57,7 @@ class CertInfo(_CertInfo, total=False):
     info: str
 
 
-def optional(
-    value: T | None, formatter: typing.Callable[[T], str] | None = None, fallback: str = ""
-) -> str:
+def optional(value: T | None, formatter: typing.Callable[[T], str] | None = None, fallback: str = "") -> str:
     """Small function to get a value if set or a fallback."""
     if not value:
         return fallback
@@ -67,7 +65,7 @@ def optional(
         return formatter(value)
     if isinstance(value, str):
         return value
-    if isinstance(value, (timedelta, int)):
+    if isinstance(value, timedelta | int):
         return str(value)
     raise TypeError(f"{value}: No formatter passed to non-string value.")
 

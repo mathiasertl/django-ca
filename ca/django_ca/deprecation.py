@@ -14,14 +14,14 @@
 """Deprecation classes in django-ca."""
 
 import functools
-import typing
 import warnings
+from collections.abc import Callable
 from inspect import signature
-from typing import Any, Union
+from typing import Any, TypeVar, cast
 
 # IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
 
-F = typing.TypeVar("F", bound=typing.Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class RemovedInDjangoCA230Warning(PendingDeprecationWarning):
@@ -44,14 +44,12 @@ class RemovedInDjangoCA250Warning(PendingDeprecationWarning):
 
 RemovedInNextVersionWarning = RemovedInDjangoCA230Warning
 
-DeprecationWarningType = Union[
-    type[RemovedInDjangoCA230Warning],
-    type[RemovedInDjangoCA240Warning],
-    type[RemovedInDjangoCA250Warning],
-]
+DeprecationWarningType = (
+    type[RemovedInDjangoCA230Warning] | type[RemovedInDjangoCA240Warning] | type[RemovedInDjangoCA250Warning]
+)
 
 
-def deprecate_function(category: DeprecationWarningType, stacklevel: int = 2) -> typing.Callable[[F], F]:
+def deprecate_function(category: DeprecationWarningType, stacklevel: int = 2) -> Callable[[F], F]:
     """Decorator to deprecate an entire function."""
 
     def decorator_deprecate(func: F) -> F:
@@ -64,14 +62,14 @@ def deprecate_function(category: DeprecationWarningType, stacklevel: int = 2) ->
             )
             return func(*args, **kwargs)
 
-        return typing.cast(F, wrapper)
+        return cast(F, wrapper)
 
     return decorator_deprecate
 
 
 def deprecate_argument(
     arg: str, category: DeprecationWarningType, stacklevel: int = 2, replacement: str | None = None
-) -> typing.Callable[[F], F]:
+) -> Callable[[F], F]:
     """Decorator to mark an argument as deprecated.
 
     The decorator will issue a warning if the argument is passed to the decorated function, regardless of how
@@ -93,7 +91,7 @@ def deprecate_argument(
 
             return func(*args, **kwargs)
 
-        return typing.cast(F, wrapper)
+        return cast(F, wrapper)
 
     return decorator_deprecate
 
@@ -103,7 +101,7 @@ def deprecate_type(
     types: type[Any] | tuple[type[Any], ...],
     category: DeprecationWarningType,
     stacklevel: int = 2,
-) -> typing.Callable[[F], F]:
+) -> Callable[[F], F]:
     """Decorator to mark a type for an argument as deprecated."""
 
     def decorator_deprecate(func: F) -> F:
@@ -121,6 +119,6 @@ def deprecate_type(
 
             return func(*args, **kwargs)
 
-        return typing.cast(F, wrapper)
+        return cast(F, wrapper)
 
     return decorator_deprecate

@@ -16,7 +16,7 @@
 from datetime import datetime, timedelta, timezone as tz
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field, JsonValue
 
 from cryptography import x509
 
@@ -32,18 +32,7 @@ from django_ca.pydantic.type_aliases import (
     Serial,
 )
 from django_ca.pydantic.validators import pem_csr_validator
-from django_ca.typehints import (
-    JSON,
-    AllowedHashTypes,
-    ConfigurableExtension,
-    HashAlgorithms,
-    ParsableKeyType,
-    TypeAliasType,
-)
-
-# TypeAliasType is required for recursive types in Pydantic models. See:
-#       https://docs.pydantic.dev/latest/concepts/types/#named-recursive-types
-JSON = TypeAliasType("JSON", JSON)  # type: ignore[misc]   # we re-assign here
+from django_ca.typehints import AllowedHashTypes, ConfigurableExtension, HashAlgorithms, ParsableKeyType
 
 
 class GenerateOCSPKeyMessage(BaseModel):
@@ -66,7 +55,7 @@ class GenerateOCSPKeyMessage(BaseModel):
 class SignCertificateMessage(BaseModel):
     """Schema for signing certificates."""
 
-    key_backend_options: dict[str, JSON] = Field(
+    key_backend_options: dict[str, JsonValue] = Field(
         default_factory=dict,
         description="Options for the key backend. Valid values depend on the key backend of the certificate "
         "authority. If not passed, the key backend must be configured for automatic signing in the backend.",

@@ -52,7 +52,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
                 last_expression = ast.unparse(a.body.pop())
             elif isinstance(a_last, ast.Assign):
                 last_expression = ast.unparse(a_last.targets[0])
-            elif isinstance(a_last, (ast.AnnAssign, ast.AugAssign)):
+            elif isinstance(a_last, ast.AnnAssign | ast.AugAssign):
                 last_expression = ast.unparse(a_last.target)
         exec(ast.unparse(a), global_variables)  # pylint: disable=exec-used
         if last_expression:

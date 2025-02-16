@@ -13,7 +13,6 @@
 
 """Models for the storages backend."""
 
-
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from django_ca.conf import model_settings

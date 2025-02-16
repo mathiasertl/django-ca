@@ -13,7 +13,6 @@
 
 """URL configuration for this project."""
 
-
 from django.conf import settings
 from django.urls import URLPattern, URLResolver, path, register_converter
 

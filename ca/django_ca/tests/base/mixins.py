@@ -209,9 +209,7 @@ class TestCaseMixin(TestCaseProtocol):
         return timedelta(days=days + 1)
 
     @contextmanager
-    def freeze_time(
-        self, timestamp: datetime
-    ) -> Iterator[FrozenDateTimeFactory | StepTickTimeFactory]:
+    def freeze_time(self, timestamp: datetime) -> Iterator[FrozenDateTimeFactory | StepTickTimeFactory]:
         """Context manager to freeze time to a given timestamp.
 
         If `timestamp` is a str that is in the `TIMESTAMPS` dict (e.g. "everything-valid"), use that

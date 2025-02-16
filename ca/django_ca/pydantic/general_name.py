@@ -45,9 +45,9 @@ def general_name_discriminator(value: Any) -> str | None:
         return "ipaddress"
     if isinstance(value, str):
         return "str"
-    if isinstance(value, (list, NameModel)):
+    if isinstance(value, list | NameModel):
         return "name"
-    if isinstance(value, (dict, OtherNameModel)):
+    if isinstance(value, dict | OtherNameModel):
         return "othername"
     return "str"
 
@@ -189,7 +189,10 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
     # for NameModel) would invoke the NameAttribute validation for every address in the network, making this
     # extremely slow for large network segments.
     value: Annotated[
-        Annotated[str, Tag("str")] | Annotated[NameModel, Tag("name")] | Annotated[OtherNameModel, Tag("othername")] | Annotated[IPAddressType, Tag("ipaddress")],
+        Annotated[str, Tag("str")]
+        | Annotated[NameModel, Tag("name")]
+        | Annotated[OtherNameModel, Tag("othername")]
+        | Annotated[IPAddressType, Tag("ipaddress")],
         Discriminator(general_name_discriminator),
     ]
 
