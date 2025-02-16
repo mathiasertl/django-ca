@@ -16,7 +16,7 @@
 """Test the detail-view for a CA."""
 
 from http import HTTPStatus
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -49,7 +49,7 @@ path = reverse_lazy(
 )
 
 
-def request(client: Client, payload: Optional[dict[str, JSON]]) -> "HttpResponse":
+def request(client: Client, payload: dict[str, JSON] | None) -> "HttpResponse":
     """Shortcut to run a request."""
     return client.put(path, payload, content_type="application/json")
 

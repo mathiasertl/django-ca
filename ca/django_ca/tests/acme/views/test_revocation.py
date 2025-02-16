@@ -18,7 +18,7 @@
 import unittest
 from datetime import datetime
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import josepy as jose
 from acme.messages import Revocation
@@ -99,8 +99,8 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         client: Client,
         url: str,
         ca: CertificateAuthority,
-        message: Union[bytes, Revocation],
-        kid: Optional[str],
+        message: bytes | Revocation,
+        kid: str | None,
     ) -> "HttpResponse":
         """Make an ACME request (override in subclasses)."""
         return acme_request(client, url, ca, message, kid=kid)
@@ -116,7 +116,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         url: str,
         message: Revocation,
         root_cert: Certificate,
-        kid: Optional[str],
+        kid: str | None,
         use_tz: bool,
         timestamp: datetime,
     ) -> None:
@@ -130,7 +130,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         assert root_cert.revoked_date == timestamp
         assert root_cert.revoked_reason == ReasonFlags.unspecified.value
 
-    def test_reason_code(self, client: Client, url: str, root_cert: Certificate, kid: Optional[str]) -> None:
+    def test_reason_code(self, client: Client, url: str, root_cert: Certificate, kid: str | None) -> None:
         """Test revocation reason."""
         message = self.get_message(reason=3)
         resp = self.acme(client, url, root_cert.ca, message, kid=kid)
@@ -286,7 +286,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         pass
 
     @pytest.fixture
-    def kid(self, child_kid_fixture: str) -> Optional[str]:
+    def kid(self, child_kid_fixture: str) -> str | None:
         """Override kid to return the child kid."""
         return child_kid_fixture
 
@@ -344,8 +344,8 @@ class TestAcmeCertificateRevocationWithJWKView(TestAcmeCertificateRevocationView
         client: Client,
         url: str,
         ca: CertificateAuthority,
-        message: Union[bytes, Revocation],
-        kid: Optional[str],
+        message: bytes | Revocation,
+        kid: str | None,
     ) -> "HttpResponse":
         return acme_request(client, url, ca, message, kid=None)
 

@@ -17,7 +17,7 @@
 """
 
 from datetime import datetime, timezone as tz
-from typing import Any, Optional
+from typing import Any
 
 from django.conf import settings
 from django.core.management.base import CommandError, CommandParser
@@ -52,7 +52,7 @@ class Command(CertCommandMixin, BaseCommand):
         )
 
     def handle(
-        self, cert: Certificate, reason: ReasonFlags, compromised: Optional[datetime], **options: Any
+        self, cert: Certificate, reason: ReasonFlags, compromised: datetime | None, **options: Any
     ) -> None:
         if cert.revoked:
             raise CommandError(f"{cert.serial}: Certificate is already revoked.")

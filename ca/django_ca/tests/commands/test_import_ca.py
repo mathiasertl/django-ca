@@ -15,7 +15,7 @@
 
 import typing
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 from unittest import mock
 
 import pkcs11
@@ -61,7 +61,7 @@ pytestmark = [pytest.mark.usefixtures("tmpcadir"), pytest.mark.usefixtures("db")
 
 
 def import_ca(
-    name: str, key_path: Optional[Path] = None, pem_path: Optional[Path] = None, **kwargs: Any
+    name: str, key_path: Path | None = None, pem_path: Path | None = None, **kwargs: Any
 ) -> CertificateAuthority:
     """Execute the import_ca command."""
     key_path = key_path or CERT_DATA["root"]["key_path"]

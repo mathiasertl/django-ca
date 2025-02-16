@@ -14,7 +14,7 @@
 """Models for the storages backend."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
@@ -33,9 +33,9 @@ class StoragesCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    password: Optional[bytes]
+    password: bytes | None
     path: Path
-    elliptic_curve: Optional[EllipticCurveTypeAlias] = None
+    elliptic_curve: EllipticCurveTypeAlias | None = None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "StoragesCreatePrivateKeyOptions":
@@ -54,7 +54,7 @@ class StoragesStorePrivateKeyOptions(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     path: Path
-    password: Optional[bytes]
+    password: bytes | None
 
 
 class StoragesUsePrivateKeyOptions(BaseModel):
@@ -63,11 +63,11 @@ class StoragesUsePrivateKeyOptions(BaseModel):
     # NOTE: we set frozen here to prevent accidental coding mistakes. Models should be immutable.
     model_config = ConfigDict(frozen=True)
 
-    password: Optional[Base64EncodedBytes] = Field(default=None, validate_default=True)
+    password: Base64EncodedBytes | None = Field(default=None, validate_default=True)
 
     @field_validator("password", mode="after")
     @classmethod
-    def load_default_password(cls, password: Optional[bytes], info: ValidationInfo) -> Optional[bytes]:
+    def load_default_password(cls, password: bytes | None, info: ValidationInfo) -> bytes | None:
         """Validator to load the password from CA_PASSWORDS if not given."""
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")

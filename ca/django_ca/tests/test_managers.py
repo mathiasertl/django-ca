@@ -15,7 +15,6 @@
 
 from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
-from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -716,7 +715,7 @@ class TypingExamples:
     def test_get(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get(pk=1)
 
-    def test_first(self) -> Optional[CertificateAuthority]:
+    def test_first(self) -> CertificateAuthority | None:
         return CertificateAuthority.objects.first()
 
     def test_get_queryset(self) -> CertificateAuthorityQuerySet:
@@ -762,7 +761,7 @@ class TypingExamples:
     def test_cert_get(self) -> Certificate:
         return Certificate.objects.get(pk=1)
 
-    def test_cert_first(self) -> Optional[Certificate]:
+    def test_cert_first(self) -> Certificate | None:
         return Certificate.objects.first()
 
     def test_cert_get_queryset(self) -> CertificateQuerySet:

@@ -21,7 +21,7 @@ import subprocess
 import sys
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import TypedDict, Union
+from typing import TypedDict
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -42,7 +42,7 @@ def build_docker_image(cmd: list[str], log_path: Path, output: bool = False) -> 
 
     with open(log_path, "bw") as stream:
         if output:
-            stdout: Union[int, io.BufferedWriter] = subprocess.PIPE
+            stdout: int | io.BufferedWriter = subprocess.PIPE
         else:
             stdout = stream
         stream.write(f"+ {shlex.join(cmd)}\n".encode())

@@ -13,14 +13,14 @@
 
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
 
-from typing import Optional, Union
+from typing import Union
 
 import semantic_version
 
 VersionTuple = Union[tuple[int, int, int], tuple[int, int, int, str, int]]
 
 
-def get_semantic_version(version: Optional[VersionTuple] = None) -> semantic_version.Version:
+def get_semantic_version(version: VersionTuple | None = None) -> semantic_version.Version:
     """Get the last django-ca release."""
     if version is None:
         # PYLINT NOTE: import django_ca only here so that it is not imported before coverage tests start
@@ -28,7 +28,7 @@ def get_semantic_version(version: Optional[VersionTuple] = None) -> semantic_ver
 
         version = django_ca.VERSION
 
-    prerelease: Optional[tuple[str, ...]] = None
+    prerelease: tuple[str, ...] | None = None
     if len(version) == 5:
         prerelease = tuple(str(e) for e in version[3:5])
     elif len(version) != 3:

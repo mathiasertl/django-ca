@@ -17,7 +17,7 @@
 
 import typing
 from http import HTTPStatus
-from typing import Any, Optional
+from typing import Any
 
 from django.db.models import Model
 from django.test.client import Client
@@ -45,7 +45,7 @@ def expected_response(root_response: dict[str, Any]) -> ListResponse:
     return [root_response]
 
 
-def request(client: Client, data: Optional[dict[str, str]] = None) -> HttpResponse:
+def request(client: Client, data: dict[str, str] | None = None) -> HttpResponse:
     """Make a default request to the view under test."""
     return client.get(path, data=data)
 

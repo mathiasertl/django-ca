@@ -19,7 +19,7 @@ import os
 from collections.abc import Callable, Iterator
 from inspect import isclass
 from pathlib import Path
-from typing import Annotated, Any, Optional, Union
+from typing import Annotated, Any
 
 from pydantic import BaseModel, BeforeValidator, Field, RootModel
 
@@ -53,7 +53,7 @@ class IncludeModel(BaseModel):
     """Model for using include()."""
 
     module: str
-    namespace: Optional[str] = None
+    namespace: str | None = None
 
 
 # TYPEHINT NOTE: mypy complains about kwargs. See https://github.com/pydantic/pydantic/issues/3125
@@ -61,12 +61,12 @@ class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
     """Model used vor validating elements in EXTEND_URL_PATTERNS."""
 
     func: Annotated[
-        Callable[..., Union[URLPattern, URLResolver]], BeforeValidator(url_pattern_type_validator)
+        Callable[..., URLPattern | URLResolver], BeforeValidator(url_pattern_type_validator)
     ] = path
     route: str
-    view: Union[ViewModel, IncludeModel]
+    view: ViewModel | IncludeModel
     kwargs: dict[str, Any] = Field(default_factory=dict)
-    name: Optional[str] = None
+    name: str | None = None
 
     @property
     def parsed_view(self) -> Any:
@@ -83,7 +83,7 @@ class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
         return view
 
     @property
-    def pattern(self) -> Union[URLResolver, URLPattern]:
+    def pattern(self) -> URLResolver | URLPattern:
         """Return the full URL pattern."""
         # pylint: disable-next=redundant-keyword-arg  # false positive
         return self.func(self.route, self.parsed_view, kwargs=self.kwargs, name=self.name)
@@ -98,7 +98,7 @@ class UrlPatternsModel(RootModel[list[UrlPatternModel]]):
         return iter(self.root)
 
 
-def load_secret_key(secret_key: Optional[str], secret_key_file: Optional[str]) -> str:
+def load_secret_key(secret_key: str | None, secret_key_file: str | None) -> str:
     """Load SECRET_KEY from file if not set elsewhere."""
     if secret_key:
         return secret_key
@@ -194,7 +194,7 @@ def parse_bool(value: str) -> bool:
 
 
 def _set_db_setting(
-    databases: dict[str, dict[str, Any]], name: str, env_name: str, default: Optional[str] = None
+    databases: dict[str, dict[str, Any]], name: str, env_name: str, default: str | None = None
 ) -> None:
     if databases["default"].get(name):
         return

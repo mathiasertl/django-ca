@@ -15,7 +15,7 @@
 
 import base64
 from datetime import datetime
-from typing import Annotated, Any, Literal, NoReturn, Optional, Union
+from typing import Annotated, Any, Literal, NoReturn
 
 from annotated_types import MaxLen, MinLen
 from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
@@ -45,9 +45,9 @@ class NamingAuthorityModel(CryptographyModel[x509.NamingAuthority]):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[OIDType] = None
-    url: Optional[Annotated[str, MaxLen(128)]] = None
-    text: Optional[Annotated[str, MaxLen(128)]] = None
+    id: OIDType | None = None
+    url: Annotated[str, MaxLen(128)] | None = None
+    text: Annotated[str, MaxLen(128)] | None = None
 
     @property
     def cryptography(self) -> "x509.NamingAuthority":
@@ -66,11 +66,11 @@ class ProfessionInfoModel(CryptographyModel[x509.ProfessionInfo]):
 
     model_config = ConfigDict(from_attributes=True)
 
-    naming_authority: Optional[NamingAuthorityModel] = None
+    naming_authority: NamingAuthorityModel | None = None
     profession_items: Annotated[list[Annotated[str, MaxLen(128)]], MinLen(1)]
-    profession_oids: Optional[list[OIDType]] = None
-    registration_number: Optional[Annotated[str, MaxLen(128)]] = None
-    add_profession_info: Optional[Base64EncodedBytes] = None
+    profession_oids: list[OIDType] | None = None
+    registration_number: Annotated[str, MaxLen(128)] | None = None
+    add_profession_info: Base64EncodedBytes | None = None
 
     @property
     def cryptography(self) -> x509.ProfessionInfo:
@@ -105,8 +105,8 @@ class AdmissionModel(CryptographyModel[x509.Admission]):
 
     model_config = ConfigDict(from_attributes=True)
 
-    admission_authority: Optional[GeneralNameModel] = None
-    naming_authority: Optional[NamingAuthorityModel] = None
+    admission_authority: GeneralNameModel | None = None
+    naming_authority: NamingAuthorityModel | None = None
     profession_infos: Annotated[list[ProfessionInfoModel], MinLen(1)]
 
     @property
@@ -133,7 +133,7 @@ class AdmissionsValueModel(CryptographyModel[x509.Admissions]):
 
     model_config = ConfigDict(from_attributes=True)
 
-    authority: Optional[GeneralNameModel] = None
+    authority: GeneralNameModel | None = None
     admissions: list[AdmissionModel] = Field(default_factory=list)
 
     @property
@@ -218,9 +218,9 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     be given.
     """
 
-    key_identifier: Optional[Base64Bytes]
-    authority_cert_issuer: Optional[list[GeneralNameModel]] = None
-    authority_cert_serial_number: Optional[int] = None
+    key_identifier: Base64Bytes | None
+    authority_cert_issuer: list[GeneralNameModel] | None = None
+    authority_cert_serial_number: int | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -285,7 +285,7 @@ class BasicConstraintsValueModel(CryptographyModel[x509.BasicConstraints]):
     model_config = ConfigDict(from_attributes=True)
 
     ca: bool
-    path_length: Optional[int] = Field(ge=0)
+    path_length: int | None = Field(ge=0)
 
     @model_validator(mode="after")
     # pylint: disable-next=missing-function-docstring
@@ -330,10 +330,10 @@ class DistributionPointModel(CryptographyModel[x509.DistributionPoint]):
 
     model_config = ConfigDict(from_attributes=True)
 
-    full_name: Optional[list[GeneralNameModel]] = None
-    relative_name: Optional[NameModel] = None
-    crl_issuer: Optional[list[GeneralNameModel]] = None
-    reasons: Optional[set[DistributionPointReasons]] = None
+    full_name: list[GeneralNameModel] | None = None
+    relative_name: NameModel | None = None
+    crl_issuer: list[GeneralNameModel] | None = None
+    reasons: set[DistributionPointReasons] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -404,9 +404,9 @@ class IssuingDistributionPointValueModel(CryptographyModel[x509.IssuingDistribut
     only_contains_ca_certs: bool = False
     indirect_crl: bool = False
     only_contains_attribute_certs: bool = False
-    only_some_reasons: Optional[set[DistributionPointReasons]] = None
-    full_name: Optional[NonEmptyOrderedSet[list[GeneralNameModel]]] = None
-    relative_name: Optional[NameModel] = None
+    only_some_reasons: set[DistributionPointReasons] | None = None
+    full_name: NonEmptyOrderedSet[list[GeneralNameModel]] | None = None
+    relative_name: NameModel | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -529,8 +529,8 @@ class MSCertificateTemplateValueModel(CryptographyModel[x509.MSCertificateTempla
 
     model_config = ConfigDict(from_attributes=True)
     template_id: OIDType
-    major_version: Optional[int] = None
-    minor_version: Optional[int] = None
+    major_version: int | None = None
+    minor_version: int | None = None
 
     @property
     def cryptography(self) -> x509.MSCertificateTemplate:
@@ -557,8 +557,8 @@ class NameConstraintsValueModel(CryptographyModel[x509.NameConstraints]):
     """
 
     model_config = ConfigDict(from_attributes=True)
-    permitted_subtrees: Optional[NonEmptyOrderedSet[list[GeneralNameModel]]] = None
-    excluded_subtrees: Optional[NonEmptyOrderedSet[list[GeneralNameModel]]] = None
+    permitted_subtrees: NonEmptyOrderedSet[list[GeneralNameModel]] | None = None
+    excluded_subtrees: NonEmptyOrderedSet[list[GeneralNameModel]] | None = None
 
     @model_validator(mode="after")
     # pylint: disable-next=missing-function-docstring
@@ -591,7 +591,7 @@ class NoticeReferenceModel(CryptographyModel[x509.NoticeReference]):
         from_attributes=True, json_schema_extra={"description": _NOTICE_REFERENCE_DESCRIPTION}
     )
 
-    organization: Optional[str] = None
+    organization: str | None = None
     notice_numbers: list[int]
 
     @property
@@ -611,8 +611,8 @@ class PolicyConstraintsValueModel(CryptographyModel[x509.PolicyConstraints]):
     """
 
     model_config = ConfigDict(from_attributes=True)
-    require_explicit_policy: Optional[int] = Field(ge=0)
-    inhibit_policy_mapping: Optional[int] = Field(ge=0)
+    require_explicit_policy: int | None = Field(ge=0)
+    inhibit_policy_mapping: int | None = Field(ge=0)
 
     @model_validator(mode="after")
     # pylint: disable-next=missing-function-docstring
@@ -659,8 +659,8 @@ class UserNoticeModel(CryptographyModel[x509.UserNotice]):
         },
     )
 
-    notice_reference: Optional[NoticeReferenceModel] = None
-    explicit_text: Optional[str]
+    notice_reference: NoticeReferenceModel | None = None
+    explicit_text: str | None
 
     @property
     def cryptography(self) -> x509.UserNotice:
@@ -708,7 +708,7 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
         description="An object identifier (OID) as dotted string.",
         json_schema_extra={"example": CertificatePoliciesOID.ANY_POLICY.dotted_string},
     )
-    policy_qualifiers: Optional[list[Union[str, UserNoticeModel]]] = Field(
+    policy_qualifiers: list[str | UserNoticeModel] | None = Field(
         default=None,
         description="Optional list of policy qualifiers, a list of strings and/or UserNoticeModel objects.",
         json_schema_extra={"example": ["http://ca.example.com/cps", {"explicit_text": "Some text."}]},
@@ -718,7 +718,7 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
     def cryptography(self) -> x509.PolicyInformation:
         """Convert to a :py:class:`~cg:cryptography.x509.PolicyInformation` instance."""
         oid = x509.ObjectIdentifier(self.policy_identifier)
-        policy_qualifiers: Optional[list[Union[str, x509.UserNotice]]] = None
+        policy_qualifiers: list[str | x509.UserNotice] | None = None
         if self.policy_qualifiers is not None:
             policy_qualifiers = []
             for qualifier in self.policy_qualifiers:

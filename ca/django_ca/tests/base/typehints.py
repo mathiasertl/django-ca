@@ -13,8 +13,9 @@
 
 """Shared typehints for tests."""
 
+from collections.abc import Callable
 from contextlib import AbstractContextManager
-from typing import TYPE_CHECKING, Any, Callable, Protocol, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypedDict, TypeVar
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes

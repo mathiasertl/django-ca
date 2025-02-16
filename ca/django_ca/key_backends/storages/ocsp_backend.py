@@ -15,7 +15,6 @@
 
 import base64
 import os
-from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -56,8 +55,8 @@ class StoragesOCSPBackend(CryptographyOCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[ec.EllipticCurve],
+        key_size: int | None,
+        elliptic_curve: ec.EllipticCurve | None,
     ) -> x509.CertificateSigningRequest:
         # Generate the private key.
         private_key = generate_private_key(key_size, key_type, elliptic_curve)
@@ -90,7 +89,7 @@ class StoragesOCSPBackend(CryptographyOCSPKeyBackend):
         csr = csr_builder.sign(private_key, csr_algorithm)
         return csr
 
-    def get_private_key_password(self, ca: "CertificateAuthority") -> Optional[bytes]:
+    def get_private_key_password(self, ca: "CertificateAuthority") -> bytes | None:
         if encoded_password := ca.ocsp_key_backend_options["private_key"].get("password"):
             return base64.b64decode(encoded_password)
         return None

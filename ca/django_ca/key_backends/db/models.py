@@ -13,7 +13,6 @@
 
 """Models for the storages backend."""
 
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -27,7 +26,7 @@ class DBCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    elliptic_curve: Optional[EllipticCurveTypeAlias] = None
+    elliptic_curve: EllipticCurveTypeAlias | None = None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "DBCreatePrivateKeyOptions":

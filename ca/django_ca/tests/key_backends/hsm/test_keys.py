@@ -13,7 +13,7 @@
 
 """Tests for models used in the HSM key backend."""
 
-from typing import Union, cast
+from typing import cast
 from unittest.mock import patch
 
 import pkcs11
@@ -152,10 +152,10 @@ def test_elliptic_curve_with_prehashed_data() -> None:
 
 @pytest.mark.parametrize("key_class", (PKCS11Ed25519PrivateKey, PKCS11Ed448PrivateKey))
 def test_ed_key_not_implemented_error(
-    key_class: type[Union[PKCS11Ed25519PrivateKey, PKCS11Ed448PrivateKey]],
+    key_class: type[PKCS11Ed25519PrivateKey | PKCS11Ed448PrivateKey],
 ) -> None:
     """Test methods that are not implemented for Ed448/Ed25519 keys."""
-    key: Union[PKCS11Ed25519PrivateKey, PKCS11Ed448PrivateKey] = key_class(None, "key_id", "key_label")
+    key: PKCS11Ed25519PrivateKey | PKCS11Ed448PrivateKey = key_class(None, "key_id", "key_label")
 
     with pytest.raises(
         NotImplementedError,

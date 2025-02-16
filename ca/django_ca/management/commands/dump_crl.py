@@ -19,7 +19,7 @@
 import typing
 import warnings
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -115,13 +115,13 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
         path: str,
         ca: CertificateAuthority,
         encoding: Encoding,
-        scope: Optional[typing.Literal["ca", "user", "attribute"]],
+        scope: typing.Literal["ca", "user", "attribute"] | None,
         only_contains_ca_certs: bool,
         only_contains_user_certs: bool,
         only_contains_attribute_certs: bool,
-        include_issuing_distribution_point: Optional[bool],
+        include_issuing_distribution_point: bool | None,
         expires: timedelta,
-        reasons: Optional[list[str]],
+        reasons: list[str] | None,
         **options: Any,
     ) -> None:
         key_backend_options, _algorithm = self.get_signing_options(ca, ca.algorithm, options)

@@ -14,8 +14,9 @@
 """Utility functions for ACME."""
 
 import json
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, Callable, Optional, Union, cast
+from typing import Any, cast
 
 import acme.jws
 import josepy as jose
@@ -70,12 +71,12 @@ def acme_request(
     client: Client,
     uri: str,
     ca: CertificateAuthority,
-    msg: Union[jose.json_util.JSONObjectWithFields, bytes],
-    cert: Optional[CertificateIssuerPrivateKeyTypes] = None,
-    kid: Optional[str] = None,
-    nonce: Optional[bytes] = None,
-    payload_cb: Optional[Callable[[dict[Any, Any]], dict[Any, Any]]] = None,
-    post_kwargs: Optional[dict[str, str]] = None,
+    msg: jose.json_util.JSONObjectWithFields | bytes,
+    cert: CertificateIssuerPrivateKeyTypes | None = None,
+    kid: str | None = None,
+    nonce: bytes | None = None,
+    payload_cb: Callable[[dict[Any, Any]], dict[Any, Any]] | None = None,
+    post_kwargs: dict[str, str] | None = None,
 ) -> "HttpResponse":
     """Do a generic ACME request.
 

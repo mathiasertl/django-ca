@@ -15,7 +15,6 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Optional
 
 import pkcs11
 from pkcs11 import KeyType, ObjectClass, Session
@@ -39,16 +38,16 @@ class HSMKeyBackendMixin:
 
     library_path: str
     token: str
-    so_pin: Optional[str]
-    user_pin: Optional[str]
+    so_pin: str | None
+    user_pin: str | None
 
     def __init__(
         self,
         alias: str,
         library_path: str,
         token: str,
-        so_pin: Optional[str] = None,
-        user_pin: Optional[str] = None,
+        so_pin: str | None = None,
+        user_pin: str | None = None,
     ):
         if so_pin is not None and user_pin is not None:
             raise ValueError(f"{alias}: Set either so_pin or user_pin.")
@@ -58,7 +57,7 @@ class HSMKeyBackendMixin:
         )
 
     @contextmanager
-    def session(self, so_pin: Optional[str], user_pin: Optional[str], rw: bool = False) -> Iterator[Session]:
+    def session(self, so_pin: str | None, user_pin: str | None, rw: bool = False) -> Iterator[Session]:
         """Shortcut to get a session from the pool."""
         try:
             with SessionPool(self.library_path, self.token, so_pin, user_pin, rw=rw) as session:
@@ -89,8 +88,8 @@ class HSMKeyBackendMixin:
         key_id: str,
         key_label: str,
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[EllipticCurves],
+        key_size: int | None,
+        elliptic_curve: EllipticCurves | None,
     ) -> PKCS11PrivateKeyTypes:
         # Test that no private key with the given label exists. Some libraries (e.g. SoftHSM) don't treat the
         # label as unique and will silently create a second key with the same label.

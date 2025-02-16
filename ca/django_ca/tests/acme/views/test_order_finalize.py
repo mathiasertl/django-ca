@@ -16,7 +16,6 @@
 # pylint: disable=redefined-outer-name
 
 from http import HTTPStatus
-from typing import Optional
 from unittest import mock
 from unittest.mock import patch
 
@@ -106,7 +105,7 @@ def test_basic(
     usable_root: CertificateAuthority,
     order: AcmeOrder,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
     use_tz: bool,
 ) -> None:
     """Basic test for creating an account via ACME."""
@@ -140,7 +139,7 @@ def test_unknown_key_backend(
     usable_root: CertificateAuthority,
     order: AcmeOrder,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test that the frontend does not need to know about the backend."""
     usable_root.key_backend_alias = "unknown"
@@ -173,7 +172,7 @@ def test_not_found(
     client: Client,
     message: CertificateRequest,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test an order that does not exist."""
     url = reverse("django_ca:acme-order-finalize", kwargs={"serial": root.serial, "slug": "foo"})
@@ -194,7 +193,7 @@ def test_wrong_account(
     message: CertificateRequest,
     root: CertificateAuthority,
     order: AcmeOrder,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test an order for a different account."""
     account = AcmeAccount.objects.create(
@@ -220,7 +219,7 @@ def test_not_ready(
     message: CertificateRequest,
     root: CertificateAuthority,
     order: AcmeOrder,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test an order that is not yet ready."""
     order.status = AcmeOrder.STATUS_INVALID
@@ -249,7 +248,7 @@ def test_invalid_auth(
     message: CertificateRequest,
     root: CertificateAuthority,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test an order where one of the authentications is not valid."""
     authz.status = AcmeAuthorization.STATUS_INVALID
@@ -277,7 +276,7 @@ def test_csr_invalid_signature(
     url: str,
     message: CertificateRequest,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR with an invalid signature."""
     # create property mock for CSR object.
@@ -302,7 +301,7 @@ def test_csr_bad_algorithm(
     client: Client,
     url: str,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR with a bad algorithm."""
     with open(FIXTURES_DIR / "md5.csr.pem", "rb") as stream:
@@ -341,7 +340,7 @@ def test_csr_valid_subject(
     root: CertificateAuthority,
     order: AcmeOrder,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR where the CommonName was in the order."""
     csr = (
@@ -386,7 +385,7 @@ def test_csr_subject_no_cn(
     root: CertificateAuthority,
     authz: AcmeAuthorization,
     order: AcmeOrder,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR that has a subject but no common name."""
     csr_builder = (
@@ -423,7 +422,7 @@ def test_csr_subject_no_domain(
     client: Client,
     url: str,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR where the CommonName is not a domain name."""
     csr = (
@@ -450,7 +449,7 @@ def test_csr_subject_not_in_order(
     client: Client,
     url: str,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR where the CommonName was not in the order."""
     csr = (
@@ -477,7 +476,7 @@ def test_csr_no_san(
     client: Client,
     url: str,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR with no SubjectAlternativeName extension."""
     csr = (
@@ -503,7 +502,7 @@ def test_csr_different_names(
     client: Client,
     url: str,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test posting a CSR with different names in the SubjectAlternativeName extension."""
     csr = (
@@ -534,7 +533,7 @@ def test_unparsable_csr(
     url: str,
     message: CertificateRequest,
     root: CertificateAuthority,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test passing a completely unparsable CSR."""
     with (
@@ -554,7 +553,7 @@ def test_csr_invalid_version(
     root: CertificateAuthority,
     url: str,
     message: CertificateRequest,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test passing a completely unparsable CSR."""
     # It's difficult to create a CSR with an invalid version, so we just mock the parsing function raising

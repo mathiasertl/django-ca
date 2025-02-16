@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
@@ -60,9 +60,9 @@ class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
     def assertKey(  # pylint: disable=invalid-name
         self,
         ca: CertificateAuthority,
-        key_type: Optional[type[CertificateIssuerPrivateKeyTypes]] = None,
-        key_size: Optional[int] = 2048,
-        excludes: Optional[Iterable[int]] = None,
+        key_type: type[CertificateIssuerPrivateKeyTypes] | None = None,
+        key_size: int | None = 2048,
+        excludes: Iterable[int] | None = None,
         elliptic_curve: type[ec.EllipticCurve] = ec.SECP256R1,
     ) -> tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:
         """Assert that they key is present and can be read."""

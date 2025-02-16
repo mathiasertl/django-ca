@@ -14,7 +14,6 @@
 """Module to parse serialized extensions into cryptography objects."""
 
 from collections.abc import Iterable, Iterator
-from typing import Optional, Union
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -49,7 +48,7 @@ from django_ca.utils import hex_to_bytes, parse_general_name, parse_serialized_n
 ##########################################
 
 
-def _parse_path_length(value: Optional[Union[int, str]]) -> Optional[int]:
+def _parse_path_length(value: int | str | None) -> int | None:
     """Parse `value` as path length (either an int, a str of an int or None)."""
     if value is not None:
         return int(value)
@@ -57,8 +56,8 @@ def _parse_path_length(value: Optional[Union[int, str]]) -> Optional[int]:
 
 
 def _parse_notice_reference(
-    value: Optional[Union[x509.NoticeReference, ParsableNoticeReference]],
-) -> Optional[x509.NoticeReference]:
+    value: x509.NoticeReference | ParsableNoticeReference | None,
+) -> x509.NoticeReference | None:
     if not value:
         return None
     if isinstance(value, x509.NoticeReference):
@@ -75,12 +74,12 @@ def _parse_user_notice(value: ParsableUserNotice) -> x509.UserNotice:
 
 
 def _parse_policy_qualifiers(
-    value: Optional[Iterable[Union[str, x509.UserNotice, ParsableUserNotice]]],
-) -> Optional[list[Union[str, x509.UserNotice]]]:
+    value: Iterable[str | x509.UserNotice | ParsableUserNotice] | None,
+) -> list[str | x509.UserNotice] | None:
     if not value:
         return None
 
-    qualifiers: list[Union[str, x509.UserNotice]] = []
+    qualifiers: list[str | x509.UserNotice] = []
     for qual in value:
         if isinstance(qual, str):
             qualifiers.append(qual)
@@ -91,7 +90,7 @@ def _parse_policy_qualifiers(
     return qualifiers
 
 
-def _parse_reason(reason: Union[str, x509.ReasonFlags]) -> x509.ReasonFlags:
+def _parse_reason(reason: str | x509.ReasonFlags) -> x509.ReasonFlags:
     if isinstance(reason, str):
         try:
             return x509.ReasonFlags[reason]  # e.g. key_compromise
@@ -101,7 +100,7 @@ def _parse_reason(reason: Union[str, x509.ReasonFlags]) -> x509.ReasonFlags:
 
 
 def _parse_distribution_points(
-    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]],
+    value: Iterable[x509.DistributionPoint | ParsableDistributionPoint],
 ) -> Iterator[x509.DistributionPoint]:
     for dpoint in value:
         if isinstance(dpoint, x509.DistributionPoint):
@@ -164,7 +163,7 @@ def _parse_authority_information_access(
     access_descriptions: list[x509.AccessDescription] = []
 
     # NOTE: OCSP is first because OID is lexicographically smaller
-    ocsp: Optional[ParsableGeneralNameList] = value.get("ocsp")
+    ocsp: ParsableGeneralNameList | None = value.get("ocsp")
     if ocsp is None:
         ocsp = []
     for name in ocsp:
@@ -175,7 +174,7 @@ def _parse_authority_information_access(
             )
         )
 
-    issuers: Optional[ParsableGeneralNameList] = value.get("issuers")
+    issuers: ParsableGeneralNameList | None = value.get("issuers")
     if issuers is None:
         issuers = []
     for name in issuers:
@@ -198,7 +197,7 @@ def _parse_basic_constraints(value: ParsableBasicConstraints) -> x509.BasicConst
 
 
 def _parse_certificate_policies(
-    value: Iterable[Union[x509.PolicyInformation, ParsablePolicyInformation]],
+    value: Iterable[x509.PolicyInformation | ParsablePolicyInformation],
 ) -> x509.CertificatePolicies:
     policies: list[x509.PolicyInformation] = []
     for pol in value:
@@ -222,12 +221,12 @@ def _parse_certificate_policies(
 
 
 def _parse_crl_distribution_points(
-    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]],
+    value: Iterable[x509.DistributionPoint | ParsableDistributionPoint],
 ) -> x509.CRLDistributionPoints:
     return x509.CRLDistributionPoints(distribution_points=_parse_distribution_points(value))
 
 
-def _parse_extended_key_usage(value: Iterable[Union[str, x509.ObjectIdentifier]]) -> x509.ExtendedKeyUsage:
+def _parse_extended_key_usage(value: Iterable[str | x509.ObjectIdentifier]) -> x509.ExtendedKeyUsage:
     mapping = {v: k for k, v in EXTENDED_KEY_USAGE_NAMES.items()}
     usages: list[x509.ObjectIdentifier] = []
     for unparsed in value:
@@ -245,7 +244,7 @@ def _parse_extended_key_usage(value: Iterable[Union[str, x509.ObjectIdentifier]]
 
 
 def _parse_freshest_crl(
-    value: Iterable[Union[x509.DistributionPoint, ParsableDistributionPoint]],
+    value: Iterable[x509.DistributionPoint | ParsableDistributionPoint],
 ) -> x509.FreshestCRL:
     return x509.FreshestCRL(distribution_points=_parse_distribution_points(value))
 
@@ -285,7 +284,7 @@ def _parse_subject_key_identifier(value: ParsableSubjectKeyIdentifier) -> x509.S
     return x509.SubjectKeyIdentifier(digest=value)
 
 
-def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509.TLSFeature:
+def _parse_tls_feature(value: Iterable[x509.TLSFeatureType | str]) -> x509.TLSFeature:
     features: list[x509.TLSFeatureType] = []
     for feature in value:
         if isinstance(feature, str):
@@ -298,7 +297,7 @@ def _parse_tls_feature(value: Iterable[Union[x509.TLSFeatureType, str]]) -> x509
 
 @deprecate_function(RemovedInDjangoCA230Warning)
 def parse_extension(  # noqa: PLR0912  # there's just many extensions
-    key: str, value: Union[CertificateExtension, CertificateExtensionType, ParsableExtension]
+    key: str, value: CertificateExtension | CertificateExtensionType | ParsableExtension
 ) -> CertificateExtension:
     """Parse a serialized extension into a cryptography object.
 

@@ -26,7 +26,7 @@ import typing
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import yaml
 
@@ -146,7 +146,7 @@ def console_include(path: str, context: dict[str, Any]) -> Iterator[None]:
             run(args, check=False)
 
 
-def get_previous_release(current_release: Optional[str] = None) -> str:
+def get_previous_release(current_release: str | None = None) -> str:
     """Get the previous release based on git tags.
 
     This function returns the name at the last tag that is a valid semantic version. Pre-release or build tags
@@ -230,7 +230,7 @@ def create_signed_cert(
     signer_public_key_path: Union[str, "os.PathLike[str]"],
     private_key_path: Union[str, "os.PathLike[str]"],
     public_key_path: Union[str, "os.PathLike[str]"],
-    password: Optional[bytes] = None,
+    password: bytes | None = None,
 ) -> None:
     """Create a self-signed cert for the given hostname.
 

@@ -14,7 +14,7 @@
 """Test Pydantic models for extensions."""
 
 import re
-from typing import Any, Optional, Union, get_args
+from typing import Any, get_args
 
 from pydantic import ValidationError
 
@@ -123,7 +123,7 @@ def assert_extension_model(
     model_class: type[ExtensionModelTypeVar],
     parameters: Any,
     expected: x509.ExtensionType,
-    critical: Optional[bool],
+    critical: bool | None,
 ) -> ExtensionModelTypeVar:
     """Test the given extension model."""
     kwargs = {"value": parameters}
@@ -365,7 +365,7 @@ def test_admission_model(parameters: dict[str, Any], expected: x509.Admission) -
     ),
 )
 def test_admissions(
-    critical: Optional[bool], parameters: dict[str, Any], admissions: x509.Admissions
+    critical: bool | None, parameters: dict[str, Any], admissions: x509.Admissions
 ) -> None:
     """Test the Admissions extension."""
     assert_extension_model(AdmissionsModel, parameters, admissions, critical)
@@ -557,7 +557,7 @@ def test_signed_certificate_timestamp(signed_certificate_timestamp_pub: x509.Cer
     ),
 )
 def test_alternative_name_extensions(
-    critical: Optional[bool],
+    critical: bool | None,
     general_names: list[dict[str, str]],
     parsed_general_names: list[x509.GeneralName],
     model: AlternativeNameBaseModel[AlternativeNameTypeVar],
@@ -577,7 +577,7 @@ def test_alternative_name_extensions(
     ),
 )
 def test_alternative_name_extensions_errors(
-    model: Union[type[SubjectAlternativeNameModel], type[IssuerAlternativeNameModel]],
+    model: type[SubjectAlternativeNameModel] | type[IssuerAlternativeNameModel],
     parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:
@@ -606,7 +606,7 @@ def test_alternative_name_extensions_errors(
     ),
 )
 def test_authority_information_access(
-    critical: Optional[bool], parameters: dict[str, Any], descriptions: list[x509.AccessDescription]
+    critical: bool | None, parameters: dict[str, Any], descriptions: list[x509.AccessDescription]
 ) -> None:
     """Test the Information Access extensions."""
     extension = x509.AuthorityInformationAccess(descriptions)
@@ -685,7 +685,7 @@ def test_authority_information_access_errors(
     ),
 )
 def test_authority_key_identifier(
-    critical: Optional[bool], parameters: dict[str, Any], extension: x509.AuthorityKeyIdentifier
+    critical: bool | None, parameters: dict[str, Any], extension: x509.AuthorityKeyIdentifier
 ) -> None:
     """Test the AuthorityKeyIdentifierModel."""
     assert_extension_model(AuthorityKeyIdentifierModel, parameters, extension, critical)
@@ -764,7 +764,7 @@ def test_authority_key_identifier_errors(parameters: dict[str, Any], expected_er
     ),
 )
 def test_basic_constraints(
-    critical: Optional[bool], parameters: dict[str, Any], extension: x509.BasicConstraints
+    critical: bool | None, parameters: dict[str, Any], extension: x509.BasicConstraints
 ) -> None:
     """Test the BasicConstraintsModel."""
     model = assert_extension_model(BasicConstraintsModel, parameters, extension, critical)
@@ -927,7 +927,7 @@ def test_basic_constraints_errors(parameters: dict[str, Any], expected_errors: E
     ),
 )
 def test_certificate_policies(
-    critical: Optional[bool], parameters: list[dict[str, Any]], policies: list[x509.PolicyInformation]
+    critical: bool | None, parameters: list[dict[str, Any]], policies: list[x509.PolicyInformation]
 ) -> None:
     """Test the CertificatePoliciesModel."""
     assert_extension_model(CertificatePoliciesModel, parameters, x509.CertificatePolicies(policies), critical)
@@ -1000,7 +1000,7 @@ DISTRIBUTION_POINTS_PARAMETERS = (
     DISTRIBUTION_POINTS_PARAMETERS,
 )
 def test_crl_distribution_points(
-    critical: Optional[bool],
+    critical: bool | None,
     parameters: list[dict[str, Any]],
     distribution_points: list[x509.DistributionPoint],
 ) -> None:
@@ -1031,7 +1031,7 @@ def test_crl_distribution_points(
     ),
 )
 def test_distribution_point_extension_errors(
-    model: Union[type[FreshestCRLModel], type[CRLDistributionPointsModel]],
+    model: type[FreshestCRLModel] | type[CRLDistributionPointsModel],
     parameters: dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:
@@ -1041,7 +1041,7 @@ def test_distribution_point_extension_errors(
 
 @pytest.mark.parametrize("critical", (False, None))
 @pytest.mark.parametrize("crl_number", (0, 1))
-def test_crl_number(critical: Optional[bool], crl_number: int) -> None:
+def test_crl_number(critical: bool | None, crl_number: int) -> None:
     """Test the CRLNumberModel."""
     assert_extension_model(CRLNumberModel, crl_number, x509.CRLNumber(crl_number), critical)
 
@@ -1060,7 +1060,7 @@ def test_crl_number_errors(parameters: dict[str, Any], expected_errors: Expected
 
 @pytest.mark.parametrize("critical", (True, None))
 @pytest.mark.parametrize("crl_number", (0, 1, 2))
-def test_delta_crl_indicator(critical: Optional[bool], crl_number: int) -> None:
+def test_delta_crl_indicator(critical: bool | None, crl_number: int) -> None:
     """Test the DeltaCRLModel."""
     assert_extension_model(DeltaCRLIndicatorModel, crl_number, x509.DeltaCRLIndicator(crl_number), critical)
 
@@ -1096,8 +1096,8 @@ def test_delta_crl_indicator_errors(
     ),
 )
 def test_extended_key_usage(
-    critical: Optional[bool],
-    usages: list[Union[str, x509.ObjectIdentifier]],
+    critical: bool | None,
+    usages: list[str | x509.ObjectIdentifier],
     extension: x509.ExtendedKeyUsage,
 ) -> None:
     """Test the ExtendedKeyUsageModel."""
@@ -1145,7 +1145,7 @@ def test_extended_key_usage_errors(parameters: dict[str, Any], expected_errors: 
 @pytest.mark.parametrize("critical", (False, None))
 @pytest.mark.parametrize(("parameters", "distribution_points"), DISTRIBUTION_POINTS_PARAMETERS)
 def test_freshest_crl(
-    critical: Optional[bool],
+    critical: bool | None,
     parameters: list[dict[str, Any]],
     distribution_points: list[x509.DistributionPoint],
 ) -> None:
@@ -1167,7 +1167,7 @@ def test_freshest_crl_critical_error() -> None:
 
 @pytest.mark.parametrize("critical", (True, None))
 @pytest.mark.parametrize("skip_certs", (0, 1))
-def test_inhibit_any_policy(critical: Optional[bool], skip_certs: int) -> None:
+def test_inhibit_any_policy(critical: bool | None, skip_certs: int) -> None:
     """Test the InhibitAnyPolicyModel."""
     assert_extension_model(InhibitAnyPolicyModel, skip_certs, x509.InhibitAnyPolicy(skip_certs), critical)
 
@@ -1203,7 +1203,7 @@ def test_inhibit_any_policy_errors(parameters: dict[str, Any], expected_errors: 
     ),
 )
 def test_issuing_distribution_point(
-    critical: Optional[bool],
+    critical: bool | None,
     parameters: dict[str, Any],
     issuing_distribution_point: x509.IssuingDistributionPoint,
 ) -> None:
@@ -1266,7 +1266,7 @@ def test_issuing_distribution_point_errors(
         ),
     ),
 )
-def test_key_usage(critical: Optional[bool], parameters: dict[str, bool], extension: x509.KeyUsage) -> None:
+def test_key_usage(critical: bool | None, parameters: dict[str, bool], extension: x509.KeyUsage) -> None:
     """Test the KeyUsageModel."""
     assert_extension_model(KeyUsageModel, parameters, extension, critical)
 
@@ -1368,7 +1368,7 @@ def test_ms_certificate_template(
     ),
 )
 def test_name_constraints(
-    critical: Optional[bool], parameters: dict[str, bool], extension: x509.KeyUsage
+    critical: bool | None, parameters: dict[str, bool], extension: x509.KeyUsage
 ) -> None:
     """Test the NameConstraintsModel."""
     assert_extension_model(NameConstraintsModel, parameters, extension, critical)
@@ -1431,7 +1431,7 @@ def test_name_constraints_errors(parameters: dict[str, bool], expected_errors: E
     ((0, 0), (1, 1), (0, 5), (5, 0), (None, 0), (0, None)),
 )
 def test_policy_constraints(
-    critical: Optional[bool], require_explicit_policy: int, inhibit_policy_mapping: int
+    critical: bool | None, require_explicit_policy: int, inhibit_policy_mapping: int
 ) -> None:
     """Test the PolicyConstraintsModel."""
     value = {
@@ -1485,13 +1485,13 @@ def test_policy_constraints_errors(parameters: dict[str, Any], expected_errors: 
 
 
 @pytest.mark.parametrize("critical", (True, False, None))
-def test_ocsp_no_check(critical: Optional[bool]) -> None:
+def test_ocsp_no_check(critical: bool | None) -> None:
     """Test the OCSPNoCheckModel."""
     assert_extension_model(OCSPNoCheckModel, None, x509.OCSPNoCheck(), critical)
 
 
 @pytest.mark.parametrize("critical", (True, None))
-def test_precert_poison(critical: Optional[bool]) -> None:
+def test_precert_poison(critical: bool | None) -> None:
     """Test the PrecertPoisonModel."""
     assert_extension_model(PrecertPoisonModel, None, x509.PrecertPoison(), critical)
 
@@ -1535,7 +1535,7 @@ def test_signed_certificate_timestamps(signed_certificate_timestamps_pub: x509.C
 )
 @pytest.mark.parametrize("critical", (False, None))
 def test_subject_information_access(
-    parameters: dict[str, Any], extension: x509.AuthorityInformationAccess, critical: Optional[bool]
+    parameters: dict[str, Any], extension: x509.AuthorityInformationAccess, critical: bool | None
 ) -> None:
     """Test the SubjectInformationAccessModel."""
     assert_extension_model(SubjectInformationAccessModel, parameters, extension, critical)
@@ -1592,7 +1592,7 @@ def test_subject_information_access_errors(
 )
 @pytest.mark.parametrize("critical", (False, None))
 def test_subject_key_identifier(
-    digest: bytes, extension: x509.SubjectKeyIdentifier, critical: Optional[bool]
+    digest: bytes, extension: x509.SubjectKeyIdentifier, critical: bool | None
 ) -> None:
     """Test the SubjectKeyIdentifierModel."""
     assert_extension_model(SubjectKeyIdentifierModel, digest, extension, critical)
@@ -1630,9 +1630,9 @@ def test_subject_key_identifier_errors() -> None:
 )
 @pytest.mark.parametrize("critical", (True, False, None))
 def test_tls_feature(
-    parameters: list[Union[str, x509.TLSFeatureType]],
+    parameters: list[str | x509.TLSFeatureType],
     features: list[x509.TLSFeatureType],
-    critical: Optional[bool],
+    critical: bool | None,
 ) -> None:
     """Test the TLSFeatureModel."""
     assert_extension_model(TLSFeatureModel, parameters, x509.TLSFeature(features), critical)
@@ -1673,7 +1673,7 @@ def test_tls_feature_errors(parameters: dict[str, bool], expected_errors: Expect
 def test_unrecognized_extension(
     parameters: dict[str, Any],
     extension_type: x509.UnrecognizedExtension,
-    critical: Optional[bool],
+    critical: bool | None,
 ) -> None:
     """Test the TLSFeatureModel."""
     assert_extension_model(UnrecognizedExtensionModel, parameters, extension_type, critical)

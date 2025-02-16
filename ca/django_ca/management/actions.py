@@ -18,7 +18,7 @@ import argparse
 import getpass
 import typing
 from datetime import timedelta
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -75,7 +75,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], 
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: ParseType,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         setattr(namespace, self.dest, self.parse_value(values))
 
@@ -316,7 +316,7 @@ class MultipleURLAction(argparse.Action):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         validator = URLValidator()
         try:
@@ -347,8 +347,8 @@ class PasswordAction(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: Optional[str],
-        option_string: Optional[str] = None,
+        values: str | None,
+        option_string: str | None = None,
     ) -> None:
         if values is None:
             values = getpass.getpass(prompt=self.prompt)
@@ -385,7 +385,7 @@ class CertificationPracticeStatementAction(argparse.Action):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         certificate_policies = getattr(namespace, self.dest)
         # Make sure that --policy-identifier was called before
@@ -435,7 +435,7 @@ class PolicyIdentifierAction(argparse.Action):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         if values == "anyPolicy":
             values = "2.5.29.32.0"
@@ -547,7 +547,7 @@ class UserNoticeAction(argparse.Action):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         certificate_policies = getattr(namespace, self.dest)
         # Make sure that --policy-identifier was called before
@@ -586,7 +586,7 @@ class AlternativeNameLegacyAction(CryptographyExtensionAction[AlternativeNameExt
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         ext = getattr(namespace, self.dest)
         if ext is None:
@@ -627,7 +627,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: str,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         alternative_names = getattr(namespace, self.dest)
         if alternative_names is None:
@@ -681,9 +681,9 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: x509.GeneralName,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
-        extension: Optional[x509.AuthorityInformationAccess] = getattr(namespace, self.dest)
+        extension: x509.AuthorityInformationAccess | None = getattr(namespace, self.dest)
         access_description = x509.AccessDescription(access_method=self.access_method, access_location=values)
 
         if extension is None:
@@ -722,7 +722,7 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: list[str],
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         usages: list[x509.ObjectIdentifier] = []
 
@@ -776,7 +776,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: list[str],
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         if invalid_usages := [ku for ku in values if ku not in KEY_USAGE_NAMES.values()]:
             raise argparse.ArgumentError(
@@ -806,7 +806,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
         values: list[str],
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         try:
             features = [constants.TLS_FEATURE_NAMES[value] for value in values]

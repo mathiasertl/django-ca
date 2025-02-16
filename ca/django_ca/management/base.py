@@ -20,7 +20,7 @@ import sys
 import textwrap
 import typing
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Optional, Union
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -95,9 +95,9 @@ class BinaryOutputWrapper(OutputWrapper):
 
     def write(  # type: ignore[override]
         self,
-        msg: Union[str, bytes] = b"",
-        style_func: Optional[typing.Callable[..., Any]] = None,
-        ending: Optional[bytes] = None,
+        msg: str | bytes = b"",
+        style_func: typing.Callable[..., Any] | None = None,
+        ending: bytes | None = None,
     ) -> None:
         if ending is None:
             ending = self.ending
@@ -120,8 +120,8 @@ class BinaryCommand(
 
     def __init__(
         self,
-        stdout: Optional[io.BytesIO] = None,
-        stderr: Optional[io.BytesIO] = None,
+        stdout: io.BytesIO | None = None,
+        stderr: io.BytesIO | None = None,
         no_color: bool = True,
         force_color: bool = False,
     ) -> None:
@@ -339,7 +339,7 @@ class BaseCommand(
         parser: CommandParser,
         description: "StrOrPromise" = "",
         name: str = f"{constants.EXTENSION_NAMES[ExtensionOID.ISSUER_ALTERNATIVE_NAME]} extension",
-        dest: Optional[str] = None,
+        dest: str | None = None,
         prefix: str = "",
     ) -> None:
         """Add argument group for the Issuer Alternative Name extension."""
@@ -367,14 +367,14 @@ class BaseCommand(
         self,
         parser: ActionsContainer,
         arg: str = "subject",
-        metavar: Optional[str] = None,
-        help_text: Optional[str] = None,
+        metavar: str | None = None,
+        help_text: str | None = None,
     ) -> None:
         """Add subject option."""
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
 
     def add_key_type(
-        self, parser: ActionsContainer, default: Optional[str], default_text: str = "%(default)s"
+        self, parser: ActionsContainer, default: str | None, default_text: str = "%(default)s"
     ) -> None:
         """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
         parser.add_argument(
@@ -429,7 +429,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         )
         self.add_critical_option(group, ExtensionOID.EXTENDED_KEY_USAGE)
 
-    def add_key_usage_group(self, parser: CommandParser, default: Optional[x509.KeyUsage] = None) -> None:
+    def add_key_usage_group(self, parser: CommandParser, default: x509.KeyUsage | None = None) -> None:
         """Add argument group for the Key Usage extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.KEY_USAGE]
         group = parser.add_argument_group(
@@ -564,7 +564,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         )
 
     def verify_certificate_authority(
-        self, ca: CertificateAuthority, expires: Optional[timedelta], profile: Profile
+        self, ca: CertificateAuthority, expires: timedelta | None, profile: Profile
     ) -> None:
         """Verify that the certificate authority can be used for signing."""
         if ca.not_after < timezone.now():

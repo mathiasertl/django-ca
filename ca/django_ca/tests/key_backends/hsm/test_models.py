@@ -13,7 +13,6 @@
 
 """Tests for models used in the HSM key backend."""
 
-from typing import Optional
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -26,7 +25,7 @@ from django_ca.key_backends.hsm.models import (
 
 
 @pytest.mark.parametrize(("so_pin", "user_pin"), (("so-pin-value", None), (None, "user-pin-value")))
-def test_pins(so_pin: Optional[str], user_pin: Optional[str]) -> None:
+def test_pins(so_pin: str | None, user_pin: str | None) -> None:
     """Test valid pin configurations."""
     model = HSMUsePrivateKeyOptions(so_pin=so_pin, user_pin=user_pin)
     assert model.so_pin == so_pin
@@ -40,7 +39,7 @@ def test_pins(so_pin: Optional[str], user_pin: Optional[str]) -> None:
         ("so-pin-value", "user-pin-value", r"Provide either so_pin or user_pin\."),
     ),
 )
-def test_invalid_pins(so_pin: Optional[str], user_pin: Optional[str], error: str) -> None:
+def test_invalid_pins(so_pin: str | None, user_pin: str | None, error: str) -> None:
     """Test invalid pin configurations."""
     with pytest.raises(ValueError, match=error):
         HSMUsePrivateKeyOptions(so_pin=so_pin, user_pin=user_pin)

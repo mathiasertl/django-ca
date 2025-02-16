@@ -14,7 +14,6 @@
 """Test the view_cert management command."""
 
 import typing
-from typing import Optional
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -604,7 +603,7 @@ def assert_basic_output(name: str, cert: Certificate, status: str) -> None:
 
     stdout, stderr = cmd("view_cert", cert.serial, wrap=False)
     san = typing.cast(
-        Optional[x509.Extension[x509.SubjectAlternativeName]],
+        x509.Extension[x509.SubjectAlternativeName] | None,
         cert.extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME),
     )
     if san is None:

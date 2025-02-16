@@ -18,7 +18,7 @@ import shutil
 import sys
 import typing
 from pathlib import Path
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 import coverage
 
@@ -50,8 +50,8 @@ from django_ca.utils import int_to_hex
 def exclude_versions(
     cov: coverage.Coverage,
     software: str,
-    current_version: Union[tuple[int], tuple[int, int]],
-    pragma_version: Union[tuple[int], tuple[int, int]],
+    current_version: tuple[int] | tuple[int, int],
+    pragma_version: tuple[int] | tuple[int, int],
     version_str: str,
 ) -> None:
     """Add pragmas to exclude lines of code if specific versions of `software` are *not* installed.
@@ -242,7 +242,7 @@ def load_pub(name: str) -> x509.Certificate:
 
 
 def load_ca(
-    name: str, pub: x509.Certificate, parent: Optional[CertificateAuthority], **kwargs: Any
+    name: str, pub: x509.Certificate, parent: CertificateAuthority | None, **kwargs: Any
 ) -> CertificateAuthority:
     """Load a CA."""
     # Set default URLs
@@ -293,7 +293,7 @@ def load_ca(
 
 def load_cert(
     ca: CertificateAuthority,
-    csr: Optional[x509.CertificateSigningRequest],
+    csr: x509.CertificateSigningRequest | None,
     pub: x509.Certificate,
     profile: str = "",
 ) -> Certificate:

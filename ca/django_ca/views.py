@@ -26,7 +26,7 @@ import typing
 import warnings
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -93,7 +93,7 @@ class CertificateRevocationListView(View):
     only_contains_attribute_certs: bool = False
     """Set to ``True`` to only include attribute certificates in the CRL."""
 
-    only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None
+    only_some_reasons: frozenset[x509.ReasonFlags] | None = None
     """Only include certificates revoked for one of the given :class:`~cg:cryptography.x509.ReasonFlags`. If
     not set, all reasons are included."""
 
@@ -112,7 +112,7 @@ class CertificateRevocationListView(View):
     content_type = None
     """Value of the Content-Type header used in the response. For CRLs in PEM format, use ``text/plain``."""
 
-    include_issuing_distribution_point: Optional[bool] = None
+    include_issuing_distribution_point: bool | None = None
     """**(deprecated)** Boolean flag to force inclusion/exclusion of IssuingDistributionPoint extension.
 
     .. deprecated:: 2.1.0
@@ -171,7 +171,7 @@ class CertificateRevocationListView(View):
             only_some_reasons=self.only_some_reasons,
         )
 
-        encoded_crl: Optional[bytes] = cache.get(cache_key)
+        encoded_crl: bytes | None = cache.get(cache_key)
 
         # CRL is not cached, try to retrieve it from the database.
         if encoded_crl is None:
@@ -184,7 +184,7 @@ class CertificateRevocationListView(View):
                     only_some_reasons=self.only_some_reasons,
                 ).filter(data__isnull=False)  # Only objects that have CRL data associated with it
             )
-            crl_obj: Optional[CertificateRevocationList] = crl_qs.newest()
+            crl_obj: CertificateRevocationList | None = crl_qs.newest()
 
             # CRL was not found in the database either, so we try to regenerate it.
             if crl_obj is None:
@@ -256,7 +256,7 @@ class OCSPView(View):
     """Private key used for signing OCSP responses. A relative path used by :ref:`CA_FILE_STORAGE
     <settings-ca-file-storage>`."""
 
-    responder_cert: Union[x509.Certificate, str] = ""
+    responder_cert: x509.Certificate | str = ""
     """Public key of the responder.
 
     This may either be:
@@ -349,7 +349,7 @@ class OCSPView(View):
         """Get the certificate authority for the request."""
         return CertificateAuthority.objects.get_by_serial_or_cn(self.ca)
 
-    def get_cert(self, ca: CertificateAuthority, serial: str) -> Union[Certificate, CertificateAuthority]:
+    def get_cert(self, ca: CertificateAuthority, serial: str) -> Certificate | CertificateAuthority:
         """Get the certificate that was requested in the OCSP request."""
         if self.ca_ocsp is True:
             return CertificateAuthority.objects.filter(parent=ca).get(serial=serial)
@@ -358,7 +358,7 @@ class OCSPView(View):
 
     def get_ocsp_response(  # pylint: disable-next=unused-argument  # ca is required by subclasses
         self, ca: CertificateAuthority, builder: OCSPResponseBuilder
-    ) -> Union[HttpResponse, OCSPResponse]:
+    ) -> HttpResponse | OCSPResponse:
         """Sign the OCSP request using cryptography keys."""
         # get key/cert for OCSP responder
         try:
@@ -392,7 +392,7 @@ class OCSPView(View):
 
     def get_ca_and_cert(
         self, cert_serial: str
-    ) -> tuple[CertificateAuthority, Union[Certificate, CertificateAuthority]]:
+    ) -> tuple[CertificateAuthority, Certificate | CertificateAuthority]:
         """Get CA and certificate for this request."""
         ca = self.get_ca()
         cert = self.get_cert(ca, cert_serial)
@@ -491,7 +491,7 @@ class GenericOCSPView(OCSPView):
 
     def get_ca_and_cert(
         self, cert_serial: str
-    ) -> tuple[CertificateAuthority, Union[Certificate, CertificateAuthority]]:
+    ) -> tuple[CertificateAuthority, Certificate | CertificateAuthority]:
         ca_serial = self.kwargs["serial"]
 
         if self.ca_ocsp:
@@ -508,7 +508,7 @@ class GenericOCSPView(OCSPView):
 
     def get_ocsp_response(
         self, ca: CertificateAuthority, builder: OCSPResponseBuilder
-    ) -> Union[HttpResponse, OCSPResponse]:
+    ) -> HttpResponse | OCSPResponse:
         """Sign the OCSP request using cryptography keys."""
         # Load public key
         try:
@@ -534,7 +534,7 @@ class GenericOCSPView(OCSPView):
         builder = builder.certificates([responder_certificate])
 
         # TYPEHINT NOTE: Certificates are always generated with a supported algorithm, so we do not check.
-        algorithm = cast(Optional[AllowedHashTypes], responder_certificate.signature_hash_algorithm)
+        algorithm = cast(AllowedHashTypes | None, responder_certificate.signature_hash_algorithm)
 
         return ca.ocsp_key_backend.sign_ocsp_response(ca, builder, algorithm)
 

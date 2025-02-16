@@ -17,7 +17,6 @@
 
 import unittest
 from http import HTTPStatus
-from typing import Optional
 from unittest import mock
 
 import josepy as jose
@@ -140,7 +139,7 @@ class TestAcmeChallengeView(AcmeWithAccountViewTestCaseMixin[jose.json_util.JSON
         url: str,
         message: bytes,  # type: ignore[override]
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
     ) -> None:
         # wrapped so that the triggered task is not run, which would do an HTTP request
         with mock.patch("django_ca.acme.views.run_task"):

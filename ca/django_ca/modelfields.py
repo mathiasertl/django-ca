@@ -19,7 +19,7 @@
 import abc
 import typing
 from collections.abc import Sequence
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -84,7 +84,7 @@ class LazyField(typing.Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.A
     """
 
     _bytes: bytes
-    _loaded: Optional[LoadedTypeVar] = None
+    _loaded: LoadedTypeVar | None = None
     _pem_token: typing.ClassVar[bytes]
     _type: type[LoadedTypeVar]
 
@@ -209,8 +209,8 @@ class LazyBinaryField(
         return name, path, args, kwargs
 
     def from_db_value(  # pylint: disable=unused-argument
-        self, value: Optional[bytes], expression: Any, condition: Any
-    ) -> Optional[WrapperTypeVar]:
+        self, value: bytes | None, expression: Any, condition: Any
+    ) -> WrapperTypeVar | None:
         """Called when data is loaded from the database.
 
         This is called when
@@ -224,8 +224,8 @@ class LazyBinaryField(
 
     def get_prep_value(
         self,
-        value: Optional[Union[WrapperTypeVar, DecodableTypeVar]],
-    ) -> Optional[bytes]:
+        value: WrapperTypeVar | DecodableTypeVar | None,
+    ) -> bytes | None:
         """Get the raw database value.
 
         This is called when
@@ -241,10 +241,10 @@ class LazyBinaryField(
 
     def formfield(
         self,
-        form_class: Optional[type[forms.Field]] = None,
-        choices_form_class: Optional[type[forms.ChoiceField]] = None,
+        form_class: type[forms.Field] | None = None,
+        choices_form_class: type[forms.ChoiceField] | None = None,
         **kwargs: Any,
-    ) -> Optional[forms.Field]:
+    ) -> forms.Field | None:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
@@ -252,8 +252,8 @@ class LazyBinaryField(
 
     def to_python(
         self,
-        value: Optional[Union[WrapperTypeVar, DecodableTypeVar]],
-    ) -> Optional[WrapperTypeVar]:
+        value: WrapperTypeVar | DecodableTypeVar | None,
+    ) -> WrapperTypeVar | None:
         """Called during deserialization and during Certificate.full_clean().
 
         Note that this function is **not** called if the field value is ``None`` or ``b""``. It is however
@@ -313,24 +313,20 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
 
         def __get__(  # type: ignore[override]
             self, instance: Any, owner: Any
-        ) -> Optional[x509.Extension[ExtensionTypeTypeVar]]: ...
+        ) -> x509.Extension[ExtensionTypeTypeVar] | None: ...
 
         def __set__(
             self,
             instance: Any,
-            value: Optional[
-                Union[
-                    x509.Extension[ExtensionTypeTypeVar], ExtensionModelTypeVar, SerializedPydanticExtension
-                ]
-            ],
+            value: x509.Extension[ExtensionTypeTypeVar] | ExtensionModelTypeVar | SerializedPydanticExtension | None,
         ) -> None: ...
 
     def formfield(
         self,
-        form_class: Optional[type[forms.Field]] = None,
-        choices_form_class: Optional[type[forms.ChoiceField]] = None,
+        form_class: type[forms.Field] | None = None,
+        choices_form_class: type[forms.ChoiceField] | None = None,
         **kwargs: Any,
-    ) -> Optional[forms.Field]:
+    ) -> forms.Field | None:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
@@ -351,7 +347,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
 
     def from_db_value(
         self, value: Any, expression: Any, connection: Any
-    ) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
+    ) -> x509.Extension[ExtensionTypeTypeVar] | None:
         """Convert the value loaded from the database to a cryptography extension."""
         if value is None:
             return value
@@ -365,7 +361,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
         # to parse the value. parse_raw_extension() just raises ValidationError in the base class.
         return self.parse_raw_extension(parsed_json)
 
-    def to_python(self, value: Any) -> Optional[x509.Extension[ExtensionTypeTypeVar]]:
+    def to_python(self, value: Any) -> x509.Extension[ExtensionTypeTypeVar] | None:
         """Convert the set value to the correct Python type.
 
         This function is called during full_clean() to convert the value to the expected Python type:
@@ -396,7 +392,7 @@ class ExtensionField(models.JSONField, typing.Generic[ExtensionTypeTypeVar, Exte
         # to parse the value. parse_raw_extension() just raises ValidationError in the base class.
         return self.parse_raw_extension(value)
 
-    def get_prep_value(self, value: Any) -> Optional[SerializedPydanticExtension]:
+    def get_prep_value(self, value: Any) -> SerializedPydanticExtension | None:
         """Prepare the value so that it can be stored in the database.
 
         This function is invoked during ``save()``. `value` may be the cryptography extension value (in
@@ -481,8 +477,8 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
     model_class = CertificatePoliciesModel
 
     def _parse_notice_reference(
-        self, value: Optional[SerializedNoticeReference]
-    ) -> Optional[x509.NoticeReference]:
+        self, value: SerializedNoticeReference | None
+    ) -> x509.NoticeReference | None:
         if not value:
             return None
 
@@ -495,12 +491,12 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
         return x509.UserNotice(notice_reference=notice_reference, explicit_text=value.get("explicit_text"))
 
     def _parse_policy_qualifiers(
-        self, value: Optional[list[Union[str, SerializedUserNotice]]]
-    ) -> Optional[list[Union[str, x509.UserNotice]]]:
+        self, value: list[str | SerializedUserNotice] | None
+    ) -> list[str | x509.UserNotice] | None:
         if value is None:
             return None
 
-        qualifiers: list[Union[str, x509.UserNotice]] = []
+        qualifiers: list[str | x509.UserNotice] = []
 
         for qual in value:
             if isinstance(qual, str):

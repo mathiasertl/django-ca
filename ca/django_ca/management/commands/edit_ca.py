@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -58,21 +58,21 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
     def handle(  # noqa: PLR0913
         self,
         ca: CertificateAuthority,
-        enabled: Optional[bool],
+        enabled: bool | None,
         # Authority Information Access extension  for certificates (MUST be non-critical)
-        sign_authority_information_access: Optional[x509.AuthorityInformationAccess],
+        sign_authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension for certificates
-        sign_certificate_policies: Optional[x509.CertificatePolicies],
+        sign_certificate_policies: x509.CertificatePolicies | None,
         sign_certificate_policies_critical: bool,
         # CRL Distribution Points extension for certificates
-        sign_crl_full_names: Optional[list[x509.GeneralName]],
+        sign_crl_full_names: list[x509.GeneralName] | None,
         sign_crl_distribution_points_critical: bool,
         # Issuer Alternative Name extension  for certificates
-        sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
+        sign_issuer_alternative_name: x509.IssuerAlternativeName | None,
         # OCSP responder configuration
-        ocsp_key_backend: Optional[str],
-        ocsp_responder_key_validity: Optional[int],
-        ocsp_response_validity: Optional[int],
+        ocsp_key_backend: str | None,
+        ocsp_responder_key_validity: int | None,
+        ocsp_response_validity: int | None,
         **options: Any,
     ) -> None:
         # TODO: it's currently not possible to clear sign_ fields

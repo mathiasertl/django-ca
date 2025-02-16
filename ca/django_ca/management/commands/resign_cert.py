@@ -17,7 +17,7 @@
 """
 
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID, NameOID
@@ -49,7 +49,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
 
-    def get_profile(self, profile: Optional[str], cert: Certificate) -> Profile:
+    def get_profile(self, profile: str | None, cert: Certificate) -> Profile:
         """Get requested profile based on command line and given certificate."""
         if profile is not None:
             return profiles[profile]
@@ -67,36 +67,36 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
         self,
         cert: Certificate,
-        ca: Optional[CertificateAuthority],
-        subject: Optional[x509.Name],
-        expires: Optional[timedelta],
+        ca: CertificateAuthority | None,
+        subject: x509.Name | None,
+        expires: timedelta | None,
         watch: list[str],
-        profile: Optional[str],
-        algorithm: Optional[AllowedHashTypes],
+        profile: str | None,
+        algorithm: AllowedHashTypes | None,
         # Authority Information Access extension
         authority_information_access: x509.AuthorityInformationAccess,
         # Certificate Policies extension
-        certificate_policies: Optional[x509.CertificatePolicies],
+        certificate_policies: x509.CertificatePolicies | None,
         certificate_policies_critical: bool,
         # CRL Distribution Points extension
-        crl_full_names: Optional[list[x509.GeneralName]],
+        crl_full_names: list[x509.GeneralName] | None,
         crl_distribution_points_critical: bool,
         # Extended Key Usage extension
-        extended_key_usage: Optional[x509.ExtendedKeyUsage],
+        extended_key_usage: x509.ExtendedKeyUsage | None,
         extended_key_usage_critical: bool,
         # Issuer Alternative Name extension:
-        issuer_alternative_name: Optional[x509.IssuerAlternativeName],
+        issuer_alternative_name: x509.IssuerAlternativeName | None,
         # Key Usage extension
-        key_usage: Optional[x509.KeyUsage],
+        key_usage: x509.KeyUsage | None,
         key_usage_critical: bool,
         # OCSP No Check extension
         ocsp_no_check: bool,
         ocsp_no_check_critical: bool,
         # Subject Alternative Name extension
-        subject_alternative_name: Optional[x509.SubjectAlternativeName],
+        subject_alternative_name: x509.SubjectAlternativeName | None,
         subject_alternative_name_critical: bool,
         # TLSFeature extension
-        tls_feature: Optional[x509.TLSFeature],
+        tls_feature: x509.TLSFeature | None,
         tls_feature_critical: bool,
         **options: Any,
     ) -> None:

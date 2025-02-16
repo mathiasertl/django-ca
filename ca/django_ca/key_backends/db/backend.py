@@ -16,7 +16,7 @@
 import typing
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -66,20 +66,20 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, DBBackend)
 
-    def add_create_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_create_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         return None
 
-    def add_store_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_store_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         return None
 
-    def add_use_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_use_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         return None
 
     def get_create_private_key_options(
         self,
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[EllipticCurves],  # type: ignore[override]
+        key_size: int | None,
+        elliptic_curve: EllipticCurves | None,  # type: ignore[override]
         options: dict[str, Any],
     ) -> DBCreatePrivateKeyOptions:
         return DBCreatePrivateKeyOptions(key_type=key_type, key_size=key_size, elliptic_curve=elliptic_curve)
@@ -142,7 +142,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
     def is_usable(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: Optional[DBUsePrivateKeyOptions] = None,
+        use_private_key_options: DBUsePrivateKeyOptions | None = None,
     ) -> bool:
         # If key_backend_options is not set or path is not set, it is certainly unusable.
         if not ca.key_backend_options or not ca.key_backend_options.get("private_key"):
@@ -167,9 +167,9 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         ca: "CertificateAuthority",
         use_private_key_options: DBUsePrivateKeyOptions,
         data: bytes,
-        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
-        padding: Optional[AsymmetricPadding] = None,
-        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+        algorithm: hashes.HashAlgorithm | Prehashed | None = None,
+        padding: AsymmetricPadding | None = None,
+        signature_algorithm: ec.EllipticCurveSignatureAlgorithm | None = None,
     ) -> bytes:
         private_key = self.get_key(ca, use_private_key_options)
 
@@ -200,7 +200,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         use_private_key_options: DBUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -219,6 +219,6 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         ca: "CertificateAuthority",
         use_private_key_options: DBUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
     ) -> x509.CertificateRevocationList:
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)

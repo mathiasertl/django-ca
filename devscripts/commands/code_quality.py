@@ -16,7 +16,7 @@
 import argparse
 import os
 import subprocess
-from typing import Any, Union
+from typing import Any
 
 from devscripts import config
 from devscripts.commands import DevCommand
@@ -30,7 +30,7 @@ class Command(DevCommand):
 
     def manage(self, *args: str) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run manage.py with warnings turned into errors."""
-        python: list[Union[str, os.PathLike[str]]] = ["python"]
+        python: list[str | os.PathLike[str]] = ["python"]
 
         known_warnings = [
             "default",  # equivalent to "python -Wd"

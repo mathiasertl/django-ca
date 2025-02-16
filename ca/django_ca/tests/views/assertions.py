@@ -14,7 +14,7 @@
 """Assertions related to views."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Union, cast
+from typing import cast
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa
@@ -50,8 +50,8 @@ def assert_ocsp_signature(public_key: CertificateIssuerPublicKeyTypes, response:
 
 
 def assert_certificate_status(
-    certificate: Union[Certificate, CertificateAuthority],
-    response: Union[ocsp.OCSPResponse, ocsp.OCSPSingleResponse],
+    certificate: Certificate | CertificateAuthority,
+    response: ocsp.OCSPResponse | ocsp.OCSPSingleResponse,
 ) -> None:
     """Check information related to the certificate status."""
     if certificate.revoked is False:
@@ -65,7 +65,7 @@ def assert_certificate_status(
 
 
 def assert_ocsp_single_response(
-    certificate: Union[Certificate, CertificateAuthority],
+    certificate: Certificate | CertificateAuthority,
     response: ocsp.OCSPSingleResponse,
     hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
 ) -> None:
@@ -80,12 +80,12 @@ def assert_ocsp_single_response(
 
 def assert_ocsp_response(
     http_response: "HttpResponse",
-    requested_certificate: Union[Certificate, CertificateAuthority],
+    requested_certificate: Certificate | CertificateAuthority,
     responder_certificate: Certificate,
     response_status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.SUCCESSFUL,
-    nonce: Optional[bytes] = None,
+    nonce: bytes | None = None,
     expires: int = 86400,
-    signature_hash_algorithm: Optional[type[hashes.HashAlgorithm]] = hashes.SHA256,
+    signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
     single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
 ) -> None:
     """Assert an OCSP request."""

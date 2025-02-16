@@ -20,7 +20,6 @@ import typing
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timezone as tz
 from ipaddress import ip_address, ip_network
-from typing import Optional, Union
 
 import idna
 
@@ -95,7 +94,7 @@ def parse_name_rfc4514(value: str) -> x509.Name:
     return check_name(x509.Name(reversed(list(name))))
 
 
-def format_name_rfc4514(subject: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
+def format_name_rfc4514(subject: x509.Name | x509.RelativeDistinguishedName) -> str:
     """Format the given (relative distinguished) name as RFC4514 compatible string.
 
     This function deviates from RFC 4514 by displaying the name attributes as they appear in the certificate,
@@ -126,7 +125,7 @@ def _serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
 
 
 @deprecate_function(RemovedInDjangoCA230Warning)
-def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> SerializedName:
+def serialize_name(name: x509.Name | x509.RelativeDistinguishedName) -> SerializedName:
     """Serialize a :py:class:`~cg:cryptography.x509.Name`.
 
     .. deprecated:: 2.2.0
@@ -141,7 +140,7 @@ def serialize_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> Se
     return [{"oid": attr.oid.dotted_string, "value": _serialize_name_attribute_value(attr)} for attr in name]
 
 
-def name_for_display(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> list[tuple[str, str]]:
+def name_for_display(name: x509.Name | x509.RelativeDistinguishedName) -> list[tuple[str, str]]:
     """Convert a |Name| or |RelativeDistinguishedName| into a list of key/value pairs for display.
 
     This function is used as a helper function to loop over the elements of a name to prepare them for
@@ -301,7 +300,7 @@ def sanitize_serial(value: str) -> str:
 
 
 @deprecate_function(RemovedInDjangoCA230Warning)
-def parse_name_x509(name: Union[str, Iterable[tuple[str, str]]]) -> tuple[x509.NameAttribute, ...]:
+def parse_name_x509(name: str | Iterable[tuple[str, str]]) -> tuple[x509.NameAttribute, ...]:
     """Parses a subject string as used in OpenSSLs command line utilities.
 
     .. deprecated:: 2.2.0
@@ -331,7 +330,7 @@ def parse_name_x509(name: Union[str, Iterable[tuple[str, str]]]) -> tuple[x509.N
 
 
 @deprecate_function(RemovedInDjangoCA230Warning)
-def x509_name(name: Union[str, Iterable[tuple[str, str]]]) -> x509.Name:
+def x509_name(name: str | Iterable[tuple[str, str]]) -> x509.Name:
     """Parses a string or iterable of two-tuples into a :py:class:`x509.Name <cg:cryptography.x509.Name>`.
 
     .. deprecated:: 2.2.0
@@ -434,30 +433,30 @@ def validate_hostname(hostname: str, allow_port: bool = False) -> str:
 @typing.overload
 def validate_private_key_parameters(
     key_type: typing.Literal["DSA", "RSA"],
-    key_size: Optional[int],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    key_size: int | None,
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> tuple[int, None]: ...
 
 
 @typing.overload
 def validate_private_key_parameters(
     key_type: typing.Literal["EC"],
-    key_size: Optional[int],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    key_size: int | None,
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> tuple[None, ec.EllipticCurve]: ...
 
 
 @typing.overload
 def validate_private_key_parameters(
     key_type: typing.Literal["Ed448", "Ed25519"],
-    key_size: Optional[int],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    key_size: int | None,
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> tuple[None, None]: ...
 
 
 def validate_private_key_parameters(
-    key_type: ParsableKeyType, key_size: Optional[int], elliptic_curve: Optional[ec.EllipticCurve]
-) -> tuple[Optional[int], Optional[ec.EllipticCurve]]:
+    key_type: ParsableKeyType, key_size: int | None, elliptic_curve: ec.EllipticCurve | None
+) -> tuple[int | None, ec.EllipticCurve | None]:
     """Validate parameters for private key generation.
 
     This function can be used to fail early if invalid parameters are passed, before the private key is
@@ -506,8 +505,8 @@ def validate_private_key_parameters(
 
 
 def validate_public_key_parameters(
-    key_type: ParsableKeyType, algorithm: Optional[AllowedHashTypes]
-) -> Optional[AllowedHashTypes]:
+    key_type: ParsableKeyType, algorithm: AllowedHashTypes | None
+) -> AllowedHashTypes | None:
     """Validate parameters for signing a certificate.
 
     This function can be used to fail early if invalid parameters are passed.
@@ -538,48 +537,48 @@ def validate_public_key_parameters(
 
 @typing.overload
 def generate_private_key(
-    key_size: Optional[int],
+    key_size: int | None,
     key_type: typing.Literal["DSA"],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> dsa.DSAPrivateKey: ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: Optional[int],
+    key_size: int | None,
     key_type: typing.Literal["RSA"],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> rsa.RSAPrivateKey: ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: Optional[int],
+    key_size: int | None,
     key_type: typing.Literal["EC"],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> ec.EllipticCurvePrivateKey: ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: Optional[int],
+    key_size: int | None,
     key_type: typing.Literal["Ed25519"],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> ed25519.Ed25519PrivateKey: ...
 
 
 @typing.overload
 def generate_private_key(
-    key_size: Optional[int],
+    key_size: int | None,
     key_type: typing.Literal["Ed448"],
-    elliptic_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> ed448.Ed448PrivateKey: ...
 
 
 def generate_private_key(
-    key_size: Optional[int],
+    key_size: int | None,
     key_type: ParsableKeyType,
-    elliptic_curve: Optional[ec.EllipticCurve],
+    elliptic_curve: ec.EllipticCurve | None,
 ) -> CertificateIssuerPrivateKeyTypes:
     """Generate a private key.
 
@@ -871,7 +870,7 @@ def parse_encoding(value: str) -> Encoding:
         raise ValueError(f"Unknown encoding: {value}") from e
 
 
-def get_cert_builder(not_after: datetime, serial: Optional[int] = None) -> x509.CertificateBuilder:
+def get_cert_builder(not_after: datetime, serial: int | None = None) -> x509.CertificateBuilder:
     """Get a basic X.509 certificate builder object.
 
     .. versionchanged:: 2.1.0
@@ -942,7 +941,7 @@ def get_crl_cache_key(
     only_contains_ca_certs: bool,
     only_contains_user_certs: bool,
     only_contains_attribute_certs: bool,
-    only_some_reasons: Optional[Iterable[x509.ReasonFlags]],
+    only_some_reasons: Iterable[x509.ReasonFlags] | None,
 ) -> str:
     """Get the cache key for a CRL with the given parameters.
 

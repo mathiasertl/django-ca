@@ -20,7 +20,7 @@ import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, NoReturn, Optional, Union, cast
+from typing import Any, NoReturn, cast
 from unittest import mock
 
 from pydantic import BaseModel
@@ -511,7 +511,7 @@ def test_sign_certificate_policies_with_serialized_model(
     assert CertificateAuthority.objects.get(pk=root.pk).sign_certificate_policies == certificate_policies
 
 
-def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> Union[str, dict[str, Any]]:
+def _old_serialize_policy_qualifier(qualifier: PolicyQualifier) -> str | dict[str, Any]:
     """Duplicate of old CertificatePolicies serialization."""
     if isinstance(qualifier, str):
         return qualifier
@@ -533,7 +533,7 @@ def _old_serialize_policy_information(
     policy_information: x509.PolicyInformation,
 ) -> dict[str, Any]:
     """Duplicate of old CertificatePolicies serialization."""
-    policy_qualifiers: Optional[list[Union[str, dict[str, Any]]]] = None
+    policy_qualifiers: list[str | dict[str, Any]] | None = None
     if policy_information.policy_qualifiers is not None:
         policy_qualifiers = [_old_serialize_policy_qualifier(q) for q in policy_information.policy_qualifiers]
 

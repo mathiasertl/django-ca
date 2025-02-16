@@ -14,8 +14,8 @@
 """Reusable type aliases for Pydantic models."""
 
 import base64
-from collections.abc import Hashable
-from typing import Annotated, Any, Callable, Optional, TypeVar, Union
+from collections.abc import Callable, Hashable
+from typing import Annotated, Any, TypeVar
 
 from pydantic import AfterValidator, BeforeValidator, Field, GetPydanticSchema, PlainSerializer
 from pydantic_core import core_schema
@@ -44,11 +44,11 @@ T = TypeVar("T", bound=type[Any])
 
 
 def _get_cryptography_schema(
-    cls: Union[type[T], list[T]],
+    cls: type[T] | list[T],
     type_mapping: dict[str, type[T]],
     name_mapping: dict[type[T], str],
-    json_serializer: Optional[Callable[[T], str]] = None,
-    str_loader: Optional[Callable[[str], T]] = None,
+    json_serializer: Callable[[T], str] | None = None,
+    str_loader: Callable[[str], T] | None = None,
 ) -> GetPydanticSchema:
     if json_serializer is None:  # pragma: no branch
 
@@ -68,7 +68,7 @@ def _get_cryptography_schema(
     )
 
     if isinstance(cls, list):  # pragma: no cover
-        python_schema: Union[LiteralSchema, IsInstanceSchema] = core_schema.literal_schema(cls)
+        python_schema: LiteralSchema | IsInstanceSchema = core_schema.literal_schema(cls)
     else:
         python_schema = core_schema.is_instance_schema(cls)
 

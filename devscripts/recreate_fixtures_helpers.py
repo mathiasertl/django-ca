@@ -22,7 +22,7 @@ import shutil
 from collections.abc import Sequence
 from datetime import datetime, timezone as tz
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -129,7 +129,7 @@ def _create_csr(
     return csr
 
 
-def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: dict[str, Any]) -> None:
+def _update_cert_data(cert: CertificateAuthority | Certificate, data: dict[str, Any]) -> None:
     data["serial"] = cert.serial
     data["sha256"] = cert.get_fingerprint(hashes.SHA256())
     data["sha512"] = cert.get_fingerprint(hashes.SHA512())
@@ -137,7 +137,7 @@ def _update_cert_data(cert: Union[CertificateAuthority, Certificate], data: dict
 
 
 def _write_ca(
-    dest: Path, ca: CertificateAuthority, cert_data: CertFixtureData, password: Optional[bytes] = None
+    dest: Path, ca: CertificateAuthority, cert_data: CertFixtureData, password: bytes | None = None
 ) -> None:
     # Encode private key
     if password is None:
@@ -184,7 +184,7 @@ def _copy_cert(dest: Path, cert: Certificate, data: CertFixtureData, key_path: P
 def _update_contrib(
     parsed: x509.Certificate,
     data: dict[str, Any],
-    cert: Union[Certificate, CertificateAuthority],
+    cert: Certificate | CertificateAuthority,
     name: str,
     filename: str,
 ) -> None:
@@ -271,7 +271,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
 
     for name in ca_names:
         # Get some data from the parent, if present
-        parent: Optional[CertificateAuthority] = None
+        parent: CertificateAuthority | None = None
         use_parent_private_key_options = None
         parent_name = data[name].get("parent")
         if parent_name:

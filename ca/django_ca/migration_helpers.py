@@ -21,7 +21,6 @@ import shlex
 import typing
 import warnings
 from collections.abc import Iterator
-from typing import Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
@@ -52,9 +51,9 @@ class Migration0040Helper:
         issuer_url: str
         ocsp_url: str
         issuer_alt_name: str
-        sign_authority_information_access: Optional[x509.Extension[x509.AuthorityInformationAccess]]
-        sign_crl_distribution_points: Optional[x509.Extension[x509.CRLDistributionPoints]]
-        sign_issuer_alternative_name: Optional[x509.Extension[x509.IssuerAlternativeName]]
+        sign_authority_information_access: x509.Extension[x509.AuthorityInformationAccess] | None
+        sign_crl_distribution_points: x509.Extension[x509.CRLDistributionPoints] | None
+        sign_issuer_alternative_name: x509.Extension[x509.IssuerAlternativeName] | None
 
     @staticmethod
     def crl_url_to_sign_crl_distribution_points(ca: MigratingCertificateAuthority) -> None:
@@ -158,7 +157,7 @@ class Migration0040Helper:
             return
 
         # Field in 1.27.0 used a multiline URL validator, so values where always URLs (without prefix).
-        distribution_point: Optional[x509.DistributionPoint] = next(
+        distribution_point: x509.DistributionPoint | None = next(
             (
                 dp
                 for dp in ca.sign_crl_distribution_points.value

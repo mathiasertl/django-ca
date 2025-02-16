@@ -16,7 +16,6 @@
 # pylint: disable=redefined-outer-name  # because of fixtures
 
 from http import HTTPStatus
-from typing import Optional
 from unittest import mock
 
 import josepy as jose
@@ -68,7 +67,7 @@ def test_basic(
     url: str,
     root: CertificateAuthority,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
     use_tz: bool,
 ) -> None:
     """Basic test for creating an account via ACME."""
@@ -92,7 +91,7 @@ def test_valid_cert(
     root_cert: Certificate,
     order: AcmeOrder,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test viewing an order with a valid certificate."""
     order.status = AcmeOrder.STATUS_VALID
@@ -120,7 +119,7 @@ def test_cert_not_yet_issued(
     root: CertificateAuthority,
     order: AcmeOrder,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test viewing an order where the certificate has not yet been issued.
 
@@ -152,7 +151,7 @@ def test_cert_not_yet_valid(
     root_cert: Certificate,
     order: AcmeOrder,
     authz: AcmeAuthorization,
-    kid: Optional[str],
+    kid: str | None,
 ) -> None:
     """Test viewing an order where the certificate has not yet valid.
 
@@ -178,7 +177,7 @@ def test_cert_not_yet_valid(
 
 
 def test_wrong_account(
-    client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: Optional[str]
+    client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: str | None
 ) -> None:
     """Test viewing for the wrong account."""
     account = AcmeAccount.objects.create(
@@ -191,7 +190,7 @@ def test_wrong_account(
     assert_unauthorized(resp, root)
 
 
-def test_not_found(client: Client, root: CertificateAuthority, order: AcmeOrder, kid: Optional[str]) -> None:
+def test_not_found(client: Client, root: CertificateAuthority, order: AcmeOrder, kid: str | None) -> None:
     """Test viewing an order that simply does not exist."""
     account = AcmeAccount.objects.create(
         ca=root, terms_of_service_agreed=True, slug="def", kid="kid", pem="bar", thumbprint="foo"
@@ -204,7 +203,7 @@ def test_not_found(client: Client, root: CertificateAuthority, order: AcmeOrder,
     assert_unauthorized(resp, root)
 
 
-def test_basic_exception(client: Client, url: str, root: CertificateAuthority, kid: Optional[str]) -> None:
+def test_basic_exception(client: Client, url: str, root: CertificateAuthority, kid: str | None) -> None:
     """Test throwing an AcmeException in acme_request().
 
     We have to mock this, as at present this is not usually done.

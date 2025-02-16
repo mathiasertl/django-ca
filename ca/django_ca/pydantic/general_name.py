@@ -17,7 +17,7 @@ import binascii
 import ipaddress
 from datetime import datetime
 from ipaddress import ip_address, ip_network
-from typing import Annotated, Any, Optional, Union, cast
+from typing import Annotated, Any, cast
 
 from pydantic import BeforeValidator, Discriminator, Tag, TypeAdapter, model_validator
 
@@ -39,7 +39,7 @@ ip_address_classes = (
 )
 
 
-def general_name_discriminator(value: Any) -> Optional[str]:
+def general_name_discriminator(value: Any) -> str | None:
     """Decide on the discriminated type for a GeneralName value."""
     if isinstance(value, ip_address_classes):
         return "ipaddress"
@@ -90,7 +90,7 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
 
     oid: OIDType
     type: Annotated[OtherNames, BeforeValidator(other_name_type_aliases)]
-    value: Optional[Union[str, bool, datetime, int]]
+    value: str | bool | datetime | int | None
 
     @classmethod
     def _parse_bytes(cls, value: bytes) -> str:
@@ -189,12 +189,7 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
     # for NameModel) would invoke the NameAttribute validation for every address in the network, making this
     # extremely slow for large network segments.
     value: Annotated[
-        Union[
-            Annotated[str, Tag("str")],
-            Annotated[NameModel, Tag("name")],
-            Annotated[OtherNameModel, Tag("othername")],
-            Annotated[IPAddressType, Tag("ipaddress")],
-        ],
+        Annotated[str, Tag("str")] | Annotated[NameModel, Tag("name")] | Annotated[OtherNameModel, Tag("othername")] | Annotated[IPAddressType, Tag("ipaddress")],
         Discriminator(general_name_discriminator),
     ]
 

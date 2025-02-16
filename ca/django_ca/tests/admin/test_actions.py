@@ -19,7 +19,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any, Union
 from unittest import mock
 
 from cryptography import x509
@@ -157,13 +157,13 @@ class AdminChangeActionTestCaseMixin(
         return reverse(view_name, kwargs={"pk": obj.pk, "tool": self.tool})
 
     def assertFailedRequest(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
+        self, response: "HttpResponse", obj: DjangoCAModelTypeVar | None = None
     ) -> None:
         """Assert that a request did not have any effect."""
         raise NotImplementedError
 
     def assertForbidden(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
+        self, response: "HttpResponse", obj: DjangoCAModelTypeVar | None = None
     ) -> None:
         """Assert that the action returned HTTP 403 (Forbidden)."""
         assert response.status_code == HTTPStatus.FORBIDDEN
@@ -183,7 +183,7 @@ class AdminChangeActionTestCaseMixin(
         self.assertFailedRequest(response)
 
     def assertSuccessfulRequest(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: Optional[DjangoCAModelTypeVar] = None
+        self, response: "HttpResponse", obj: DjangoCAModelTypeVar | None = None
     ) -> None:
         """Assert that the request was successful."""
         raise NotImplementedError
@@ -294,7 +294,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         super().setUp()
         self.data = {"revoked_reason": ""}  # default post data
 
-    def assertFailedRequest(self, response: "HttpResponse", obj: Optional[Certificate] = None) -> None:
+    def assertFailedRequest(self, response: "HttpResponse", obj: Certificate | None = None) -> None:
         obj = obj or self.cert
         self.assertNotRevoked(obj)
 
@@ -310,9 +310,9 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
     def assertSuccessfulRequest(
         self,
         response: "HttpResponse",
-        obj: Optional[Certificate] = None,
+        obj: Certificate | None = None,
         reason: str = "unspecified",
-        compromised: Optional[datetime] = None,
+        compromised: datetime | None = None,
     ) -> None:
         self.assertRedirects(response, self.change_url())
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
@@ -397,14 +397,14 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
     pre_signal = pre_sign_cert
     post_signal = post_issue_cert
 
-    def assertFailedRequest(self, response: "HttpResponse", obj: Optional[Certificate] = None) -> None:
+    def assertFailedRequest(self, response: "HttpResponse", obj: Certificate | None = None) -> None:
         obj = obj or self.cert
         assert self.model.objects.filter(cn=obj.cn).count() == 1
 
     def assertSuccessfulRequest(
         self,
         response: Union[DjangoWebtestResponse, "HttpResponse"],
-        obj: Optional[Certificate] = None,
+        obj: Certificate | None = None,
     ) -> None:
         obj = obj or self.cert
         obj.refresh_from_db()

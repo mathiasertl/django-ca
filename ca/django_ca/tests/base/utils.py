@@ -24,7 +24,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO, StringIO
-from typing import Any, Optional, Union
+from typing import Any
 from unittest import mock
 
 from pydantic import BaseModel
@@ -76,8 +76,8 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
     def get_create_private_key_options(
         self,
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[str],
+        key_size: int | None,
+        elliptic_curve: str | None,
         options: dict[str, Any],
     ) -> DummyModel:
         return DummyModel()
@@ -102,7 +102,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         return DummyModel()
 
     def is_usable(
-        self, ca: "CertificateAuthority", use_private_key_options: Optional[DummyModel] = None
+        self, ca: "CertificateAuthority", use_private_key_options: DummyModel | None = None
     ) -> bool:
         return True
 
@@ -114,7 +114,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         ca: "CertificateAuthority",
         use_private_key_options: DummyModel,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
     ) -> x509.CertificateRevocationList:
         return None  # type: ignore[return-value]
 
@@ -124,7 +124,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         use_private_key_options: DummyModel,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -148,7 +148,7 @@ def root_reverse(name: str, **kwargs: Any) -> str:
     return reverse(f"django_ca:{name}", kwargs=kwargs)
 
 
-def root_uri(name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
+def root_uri(name: str, hostname: str | None = None, **kwargs: Any) -> str:
     """Full URI with a root serial."""
     if not hostname:  # pragma: no branch
         hostname = SERVER_NAME
@@ -157,8 +157,8 @@ def root_uri(name: str, hostname: Optional[str] = None, **kwargs: Any) -> str:
 
 
 def authority_information_access(
-    ca_issuers: Optional[Iterable[x509.GeneralName]] = None,
-    ocsp: Optional[Iterable[x509.GeneralName]] = None,
+    ca_issuers: Iterable[x509.GeneralName] | None = None,
+    ocsp: Iterable[x509.GeneralName] | None = None,
     critical: bool = False,
 ) -> x509.Extension[x509.AuthorityInformationAccess]:
     """Shortcut for getting a AuthorityInformationAccess extension."""
@@ -184,7 +184,7 @@ def authority_information_access(
 
 
 def basic_constraints(
-    ca: bool = False, path_length: Optional[int] = None, critical: bool = True
+    ca: bool = False, path_length: int | None = None, critical: bool = True
 ) -> x509.Extension[x509.BasicConstraints]:
     """Shortcut for getting a BasicConstraints extension."""
     return x509.Extension(
@@ -209,28 +209,28 @@ def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> tuple[by
 
 @typing.overload
 def cmd(
-    *args: Any, stdout: BytesIO, stderr: Optional[StringIO] = None, **kwargs: Any
+    *args: Any, stdout: BytesIO, stderr: StringIO | None = None, **kwargs: Any
 ) -> tuple[bytes, str]: ...
 
 
 @typing.overload
 def cmd(
-    *args: Any, stdout: Optional[StringIO] = None, stderr: BytesIO, **kwargs: Any
+    *args: Any, stdout: StringIO | None = None, stderr: BytesIO, **kwargs: Any
 ) -> tuple[str, bytes]: ...
 
 
 @typing.overload
 def cmd(
-    *args: Any, stdout: Optional[StringIO] = None, stderr: Optional[StringIO] = None, **kwargs: Any
+    *args: Any, stdout: StringIO | None = None, stderr: StringIO | None = None, **kwargs: Any
 ) -> tuple[str, str]: ...
 
 
 def cmd(
     *args: Any,
-    stdout: Optional[Union[StringIO, BytesIO]] = None,
-    stderr: Optional[Union[StringIO, BytesIO]] = None,
+    stdout: StringIO | BytesIO | None = None,
+    stderr: StringIO | BytesIO | None = None,
     **kwargs: Any,
-) -> tuple[Union[str, bytes], Union[str, bytes]]:
+) -> tuple[str | bytes, str | bytes]:
     """Call to a manage.py command using call_command."""
     if stdout is None:
         stdout = StringIO()
@@ -256,9 +256,9 @@ def cmd(
 def cmd_e2e(
     args: typing.Sequence[str],
     *,
-    stdin: Optional[Union[StringIO, bytes]] = None,
-    stdout: Optional[StringIO] = None,
-    stderr: Optional[StringIO] = None,
+    stdin: StringIO | bytes | None = None,
+    stdout: StringIO | None = None,
+    stderr: StringIO | None = None,
 ) -> tuple[str, str]: ...
 
 
@@ -266,9 +266,9 @@ def cmd_e2e(
 def cmd_e2e(
     args: typing.Sequence[str],
     *,
-    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdin: StringIO | bytes | None = None,
     stdout: BytesIO,
-    stderr: Optional[StringIO] = None,
+    stderr: StringIO | None = None,
 ) -> tuple[bytes, str]: ...
 
 
@@ -276,8 +276,8 @@ def cmd_e2e(
 def cmd_e2e(
     args: typing.Sequence[str],
     *,
-    stdin: Optional[Union[StringIO, bytes]] = None,
-    stdout: Optional[StringIO] = None,
+    stdin: StringIO | bytes | None = None,
+    stdout: StringIO | None = None,
     stderr: BytesIO,
 ) -> tuple[str, bytes]: ...
 
@@ -286,7 +286,7 @@ def cmd_e2e(
 def cmd_e2e(
     args: typing.Sequence[str],
     *,
-    stdin: Optional[Union[StringIO, bytes]] = None,
+    stdin: StringIO | bytes | None = None,
     stdout: BytesIO,
     stderr: BytesIO,
 ) -> tuple[bytes, bytes]: ...
@@ -294,10 +294,10 @@ def cmd_e2e(
 
 def cmd_e2e(
     args: typing.Sequence[str],
-    stdin: Optional[Union[StringIO, bytes]] = None,
-    stdout: Optional[Union[BytesIO, StringIO]] = None,
-    stderr: Optional[Union[BytesIO, StringIO]] = None,
-) -> tuple[Union[str, bytes], Union[str, bytes]]:
+    stdin: StringIO | bytes | None = None,
+    stdout: BytesIO | StringIO | None = None,
+    stderr: BytesIO | StringIO | None = None,
+) -> tuple[str | bytes, str | bytes]:
     """Call a management command the way manage.py does.
 
     Unlike call_command, this method also tests the argparse configuration of the called command.
@@ -349,7 +349,7 @@ def crl_cache_key(
     only_contains_ca_certs: bool = False,
     only_contains_user_certs: bool = False,
     only_contains_attribute_certs: bool = False,
-    only_some_reasons: Optional[Iterable[x509.ReasonFlags]] = None,
+    only_some_reasons: Iterable[x509.ReasonFlags] | None = None,
 ) -> str:
     """Shortcut to get a CRL cache key."""
     return get_crl_cache_key(
@@ -371,10 +371,10 @@ def crl_distribution_points(
 
 
 def distribution_point(
-    full_name: Optional[Iterable[x509.GeneralName]] = None,
-    relative_name: Optional[x509.RelativeDistinguishedName] = None,
-    reasons: Optional[frozenset[x509.ReasonFlags]] = None,
-    crl_issuer: Optional[Iterable[x509.GeneralName]] = None,
+    full_name: Iterable[x509.GeneralName] | None = None,
+    relative_name: x509.RelativeDistinguishedName | None = None,
+    reasons: frozenset[x509.ReasonFlags] | None = None,
+    crl_issuer: Iterable[x509.GeneralName] | None = None,
 ) -> x509.DistributionPoint:
     """Shortcut for generating a single distribution point."""
     return x509.DistributionPoint(
@@ -435,13 +435,13 @@ def get_cert_context(name: str) -> dict[str, Any]:
 
 
 def get_idp(
-    full_name: Optional[Iterable[x509.GeneralName]] = None,
+    full_name: Iterable[x509.GeneralName] | None = None,
     indirect_crl: bool = False,
     only_contains_attribute_certs: bool = False,
     only_contains_ca_certs: bool = False,
     only_contains_user_certs: bool = False,
-    only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None,
-    relative_name: Optional[x509.RelativeDistinguishedName] = None,
+    only_some_reasons: frozenset[x509.ReasonFlags] | None = None,
+    relative_name: x509.RelativeDistinguishedName | None = None,
 ) -> "x509.Extension[x509.IssuingDistributionPoint]":
     """Get an IssuingDistributionPoint extension."""
     return x509.Extension(
@@ -491,8 +491,8 @@ def key_usage(**usages: bool) -> x509.Extension[x509.KeyUsage]:
 
 
 def name_constraints(
-    permitted: Optional[Iterable[x509.GeneralName]] = None,
-    excluded: Optional[Iterable[x509.GeneralName]] = None,
+    permitted: Iterable[x509.GeneralName] | None = None,
+    excluded: Iterable[x509.GeneralName] | None = None,
     critical: bool = True,
 ) -> x509.Extension[x509.NameConstraints]:
     """Shortcut for getting a NameConstraints extension."""
@@ -525,7 +525,7 @@ def subject_alternative_name(
 
 
 def subject_key_identifier(
-    cert: Union[X509CertMixin, x509.Certificate],
+    cert: X509CertMixin | x509.Certificate,
 ) -> x509.Extension[x509.SubjectKeyIdentifier]:
     """Shortcut for getting a SubjectKeyIdentifier extension."""
     if isinstance(cert, X509CertMixin):  # pragma: no branch - usually full certificate is passed.
@@ -559,7 +559,7 @@ def uri(url: str) -> x509.UniformResourceIdentifier:  # just a shortcut
 
 
 def ip(
-    name: Union[ipaddress.IPv4Address, ipaddress.IPv6Address, ipaddress.IPv4Network, ipaddress.IPv6Network],
+    name: ipaddress.IPv4Address | ipaddress.IPv6Address | ipaddress.IPv4Network | ipaddress.IPv6Network,
 ) -> x509.IPAddress:
     """Shortcut to get a :py:class:`cg:cryptography.x509.IPAddress`."""
     return x509.IPAddress(name)

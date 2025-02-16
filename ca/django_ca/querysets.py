@@ -135,7 +135,7 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
         self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar],
         *,
         now: datetime,
-        reasons: Optional[Iterable[x509.ReasonFlags]],
+        reasons: Iterable[x509.ReasonFlags] | None,
         grace_timedelta: timedelta = timedelta(minutes=10),
     ) -> X509CertMixinQuerySetProtocol[X509CertMixinTypeVar]:
         """Get certificates for a certificate revocation list (CRL).
@@ -268,7 +268,7 @@ class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
         return self.order_by("-number").first()
 
     def reasons(
-        self, only_some_reasons: Optional[frozenset[x509.ReasonFlags]]
+        self, only_some_reasons: frozenset[x509.ReasonFlags] | None
     ) -> "CertificateRevocationListQuerySet":
         """Return CRLs with the given set of reasons."""
         if only_some_reasons is None:
@@ -282,7 +282,7 @@ class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
         only_contains_ca_certs: bool = False,
         only_contains_user_certs: bool = False,
         only_contains_attribute_certs: bool = False,
-        only_some_reasons: Optional[frozenset[x509.ReasonFlags]] = None,
+        only_some_reasons: frozenset[x509.ReasonFlags] | None = None,
     ) -> "CertificateRevocationListQuerySet":
         """Return CRLs with the given scope."""
         return self.filter(

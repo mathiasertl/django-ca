@@ -16,7 +16,7 @@
 import abc
 import typing
 from textwrap import indent
-from typing import Any, NoReturn, Optional
+from typing import Any, NoReturn
 
 from pydantic import BaseModel, ValidationError
 
@@ -144,7 +144,7 @@ class CertCommandMixin(_Base, metaclass=abc.ABCMeta):
 class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
     """Mixin to add common arguments to commands that create or update a certificate authority."""
 
-    def add_general_args(self, parser: CommandParser, default: Optional[str] = "") -> ActionsContainer:
+    def add_general_args(self, parser: CommandParser, default: str | None = "") -> ActionsContainer:
         """Add some general arguments.
 
         Parameters
@@ -229,7 +229,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             help="Require email address during ACME account registration.",
         )
 
-    def add_ocsp_group(self, parser: CommandParser, default_ocsp_key_backend: Optional[str] = None) -> None:
+    def add_ocsp_group(self, parser: CommandParser, default_ocsp_key_backend: str | None = None) -> None:
         """Add arguments for automatic OCSP configuration."""
         group = parser.add_argument_group(
             "OCSP responder configuration",
@@ -325,8 +325,8 @@ class UsePrivateKeyMixin:
                 backend.add_use_private_key_arguments(group)
 
     def get_signing_options(
-        self, ca: CertificateAuthority, algorithm: Optional[AllowedHashTypes], options: dict[str, Any]
-    ) -> tuple[BaseModel, Optional[AllowedHashTypes]]:
+        self, ca: CertificateAuthority, algorithm: AllowedHashTypes | None, options: dict[str, Any]
+    ) -> tuple[BaseModel, AllowedHashTypes | None]:
         """Get variables required for signing a certificate."""
         try:
             key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)

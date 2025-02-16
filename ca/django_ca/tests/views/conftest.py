@@ -16,7 +16,6 @@
 import base64
 import typing
 from http import HTTPStatus
-from typing import Optional, Union
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -47,8 +46,8 @@ def generate_ocsp_key(ca: CertificateAuthority) -> tuple[CertificateIssuerPrivat
 
 def ocsp_get(
     client: Client,
-    certificate: Union[CertificateAuthority, Certificate],
-    nonce: Optional[bytes] = None,
+    certificate: CertificateAuthority | Certificate,
+    nonce: bytes | None = None,
     hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
 ) -> "HttpResponse":
     """Make an OCSP get request."""

@@ -19,7 +19,7 @@ import base64
 import ipaddress
 from datetime import timedelta
 from http import HTTPStatus
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -96,7 +96,7 @@ def sign_certificate(
     ca: CertificateAuthority,
     data: dict[str, Any],
     expected_response: dict[str, Any],
-    expected_algorithm: Optional[hashes.HashAlgorithm] = None,
+    expected_algorithm: hashes.HashAlgorithm | None = None,
 ) -> Certificate:
     """Common function to issue a certificate signing request."""
     data["csr"] = csr

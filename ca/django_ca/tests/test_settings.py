@@ -17,7 +17,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 from unittest import mock
 
 from cryptography import x509
@@ -65,12 +65,12 @@ class DummyView(View):
 
 
 def assert_url_config(
-    actual: list[Union[URLPattern, URLResolver]], expected: list[Union[URLPattern, URLResolver]]
+    actual: list[URLPattern | URLResolver], expected: list[URLPattern | URLResolver]
 ) -> None:
     """Assert that the URL patterns are equal."""
     assert len(actual) == len(expected)
 
-    for act, exp in zip(actual, expected):
+    for act, exp in zip(actual, expected, strict=False):
         # Assert that both have the same type (URLPattern == view(), URLResolver == include())
         assert type(act) is type(exp)
 
@@ -394,7 +394,7 @@ def test_ca_acme_cert_validity_timedelta_settings_as_int(settings: SettingsWrapp
     ),
 )
 def test_ca_acme_cert_validity_limits(
-    settings: SettingsWrapper, setting: str, value: Union[int, timedelta], message: str
+    settings: SettingsWrapper, setting: str, value: int | timedelta, message: str
 ) -> None:
     """Test limits for CA_ACME_DEFAULT_CERT_VALIDITY and CA_ACME_MAX_CERT_VALIDITY."""
     with assert_improperly_configured(message):

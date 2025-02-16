@@ -15,13 +15,13 @@
 
 import threading
 from types import TracebackType
-from typing import Final, Optional
+from typing import Final
 
 import pkcs11
 from pkcs11 import Session
 from pkcs11._pkcs11 import lib as pkcs11_lib
 
-PoolKeyType = tuple[str, str, Optional[str], Optional[str]]
+PoolKeyType = tuple[str, str, str | None, str | None]
 
 
 class SessionPool:
@@ -36,12 +36,12 @@ class SessionPool:
 
     path: Final[str]
     token_label: Final[str]
-    so_pin: Final[Optional[str]]
-    user_pin: Final[Optional[str]]
+    so_pin: Final[str | None]
+    user_pin: Final[str | None]
     rw: Final[bool]
 
     def __init__(
-        self, path: str, token_label: str, so_pin: Optional[str], user_pin: Optional[str], rw: bool = False
+        self, path: str, token_label: str, so_pin: str | None, user_pin: str | None, rw: bool = False
     ) -> None:
         if so_pin is None and user_pin is None:
             raise ValueError("so_pin and user_pin cannot both be None.")
@@ -59,8 +59,8 @@ class SessionPool:
         cls,
         path: str,
         token_label: str,
-        so_pin: Optional[str] = None,
-        user_pin: Optional[str] = None,
+        so_pin: str | None = None,
+        user_pin: str | None = None,
         rw: bool = False,
     ) -> Session:
         """Open a new session with the given parameters."""
@@ -92,7 +92,7 @@ class SessionPool:
             return cls._session_pool[pool_key]
 
     @classmethod
-    def release(cls, path: str, token_label: str, so_pin: Optional[str], user_pin: Optional[str]) -> None:
+    def release(cls, path: str, token_label: str, so_pin: str | None, user_pin: str | None) -> None:
         """Close session if no reference is known."""
         with cls._session_lock:
             pool_key = (path, token_label, so_pin, user_pin)
@@ -114,8 +114,8 @@ class SessionPool:
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         self.release(self.path, self.token_label, so_pin=self.so_pin, user_pin=self.user_pin)

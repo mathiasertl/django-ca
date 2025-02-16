@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterator
-from typing import Any, Optional, Union
+from typing import Any
 
 from cryptography import x509
 from cryptography.x509.certificate_transparency import LogEntryType, SignedCertificateTimestamp
@@ -35,7 +35,7 @@ from django_ca.utils import add_colons, bytes_to_hex, int_to_hex
 
 
 def extension_as_admin_html(
-    extension: CertificateExtension, extra_context: Optional[dict[str, Any]] = None
+    extension: CertificateExtension, extra_context: dict[str, Any] | None = None
 ) -> str:
     """Convert an extension to HTML code suitable for the admin interface."""
     template = f"django_ca/admin/extensions/{extension.oid.dotted_string}.html"
@@ -98,7 +98,7 @@ def signed_certificate_timestamp_values(sct: SignedCertificateTimestamp) -> tupl
     return entry_type, sct.version.name, bytes_to_hex(sct.log_id), sct.timestamp.isoformat(" ")
 
 
-def get_formatting_context(serial: int, signer_serial: int) -> dict[str, Union[int, str]]:
+def get_formatting_context(serial: int, signer_serial: int) -> dict[str, int | str]:
     """Get the context for formatting extensions."""
     hex_serial = int_to_hex(serial)
     signer_serial_hex = int_to_hex(signer_serial)
@@ -113,7 +113,7 @@ def get_formatting_context(serial: int, signer_serial: int) -> dict[str, Union[i
     }
 
 
-def format_general_name(name: x509.GeneralName, context: dict[str, Union[str, int]]) -> x509.GeneralName:
+def format_general_name(name: x509.GeneralName, context: dict[str, str | int]) -> x509.GeneralName:
     """Format a general name (currently only operating on UniformResourceIdentifier)."""
     if isinstance(name, x509.UniformResourceIdentifier):
         return x509.UniformResourceIdentifier(name.value.format(**context))
@@ -124,8 +124,8 @@ def format_extensions(
     # NOTE: dicts are invariant in mypy, so the type of the dict when calling this function needs to *exactly*
     #   match. That's why we typehint an essentially redundant union for extensions so that any of the types
     #   can be used.
-    extensions: Union[ConfigurableExtensionDict, EndEntityCertificateExtensionDict, CertificateExtensionDict],
-    context: dict[str, Union[str, int]],
+    extensions: ConfigurableExtensionDict | EndEntityCertificateExtensionDict | CertificateExtensionDict,
+    context: dict[str, str | int],
 ) -> None:
     """Format extensions based on the given context."""
     if ExtensionOID.AUTHORITY_INFORMATION_ACCESS in extensions:

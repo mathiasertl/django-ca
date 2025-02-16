@@ -26,7 +26,7 @@ import typing
 from collections.abc import Iterable
 from datetime import datetime, timezone as tz
 from http import HTTPStatus
-from typing import Generic, Optional, TypeVar, Union, cast
+from typing import Generic, TypeVar, cast
 
 import acme.jws
 import josepy as jose
@@ -85,7 +85,7 @@ from django_ca.utils import check_name, int_to_hex
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
-DirectoryMetaAlias = dict[str, Union[str, list[str]]]
+DirectoryMetaAlias = dict[str, str | list[str]]
 
 
 if typing.TYPE_CHECKING:
@@ -145,7 +145,7 @@ class AcmeDirectory(View):
     def _url(self, request: HttpRequest, name: str, ca: CertificateAuthority) -> str:
         return request.build_absolute_uri(reverse(f"django_ca:{name}", kwargs={"serial": ca.serial}))
 
-    def get(self, request: HttpRequest, serial: Optional[str] = None) -> HttpResponse:
+    def get(self, request: HttpRequest, serial: str | None = None) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
@@ -167,7 +167,7 @@ class AcmeDirectory(View):
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
         rnd = jose.json_util.encode_b64jose(secrets.token_bytes(16))
 
-        directory: dict[str, Union[str, DirectoryMetaAlias]] = {
+        directory: dict[str, str | DirectoryMetaAlias] = {
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
             "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
             "newAccount": self._url(request, "acme-new-account", ca),
@@ -237,7 +237,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     jws: acme.jws.JWS
 
     @abc.abstractmethod
-    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+    def process_acme_request(self, slug: str | None) -> AcmeResponse:
         """Abstract method expected to implement processing a message.
 
         The `slug` argument is the URL slug that identifies an ACME object and is None for requests that
@@ -298,7 +298,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     #        with open(prepared_path, 'w') as stream:
     #            json.dump(prepared_data, stream, indent=4)
 
-    def dispatch(self, request: HttpRequest, serial: str, slug: Optional[str] = None) -> "HttpResponseBase":
+    def dispatch(self, request: HttpRequest, serial: str, slug: str | None = None) -> "HttpResponseBase":
         if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -328,7 +328,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         return response
 
     def post(  # noqa: PLR0911
-        self, request: HttpRequest, serial: str, slug: Optional[str] = None
+        self, request: HttpRequest, serial: str, slug: str | None = None
     ) -> AcmeResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
@@ -439,7 +439,7 @@ class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
         contain no information.
         """
 
-    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+    def process_acme_request(self, slug: str | None) -> AcmeResponse:
         if self.ignore_body is False and self.jws.payload != b"":
             return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
         if slug is None:  # pragma: no cover; just a safety measure
@@ -454,13 +454,13 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
     message_cls: type[MessageTypeVar]
 
     @abc.abstractmethod
-    def acme_request(self, message: MessageTypeVar, slug: Optional[str]) -> AcmeResponse:
+    def acme_request(self, message: MessageTypeVar, slug: str | None) -> AcmeResponse:
         """Process ACME request.
 
         Actual view subclasses are expected to implement this function.
         """
 
-    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:
+    def process_acme_request(self, slug: str | None) -> AcmeResponse:
         try:
             message = self.message_cls.json_loads(self.jws.payload)
             log.debug("ACME message: %s", message)
@@ -532,7 +532,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
     message_cls = messages.Registration
     requires_key = True
 
-    def acme_request(self, message: messages.Registration, slug: Optional[str]) -> AcmeResponseAccount:
+    def acme_request(self, message: messages.Registration, slug: str | None) -> AcmeResponseAccount:
         """Process ACME request."""
         pem = (
             self.jwk.key.public_bytes(
@@ -662,7 +662,7 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
             order__account=account, status=AcmeAuthorization.STATUS_PENDING
         ).update(status=AcmeAuthorization.STATUS_DEACTIVATED)
 
-    def acme_request(self, message: messages.Registration, slug: Optional[str] = None) -> AcmeResponseAccount:
+    def acme_request(self, message: messages.Registration, slug: str | None = None) -> AcmeResponseAccount:
         if slug != self.account.slug:
             raise AcmeMalformed(message="Account slug does not match account that signed the request.")
 
@@ -685,7 +685,7 @@ class AcmeAccountOrdersView(AcmeBaseView):
     """View showing orders for an account (not yet implemented)."""
 
     # TODO: implement this view
-    def process_acme_request(self, slug: Optional[str]) -> AcmeResponse:  # pragma: no cover
+    def process_acme_request(self, slug: str | None) -> AcmeResponse:  # pragma: no cover
         raise AcmeException(message="Not Implemented.")
 
 
@@ -708,8 +708,8 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
     @transaction.atomic
     def _create_order(
         self,
-        not_before: Optional[datetime],
-        not_after: Optional[datetime],
+        not_before: datetime | None,
+        not_after: datetime | None,
         identifiers: list[messages.Identifier],
     ) -> tuple[AcmeOrder, list[str]]:
         order = AcmeOrder.objects.create(account=self.account, not_before=not_before, not_after=not_after)
@@ -718,14 +718,14 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         ]
         return order, authorizations
 
-    def acme_request(self, message: NewOrder, slug: Optional[str] = None) -> AcmeResponseOrderCreated:
+    def acme_request(self, message: NewOrder, slug: str | None = None) -> AcmeResponseOrderCreated:
         """Process ACME request."""
         now = datetime.now(tz.utc)
 
         # josepy message classes define field names as class variables, but instance attributes are of the
         # same type (similar to Django). So we cast josepy fields to the actual type.
-        not_before = cast(Optional[datetime], message.not_before)
-        not_after = cast(Optional[datetime], message.not_after)
+        not_before = cast(datetime | None, message.not_before)
+        not_after = cast(datetime | None, message.not_after)
         # TODO: test if identifiers are acceptable
         identifiers = typing.cast(list[messages.Identifier], message.identifiers)
 
@@ -900,7 +900,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         # https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
         transaction.on_commit(lambda: run_task(acme_issue_certificate, acme_certificate_pk=cert.pk))
 
-    def acme_request(self, message: CertificateRequest, slug: Optional[str]) -> AcmeResponseOrder:
+    def acme_request(self, message: CertificateRequest, slug: str | None) -> AcmeResponseOrder:
         """Process ACME request."""
         try:
             order = AcmeOrder.objects.viewable().account(account=self.account).url().get(slug=slug)
@@ -1193,7 +1193,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
 
         return cert
 
-    def acme_request(self, message: messages.Revocation, slug: Optional[str]) -> AcmeResponse:
+    def acme_request(self, message: messages.Revocation, slug: str | None) -> AcmeResponse:
         reason_code = message.reason
         if reason_code is None:
             reason_code = 0
