@@ -13,9 +13,9 @@
 
 """django-ca root module."""
 
-from typing import Any, Union
+from typing import Any
 
-VersionTuple = Union[tuple[int, int, int], tuple[int, int, int, str, int]]
+VersionTuple = tuple[int, int, int] | tuple[int, int, int, str, int]
 
 # WARNING: This module MUST NOT include any dependencies, as it is read by setup.py
 

@@ -291,14 +291,12 @@ def test_hsm_store_key(ca_name: str, subject: x509.Name) -> None:
         # Assert basic private key properties
         assert isinstance(
             private_key,
-            (
-                PKCS11RSAPrivateKey,
-                PKCS11EllipticCurvePrivateKey,
-                PKCS11Ed25519PrivateKey,
-                PKCS11Ed448PrivateKey,
-            ),
+            PKCS11RSAPrivateKey
+            | PKCS11EllipticCurvePrivateKey
+            | PKCS11Ed25519PrivateKey
+            | PKCS11Ed448PrivateKey,
         )
-        if isinstance(private_key, (PKCS11RSAPrivateKey, PKCS11EllipticCurvePrivateKey)):
+        if isinstance(private_key, PKCS11RSAPrivateKey | PKCS11EllipticCurvePrivateKey):
             assert private_key.key_size == ca_data["pub"]["parsed"].public_key().key_size
         if isinstance(private_key, PKCS11EllipticCurvePrivateKey):
             assert private_key.curve == ca_data["pub"]["parsed"].public_key().curve

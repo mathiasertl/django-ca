@@ -315,7 +315,7 @@ class HSMBackend(
                 serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
             pub_attrs = decode_ec_public_key(pub_der)
-        elif isinstance(key, (ed448.Ed448PrivateKey, ed25519.Ed25519PrivateKey)):
+        elif isinstance(key, ed448.Ed448PrivateKey | ed25519.Ed25519PrivateKey):
             if isinstance(key, ed448.Ed448PrivateKey):
                 key_type = "Ed448"
             else:

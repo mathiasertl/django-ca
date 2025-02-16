@@ -1000,7 +1000,19 @@ def validate_cryptography_extensions(v: Any, info: ValidationInfo) -> Any:
 #: Union type for extensions that may occur as input when signing a certificate.
 ConfigurableExtensionModel = Annotated[
     Annotated[
-        AdmissionsModel | AuthorityInformationAccessModel | CertificatePoliciesModel | CRLDistributionPointsModel | ExtendedKeyUsageModel | FreshestCRLModel | IssuerAlternativeNameModel | KeyUsageModel | MSCertificateTemplateModel | OCSPNoCheckModel | PrecertPoisonModel | SubjectAlternativeNameModel | TLSFeatureModel,
+        AdmissionsModel
+        | AuthorityInformationAccessModel
+        | CertificatePoliciesModel
+        | CRLDistributionPointsModel
+        | ExtendedKeyUsageModel
+        | FreshestCRLModel
+        | IssuerAlternativeNameModel
+        | KeyUsageModel
+        | MSCertificateTemplateModel
+        | OCSPNoCheckModel
+        | PrecertPoisonModel
+        | SubjectAlternativeNameModel
+        | TLSFeatureModel,
         Field(discriminator="type"),
     ],
     BeforeValidator(validate_cryptography_extensions),
@@ -1009,7 +1021,29 @@ ConfigurableExtensionModel = Annotated[
 #: Union type for all known extensions that may occur in any type of certificate.
 CertificateExtensionModel = Annotated[
     Annotated[
-        AdmissionsModel | AuthorityInformationAccessModel | AuthorityKeyIdentifierModel | BasicConstraintsModel | CRLDistributionPointsModel | CertificatePoliciesModel | ExtendedKeyUsageModel | FreshestCRLModel | InhibitAnyPolicyModel | IssuerAlternativeNameModel | KeyUsageModel | MSCertificateTemplateModel | NameConstraintsModel | OCSPNoCheckModel | PolicyConstraintsModel | PrecertPoisonModel | PrecertificateSignedCertificateTimestampsModel | SignedCertificateTimestampsModel | SubjectAlternativeNameModel | SubjectInformationAccessModel | SubjectKeyIdentifierModel | TLSFeatureModel | UnrecognizedExtensionModel,
+        AdmissionsModel
+        | AuthorityInformationAccessModel
+        | AuthorityKeyIdentifierModel
+        | BasicConstraintsModel
+        | CRLDistributionPointsModel
+        | CertificatePoliciesModel
+        | ExtendedKeyUsageModel
+        | FreshestCRLModel
+        | InhibitAnyPolicyModel
+        | IssuerAlternativeNameModel
+        | KeyUsageModel
+        | MSCertificateTemplateModel
+        | NameConstraintsModel
+        | OCSPNoCheckModel
+        | PolicyConstraintsModel
+        | PrecertPoisonModel
+        | PrecertificateSignedCertificateTimestampsModel
+        | SignedCertificateTimestampsModel
+        | SubjectAlternativeNameModel
+        | SubjectInformationAccessModel
+        | SubjectKeyIdentifierModel
+        | TLSFeatureModel
+        | UnrecognizedExtensionModel,
         Field(discriminator="type"),
     ],
     BeforeValidator(validate_cryptography_extensions),

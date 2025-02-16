@@ -13,7 +13,6 @@
 
 """Test the cache_crls management command."""
 
-
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.cache import cache

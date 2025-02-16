@@ -181,7 +181,7 @@ class GeneralNameKeyValueWidget(KeyValueWidget):
     key_key = "type"
 
     def format_value(self, value: Any) -> str:
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, list | tuple):
             models = GeneralNameModelList.validate_python(value)
             value = [m.model_dump(mode="json") for m in models]
 

@@ -220,7 +220,7 @@ def timedelta_as_number_parser(unit: Literal["seconds", "hours", "days"] = "seco
     """
 
     def validator(value: Any) -> Any:
-        if isinstance(value, (float, int)):
+        if isinstance(value, float | int):
             return timedelta(**{unit: value})  # type: ignore[misc]  # mypy complains that unit is not a str
         return value
 

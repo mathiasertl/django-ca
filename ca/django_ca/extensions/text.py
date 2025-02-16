@@ -229,15 +229,15 @@ def _tls_feature_as_text(value: x509.TLSFeature) -> str:
 
 def extension_as_text(value: x509.ExtensionType) -> str:  # noqa: PLR0911
     """Return the given extension value as human-readable text."""
-    if isinstance(value, (x509.OCSPNoCheck, x509.PrecertPoison)):
+    if isinstance(value, x509.OCSPNoCheck | x509.PrecertPoison):
         return "Yes"  # no need for extra function
-    if isinstance(value, (x509.FreshestCRL, x509.CRLDistributionPoints)):
+    if isinstance(value, x509.FreshestCRL | x509.CRLDistributionPoints):
         return _distribution_points_as_text(value)
-    if isinstance(value, (x509.IssuerAlternativeName, x509.SubjectAlternativeName)):
+    if isinstance(value, x509.IssuerAlternativeName | x509.SubjectAlternativeName):
         return "\n".join(f"* {format_general_name(name)}" for name in value)
-    if isinstance(value, (x509.PrecertificateSignedCertificateTimestamps, x509.SignedCertificateTimestamps)):
+    if isinstance(value, x509.PrecertificateSignedCertificateTimestamps | x509.SignedCertificateTimestamps):
         return _signed_certificate_timestamps_as_text(value)
-    if isinstance(value, (x509.AuthorityInformationAccess, x509.SubjectInformationAccess)):
+    if isinstance(value, x509.AuthorityInformationAccess | x509.SubjectInformationAccess):
         return _authority_information_access_as_text(value)
     if isinstance(value, x509.Admissions):
         return _admissions_as_text(value)

@@ -13,11 +13,9 @@
 
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
 
-from typing import Union
-
 import semantic_version
 
-VersionTuple = Union[tuple[int, int, int], tuple[int, int, int, str, int]]
+VersionTuple = tuple[int, int, int] | tuple[int, int, int, str, int]
 
 
 def get_semantic_version(version: VersionTuple | None = None) -> semantic_version.Version:

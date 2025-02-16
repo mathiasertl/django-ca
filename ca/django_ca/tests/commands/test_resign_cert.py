@@ -64,9 +64,7 @@ def resign_cert(serial: str, **kwargs: Any) -> tuple[str, str]:
     return cmd("resign_cert", serial, **kwargs)
 
 
-def assert_resigned(
-    old: Certificate, new: Certificate, new_ca: CertificateAuthority | None = None
-) -> None:
+def assert_resigned(old: Certificate, new: Certificate, new_ca: CertificateAuthority | None = None) -> None:
     """Assert that the resigned certificate matches the old cert."""
     new_ca = new_ca or old.ca
     issuer = new_ca.subject
@@ -78,9 +76,7 @@ def assert_resigned(
     assert issuer == new.issuer
 
 
-def assert_equal_ext(
-    old: Certificate, new: Certificate, new_ca: CertificateAuthority | None = None
-) -> None:
+def assert_equal_ext(old: Certificate, new: Certificate, new_ca: CertificateAuthority | None = None) -> None:
     """Assert that the extensions in both certs are equal."""
     new_ca = new_ca or old.ca
     assert old.subject == new.subject

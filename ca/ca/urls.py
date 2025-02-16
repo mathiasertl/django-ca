@@ -13,7 +13,6 @@
 
 """Root URL configuration for the django-ca Django project."""
 
-
 from django.conf import settings
 from django.contrib import admin
 from django.urls import URLPattern, URLResolver, include, path

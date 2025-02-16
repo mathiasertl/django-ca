@@ -77,8 +77,8 @@ def assert_url_config(
         # assert both callbacks have `view_class` set (== class-based view) or not.
         assert hasattr(act.callback, "view_class") is hasattr(exp.callback, "view_class")
 
-        assert isinstance(act, (URLPattern, URLResolver))
-        assert isinstance(exp, (URLPattern, URLResolver))
+        assert isinstance(act, URLPattern | URLResolver)
+        assert isinstance(exp, URLPattern | URLResolver)
         assert str(act.pattern) == str(exp.pattern)  # checks the route
 
         # Need different tests for class-based and function-based views:

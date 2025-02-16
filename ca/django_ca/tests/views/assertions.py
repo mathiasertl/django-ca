@@ -41,7 +41,7 @@ def assert_ocsp_signature(public_key: CertificateIssuerPublicKeyTypes, response:
     elif isinstance(public_key, dsa.DSAPublicKey):
         hash_algorithm = cast(hashes.HashAlgorithm, hash_algorithm)  # to make mypy happy
         public_key.verify(response.signature, tbs_response, hash_algorithm)
-    elif isinstance(public_key, (ed25519.Ed25519PublicKey, ed448.Ed448PublicKey)):
+    elif isinstance(public_key, ed25519.Ed25519PublicKey | ed448.Ed448PublicKey):
         public_key.verify(response.signature, tbs_response)
     else:  # pragma: no cover
         # All valid types should be implemented, but if you see this happen, go here:

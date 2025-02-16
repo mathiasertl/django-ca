@@ -731,7 +731,7 @@ def test_sign_data_with_default_parameters(usable_ca: CertificateAuthority, data
         public_key.verify(signature, data, algorithm)
     elif isinstance(public_key, ec.EllipticCurvePublicKey):
         public_key.verify(signature, data, ec.ECDSA(hashes.SHA512()))
-    elif isinstance(public_key, (ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)):
+    elif isinstance(public_key, ed448.Ed448PublicKey | ed25519.Ed25519PublicKey):
         public_key.verify(signature, data)
     else:
         raise ValueError("Unknown key type encountered.")

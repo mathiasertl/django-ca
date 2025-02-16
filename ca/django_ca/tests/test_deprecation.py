@@ -86,9 +86,7 @@ def test_deprecated_argument_not_passed(warning: DeprecationWarningType) -> None
 
 @pytest.mark.parametrize("typ", (int, (int, set)))
 @pytest.mark.parametrize("warning", WARNING_TYPES)
-def test_deprecate_type(
-    typ: type[Any] | tuple[type[Any], ...], warning: DeprecationWarningType
-) -> None:
+def test_deprecate_type(typ: type[Any] | tuple[type[Any], ...], warning: DeprecationWarningType) -> None:
     """Test the deprecate_type() operator."""
     version = re.escape(warning.version)
     match = rf"^Passing int for arg is deprecated and will be removed in django-ca {version}\.$"

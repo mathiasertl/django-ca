@@ -13,7 +13,6 @@
 
 """Utility functions for HSMs."""
 
-
 from pkcs11 import Attribute, KeyType, ObjectClass
 from pkcs11.util.ec import encode_named_curve_parameters
 
