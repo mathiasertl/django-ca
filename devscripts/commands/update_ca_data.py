@@ -18,7 +18,6 @@ import os
 import typing
 from collections.abc import Iterable, Sequence
 from datetime import timedelta
-from typing import Optional, Union
 
 from tabulate import tabulate
 
@@ -30,7 +29,7 @@ from devscripts.commands import DevCommand
 from devscripts.out import warn
 
 
-def format_name(name: Union[x509.Name, x509.RelativeDistinguishedName]) -> str:
+def format_name(name: x509.Name | x509.RelativeDistinguishedName) -> str:
     """Wrapper around format_name_rfc4514 avoiding a top-level import."""
     from django_ca.utils import format_name_rfc4514  # pylint: disable=import-outside-toplevel
 
@@ -59,7 +58,7 @@ class CertInfo(_CertInfo, total=False):
 
 
 def optional(
-    value: Optional[T], formatter: Optional[typing.Callable[[T], str]] = None, fallback: str = ""
+    value: T | None, formatter: typing.Callable[[T], str] | None = None, fallback: str = ""
 ) -> str:
     """Small function to get a value if set or a fallback."""
     if not value:
@@ -253,7 +252,7 @@ def ref_as_str(ref: x509.NoticeReference) -> str:
     return f"{ref.organization}: {', '.join(numbers)}"
 
 
-def policy_as_str(policy: Union[str, x509.UserNotice]) -> str:
+def policy_as_str(policy: str | x509.UserNotice) -> str:
     """Convert a CertificatePolicies policy to a str."""
     if isinstance(policy, str):
         return policy

@@ -56,8 +56,8 @@ def assert_validation_errors(
 
 
 def assert_validation_errors(
-    model_class: Union[type[CryptographyModelTypeVar], type[CryptographyRootModelTypeVar]],
-    parameters: Union[list[dict[str, Any]], dict[str, Any]],
+    model_class: type[CryptographyModelTypeVar] | type[CryptographyRootModelTypeVar],
+    parameters: list[dict[str, Any]] | dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:
     """Assertion method to test validation errors."""
@@ -69,7 +69,7 @@ def assert_validation_errors(
 
     errors = ex_info.value.errors()
     assert len(expected_errors) == len(errors)
-    for expected, actual in zip(expected_errors, errors):
+    for expected, actual in zip(expected_errors, errors, strict=False):
         assert expected[0] == actual["type"]
         assert expected[1] == actual["loc"]
         if isinstance(expected[2], str):

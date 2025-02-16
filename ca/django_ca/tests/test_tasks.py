@@ -20,7 +20,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
-from typing import Optional, Union
 from unittest import mock
 
 import dns.resolver
@@ -131,11 +130,11 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
     @contextmanager
     def mock_challenge(
         self,
-        challenge: Optional[AcmeChallenge] = None,
+        challenge: AcmeChallenge | None = None,
         status: int = HTTPStatus.OK,
-        content: Optional[bytes] = None,
+        content: bytes | None = None,
         call_count: int = 1,
-        token: Optional[str] = None,
+        token: str | None = None,
     ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock the client fullfilling the challenge."""
         raise NotImplementedError
@@ -243,11 +242,11 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
     @contextmanager
     def mock_challenge(
         self,
-        challenge: Optional[AcmeChallenge] = None,
+        challenge: AcmeChallenge | None = None,
         status: int = HTTPStatus.OK,
-        content: Optional[Union[io.BytesIO, bytes]] = None,
+        content: io.BytesIO | bytes | None = None,
         call_count: int = 1,
-        token: Optional[str] = None,
+        token: str | None = None,
     ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
         challenge = challenge or self.chall
@@ -301,11 +300,11 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
     @contextmanager
     def mock_challenge(
         self,
-        challenge: Optional[AcmeChallenge] = None,
+        challenge: AcmeChallenge | None = None,
         status: int = HTTPStatus.OK,
-        content: Optional[bytes] = None,
+        content: bytes | None = None,
         call_count: int = 1,
-        token: Optional[str] = None,
+        token: str | None = None,
     ) -> Iterator[requests_mock.mocker.Mocker]:
         """Mock a request to satisfy an ACME challenge."""
         dns.resolver.reset_default_resolver()

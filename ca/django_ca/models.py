@@ -25,7 +25,7 @@ import re
 import typing
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta, timezone as tz
-from typing import Literal, Optional, Union, cast
+from typing import Literal, Optional, cast
 
 import josepy as jose
 from acme import challenges, messages
@@ -166,7 +166,7 @@ def ocsp_key_backend_options_default() -> OCSPKeyBackendDict:
 class ReasonEncoder(json.JSONEncoder):
     """Encoder for revocation reasons."""
 
-    def default(self, o: Union[x509.ReasonFlags, Iterable[x509.ReasonFlags]]) -> Union[str, list[str]]:
+    def default(self, o: x509.ReasonFlags | Iterable[x509.ReasonFlags]) -> str | list[str]:
         if isinstance(o, Iterable):
             return sorted(elem.name for elem in o)
         # if isinstance(o, x509.ReasonFlags):
@@ -288,7 +288,7 @@ class X509CertMixin(DjangoCAModel):
     # Properties here are shortcuts to properties of the loaded certificate.
 
     @property
-    def algorithm(self) -> Optional[AllowedHashTypes]:
+    def algorithm(self) -> AllowedHashTypes | None:
         """A shortcut for :py:attr:`~cg:cryptography.x509.Certificate.signature_hash_algorithm`."""
         return typing.cast(AllowedHashTypes, self.pub.loaded.signature_hash_algorithm)
 
@@ -329,7 +329,7 @@ class X509CertMixin(DjangoCAModel):
         return "".join(c.pub.pem for c in self.bundle)  # type:  ignore[attr-defined]
 
     @property
-    def jwk(self) -> Union[jose.jwk.JWKRSA, jose.jwk.JWKEC]:
+    def jwk(self) -> jose.jwk.JWKRSA | jose.jwk.JWKEC:
         """Get a JOSE JWK public key for this certificate.
 
         .. NOTE::
@@ -351,14 +351,14 @@ class X509CertMixin(DjangoCAModel):
             raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
         return jwk
 
-    def get_revocation_reason(self) -> Optional[x509.ReasonFlags]:
+    def get_revocation_reason(self) -> x509.ReasonFlags | None:
         """Get the revocation reason of this certificate."""
         if self.revoked is False:
             return None
 
         return x509.ReasonFlags[self.revoked_reason]
 
-    def get_compromised_time(self) -> Optional[datetime]:
+    def get_compromised_time(self) -> datetime | None:
         """Return when this certificate was compromised.
 
         Returns ``None`` if the time is not known **or** if the certificate is not revoked.
@@ -372,7 +372,7 @@ class X509CertMixin(DjangoCAModel):
 
         return self.compromised
 
-    def get_revocation_time(self) -> Optional[datetime]:
+    def get_revocation_time(self) -> datetime | None:
         """Get the revocation time."""
         if self.revoked is False:
             return None
@@ -453,7 +453,7 @@ class X509CertMixin(DjangoCAModel):
         return revoked_cert.build()
 
     def revoke(
-        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: Optional[datetime] = None
+        self, reason: ReasonFlags = ReasonFlags.unspecified, compromised: datetime | None = None
     ) -> None:
         """Revoke the current certificate.
 
@@ -632,7 +632,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             self._ocsp_key_backend = ocsp_key_backends[self.ocsp_key_backend_alias]
         return self._ocsp_key_backend
 
-    def is_usable(self, options: Optional[BaseModel] = None) -> bool:
+    def is_usable(self, options: BaseModel | None = None) -> bool:
         """Shortcut determining if the certificate authority can be used for signing."""
         return self.key_backend.is_usable(self, options)
 
@@ -727,10 +727,10 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         key_backend_options: BaseModel,
         csr: x509.CertificateSigningRequest,
         subject: x509.Name,
-        algorithm: Optional[AllowedHashTypes] = None,
-        not_after: Optional[datetime] = None,
-        expires: Optional[datetime] = None,
-        extensions: Optional[list[ConfigurableExtension]] = None,
+        algorithm: AllowedHashTypes | None = None,
+        not_after: datetime | None = None,
+        expires: datetime | None = None,
+        extensions: list[ConfigurableExtension] | None = None,
     ) -> x509.Certificate:
         """Create a signed certificate.
 
@@ -822,10 +822,10 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     def sign_data(
         self,
         data: bytes,
-        key_backend_options: Optional[BaseModel] = None,
-        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
-        padding: Optional[AsymmetricPadding] = None,
-        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+        key_backend_options: BaseModel | None = None,
+        algorithm: hashes.HashAlgorithm | Prehashed | None = None,
+        padding: AsymmetricPadding | None = None,
+        signature_algorithm: ec.EllipticCurveSignatureAlgorithm | None = None,
     ) -> bytes:
         """Shortcut to sign data using this certificate authority with its key backend.
 
@@ -886,13 +886,13 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     def generate_ocsp_key(
         self,
         key_backend_options: BaseModel,
-        key_type: Optional[ParsableKeyType] = None,
-        key_size: Optional[int] = None,
-        elliptic_curve: Optional[ec.EllipticCurve] = None,
+        key_type: ParsableKeyType | None = None,
+        key_size: int | None = None,
+        elliptic_curve: ec.EllipticCurve | None = None,
         profile: str = "ocsp",
-        algorithm: Optional[AllowedHashTypes] = None,
-        not_after: Optional[Union[datetime, timedelta]] = None,
-        expires: Optional[Union[datetime, timedelta]] = None,
+        algorithm: AllowedHashTypes | None = None,
+        not_after: datetime | timedelta | None = None,
+        expires: datetime | timedelta | None = None,
         autogenerated: bool = True,
         force: bool = False,
     ) -> Optional["Certificate"]:
@@ -1071,12 +1071,12 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         self,
         key_backend_options: BaseModel,
         expires: int = 86400,
-        algorithm: Optional[AllowedHashTypes] = None,  # pylint: disable=unused-argument
-        scope: Optional[Literal[None, "ca", "user", "attribute"]] = None,
-        counter: Optional[str] = None,  # pylint: disable=unused-argument
-        full_name: Optional[Iterable[x509.GeneralName]] = None,  # pylint: disable=unused-argument
-        relative_name: Optional[x509.RelativeDistinguishedName] = None,  # pylint: disable=unused-argument
-        include_issuing_distribution_point: Optional[bool] = None,  # pylint: disable=unused-argument
+        algorithm: AllowedHashTypes | None = None,  # pylint: disable=unused-argument
+        scope: Literal[None, "ca", "user", "attribute"] | None = None,
+        counter: str | None = None,  # pylint: disable=unused-argument
+        full_name: Iterable[x509.GeneralName] | None = None,  # pylint: disable=unused-argument
+        relative_name: x509.RelativeDistinguishedName | None = None,  # pylint: disable=unused-argument
+        include_issuing_distribution_point: bool | None = None,  # pylint: disable=unused-argument
     ) -> x509.CertificateRevocationList:
         """Generate a Certificate Revocation List (CRL).
 
@@ -1111,7 +1111,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         return crl.loaded
 
     @property
-    def path_length(self) -> Optional[int]:
+    def path_length(self) -> int | None:
         """The ``path_length`` attribute of the ``BasicConstraints`` extension."""
         try:
             ext = self.pub.loaded.extensions.get_extension_for_class(x509.BasicConstraints)
@@ -1120,7 +1120,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         return ext.value.path_length
 
     @property
-    def max_path_length(self) -> Optional[int]:
+    def max_path_length(self) -> int | None:
         """The maximum `path length` for any intermediate CAs signed by this CA.
 
         This value is either ``None``, if this and all parent CAs don't have a ``path_length`` attribute, or
@@ -1302,7 +1302,7 @@ class CertificateRevocationList(DjangoCAModel):
         """The CRL encoded in PEM format."""
         return self.loaded.public_bytes(Encoding.PEM)
 
-    def _cache_data(self, serial: Optional[str] = None) -> Iterator[tuple[str, bytes, int]]:
+    def _cache_data(self, serial: str | None = None) -> Iterator[tuple[str, bytes, int]]:
         if self.data is None:
             raise ValueError("CRL is not yet generated for this object.")
 
@@ -1337,7 +1337,7 @@ class CertificateRevocationList(DjangoCAModel):
 
             yield cache_key, encoded_crl, expires_seconds
 
-    def cache(self, serial: Optional[str] = None) -> None:
+    def cache(self, serial: str | None = None) -> None:
         """Cache this instance.
 
         If `serial` is not given, `self.ca` will be accessed (possibly triggering a database query) to
@@ -1790,7 +1790,7 @@ class AcmeChallenge(DjangoCAModel):
         raise ValueError(f"{self.type}: Unsupported challenge type.")
 
     @property
-    def acme_validated(self) -> Optional[datetime]:
+    def acme_validated(self) -> datetime | None:
         """Timestamp when this challenge was validated.
 
         This property is a wrapper around the `validated` field. It always returns `None` if the challenge is

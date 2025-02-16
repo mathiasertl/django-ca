@@ -15,7 +15,7 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pkcs11 import Session
 
@@ -57,8 +57,8 @@ class HSMOCSPBackend(HSMKeyBackendMixin, OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[ec.EllipticCurve],
+        key_size: int | None,
+        elliptic_curve: ec.EllipticCurve | None,
     ) -> x509.CertificateSigningRequest:
         key_id = int_to_hex(x509.random_serial_number())
         key_label = f"ocsp_{key_id}"
@@ -92,7 +92,7 @@ class HSMOCSPBackend(HSMKeyBackendMixin, OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: Optional[AllowedHashTypes],
+        signature_hash_algorithm: AllowedHashTypes | None,
     ) -> OCSPResponse:
         key_id = ca.ocsp_key_backend_options["private_key"]["key_id"]
         key_label = ca.ocsp_key_backend_options["private_key"]["key_label"]

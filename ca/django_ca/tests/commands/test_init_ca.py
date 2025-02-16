@@ -16,7 +16,7 @@
 import io
 import re
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 from unittest.mock import patch
 
@@ -154,7 +154,7 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
 
 
 def init_ca_e2e(
-    name: str, subject: str, *args: str, chain: Optional[list[CertificateAuthority]] = None
+    name: str, subject: str, *args: str, chain: list[CertificateAuthority] | None = None
 ) -> CertificateAuthority:
     """Run a init_ca command via cmd_e2e()."""
     if chain is None:

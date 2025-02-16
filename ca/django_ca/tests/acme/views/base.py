@@ -16,7 +16,6 @@
 import abc
 import typing
 from http import HTTPStatus
-from typing import Optional, Union
 from unittest import mock
 
 import acme
@@ -75,7 +74,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         url: str,
         message: MessageTypeVar,
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
     ) -> None:
         """Test sending an unknown nonce."""
         resp = acme_request(client, url, root, message, nonce=b"foo", kid=kid)
@@ -85,9 +84,9 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         self,
         client: Client,
         url: str,
-        message: Union[bytes, MessageTypeVar],
+        message: bytes | MessageTypeVar,
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
     ) -> None:
         """Test sending a nonce twice."""
         nonce = get_nonce(client, root)
@@ -160,7 +159,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         url: str,
         message: MessageTypeVar,
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
         account_slug: str,
     ) -> None:
         """Send a KID where a JWK is required and vice versa."""
@@ -181,7 +180,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         url: str,
         message: MessageTypeVar,
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
     ) -> None:
         """Test invalid JWS signature."""
         with self.patch("acme.jws.JWS.verify", return_value=False) as verify_mock:
@@ -223,7 +222,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         url: str,
         message: MessageTypeVar,
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
     ) -> None:
         """Test sending the wrong URL."""
         with self.patch("django.http.request.HttpRequest.build_absolute_uri", return_value="foo"):
@@ -235,7 +234,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         client: Client,
         url: str,
         root: CertificateAuthority,
-        kid: Optional[str],
+        kid: str | None,
     ) -> None:
         """Test sending a payload to a post-as-get request."""
         if not self.post_as_get:

@@ -17,7 +17,7 @@
 """
 
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any
 
 from docutils.statemachine import StringList
 from sphinx.ext.autodoc import DataDocumenter, ObjectMember
@@ -128,7 +128,7 @@ class MappingDocumentor(DataDocumenter):
         for line in table.splitlines():
             self.add_line(line, source_name)
 
-    def add_content(self, more_content: Optional[StringList]) -> None:
+    def add_content(self, more_content: StringList | None) -> None:
         """Overwritten to add a table of values for a mapping to the description."""
         super().add_content(more_content)
         self.add_table()

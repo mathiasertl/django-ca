@@ -16,7 +16,7 @@
 import typing
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -187,7 +187,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
             if ca.is_usable()
         ]
 
-    def clean_algorithm(self) -> Optional[hashes.HashAlgorithm]:  # pylint: disable=missing-function-docstring
+    def clean_algorithm(self) -> hashes.HashAlgorithm | None:  # pylint: disable=missing-function-docstring
         if algorithm_name := self.cleaned_data["algorithm"]:
             return constants.HASH_ALGORITHM_TYPES[algorithm_name]()
         return None  # required by mypy
@@ -198,13 +198,13 @@ class CreateCertificateBaseForm(CertificateModelForm):
             raise forms.ValidationError(_("Certificate cannot expire in the past."))
         return expires
 
-    def clean_password(self) -> Optional[bytes]:  # pylint: disable=missing-function-docstring
+    def clean_password(self) -> bytes | None:  # pylint: disable=missing-function-docstring
         password: str = self.cleaned_data["password"]
         if not password:
             return None
         return password.encode("utf-8")
 
-    def clean(self) -> Optional[dict[str, Any]]:
+    def clean(self) -> dict[str, Any] | None:
         data = super().clean()
 
         # COVERAGE Unclear if/when this happens, but django-stubs==1.15.0 reports data as Optional.
@@ -213,12 +213,12 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
         expires = data.get("not_after")
         ca: CertificateAuthority = data["ca"]
-        subject = typing.cast(Optional[x509.Name], data.get("subject"))
-        algorithm = typing.cast(Optional[hashes.HashAlgorithm], data.get("algorithm"))
+        subject = typing.cast(x509.Name | None, data.get("subject"))
+        algorithm = typing.cast(hashes.HashAlgorithm | None, data.get("algorithm"))
         subject_alternative_name = data.get("subject_alternative_name", (None, False))
 
         subject_alternative_name = typing.cast(
-            Optional[x509.Extension[x509.SubjectAlternativeName]], subject_alternative_name
+            x509.Extension[x509.SubjectAlternativeName] | None, subject_alternative_name
         )
 
         # Load the CA to test loading options

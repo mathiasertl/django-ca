@@ -19,7 +19,7 @@ import typing
 from collections.abc import Iterator, Sequence
 from datetime import datetime
 from threading import local
-from typing import Annotated, Any, ClassVar, Generic, Optional, TypeVar, Union
+from typing import Annotated, Any, ClassVar, Generic, TypeVar
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -66,7 +66,7 @@ class CreatePrivateKeyOptionsBaseModel(BaseModel):
     """Base model for creating private keys that shares common fields and validators."""
 
     key_type: ParsableKeyType
-    key_size: Optional[Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)]] = None
+    key_size: Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)] | None = None
 
     @model_validator(mode="after")
     def validate_key_size(self) -> "typing.Self":
@@ -142,7 +142,7 @@ class KeyBackend(
             self.argparse_prefix = f"{alias.lower().replace('_', '-')}-"
             self.options_prefix = f"{alias.lower().replace('-', '_')}_"
 
-    def add_create_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_create_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         """Add an argument group for arguments for private key generation with this backend.
 
         By default, the title and description of the argument group is based on
@@ -157,7 +157,7 @@ class KeyBackend(
             f"The backend used with --key-backend={self.alias}. {self.description}",
         )
 
-    def add_store_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_store_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         """Add an argument group for storing private keys (when importing an existing CA).
 
         By default, this method adds the same group as
@@ -165,7 +165,7 @@ class KeyBackend(
         """
         return self.add_create_private_key_group(parser)
 
-    def add_use_private_key_group(self, parser: CommandParser) -> Optional[ArgumentGroup]:
+    def add_use_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         """Add an argument group for arguments required for using a private key stored with this backend.
 
         By default, the title and description of the argument group is based on
@@ -216,8 +216,8 @@ class KeyBackend(
     def get_create_private_key_options(
         self,
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[str],
+        key_size: int | None,
+        elliptic_curve: str | None,
         options: dict[str, Any],
     ) -> CreatePrivateKeyOptionsTypeVar:
         """Get options to create private keys into a Pydantic model.
@@ -262,7 +262,7 @@ class KeyBackend(
     def is_usable(
         self,
         ca: "CertificateAuthority",
-        use_private_key_options: Optional[UsePrivateKeyOptionsTypeVar] = None,
+        use_private_key_options: UsePrivateKeyOptionsTypeVar | None = None,
     ) -> bool:
         """Boolean returning if the given `ca` can be used to sign new certificates (or CRLs).
 
@@ -320,9 +320,9 @@ class KeyBackend(
         use_private_key_options: UsePrivateKeyOptionsTypeVar,
         data: bytes,
         *,
-        algorithm: Optional[Union[hashes.HashAlgorithm, Prehashed]] = None,
-        padding: Optional[AsymmetricPadding] = None,
-        signature_algorithm: Optional[ec.EllipticCurveSignatureAlgorithm] = None,
+        algorithm: hashes.HashAlgorithm | Prehashed | None = None,
+        padding: AsymmetricPadding | None = None,
+        signature_algorithm: ec.EllipticCurveSignatureAlgorithm | None = None,
     ) -> bytes:
         """Sign arbitrary data.
 
@@ -341,7 +341,7 @@ class KeyBackend(
         use_private_key_options: UsePrivateKeyOptionsTypeVar,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -356,16 +356,16 @@ class KeyBackend(
         ca: "CertificateAuthority",
         use_private_key_options: UsePrivateKeyOptionsTypeVar,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: Optional[AllowedHashTypes],
+        algorithm: AllowedHashTypes | None,
     ) -> x509.CertificateRevocationList:
         """Sign a certificate revocation list request."""
 
     def validate_signature_hash_algorithm(
         self,
         key_type: ParsableKeyType,
-        algorithm: Optional[AllowedHashTypes],
-        default: Optional[AllowedHashTypes] = None,
-    ) -> Optional[AllowedHashTypes]:
+        algorithm: AllowedHashTypes | None,
+        default: AllowedHashTypes | None = None,
+    ) -> AllowedHashTypes | None:
         """Give a backend the opportunity to check the signature hash algorithm or return the default value.
 
         The `algorithm` is the one selected by the user, or ``None`` if no algorithm was selected. The
@@ -406,8 +406,8 @@ class OCSPKeyBackend(KeyBackendBase):
         self,
         ca: "CertificateAuthority",
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[ec.EllipticCurve],
+        key_size: int | None,
+        elliptic_curve: ec.EllipticCurve | None,
     ) -> x509.CertificateSigningRequest:
         """Create the private key.
 
@@ -415,7 +415,7 @@ class OCSPKeyBackend(KeyBackendBase):
         ca.ocsp_key_backend_options so it can be signed. You're not responsible for the public key at all.
         """
 
-    def get_csr_algorithm(self, key_type: ParsableKeyType) -> Optional[AllowedHashTypes]:
+    def get_csr_algorithm(self, key_type: ParsableKeyType) -> AllowedHashTypes | None:
         """Helper function to get a usable signing algorithm for the given key type.
 
         This function can be used to get a default signing algorithm when creating a CSR in
@@ -465,7 +465,7 @@ class OCSPKeyBackend(KeyBackendBase):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: Optional[AllowedHashTypes],
+        signature_hash_algorithm: AllowedHashTypes | None,
     ) -> OCSPResponse:
         """Sign the given OCSP response."""
 
@@ -485,7 +485,7 @@ class CryptographyOCSPKeyBackend(OCSPKeyBackend):
 
     # COVERAGE NOTE: Function is implemented in all subclasses.`
     # pylint: disable-next=unused-argument
-    def get_private_key_password(self, ca: "CertificateAuthority") -> Optional[bytes]:  # pragma: no cover
+    def get_private_key_password(self, ca: "CertificateAuthority") -> bytes | None:  # pragma: no cover
         """Get the private key password. The default implementation never returns a password."""
         return None
 
@@ -513,7 +513,7 @@ class CryptographyOCSPKeyBackend(OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: Optional[AllowedHashTypes],
+        signature_hash_algorithm: AllowedHashTypes | None,
     ) -> OCSPResponse:
         private_key = self.load_private_key(ca)
         return builder.sign(private_key, signature_hash_algorithm)

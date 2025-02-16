@@ -13,7 +13,6 @@
 
 """Root URL configuration for the django-ca Django project."""
 
-from typing import Union
 
 from django.conf import settings
 from django.contrib import admin
@@ -21,7 +20,7 @@ from django.urls import URLPattern, URLResolver, include, path
 
 admin.autodiscover()
 
-urlpatterns: list[Union[URLPattern, URLResolver]] = [
+urlpatterns: list[URLPattern | URLResolver] = [
     path(getattr(settings, "CA_URL_PATH", "django_ca/"), include("django_ca.urls")),
 ]
 

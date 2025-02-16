@@ -16,7 +16,6 @@
 
 import subprocess
 from collections.abc import Iterator
-from typing import Optional
 
 from pkcs11._pkcs11 import Session
 
@@ -27,7 +26,7 @@ import pytest
 
 from django_ca.key_backends.hsm.session import SessionPool
 
-PoolKeyType = tuple[str, str, Optional[str], Optional[str]]
+PoolKeyType = tuple[str, str, str | None, str | None]
 
 # pylint: disable=redefined-outer-name  # several fixtures are defined here
 # pylint: disable=protected-access  # we test class internals throughout this module

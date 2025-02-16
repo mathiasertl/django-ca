@@ -13,7 +13,6 @@
 
 """Test migration helpers."""
 
-from typing import Optional
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
@@ -40,7 +39,7 @@ from django_ca.tests.base.utils import distribution_point, dns, rdn, uri
     ),
 )
 def test_0040_crl_url_to_sign_crl_distribution_points(
-    root: CertificateAuthority, crl_url: str, full_name: Optional[list[x509.GeneralName]]
+    root: CertificateAuthority, crl_url: str, full_name: list[x509.GeneralName] | None
 ) -> None:
     """Test migrating a populated `crl_url` field to `sign_crl_distribution_points`."""
     root.crl_url = crl_url  # type: ignore[attr-defined]  # what we're testing

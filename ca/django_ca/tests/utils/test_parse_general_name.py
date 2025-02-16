@@ -14,7 +14,6 @@
 """Test :py:func:`~django_ca.utils.parse_general_name`."""
 
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Union
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -38,7 +37,7 @@ from django_ca.utils import parse_general_name
 def test_ip(
     prefix: str,
     value: str,
-    expected: Union[IPv4Address, IPv4Network, IPv6Address, IPv6Network],
+    expected: IPv4Address | IPv4Network | IPv6Address | IPv6Network,
 ) -> None:
     """Test parsing an IPv4 address."""
     expected_name = x509.IPAddress(expected)

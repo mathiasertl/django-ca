@@ -20,7 +20,7 @@ import subprocess
 import sys
 import types
 import typing
-from typing import Any, Union
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -145,7 +145,7 @@ class Command(DevCommand):
         loaded_cas = {}
         certs = fixture_data["certs"]
         for _cert_name, cert_data in sorted(certs.items(), key=lambda t: (t[1]["type"], t[0])):
-            cert: Union[CertificateAuthority, Certificate]  # facilitate type hinting later
+            cert: CertificateAuthority | Certificate  # facilitate type hinting later
             if cert_data["type"] == "ca":
                 if not cert_data["key_filename"]:
                     continue  # CA without private key (e.g. real-world CA)

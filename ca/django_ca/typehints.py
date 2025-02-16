@@ -17,7 +17,7 @@ import argparse
 import ipaddress
 import sys
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Literal, Optional, TypedDict, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar, Union
 
 import packaging.version
 
@@ -79,10 +79,10 @@ ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 ParsableSubject = Union[
     str,
     # Union for keys is not supported, see: https://github.com/python/mypy/issues/6001
-    Mapping[x509.ObjectIdentifier, Union[str, Iterable[str]]],
-    Mapping[str, Union[str, Iterable[str]]],
+    Mapping[x509.ObjectIdentifier, str | Iterable[str]],
+    Mapping[str, str | Iterable[str]],
     x509.Name,
-    Iterable[tuple[Union[x509.ObjectIdentifier, str], Union[str, Iterable[str]]]],
+    Iterable[tuple[x509.ObjectIdentifier | str, str | Iterable[str]]],
 ]
 
 # GeneralNameList
@@ -111,7 +111,7 @@ class ParsableNoticeReference(TypedDict, total=False):
 class ParsableUserNotice(TypedDict, total=False):
     """Parsable version of a User Notice."""
 
-    notice_reference: Union[x509.NoticeReference, ParsableNoticeReference]
+    notice_reference: x509.NoticeReference | ParsableNoticeReference
     explicit_text: str
 
 
@@ -119,10 +119,10 @@ class ParsableUserNotice(TypedDict, total=False):
 class ParsableDistributionPoint(TypedDict, total=False):
     """Parsable version of a Distribution Point."""
 
-    full_name: Optional[ParsableGeneralNameList]
-    relative_name: Union[SerializedName, x509.RelativeDistinguishedName]
+    full_name: ParsableGeneralNameList | None
+    relative_name: SerializedName | x509.RelativeDistinguishedName
     crl_issuer: ParsableGeneralNameList
-    reasons: Iterable[Union[str, x509.ReasonFlags]]
+    reasons: Iterable[str | x509.ReasonFlags]
 
 
 ParsablePolicyQualifier = Union[str, x509.UserNotice, ParsableUserNotice]
@@ -133,7 +133,7 @@ class ParsablePolicyInformation(TypedDict, total=False):
     """Parsable version of the Policy Information extension."""
 
     policy_identifier: ParsablePolicyIdentifier
-    policy_qualifiers: Optional[Sequence[ParsablePolicyQualifier]]
+    policy_qualifiers: Sequence[ParsablePolicyQualifier] | None
 
 
 PolicyQualifier = Union[str, x509.UserNotice]
@@ -155,9 +155,9 @@ class BasicConstraintsBase(TypedDict):
 class ParsableAuthorityKeyIdentifierDict(TypedDict, total=False):
     """Parsable version of the ParsableAuthorityKeyIdentifier extension."""
 
-    key_identifier: Optional[bytes]
+    key_identifier: bytes | None
     authority_cert_issuer: Iterable[str]
-    authority_cert_serial_number: Optional[int]
+    authority_cert_serial_number: int | None
 
 
 ############
@@ -453,8 +453,8 @@ class ProfileExtensionValue(TypedDict, total=False):
     and `value` may not be set for extensions that don't have a value.
     """
 
-    value: Optional[Any]
-    critical: Optional[bool]
+    value: Any | None
+    critical: bool | None
 
 
 class SerializedPydanticNameAttribute(TypedDict):
@@ -480,8 +480,8 @@ class SerializedProfile(TypedDict):
 
     name: str
     description: str
-    subject: Optional[SerializedPydanticName]
-    algorithm: Optional[HashAlgorithms]
+    subject: SerializedPydanticName | None
+    algorithm: HashAlgorithms | None
     extensions: list[SerializedPydanticExtension]
     clear_extensions: list[EndEntityCertificateExtensionKeys]
 
@@ -516,7 +516,7 @@ class SerializedPolicyInformation(TypedDict):
     """Serialized variant of a PolicyInformation extension."""
 
     policy_identifier: str
-    policy_qualifiers: Optional[SerializedPolicyQualifiers]
+    policy_qualifiers: SerializedPolicyQualifiers | None
 
 
 ###################
@@ -531,8 +531,8 @@ ParsableAuthorityKeyIdentifier = Union[str, bytes, ParsableAuthorityKeyIdentifie
 class ParsableAuthorityInformationAccess(TypedDict, total=False):
     """Parsable Authority Information Access extension."""
 
-    ocsp: Optional[ParsableGeneralNameList]
-    issuers: Optional[ParsableGeneralNameList]
+    ocsp: ParsableGeneralNameList | None
+    issuers: ParsableGeneralNameList | None
 
 
 class ParsableBasicConstraints(BasicConstraintsBase, total=False):
@@ -542,7 +542,7 @@ class ParsableBasicConstraints(BasicConstraintsBase, total=False):
     has a ``"path_length"`` value that is either ``None`` or an int.
     """
 
-    path_length: Union[int, str]
+    path_length: int | str
 
 
 class ParsableNameConstraints(TypedDict, total=False):

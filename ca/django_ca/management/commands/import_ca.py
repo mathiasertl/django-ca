@@ -18,7 +18,7 @@
 
 import argparse
 import typing
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -91,22 +91,22 @@ Note that the private key will be copied to the directory configured by the CA_D
         key: typing.BinaryIO,
         pem: typing.BinaryIO,
         key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
-        parent: Optional[CertificateAuthority],
-        import_password: Optional[bytes],
+        parent: CertificateAuthority | None,
+        import_password: bytes | None,
         # Authority Information Access extension  for certificates (MUST be non-critical)
-        sign_authority_information_access: Optional[x509.AuthorityInformationAccess],
+        sign_authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension
-        sign_certificate_policies: Optional[x509.CertificatePolicies],
+        sign_certificate_policies: x509.CertificatePolicies | None,
         sign_certificate_policies_critical: bool,
         # Issuer Alternative Name extension  for certificates
-        sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
+        sign_issuer_alternative_name: x509.IssuerAlternativeName | None,
         # CRL Distribution Points extension for certificates
-        sign_crl_full_names: Optional[list[x509.GeneralName]],
+        sign_crl_full_names: list[x509.GeneralName] | None,
         sign_crl_distribution_points_critical: bool,
         # OCSP responder configuration
         ocsp_key_backend: str,
-        ocsp_responder_key_validity: Optional[int],
-        ocsp_response_validity: Optional[int],
+        ocsp_responder_key_validity: int | None,
+        ocsp_response_validity: int | None,
         **options: Any,
     ) -> None:
         key_data = key.read()

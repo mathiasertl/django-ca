@@ -18,7 +18,7 @@
 
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone as tz
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -283,61 +283,61 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         self,
         name: str,
         subject: x509.Name,
-        parent: Optional[CertificateAuthority],
+        parent: CertificateAuthority | None,
         expires: timedelta,
         # private key storage options
         key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[str],
-        algorithm: Optional[AllowedHashTypes],
+        key_size: int | None,
+        elliptic_curve: str | None,
+        algorithm: AllowedHashTypes | None,
         # Authority Information Access extension (MUST be non-critical)
-        authority_information_access: Optional[x509.AuthorityInformationAccess],
+        authority_information_access: x509.AuthorityInformationAccess | None,
         # Basic Constraints extension
-        path_length: Optional[int],
+        path_length: int | None,
         # Certificate Policies extension
-        certificate_policies: Optional[x509.CertificatePolicies],
+        certificate_policies: x509.CertificatePolicies | None,
         certificate_policies_critical: bool,
         # CRL Distribution Points extension
-        crl_full_names: Optional[list[x509.GeneralName]],
+        crl_full_names: list[x509.GeneralName] | None,
         crl_distribution_points_critical: bool,
         # Extended Key Usage extension
-        extended_key_usage: Optional[x509.ExtendedKeyUsage],
+        extended_key_usage: x509.ExtendedKeyUsage | None,
         extended_key_usage_critical: bool,
         # Inhibit anyPolicy extension:
-        inhibit_any_policy: Optional[int],
+        inhibit_any_policy: int | None,
         # Issuer Alternative Name extension:
-        issuer_alternative_name: Optional[x509.IssuerAlternativeName],
+        issuer_alternative_name: x509.IssuerAlternativeName | None,
         # Key Usage extension:
         key_usage: x509.KeyUsage,
         key_usage_critical: bool,
         # Name Constraints extension:
-        permit_name: Optional[Iterable[x509.GeneralName]],
-        exclude_name: Optional[Iterable[x509.GeneralName]],
+        permit_name: Iterable[x509.GeneralName] | None,
+        exclude_name: Iterable[x509.GeneralName] | None,
         # Policy Constraints extension:
-        require_explicit_policy: Optional[int],
-        inhibit_policy_mapping: Optional[int],
+        require_explicit_policy: int | None,
+        inhibit_policy_mapping: int | None,
         # Subject Alternative Name extension
-        subject_alternative_name: Optional[x509.SubjectAlternativeName],
+        subject_alternative_name: x509.SubjectAlternativeName | None,
         subject_alternative_name_critical: bool,
         # ACMEv2 related options
         caa: str,
         website: str,
         tos: str,
         # Authority Information Access extension  for certificates (MUST be non-critical)
-        sign_authority_information_access: Optional[x509.AuthorityInformationAccess],
+        sign_authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension  for certificates
-        sign_certificate_policies: Optional[x509.CertificatePolicies],
+        sign_certificate_policies: x509.CertificatePolicies | None,
         sign_certificate_policies_critical: bool,
         # CRL Distribution Points extension for certificates
-        sign_crl_full_names: Optional[list[x509.GeneralName]],
+        sign_crl_full_names: list[x509.GeneralName] | None,
         sign_crl_distribution_points_critical: bool,
         # Issuer Alternative Name extension  for certificates
-        sign_issuer_alternative_name: Optional[x509.IssuerAlternativeName],
+        sign_issuer_alternative_name: x509.IssuerAlternativeName | None,
         # OCSP responder configuration
         ocsp_key_backend: str,
-        ocsp_responder_key_validity: Optional[int],
-        ocsp_response_validity: Optional[int],
+        ocsp_responder_key_validity: int | None,
+        ocsp_response_validity: int | None,
         **options: Any,
     ) -> None:
         # Make sure that selected private key options are supported by the selected key backend

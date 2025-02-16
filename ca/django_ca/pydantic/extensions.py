@@ -70,10 +70,8 @@ from typing import (  # noqa: UP035  # see typing.Type usage below
     ClassVar,
     Literal,
     NoReturn,
-    Optional,
     Type,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -138,10 +136,10 @@ if TYPE_CHECKING:
 class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for all extension models."""
 
-    type: Union[ExtensionKeys, Literal["unknown"]] = Field(repr=False)
+    type: ExtensionKeys | Literal["unknown"] = Field(repr=False)
     critical: bool
     value: Any
-    requires_critical: ClassVar[Optional[bool]] = None
+    requires_critical: ClassVar[bool | None] = None
 
     @field_validator("critical", mode="after")
     @classmethod
@@ -174,8 +172,8 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
             self,
             *,
             mode: Literal["json", "python"] | str = "python",
-            include: Optional[IncEx] = None,
-            exclude: Optional[IncEx] = None,
+            include: IncEx | None = None,
+            exclude: IncEx | None = None,
             by_alias: bool = False,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -1002,21 +1000,7 @@ def validate_cryptography_extensions(v: Any, info: ValidationInfo) -> Any:
 #: Union type for extensions that may occur as input when signing a certificate.
 ConfigurableExtensionModel = Annotated[
     Annotated[
-        Union[
-            AdmissionsModel,
-            AuthorityInformationAccessModel,
-            CertificatePoliciesModel,
-            CRLDistributionPointsModel,
-            ExtendedKeyUsageModel,
-            FreshestCRLModel,
-            IssuerAlternativeNameModel,
-            KeyUsageModel,
-            MSCertificateTemplateModel,
-            OCSPNoCheckModel,
-            PrecertPoisonModel,
-            SubjectAlternativeNameModel,
-            TLSFeatureModel,
-        ],
+        AdmissionsModel | AuthorityInformationAccessModel | CertificatePoliciesModel | CRLDistributionPointsModel | ExtendedKeyUsageModel | FreshestCRLModel | IssuerAlternativeNameModel | KeyUsageModel | MSCertificateTemplateModel | OCSPNoCheckModel | PrecertPoisonModel | SubjectAlternativeNameModel | TLSFeatureModel,
         Field(discriminator="type"),
     ],
     BeforeValidator(validate_cryptography_extensions),
@@ -1025,31 +1009,7 @@ ConfigurableExtensionModel = Annotated[
 #: Union type for all known extensions that may occur in any type of certificate.
 CertificateExtensionModel = Annotated[
     Annotated[
-        Union[
-            AdmissionsModel,
-            AuthorityInformationAccessModel,
-            AuthorityKeyIdentifierModel,
-            BasicConstraintsModel,
-            CRLDistributionPointsModel,
-            CertificatePoliciesModel,
-            ExtendedKeyUsageModel,
-            FreshestCRLModel,
-            InhibitAnyPolicyModel,
-            IssuerAlternativeNameModel,
-            KeyUsageModel,
-            MSCertificateTemplateModel,
-            NameConstraintsModel,
-            OCSPNoCheckModel,
-            PolicyConstraintsModel,
-            PrecertPoisonModel,
-            PrecertificateSignedCertificateTimestampsModel,
-            SignedCertificateTimestampsModel,
-            SubjectAlternativeNameModel,
-            SubjectInformationAccessModel,
-            SubjectKeyIdentifierModel,
-            TLSFeatureModel,
-            UnrecognizedExtensionModel,
-        ],
+        AdmissionsModel | AuthorityInformationAccessModel | AuthorityKeyIdentifierModel | BasicConstraintsModel | CRLDistributionPointsModel | CertificatePoliciesModel | ExtendedKeyUsageModel | FreshestCRLModel | InhibitAnyPolicyModel | IssuerAlternativeNameModel | KeyUsageModel | MSCertificateTemplateModel | NameConstraintsModel | OCSPNoCheckModel | PolicyConstraintsModel | PrecertPoisonModel | PrecertificateSignedCertificateTimestampsModel | SignedCertificateTimestampsModel | SubjectAlternativeNameModel | SubjectInformationAccessModel | SubjectKeyIdentifierModel | TLSFeatureModel | UnrecognizedExtensionModel,
         Field(discriminator="type"),
     ],
     BeforeValidator(validate_cryptography_extensions),

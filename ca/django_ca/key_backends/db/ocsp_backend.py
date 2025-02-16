@@ -14,7 +14,6 @@
 """OCSP key backend storing private keys in the database."""
 
 import typing
-from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -36,8 +35,8 @@ class DBOCSPBackend(OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         key_type: ParsableKeyType,
-        key_size: Optional[int],
-        elliptic_curve: Optional[ec.EllipticCurve],
+        key_size: int | None,
+        elliptic_curve: ec.EllipticCurve | None,
     ) -> x509.CertificateSigningRequest:
         # Generate the private key.
         private_key = generate_private_key(key_size, key_type, elliptic_curve)
@@ -59,7 +58,7 @@ class DBOCSPBackend(OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: Optional[AllowedHashTypes],
+        signature_hash_algorithm: AllowedHashTypes | None,
     ) -> OCSPResponse:
         pem = ca.ocsp_key_backend_options["private_key"]["pem"].encode()
         key = typing.cast(CertificateIssuerPrivateKeyTypes, serialization.load_pem_private_key(pem, None))

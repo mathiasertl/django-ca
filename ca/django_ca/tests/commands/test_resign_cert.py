@@ -15,7 +15,7 @@
 
 import os
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import patch
 
 from cryptography import x509
@@ -65,7 +65,7 @@ def resign_cert(serial: str, **kwargs: Any) -> tuple[str, str]:
 
 
 def assert_resigned(
-    old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
+    old: Certificate, new: Certificate, new_ca: CertificateAuthority | None = None
 ) -> None:
     """Assert that the resigned certificate matches the old cert."""
     new_ca = new_ca or old.ca
@@ -79,7 +79,7 @@ def assert_resigned(
 
 
 def assert_equal_ext(
-    old: Certificate, new: Certificate, new_ca: Optional[CertificateAuthority] = None
+    old: Certificate, new: Certificate, new_ca: CertificateAuthority | None = None
 ) -> None:
     """Assert that the extensions in both certs are equal."""
     new_ca = new_ca or old.ca

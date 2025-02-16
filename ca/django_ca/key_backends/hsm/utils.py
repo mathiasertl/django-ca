@@ -13,7 +13,6 @@
 
 """Utility functions for HSMs."""
 
-from typing import Union
 
 from pkcs11 import Attribute, KeyType, ObjectClass
 from pkcs11.util.ec import encode_named_curve_parameters
@@ -23,7 +22,7 @@ from asn1crypto.core import OctetString
 from asn1crypto.keys import PrivateKeyInfo, PublicKeyInfo
 
 
-def decode_eddsa_private_key(der: bytes) -> dict[int, Union[str, int, bytes]]:
+def decode_eddsa_private_key(der: bytes) -> dict[int, str | int | bytes]:
     """Decode a DER-encoded EdDSA private key into a dictionary for``pkcs11.Session.create_object``.
 
     This function was copied from
@@ -43,7 +42,7 @@ def decode_eddsa_private_key(der: bytes) -> dict[int, Union[str, int, bytes]]:
     }
 
 
-def decode_eddsa_public_key(der: bytes, encode_eddsa_point: bool = True) -> dict[int, Union[str, int, bytes]]:
+def decode_eddsa_public_key(der: bytes, encode_eddsa_point: bool = True) -> dict[int, str | int | bytes]:
     """Decode a DER-encoded EdDSA public key into a dictionary for``pkcs11.Session.create_object``.
 
     This function was copied from

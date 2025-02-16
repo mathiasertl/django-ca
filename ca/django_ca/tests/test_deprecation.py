@@ -14,7 +14,7 @@
 """Test :py:mod:`django_ca.deprecation`."""
 
 import re
-from typing import Any, Union
+from typing import Any
 
 import pytest
 
@@ -87,7 +87,7 @@ def test_deprecated_argument_not_passed(warning: DeprecationWarningType) -> None
 @pytest.mark.parametrize("typ", (int, (int, set)))
 @pytest.mark.parametrize("warning", WARNING_TYPES)
 def test_deprecate_type(
-    typ: Union[type[Any], tuple[type[Any], ...]], warning: DeprecationWarningType
+    typ: type[Any] | tuple[type[Any], ...], warning: DeprecationWarningType
 ) -> None:
     """Test the deprecate_type() operator."""
     version = re.escape(warning.version)

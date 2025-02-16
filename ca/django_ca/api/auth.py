@@ -13,7 +13,7 @@
 
 """Authentication classes for the API."""
 
-from typing import Literal, Union
+from typing import Literal
 
 from ninja.security import HttpBasicAuth
 
@@ -43,7 +43,7 @@ class BasicAuth(HttpBasicAuth):
 
     def authenticate(
         self, request: HttpRequest, username: str, password: str
-    ) -> Union[Literal[False], AbstractUser]:
+    ) -> Literal[False] | AbstractUser:
         user = User.objects.get(username=username)
 
         if user.check_password(password) is False:

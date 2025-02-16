@@ -13,7 +13,6 @@
 
 """Test extension utility functions in django_ca.extensions.utils."""
 
-from typing import Union
 from unittest import TestCase
 
 from cryptography import x509
@@ -39,7 +38,7 @@ class CertificatePoliciesIsSimpleTestCase(TestCase):
 
     def policy_information(
         self,
-        *policy_qualifiers: Union[str, x509.UserNotice],
+        *policy_qualifiers: str | x509.UserNotice,
         policy_identifier: x509.ObjectIdentifier = CertificatePoliciesOID.ANY_POLICY,
     ) -> x509.PolicyInformation:
         """Create a Policy Information object from the given policy qualifiers."""
