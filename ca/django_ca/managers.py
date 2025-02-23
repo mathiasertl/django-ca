@@ -635,8 +635,13 @@ class CertificateManager(
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
         add_issuer_alternative_name: Optional[bool] = None,
+        allow_unrecognized_extensions: bool = False,
     ) -> "Certificate":
         """Create and sign a new certificate based on the given profile.
+
+        .. versionchanged:: 2.2.1
+
+           The `allow_unrecognized_extensions` parameter was added.
 
         .. deprecated:: 2.1.0
 
@@ -674,6 +679,8 @@ class CertificateManager(
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         add_issuer_alternative_name : bool, optional
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
+        allow_unrecognized_extensions : bool, optional
+            Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         """
         # Get the profile object if none was passed
         if profile is None:
@@ -693,6 +700,7 @@ class CertificateManager(
             not_after=not_after,
             algorithm=algorithm,
             extensions=extensions,
+            allow_unrecognized_extensions=allow_unrecognized_extensions,
             add_crl_url=add_crl_url,
             add_ocsp_url=add_ocsp_url,
             add_issuer_url=add_issuer_url,

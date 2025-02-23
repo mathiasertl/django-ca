@@ -486,11 +486,15 @@ def test_create_cert_with_merge_authority_information_access_existing_values(
     )
 
 
-def test_create_cert_with_extension_as_cryptography(
-    usable_root: CertificateAuthority, subject: x509.Name
-) -> None:
+def test_create_cert_with_extensions(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test with a profile that has cryptography extensions."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    # Also create an unknown extension
+    unknown_oid = x509.ObjectIdentifier("1.2.3")
+    unknown_ext = x509.Extension(
+        oid=unknown_oid, critical=True, value=x509.UnrecognizedExtension(oid=unknown_oid, value=b"abc")
+    )
 
     prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
     with mock_signal(pre_sign_cert) as pre:
@@ -500,13 +504,37 @@ def test_create_cert_with_extension_as_cryptography(
             csr,
             subject=subject,
             add_issuer_alternative_name=False,
-            extensions=[ocsp_no_check()],
+            extensions=[ocsp_no_check(), unknown_ext],
+            allow_unrecognized_extensions=True,
         )
     assert pre.call_count == 1
     assert_extensions(
         cert,
-        [usable_root.get_authority_key_identifier_extension(), basic_constraints(), ocsp_no_check()],
+        [
+            unknown_ext,
+            usable_root.get_authority_key_identifier_extension(),
+            basic_constraints(),
+            ocsp_no_check(),
+        ],
     )
+
+
+def test_create_cert_with_unrecognized_extensions(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Test with a profile that has cryptography extensions."""
+    csr = CERT_DATA["child-cert"]["csr"]["parsed"]
+
+    # Also create an unknown extension
+    unknown_oid = x509.ObjectIdentifier("1.2.3")
+    unknown_ext = x509.Extension(
+        oid=unknown_oid, critical=True, value=x509.UnrecognizedExtension(oid=unknown_oid, value=b"abc")
+    )
+
+    prof = Profile("example")
+    with mock_signal(pre_sign_cert) as pre, pytest.raises(ValueError, match=r"Extension cannot be set"):
+        create_cert(prof, usable_root, csr, subject=subject, extensions=[unknown_ext])
+    assert pre.call_count == 0
 
 
 def test_create_cert_with_extension_overrides(usable_root: CertificateAuthority, subject: x509.Name) -> None:

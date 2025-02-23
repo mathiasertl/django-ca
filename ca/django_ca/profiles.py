@@ -195,6 +195,7 @@ class Profile:
         not_after: Optional[Union[datetime, timedelta]] = None,
         algorithm: Optional[AllowedHashTypes] = None,
         extensions: Optional[Iterable[ConfigurableExtension]] = None,
+        allow_unrecognized_extensions: bool = False,
         add_crl_url: Optional[bool] = None,
         add_ocsp_url: Optional[bool] = None,
         add_issuer_url: Optional[bool] = None,
@@ -213,6 +214,10 @@ class Profile:
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
+
+        .. versionchanged:: 2.2.1
+
+           The `allow_unrecognized_extensions` parameter was added.
 
         .. deprecated:: 2.1.0
 
@@ -252,6 +257,10 @@ class Profile:
             :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension, *add_issuer_alternative_name*
             is ``True`` and the passed CA has an IssuerAlternativeName set, that value will be appended to the
             extension you pass here.
+        allow_unrecognized_extensions : bool, optional
+            Set to ``True`` to allow passing unrecognized extensions. The default is ``False``. Note that when
+            setting this to ``True``, it is possible to pass almost any extension value without any sanity
+            check, so you have to be extremely careful.
         add_crl_url : bool, optional
             Override if any CRL URLs from the CA should be added to the CA. If not passed, the value set in
             the profile is used.
@@ -264,8 +273,6 @@ class Profile:
         add_issuer_alternative_name : bool, optional
             Override if any IssuerAlternativeNames from the CA should be added to the CA. If not passed, the
             value set in the profile is used.
-        password: bytes or str, optional
-            The password to the private key of the CA.
 
         Returns
         -------
@@ -293,6 +300,12 @@ class Profile:
             # Ensure that the function did *not* get any extension not meant to be in a certificate or that
             # should not be configurable by the user.
             for extension in extensions:
+                # Allow clients to pass unrecognized extensions.
+                if allow_unrecognized_extensions is True and isinstance(
+                    extension.value, x509.UnrecognizedExtension
+                ):
+                    continue
+
                 if extension.oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
                     raise ValueError(f"{extension}: Extension cannot be set when creating a certificate.")
 
