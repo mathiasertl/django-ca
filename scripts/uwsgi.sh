@@ -12,7 +12,7 @@ fi
 DJANGO_CA_SECRET_KEY=${DJANGO_CA_SECRET_KEY:-}
 
 # Default path to the file holding the secret key. Note that the default here matches the default set in the
-# Dockerfile. docker-compose.yml will override this with a path shared between backend and frontend.
+# Dockerfile. compose.yaml will override this with a path shared between backend and frontend.
 DJANGO_CA_SECRET_KEY_FILE=${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
 
 if [ -z "${DJANGO_CA_SECRET_KEY}" ]; then

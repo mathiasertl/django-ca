@@ -30,11 +30,11 @@ Create a file with pinned requirements, so that users can reliably reproduce a s
    $ rm requirements-pinned.txt  # uv does not update the file if it exists
    $ uv pip compile pyproject.toml --all-extras -o requirements-pinned.txt
 
-docker-compose
+Docker Compose
 ==============
 
-* Verify that :file:`docker-compose.yml` uses up-to-date version of 3rd-party containers.
-* Set the default django-ca version in :file:`docker-compose.yml` to the new version.
+* Verify that :file:`compose.yaml` uses up-to-date version of 3rd-party containers.
+* Set the default django-ca version in :file:`compose.yaml` to the new version.
 * Update table in ``docs/source/quickstart/docker_compose.rst``.
 
 ******************
@@ -127,4 +127,4 @@ After a release
 
       $ grep -r '# pragma:' ca/ docs/source/ devscripts/ *.py
 
-* Update :file:`docker-compose.yml` to use the ``latest`` version of **django-ca**.
+* Update :file:`compose.yaml` to use the ``latest`` version of **django-ca**.

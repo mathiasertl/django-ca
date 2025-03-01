@@ -410,7 +410,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
 
 
 def get_postgres_version(path: Union[Path, str]) -> str:
-    """Get the PostgreSQL version in the current docker-compose.yml."""
+    """Get the PostgreSQL version in the current compose.yaml."""
     with open(path, encoding="utf-8") as stream:
         parsed_data = yaml.safe_load(stream)
     return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
@@ -425,7 +425,7 @@ def test_update(release: str) -> int:  # noqa: PLR0915
 
     with tempfile.TemporaryDirectory() as tmpdir:
         last_release_dest = utils.git_archive(last_release, tmpdir)
-        shutil.copy(last_release_dest / "docker-compose.yml", tmpdir)
+        shutil.copy(last_release_dest / "compose.yaml", tmpdir)
         standalone_dir = last_release_dest / "devscripts" / "standalone"
         backend = f"{os.path.basename(tmpdir)}-backend-1"
         frontend = f"{os.path.basename(tmpdir)}-frontend-1"
@@ -469,7 +469,7 @@ POSTGRES_PASSWORD=mysecretpassword
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
 
-            old_postgres_version = get_postgres_version("docker-compose.yml")
+            old_postgres_version = get_postgres_version("compose.yaml")
             new_postgres_version = get_postgres_version(config.ROOT_DIR / "compose.yaml")
 
             # Backup database if there was a PostgreSQL update

@@ -12,7 +12,7 @@ BUILDDIR      = build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile source/_files/docker-compose.yml source/_files/openapi.json extra-files
+.PHONY: help Makefile source/_files/compose.yaml source/_files/openapi.json extra-files
 
 source/_files/compose.yaml:
 	cp ../compose.yaml source/_files/

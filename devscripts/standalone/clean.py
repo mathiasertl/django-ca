@@ -53,7 +53,7 @@ def cleanup(root: Path, dry: bool = False) -> None:
     remove(root / ".pytest_cache", dry=dry)
     remove(root / ".ruff_cache", dry=dry)
     remove(root / "contrib/selenium/geckodriver", dry=dry)
-    remove(root / "docs/source/_files/docker-compose.yml", dry=dry)
+    remove(root / "docs/source/_files/compose.yaml", dry=dry)
     for path in root.glob("*.crl"):
         remove(path, dry=dry)
     for path in root.glob("*.pem"):

@@ -30,7 +30,7 @@ If you want to test the current development state, you must first locally build 
 Then start the setup with the override file and you'll get a complete setup and a `certbot` container that can
 be used to retrieve certificates. The DNS of setup so that the CA can be reached at ``ca.example.com``::
 
-   $ export COMPOSE_FILE=docker-compose.yml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml
+   $ export COMPOSE_FILE=compose.yaml:ca/django_ca/tests/fixtures/docker-compose.certbot.yaml
    $ docker compose up -d
    ...
    $ docker compose exec backend manage createsuperuser

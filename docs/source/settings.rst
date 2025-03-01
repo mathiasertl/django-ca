@@ -724,7 +724,7 @@ MYSQL_DATABASE, MYSQL_DATABASE_FILE, MYSQL_USER, MYSQL_USER_FILE, MYSQL_PASSWORD
 NGINX
 =====
 
-The :file:`docker-compose.yml` file provided by the project uses environment variables to parameterize the
+The :file:`compose.yaml` file provided by the project uses environment variables to parameterize the
 NGINX configuration. Except for ``NGINX_TEMPLATE``, these environment variables are *not* used by
 **django-ca** itself, but only by the NGINX container itself. As usual, you have to set these variables in
 your :file:`.env` file, for example:

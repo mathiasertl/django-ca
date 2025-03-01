@@ -29,7 +29,7 @@
 /ca/ca/settings.yaml
 /ca/files/
 /docs/build/
-/docs/source/_files/docker-compose.yml
+/docs/source/_files/compose.yaml
 /include/
 /lib/
 /share/
