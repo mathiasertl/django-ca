@@ -70,11 +70,11 @@ packaging==24.2
     # via django-ca (pyproject.toml)
 prompt-toolkit==3.0.50
     # via click-repl
-psycopg==3.2.4
+psycopg==3.2.5
     # via django-ca (pyproject.toml)
-psycopg-c==3.2.4
+psycopg-c==3.2.5
     # via psycopg
-psycopg-pool==3.2.4
+psycopg-pool==3.2.6
     # via psycopg
 pycparser==2.22
     # via cffi

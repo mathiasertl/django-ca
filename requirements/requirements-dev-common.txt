@@ -8,7 +8,7 @@ django-test-migrations==1.4.0
 pytest==8.3.4
 pytest-cov==6.0.0
 pytest-django==4.10.0
-selenium==4.28.1
+selenium==4.29.0
 semantic-version==2.10.0
 # See pyproject.toml for reasoning for required minimum version
 setuptools>=68.1
