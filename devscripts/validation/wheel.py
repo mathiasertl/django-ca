@@ -14,17 +14,19 @@
 """Functions for validating the Docker image and the respective tutorial."""
 
 import argparse
-import os
 import subprocess
 import time
 from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from setuptools.config.pyprojecttoml import read_configuration
 
 from devscripts import config, utils
-from devscripts.commands import DevCommand
+from devscripts.commands import CommandError, DevCommand
 from devscripts.out import info, ok
+
+if TYPE_CHECKING:
+    from docker.client import DockerClient
 
 
 def run(release: str, image: str, python_version: str, extra: str = "") -> "subprocess.CompletedProcess[Any]":
@@ -36,26 +38,19 @@ def run(release: str, image: str, python_version: str, extra: str = "") -> "subp
         wheel += f"[{extra}]"
         command += f" --extra={extra}"
 
-    dependencies = "wheel"
+    dependencies = ""
     if python_version in ("3.9", "3.10"):  # pragma: only py<3.11
         # We read pyproject.toml, so older python versions need an extra library.
-        dependencies += " tomli"
+        dependencies += "tomli"
 
     commands = [
-        "python -m venv /tmp/venv",
-        f"/tmp/venv/bin/pip install -U pip {dependencies}",
-        f"/tmp/venv/bin/pip install {wheel}",
-        f"/tmp/venv/bin/python {command}",
+        "echo Installing wheel...",
+        f"uv pip install {dependencies} {wheel}",
+        "echo Check dependencies...",
+        f".venv/bin/python {command}",
     ]
 
-    return utils.docker_run(
-        f"--user={os.getuid()}:{os.getgid()}",
-        "--rm",
-        image,
-        "/bin/sh",
-        "-c",
-        "; ".join(commands),
-    )
+    return utils.docker_run("--rm", image, "/bin/sh", "-c", "; ".join(commands))
 
 
 class Command(DevCommand):
@@ -93,7 +88,7 @@ class Command(DevCommand):
     def handle(self, args: argparse.Namespace) -> None:
         info("Testing Python wheel...")
         release = self.django_ca.__version__
-        client = self.docker.from_env()
+        client: DockerClient = self.docker.from_env()
 
         python_versions = args.python
         if not python_versions:
@@ -110,12 +105,19 @@ class Command(DevCommand):
             info(f"Testing with Python {pyver}.", indent="  ")
 
             # build the image
-            image, _logs = client.images.build(
-                path=str(config.ROOT_DIR),
-                dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel.test"),
-                buildargs={"IMAGE": f"python:{pyver}"},
-                target="test",
-            )
+            try:
+                image, _logs = client.images.build(
+                    path=str(config.ROOT_DIR),
+                    dockerfile=str(config.DEVSCRIPTS_FILES / "Dockerfile.wheel.test"),
+                    buildargs={"IMAGE": f"python:{pyver}"},
+                )
+            except self.docker.errors.BuildError as ex:
+                for elem in ex.build_log:
+                    if line := elem.get("stream"):
+                        print(line, end="")
+                    else:
+                        print(elem)
+                raise CommandError("Building Docker image failed, see above for output.") from ex
 
             if test_no_extras:
                 info("Test with no extras", indent="    ")

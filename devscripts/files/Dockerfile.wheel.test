@@ -1,8 +1,21 @@
 # Dockerfile to test wheels in an isolated environment
 
 ARG IMAGE
-FROM $IMAGE as test
+FROM $IMAGE
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_PYTHON_PREFERENCE=only-system
+ENV UV_PYTHON_DOWNLOADS=never
+ENV UV_NO_CACHE=1
+
+RUN mkdir -p /work/
+RUN chown nobody:nogroup /work/
+USER nobody:nogroup
 WORKDIR /work/
+
 ADD devscripts/standalone/test-imports.py devscripts/standalone/test-imports.py
 COPY pyproject.toml ./
-COPY dist/* dist/
+COPY dist/*.whl dist/
+
+# Create virtual environment
+RUN uv venv
