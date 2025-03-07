@@ -5,6 +5,9 @@ on:
 
 env:
   UV_SYSTEM_PYTHON: 1
+  NEWEST_PYTHON: "3.13"
+  NEWEST_CRYPTOGRAPHY: "44.0"
+  NEWEST_PYDANTIC: "2.10.0"
 
 jobs:
   run:
@@ -20,7 +23,11 @@ jobs:
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, pydantic ${{ matrix.pydantic-version }}
     steps:
       - name: Install APT dependencies
-        run: sudo apt-get install -y firefox softhsm2
+        run: sudo apt-get install -y softhsm2
+
+      - name: Install Firefox
+        run: sudo apt-get install -y firefox
+        if: ${{ matrix.python-version == env.NEWEST_PYTHON && matrix.cryptography-version == env.NEWEST_CRYPTOGRAPHY && matrix.pydantic-version == env.NEWEST_PYDANTIC }}
 
       - name: Acquire sources
         uses: actions/checkout@v4.1.1

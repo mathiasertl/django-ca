@@ -127,6 +127,11 @@ def check_github_action_versions(job: dict[str, Any], name: str) -> int:
 def check_github_actions_tests() -> int:
     """Check GitHub actions."""
     errors = 0
+
+    django_versions = tuple(f"{version}.0" for version in config.DJANGO)
+    cg_versions = tuple(f"{version}.0" for version in config.CRYPTOGRAPHY)
+    pydantic_versions = tuple(f"{version}.0" for version in config.PYDANTIC)
+
     for workflow in Path(".github", "workflows").glob("*.yml"):
         check_path(workflow)
         with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
@@ -140,9 +145,7 @@ def check_github_actions_tests() -> int:
                 errors += simple_diff(
                     "Python versions", tuple(matrix["python-version"]), config.PYTHON_RELEASES
                 )
-                django_versions = tuple(f"{version}.0" for version in config.DJANGO)
-                cg_versions = tuple(f"{version}.0" for version in config.CRYPTOGRAPHY)
-                pydantic_versions = tuple(f"{version}.0" for version in config.PYDANTIC)
+
                 errors += simple_diff("Django versions", tuple(matrix["django-version"]), django_versions)
                 errors += simple_diff(
                     "cryptography versions", tuple(matrix["cryptography-version"]), cg_versions
@@ -150,6 +153,15 @@ def check_github_actions_tests() -> int:
                 errors += simple_diff(
                     "Pydantic versions", tuple(matrix["pydantic-version"]), pydantic_versions
                 )
+
+            # Check any NEWEST_* environment variables
+            for key, value in action_config.get("env", {}).items():
+                if key == "NEWEST_PYTHON" and value != config.PYTHON_RELEASES[-1]:
+                    errors += err(f"    env.NEWEST_PYTHON is {value}.")
+                if key == "NEWEST_CRYPTOGRAPHY" and value != cg_versions[-1]:
+                    errors += err(f"    env.NEWEST_CRYPTOGRAPHY is {value}.")
+                if key == "NEWEST_PYDANTIC" and value != pydantic_versions[-1]:
+                    errors += err(f"    env.NEWEST_PYDANTIC is {value}.")
 
     return errors
 
