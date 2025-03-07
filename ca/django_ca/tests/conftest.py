@@ -88,8 +88,7 @@ def pytest_configure(config: "PytestConfig") -> None:
     # Add a header to log important software versions
     print("Testing with:")
     print("* Python: ", sys.version.replace("\n", ""))
-    # pragma: only py<3.10  # p.name is available as a shortcut to p.metadata["Name"] in Python 3.10
-    installed_versions = {p.metadata["Name"]: p.version for p in importlib.metadata.distributions()}
+    installed_versions = {p.name: p.version for p in importlib.metadata.distributions()}
     for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy", "pydantic"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
     print(f"* Selenium tests: {not skip_selenium}")

@@ -38,7 +38,7 @@ from django.conf import settings
 
 try:
     import tomllib
-except ModuleNotFoundError:  # pragma: py<3.11
+except ModuleNotFoundError:  # pragma: py<3.11  # tomllib was added in Python 3.11
     import tomli as tomllib  # type: ignore[no-redef]
 
 # Add source dir to path if not present. This happens at least when this script started in a Docker image.

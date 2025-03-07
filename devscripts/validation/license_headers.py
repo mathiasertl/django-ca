@@ -24,7 +24,7 @@ from devscripts.commands import CommandError, DevCommand
 
 try:
     import tomllib
-except ImportError:  # pragma: py<3.11
+except ImportError:  # pragma: py<3.11   # tomllib was added in Python 3.11
     import tomli as tomllib  # type: ignore[no-redef]
 
 LICENSE_HEADER = """This file is part of django-ca (https://github.com/mathiasertl/django-ca).

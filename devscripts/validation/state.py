@@ -31,9 +31,7 @@ from devscripts import config
 from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info, ok
 
-if typing.TYPE_CHECKING:  # pragma: only py<3.10  # remove TYPE_CHECKING check once support for 3.9 is dropped
-    # protected by TYPE_CHECKING as ParamSpec is new in Python 3.10.
-    CheckFuncSpec = typing.ParamSpec("CheckFuncSpec")
+CheckFuncSpec = typing.ParamSpec("CheckFuncSpec")
 
 # pylint: enable=no-name-in-module
 
@@ -86,9 +84,8 @@ def simple_diff(what: str, actual: Any, expected: Any) -> int:
     return err(f"{what}: Have {actual}, expected {expected}.")
 
 
-# pragma: only py<3.10: Quoting for CheckFuncSpec, as ParamSpec was added in Python 3.10.
 def check(
-    func: "typing.Callable[CheckFuncSpec, int]", *args: "CheckFuncSpec.args", **kwargs: "CheckFuncSpec.kwargs"
+    func: typing.Callable[CheckFuncSpec, int], *args: CheckFuncSpec.args, **kwargs: CheckFuncSpec.kwargs
 ) -> int:
     """Run a given check."""
     errors = func(*args, **kwargs)

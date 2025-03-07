@@ -24,7 +24,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
-import django
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models.functions import Coalesce
@@ -234,7 +233,7 @@ class CertificateAuthorityManager(
         key_backend: KeyBackend[Any, Any, Any],
         key_backend_options: BaseModel,
         subject: x509.Name,
-        not_after: datetime | None = None,
+        not_after: datetime,
         algorithm: AllowedHashTypes | None = None,
         parent: Optional["CertificateAuthority"] = None,
         use_parent_private_key_options: BaseModel | None = None,
@@ -261,10 +260,9 @@ class CertificateAuthorityManager(
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
 
-        .. deprecated:: 2.1.0
+        .. versionchanged:: 2.3.0
 
-           The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
-           instead.
+           The ``expires`` parameter was removed in django-ca 2.3.0. Use ``not_after`` instead.
 
         .. versionchanged:: 2.0.0
 
@@ -366,9 +364,6 @@ class CertificateAuthorityManager(
             For various cases of wrong input data (e.g. extensions of invalid type).
         """
         # pylint: disable=too-many-locals
-        if not_after is None:  # pragma: only django-ca<2.3.0  # can only happen while we still have expires
-            raise TypeError("Missing required argument: 'not_after'")
-
         if parent is not None and use_parent_private_key_options is None:
             raise ValueError("use_parent_private_key_options is required when parent is passed.")
         if openssh_ca and parent:
@@ -897,13 +892,8 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
 
         # Refresh the object from the database, since we need to access the number. See:
         # https://docs.djangoproject.com/en/5.1/ref/models/expressions/#f-assignments-persist-after-model-save
-        if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
-            # Assure that ``ca`` is loaded already
-            fields = ("ca", "number")  # only fetch required fields to optimize query
-            obj.refresh_from_db(from_queryset=self.model.objects.select_related("ca"), fields=fields)
-        else:  # pragma: django<5.1 branch
-            # The `from_queryset` argument was added in Django 5.0.
-            obj = self.model.objects.select_related("ca").get(pk=obj.pk)
+        # Assure that ``ca`` is loaded already
+        obj.refresh_from_db(from_queryset=self.model.objects.select_related("ca"), fields=("ca", "number"))
 
         # Add the CRL Number extension
         builder = builder.add_extension(x509.CRLNumber(crl_number=obj.number), critical=False)

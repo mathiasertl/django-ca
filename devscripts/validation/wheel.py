@@ -39,7 +39,7 @@ def run(release: str, image: str, python_version: str, extra: str = "") -> "subp
         command += f" --extra={extra}"
 
     dependencies = ""
-    if python_version in ("3.9", "3.10"):  # pragma: only py<3.11
+    if python_version == "3.10":  # pragma: only py<3.11
         # We read pyproject.toml, so older python versions need an extra library.
         dependencies += "tomli"
 

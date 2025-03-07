@@ -28,7 +28,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, Union, cast
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
-import django
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.messages import constants as messages
@@ -93,6 +92,7 @@ from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for
 if TYPE_CHECKING:
     from django.contrib.admin.filters import _ListFilterChoices
 
+FormfieldOverrides = dict[type["models.Field[Any, Any]"], dict[str, Any]]
 log = logging.getLogger(__name__)
 
 #: Tuple of extensions that can be set when creating a new certificate via the admin interface.
@@ -354,9 +354,10 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
 class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], CertificateAuthorityAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.CertificateAuthority`."""
 
-    if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
-        formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
-
+    # TYPEHINT NOTE: django-stubs does not define this as ClassVar in the base class.
+    formfield_overrides: ClassVar[FormfieldOverrides] = {  # type: ignore[misc]
+        models.URLField: {"assume_scheme": "https"}
+    }
     fieldsets = (
         (
             None,
@@ -1146,15 +1147,13 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
     class AcmeAccountAdmin(AcmeAccountAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAccount`."""
 
-        if django.VERSION >= (5, 0):  # pragma: django>=5.1 branch
-            formfield_overrides = {models.URLField: {"assume_scheme": "https"}}
-
+        # TYPEHINT NOTE: django-stubs does not define this as ClassVar in the base class.
+        formfield_overrides: ClassVar[FormfieldOverrides] = {  # type: ignore[misc]
+            models.URLField: {"assume_scheme": "https"}
+        }
         list_display = ("first_contact", "ca", "slug", "status", "created", "terms_of_service_agreed")
         list_filter = ("ca", "status", "terms_of_service_agreed")
-        readonly_fields = (
-            "pem",
-            "created",
-        )
+        readonly_fields = ("pem", "created")
         search_fields = ("contact",)
 
         def first_contact(self, obj: AcmeAccount) -> str:

@@ -483,12 +483,6 @@ def test_init_with_unknown_profile(ca_name: str, subject: x509.Name, key_backend
         )
 
 
-def test_init_with_not_after_is_none(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
-    """Pass ``None`` for not_after, which is checked until 2.3.0."""
-    with pytest.raises(TypeError, match=r"^Missing required argument: 'not_after'$"):
-        CertificateAuthority.objects.init(ca_name, key_backend, key_backend_options, subject, not_after=None)
-
-
 @pytest.mark.django_db
 def test_init_with_unknown_extension_type(subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a CA with an unknown extension throws an error."""

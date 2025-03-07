@@ -79,10 +79,10 @@ def exclude_versions(
         cov.exclude(f"pragma: {software}<={version_str}", which="partial")
 
         # completely exclude pragma branches that just don't match.
-        # For example, when running python 3.9:
+        # For example, when running python 3.13:
         #
-        # if sys.version_info[:2] > (3, 9):  # pragma: py>3.9 branch
-        #     print("Only python 3.10 or later")
+        # if sys.version_info[:2] > (3, 13):  # pragma: py>3.13 branch
+        #     print("Only python 3.14 or later")
         #
         # --> just completely exclude the block, as it is never executed
         cov.exclude(f"pragma: {software}>{version_str} branch")
@@ -101,8 +101,8 @@ def exclude_versions(
 
             # Completely exclude branches only used in *newer* versions. For example, if you use Python 3.8:
             #
-            # if sys.version_info[:2] > (3, 9):  # pragma: py>3.9 branch
-            #     print("Only python 3.9 or later")
+            # if sys.version_info[:2] > (3, 13):  # pragma: py>3.13 branch
+            #     print("Only python 3.14 or later")
             #
             # --> The branch is never executed on Python 3.8.
             cov.exclude(f"pragma: {software}>{version_str} branch")
@@ -118,8 +118,8 @@ def exclude_versions(
 
             # Completely exclude branches only used in *older* versions. For example, if you use Python 3.9:
             #
-            # if sys.version_info[:2] < (3, 9):  # pragma: py<3.9 branch
-            #     print("Only before Python 3.9")
+            # if sys.version_info[:2] < (3, 13):  # pragma: py<3.13 branch
+            #     print("Only before Python 3.13")
             #
             # --> The branch is never executed on Python 3.9.
             cov.exclude(f"pragma: {software}<{version_str} branch")
