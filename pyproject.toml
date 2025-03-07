@@ -47,13 +47,15 @@ ubuntu-releases = [
 [django-ca.release.github]
 # Action versions can be retrieved directly from the GitHub "marketplace", e.g.:
 #   https://github.com/marketplace/actions/checkout
-actions."actions/checkout" = "v4.1.1"
-actions."actions/setup-python" = "v5.0.0"
-actions."actions/cache" = "v4.0.0"
+actions."actions/checkout" = "v4.2.2"
+actions."actions/setup-python" = "v5.4.0"
+actions."actions/cache" = "v4.2.2"
 # CodeQL actions are actually all in the same repository:
 #   https://github.com/github/codeql-action
 actions."github/codeql-action/init" = "v3"
 actions."github/codeql-action/analyze" = "v3"
+# https://github.com/marketplace/actions/astral-sh-setup-uv
+actions."astral-sh/setup-uv" = "v5.3.1"
 
 [django-ca.validation]
 # list glob-style patterns to exclude from any check (currently only license headers)
