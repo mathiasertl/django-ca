@@ -6,8 +6,8 @@ on:
 env:
   UV_SYSTEM_PYTHON: 1
   NEWEST_PYTHON: "3.13"
-  NEWEST_CRYPTOGRAPHY: "44.0"
-  NEWEST_PYDANTIC: "2.10.0"
+  NEWEST_CRYPTOGRAPHY: "44"
+  NEWEST_PYDANTIC: "2.10"
 
 jobs:
   run:
@@ -16,9 +16,9 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
-        django-version: [ "5.1.0" ]
-        cryptography-version: [ "44.0" ]
-        pydantic-version: [ "2.10.0" ]
+        django-version: [ "5.1" ]
+        cryptography-version: [ "44" ]
+        pydantic-version: [ "2.10" ]
 
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, pydantic ${{ matrix.pydantic-version }}
     steps:
@@ -42,16 +42,19 @@ jobs:
         uses: astral-sh/setup-uv@v5.3.1
         with:
           enable-cache: true
-          cache-dependency-glob: "requirements.txt"
-
-      - name: Update setuptools/wheel
-        run: uv pip install -U setuptools wheel
 
       - name: Install dependencies
-        run: uv pip install -r requirements.txt -r requirements/requirements-test.txt django~=${{ matrix.django-version }} cryptography~=${{ matrix.cryptography-version }} pydantic~=${{ matrix.pydantic-version }}
+        run: |
+          uv sync --extra api --extra celery --extra hsm --group dev --group Django${{ matrix.django-version }} --group cryptography${{ matrix.cryptography-version }} --group pydantic${{ matrix.pydantic-version }}
+          echo VIRTUALENV=${GITHUB_WORKSPACE}/.venv >> $GITHUB_ENV
+          echo PATH=${GITHUB_WORKSPACE}/.venv/bin:$PATH >> $GITHUB_ENV 
 
       - name: Initialize demo
-        run: python dev.py init-demo
+        run: |
+          echo $PATH
+          ls .venv/bin/python
+          which python
+          python dev.py init-demo
 
       - name: Run tests
         run: pytest -v --cov-report term-missing --durations=20

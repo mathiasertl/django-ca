@@ -1,1 +1,0 @@
--e .[celery,hsm,redis,yaml,api,postgres]
