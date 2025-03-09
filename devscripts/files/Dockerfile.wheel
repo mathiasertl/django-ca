@@ -4,12 +4,8 @@ ARG IMAGE
 FROM $IMAGE as build
 WORKDIR /work/
 
-# Add/update basic Python tools
-RUN pip install -U pip setuptools
-
-# Install build dependencies
-ADD requirements/requirements-dist.txt ./
-RUN pip install -r requirements-dist.txt
+# Install uv: https://docs.astral.sh/uv/guides/integration/docker/
+COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
 
 # Add files necessary to build the wheel
 ADD LICENSE MANIFEST.in README.md pyproject.toml ./
@@ -17,10 +13,7 @@ ADD docs/source/intro.rst docs/source/
 ADD ca/django_ca ca/django_ca
 
 # Build wheel
-RUN python -m build
-
-# Do a twine check (Note that this is extremely minimal)
-RUN twine check --strict dist/*
+RUN uv build
 
 FROM $IMAGE
 COPY --from=build /work/dist/* /work/dist/

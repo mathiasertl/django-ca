@@ -47,7 +47,7 @@ def run(release: str, image: str, python_version: str, extra: str = "") -> "subp
         "echo Installing wheel...",
         f"uv pip install {dependencies} {wheel}",
         "echo Check dependencies...",
-        f".venv/bin/python {command}",
+        f"python {command}",
     ]
 
     return utils.docker_run("--rm", image, "/bin/sh", "-c", "; ".join(commands))

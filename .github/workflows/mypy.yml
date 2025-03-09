@@ -4,7 +4,8 @@ on:
   pull_request:
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_PYTHON_PREFERENCE: only-system
+  UV_NO_SYNC: 1
 
 jobs:
   run:
@@ -28,13 +29,9 @@ jobs:
         uses: astral-sh/setup-uv@v5.3.1
         with:
           enable-cache: true
-          cache-dependency-glob: "requirements.txt"
-
-      - name: Update setuptools/wheel
-        run: uv pip install -U setuptools wheel
 
       - name: Install dependencies
-        run: uv pip install -r requirements.txt -r requirements/requirements-mypy.txt
+        run: uv sync --extra api --extra celery --extra hsm --extra redis --no-default-groups --group dev --group mypy
 
       - name: run mypy
-        run: mypy .
+        run: uv run mypy .
