@@ -48,8 +48,8 @@ def minor_to_major(version: str) -> str:
 
 
 with open(PYPROJECT_PATH, "rb") as _pyproject_stream:
-    _pyproject_toml = tomllib.load(_pyproject_stream)
-_release_config = _pyproject_toml["django-ca"]["release"]
+    PYPROJECT_TOML = tomllib.load(_pyproject_stream)
+_release_config = PYPROJECT_TOML["django-ca"]["release"]
 
 PYTHON_RELEASES = tuple(typing.cast(list[str], _release_config["python"]))
 DJANGO = tuple(typing.cast(list[str], _release_config["django"]))

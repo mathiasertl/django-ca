@@ -15,22 +15,26 @@ RUN --mount=type=cache,target=/etc/apk/cache apk add --update \
 RUN addgroup -g 9000 -S django-ca && \
     adduser -S -u 9000 -G django-ca django-ca
 
+# Activate the virtual environment (even if it's not created yet).
+ENV PATH="/usr/src/django-ca/.venv/bin:$PATH"
+
 FROM base as build
+
+# Install uv: https://docs.astral.sh/uv/guides/integration/docker/
+COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
+
 RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install -U setuptools pip wheel
-
-COPY requirements/ requirements/
 COPY ca/django_ca/__init__.py ca/django_ca/
-COPY pyproject.toml requirements-pinned.txt ./
+COPY pyproject.toml uv.lock ./
 COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
-RUN --mount=type=cache,target=/root/.cache/pip/http \
-    pip install --no-warn-script-location --ignore-installed --prefix=/install \
-        -r requirements/requirements-docker.txt \
-        -r requirements-pinned.txt \
-        -e .[celery,hsm,mysql,postgres,redis,yaml]
+
+ENV UV_PYTHON_PREFERENCE=only-system
+ENV UV_LINK_MODE=copy
+RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-alpine \
+    uv sync --frozen --all-extras --no-default-groups --group docker --compile-bytecode
 
 # Finally, copy sources
 COPY ca/ ca/
@@ -39,13 +43,12 @@ COPY ca/ ca/
 # Test stage #
 ##############
 FROM build as test
-COPY --from=build /install /usr/local
 ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
 
 # Install additional requirements for testing:
-RUN --mount=type=cache,target=/root/.cache/pip/http pip install \
-    -r requirements/requirements-test.txt
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --all-extras --group dev
 
 # copy this late so that changes do not trigger a cache miss during build
 COPY pyproject.toml ./
@@ -71,7 +74,6 @@ RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-seleni
 # Build stage #
 ###############
 FROM build as prepare
-COPY --from=build /install /install
 
 COPY ca/ ca/
 COPY scripts/* ca/
@@ -81,10 +83,9 @@ COPY nginx/ nginx/
 
 COPY devscripts/ devscripts/
 
-RUN rm -rf requirements-pinned.txt requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
+RUN rm -rf ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
 
 # Test that imports are working
-RUN cp -a /install/* /usr/local/
 RUN python devscripts/standalone/clean.py
 RUN DJANGO_CA_SECRET_KEY=dummy devscripts/standalone/test-imports.py --all-extras
 
@@ -101,7 +102,6 @@ COPY --from=test /usr/src/django-ca/docs/build/coverage/ /tmp
 # final stage #
 ###############
 FROM base
-COPY --from=build /install /usr/local
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \

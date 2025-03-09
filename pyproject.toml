@@ -83,7 +83,6 @@ authors = [
     {name = "Mathias Ertl", email = "mati@er.tl"},
 ]
 description = "A Django app providing a TLS certificate authority."
-# "
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: Django :: 5.1",
@@ -112,13 +111,13 @@ dependencies = [
     "acme>=3.2",
     "asn1crypto>=1.5",
     "cryptography>=44",
-    "django-object-actions>=4.0.0",
-    "dnspython>=2.5",
-    "idna>=3.4",
+    "django-object-actions>=4.2.0",
+    "dnspython>=2.6",
+    "idna>=3.8",
     "josepy>=1.13.0,<2.0",
     "packaging",
     "pydantic>=2.10",
-    "requests",
+    "requests>=2.30",
     # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
     "typing_extensions>=4.6.0;python_version<'3.12'",
 ]
@@ -508,4 +507,86 @@ readme = {file = ["docs/source/intro.rst"], content-type = "text/x-rst"}
 where = ["ca"]
 include = ["django_ca*"]
 exclude = ["django_ca.tests*"]
+
+[tool.uv]
+default-groups = ["dev", "docs", "lint", "mypy", "local"]
+conflicts = [
+    # TODO: When adding a group here, make sure that dev.py validate state checks it
+#    [ { group = "django5.0" }, { group = "django5.1" }, ],
+]
+
+[dependency-groups]
+dev = [
+    "coverage[toml]>=7.6.12",
+    "django-test-migrations>=1.4.0",
+    "django-webtest>=1.9.12",
+    "freezegun>=1.5.1",
+    "gitpython>=3.1.44",
+    "jinja2>=3.1.6",
+    "pyopenssl>=23",
+    "pyrfc3339>=2.0.1",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-django>=4.10.0",
+    "pytest-env>=1.1.5",
+    "pytest-freezer>=0.4.9",
+    "pytest-random-order>=1.1.1",
+    "pyvirtualdisplay>=3.0",
+    "pyyaml>=6.0.2",
+    "requests-mock>=1.12.1",
+    "selenium>=4.29.0",
+    "semantic-version>=2.10.0",
+    "sphinx==7.3.7",
+    "tabulate>=0.9.0",
+    "termcolor>=2.5.0",
+    "tomli>=2.2.1 ; python_full_version < '3.11'",
+]
+docs = [
+    "doc8>=1.1.2",
+    "numpydoc>=1.8.0",
+    "sphinx-inline-tabs>=2023.4.21",
+    "sphinx-jinja>=2.0.2",
+    "sphinx-rtd-theme>=3.0.2",
+    "sphinxcontrib-openapi>=0.8.4",
+    "sphinxcontrib-spelling>=8.0.1",
+]
+local = [
+    "docker>=7.1.0",
+    "ipython>=7.28.0",
+    "pytest-xdist>=3.6.1",
+    "tox>=4.18.0",
+    "tox-uv>=1.25.0",
+    "wheel-inspect>=1.7.2",
+]
+lint = [
+    "pre-commit>=4.1.0",
+    "pylint>=3.3.4",
+    "pylint-django>=2.6.1",
+    "ruff>=0.9.9",
+]
+mypy = [
+    "django-stubs>=5.1.3",
+    "mypy>=1.15.0",
+    "types-docutils>=0.21.0.20241128",
+    "types-freezegun>=1.1.10",
+    "types-jinja2>=2.11.9",
+    "types-mysqlclient>=2.2.0.20241221",
+    "types-psycopg2>=2.9.21.20250121",
+    "types-pyopenssl>=24.1.0.20240722",
+    "types-pyrfc3339>=2.0.1.20241107",
+    "types-pytz>=2025.1.0.20250204",
+    "types-redis>=4.6.0.20241004",
+    "types-requests>=2.32.0.20250301",
+    "types-setuptools>=75.8.2.20250301",
+    "types-tabulate>=0.9.0.20241207",
+]
+docker = [
+    "uwsgi==2.0.28",
+]
+
+# Dependency groups for use in test matrices (tox, GitHub actions, ...)
+"Django5.1" = ["Django~=5.1.0"]
+"cryptography44" = ["cryptography~=44.0"]
+"acme3.2" = ["acme~=3.2.0"]
+"pydantic2.10" = ["pydantic~=2.10.0"]
 

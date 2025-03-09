@@ -20,6 +20,7 @@
 /.pytest_cache/
 /.python-version
 /.tox/
+/.venv/
 /bin/
 /ca/*.crl
 /ca/*.csr

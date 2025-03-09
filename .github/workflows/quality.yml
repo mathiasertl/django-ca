@@ -4,7 +4,8 @@ on:
   pull_request:
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_PYTHON_PREFERENCE: only-system
+  UV_NO_SYNC: 1
 
 jobs:
   run:
@@ -26,35 +27,23 @@ jobs:
         uses: astral-sh/setup-uv@v5.3.1
         with:
           enable-cache: true
-          cache-dependency-glob: "requirements.txt"
-
-      - name: Update setuptools/wheel
-        run: uv pip install -U setuptools wheel
 
       - name: Install dependencies
-        run: |
-          uv pip install -r requirements.txt
-          uv pip install -r requirements/requirements-test.txt
-          uv pip install -r requirements/requirements-lint.txt
-
-          # Mitigate "Unable to import 'typing_extensions' (import-error)"
-          uv pip install typing-extensions
+        run: uv sync --extra api --no-default-groups --group dev --group lint
 
       - name: Run ruff
-        run: python dev.py code-quality
+        run: uv run python dev.py code-quality
 
       # Will show outdated dependencies, etc
       - name: Validate state
-        run: python dev.py validate state
+        run: uv run python dev.py validate state
 
       - name: Check license headers
-        run: python dev.py validate license-headers
+        run: uv run python dev.py validate license-headers
 
       - name: Validate sdist/wheel
         run: |
-            uv pip install -r requirements/requirements-dist.txt
-            python -m build
-            twine check --strict dist/*
+            uv build 
 
       - name: Run pylint
-        run: pylint --verbose ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/
+        run: uv run pylint --verbose ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/

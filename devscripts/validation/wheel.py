@@ -19,8 +19,6 @@ import time
 from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
-from setuptools.config.pyprojecttoml import read_configuration
-
 from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
 from devscripts.out import info, ok
@@ -47,7 +45,7 @@ def run(release: str, image: str, python_version: str, extra: str = "") -> "subp
         "echo Installing wheel...",
         f"uv pip install {dependencies} {wheel}",
         "echo Check dependencies...",
-        f".venv/bin/python {command}",
+        f"python {command}",
     ]
 
     return utils.docker_run("--rm", image, "/bin/sh", "-c", "; ".join(commands))
@@ -62,10 +60,9 @@ class Command(DevCommand):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.pyproject_toml = read_configuration(config.ROOT_DIR / "pyproject.toml")
         self.extra_choices = [
             "none",
-            *list(self.pyproject_toml["project"]["optional-dependencies"]),
+            *list(config.PYPROJECT_TOML["project"]["optional-dependencies"]),
         ]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:

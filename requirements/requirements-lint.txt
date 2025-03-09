@@ -1,5 +1,0 @@
--r requirements-dev-common.txt
-pre-commit==4.1.0
-pylint-django==2.6.1
-pylint==3.3.4
-ruff==0.9.9

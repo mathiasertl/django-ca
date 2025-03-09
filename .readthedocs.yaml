@@ -9,15 +9,18 @@ build:
   tools:
     python: "3.12"
   jobs:
+    create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+    install:
+      - uv sync --extra api --extra celery --extra hsm --no-default-groups --group dev --group docs
     pre_build:
-      - make -C docs extra-files
+      - uv run make -C docs extra-files
+    build:
+      html:
+        - uv run sphinx-build -T -b html docs/source $READTHEDOCS_OUTPUT/html
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
    configuration: docs/source/conf.py
-
-# Optionally declare the Python requirements required to build your docs
-python:
-   install:
-   - requirements: requirements.txt
-   - requirements: requirements/requirements-docs.txt

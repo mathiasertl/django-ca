@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import Any, Union
 
 import yaml
-from setuptools.config.pyprojecttoml import read_configuration
 from termcolor import colored
 
 from devscripts import config
@@ -128,9 +127,9 @@ def check_github_actions_tests() -> int:
     """Check GitHub actions."""
     errors = 0
 
-    django_versions = tuple(f"{version}.0" for version in config.DJANGO)
-    cg_versions = tuple(f"{version}.0" for version in config.CRYPTOGRAPHY)
-    pydantic_versions = tuple(f"{version}.0" for version in config.PYDANTIC)
+    django_versions = tuple(f"{version}" for version in config.DJANGO)
+    cg_versions = tuple(f"{version}" for version in config.CRYPTOGRAPHY)
+    pydantic_versions = tuple(f"{version}" for version in config.PYDANTIC)
 
     for workflow in Path(".github", "workflows").glob("*.yml"):
         check_path(workflow)
@@ -174,23 +173,24 @@ def check_tox() -> int:
     tox_config.read(config.ROOT_DIR / "tox.ini")
 
     # Mapping of additional testenv specific requirements
-    tox_deps = tox_config["testenv"]["deps"].splitlines()
-    tox_env_reqs = dict([line.split(": ", 1) for line in tox_deps if ": " in line])
+    tox_deps = tox_config["testenv"]["dependency_groups"].splitlines()
+    tox_dep_groups = dict([line.split(": ", 1) for line in tox_deps if ": " in line])
 
     # Check that there is a testenv listing all versions
     # pylint: disable-next=useless-suppression  # not useless, want to enable line eventually
     # pylint: disable=consider-using-f-string  # this line is just ugly otherwise
-    expected_env_list = "py{{{}}}-dj{{{}}}-cg{{{}}}-acme{{{}}}".format(
+    expected_env_list = "py{{{}}}-dj{{{}}}-cg{{{}}}-acme{{{}}}-pydantic{{{}}}".format(
         ",".join([pyver.replace(".", "") for pyver in config.PYTHON_RELEASES]),
         ",".join(config.DJANGO),
         ",".join(config.CRYPTOGRAPHY),
         ",".join(config.ACME),
+        ",".join(config.PYDANTIC),
     )
 
     # pylint: enable=consider-using-f-string
     # Check disabled as long as different Django versions support different Python versions
     if expected_env_list not in tox_config["tox"]["envlist"].splitlines():
-        info(f"(disabled) Expected envlist item not found: {expected_env_list}")
+        errors += err(f"Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
     for component in ["django", "cryptography", "acme", "pydantic"]:
@@ -198,20 +198,20 @@ def check_tox() -> int:
         short_name = TOX_ENV_SHORT_NAMES.get(component, component)
         errors += simple_diff(
             f"{component} conditional dependencies present",
-            [e for e in tox_env_reqs if e.startswith(short_name)],
+            [e for e in tox_dep_groups if e.startswith(short_name)],
             [f"{short_name}{major}" for major in getattr(config, component.upper())],
         )
 
         for major in getattr(config, component.upper()):
             name = f"{short_name}{major}"
             try:
-                actual = tox_env_reqs[name]
+                actual = tox_dep_groups[name]
             except KeyError:
                 errors += err(f"{name}: Conditional dependency not found.")
                 continue
 
-            expected = f"{CANONICAL_PYPI_NAMES[component]}~={major}.0"
-            if name not in tox_env_reqs:
+            expected = f"{CANONICAL_PYPI_NAMES[component]}{major}"
+            if name not in tox_dep_groups:
                 continue  # handled in simple-diff above
 
             if actual != expected:
@@ -225,13 +225,13 @@ def check_pyproject_toml() -> int:
     check_path("pyproject.toml")
     errors = 0
 
-    project_configuration = read_configuration(config.ROOT_DIR / "pyproject.toml")
+    # project_configuration = config.read_configuration(config.ROOT_DIR / "pyproject.toml")
 
     # Get data from pyproject.toml
-    classifiers = project_configuration["project"]["classifiers"]
+    classifiers = config.PYPROJECT_TOML["project"]["classifiers"]
 
     # Get requirements - split everything after the first comma, to allow excluding single versions
-    install_requires = [s.split(",")[0] for s in project_configuration["project"]["dependencies"]]
+    install_requires = [s.split(",")[0] for s in config.PYPROJECT_TOML["project"]["dependencies"]]
 
     # validate that we have the proper language/django classifiers
     pyver_cfs = tuple(
@@ -252,10 +252,11 @@ def check_pyproject_toml() -> int:
             errors += err(f"Django {djver} classifier not found.")
 
     expected_py_req = f">={config.PYTHON_RELEASES[0]}"
-    actual_py_req = project_configuration["project"]["requires-python"]
+    actual_py_req = config.PYPROJECT_TOML["project"]["requires-python"]
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
+    # Check project dependencies
     expected_django_req = f"Django>={config.DJANGO[0]}"
     if expected_django_req not in install_requires:
         errors += err(f"{expected_django_req}: Expected Django requirement not found.")
@@ -267,6 +268,30 @@ def check_pyproject_toml() -> int:
     expected_acme_req = f"acme>={config.ACME[0]}"
     if expected_acme_req not in install_requires:
         errors += err(f"{expected_acme_req}: Expected acme requirement not found.")
+
+    # Check dependency groups for tox and GitHub Actions.
+    for sw, versions in {
+        "Django": config.DJANGO,
+        "cryptography": config.CRYPTOGRAPHY,
+        "acme": config.ACME,
+        "pydantic": config.PYDANTIC,
+    }.items():
+        actual_groups = [g for g in config.PYPROJECT_TOML["dependency-groups"] if g.startswith(sw)]
+        expected_groups = [f"{sw}{version}" for version in versions]
+        if actual_groups != expected_groups:
+            errors += err(
+                f"{sw}: Unexpected dependency groups. Got: {actual_groups}, expected: {expected_groups}"
+            )
+            continue
+
+        for version in versions:
+            expected_group_key = f"{sw}{version}"
+            expected_group = [f"{sw}~={version}.0"]
+            if actual_dj_group := config.PYPROJECT_TOML["dependency-groups"].get(expected_group_key):
+                if actual_dj_group != expected_group:
+                    errors += err(f"{expected_group_key}: Depends on {actual_dj_group}.")
+            else:
+                errors += err(f"{expected_group_key}: Dependency group not found.")
 
     return errors
 

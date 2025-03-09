@@ -11,8 +11,7 @@ Preparation
 Run these steps when you begin to create a new release:
 
 * Double-check that the changelog is up to date.
-* Update requirements in :file:`requirements*.txt` and :file:`pyproject.toml` (use
-  :command:`uv pip list --outdated`).
+* Update requirements in :file:`pyproject.toml` (use :command:`uv pip list --outdated`).
 * Check versions of major software dependencies and:
 
   * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.
@@ -22,13 +21,12 @@ Run these steps when you begin to create a new release:
 * Run :command:`./dev.py validate state` and fix any errors.
 * Update version in ``ca/django_ca/__init__.py``.
 
-Pin requirements
-================
+Upgrade ``uv.lock``
+===================
 
 Create a file with pinned requirements, so that users can reliably reproduce a setup::
 
-   $ rm requirements-pinned.txt  # uv does not update the file if it exists
-   $ uv pip compile pyproject.toml --all-extras -o requirements-pinned.txt
+   $ uv sync --upgrade
 
 Docker Compose
 ==============

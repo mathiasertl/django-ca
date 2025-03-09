@@ -152,7 +152,7 @@ class Command(DevCommand):
                 repo.remotes.origin.push(refspec=git_tag)
 
                 # Upload wheel
-                self.run("twine", "upload", "dist/*")
+                self.run("uv", "publish", "dist/*")
 
                 # Upload Docker image
                 self.run("docker", "push", docker_tag)

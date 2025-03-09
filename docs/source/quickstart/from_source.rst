@@ -5,7 +5,7 @@ Quickstart from source
 This guide provides instructions for running your own certificate authority by installing django-ca from
 source. This method requires a lot of manual configuration and a lot of expert knowledge, but is a good choice
 if you use an exotic system or other options do not work for you for some reason. If you're looking for a
-faster and easier option, you might consider using :doc:`docker-compose </quickstart/docker_compose>`.
+faster and easier option, you might consider using :doc:`Docker Compose </quickstart/docker_compose>`.
 
 .. NOTE::
 
@@ -31,12 +31,22 @@ Required software
 
 On Debian/Ubuntu, simply do:
 
-.. code-block:: console
+.. tab:: PostgreSQL
 
-   root@host:~# apt update
-   root@host:~# apt install python3 python3-venv python3-dev \
-   >     gcc libpq-dev postgresql postgresql-client \
-   >     redis-server nginx uwsgi uwsgi-plugin-python3
+    .. code-block:: console
+
+       root@host:~# apt update
+       root@host:~# apt install build-essential postgresql-client libpq-dev
+
+.. tab:: MariaDB
+
+    .. code-block:: console
+
+       root@host:~# apt update
+       root@host:~# apt install build-essential pkg-config mariadb-client libmariadb-dev
+
+Additionally, this guide uses `uv` to set up a Python Virtual Environment. Please refer to the `installation
+instructions <https://docs.astral.sh/uv/getting-started/installation/>`_ for how to install it.
 
 Environment
 ===========
@@ -77,34 +87,41 @@ during an update:
 Create a virtualenv
 ===================
 
-In our setup, we create a `virtualenv <https://docs.python.org/3/tutorial/venv.html>`_ to install the Python
-environment. Several tools building on virtualenv exist (e.g. `pyenv <https://github.com/pyenv/pyenv>`_ or
-`virtualenvwrapper <https://virtualenvwrapper.readthedocs.io/en/latest/>`_) that you might want to try out.
+We use `uv <https://docs.astral.sh/uv/>`_ to create and manage the Python environment. By default, ``uv`` will
+manage both a local Python installation and `virtualenv <https://docs.python.org/3/tutorial/venv.html>`_ for
+you, but you can instruct it to use the system Python installation (try ``uv sync --help``).
 
-.. WARNING::
+.. tab:: PostgreSQL
 
-   Always run pip in a virtualenv or it will update system dependencies and break your system!
+    .. code-block:: console
+
+       root@host:~# cd /opt/django-ca/src/django-ca/
+       root@host:/opt/django-ca/src/django-ca/# uv sync --no-default-groups \
+       >     --all-extras --no-extra mysql
+
+.. tab:: MariaDB
+
+    .. code-block:: console
+
+       root@host:~# cd /opt/django-ca/src/django-ca/
+       root@host:/opt/django-ca/src/django-ca/# uv sync --no-default-groups \
+       >     --all-extras --no-extra postgres
+
+Depending on your needs you might also want to disable other extras as well. This is a list of all currently
+available extras:
+
+.. include:: /include/pip-extras.rst
+
+You can of course use a regular `virtualenv` and ``pip`` to manage your environment as well. For example:
 
 .. code-block:: console
 
-   root@host:~# python3 -m venv /opt/django-ca/venv/
-   root@host:~# /opt/django-ca/venv/bin/pip install -U \
-   >    pip setuptools wheel
-   root@host:~# /opt/django-ca/venv/bin/pip install -U \
-   >    -e /opt/django-ca/src/django-ca[postgres,celery,redis,yaml]
-
-Alternatively, you can also use a pinned set of requirements created at the time of release by replacing the
-last command with:
-
-.. code-block:: console
-
-   root@host:~# /opt/django-ca/venv/bin/pip install -U \
-   >     -r /opt/django-ca/src/django-ca/requirements-pinned.txt \
-   >     -e /opt/django-ca/src/django-ca
-
-Both commands will install PostgreSQL support, but *not* install MySQL support. If you want to use MySQL,
-install the ``mysql`` extra.
-
+   root@host:~# cd /opt/django-ca/src/django-ca/
+   root@host:/opt/django-ca/src/django-ca/# python3 -m venv .venv/
+   root@host:/opt/django-ca/src/django-ca/# .venv/bin/pip install -U \
+   >     pip setuptools wheel
+   root@host:/opt/django-ca/src/django-ca/# .venv/bin/pip install -U \
+   >     -e /opt/django-ca/src/django-ca[api,hsm,postgres,celery,redis,yaml]
 
 PostgreSQL database
 ===================
@@ -287,6 +304,14 @@ the new one:
 
 .. jinja::
    :file: /include/guide-update-source.rst.jinja
+
+Create a new virtual environment (with updated dependencies) using ``uv``:
+
+.. code-block:: console
+
+   root@host:~# cd /opt/django-ca/src/django-ca/
+   root@host:/opt/django-ca/src/django-ca/# uv sync --no-default-groups \
+   >     --all-extras --no-extra postgres
 
 Update the database schema and static files:
 

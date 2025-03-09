@@ -22,11 +22,10 @@ ENV PATH="/usr/src/django-ca/.venv/bin:$PATH"
 FROM base as build
 
 # Install uv: https://docs.astral.sh/uv/guides/integration/docker/
-COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
 
-COPY requirements/ requirements/
 COPY ca/django_ca/__init__.py ca/django_ca/
-COPY pyproject.toml requirements-pinned.txt ./
+COPY pyproject.toml uv.lock ./
 COPY docs/source/intro.rst docs/source/intro.rst
 
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
@@ -38,12 +37,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 
 ENV UV_PYTHON_PREFERENCE=only-system
 ENV UV_LINK_MODE=copy
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv venv && \
-    uv pip install \
-        -r requirements/requirements-docker.txt \
-        -r requirements-pinned.txt \
-        -e .[celery,hsm,mysql,postgres,redis,yaml]
+RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
+    uv sync --frozen --all-extras --no-default-groups --group docker --compile-bytecode
 
 ##############
 # Test stage #
@@ -60,7 +55,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         softhsm2
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -r requirements/requirements-test.txt
+    uv sync --frozen --all-extras --group dev
 
 # Copy sources (doctests are run by test suite, CA files are used in tests)
 COPY ca/ ca/
@@ -87,7 +82,7 @@ COPY nginx/ nginx/
 
 COPY devscripts/standalone/ devscripts/standalone/
 
-RUN rm -rf requirements-pinned.txt requirements/ ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
+RUN rm -rf ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
 
 # Test that imports are working
 RUN python devscripts/standalone/clean.py

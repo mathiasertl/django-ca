@@ -17,7 +17,8 @@ development headers. Under Debian/Ubuntu, you can install everything with:
 
 .. code-block:: console
 
-   $ apt install python3 python3-venv python3-dev gcc libpq-dev
+   $ apt install python3 build-essential pkg-config \
+   >     postgresql-client libpq-dev mariadb-client libmariadb-dev
 
 Virtual environment
 ===================
@@ -26,9 +27,7 @@ To create and activate a virtual environment:
 
 .. code-block:: console
 
-   $ python3 -m venv venv/
-   $ venv/bin/pip install -U pip setuptools wheel
-   $ venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+   $ uv sync --all-extras
    $ source venv/bin/activate
    (venv) $
 
