@@ -175,11 +175,10 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
         "subject_field",
     )
 
+    @admin.display(description=_("Public key"))
     def pub_pem(self, obj: X509CertMixinTypeVar) -> str:
         """Get the CSR in PEM form for display."""
         return obj.pub.pem
-
-    pub_pem.short_description = _("Public key")  # type: ignore[attr-defined] # django standard
 
     def get_urls(self) -> list[URLPattern]:
         """Overridden to add urls for download/download_bundle views."""
@@ -271,12 +270,10 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
             return "None"
         return constants.HASH_ALGORITHM_NAMES.get(type(algorithm), "None")
 
+    @admin.display(description=_("Serial"), ordering="serial")
     def serial_field(self, obj: X509CertMixinTypeVar) -> str:
         """Display the serial (with colons added)."""
         return add_colons(obj.serial)
-
-    serial_field.short_description = _("Serial")  # type: ignore[attr-defined] # django standard
-    serial_field.admin_order_field = "serial"  # type: ignore[attr-defined] # django standard
 
     @admin.display(description=_("Subject"))
     def subject_field(self, obj: X509CertMixinTypeVar) -> str:
@@ -726,11 +723,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                 return True
         return False
 
+    @admin.display(description=_("CSR"))
     def csr_pem(self, obj: Certificate) -> str:
         """Get the CSR in PEM form for display."""
         return obj.csr.pem
-
-    csr_pem.short_description = _("CSR")  # type: ignore[attr-defined] # django standard
 
     # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
     # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
@@ -967,13 +963,11 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     revoke_change.label = _("Revoke")  # type: ignore[attr-defined] # django standard
     revoke_change.short_description = _("Revoke this certificate")  # type: ignore[attr-defined]
 
+    @admin.action(description=_("Revoke selected certificates"), permissions=("change",))
     def revoke(self, request: HttpRequest, queryset: CertificateQuerySet) -> None:
         """Implement the revoke() action."""
         for cert in queryset:
             cert.revoke()
-
-    revoke.short_description = _("Revoke selected certificates")  # type: ignore[attr-defined]
-    revoke.allowed_permissions = ("change",)  # type: ignore[attr-defined] # django standard
 
     def get_change_actions(self, request: HttpRequest, object_id: int, form_url: str) -> list[str]:
         actions = list(super().get_change_actions(request, object_id, form_url))
@@ -1021,6 +1015,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return []
         return super().get_readonly_fields(request, obj=obj)
 
+    @admin.display(description=_("Status"))
     def status(self, obj: Certificate) -> "StrPromise":
         """Get a string for the status of a certificate."""
         if obj.revoked:
@@ -1029,14 +1024,10 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return _("Expired")
         return _("Valid")
 
-    status.short_description = _("Status")  # type: ignore[attr-defined] # django standard
-
+    @admin.display(description=_("Not after"), ordering="not_after")
     def not_after_date(self, obj: Certificate) -> date:
         """Get the date (without time) when a cert expires."""
         return obj.not_after.date()
-
-    not_after_date.short_description = _("Expires")  # type: ignore[attr-defined] # django standard
-    not_after_date.admin_order_field = "not_after"  # type: ignore[attr-defined] # django standard
 
     # TYPE NOTE: django-stubs typehints obj as Model, but we can be more specific here
     def save_model(  # type: ignore[override]
@@ -1175,12 +1166,13 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
         readonly_fields = ("pem", "created")
         search_fields = ("contact",)
 
+        @admin.display(description=_("Contact"), ordering="contact")
         def first_contact(self, obj: AcmeAccount) -> str:
             """Return the first contact address."""
             return str(obj)
 
-        first_contact.short_description = _("Contact")  # type: ignore[attr-defined] # django standard
-        first_contact.admin_order_field = "contact"  # type: ignore[attr-defined] # django standard
+        def has_add_permission(self, request: HttpRequest) -> bool:
+            return False
 
     @admin.register(AcmeOrder)
     class AcmeOrderAdmin(AcmeOrderAdminBase):
@@ -1197,109 +1189,87 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
         list_select_related = ("account",)
         search_fields = ("account__contact", "slug")
 
+        @admin.display(description=_("CA"), ordering="account__ca")
         def ca(self, obj: AcmeOrder) -> str:
             """Property to get a link to the CA."""
             return format_html('<a href="{}">{}</a>', obj.account.ca.admin_change_url, obj.account.ca)
 
-        ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
-        ca.admin_order_field = "account__ca"  # type: ignore[attr-defined] # django standard
-
+        @admin.display(description=_("Account"), ordering="account__contact")
         def account_link(self, obj: AcmeOrder) -> str:
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.account.admin_change_url, obj.account)
 
-        account_link.short_description = _("Account")  # type: ignore[attr-defined] # django standard
-        account_link.admin_order_field = "account__contact"  # type: ignore[attr-defined] # django standard
+        def has_add_permission(self, request: HttpRequest) -> bool:
+            return False
 
     @admin.register(AcmeAuthorization)
     class AcmeAuthorizationAdmin(AcmeAuthorizationAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
         list_display = ("slug", "value", "status", "ca", "account", "order_display")
-        list_filter = (
-            "status",
-            "order__account__ca",
-        )
+        list_filter = ("status", "order__account__ca")
         list_select_related = ("order__account__ca",)
-        search_fields = (
-            "value",
-            "slug",
-            "order__account__contact",
-        )
+        search_fields = ("value", "slug", "order__account__contact")
 
+        @admin.display(description=_("Account"), ordering="order__account__contact")
         def account(self, obj: AcmeAuthorization) -> str:
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
 
-        account.short_description = _("Account")  # type: ignore[attr-defined] # django standard
-        account.admin_order_field = "order__account__contact"  # type: ignore[attr-defined] # django standard
-
+        @admin.display(description=_("CA"), ordering="account__ca")
         def ca(self, obj: AcmeAuthorization) -> str:
             """Property to get a link to the CA."""
             return format_html(
                 '<a href="{}">{}</a>', obj.order.account.ca.admin_change_url, obj.order.account.ca
             )
 
-        ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
-        ca.admin_order_field = "account__ca"  # type: ignore[attr-defined] # django standard
-
+        @admin.display(description=_("Order"), ordering="order__slug")
         def order_display(self, obj: AcmeAuthorization) -> str:
             """Property to get a link to the ACME order."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
 
-        order_display.short_description = _("Order")  # type: ignore[attr-defined] # django standard
-        order_display.admin_order_field = "order__slug"  # type: ignore[attr-defined] # django standard
+        def has_add_permission(self, request: HttpRequest) -> bool:
+            return False
 
     @admin.register(AcmeChallenge)
     class AcmeChallengeAdmin(AcmeChallengeAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeChallenge`."""
 
-        list_display = (
-            "slug",
-            "auth",
-            "type",
-            "status",
-            "validated",
-        )
+        list_display = ("slug", "auth", "type", "status", "validated")
         list_filter = ("type", "status", "auth__order")
+
+        def has_add_permission(self, request: HttpRequest) -> bool:
+            return False
 
     @admin.register(AcmeCertificate)
     class AcmeCertificateAdmin(AcmeCertificateAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeCertificate`."""
 
         list_display = ("slug", "status", "cert", "ca", "account", "order_link")
-        list_filter = (
-            "order__status",
-            "order__account__ca",
-        )
+        list_filter = ("order__status", "order__account__ca")
         list_select_related = ("order__account__ca",)
 
+        @admin.display(description=_("Account"), ordering="order__account__contact")
         def account(self, obj: AcmeCertificate) -> str:
             """Property to get a link to the ACME account."""
             return format_html('<a href="{}">{}</a>', obj.order.account.admin_change_url, obj.order.account)
 
-        account.short_description = _("Account")  # type: ignore[attr-defined] # django standard
-        account.admin_order_field = "order__account__contact"  # type: ignore[attr-defined] # django standard
-
+        @admin.display(description=_("CA"), ordering="order__account__ca")
         def ca(self, obj: AcmeCertificate) -> str:
             """Property to get a link to the CA."""
             return format_html(
                 '<a href="{}">{}</a>', obj.order.account.ca.admin_change_url, obj.order.account.ca
             )
 
-        ca.short_description = _("CA")  # type: ignore[attr-defined] # django standard
-        ca.admin_order_field = "order__account__ca"  # type: ignore[attr-defined] # django standard
-
+        @admin.display(description=_("Order"), ordering="order")
         def order_link(self, obj: AcmeCertificate) -> str:
             """Property to get a link to the oder."""
             return format_html('<a href="{}">{}</a>', obj.order.admin_change_url, obj.order.slug)
 
-        order_link.short_description = _("Order")  # type: ignore[attr-defined] # django standard
-        order_link.admin_order_field = "order"  # type: ignore[attr-defined] # django standard
-
+        @admin.display(description=_("Status"), ordering="order__status")
         def status(self, obj: AcmeCertificate) -> str:
             """Property to get the order status."""
             return obj.order.status
 
-        status.short_description = _("Status")  # type: ignore[attr-defined] # django standard
-        status.admin_order_field = "order__status"  # type: ignore[attr-defined] # django standard
+        def has_add_permission(self, request: HttpRequest) -> bool:
+            return False
