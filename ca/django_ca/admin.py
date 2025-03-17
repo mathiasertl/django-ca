@@ -393,6 +393,13 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
             },
         ),
         (
+            _("ACME"),
+            {
+                "fields": ("acme_enabled", "acme_registration", "acme_profile", "acme_requires_contact"),
+            },
+        ),
+        (_("API"), {"fields": ["api_enabled"]}),
+        (
             _("Details"),
             {
                 "description": _("Information to add to newly signed certificates."),
@@ -448,31 +455,17 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         # Mark certificate policies as read-only if the configured extension is to complex for the widget.
         sign_certificate_policies = obj.sign_certificate_policies
         if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
-            detail_fields = list(fieldsets[1][1]["fields"])
+            detail_fields = list(fieldsets[3][1]["fields"])
             sign_certificate_policies_index = detail_fields.index("sign_certificate_policies")
             detail_fields[sign_certificate_policies_index] = "sign_certificate_policies_readonly"
-            fieldsets[1][1]["fields"] = tuple(detail_fields)
+            fieldsets[3][1]["fields"] = tuple(detail_fields)
 
-        api_index = 1
-        if model_settings.CA_ENABLE_ACME:
-            api_index = 2
-            fieldsets.insert(
-                1,
-                (
-                    _("ACME"),
-                    {
-                        "fields": (
-                            "acme_enabled",
-                            "acme_registration",
-                            "acme_profile",
-                            "acme_requires_contact",
-                        ),
-                    },
-                ),
-            )
-
-        if model_settings.CA_ENABLE_REST_API:
-            fieldsets.insert(api_index, (_("API"), {"fields": ["api_enabled"]}))
+        if not model_settings.CA_ENABLE_ACME:
+            fieldsets[1][1]["description"] = _("ACME support is currently disabled in the configuration.")
+            fieldsets[1][1]["classes"] = ["collapse"]
+        if not model_settings.CA_ENABLE_REST_API:
+            fieldsets[2][1]["description"] = _("REST API support is currently disabled in the configuration.")
+            fieldsets[2][1]["classes"] = ["collapse"]
 
         return fieldsets
 
@@ -486,6 +479,12 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
         sign_certificate_policies = obj.sign_certificate_policies
         if sign_certificate_policies and not certificate_policies_is_simple(sign_certificate_policies.value):
             fields = (*fields, "sign_certificate_policies_readonly")
+
+        if not model_settings.CA_ENABLE_ACME:
+            fields += tuple(self.fieldsets[1][1]["fields"])
+        if not model_settings.CA_ENABLE_REST_API:
+            fields += tuple(self.fieldsets[2][1]["fields"])
+
         return fields
 
     def sign_certificate_policies_readonly(self, obj: CertificateAuthority) -> str:
