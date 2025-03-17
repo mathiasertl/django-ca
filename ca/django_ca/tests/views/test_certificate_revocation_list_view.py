@@ -265,4 +265,4 @@ def test_invalid_encoding(client: Client, default_url: str) -> None:
     response = client.get(default_url, {"encoding": "X962"})
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response["Content-Type"] == "text/plain"
-    assert response.content == b"X962: Invalid encoding requested."
+    assert response.content == b"Invalid encoding requested."

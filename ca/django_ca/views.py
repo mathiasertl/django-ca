@@ -170,10 +170,7 @@ class CertificateRevocationListView(View):
         # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
             if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
-                return HttpResponseBadRequest(
-                    f"{get_encoding}: Invalid encoding requested.",
-                    content_type="text/plain",
-                )
+                return HttpResponseBadRequest("Invalid encoding requested.", content_type="text/plain")
             # TYPEHINT NOTE: type is verified in the previous line
             encoding = cast(CertificateRevocationListEncodings, parse_encoding(get_encoding))
         else:
