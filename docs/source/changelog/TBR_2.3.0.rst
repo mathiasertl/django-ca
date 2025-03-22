@@ -8,15 +8,24 @@ Settings
 
 * CA_CRL_PROFILES: The ``scope`` parameter was removed (deprecated since 2.1.0). Use ``only_contains_*``
   parameters instead.
-* CA_CRL_PROFILES: The ``encoding`` parameter where removed (deprecated since 2.1.0). All encodings are now
+* CA_CRL_PROFILES: The ``encoding`` parameter was removed (deprecated since 2.1.0). All encodings are now
   always available.
 
 ************
 Command-line
 ************
 
-* The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` will be removed (deprecated
+* The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` where removed (deprecated
   since django-ca 2.1.0).
+
+********
+REST API
+********
+
+* The URL path for the revocation endpoint has changed. It is now
+  ``/ca/{ca_serial}/certs/{certificate_serial}/revoke/`` instead of
+  ``/ca/{ca_serial}/revoke/{certificate_serial}/``. The old API endpoint will be removed in
+  ``django-ca~=2.5.0``.
 
 ************
 Dependencies
