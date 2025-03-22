@@ -13,6 +13,7 @@
 
 """Endpoint implementation for the API."""
 
+import warnings
 from http import HTTPStatus
 
 from ninja import NinjaAPI, Query
@@ -24,6 +25,7 @@ from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 from django.db import transaction
 from django.http import Http404, HttpResponse
+from django.urls import reverse
 
 from django_ca import __version__
 from django_ca.api.auth import BasicAuth
@@ -38,6 +40,7 @@ from django_ca.api.schemas import (
     RevokeCertificateSchema,
 )
 from django_ca.api.utils import get_certificate_authority
+from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.pydantic.messages import SignCertificateMessage
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
@@ -213,7 +216,7 @@ def view_certificate(request: WSGIRequest, serial: str, certificate_serial: str)
 
 
 @api.post(
-    "/ca/{serial:serial}/revoke/{serial:certificate_serial}/",
+    "/ca/{serial:serial}/certs/{serial:certificate_serial}/revoke/",
     response=CertificateSchema,
     auth=BasicAuth("django_ca.revoke_certificate"),
     summary="Revoke certificate",
@@ -238,3 +241,24 @@ def revoke_certificate(
 
     cert.revoke(revocation.reason, revocation.compromised)
     return cert
+
+
+@api.post(
+    "/ca/{serial:serial}/revoke/{serial:certificate_serial}/",
+    response=CertificateSchema,
+    auth=BasicAuth("django_ca.revoke_certificate"),
+    summary="Revoke certificate",
+    tags=["Certificates"],
+)
+def revoke_certificate_deprecated(
+    request: WSGIRequest, serial: str, certificate_serial: str, revocation: RevokeCertificateSchema
+) -> Certificate:
+    """Deprecated path to revoke a certificate."""
+    path = reverse(
+        "django_ca:api:revoke_certificate",
+        kwargs={"serial": serial, "certificate_serial": certificate_serial},
+    )
+    warnings.warn(
+        f"{request.path}: Path is deprecated, use {path} instead.", RemovedInDjangoCA250Warning, stacklevel=1
+    )
+    return revoke_certificate(request, serial, certificate_serial, revocation)

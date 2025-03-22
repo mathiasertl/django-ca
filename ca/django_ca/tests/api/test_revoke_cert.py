@@ -25,6 +25,7 @@ from django.utils import timezone
 
 import pytest
 
+from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate
 from django_ca.tests.api.conftest import APIPermissionTestBase, DetailResponse
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -35,6 +36,8 @@ path = reverse_lazy(
     "django_ca:api:revoke_certificate",
     kwargs={"serial": CERT_DATA["root"]["serial"], "certificate_serial": CERT_DATA["root-cert"]["serial"]},
 )
+
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 @pytest.fixture(scope="module")
@@ -50,7 +53,6 @@ def expected_response(root_cert_response: dict[str, Any]) -> DetailResponse:
     return root_cert_response
 
 
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_revoke_view(root_cert: Certificate, api_client: Client, expected_response: DetailResponse) -> None:
     """Test an ordinary certificate revocation."""
     response = api_client.post(path, {}, content_type="application/json")
@@ -63,7 +65,6 @@ def test_revoke_view(root_cert: Certificate, api_client: Client, expected_respon
     assert root_cert.compromised is None
 
 
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_revoke_with_parameters(
     root_cert: Certificate, api_client: Client, expected_response: DetailResponse
 ) -> None:
@@ -86,7 +87,6 @@ def test_revoke_with_parameters(
     assert root_cert.compromised == now
 
 
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_revoked_certificate_fails(root_cert: Certificate, api_client: Client) -> None:
     """Test that revoking a revoked certificate fails."""
     root_cert.revoke()
@@ -107,7 +107,6 @@ def test_cannot_revoke_expired_certificate(root_cert: Certificate, api_client: C
     assert root_cert.revoked is False  # cert is still not revoked (just expired)
 
 
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("root")  # CA should exist, but certificate does not
 def test_certificate_not_found(api_client: Client) -> None:
     """Test response when a certificate was not found."""
@@ -116,7 +115,6 @@ def test_certificate_not_found(api_client: Client) -> None:
     assert response.json() == {"detail": "Not Found"}, response.json()
 
 
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_disabled_ca(root_cert: Certificate, api_client: Client) -> None:
     """Test that certificates for a disabled can *not* be viewed."""
     root_cert.ca.enabled = False
@@ -125,6 +123,28 @@ def test_disabled_ca(root_cert: Certificate, api_client: Client) -> None:
     response = api_client.post(path, {}, content_type="application/json")
     assert response.status_code == HTTPStatus.NOT_FOUND, response.content
     assert response.json() == {"detail": "Not Found"}, response.json()
+
+
+def test_deprecated_path(
+    root_cert: Certificate, api_client: Client, expected_response: DetailResponse
+) -> None:
+    """Test an ordinary certificate revocation."""
+    path = reverse_lazy(
+        "django_ca:api:revoke_certificate_deprecated",
+        kwargs={
+            "serial": CERT_DATA["root"]["serial"],
+            "certificate_serial": CERT_DATA["root-cert"]["serial"],
+        },
+    )
+    with pytest.warns(RemovedInDjangoCA250Warning, match=r"Path is deprecated"):
+        response = api_client.post(path, {}, content_type="application/json")
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == expected_response, response.json()
+
+    root_cert.refresh_from_db()
+    assert root_cert.revoked is True
+    assert root_cert.revoked_reason == "unspecified"
+    assert root_cert.compromised is None
 
 
 class TestPermissions(APIPermissionTestBase):
