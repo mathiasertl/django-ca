@@ -154,6 +154,17 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
             raise ValueError("this extension must be marked as non-critical")
         return critical
 
+    @model_validator(mode="after")
+    def set_type(self) -> "Self":
+        """Model validator to explicitly set the type field.
+
+        This is necessary when validating from cryptography models, where `type` would otherwise not be
+        explicitly set. Serializing such model instances then with `exclude_unset=True` yields unusable model
+        data.
+        """
+        self.type = self.type
+        return self
+
     @property
     def cryptography(self) -> x509.Extension[ExtensionTypeTypeVar]:  # type: ignore[override]
         """Convert to a :py:class:`~cg:cryptography.x509.Extension` instance."""
