@@ -27,7 +27,7 @@ from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.urls import reverse
 
-from django_ca import __version__
+from django_ca import __version__, constants
 from django_ca.api.auth import BasicAuth
 from django_ca.api.errors import Forbidden
 from django_ca.api.schemas import (
@@ -40,9 +40,10 @@ from django_ca.api.schemas import (
     RevokeCertificateSchema,
 )
 from django_ca.api.utils import get_certificate_authority
+from django_ca.constants import ExtensionOID
 from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
-from django_ca.pydantic.messages import SignCertificateMessage
+from django_ca.pydantic.messages import ResignCertificateMessage, SignCertificateMessage
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tasks import api_sign_certificate as sign_certificate_task, run_task
 
@@ -213,6 +214,74 @@ def view_certificate(request: WSGIRequest, serial: str, certificate_serial: str)
     """Retrieve details of the certificate with the given certificate serial."""
     ca = get_certificate_authority(serial, expired=True)  # You can view certificates of expired CAs
     return Certificate.objects.get(ca=ca, serial=certificate_serial)
+
+
+@api.post(
+    "/ca/{serial:serial}/certs/{serial:certificate_serial}/resign/",
+    response=CertificateOrderSchema,
+    auth=BasicAuth("django_ca.sign_certificate"),
+    summary="Resign a certificate",
+    tags=["Certificates"],
+)
+def resign_certificate(
+    request: WSGIRequest, serial: str, certificate_serial: str, data: ResignCertificateMessage
+) -> CertificateOrder:
+    """Resign the named certificate.
+
+    The certificate will be resigned using the same certificate authority and the same signing algorithm as
+    the original certificate. Extensions will be copied over to the new certificate *except* where the CA
+    sets its own extensions (such as CRLDistributionPoints, AuthorityInformationAccess, ...).
+    """
+    ca = get_certificate_authority(serial)
+    try:
+        cert: Certificate = Certificate.objects.get(ca=ca, serial=certificate_serial)
+    except Certificate.DoesNotExist as ex:
+        raise Http404(f"{certificate_serial}: Certificate not found.") from ex
+
+    if cert.csr is None:
+        raise HttpError(HTTPStatus.BAD_REQUEST, "Cannot resign certificate without a CSR.")
+
+    # TYPEHINT NOTE: django-ninja sets the user as `request.auth` and mypy does not know about it
+    order = CertificateOrder.objects.create(
+        certificate_authority=ca,
+        user=request.auth,  # type: ignore[attr-defined]
+    )
+
+    extensions = [
+        ext
+        for ext in cert.extensions.values()
+        if ext.oid
+        not in (
+            ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
+            ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+            ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            ExtensionOID.CERTIFICATE_POLICIES,
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+            ExtensionOID.BASIC_CONSTRAINTS,
+            ExtensionOID.SUBJECT_KEY_IDENTIFIER,
+        )
+    ]
+
+    algorithm = None
+    if cert.algorithm:
+        algorithm = constants.HASH_ALGORITHM_NAMES[type(cert.algorithm)]
+
+    message = SignCertificateMessage(
+        key_backend_options=data.key_backend_options,
+        algorithm=algorithm,
+        csr=cert.csr.pem,
+        not_after=data.not_after,
+        extensions=extensions,
+        profile=cert.profile,
+        subject=cert.subject,
+    )
+    parameters = message.model_dump(mode="json", exclude_unset=True)
+
+    # start task only after commit, see:
+    #   https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
+    transaction.on_commit(lambda: run_task(sign_certificate_task, order_pk=order.pk, **parameters))
+
+    return order
 
 
 @api.post(

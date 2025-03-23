@@ -22,6 +22,8 @@ Command-line
 REST API
 ********
 
+* Add ability to resign certificates via the API (fixes
+  `#155 <https://github.com/mathiasertl/django-ca/issues/155>`_).
 * The URL path for the revocation endpoint has changed. It is now
   ``/ca/{ca_serial}/certs/{certificate_serial}/revoke/`` instead of
   ``/ca/{ca_serial}/revoke/{certificate_serial}/``. The old API endpoint will be removed in
@@ -31,7 +33,7 @@ REST API
 Dependencies
 ************
 
-* **BACKWARDS INCOMPATIBLE:** Dropped support for ``django~=4.2.0``, ``acme~=3.0.0`` and ``acme~=3.`.0``.
+* **BACKWARDS INCOMPATIBLE:** Dropped support for ``django~=4.2.0``, ``acme~=3.0.0`` and ``acme~=3.0.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Alpine 3.19.
 
 **********

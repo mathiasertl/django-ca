@@ -52,14 +52,24 @@ class GenerateOCSPKeyMessage(BaseModel):
     force: bool = False
 
 
-class SignCertificateMessage(BaseModel):
-    """Schema for signing certificates."""
+class ResignCertificateMessage(BaseModel):
+    """Schema for resigning an existing certificate."""
 
     key_backend_options: dict[str, JsonValue] = Field(
         default_factory=dict,
         description="Options for the key backend. Valid values depend on the key backend of the certificate "
         "authority. If not passed, the key backend must be configured for automatic signing in the backend.",
     )
+    not_after: datetime | None = Field(
+        description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
+        default_factory=lambda: datetime.now(tz=tz.utc) + model_settings.CA_DEFAULT_EXPIRES,
+        json_schema_extra={"example": DATETIME_EXAMPLE},
+    )
+
+
+class SignCertificateMessage(ResignCertificateMessage):
+    """Schema for signing certificates."""
+
     algorithm: HashAlgorithms | None = Field(
         default=None,
         description="Hash algorithm used for signing (default: same as in the certificate authority).",
@@ -75,11 +85,6 @@ class SignCertificateMessage(BaseModel):
         json_schema_extra={
             "example": "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----\n"
         },
-    )
-    not_after: datetime | None = Field(
-        description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
-        default_factory=lambda: datetime.now(tz=tz.utc) + model_settings.CA_DEFAULT_EXPIRES,
-        json_schema_extra={"example": DATETIME_EXAMPLE},
     )
     extensions: list[ConfigurableExtensionModel] | None = Field(
         default_factory=list,  # type: ignore[arg-type]  # false positive
