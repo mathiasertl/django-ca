@@ -59,6 +59,7 @@ Welcome to django-ca's documentation!
    python/pydantic
    python/tasks
    python/typehints
+   python/extend/index
 
 .. toctree::
    :maxdepth: 1
