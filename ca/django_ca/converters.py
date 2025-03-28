@@ -35,7 +35,7 @@ class HexConverter:
 
 
 class SerialConverter(HexConverter):
-    """Extends base to call :py:func:`~django-ca.utils.sanitize_serial` for the value."""
+    """Extends base to call :py:func:`~django_ca.utils.sanitize_serial` for the value."""
 
     def to_python(self, value: str) -> str:
         return sanitize_serial(value)
