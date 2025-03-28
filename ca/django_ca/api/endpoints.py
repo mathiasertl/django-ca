@@ -75,7 +75,7 @@ def list_certificate_authorities(
 
 
 @api.get(
-    "/ca/{serial:serial}/",
+    "/ca/{django-ca-serial:serial}/",
     response=CertificateAuthoritySchema,
     auth=BasicAuth("django_ca.view_certificateauthority"),
     summary="View certificate authority",
@@ -87,7 +87,7 @@ def view_certificate_authority(request: WSGIRequest, serial: str) -> Certificate
 
 
 @api.put(
-    "/ca/{serial:serial}/",
+    "/ca/{django-ca-serial:serial}/",
     response=CertificateAuthoritySchema,
     auth=BasicAuth("django_ca.change_certificateauthority"),
     summary="Update certificate authority",
@@ -125,7 +125,7 @@ def update_certificate_authority(
 
 
 @api.post(
-    "/ca/{serial:serial}/sign/",
+    "/ca/{django-ca-serial:serial}/sign/",
     response=CertificateOrderSchema,
     auth=BasicAuth("django_ca.sign_certificate"),
     summary="Sign a certificate",
@@ -161,7 +161,7 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateMes
 
 
 @api.get(
-    "/ca/{serial:serial}/orders/{acme:slug}/",
+    "/ca/{django-ca-serial:serial}/orders/{django-ca-acme-slug:slug}/",
     response=CertificateOrderSchema,
     auth=BasicAuth("django_ca.sign_certificate"),
     summary="Retrieve certificate order",
@@ -176,7 +176,7 @@ def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> Certi
 
 
 @api.get(
-    "/ca/{serial:serial}/certs/",
+    "/ca/{django-ca-serial:serial}/certs/",
     response=list[CertificateSchema],
     auth=BasicAuth("django_ca.view_certificate"),
     summary="List certificates",
@@ -204,7 +204,7 @@ def list_certificates(
 
 
 @api.get(
-    "/ca/{serial:serial}/certs/{serial:certificate_serial}/",
+    "/ca/{django-ca-serial:serial}/certs/{django-ca-serial:certificate_serial}/",
     response=CertificateSchema,
     auth=BasicAuth("django_ca.view_certificate"),
     summary="View certificate",
@@ -217,7 +217,7 @@ def view_certificate(request: WSGIRequest, serial: str, certificate_serial: str)
 
 
 @api.post(
-    "/ca/{serial:serial}/certs/{serial:certificate_serial}/resign/",
+    "/ca/{django-ca-serial:serial}/certs/{django-ca-serial:certificate_serial}/resign/",
     response=CertificateOrderSchema,
     auth=BasicAuth("django_ca.sign_certificate"),
     summary="Resign a certificate",
@@ -285,7 +285,7 @@ def resign_certificate(
 
 
 @api.post(
-    "/ca/{serial:serial}/certs/{serial:certificate_serial}/revoke/",
+    "/ca/{django-ca-serial:serial}/certs/{django-ca-serial:certificate_serial}/revoke/",
     response=CertificateSchema,
     auth=BasicAuth("django_ca.revoke_certificate"),
     summary="Revoke certificate",
@@ -313,7 +313,7 @@ def revoke_certificate(
 
 
 @api.post(
-    "/ca/{serial:serial}/revoke/{serial:certificate_serial}/",
+    "/ca/{django-ca-serial:serial}/revoke/{django-ca-serial:certificate_serial}/",
     response=CertificateSchema,
     auth=BasicAuth("django_ca.revoke_certificate"),
     summary="Revoke certificate",
