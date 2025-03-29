@@ -33,7 +33,9 @@ if typing.TYPE_CHECKING:
     from django.db.migrations.state import StateApps
 
 
-def populate_extension_fields(apps: "StateApps", schema_editor: "BaseDatabaseSchemaEditor") -> None:
+def populate_extension_fields(
+    apps: "StateApps", schema_editor: "BaseDatabaseSchemaEditor"
+) -> None:  # pragma: no cover
     """Migrate to extension fields (forward migration)."""
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.all():
@@ -43,7 +45,9 @@ def populate_extension_fields(apps: "StateApps", schema_editor: "BaseDatabaseSch
         ca.save()
 
 
-def reverse_extension_fields(apps: "StateApps", schema_editor: "BaseDatabaseSchemaEditor") -> None:
+def reverse_extension_fields(
+    apps: "StateApps", schema_editor: "BaseDatabaseSchemaEditor"
+) -> None:  # pragma: no cover
     """Migrate to old fields (backwards migration)."""
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.all():
