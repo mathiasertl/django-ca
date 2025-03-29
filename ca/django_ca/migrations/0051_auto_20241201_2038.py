@@ -29,7 +29,7 @@ from django_ca.key_backends.storages import StoragesOCSPBackend
 log = logging.getLogger(__name__)
 
 
-def configure_ocsp_responder_key(apps, schema_editor):
+def configure_ocsp_responder_key(apps, schema_editor):  # pragma: no cover
     """Migration function to set ocsp responder key if it exists."""
     # We can't import the Person model directly as it may be a newer
     # version than this migration expects. We use the historical version.
@@ -44,7 +44,7 @@ def configure_ocsp_responder_key(apps, schema_editor):
             continue
         except ImproperlyConfigured:  # pragma: no cover  # not possible to reproduce with SettingsWrapper
             log.warning("%s: Key backend is not configured.", ca.ocsp_key_backend_alias)
-            continue
+            continue  # pragma: no cover
 
         # COVERAGE NOTE: No other implementations exist at the time of writing
         if not isinstance(ocsp_key_backend, StoragesOCSPBackend):  # pragma: no cover

@@ -518,7 +518,6 @@ conflicts = [
 [dependency-groups]
 dev = [
     "coverage[toml]>=7.6.12",
-    "django-test-migrations>=1.4.0",
     "django-webtest>=1.9.12",
     "freezegun>=1.5.1",
     "gitpython>=3.1.44",
