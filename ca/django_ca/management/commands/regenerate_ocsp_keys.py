@@ -125,14 +125,6 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                     self.stderr.write(self.style.WARNING(f"{hr_serial}: {ex}"))
                 continue
 
-            # Only check if the key is usable from here and emit a warning otherwise.
-            if not ca.is_usable(key_backend_options):
-                if quiet is False:  # pragma: no branch
-                    # NOTE: coverage falsely identifies the above condition to always be false.
-                    self.stderr.write(self.style.WARNING(f"{hr_serial}: CA has no private key."))
-
-                continue
-
             # Get private key parameters for this particular private key
             ca_key_type = key_type
             if ca_key_type is None:
@@ -159,8 +151,11 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 force=force,
             )
 
-            run_task(
-                generate_ocsp_key,
-                key_backend_options=key_backend_options.model_dump(mode="json"),
-                **parameters.model_dump(mode="json"),
-            )
+            try:
+                run_task(
+                    generate_ocsp_key,
+                    key_backend_options=key_backend_options.model_dump(mode="json"),
+                    **parameters.model_dump(mode="json"),
+                )
+            except Exception as ex:
+                raise CommandError(ex) from ex
