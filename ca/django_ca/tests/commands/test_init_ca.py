@@ -181,6 +181,10 @@ def test_basic(ca_name: str, subject: x509.Name, rfc4514_subject: str, key_backe
     assert_ca_properties(ca, ca_name)
     assert_certificate(ca, subject)
 
+    assert ca.path_length == 0
+    assert ca.max_path_length == 0
+    assert ca.allows_intermediate_ca is False
+
     # test the private key
     key = key_backend.get_key(ca, use_options)
     assert isinstance(key, RSAPrivateKey)
@@ -750,14 +754,6 @@ def test_no_cn(ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_intermediate_check(ca_name: str) -> None:
     """Test intermediate path length checks."""
-    with assert_create_ca_signals() as (pre, post):
-        parent = init_ca(name=ca_name)
-    assert_post_create_ca(post, parent)
-    parent.full_clean()  # assert e.g. max_length in serials
-    assert parent.path_length == 0
-    assert parent.max_path_length == 0
-    assert parent.allows_intermediate_ca is False
-
     with assert_create_ca_signals() as (pre, post):
         path_length_1 = init_ca(name=f"{ca_name}-1", path_length=1)
     assert_post_create_ca(post, path_length_1)

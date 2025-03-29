@@ -17,6 +17,8 @@ Command-line
 
 * The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` where removed (deprecated
   since django-ca 2.1.0).
+* :command:`manage.py regenerate_ocsp_keys` no longer requires the private key to be usable where the command
+  is invoked if Celery is used.
 
 ********
 REST API

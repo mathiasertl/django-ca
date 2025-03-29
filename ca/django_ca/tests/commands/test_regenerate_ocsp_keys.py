@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name  # for fixture names
+
 """Test the regenerate_ocsp_keys management command."""
 
 import typing
@@ -18,27 +20,31 @@ from collections.abc import Iterable
 from typing import Any
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, rsa
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec, ed448
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django.core.files.storage import storages
-from django.test import TestCase
+
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
 from django_ca.key_backends.storages import StoragesOCSPBackend
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
-from django_ca.tests.base.constants import CERT_DATA
-from django_ca.tests.base.mixins import TestCaseMixin
-from django_ca.tests.base.utils import cmd, cmd_e2e, override_tmpcadir
-from django_ca.utils import add_colons
+from django_ca.tests.base.mocks import mock_celery_task
+from django_ca.tests.base.utils import cmd, cmd_e2e
 
 
-def regenerate_ocsp_keys(*serials: str, **kwargs: Any) -> tuple[str, str]:
+def regenerate_ocsp_keys(*serials: str, stdout: str = "", stderr: str = "", **kwargs: Any) -> tuple[str, str]:
     """Execute the regenerate_ocsp_keys command."""
-    return cmd("regenerate_ocsp_keys", *serials, **kwargs)
+    actual_stdout, actual_stderr = cmd("regenerate_ocsp_keys", *serials, **kwargs)
+    assert actual_stdout == stdout
+    assert actual_stderr == stderr
+    return actual_stdout, actual_stderr
 
 
 def regenerate_ocsp_keys_e2e(*args: str) -> None:
@@ -48,221 +54,178 @@ def regenerate_ocsp_keys_e2e(*args: str) -> None:
     assert stderr == ""
 
 
-class RegenerateOCSPKeyTestCase(TestCaseMixin, TestCase):
-    """Main test class for this command."""
+def assert_key(
+    ca: CertificateAuthority,
+    key_type: type[CertificateIssuerPrivateKeyTypes] | None = None,
+    excludes: Iterable[int] | None = None,
+) -> tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:
+    """Assert that they key is present and can be read."""
+    ca.refresh_from_db()  # need to reload data to be able to see new OCSP key data
 
-    load_cas = "__usable__"
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.existing_certs = list(Certificate.objects.values_list("pk", flat=True))
-
-    def assertKey(  # pylint: disable=invalid-name
-        self,
-        ca: CertificateAuthority,
-        key_type: type[CertificateIssuerPrivateKeyTypes] | None = None,
-        key_size: int | None = 2048,
-        excludes: Iterable[int] | None = None,
-        elliptic_curve: type[ec.EllipticCurve] = ec.SECP256R1,
-    ) -> tuple[CertificateIssuerPrivateKeyTypes, x509.Certificate]:
-        """Assert that they key is present and can be read."""
-        if key_type is None:
-            key_backend_options = StoragesUsePrivateKeyOptions.model_validate({}, context={"ca": ca})
-            ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
-                ca, key_backend_options
-            )
-            key_type = type(ca_key)
-
-        ocsp_key_backend = ca.ocsp_key_backend
-        assert isinstance(ocsp_key_backend, StoragesOCSPBackend)
-        priv = typing.cast(CertificateIssuerPrivateKeyTypes, ocsp_key_backend.load_private_key(ca))
-        assert isinstance(priv, key_type)
-        if isinstance(priv, dsa.DSAPrivateKey | rsa.RSAPrivateKey):
-            assert priv.key_size == key_size
-        if isinstance(priv, ec.EllipticCurvePrivateKey):
-            assert isinstance(priv.curve, elliptic_curve)
-
-        ca.refresh_from_db()
-        cert = x509.load_pem_x509_certificate(ca.ocsp_key_backend_options["certificate"]["pem"].encode())
-        assert isinstance(cert, x509.Certificate)
-
-        cert_qs = Certificate.objects.filter(ca=ca).exclude(pk__in=self.existing_certs)
-
-        if excludes:
-            cert_qs = cert_qs.exclude(pk__in=excludes)
-
-        db_cert = cert_qs.get()
-
-        aia = typing.cast(
-            x509.Extension[x509.AuthorityInformationAccess],
-            db_cert.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+    if key_type is None:
+        key_backend_options = StoragesUsePrivateKeyOptions.model_validate({}, context={"ca": ca})
+        ca_key = ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
+            ca, key_backend_options
         )
+        key_type = type(ca_key)
 
-        expected_aia = x509.Extension(
-            oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
-            critical=ca.sign_authority_information_access.critical,  # type: ignore[union-attr]
-            value=x509.AuthorityInformationAccess(
-                ad
-                for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
-                if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
-            ),
-        )
-        assert aia == expected_aia
+    ocsp_key_backend = ca.ocsp_key_backend
+    assert isinstance(ocsp_key_backend, StoragesOCSPBackend)
+    priv = typing.cast(CertificateIssuerPrivateKeyTypes, ocsp_key_backend.load_private_key(ca))
+    assert isinstance(priv, key_type)
 
-        return priv, cert
+    cert = x509.load_pem_x509_certificate(ca.ocsp_key_backend_options["certificate"]["pem"].encode())
+    assert isinstance(cert, x509.Certificate)
 
-    def assertHasNoKey(self, serial: str) -> None:  # pylint: disable=invalid-name
-        """Assert that the key is **not** present."""
-        priv_path = f"ocsp/{serial}.key"
-        cert_path = f"ocsp/{serial}.pem"
-        storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
-        assert storage.exists(priv_path) is False
-        assert storage.exists(cert_path) is False
+    cert_qs = Certificate.objects.filter(ca=ca, profile="ocsp")
 
-    @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
-    def test_basic(self) -> None:
-        """Basic test."""
-        with self.mute_celery():
-            stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
+    if excludes:
+        cert_qs = cert_qs.exclude(pk__in=excludes)
 
-        assert stdout == ""
-        assert stderr == ""
-        self.cas["root"].refresh_from_db()
-        self.assertKey(self.cas["root"])
+    db_cert = cert_qs.get()
 
-    @override_tmpcadir(CA_USE_CELERY=False)
-    def test_rsa_with_key_size(self) -> None:
-        """Test creating an RSA key with explicit key size."""
-        with self.mute_celery():
-            stdout, stderr = cmd(
-                "regenerate_ocsp_keys", CERT_DATA["root"]["serial"], key_type="RSA", key_size=4096
-            )
+    aia = typing.cast(
+        x509.Extension[x509.AuthorityInformationAccess],
+        db_cert.extensions[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+    )
 
-        assert stdout == ""
-        assert stderr == ""
-        self.cas["root"].refresh_from_db()
-        self.assertKey(self.cas["root"], key_size=4096)
+    expected_aia = x509.Extension(
+        oid=ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+        critical=ca.sign_authority_information_access.critical,  # type: ignore[union-attr]
+        value=x509.AuthorityInformationAccess(
+            ad
+            for ad in ca.sign_authority_information_access.value  # type: ignore[union-attr]
+            if ad.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+        ),
+    )
+    assert aia == expected_aia
 
-    @override_tmpcadir(CA_USE_CELERY=False)
-    def test_ec_with_curve(self) -> None:
-        """Test creating an EC key with explicit elliptic curve."""
-        with self.mute_celery():
-            stdout, stderr = cmd(
-                "regenerate_ocsp_keys", CERT_DATA["ec"]["serial"], elliptic_curve=ec.SECP384R1()
-            )
+    return priv, cert
 
-        assert stdout == ""
-        assert stderr == ""
-        self.cas["ec"].refresh_from_db()
-        self.assertKey(self.cas["ec"], elliptic_curve=ec.SECP384R1)
 
-    @override_tmpcadir(CA_USE_CELERY=False)  # CA_USE_CELERY=False is set anyway, but just to be sure
-    def test_hash_algorithm(self) -> None:
-        """Test the hash algorithm option."""
-        with self.mute_celery():
-            stdout, stderr = cmd(
-                "regenerate_ocsp_keys", CERT_DATA["root"]["serial"], "--algorithm", "SHA-256"
-            )
+def assert_no_key(serial: str) -> None:
+    """Assert that the OCSP key is **not** present."""
+    priv_path = f"ocsp/{serial}.key"
+    cert_path = f"ocsp/{serial}.pem"
+    storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
+    assert storage.exists(priv_path) is False
+    assert storage.exists(cert_path) is False
 
-        assert stdout == ""
-        assert stderr == ""
-        self.cas["root"].refresh_from_db()
-        self.assertKey(self.cas["root"])
 
-    @override_tmpcadir(CA_USE_CELERY=True)
-    def test_with_celery(self) -> None:
-        """Basic test."""
-        with self.mute_celery(
+def test_with_serial(usable_root: CertificateAuthority) -> None:
+    """Basic test."""
+    regenerate_ocsp_keys(usable_root.serial)
+    private_key, certificate = assert_key(usable_root)
+
+    # get list of existing certificates
+    excludes = list(Certificate.objects.all().values_list("pk", flat=True))
+
+    # Try regenerating certificate
+    regenerate_ocsp_keys(usable_root.serial, force=True)
+    new_priv, new_cert = assert_key(usable_root, excludes=excludes)
+
+    # Key/Cert should now be different
+    assert private_key != new_priv
+    assert certificate != new_cert
+
+
+def test_rsa_with_key_size(usable_root: CertificateAuthority) -> None:
+    """Test creating an RSA key with explicit key size."""
+    regenerate_ocsp_keys(usable_root.serial, key_type="RSA", key_size=4096)
+    private_key, _certificate = assert_key(usable_root)
+    assert private_key.key_size == 4096  # type: ignore[union-attr]
+
+
+def test_ec_with_curve(usable_ec: CertificateAuthority) -> None:
+    """Test creating an EC key with explicit elliptic curve."""
+    regenerate_ocsp_keys(usable_ec.serial, elliptic_curve=ec.SECP384R1())
+    private_key, _certificate = assert_key(usable_ec)
+    assert isinstance(private_key.curve, ec.SECP384R1)  # type: ignore[union-attr]
+
+
+def test_hash_algorithm(usable_root: CertificateAuthority) -> None:
+    """Test the hash algorithm option."""
+    regenerate_ocsp_keys(usable_root.serial, algorithm=hashes.SHA384())
+    _private_key, certificate = assert_key(usable_root)
+    assert isinstance(certificate.signature_hash_algorithm, hashes.SHA384)
+
+
+def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
+    """Basic test."""
+    settings.CA_USE_CELERY = True
+    with mock_celery_task(
+        "django_ca.tasks.generate_ocsp_key",
+        (
             (
-                (
-                    tuple(),
-                    {
-                        "serial": CERT_DATA["root"]["serial"],
-                        "key_backend_options": {"password": None},
-                        "profile": "ocsp",
-                        "not_after": "P2D",
-                        "algorithm": "SHA-256",
-                        "key_size": None,
-                        "key_type": "RSA",
-                        "elliptic_curve": None,
-                        "force": False,
-                        "autogenerated": True,
-                    },
-                ),
-                {},
+                tuple(),
+                {
+                    "serial": usable_root.serial,
+                    "key_backend_options": {"password": None},
+                    "profile": "ocsp",
+                    "not_after": "P2D",
+                    "algorithm": "SHA-384",
+                    "key_size": None,
+                    "key_type": "RSA",
+                    "elliptic_curve": None,
+                    "force": False,
+                    "autogenerated": True,
+                },
             ),
-        ):
-            regenerate_ocsp_keys_e2e(CERT_DATA["root"]["serial"], "--algorithm", "SHA-256")
+            {},
+        ),
+    ):
+        regenerate_ocsp_keys(usable_root.serial, algorithm=hashes.SHA384())
+    assert_no_key(usable_root.serial)
 
-    @override_tmpcadir()
-    def test_with_ed448_with_explicit_key_type(self) -> None:
-        """Test creating an Ed448-based OCSP key for an RSA-based CA."""
-        regenerate_ocsp_keys_e2e(CERT_DATA["root"]["serial"], "--key-type", "Ed448")
-        self.cas["root"].refresh_from_db()
-        self.assertKey(self.cas["root"], key_type=ed448.Ed448PrivateKey)
 
-    @override_tmpcadir()
-    def test_all(self) -> None:
-        """Test for all CAs."""
-        stdout, stderr = cmd("regenerate_ocsp_keys")
-        assert stdout == ""
-        assert stderr == ""
-        for ca in self.cas.values():
-            ca.refresh_from_db()
-            self.assertKey(ca)
+def test_with_explicit_key_type(usable_root: CertificateAuthority) -> None:
+    """Test creating an Ed448-based OCSP key for an RSA-based CA."""
+    regenerate_ocsp_keys(usable_root.serial, key_type="Ed448")
+    assert_key(usable_root, key_type=ed448.Ed448PrivateKey)
 
-    @override_tmpcadir()
-    def test_overwrite(self) -> None:
-        """Test overwriting pre-generated OCSP keys."""
-        stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
-        assert stdout == ""
-        assert stderr == ""
-        self.cas["root"].refresh_from_db()
-        priv, cert = self.assertKey(self.cas["root"])
 
-        # get list of existing certificates
-        excludes = list(Certificate.objects.all().values_list("pk", flat=True))
+def test_without_serial(
+    settings: SettingsWrapper, root: CertificateAuthority, ec: CertificateAuthority
+) -> None:
+    """Test for all CAs."""
+    settings.CA_USE_CELERY = True
+    kwargs = {
+        "key_backend_options": {"password": None},
+        "profile": "ocsp",
+        "not_after": "P2D",
+        "algorithm": "SHA-256",
+        "key_size": None,
+        "elliptic_curve": None,
+        "force": False,
+        "autogenerated": True,
+    }
+    with mock_celery_task(
+        "django_ca.tasks.generate_ocsp_key",
+        ((tuple(), {"serial": root.serial, "key_type": "RSA", **kwargs}), {}),
+        ((tuple(), {"serial": ec.serial, "key_type": "EC", **kwargs}), {}),
+    ):
+        cmd("regenerate_ocsp_keys")
 
-        # write again
-        stdout, stderr = cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"], force=True)
-        assert stdout == ""
-        assert stderr == ""
-        self.cas["root"].refresh_from_db()
-        new_priv, new_cert = self.assertKey(self.cas["root"], excludes=excludes)
 
-        # Key/Cert should now be different
-        assert priv != new_priv
-        assert cert != new_cert
+@pytest.mark.django_db
+def test_wrong_serial() -> None:
+    """Try passing an unknown CA."""
+    regenerate_ocsp_keys("ZZZZZ", stderr="0Z:ZZ:ZZ: Unknown CA.\n")
 
-    @override_tmpcadir()
-    def test_wrong_serial(self) -> None:
-        """Try passing an unknown CA."""
-        serial = "ZZZZZ"
-        stdout, stderr = cmd("regenerate_ocsp_keys", serial, no_color=True)
-        assert stdout == ""
-        assert stderr == "0Z:ZZ:ZZ: Unknown CA.\n"
-        self.assertHasNoKey(serial)
 
-    @override_tmpcadir(CA_PROFILES={"ocsp": None})
-    def test_no_ocsp_profile(self) -> None:
-        """Try when there is no OCSP profile."""
-        with assert_command_error(r"^ocsp: Undefined profile\.$"):
-            cmd("regenerate_ocsp_keys", CERT_DATA["root"]["serial"])
-        self.assertHasNoKey(CERT_DATA["root"]["serial"])
+def test_no_ocsp_profile(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+    """Try when there is no OCSP profile."""
+    settings.CA_PROFILES = {"ocsp": None}
+    with assert_command_error(r"^ocsp: Undefined profile\.$"):
+        regenerate_ocsp_keys(root.serial)
+    assert_no_key(root.serial)
 
-    def test_no_private_key(self) -> None:
-        """Try when there is no private key."""
-        ca = self.cas["root"]
-        stdout, stderr = cmd("regenerate_ocsp_keys", ca.serial, no_color=True)
-        assert stdout == ""
-        assert stderr == f"{add_colons(ca.serial)}: CA has no private key.\n"
-        self.assertHasNoKey(ca.serial)
 
-        # and in quiet mode
-        stdout, stderr = cmd("regenerate_ocsp_keys", ca.serial, quiet=True, no_color=True)
-        assert stdout == ""
-        assert stderr == ""
-        self.assertHasNoKey(ca.serial)
+@pytest.mark.usefixtures("tmpcadir")
+def test_without_private_key(root: CertificateAuthority) -> None:
+    """Try regenerating the OCSP key when no CA private key is available."""
+    with assert_command_error(r"No such file or directory"):
+        regenerate_ocsp_keys(root.serial)
 
 
 def test_model_validation_error(root: CertificateAuthority) -> None:
