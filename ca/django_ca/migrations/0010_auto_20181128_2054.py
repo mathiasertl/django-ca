@@ -37,5 +37,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(add_valid_from),
+        migrations.RunPython(add_valid_from, migrations.RunPython.noop, elidable=True),
     ]

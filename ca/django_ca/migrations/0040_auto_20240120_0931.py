@@ -59,5 +59,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(populate_extension_fields, reverse_extension_fields),
+        migrations.RunPython(populate_extension_fields, reverse_extension_fields, elidable=True),
     ]

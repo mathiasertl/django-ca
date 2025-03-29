@@ -97,4 +97,6 @@ class Migration(migrations.Migration):
         ("django_ca", "0050_certificateauthority_ocsp_key_backend_alias_and_more"),
     ]
 
-    operations = [migrations.RunPython(configure_ocsp_responder_key, migrations.RunPython.noop)]
+    operations = [
+        migrations.RunPython(configure_ocsp_responder_key, migrations.RunPython.noop, elidable=True)
+    ]
