@@ -91,4 +91,4 @@ class Migration(migrations.Migration):
     dependencies = [
         ("django_ca", "0047_certificaterevocationlist"),
     ]
-    operations = [migrations.RunPython(migrate_crl_number, migrations.RunPython.noop)]
+    operations = [migrations.RunPython(migrate_crl_number, migrations.RunPython.noop, elidable=True)]

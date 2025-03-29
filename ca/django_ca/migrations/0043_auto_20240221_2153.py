@@ -42,5 +42,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_path, reverse_path),
+        migrations.RunPython(migrate_path, reverse_path, elidable=True),
     ]

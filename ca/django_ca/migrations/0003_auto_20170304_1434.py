@@ -30,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_revocation_reasons),
+        migrations.RunPython(migrate_revocation_reasons, elidable=True),
     ]

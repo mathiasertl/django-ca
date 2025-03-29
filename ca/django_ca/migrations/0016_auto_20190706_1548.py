@@ -34,4 +34,4 @@ class Migration(migrations.Migration):
         ("django_ca", "0015_auto_20190518_1050"),
     ]
 
-    operations = [migrations.RunPython(rm_colons, add_colons)]
+    operations = [migrations.RunPython(rm_colons, add_colons, elidable=True)]

@@ -16,5 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(update_sign_certificates_schema, reverse_code=migrations.RunPython.noop)
+        migrations.RunPython(
+            update_sign_certificates_schema, reverse_code=migrations.RunPython.noop, elidable=True
+        )
     ]
