@@ -79,7 +79,7 @@ class AdminActionTestCaseMixin(
         self.user.save()
 
         for obj in self.get_objects():
-            response = self.client.post(self.changelist_url, self.data)
+            response = self.client.post(self.model.admin_changelist_url, self.data)
             assert response.status_code == HTTPStatus.FORBIDDEN
             self.assertFailedRequest(response, obj)
 
@@ -116,7 +116,7 @@ class AdminActionTestCaseMixin(
             self.user.user_permissions.add(Permission.objects.get(codename=name, content_type__app_label=app))
 
         for obj in self.get_objects():
-            response = self.client.post(self.changelist_url, self.data)
+            response = self.client.post(self.model.admin_changelist_url, self.data)
             assert response.status_code == HTTPStatus.OK
             self.assertFailedRequest(response, obj)
 
@@ -131,8 +131,8 @@ class AdminActionTestCaseMixin(
             self.user.user_permissions.add(Permission.objects.get(codename=name, content_type__app_label=app))
 
         for obj in self.get_objects():
-            response = self.client.post(self.changelist_url, self.data)
-            self.assertRedirects(response, self.changelist_url)
+            response = self.client.post(self.model.admin_changelist_url, self.data)
+            self.assertRedirects(response, self.model.admin_changelist_url)
             self.assertSuccessfulRequest(response, obj)
 
 
@@ -183,7 +183,7 @@ class AdminChangeActionTestCaseMixin(
         self.assertFailedRequest(response)
 
     def assertSuccessfulRequest(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", obj: DjangoCAModelTypeVar | None = None
+        self, response: "HttpResponse", obj: DjangoCAModelTypeVar
     ) -> None:
         """Assert that the request was successful."""
         raise NotImplementedError
@@ -254,7 +254,7 @@ class AdminChangeActionTestCaseMixin(
     def test_unknown_object(self) -> None:
         """Test an unknown object (get_change_actions() fetches object, so it should work)."""
         with self.mockSignals(False, False):
-            response = self.client.get(self.change_url(self.model(pk=1234)))
+            response = self.client.get(self.model(pk=1234).admin_change_url)
         self.assertRedirects(response, "/admin/")
 
 
@@ -310,11 +310,11 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
     def assertSuccessfulRequest(
         self,
         response: "HttpResponse",
-        obj: Certificate | None = None,
+        obj: Certificate,
         reason: str = "unspecified",
         compromised: datetime | None = None,
     ) -> None:
-        self.assertRedirects(response, self.change_url())
+        self.assertRedirects(response, obj.admin_change_url)
         self.assertTemplateUsed("admin/django_ca/certificate/revoke_form.html")
         assert_revoked(self.cert, reason=reason, compromised=compromised)
 
@@ -323,7 +323,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         for obj in self.get_objects():
             with self.mockSignals():
                 response = self.client.post(self.get_url(obj), data={"revoked_reason": ""})
-        self.assertSuccessfulRequest(response)
+            self.assertSuccessfulRequest(response, obj)
 
     def test_with_reason(self) -> None:
         """Test revoking a certificate with an explicit reason."""
@@ -331,7 +331,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
         for obj in self.get_objects():
             with self.mockSignals():
                 response = self.client.post(self.get_url(obj), data={"revoked_reason": reason.name})
-            self.assertSuccessfulRequest(response, reason=reason.name)
+            self.assertSuccessfulRequest(response, obj, reason=reason.name)
 
     def test_with_compromised(self) -> None:
         """Test revoking a certificate with a revocation date."""
@@ -340,7 +340,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
         with self.mockSignals():
             response = self.client.post(self.get_url(self.cert), data=data)
-        self.assertSuccessfulRequest(response, compromised=value)
+        self.assertSuccessfulRequest(response, self.cert, compromised=value)
 
     def test_with_compromised_without_use_tz(self) -> None:
         """Test revoking a certificate with a revocation date with USE_TZ=False."""
@@ -349,7 +349,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
         with self.mockSignals(), self.settings(USE_TZ=False):
             response = self.client.post(self.get_url(self.cert), data=data)
-            self.assertSuccessfulRequest(response, compromised=value)
+            self.assertSuccessfulRequest(response, self.cert, compromised=value)
 
     def test_compromised_in_the_future(self) -> None:
         """Test that the compromised must be in the past."""
@@ -379,12 +379,12 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
         # Viewing page already redirects to change URL
         with self.assertNoSignals():
-            self.assertRedirects(self.client.get(self.get_url(self.cert)), self.change_url())
+            self.assertRedirects(self.client.get(self.get_url(self.cert)), self.cert.admin_change_url)
 
         # Revoke a second time, which does not update the reason
         with self.assertNoSignals():
             response = self.client.post(self.get_url(self.cert), data={"revoked_reason": "certificateHold"})
-        self.assertRedirects(response, self.change_url())
+        self.assertRedirects(response, self.cert.admin_change_url)
         assert_revoked(self.cert)
 
 
@@ -463,7 +463,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         with self.mockSignals():
             url = self.get_url(self.cert)
             response = self.client.post(url, data=self.data)
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
         self.assertSuccessfulRequest(response)
 
     @override_tmpcadir()  # otherwise there are no usable CAs, hiding the message we want to test
@@ -475,8 +475,8 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         for obj in self.get_objects():
             with self.assertNoSignals():
                 response = self.client.get(self.get_url(obj))
-        self.assertRedirects(response, self.change_url())
-        self.assertMessages(response, ["Certificate has no CSR (most likely because it was imported)."])
+            self.assertRedirects(response, obj.admin_change_url)
+            self.assertMessages(response, ["Certificate has no CSR (most likely because it was imported)."])
 
     @override_tmpcadir()
     def test_no_profile(self) -> None:

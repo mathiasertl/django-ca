@@ -31,9 +31,11 @@ from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
 from django.core.cache import cache
+from django.test import Client
 from django.test.testcases import SimpleTestCase
 from django.urls import reverse
 
+import pytest
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory, StepTickTimeFactory
 
@@ -330,9 +332,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
     model: type[DjangoCAModelTypeVar]
     """Model must be configured for TestCase instances using this mixin."""
 
-    media_css: tuple[str, ...] = tuple()
-    """List of custom CSS files loaded by the ModelAdmin.Media class."""
-
     view_name: str
     """The name of the view being tested."""
 
@@ -373,16 +372,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         qs = quote(response.wsgi_request.get_full_path())
         self.assertRedirects(response, f"{path}?next={qs}", **kwargs)
 
-    def change_url(self, obj: DjangoCAModel | None = None) -> str:
-        """Shortcut for the change URL of the given instance."""
-        obj = obj or self.obj
-        return obj.admin_change_url
-
-    @property
-    def changelist_url(self) -> str:
-        """Shortcut for the changelist URL of the model under test."""
-        return self.model.admin_changelist_url
-
     @classmethod
     def create_superuser(
         cls, username: str = "admin", password: str = "admin", email: str = "user@example.com"
@@ -390,15 +379,15 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         """Shortcut to create a superuser."""
         return User.objects.create_superuser(username=username, password=password, email=email)
 
-    def get_changelist_view(self, data: dict[str, str] | None = None) -> "HttpResponse":
+    def get_changelist_response(self, client: Client, data: dict[str, str] | None = None) -> "HttpResponse":
         """Get the response to a changelist view for the given model."""
-        return self.client.get(self.changelist_url, data)
+        return client.get(self.model.admin_changelist_url, data)
 
-    def get_change_view(
-        self, obj: DjangoCAModelTypeVar, data: dict[str, str] | None = None
+    def get_change_response(
+        self, client: Client, obj: DjangoCAModelTypeVar, data: dict[str, str] | None = None
     ) -> "HttpResponse":
         """Get the response to a change view for the given model instance."""
-        return self.client.get(self.change_url(obj), data)
+        return client.get(obj.admin_change_url, data)
 
     def get_objects(self) -> Iterable[DjangoCAModelTypeVar]:
         """Get list of objects for defined for this test."""
@@ -422,21 +411,17 @@ class StandardAdminViewTestCaseMixin(AdminTestCaseMixin[DjangoCAModelTypeVar]):
 
         Should yield tuples of objects that should be displayed and a dict of query parameters.
         """
-        yield self.model._default_manager.all(), {}
+        yield self.model.objects.all(), {}  # type: ignore[attr-defined]
 
-    def test_model_count(self) -> None:
-        """Test that the implementing TestCase actually creates some instances."""
-        assert self.model._default_manager.all().count() > 0
-
-    def test_changelist_view(self) -> None:
+    @pytest.mark.usefixtures("changelist_objects")
+    def test_changelist_view(self, admin_client: Client) -> None:
         """Test that the changelist view works."""
         for qs, data in self.get_changelists():
-            assert_changelist_response(self.get_changelist_view(data), *qs)
+            assert_changelist_response(self.get_changelist_response(admin_client, data), *qs)
 
-    def test_change_view(self) -> None:
+    def test_change_view(self, admin_client: Client, change_object: DjangoCAModelTypeVar) -> None:
         """Test that the change view works for all instances."""
-        for obj in self.model._default_manager.all():
-            assert_change_response(self.get_change_view(obj))
+        assert_change_response(self.get_change_response(admin_client, change_object))
 
 
 class AcmeValuesMixin:

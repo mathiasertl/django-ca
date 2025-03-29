@@ -171,7 +171,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 },
             )
 
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
 
         cert = Certificate.objects.get(cn=cname)
         assert_post_issue_cert(post, cert)
@@ -300,7 +300,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         ca = self.cas["root"]
         with assert_create_cert_signals() as (pre, post):
             response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "subject": ""})
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
 
         cert: Certificate = Certificate.objects.get(cn="")
         assert_post_issue_cert(post, cert)
@@ -328,7 +328,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                     ),
                 },
             )
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
 
         cert: Certificate = Certificate.objects.get(cn=self.hostname)
         assert_post_issue_cert(post, cert)
@@ -424,7 +424,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 self.add_url,
                 data={**self.form_data(CSR, ca), "key_usage_0": []},
             )
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
 
         cert = Certificate.objects.get(cn=self.hostname)
         assert ExtensionOID.KEY_USAGE not in cert.extensions  # KeyUsage is not set!
@@ -460,7 +460,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 self.add_url,
                 data={**self.form_data(CSR, ca), "password": CERT_DATA["pwd"]["password"].decode("utf-8")},
             )
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
 
         cert = Certificate.objects.get(cn=self.hostname)
         assert_post_issue_cert(post, cert)
@@ -491,7 +491,7 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         # post with correct password!
         with assert_create_cert_signals() as (pre, post):
             response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
-        self.assertRedirects(response, self.changelist_url)
+        self.assertRedirects(response, self.model.admin_changelist_url)
 
         cert = Certificate.objects.get(cn=self.hostname)
         assert_post_issue_cert(post, cert)
