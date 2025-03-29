@@ -18,6 +18,7 @@ RUN adduser --system --uid=9000 --group --disabled-login django-ca
 
 # Activate the virtual environment (even if it's not created yet).
 ENV PATH="/usr/src/django-ca/.venv/bin:$PATH"
+ENV VIRTUAL_ENV=/usr/src/django-ca/.venv
 
 FROM base as build
 
