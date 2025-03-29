@@ -27,7 +27,7 @@ from django.utils import timezone
 from django.utils.timezone import make_naive
 
 
-def migrate_crl_number(apps, schema_editor):
+def migrate_crl_number(apps, schema_editor):  # pragma: no cover
     """Forward operation: CertificateAuthority.crl_number -> CertificateRevocationList."""
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     CertificateRevocationList = apps.get_model("django_ca", "CertificateRevocationList")

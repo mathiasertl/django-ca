@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def remove_empty(apps, schema_editor):
+def remove_empty(apps, schema_editor):  # pragma: no cover
     Certificate = apps.get_model("django_ca", "Certificate")
     Certificate.objects.filter(revoked_reason="").update(revoked_reason="unspecified")
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")

@@ -16,7 +16,7 @@
 from django.db import migrations
 
 
-def migrate_path(apps, schema_editor):
+def migrate_path(apps, schema_editor):  # pragma: no cover
     """Forward migration."""
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.all():
@@ -25,7 +25,7 @@ def migrate_path(apps, schema_editor):
         ca.save()
 
 
-def reverse_path(apps, schema_editor):
+def reverse_path(apps, schema_editor):  # pragma: no cover
     """Backward migration."""
     CertificateAuthority = apps.get_model("django_ca", "CertificateAuthority")
     for ca in CertificateAuthority.objects.all():
