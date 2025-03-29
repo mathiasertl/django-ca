@@ -1,0 +1,2 @@
+CA_ENABLE_REST_API: true
+EMAIL_HOST: smtp.example.com

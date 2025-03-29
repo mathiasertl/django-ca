@@ -2,12 +2,6 @@
 Path converters
 ###############
 
-.. spelling::
-
-   urls
-   views
-   py
-
 **django-ca** provides several path converters that you can use in your own URL configurations.
 
 *************
@@ -34,7 +28,7 @@ The path element can be used to retrieve :py:class:`~django_ca.models.Certificat
 For example, consider this URL configuration:
 
 .. code-block:: python
-   :caption: urls.py
+   :caption: :file:`urls.py`
 
    from django.urls import path
 
@@ -47,7 +41,7 @@ For example, consider this URL configuration:
 Your view implementation can then use the serial to fetch data from the database:
 
 .. literalinclude:: /include/extend/path_converters_serial_view.py
-   :caption: views.py
+   :caption: file:`views.py`
    :language: python
 
 ****************

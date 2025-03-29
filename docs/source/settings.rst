@@ -674,6 +674,8 @@ The django-ca project reads custom settings from YAML files in a directory.
 All installation options already include a good default for this environment variable and examples in the
 quickstart guides assume it is not modified. It is documented here for completeness.
 
+.. _settings-django-ca-settings:
+
 DJANGO_CA_SETTINGS
    The directory where to load YAML settings files. All files in the directory that have a ``.yaml`` suffix
    will be read in alphabetical order.
