@@ -18,7 +18,11 @@ from http import HTTPStatus
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
 
-from django.test import Client, TestCase, override_settings
+from django.contrib.admin.helpers import AdminForm
+from django.test import Client, TestCase
+
+import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.assertions import assert_change_response
@@ -26,37 +30,55 @@ from django_ca.tests.base.mixins import AdminTestCaseMixin, StandardAdminViewTes
 from django_ca.tests.base.utils import certificate_policies
 
 
-class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[CertificateAuthority], TestCase):
+class TestCertificateAuthorityAdminView(StandardAdminViewTestCaseMixin[CertificateAuthority]):
     """Test CA admin views."""
 
-    load_cas = "__all__"
-
     model = CertificateAuthority
-    media_css = (
-        "django_ca/admin/css/base.css",
-        "django_ca/admin/css/certificateauthorityadmin.css",
-    )
 
-    @override_settings(CA_ENABLE_ACME=False)
-    def test_change_view_without_acme(self) -> None:
+    @pytest.fixture
+    def change_object(self, root: CertificateAuthority) -> CertificateAuthority:
+        """Fixture for the object in detail view."""
+        return root
+
+    @pytest.fixture
+    def changelist_objects(self, usable_cas: list[CertificateAuthority]) -> list[CertificateAuthority]:
+        """Fixture for the objects in the changelist."""
+        return usable_cas
+
+    def test_change_view_without_acme(
+        self, settings: SettingsWrapper, admin_client: Client, root: CertificateAuthority
+    ) -> None:
         """Basic tests but with ACME support disabled."""
-        self.test_change_view()
+        settings.CA_ENABLE_ACME = False
+        response = self.get_change_response(admin_client, root)
+        assert_change_response(response)
+        assert b"ACME support is currently disabled in the configuration." in response.content
+        adminform = response.context["adminform"]
+        assert isinstance(adminform, AdminForm)
+        assert "acme_enabled" in adminform.readonly_fields
 
-    @override_settings(CA_ENABLE_REST_API=False)
-    def test_change_view_without_api(self) -> None:
+    def test_change_view_without_api(
+        self, settings: SettingsWrapper, admin_client: Client, root: CertificateAuthority
+    ) -> None:
         """Basic tests but with API support disabled."""
-        self.test_change_view()
+        settings.CA_ENABLE_REST_API = False
+        response = self.get_change_response(admin_client, root)
+        assert_change_response(response)
+        assert b"REST API support is currently disabled in the configuration." in response.content
+        adminform = response.context["adminform"]
+        assert isinstance(adminform, AdminForm)
+        assert "api_enabled" in adminform.readonly_fields
 
-    def test_complex_sign_certificate_policies(self) -> None:
+    def test_complex_sign_certificate_policies(
+        self, admin_client: Client, root: CertificateAuthority
+    ) -> None:
         """Test that complex Certificate Policy extensions are read-only."""
-        ca = self.cas["root"]
-
         # This test is only meaningful if the CA does **not** have the Certificate Policies extension in its
         # own extensions. We (can) only test for the used template after viewing, and the template would be
         # used for that extension.
-        assert ExtensionOID.CERTIFICATE_POLICIES not in ca.extensions
+        assert ExtensionOID.CERTIFICATE_POLICIES not in root.extensions
 
-        ca.sign_certificate_policies = certificate_policies(
+        root.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.ANY_POLICY,
                 policy_qualifiers=[
@@ -76,8 +98,8 @@ class CertificateAuthorityAdminViewTestCase(StandardAdminViewTestCaseMixin[Certi
                 ],
             ),
         )
-        ca.save()
-        response = self.get_change_view(ca)
+        root.save()
+        response = self.get_change_response(admin_client, root)
         assert_change_response(response)
         templates = [t.name for t in response.templates]
         assert "django_ca/admin/extensions/2.5.29.32.html" in templates

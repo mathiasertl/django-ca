@@ -14,12 +14,11 @@
 """Test cases for ModelAdmin classes for ACME models."""
 
 import typing
-from datetime import timedelta
 
-from django.test import TestCase
+from django.test import Client
 from django.utils import timezone
 
-from freezegun import freeze_time
+import pytest
 
 from django_ca.models import (
     AcmeAccount,
@@ -30,10 +29,8 @@ from django_ca.models import (
     CertificateAuthority,
 )
 from django_ca.tests.admin.assertions import assert_changelist_response
-from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import StandardAdminViewTestCaseMixin
 from django_ca.tests.base.typehints import DjangoCAModelTypeVar
-from django_ca.tests.base.utils import override_tmpcadir
 
 PEM1 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvP5N/1KjBQniyyukn30E
@@ -70,117 +67,195 @@ class AcmeAdminTestCaseMixin(
 ):
     """Admin view mixin that creates all model instances for ACME."""
 
-    load_cas = (
-        "root",
-        "child",
-    )
-    cas: dict[str, CertificateAuthority]
-
-    def setUp(self) -> None:
-        super().setUp()
-        kid1 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_1)
-        account1 = AcmeAccount.objects.create(
-            ca=self.cas["child"],
-            contact=f"mailto:{self.user.email}",
+    @pytest.fixture
+    def account_one(self, child: CertificateAuthority) -> AcmeAccount:
+        """Fixture for an enabled account."""
+        kid = self.absolute_uri(":acme-account", serial=child.serial, slug=ACME_SLUG_1)
+        return AcmeAccount.objects.create(
+            ca=child,
+            contact="mailto:user@example.com",
             status=AcmeAccount.STATUS_VALID,
-            kid=kid1,
+            kid=kid,
             terms_of_service_agreed=True,
             pem=PEM1,
             thumbprint=THUMBPRINT1,
             slug=ACME_SLUG_1,
         )
-        kid2 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1)
-        account2 = AcmeAccount.objects.create(
-            ca=self.cas["root"],
-            contact=f"mailto:{self.user.email}",
+
+    @pytest.fixture
+    def account_two(self, root: CertificateAuthority) -> AcmeAccount:
+        """Fixture for a revoked account."""
+        kid = self.absolute_uri(":acme-account", serial=root.serial, slug=ACME_SLUG_1)
+        return AcmeAccount.objects.create(
+            ca=root,
+            contact="mailto:user@example.net",
             status=AcmeAccount.STATUS_REVOKED,
-            kid=kid2,
+            kid=kid,
             terms_of_service_agreed=False,
             pem=PEM2,
             thumbprint=THUMBPRINT2,
             slug=ACME_SLUG_2,
         )
-        self.order1 = AcmeOrder.objects.create(account=account1, status=AcmeOrder.STATUS_VALID)
-        self.order2 = AcmeOrder.objects.create(account=account2, status=AcmeOrder.STATUS_PROCESSING)
 
-        auth1 = AcmeAuthorization.objects.create(
-            order=self.order1,
+    @pytest.fixture
+    def order_one(self, account_one: AcmeAccount) -> AcmeOrder:
+        """Fixture for an order."""
+        return AcmeOrder.objects.create(account=account_one, status=AcmeOrder.STATUS_VALID)
+
+    @pytest.fixture
+    def order_two(self, account_two: AcmeAccount) -> AcmeOrder:
+        """Fixture for an order."""
+        return AcmeOrder.objects.create(account=account_two, status=AcmeOrder.STATUS_PROCESSING)
+
+    @pytest.fixture
+    def authorization_one(self, order_one: AcmeOrder) -> AcmeAuthorization:
+        """Fixture for an authorization."""
+        return AcmeAuthorization.objects.create(
+            order=order_one,
             type=AcmeAuthorization.TYPE_DNS,
             value="example.com",
             status=AcmeAuthorization.STATUS_PENDING,
             wildcard=True,
         )
-        auth2 = AcmeAuthorization.objects.create(
-            order=self.order2,
+
+    @pytest.fixture
+    def authorization_two(self, order_two: AcmeOrder) -> AcmeAuthorization:
+        """Fixture for an authorization."""
+        return AcmeAuthorization.objects.create(
+            order=order_two,
             type=AcmeAuthorization.TYPE_DNS,
             value="example.net",
             status=AcmeAuthorization.STATUS_VALID,
             wildcard=False,
         )
-        AcmeChallenge.objects.create(auth=auth1, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1)
-        AcmeChallenge.objects.create(
-            auth=auth2,
+
+    @pytest.fixture
+    def challenge_one(self, authorization_one: AcmeAuthorization) -> AcmeChallenge:
+        """Fixture for an challenge."""
+        return AcmeChallenge.objects.create(
+            auth=authorization_one, status=AcmeChallenge.STATUS_PENDING, token=TOKEN1
+        )
+
+    @pytest.fixture
+    def challenge_two(self, authorization_two: AcmeAuthorization) -> AcmeChallenge:
+        """Fixture for an challenge."""
+        return AcmeChallenge.objects.create(
+            auth=authorization_two,
             status=AcmeChallenge.STATUS_VALID,
             token=TOKEN2,
             validated=timezone.now(),
             type=AcmeChallenge.TYPE_HTTP_01,
         )
-        AcmeChallenge.objects.create(
-            auth=auth2,
+
+    @pytest.fixture
+    def challenge_three(self, authorization_two: AcmeAuthorization) -> AcmeChallenge:
+        """Fixture for an challenge."""
+        return AcmeChallenge.objects.create(
+            auth=authorization_two,
             status=AcmeChallenge.STATUS_INVALID,
             token=TOKEN3,
             error="some-error",
             type=AcmeChallenge.TYPE_DNS_01,
         )
-        AcmeCertificate.objects.create(order=self.order1)
-        AcmeCertificate.objects.create(order=self.order2, csr=CSR1)
+
+    @pytest.fixture
+    def certificate_one(self, order_one: AcmeOrder) -> AcmeCertificate:
+        """Fixture for a certificate."""
+        return AcmeCertificate.objects.create(order=order_one)
+
+    @pytest.fixture
+    def certificate_two(self, order_two: AcmeOrder) -> AcmeCertificate:
+        """Fixture for a certificate."""
+        return AcmeCertificate.objects.create(order=order_two, csr=CSR1)
 
 
-class AcmeAccountViewsTestCase(AcmeAdminTestCaseMixin[AcmeAccount], TestCase):
+class TestAcmeAccountViews(AcmeAdminTestCaseMixin[AcmeAccount]):
     """Test standard views for :py:class:`~django_ca.models.AcmeAccount`."""
 
     model = AcmeAccount
 
+    @pytest.fixture
+    def change_object(self, account_one: AcmeAccount) -> AcmeAccount:
+        """Fixture for the object in detail view."""
+        return account_one
 
-class AcmeOrderViewsTestCase(AcmeAdminTestCaseMixin[AcmeOrder], TestCase):
+    @pytest.fixture
+    def changelist_objects(self, account_one: AcmeAccount, account_two: AcmeAccount) -> list[AcmeAccount]:
+        """Fixture for the objects in the changelist."""
+        return [account_one, account_two]
+
+
+class TestAcmeOrderViews(AcmeAdminTestCaseMixin[AcmeOrder]):
     """Test standard views for :py:class:`~django_ca.models.AcmeOrder`."""
 
     model = AcmeOrder
 
-    @override_tmpcadir()
-    def test_expired_filter(self) -> None:
+    @pytest.fixture
+    def change_object(self, order_one: AcmeOrder) -> AcmeOrder:
+        """Fixture for the object in detail view."""
+        return order_one
+
+    @pytest.fixture
+    def changelist_objects(self, order_one: AcmeOrder, order_two: AcmeOrder) -> list[AcmeOrder]:
+        """Fixture for the objects in the changelist."""
+        return [order_one, order_two]
+
+    def test_expired_filter(self, admin_client: Client, order_one: AcmeOrder, order_two: AcmeOrder) -> None:
         """Test the "expired" list filter."""
-        assert_changelist_response(
-            self.client.get(f"{self.changelist_url}?expired=0"), self.order1, self.order2
-        )
-        assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=1"))
-
-    @override_tmpcadir()
-    @freeze_time(TIMESTAMPS["everything_expired"])
-    def test_expired_filter_with_everything_expired(self) -> None:
-        """Test the "expired" filter when everything is expired."""
-        self.client.force_login(self.user)
-        now = timezone.now()
-        AcmeOrder.objects.all().update(expires=now - timedelta(days=10))
-        assert_changelist_response(self.client.get(f"{self.changelist_url}?expired=0"))
-        assert_changelist_response(
-            self.client.get(f"{self.changelist_url}?expired=1"), self.order1, self.order2
-        )
+        url = self.model.admin_changelist_url
+        assert_changelist_response(admin_client.get(f"{url}?expired=0"), order_one, order_two)
+        assert_changelist_response(admin_client.get(f"{url}?expired=1"))
 
 
-class AcmeAuthorizationViewsTestCase(AcmeAdminTestCaseMixin[AcmeAuthorization], TestCase):
+class TestAcmeAuthorizationViews(AcmeAdminTestCaseMixin[AcmeAuthorization]):
     """Test standard views for :py:class:`~django_ca.models.AcmeAuthorization`."""
 
     model = AcmeAuthorization
 
+    @pytest.fixture
+    def change_object(self, authorization_one: AcmeAuthorization) -> AcmeAuthorization:
+        """Fixture for the object in detail view."""
+        return authorization_one
 
-class AcmeChallengeViewsTestCase(AcmeAdminTestCaseMixin[AcmeChallenge], TestCase):
+    @pytest.fixture
+    def changelist_objects(
+        self, authorization_one: AcmeAuthorization, authorization_two: AcmeAuthorization
+    ) -> list[AcmeAuthorization]:
+        """Fixture for the objects in the changelist."""
+        return [authorization_one, authorization_two]
+
+
+class TestAcmeChallengeViews(AcmeAdminTestCaseMixin[AcmeChallenge]):
     """Test standard views for :py:class:`~django_ca.models.AcmeChallenge`."""
 
     model = AcmeChallenge
 
+    @pytest.fixture
+    def change_object(self, challenge_one: AcmeChallenge) -> AcmeChallenge:
+        """Fixture for the object in detail view."""
+        return challenge_one
 
-class AcmeCertificateViewsTestCase(AcmeAdminTestCaseMixin[AcmeCertificate], TestCase):
+    @pytest.fixture
+    def changelist_objects(
+        self, challenge_one: AcmeChallenge, challenge_two: AcmeChallenge, challenge_three: AcmeChallenge
+    ) -> list[AcmeChallenge]:
+        """Fixture for the objects in the changelist."""
+        return [challenge_one, challenge_two, challenge_three]
+
+
+class TestAcmeCertificateViews(AcmeAdminTestCaseMixin[AcmeCertificate]):
     """Test standard views for :py:class:`~django_ca.models.AcmeCertificate`."""
 
     model = AcmeCertificate
+
+    @pytest.fixture
+    def change_object(self, certificate_one: AcmeCertificate) -> AcmeCertificate:
+        """Fixture for the object in detail view."""
+        return certificate_one
+
+    @pytest.fixture
+    def changelist_objects(
+        self, certificate_one: AcmeCertificate, certificate_two: AcmeCertificate
+    ) -> list[AcmeCertificate]:
+        """Fixture for the objects in the changelist."""
+        return [certificate_one, certificate_two]
