@@ -56,7 +56,7 @@ class AddCertificateSeleniumTestCase(
     def setUp(self) -> None:
         super().setUp()
         self.login()
-        self.url = f"{self.live_server_url}{self.add_url}"
+        self.url = f"{self.live_server_url}{Certificate.admin_add_url}"
 
     def assertModified(self) -> None:  # pylint: disable=invalid-name
         """Assert that the field was modified."""

@@ -18,7 +18,7 @@ import re
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any
 from unittest import mock
@@ -182,33 +182,12 @@ class TestCaseMixin(TestCaseProtocol):
             value=x509.CRLDistributionPoints([dpoint]),
         )
 
-    def freshest_crl(
-        self,
-        full_name: Iterable[x509.GeneralName] | None = None,
-        relative_name: x509.RelativeDistinguishedName | None = None,
-        reasons: frozenset[x509.ReasonFlags] | None = None,
-        crl_issuer: Iterable[x509.GeneralName] | None = None,
-        critical: bool = False,
-    ) -> x509.Extension[x509.FreshestCRL]:
-        """Shortcut for getting a CRLDistributionPoints extension."""
-        dpoint = x509.DistributionPoint(
-            full_name=full_name, relative_name=relative_name, reasons=reasons, crl_issuer=crl_issuer
-        )
-        return x509.Extension(
-            oid=ExtensionOID.FRESHEST_CRL, critical=critical, value=x509.FreshestCRL([dpoint])
-        )
-
     @property
     def hostname(self) -> str:
         """Get a hostname unique for the test case."""
         name = self.id().split(".", 2)[-1].lower()
         name = re.sub("[^a-z0-9.-]", "-", name)
         return f"{name}.example.com"[-64:].lstrip("-.")
-
-    @classmethod
-    def expires(cls, days: int) -> timedelta:
-        """Get a timestamp `days` from now."""
-        return timedelta(days=days + 1)
 
     @contextmanager
     def freeze_time(self, timestamp: datetime) -> Iterator[FrozenDateTimeFactory | StepTickTimeFactory]:
@@ -343,11 +322,6 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         self.user = self.create_superuser()
         self.client.force_login(self.user)
         self.obj = self.model._default_manager.first()  # type: ignore[assignment]
-
-    @property
-    def add_url(self) -> str:
-        """Shortcut for the "add" URL of the model under test."""
-        return self.model.admin_add_url
 
     def assertBundle(  # pylint: disable=invalid-name
         self, cert: DjangoCAModelTypeVar, expected: Iterable[X509CertMixin], filename: str

@@ -22,6 +22,7 @@ from django.contrib.admin.helpers import AdminForm
 from django.test import Client, TestCase
 
 import pytest
+from pytest_django.asserts import assertInHTML
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import CertificateAuthority
@@ -68,6 +69,23 @@ class TestCertificateAuthorityAdminView(StandardAdminViewTestCaseMixin[Certifica
         adminform = response.context["adminform"]
         assert isinstance(adminform, AdminForm)
         assert "api_enabled" in adminform.readonly_fields
+
+    def test_change_view_with_ed_ca(self, admin_client: Client, ed448: CertificateAuthority) -> None:
+        """Test viewing an Ed-based CA, which does not have a signature hash algorithm."""
+        response = self.get_change_response(admin_client, ed448)
+        assert_change_response(response)
+        assertInHTML(
+            """
+            <div class="form-row field-signature_hash_algorithm">
+                <div>        
+                    <div class="flex-container">    
+                        <label>Signature hash algorithm:</label>
+                        <div class="readonly">None</div>
+                    </div>
+                </div>
+            </div>""",
+            response.content.decode("utf-8"),
+        )
 
     def test_complex_sign_certificate_policies(
         self, admin_client: Client, root: CertificateAuthority

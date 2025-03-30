@@ -15,35 +15,39 @@
 
 import json
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone as tz
+from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Literal
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, CertificatePoliciesOID, ExtensionOID, NameOID
 
-from django.core.files.storage import storages
-from django.test import TestCase
+from django.contrib.auth.models import User  # pylint: disable=imported-auth-user
+from django.forms.boundfield import BoundField
+from django.test import Client
 
 import pytest
-from django_webtest import WebTestMixin
-from freezegun import freeze_time
+from _pytest.logging import LogCaptureFixture
+from django_webtest import DjangoTestApp
+from pytest_django.asserts import assertRedirects
+from pytest_django.fixtures import SettingsWrapper
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
-from webtest import Checkbox, Hidden, Select as WebTestSelect, Submit
 
 from django_ca.conf import model_settings
 from django_ca.constants import (
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     EXTENSION_DEFAULT_CRITICAL,
+    HASH_ALGORITHM_NAMES,
     ExtendedKeyUsageOID,
 )
 from django_ca.fields import CertificateSigningRequestField
+from django_ca.forms import CreateCertificateForm
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
 from django_ca.pydantic.extensions import (
@@ -67,6 +71,8 @@ from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
     certificate_policies,
+    cn,
+    country,
     crl_distribution_points,
     distribution_point,
     dns,
@@ -81,114 +87,200 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
-from django_ca.typehints import SerializedPydanticExtension
+from django_ca.typehints import HashAlgorithms, SerializedPydanticExtension
 
 CSR = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-@freeze_time(TIMESTAMPS["after_child"])
-class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
-    """Tests for adding certificates."""
+def form_data(
+    csr: str, ca: CertificateAuthority, hostname: str, algorithm: HashAlgorithms | Literal[""] = "SHA-256"
+) -> dict[str, str | bool | int | list[str]]:
+    """Get basic form data to submit to the admin interface."""
+    crldp = CRLDistributionPointsModel.model_validate(ca.sign_crl_distribution_points).model_dump(
+        mode="json"
+    )["value"]
+    aia = AuthorityInformationAccessModel.model_validate(ca.sign_authority_information_access).model_dump(
+        mode="json"
+    )["value"]
+    ca_issuers = [
+        ad["access_location"]
+        for ad in aia
+        if ad["access_method"] == AuthorityInformationAccessOID.CA_ISSUERS.dotted_string
+    ]
+    ocsp = [
+        ad["access_location"]
+        for ad in aia
+        if ad["access_method"] == AuthorityInformationAccessOID.OCSP.dotted_string
+    ]
 
-    load_cas = ("root", "child", "dsa", "ec", "ed25519", "ed448", "pwd")
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.default_expires = (datetime.now(tz=tz.utc) + self.expires(3)).strftime("%Y-%m-%d")
-
-    def form_data(
-        self, csr: str, ca: CertificateAuthority, algorithm: str = "SHA-256"
-    ) -> dict[str, str | bool | int | list[str]]:
-        """Get basic form data to submit to the admin interface."""
-        crldp = CRLDistributionPointsModel.model_validate(ca.sign_crl_distribution_points).model_dump(
-            mode="json"
-        )["value"]
-        aia = AuthorityInformationAccessModel.model_validate(ca.sign_authority_information_access).model_dump(
-            mode="json"
-        )["value"]
-        ca_issuers = [
-            ad["access_location"]
-            for ad in aia
-            if ad["access_method"] == AuthorityInformationAccessOID.CA_ISSUERS.dotted_string
-        ]
-        ocsp = [
-            ad["access_location"]
-            for ad in aia
-            if ad["access_method"] == AuthorityInformationAccessOID.OCSP.dotted_string
-        ]
-
-        return {
-            "csr": csr,
-            "ca": ca.pk,
-            "profile": "webserver",
-            "subject": json.dumps(
-                [
-                    {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                    {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
-                ]
-            ),
-            "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": self.hostname}]),
-            "algorithm": algorithm,
-            "not_after": ca.not_after.strftime("%Y-%m-%d"),
-            "certificate_policies_0": "1.2.3",
-            "certificate_policies_1": "https://cps.example.com",
-            "certificate_policies_2": "explicit-text",
-            "key_usage_0": ["digital_signature", "key_agreement"],
-            "key_usage_1": True,
-            "extended_key_usage_0": [
-                ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
-                ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
-            ],
-            "extended_key_usage_1": False,
-            "tls_feature_0": ["status_request", "status_request_v2"],
-            "tls_feature_1": False,
-            "ocsp_no_check_0": True,
-            "ocsp_no_check_1": False,
-            "crl_distribution_points_0": json.dumps(crldp[0]["full_name"]),
-            "crl_distribution_points_1": "",
-            "crl_distribution_points_2": "",
-            "crl_distribution_points_3": [],
-            "crl_distribution_points_4": False,
-            "authority_information_access_0": json.dumps(ca_issuers),
-            "authority_information_access_1": json.dumps(ocsp),
-            "authority_information_access_2": False,
-        }
-
-    def add_cert(self, cname: str, ca: CertificateAuthority, algorithm: str = "SHA-256") -> None:
-        """Add certificate based on given name with given CA."""
-        with assert_create_cert_signals() as (pre, post):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    **self.form_data(CSR, ca),
-                    "algorithm": algorithm,
-                    "subject": json.dumps(
-                        [
-                            {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": cname},
-                        ]
-                    ),
-                },
-            )
-
-        self.assertRedirects(response, self.model.admin_changelist_url)
-
-        cert = Certificate.objects.get(cn=cname)
-        assert_post_issue_cert(post, cert)
-        assert cert.pub.loaded.subject == x509.Name(
+    return {
+        "csr": csr,
+        "ca": ca.pk,
+        "profile": "webserver",
+        "subject": json.dumps(
             [
-                x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
-                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=cname),
+                {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
+                {"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname},
             ]
-        )
-        assert cert.issuer == ca.subject
+        ),
+        "subject_alternative_name_0": json.dumps([{"type": "DNS", "value": hostname}]),
+        "algorithm": algorithm,
+        "not_after": ca.not_after.strftime("%Y-%m-%d"),
+        "certificate_policies_0": "1.2.3",
+        "certificate_policies_1": "https://cps.example.com",
+        "certificate_policies_2": "explicit-text",
+        "key_usage_0": ["digital_signature", "key_agreement"],
+        "key_usage_1": True,
+        "extended_key_usage_0": [
+            ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+            ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
+        ],
+        "extended_key_usage_1": False,
+        "tls_feature_0": ["status_request", "status_request_v2"],
+        "tls_feature_1": False,
+        "ocsp_no_check_0": True,
+        "ocsp_no_check_1": False,
+        "crl_distribution_points_0": json.dumps(crldp[0]["full_name"]),
+        "crl_distribution_points_1": "",
+        "crl_distribution_points_2": "",
+        "crl_distribution_points_3": [],
+        "crl_distribution_points_4": False,
+        "authority_information_access_0": json.dumps(ca_issuers),
+        "authority_information_access_1": json.dumps(ocsp),
+        "authority_information_access_2": False,
+    }
+
+
+def get_add_response(client: Client) -> "HttpResponse":
+    """Do a basic get request (to test CSS etc)."""
+    response = client.get(Certificate.admin_add_url)
+    assert response.status_code == HTTPStatus.OK
+    templates = [t.name for t in response.templates]
+    assert "admin/django_ca/certificate/change_form.html" in templates
+    assert "admin/change_form.html" in templates
+    assert_css(response, "django_ca/admin/css/base.css")
+    assert_css(response, "django_ca/admin/css/certificateadmin.css")
+    return response
+
+
+def get_add_response_form(client: Client) -> CreateCertificateForm:
+    """Just get the form returned in the add view response."""
+    response = get_add_response(client)
+    form = response.context["adminform"].form
+    assert isinstance(form, CreateCertificateForm)
+    return form
+
+
+def assert_initial_field_value(form: CreateCertificateForm, field: str, value: Any) -> BoundField:
+    """Assert an initial value in a form field."""
+    bound_field = form.fields[field].get_bound_field(form, field)
+    assert bound_field.initial == value
+    return bound_field
+
+
+class TestViewAddView:
+    """Tests for simply viewing the add view (== view the form for adding a certificate)."""
+
+    def test_with_rsa(
+        self, admin_client: Client, usable_root: CertificateAuthority, usable_child: CertificateAuthority
+    ) -> None:
+        """Test with an RSA-based CA as default CA (algorithm should be ca algorithm)."""
+        assert usable_child.not_after > usable_root.not_after  # assumption must hold for default value
+        form = get_add_response_form(admin_client)
+        assert_initial_field_value(form, "ca", usable_child)
+        assert usable_child.algorithm is not None
+        assert_initial_field_value(form, "algorithm", HASH_ALGORITHM_NAMES[type(usable_child.algorithm)])
+
+    @pytest.mark.usefixtures("usable_ed448")
+    def test_with_ed448(self, admin_client: Client) -> None:
+        """Test with an Ed-based CA as default CA (algorithm should be empty)."""
+        form = get_add_response_form(admin_client)
+        assert_initial_field_value(form, "algorithm", "")
+
+    def test_with_disabled_ca(
+        self, admin_client: Client, usable_root: CertificateAuthority, usable_child: CertificateAuthority
+    ) -> None:
+        """Test disabling the default CA, check that the default has changed and is not selectable."""
+        assert usable_child.not_after > usable_root.not_after  # assumption must hold for default value
+        usable_child.enabled = False
+        usable_child.save()
+
+        form = get_add_response_form(admin_client)
+        bound_field = assert_initial_field_value(form, "ca", usable_root)
+        assert bound_field.field.choices == [(usable_root.pk, usable_root.name)]  # type: ignore[attr-defined]
+
+    @pytest.mark.usefixtures("root")
+    def test_with_no_usable_ca(self, admin_client: Client) -> None:
+        """Test error when no usable CAs are configured."""
+        response = admin_client.get(Certificate.admin_add_url)
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
+    @pytest.mark.usefixtures("usable_root")
+    def test_change_view_with_expired_cas(self, admin_client: Client) -> None:
+        """Test error when all CAs have expired."""
+        response = admin_client.get(Certificate.admin_add_url)
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    @pytest.mark.usefixtures("usable_root")
+    def test_get_profiles(self, settings: SettingsWrapper, admin_client: Client) -> None:
+        """Test get with a subject that explicitly sets an extension."""
+        settings.CA_PROFILES = {"webserver": {"extensions": {"ocsp_no_check": {"critical": True}}}}
+        form = get_add_response_form(admin_client)
+        assert_initial_field_value(form, "ocsp_no_check", ocsp_no_check(critical=True))
+
+    def test_with_unusable_default_ca(
+        self,
+        settings: SettingsWrapper,
+        admin_client: Client,
+        usable_root: CertificateAuthority,
+        usable_child: CertificateAuthority,
+    ) -> None:
+        """Test that a usable CA is the initial value if the default is not usable."""
+        settings.CA_DEFAULT_CA = usable_child.serial
+        usable_child.enabled = False
+        usable_child.save()
+        form = get_add_response_form(admin_client)
+        assert_initial_field_value(form, "ca", usable_root)
+
+    def test_with_unusable_default_ca_with_unsable_private_key(
+        self,
+        settings: SettingsWrapper,
+        admin_client: Client,
+        usable_root: CertificateAuthority,
+        usable_child: CertificateAuthority,
+    ) -> None:
+        """Test that a usable CA is the initial value if the default is not usable acc. to the key backend."""
+        settings.CA_DEFAULT_CA = usable_child.serial
+        usable_child.key_backend_options = {"path": "does-not-exist.key"}
+        usable_child.save()
+        form = get_add_response_form(admin_client)
+        assert_initial_field_value(form, "ca", usable_root)
+
+
+class TestSubmitAddView:
+    """Tests for adding certificates via the admin interface."""
+
+    def test_add(self, admin_client: Client, hostname: str, usable_root: CertificateAuthority) -> None:
+        """Test to actually add a certificate."""
+        with assert_create_cert_signals() as (pre, post):
+            response = admin_client.post(
+                Certificate.admin_add_url, data=form_data(CSR, usable_root, hostname)
+            )
+            assertRedirects(response, Certificate.admin_changelist_url)
+
+        cert = Certificate.objects.get(cn=hostname)
+        assert_post_issue_cert(post, cert)
+        assert cert.pub.loaded.subject == x509.Name([country("US"), cn(hostname)])
+        assert cert.issuer == usable_root.subject
         assert_extensions(
             cert,
             [
                 extended_key_usage(ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH),
                 key_usage(digital_signature=True, key_agreement=True),
                 ocsp_no_check(),
-                subject_alternative_name(dns(self.hostname)),
+                subject_alternative_name(dns(hostname)),
                 tls_feature(x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2),
                 certificate_policies(
                     x509.PolicyInformation(
@@ -201,209 +293,140 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
                 ),
             ],
         )
-        assert cert.ca == ca
+        assert cert.ca == usable_root
         assert cert.csr.pem == CSR
         assert cert.profile == "webserver"
 
         # Some extensions are NOT set
         assert ExtensionOID.ISSUER_ALTERNATIVE_NAME not in cert.extensions
 
-        # Test that we can view the certificate
-        response = self.client.get(cert.admin_change_url)
-        assert response.status_code == HTTPStatus.OK
+    def test_with_extension_disabled_in_profile(
+        self,
+        settings: SettingsWrapper,
+        admin_client: Client,
+        hostname: str,
+        usable_root: CertificateAuthority,
+    ) -> None:
+        """Test adding extensions based on a profile where one extension is a None value."""
+        settings.CA_PROFILES = {"webserver": {"extensions": {"ocsp_no_check": None}}}
+        submit_data = {**form_data(CSR, usable_root, hostname), "ocsp_no_check_0": False}
 
-    def _test_get(self) -> "HttpResponse":
-        """Do a basic get request (to test CSS etc)."""
-        response = self.client.get(self.add_url)
-        assert response.status_code == HTTPStatus.OK
-        templates = [t.name for t in response.templates]
-        assert "admin/django_ca/certificate/change_form.html" in templates
-        assert "admin/change_form.html" in templates
-        assert_css(response, "django_ca/admin/css/base.css")
-        assert_css(response, "django_ca/admin/css/certificateadmin.css")
-        return response
+        response = admin_client.post(Certificate.admin_add_url, data=submit_data)
+        assertRedirects(response, Certificate.admin_changelist_url)
 
-    @override_tmpcadir()
-    def test_get(self) -> None:
-        """Do a basic get request (to test CSS etc)."""
-        self._test_get()
+        cert = Certificate.objects.get(cn=hostname)
+        assert ExtensionOID.OCSP_NO_CHECK not in cert.extensions, cert.extensions.keys()
 
-    # @override_settings(CA_PROFILES={}, CA_DEFAULT_SUBJECT=tuple())
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_get_dict(self) -> None:
-        """Test get with no profiles and no default subject."""
-        self._test_get()
-
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_ed448_ca(self) -> None:
-        """Test tet with default hash algorithm as none."""
-        CertificateAuthority.objects.exclude(name="ed448").delete()
-        self._test_get()
-
-    @override_tmpcadir()
-    def test_default_ca_key_does_not_exist(self) -> None:
-        """View add form when the ca key does not exist."""
-        storages["django-ca"].delete(self.ca.key_backend_options["path"])
-        response = self.client.get(self.add_url)
-        assert response.status_code == HTTPStatus.OK
-
-        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
-
-        field = form.fields["ca"]
-        bound_field = field.get_bound_field(form, "ca")
-        assert bound_field.initial != self.ca
-        assert isinstance(bound_field.initial, CertificateAuthority)
-
-    @override_tmpcadir(CA_DEFAULT_CA=CERT_DATA["child"]["serial"])
-    def test_cas_expired(self) -> None:
-        """Do a basic get request (to test CSS etc)."""
-        self.ca.enabled = False
-        self.ca.save()
-
-        with self.assertLogs() as logcm:
-            response = self.client.get(self.add_url)
-        assert response.status_code == HTTPStatus.OK
-        assert logcm.output == [f"ERROR:django_ca.admin:CA_DEFAULT_CA: {self.ca.serial} is disabled."]
-
-        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
-
-        field = form.fields["ca"].get_bound_field(form, "ca")
-        assert field.initial != self.ca
-        assert isinstance(field.initial, CertificateAuthority)
-
-    @override_tmpcadir(
-        CA_PROFILES={"webserver": {"extensions": {"ocsp_no_check": {"critical": True}}}},
-        CA_DEFAULT_PROFILE="webserver",
-    )
-    def test_get_profiles(self) -> None:
-        """Test get with no profiles and no default subject."""
-        response = self._test_get()
-        form = response.context_data["adminform"].form  # type: ignore[attr-defined]  # false positive
-
-        field = form.fields["ocsp_no_check"]
-        bound_field = field.get_bound_field(form, "ocsp_no_check")
-        assert bound_field.initial == ocsp_no_check(critical=True)
-
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_add(self) -> None:
-        """Test to actually add a certificate."""
-        self.add_cert("test-child-add.example.com", self.ca)
-        self.add_cert("test-root-add.example.com", self.cas["root"])
-        self.add_cert("test-dsa-add.example.com", self.cas["dsa"])
-        self.add_cert("test-ec-add.example.com", self.cas["ec"])
-        self.add_cert("test-ed25519-add.example.com", self.cas["ed25519"], algorithm="")
-        self.add_cert("test-ed448-add.example.com", self.cas["ed448"], algorithm="")
-
-    @override_tmpcadir()
-    def test_empty_subject(self) -> None:
+    def test_empty_subject(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test passing an empty subject with a subject alternative name."""
-        ca = self.cas["root"]
-        with assert_create_cert_signals() as (pre, post):
-            response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "subject": ""})
-        self.assertRedirects(response, self.model.admin_changelist_url)
+        response = admin_client.post(
+            Certificate.admin_add_url, data={**form_data(CSR, usable_root, hostname), "subject": ""}
+        )
+        assertRedirects(response, Certificate.admin_changelist_url)
 
         cert: Certificate = Certificate.objects.get(cn="")
-        assert_post_issue_cert(post, cert)
         assert cert.subject == x509.Name([])
         assert cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
-            dns(self.hostname)
+            dns(hostname)
         )
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_subject_with_multiple_org_units(self) -> None:
+    def test_subject_with_multiple_org_units(
+        self,
+        settings: SettingsWrapper,
+        admin_client: Client,
+        hostname: str,
+        usable_root: CertificateAuthority,
+    ) -> None:
         """Test creating a certificate with multiple Org Units (which is allowed)."""
-        ca = self.cas["root"]
+        settings.CA_DEFAULT_SUBJECT = tuple()
         with assert_create_cert_signals() as (pre, post):
-            response = self.client.post(
-                self.add_url,
+            response = admin_client.post(
+                Certificate.admin_add_url,
                 data={
-                    **self.form_data(CSR, ca),
+                    **form_data(CSR, usable_root, hostname),
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
                             {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-1"},
                             {"oid": NameOID.ORGANIZATIONAL_UNIT_NAME.dotted_string, "value": "OU-2"},
-                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname},
                         ]
                     ),
                 },
             )
-        self.assertRedirects(response, self.model.admin_changelist_url)
+        assertRedirects(response, Certificate.admin_changelist_url)
 
-        cert: Certificate = Certificate.objects.get(cn=self.hostname)
+        cert: Certificate = Certificate.objects.get(cn=hostname)
         assert_post_issue_cert(post, cert)
         assert cert.subject == x509.Name(
             [
                 x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
                 x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-1"),
                 x509.NameAttribute(oid=NameOID.ORGANIZATIONAL_UNIT_NAME, value="OU-2"),
-                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
+                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=hostname),
             ]
         )
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_add_no_common_name_and_no_subject_alternative_name(self) -> None:
+    def test_add_no_common_name_and_no_subject_alternative_name(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test posting a subject with no common name and no subject alternative name."""
-        ca = self.cas["root"]
         cert_count = Certificate.objects.all().count()
+        error_msg = "Subject Alternative Name is required if the subject does not contain a Common Name."
 
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
+            response = admin_client.post(
+                Certificate.admin_add_url,
                 data={
-                    **self.form_data(CSR, ca),
+                    **form_data(CSR, usable_root, hostname),
                     "subject": json.dumps([{"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"}]),
                     "subject_alternative_name_0": [],
                     "subject_alternative_name_1": True,
                 },
             )
         assert response.status_code == HTTPStatus.OK
-        assert not response.context["adminform"].form.is_valid()
-        assert response.context["adminform"].form.errors == {
-            "subject_alternative_name": [
-                "Subject Alternative Name is required if the subject does not contain a Common Name."
-            ]
-        }
+        assert response.context["adminform"].form.is_valid() is False
+        assert response.context["adminform"].form.errors == {"subject_alternative_name": [error_msg]}
         assert cert_count == Certificate.objects.all().count()
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_subject_with_multiple_country_codes(self) -> None:
+    def test_subject_with_multiple_country_codes(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test creating a certificate with multiple country codes (which is not allowed)."""
-        ca = self.cas["root"]
-
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
+            response = admin_client.post(
+                Certificate.admin_add_url,
                 data={
-                    **self.form_data(CSR, ca),
+                    **form_data(CSR, usable_root, hostname),
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
-                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname},
                         ]
                     ),
                 },
             )
-        assert not response.context["adminform"].form.is_valid()
+        assert response.context["adminform"].form.is_valid() is False
 
         msg = "Value error, attribute of type countryName must not occur more then once in a name."
         assert response.context["adminform"].form.errors == {"subject": [msg]}
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_subject_with_invalid_country_code(self) -> None:
+    def test_subject_with_invalid_country_code(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test creating a certificate with an invalid country code."""
-        ca = self.cas["root"]
-
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
+            response = admin_client.post(
+                Certificate.admin_add_url,
                 data={
-                    **self.form_data(CSR, ca),
+                    **form_data(CSR, usable_root, hostname),
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "FOO"},
-                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname},
                         ]
                     ),
                 },
@@ -414,33 +437,33 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             "subject": ["Value error, FOO: Must have exactly two characters"]
         }
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_add_no_key_usage(self) -> None:
+    def test_add_no_key_usage(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test adding a cert with no (extended) key usage."""
-        ca = self.cas["root"]
-
-        with assert_create_cert_signals() as (pre, post):
-            response = self.client.post(
-                self.add_url,
-                data={**self.form_data(CSR, ca), "key_usage_0": []},
+        with assert_create_cert_signals():
+            response = admin_client.post(
+                Certificate.admin_add_url,
+                data={**form_data(CSR, usable_root, hostname), "key_usage_0": []},
             )
-        self.assertRedirects(response, self.model.admin_changelist_url)
+        assertRedirects(response, Certificate.admin_changelist_url)
 
-        cert = Certificate.objects.get(cn=self.hostname)
+        cert = Certificate.objects.get(cn=hostname)
         assert ExtensionOID.KEY_USAGE not in cert.extensions  # KeyUsage is not set!
 
-        # Test that we can view the certificate
-        response = self.client.get(cert.admin_change_url)
-        assert response.status_code == HTTPStatus.OK
-
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple(), CA_PASSWORDS={})
-    def test_add_with_password(self) -> None:
+    def test_add_with_password(
+        self,
+        settings: SettingsWrapper,
+        admin_client: Client,
+        hostname: str,
+        usable_pwd: CertificateAuthority,
+    ) -> None:
         """Test adding with a password."""
-        ca = self.cas["pwd"]
+        settings.CA_PASSWORDS = {}
 
         # first post without password
         with assert_create_cert_signals(False, False):
-            response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
+            response = admin_client.post(Certificate.admin_add_url, data=form_data(CSR, usable_pwd, hostname))
         assert response.context["adminform"].form.is_valid() is False
         assert response.context["adminform"].form.errors == {
             "password": ["Certificate authority is not usable."]
@@ -448,7 +471,9 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # now post with a wrong password
         with assert_create_cert_signals(False, False):
-            response = self.client.post(self.add_url, data={**self.form_data(CSR, ca), "password": "wrong"})
+            response = admin_client.post(
+                Certificate.admin_add_url, data={**form_data(CSR, usable_pwd, hostname), "password": "wrong"}
+            )
         assert response.context["adminform"].form.is_valid() is False
         assert response.context["adminform"].form.errors == {
             "password": ["Certificate authority is not usable."]
@@ -456,54 +481,53 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
 
         # post with correct password!
         with assert_create_cert_signals() as (pre, post):
-            response = self.client.post(
-                self.add_url,
-                data={**self.form_data(CSR, ca), "password": CERT_DATA["pwd"]["password"].decode("utf-8")},
+            response = admin_client.post(
+                Certificate.admin_add_url,
+                data={
+                    **form_data(CSR, usable_pwd, hostname),
+                    "password": CERT_DATA["pwd"]["password"].decode("utf-8"),
+                },
             )
-        self.assertRedirects(response, self.model.admin_changelist_url)
+        assertRedirects(response, Certificate.admin_changelist_url)
 
-        cert = Certificate.objects.get(cn=self.hostname)
+        cert = Certificate.objects.get(cn=hostname)
         assert_post_issue_cert(post, cert)
         assert cert.pub.loaded.subject == x509.Name(
             [
                 x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
-                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
+                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=hostname),
             ]
         )
-        assert ca.subject == cert.issuer
-        assert_authority_key_identifier(ca, cert)
-        assert cert.ca == ca
+        assert usable_pwd.subject == cert.issuer
+        assert_authority_key_identifier(usable_pwd, cert)
+        assert cert.ca == usable_pwd
         assert cert.csr.pem == CSR
 
         # Some extensions are not set
         assert ExtensionOID.ISSUER_ALTERNATIVE_NAME not in cert.extensions
         assert ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS not in cert.extensions
 
-        # Test that we can view the certificate
-        response = self.client.get(cert.admin_change_url)
-        assert response.status_code == HTTPStatus.OK
-
-    @override_tmpcadir(CA_PASSWORDS={CERT_DATA["pwd"]["serial"]: CERT_DATA["pwd"]["password"]})
-    def test_add_with_password_with_ca_passwords(self) -> None:
+    def test_add_with_password_with_ca_passwords(
+        self,
+        settings: SettingsWrapper,
+        admin_client: Client,
+        hostname: str,
+        usable_pwd: CertificateAuthority,
+    ) -> None:
         """Test adding with a password with the CA_PASSWORDS setting."""
-        ca = self.cas["pwd"]
+        settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA["pwd"]["password"]}
 
         # post with correct password!
         with assert_create_cert_signals() as (pre, post):
-            response = self.client.post(self.add_url, data=self.form_data(CSR, ca))
-        self.assertRedirects(response, self.model.admin_changelist_url)
+            response = admin_client.post(Certificate.admin_add_url, data=form_data(CSR, usable_pwd, hostname))
+        assertRedirects(response, Certificate.admin_changelist_url)
 
-        cert = Certificate.objects.get(cn=self.hostname)
+        cert = Certificate.objects.get(cn=hostname)
         assert_post_issue_cert(post, cert)
-        assert cert.pub.loaded.subject == x509.Name(
-            [
-                x509.NameAttribute(oid=NameOID.COUNTRY_NAME, value="US"),
-                x509.NameAttribute(oid=NameOID.COMMON_NAME, value=self.hostname),
-            ]
-        )
-        assert ca.subject == cert.issuer
-        assert_authority_key_identifier(ca, cert)
-        assert cert.ca == ca
+        assert cert.pub.loaded.subject == x509.Name([country("US"), cn(hostname)])
+        assert usable_pwd.subject == cert.issuer
+        assert_authority_key_identifier(usable_pwd, cert)
+        assert cert.ca == usable_pwd
         assert cert.csr.pem == CSR
 
         # Some extensions are not set
@@ -511,39 +535,38 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         assert ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS not in cert.extensions
 
         # Test that we can view the certificate
-        response = self.client.get(cert.admin_change_url)
+        response = admin_client.get(cert.admin_change_url)
         assert response.status_code == HTTPStatus.OK
 
-    @override_tmpcadir()
-    def test_invalid_csr(self) -> None:
+    def test_invalid_csr(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test passing an unparsable CSR."""
-        ca = self.cas["root"]
-
         with assert_create_cert_signals(False, False):
-            response = self.client.post(self.add_url, data=self.form_data("whatever", ca))
+            response = admin_client.post(
+                Certificate.admin_add_url, data=form_data("whatever", usable_root, hostname)
+            )
         assert response.status_code == HTTPStatus.OK
         assert not response.context["adminform"].form.is_valid()
         assert response.context["adminform"].form.errors == {
             "csr": [CertificateSigningRequestField.simple_validation_error]
         }
 
-        with pytest.raises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=self.hostname)
-
-    @override_tmpcadir()
-    def test_unparsable_csr(self) -> None:
+    def test_unparsable_csr(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test passing something that looks like a CSR but isn't.
 
         This is different from test_wrong_csr() because this passes our initial test, but cryptography itself
         fails to load the CSR.
         """
-        ca = self.cas["root"]
-
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data=self.form_data(
-                    "-----BEGIN CERTIFICATE REQUEST-----\nwrong-----END CERTIFICATE REQUEST-----", ca
+            response = admin_client.post(
+                Certificate.admin_add_url,
+                data=form_data(
+                    "-----BEGIN CERTIFICATE REQUEST-----\nwrong-----END CERTIFICATE REQUEST-----",
+                    usable_root,
+                    hostname,
                 ),
             )
         assert response.status_code == HTTPStatus.OK, response.content
@@ -555,18 +578,16 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         assert len(form.errors) == 1, form.errors
         assert len(form.errors["csr"]) == 1, form.errors["csr"]
 
-        with pytest.raises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=self.hostname)
-
-    @override_tmpcadir()
-    def test_not_after_in_the_past(self) -> None:
+    def test_not_after_in_the_past(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test creating a cert that not_after in the past."""
-        ca = self.cas["root"]
         expires = datetime.now() - timedelta(days=3)
 
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url, data={**self.form_data(CSR, ca), "not_after": expires.strftime("%Y-%m-%d")}
+            response = admin_client.post(
+                Certificate.admin_add_url,
+                data={**form_data(CSR, usable_root, hostname), "not_after": expires.strftime("%Y-%m-%d")},
             )
         assert response.status_code == HTTPStatus.OK
         assert "Certificate cannot expire in the past." in response.content.decode("utf-8")
@@ -576,19 +597,20 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         }
 
         with pytest.raises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=self.hostname)
+            Certificate.objects.get(cn=hostname)
 
-    @override_tmpcadir()
-    def test_expires_too_late(self) -> None:
+    def test_expires_too_late(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test that creating a cert that not_after after the CA not_after throws an error."""
-        ca = self.cas["root"]
-        expires = ca.not_after + timedelta(days=3)
-        correct_expires = ca.not_after.strftime("%Y-%m-%d")
+        expires = usable_root.not_after + timedelta(days=3)
+        correct_expires = usable_root.not_after.strftime("%Y-%m-%d")
         error = f"CA not_after on {correct_expires}, certificate must not expire after that."
 
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url, data={**self.form_data(CSR, ca), "not_after": expires.strftime("%Y-%m-%d")}
+            response = admin_client.post(
+                Certificate.admin_add_url,
+                data={**form_data(CSR, usable_root, hostname), "not_after": expires.strftime("%Y-%m-%d")},
             )
         assert response.status_code == HTTPStatus.OK
         assert error in response.content.decode("utf-8")
@@ -596,116 +618,73 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         assert response.context["adminform"].form.errors == {"not_after": [error]}
 
         with pytest.raises(Certificate.DoesNotExist):
-            Certificate.objects.get(cn=self.hostname)
+            Certificate.objects.get(cn=hostname)
 
-    @override_tmpcadir()
-    def test_invalid_signature_hash_algorithm(self) -> None:
+    def test_invalid_signature_hash_algorithm_with_ed(
+        self,
+        admin_client: Client,
+        hostname: str,
+        usable_ed448: CertificateAuthority,
+    ) -> None:
         """Test adding a certificate with an invalid signature hash algorithm."""
-        # Test with Ed448 CA
+        csr = CERT_DATA["ed448-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
         with assert_create_cert_signals(False, False):
-            csr = CERT_DATA["ed448-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": self.cas["ed448"].pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "algorithm": "SHA-256",  # this is what we test
-                    "not_after": self.default_expires,
-                },
+            response = admin_client.post(
+                Certificate.admin_add_url, data=form_data(csr, usable_ed448, hostname, "SHA-256")
             )
         assert not response.context["adminform"].form.is_valid(), response
         assert response.context["adminform"].form.errors == {
             "algorithm": ["Ed448-based certificate authorities do not use a signature hash algorithm."]
         }
 
-        # Test with Ed25519 CA
-        csr = CERT_DATA["ed25519-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
-        with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": self.cas["ed25519"].pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "algorithm": "SHA-256",  # this is what we test
-                    "not_after": self.default_expires,
-                },
-            )
-        assert not response.context["adminform"].form.is_valid(), response
-        assert response.context["adminform"].form.errors == {
-            "algorithm": ["Ed25519-based certificate authorities do not use a signature hash algorithm."]
-        }
-
+    def test_invalid_signature_hash_algorithm_with_dsa(
+        self, admin_client: Client, hostname: str, usable_dsa: CertificateAuthority
+    ) -> None:
+        """Test adding a certificate with an invalid signature hash algorithm."""
         # Test with DSA CA
         csr = CERT_DATA["dsa-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": self.cas["dsa"].pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "algorithm": "SHA-512",  # this is what we test
-                    "not_after": self.default_expires,
-                },
+            response = admin_client.post(
+                Certificate.admin_add_url, data=form_data(csr, usable_dsa, hostname, "SHA-512")
             )
         assert not response.context["adminform"].form.is_valid(), response
         assert response.context["adminform"].form.errors == {
             "algorithm": ["DSA-based certificate authorities require a SHA-256 signature hash algorithm."]
         }
 
-        # Test with RSA CA
+    def test_invalid_signature_hash_algorithm_with_rsa(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
+        """Test adding a certificate with an invalid signature hash algorithm."""
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": csr,
-                    "ca": self.cas["root"].pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "algorithm": "",  # this is what we test
-                    "not_after": self.default_expires,
-                },
+            response = admin_client.post(
+                Certificate.admin_add_url, data=form_data(CSR, usable_root, hostname, "")
             )
         assert not response.context["adminform"].form.is_valid(), response
         assert response.context["adminform"].form.errors == {
             "algorithm": ["RSA-based certificate authorities require a signature hash algorithm."]
         }
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
-    def test_certificate_policies_with_invalid_oid(self) -> None:
+    def test_certificate_policies_with_invalid_oid(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Test posting a certificate policies extension with an invalid OID."""
-        ca = self.cas["root"]
-        cert_count = Certificate.objects.all().count()
-
         with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
+            response = admin_client.post(
+                Certificate.admin_add_url,
                 data={
                     "csr": CSR,
-                    "ca": ca.pk,
+                    "ca": usable_root.pk,
                     "profile": "webserver",
                     "subject": json.dumps(
                         [
                             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "US"},
-                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname},
+                            {"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname},
                         ]
                     ),
                     "subject_alternative_name_1": True,
                     "algorithm": "SHA-256",
-                    "not_after": ca.not_after.strftime("%Y-%m-%d"),
+                    "not_after": usable_root.not_after.strftime("%Y-%m-%d"),
                     "certificate_policies_0": "abc",
                 },
             )
@@ -714,80 +693,18 @@ class AddCertificateTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         assert response.context["adminform"].form.errors == {
             "certificate_policies": ["abc: The given OID is invalid."]
         }
-        assert cert_count == Certificate.objects.all().count()
 
-    def test_add_no_cas(self) -> None:
-        """Test adding when all CAs are disabled."""
-        ca = self.cas["root"]
-        CertificateAuthority.objects.update(enabled=False)
-        response = self.client.get(self.add_url)
-        assert response.status_code == HTTPStatus.FORBIDDEN
-
-        with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": CSR,
-                    "ca": ca.pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "subject_alternative_name_1": True,
-                    "algorithm": "SHA-256",
-                    "not_after": ca.not_after.strftime("%Y-%m-%d"),
-                    "key_usage_0": [
-                        "digital_signature",
-                        "key_agreement",
-                    ],
-                    "key_usage_1": True,
-                    "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
-                    ],
-                    "extended_key_usage_1": False,
-                },
-            )
-        assert response.status_code == HTTPStatus.FORBIDDEN
-
-    def test_add_unusable_cas(self) -> None:
+    def test_add_unusable_cas(
+        self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
+    ) -> None:
         """Try adding with an unusable CA."""
-        ca = self.cas["root"]
-        CertificateAuthority.objects.update(key_backend_options={"path": "not/exist/add-unusable-cas"})
-
-        # check that we have some enabled CAs, just to make sure this test is really useful
-        assert CertificateAuthority.objects.filter(enabled=True).exists() is True
+        usable_root.key_backend_options = {"path": "not/exist/add-unusable-cas"}
+        usable_root.save()
 
         with assert_create_cert_signals(False, False):
-            response = self.client.get(self.add_url)
-        assert response.status_code == HTTPStatus.FORBIDDEN
-
-        with assert_create_cert_signals(False, False):
-            response = self.client.post(
-                self.add_url,
-                data={
-                    "csr": CSR,
-                    "ca": ca.pk,
-                    "profile": "webserver",
-                    "subject": json.dumps(
-                        [{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}]
-                    ),
-                    "subject_alternative_name_1": True,
-                    "algorithm": "SHA-256",
-                    "not_after": ca.not_after.strftime("%Y-%m-%d"),
-                    "key_usage_0": [
-                        "digital_signature",
-                        "key_agreement",
-                    ],
-                    "key_usage_1": True,
-                    "extended_key_usage_0": [
-                        "clientAuth",
-                        "serverAuth",
-                    ],
-                    "extended_key_usage_1": False,
-                },
+            response = admin_client.post(
+                Certificate.admin_add_url, data=form_data(CSR, usable_root, hostname)
             )
-
         assert response.status_code == HTTPStatus.FORBIDDEN
 
 
@@ -870,7 +787,7 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         """Test that selecting the profile modifies the extensions."""
         self.login()
 
-        self.selenium.get(f"{self.live_server_url}{self.add_url}")
+        self.selenium.get(f"{self.live_server_url}{Certificate.admin_add_url}")
 
         # Open the collapsed fieldset to make sure that fields are in view
         self.find("fieldset.x509-extensions").click()
@@ -1274,97 +1191,29 @@ class SubjectFieldSeleniumTestCase(AddCertificateSeleniumTestCase):
         assert self.displayed_value == []
 
 
-@freeze_time(TIMESTAMPS["everything_valid"])
-class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestMixin, TestCase):
+class TestAddCertificateWebTest:
     """Tests for adding certificates."""
 
-    load_cas = ("root", "child")
-
-    @override_tmpcadir()
-    def test_empty_form_and_empty_cert(self) -> None:
-        """Test submitting an empty form, then filling it with values and submitting it."""
-        response = self.app.get(self.add_url, user=self.user.username)
-        form = response.forms["certificate_form"]
-        for _key, field_list in form.fields.items():
-            for field in field_list:
-                if isinstance(field, Hidden | Submit):
-                    continue
-                if isinstance(field, Checkbox):
-                    field.checked = False
-                elif isinstance(field, WebTestSelect):
-                    continue  # just annoying to handle
-                else:
-                    field.value = ""
-
-        form["crl_distribution_points_0"] = "[]"
-        form["authority_information_access_0"] = "[]"
-        form["authority_information_access_1"] = "[]"
-        response = form.submit()
-        assert response.status_code == 200
-
-        # Fill in the bare minimum fields
-        form = response.forms["certificate_form"]
-        form["csr"] = CSR
-        form["subject"] = json.dumps(
-            [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "test-empty-form.example.com"}]
-        )
-        now = datetime.now(tz=tz.utc).replace(tzinfo=None)
-        form["not_after"] = (now + timedelta(days=10)).strftime("%Y-%m-%d")
-
-        # Submit the form
-        response = form.submit().follow()
-        assert response.status_code == 200
-        cert = Certificate.objects.get(cn="test-empty-form.example.com")
-
-        # Cert has minimal extensions, since we cleared the form earlier
-        assert cert.sorted_extensions == [
-            cert.ca.get_authority_key_identifier_extension(),
-            basic_constraints(),
-            subject_key_identifier(cert),
-        ]
-
-    @override_tmpcadir(
-        CA_PROFILES={
-            "webserver": {
-                "extensions": {
-                    "subject_alternative_name": {"value": [{"type": "DNS", "value": "example.com"}]},
-                    "ocsp_no_check": None,
-                }
-            }
-        },
-    )
-    def test_none_extension_and_subject_alternative_name_extension(self) -> None:
-        """Test how saving the model behaves when profile has None-extension or SubjectAlternativeName."""
-        response = self.app.get(self.add_url, user=self.user.username)
-        form = response.forms["certificate_form"]
-        form["csr"] = CSR
-        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
-        response = form.submit().follow()
-        assert response.status_code == 200
-
-        cert: Certificate = Certificate.objects.get(cn=self.hostname)
-        assert cert.sorted_extensions == [
-            cert.ca.sign_authority_information_access,
-            cert.ca.get_authority_key_identifier_extension(),
-            basic_constraints(),
-            cert.ca.sign_crl_distribution_points,
-            subject_alternative_name(dns("example.com")),
-            subject_key_identifier(cert),
-        ]
-
-    @override_tmpcadir(CA_PROFILES={"nothing": {}}, CA_DEFAULT_PROFILE="nothing")
-    def test_only_ca_prefill(self) -> None:
+    def test_only_ca_prefill(
+        self,
+        django_app: DjangoTestApp,
+        admin_user: User,
+        settings: SettingsWrapper,
+        hostname: str,
+        usable_root: CertificateAuthority,
+    ) -> None:
         """Create a cert with an empty profile.
 
         This test shows that the values from the CA are prefilled correctly. If they were not, some fields
         would not show up in the signed certificate.
         """
+        settings.CA_PROFILES = {"nothing": {}}
+        settings.CA_DEFAULT_PROFILE = "nothing"
         # Make sure that the CA has field values set.
         # CertificateAuthority.objects.exclude(id=self.ca.id).delete()
-        cn = "test-only-ca.example.com"
-        assert self.ca.sign_authority_information_access is not None
-        assert self.ca.sign_crl_distribution_points is not None
-        self.ca.sign_certificate_policies = certificate_policies(
+        assert usable_root.sign_authority_information_access is not None
+        assert usable_root.sign_crl_distribution_points is not None
+        usable_root.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=x509.ObjectIdentifier("1.2.3"),
                 policy_qualifiers=[
@@ -1373,35 +1222,49 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                 ],
             )
         )
-        self.ca.sign_issuer_alternative_name = issuer_alternative_name(
+        usable_root.sign_issuer_alternative_name = issuer_alternative_name(
             uri("http://issuer-alt-name.test-only-ca.example.com")
         )
-        self.ca.save()
+        usable_root.save()
 
-        response = self.app.get(self.add_url, user=self.user.username)
+        response = django_app.get(Certificate.admin_add_url, user=admin_user.username)
+        assert response.status_code == HTTPStatus.OK
+
         form = response.forms["certificate_form"]
         form["csr"] = CSR
-        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
-        form["subject_alternative_name_0"] = json.dumps([{"type": "DNS", "value": self.hostname}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname}])
+        form["subject_alternative_name_0"] = json.dumps([{"type": "DNS", "value": hostname}])
         response = form.submit().follow()
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
 
         # Check that we get all the extensions from the CA
-        cert: Certificate = Certificate.objects.get(cn="test-only-ca.example.com")
-        assert cert.ca == self.ca
+        cert: Certificate = Certificate.objects.get(cn=hostname)
+        assert cert.ca == usable_root
         assert cert.sorted_extensions == [
             cert.ca.sign_authority_information_access,
             cert.ca.get_authority_key_identifier_extension(),
             basic_constraints(),
             cert.ca.sign_crl_distribution_points,
-            self.ca.sign_certificate_policies,
-            self.ca.sign_issuer_alternative_name,
-            subject_alternative_name(dns(self.hostname)),
+            usable_root.sign_certificate_policies,
+            usable_root.sign_issuer_alternative_name,
+            subject_alternative_name(dns(hostname)),
             subject_key_identifier(cert),
         ]
 
-    @override_tmpcadir(
-        CA_PROFILES={
+    def test_full_profile_prefill(
+        self,
+        django_app: DjangoTestApp,
+        admin_user: User,
+        settings: SettingsWrapper,
+        hostname: str,
+        usable_root: CertificateAuthority,
+    ) -> None:
+        """Create a cert with a full profile, which should mask any CA-specific values.
+
+        This test shows that the values from the profile are prefilled correctly. If they were not, some
+        fields would not show up in the signed certificate.
+        """
+        settings.CA_PROFILES = {
             "everything": {
                 "extensions": {
                     "authority_information_access": {
@@ -1462,7 +1325,10 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                                     {"type": "URI", "value": "http://freshest-crl.profile.example.com"}
                                 ],
                                 "crl_issuer": [
-                                    {"type": "URI", "value": "http://freshest-crl-issuer.profile.example.com"}
+                                    {
+                                        "type": "URI",
+                                        "value": "http://freshest-crl-issuer.profile.example.com",
+                                    }
                                 ],
                             }
                         ],
@@ -1482,40 +1348,35 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                     "tls_feature": {"critical": True, "value": ["OCSPMustStaple"]},
                 }
             }
-        },
-        CA_DEFAULT_PROFILE="everything",
-    )
-    def test_full_profile_prefill(self) -> None:
-        """Create a cert with a full profile, which should mask any CA-specific values.
+        }
 
-        This test shows that the values from the profile are prefilled correctly. If they were not, some
-        fields would not show up in the signed certificate.
-        """
+        settings.CA_DEFAULT_PROFILE = "everything"
+
         # Make sure that the CA has sign_* field values set.
-        assert self.ca.sign_authority_information_access is not None
-        assert self.ca.sign_crl_distribution_points is not None
-        self.ca.sign_certificate_policies = certificate_policies(
+        assert usable_root.sign_authority_information_access is not None
+        assert usable_root.sign_crl_distribution_points is not None
+        usable_root.sign_certificate_policies = certificate_policies(
             x509.PolicyInformation(
                 policy_identifier=CertificatePoliciesOID.CPS_QUALIFIER, policy_qualifiers=None
             )
         )
-        self.ca.sign_issuer_alternative_name = issuer_alternative_name(
+        usable_root.sign_issuer_alternative_name = issuer_alternative_name(
             uri("http://issuer-alt-name.test-only-ca.example.com")
         )
-        self.ca.save()
+        usable_root.save()
 
-        response = self.app.get(self.add_url, user=self.user.username)
+        response = django_app.get(Certificate.admin_add_url, user=admin_user.username)
         form = response.forms["certificate_form"]
         # default value for form field is on import time, so override settings does not change
         # profile field
         form["profile"] = "everything"
         form["csr"] = CSR
-        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": self.hostname}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname}])
         response = form.submit().follow()
         assert response.status_code == 200
 
         # Check that we get all the extensions from the CA
-        cert = Certificate.objects.get(cn=self.hostname)
+        cert = Certificate.objects.get(cn=hostname)
         assert cert.profile == "everything"
         assert cert.sorted_extensions == [
             authority_information_access(
@@ -1596,36 +1457,81 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
         },
         CA_DEFAULT_PROFILE="everything",
     )
-    def test_multiple_distribution_points(self) -> None:
+    def test_multiple_distribution_points(
+        self,
+        caplog: LogCaptureFixture,
+        django_app: DjangoTestApp,
+        admin_user: User,
+        settings: SettingsWrapper,
+        hostname: str,
+        usable_root: CertificateAuthority,
+    ) -> None:
         """Create a cert with a full profile, which should mask any CA-specific values.
 
         This test shows that the values from the profile are prefilled correctly. If they were not, some
         fields would not show up in the signed certificate.
         """
-        # Make sure that the CA has field values set.
-        cn = "test-only-ca.example.com"
-        self.ca.sign_crl_distribution_points = None
-        self.ca.sign_authority_information_access = None
-        self.ca.save()
+        settings.CA_PROFILES = {
+            "everything": {
+                "extensions": {
+                    "crl_distribution_points": {
+                        "critical": True,
+                        "value": [
+                            {
+                                "full_name": [{"type": "URI", "value": "http://crl.profile.example.com"}],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://crl-issuer.profile.example.com"}
+                                ],
+                            },
+                            {
+                                "full_name": [{"type": "URI", "value": "http://crl2.profile.example.com"}],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://crl-issuer2.profile.example.com"}
+                                ],
+                            },
+                        ],
+                    },
+                    "freshest_crl": {
+                        "critical": False,
+                        "value": [
+                            {
+                                "full_name": [
+                                    {"type": "URI", "value": "http://freshest-crl.profile.example.com"}
+                                ],
+                                "crl_issuer": [
+                                    {"type": "URI", "value": "http://freshest-crl-issuer.profile.example.com"}
+                                ],
+                            }
+                        ],
+                    },
+                }
+            }
+        }
+        settings.CA_DEFAULT_PROFILE = "everything"
 
-        with self.assertLogs("django_ca") as logcm:
-            response = self.app.get(self.add_url, user=self.user.username)
-        assert logcm.output == [
-            "WARNING:django_ca.widgets:Received multiple DistributionPoints, only the first can be "
-            "changed in the web interface."
-        ]
+        # Make sure that the CA has field values set.
+        usable_root.sign_crl_distribution_points = None
+        usable_root.sign_authority_information_access = None
+        usable_root.save()
+
+        response = django_app.get(Certificate.admin_add_url, user=admin_user.username)
+        assert (
+            "Received multiple DistributionPoints, only the first can be changed in the web interface."
+            in caplog.text
+        )
+
         form = response.forms["certificate_form"]
         # default value for form field is on import time, so override settings does not change
         # profile field
         form["profile"] = "everything"
         form["csr"] = CSR
-        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": cn}])
+        form["subject"] = json.dumps([{"oid": NameOID.COMMON_NAME.dotted_string, "value": hostname}])
         response = form.submit()
         response = response.follow()
         assert response.status_code == 200
 
         # Check that we get all the extensions from the CA
-        cert: Certificate = Certificate.objects.get(cn="test-only-ca.example.com")
+        cert: Certificate = Certificate.objects.get(cn=hostname)
         assert cert.profile == "everything"
         assert cert.sorted_extensions == [
             cert.ca.get_authority_key_identifier_extension(),
@@ -1650,10 +1556,11 @@ class AddCertificateWebTestTestCase(CertificateModelAdminTestCaseMixin, WebTestM
                     ]
                 ),
             ),
-            self.freshest_crl(
-                [uri("http://freshest-crl.profile.example.com")],
-                crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
-                critical=False,
+            freshest_crl(
+                distribution_point(
+                    [uri("http://freshest-crl.profile.example.com")],
+                    crl_issuer=[uri("http://freshest-crl-issuer.profile.example.com")],
+                )
             ),
             subject_key_identifier(cert),
         ]
