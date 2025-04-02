@@ -18,8 +18,8 @@ import os
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives._serialization import Encoding, PrivateFormat
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 
 from django.conf import settings
 from django.core.files.base import ContentFile
