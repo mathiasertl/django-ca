@@ -26,6 +26,7 @@ REST API
 
 * Add ability to resign certificates via the API (fixes
   `#155 <https://github.com/mathiasertl/django-ca/issues/155>`_).
+* Add CSR when signing certificates (fixes `#163 <https://github.com/mathiasertl/django-ca/issues/163>`_).
 * The URL path for the revocation endpoint has changed. It is now
   ``/ca/{ca_serial}/certs/{certificate_serial}/revoke/`` instead of
   ``/ca/{ca_serial}/revoke/{certificate_serial}/``. The old API endpoint will be removed in
