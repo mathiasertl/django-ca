@@ -91,6 +91,23 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         force: bool,
         **options: Any,
     ) -> None:
+        if profile is not None:
+            self.stderr.write(
+                f"WARNING: --profile={profile} is deprecated and will be removed on django-ca 2.5.0."
+            )
+        if expires is not None:
+            self.stderr.write("WARNING: --expires is deprecated and will be removed on django-ca 2.5.0.")
+        if algorithm is not None:
+            self.stderr.write("WARNING: --algorithm is deprecated and will be removed on django-ca 2.5.0.")
+        if key_type is not None:
+            self.stderr.write("WARNING: --key-type is deprecated and will be removed on django-ca 2.5.0.")
+        if key_size is not None:
+            self.stderr.write("WARNING: --key-size is deprecated and will be removed on django-ca 2.5.0.")
+        if elliptic_curve is not None:
+            self.stderr.write(
+                "WARNING: --elliptic-curve is deprecated and will be removed on django-ca 2.5.0."
+            )
+
         profile = profile or "ocsp"
 
         # Check if the profile exists. Note that this shouldn't really happen, since valid parameters match

@@ -17,6 +17,7 @@
 
 import typing
 from collections.abc import Iterable
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from cryptography import x509
@@ -104,6 +105,11 @@ def test_with_serial(usable_root: CertificateAuthority) -> None:
     regenerate_ocsp_keys(usable_root.serial)
     certificate = assert_key(usable_root)
 
+    # test expiry of the certificate
+    now = datetime.now(tz=timezone.utc).replace(microsecond=0, second=0)
+    expected_expires = now + timedelta(days=usable_root.ocsp_responder_key_validity)
+    assert certificate.not_valid_after_utc == expected_expires
+
     # get list of existing certificates
     excludes = list(Certificate.objects.all().values_list("pk", flat=True))
 
@@ -115,9 +121,13 @@ def test_with_serial(usable_root: CertificateAuthority) -> None:
     assert certificate != new_cert
 
 
-def test_rsa_with_key_size(usable_root: CertificateAuthority) -> None:
+def test_with_key_size(usable_root: CertificateAuthority) -> None:
     """Test creating an RSA key with explicit key size."""
-    regenerate_ocsp_keys(usable_root.serial, key_type="RSA", key_size=1024)
+    regenerate_ocsp_keys(
+        usable_root.serial,
+        key_size=1024,
+        stderr="WARNING: --key-size is deprecated and will be removed on django-ca 2.5.0.\n",
+    )
     certificate = assert_key(usable_root)
     public_key = certificate.public_key()
     assert isinstance(public_key, rsa.RSAPublicKey)
@@ -126,16 +136,24 @@ def test_rsa_with_key_size(usable_root: CertificateAuthority) -> None:
 
 def test_ec_with_curve(usable_ec: CertificateAuthority) -> None:
     """Test creating an EC key with explicit elliptic curve."""
-    regenerate_ocsp_keys(usable_ec.serial, elliptic_curve=ec.SECP384R1())
+    regenerate_ocsp_keys(
+        usable_ec.serial,
+        elliptic_curve=ec.SECP384R1(),
+        stderr="WARNING: --elliptic-curve is deprecated and will be removed on django-ca 2.5.0.\n",
+    )
     certificate = assert_key(usable_ec)
     public_key = certificate.public_key()
     assert isinstance(public_key, ec.EllipticCurvePublicKey)
     assert isinstance(public_key.curve, ec.SECP384R1)
 
 
-def test_hash_algorithm(usable_root: CertificateAuthority) -> None:
+def test_with_hash_algorithm(usable_root: CertificateAuthority) -> None:
     """Test the hash algorithm option."""
-    regenerate_ocsp_keys(usable_root.serial, algorithm=hashes.SHA384())
+    regenerate_ocsp_keys(
+        usable_root.serial,
+        algorithm=hashes.SHA384(),
+        stderr="WARNING: --algorithm is deprecated and will be removed on django-ca 2.5.0.\n",
+    )
     certificate = assert_key(usable_root)
     assert isinstance(certificate.signature_hash_algorithm, hashes.SHA384)
 
@@ -153,7 +171,7 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
                     "key_backend_options": {"password": None},
                     "profile": "ocsp",
                     "not_after": None,
-                    "algorithm": "SHA-384",
+                    "algorithm": "SHA-256",
                     "key_size": None,
                     "key_type": "RSA",
                     "elliptic_curve": None,
@@ -164,13 +182,17 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
             {},
         ),
     ):
-        regenerate_ocsp_keys(usable_root.serial, algorithm=hashes.SHA384())
+        regenerate_ocsp_keys(usable_root.serial)
     assert_no_key(usable_root.serial)
 
 
-def test_with_explicit_key_type(usable_root: CertificateAuthority) -> None:
+def test_with_key_type(usable_root: CertificateAuthority) -> None:
     """Test creating an Ed448-based OCSP key for an RSA-based CA."""
-    regenerate_ocsp_keys(usable_root.serial, key_type="Ed448")
+    regenerate_ocsp_keys(
+        usable_root.serial,
+        key_type="Ed448",
+        stderr="WARNING: --key-type is deprecated and will be removed on django-ca 2.5.0.\n",
+    )
     assert_key(usable_root, key_type=ed448.Ed448PublicKey)
 
 
