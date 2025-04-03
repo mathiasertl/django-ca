@@ -152,7 +152,7 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
                     "serial": usable_root.serial,
                     "key_backend_options": {"password": None},
                     "profile": "ocsp",
-                    "not_after": "P2D",
+                    "not_after": None,
                     "algorithm": "SHA-384",
                     "key_size": None,
                     "key_type": "RSA",
@@ -182,7 +182,7 @@ def test_without_serial(
     kwargs = {
         "key_backend_options": {"password": None},
         "profile": "ocsp",
-        "not_after": "P2D",
+        "not_after": None,
         "algorithm": "SHA-256",
         "key_size": None,
         "elliptic_curve": None,

@@ -52,7 +52,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
 
         parser.add_argument(
             "--expires",
-            default=timedelta(days=2),
+            default=None,
             action=ExpiresAction,
             help="Sign the certificate for DAYS days (default: %(default)s)",
         )
@@ -82,7 +82,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         self,
         serials: Iterable[str],
         profile: str | None,
-        expires: timedelta,
+        expires: timedelta | None,
         algorithm: AllowedHashTypes | None,
         key_type: ParsableKeyType | None,
         key_size: int | None,
@@ -154,7 +154,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             try:
                 run_task(
                     generate_ocsp_key,
-                    key_backend_options=key_backend_options.model_dump(mode="json"),
+                    key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
                     **parameters.model_dump(mode="json"),
                 )
             except Exception as ex:
