@@ -83,4 +83,5 @@ def mock_celery_task(task: str, *calls: tuple[tuple[Any, ...], dict[str, Any]]) 
     # Make sure that task was called the right number of times
     assert len(calls) == len(mocked.call_args_list), (len(calls), len(mocked.call_args_list), calls)
     for expected, actual in zip(calls, mocked.call_args_list, strict=False):
+        print(1)
         assert expected == actual, (expected, actual)

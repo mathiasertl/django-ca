@@ -34,7 +34,7 @@ from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import generate_ocsp_key, run_task
 from django_ca.typehints import AllowedHashTypes, ParsableKeyType
-from django_ca.utils import add_colons, validate_private_key_parameters
+from django_ca.utils import add_colons
 
 
 class Command(UsePrivateKeyMixin, BaseCommand):
@@ -78,7 +78,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
             parser, 'Override the profile used for generating the certificate. By default, "ocsp" is used.'
         )
 
-    def handle(  # pylint: disable=too-many-locals
+    def handle(
         self,
         serials: Iterable[str],
         profile: str | None,
@@ -91,21 +91,22 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         force: bool,
         **options: Any,
     ) -> None:
+        parameter_dict: dict[str, Any] = {"force": force}
         if profile is not None:
-            self.stderr.write(
-                f"WARNING: --profile={profile} is deprecated and will be removed on django-ca 2.5.0."
-            )
+            self.stderr.write("WARNING: --profile is deprecated and will be removed on django-ca 2.4.0.")
+            parameter_dict["profile"] = profile
         if expires is not None:
-            self.stderr.write("WARNING: --expires is deprecated and will be removed on django-ca 2.5.0.")
+            self.stderr.write("WARNING: --expires is deprecated and will be removed on django-ca 2.4.0.")
+            parameter_dict["not_after"] = expires
         if algorithm is not None:
-            self.stderr.write("WARNING: --algorithm is deprecated and will be removed on django-ca 2.5.0.")
+            self.stderr.write("WARNING: --algorithm is deprecated and will be removed on django-ca 2.4.0.")
         if key_type is not None:
-            self.stderr.write("WARNING: --key-type is deprecated and will be removed on django-ca 2.5.0.")
+            self.stderr.write("WARNING: --key-type is deprecated and will be removed on django-ca 2.4.0.")
         if key_size is not None:
-            self.stderr.write("WARNING: --key-size is deprecated and will be removed on django-ca 2.5.0.")
+            self.stderr.write("WARNING: --key-size is deprecated and will be removed on django-ca 2.4.0.")
         if elliptic_curve is not None:
             self.stderr.write(
-                "WARNING: --elliptic-curve is deprecated and will be removed on django-ca 2.5.0."
+                "WARNING: --elliptic-curve is deprecated and will be removed on django-ca 2.4.0."
             )
 
         profile = profile or "ocsp"
@@ -128,13 +129,16 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 self.stderr.write(self.style.ERROR(f"{hr_serial}: Unknown CA."))
                 continue
 
+            per_ca_parameter_dict = {**parameter_dict, "serial": ca.serial}
+
             try:
                 key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)
 
                 # Make sure that the selected signature hash algorithm works for the CAs backend.
-                signing_algorithm = ca.key_backend.validate_signature_hash_algorithm(
-                    ca.key_type, algorithm, default=ca.algorithm
-                )
+                if algorithm is not None:
+                    per_ca_parameter_dict["algorithm"] = ca.key_backend.validate_signature_hash_algorithm(
+                        ca.key_type, algorithm, default=ca.algorithm
+                    )
             except ValidationError as ex:
                 self.validation_error_to_command_error(ex)
             except Exception as ex:  # pragma: no cover  # pylint: disable=broad-exception-caught
@@ -143,36 +147,22 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 continue
 
             # Get private key parameters for this particular private key
-            ca_key_type = key_type
-            if ca_key_type is None:
-                ca_key_type = ca.key_type
+            if key_type is not None:
+                per_ca_parameter_dict["key_type"] = key_type
 
-            ca_key_size: int | None = None
-            if ca_key_type in ("RSA", "DSA") and key_size is not None:
-                ca_key_size = key_size
+            if ca.key_type in ("RSA", "DSA") and key_size is not None:
+                per_ca_parameter_dict["key_size"] = key_size
 
-            ca_elliptic_curve: ec.EllipticCurve | None = None
-            if ca_key_type == "EC" and elliptic_curve is not None:
-                ca_elliptic_curve = elliptic_curve
+            if ca.key_type == "EC" and elliptic_curve is not None:
+                per_ca_parameter_dict["elliptic_curve"] = elliptic_curve
 
-            validate_private_key_parameters(ca_key_type, ca_key_size, ca_elliptic_curve)
-
-            parameters = GenerateOCSPKeyMessage(
-                serial=ca.serial,
-                profile=profile,
-                not_after=expires,
-                key_type=ca_key_type,
-                key_size=ca_key_size,
-                elliptic_curve=ca_elliptic_curve,
-                algorithm=signing_algorithm,
-                force=force,
-            )
+            parameters = GenerateOCSPKeyMessage.model_validate(per_ca_parameter_dict)
 
             try:
                 run_task(
                     generate_ocsp_key,
                     key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
-                    **parameters.model_dump(mode="json"),
+                    **parameters.model_dump(mode="json", exclude_unset=True),
                 )
             except Exception as ex:
                 raise CommandError(ex) from ex

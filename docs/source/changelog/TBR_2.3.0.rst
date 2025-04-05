@@ -17,10 +17,15 @@ Command-line
 
 * The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` where removed (deprecated
   since django-ca 2.1.0).
-* :command:`manage.py regenerate_ocsp_keys` no longer requires the private key to be usable where the command
-  is invoked if Celery is used.
-* :command:`manage.py regenerate_ocsp_keys` no longer has a default value for ``--expires``, which effectively
-  masked the configured CA value.
+* :command:`manage.py regenerate_ocsp_keys`:
+
+  * Deprecate the ``--profile`` and ``--expires`` arguments. The arguments will be removed in
+    ``django-ca~=2.4.0``. The profile should always be "ocsp", which can also influence certificate expiry.
+  * Deprecate the ``--key-type``, ``--key-size``, ``--elliptic-curve`` and ``--algorithm`` arguments. The
+    arguments will be removed in ``django-ca~=2.4.0``. OCSP keys generated with this command then mirror the
+    CA they are delegating for.
+  * No longer require the private key to be usable where the command is invoked if Celery is used.
+  * Remove default value for ``--expires``, which masks the configured CA value.
 
 ********
 REST API
