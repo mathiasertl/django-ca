@@ -17,6 +17,18 @@ Command-line
 
 * The ``--scope`` and ``--algorithm`` parameters to :command:`manage.py dump_crl` where removed (deprecated
   since django-ca 2.1.0).
+* :command:`manage.py resign_cert`:
+
+  * Overriding details from the original certificate is deprecated and will be removed in
+    ``django-ca~=2.4.0``. This affects ``--ca``, ``--subject``, ``--profile``, ``--algorithm``,
+    ``--ocsp-responder``, ``--ca-issuer``, ``--policy-identifier``, ``--certification-practice-statement``,
+    ``--user-notice``, ``--crl-full-name``, ``--issuer-alternative-name``, ``--extended-key-usage``,
+    ``--key-usage``, ``--ocsp-no-check``, ``--subject-alternative-name`` and ``--tls-feature``, as well as all
+    arguments to mark them as (not) critical. These arguments make the behavior unpredictable and make it hard
+    to predict what the certificate really looks like. If you want to sign a certificate again with different
+    extensions, sign the certificate normally. It will still be possible to resign a certificate using a
+    different CA.
+
 * :command:`manage.py regenerate_ocsp_keys`:
 
   * Deprecate the ``--profile`` and ``--expires`` arguments. The arguments will be removed in

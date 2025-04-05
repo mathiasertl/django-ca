@@ -13,7 +13,7 @@
 
 """Test the resign_cert management command."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as tz
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -28,7 +28,6 @@ from cryptography.x509.oid import (
     NameOID,
 )
 
-from django.test import TestCase
 from django.utils import timezone
 
 import pytest
@@ -37,7 +36,6 @@ from pytest_django.fixtures import SettingsWrapper
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.tests.base.assertions import assert_command_error, assert_create_cert_signals
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     basic_constraints,
     certificate_policies,
@@ -58,11 +56,11 @@ from django_ca.tests.base.utils import (
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-def resign_cert(serial: str, **kwargs: Any) -> Certificate:
+def resign_cert(serial: str, stderr: str = "", **kwargs: Any) -> Certificate:
     """Execute the regenerate_ocsp_keys command."""
     with assert_create_cert_signals():
-        stdout, stderr = cmd("resign_cert", serial, **kwargs)
-    assert stderr == ""
+        stdout, actual_stderr = cmd("resign_cert", serial, **kwargs)
+    assert actual_stderr == stderr
     return Certificate.objects.get(pub=stdout)
 
 
@@ -192,7 +190,7 @@ def test_all_extensions_cert_with_overrides(
             "--tls-feature",
             "status_request",
         )
-    assert stderr == ""
+    assert stderr == "WARNING: Specifying extensions is deprecated and will be removed on django-ca 2.4.0.\n"
 
     new = Certificate.objects.get(pub=stdout)
     assert_resigned(all_extensions, new)
@@ -321,7 +319,7 @@ def test_no_extensions_cert_with_overrides(
             "--tls-feature",
             "status_request",
         )
-    assert stderr == ""
+    assert stderr == "WARNING: Specifying extensions is deprecated and will be removed on django-ca 2.4.0.\n"
 
     new = Certificate.objects.get(pub=stdout)
     assert_resigned(no_extensions, new)
@@ -415,7 +413,7 @@ def test_no_extensions_cert_with_overrides_with_non_default_critical(
             "status_request",
             "--tls-feature-critical",
         )
-    assert stderr == ""
+    assert stderr == "WARNING: Specifying extensions is deprecated and will be removed on django-ca 2.4.0.\n"
 
     new = Certificate.objects.get(pub=stdout)
     assert_resigned(no_extensions, new)
@@ -470,17 +468,39 @@ def test_no_extensions_cert_with_overrides_with_non_default_critical(
 
 
 @pytest.mark.usefixtures("usable_root")
-def test_custom_algorithm(root_cert: Certificate) -> None:
-    """Test resigning a cert with a new algorithm."""
-    new = resign_cert(root_cert.serial, algorithm=hashes.SHA512())
+def test_with_algorithm(root_cert: Certificate) -> None:
+    """Test resigning a cert with a custom algorithm."""
+    new = resign_cert(
+        root_cert.serial,
+        algorithm=hashes.SHA512(),
+        stderr="WARNING: --algorithm is deprecated and will be removed on django-ca 2.4.0.\n",
+    )
     assert_resigned(root_cert, new)
     assert_equal_ext(root_cert, new)
     assert isinstance(new.algorithm, hashes.SHA512)
 
 
-def test_different_ca(usable_child: CertificateAuthority, root_cert: Certificate) -> None:
+@pytest.mark.usefixtures("usable_root")
+def test_with_expires(root_cert: Certificate) -> None:
+    """Test resigning a cert with a custom expiry."""
+    now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
+    new = resign_cert(
+        root_cert.serial,
+        expires=timedelta(days=21),
+        stderr="WARNING: --expires is deprecated and will be removed on django-ca 2.4.0.\n",
+    )
+    assert_resigned(root_cert, new)
+    assert_equal_ext(root_cert, new)
+    assert new.not_after == now + timedelta(days=21)
+
+
+def test_with_ca(usable_child: CertificateAuthority, root_cert: Certificate) -> None:
     """Test writing with a different CA."""
-    new = resign_cert(root_cert.serial, ca=usable_child)
+    new = resign_cert(
+        root_cert.serial,
+        ca=usable_child,
+        stderr="WARNING: --ca is deprecated and will be removed on django-ca 2.4.0.\n",
+    )
     assert_resigned(root_cert, new, new_ca=usable_child)
     assert_equal_ext(root_cert, new, new_ca=usable_child)
 
@@ -515,7 +535,10 @@ def test_overwrite(settings: SettingsWrapper, root_cert: Certificate) -> None:
                 "subject-alternative-name.example.com",
             ]
         )
-    assert stderr == ""
+    assert stderr == (
+        "WARNING: --subject is deprecated and will be removed on django-ca 2.4.0.\n"
+        "WARNING: Specifying extensions is deprecated and will be removed on django-ca 2.4.0.\n"
+    )
 
     new = Certificate.objects.get(pub=stdout)
     assert_resigned(root_cert, new)
@@ -549,9 +572,8 @@ def test_set_profile(settings: SettingsWrapper, root_cert: Certificate) -> None:
     """Test getting the certificate from the profile."""
     settings.CA_PROFILES = {"server": {"expires": 200}, "webserver": {}}
     settings.CA_DEFAULT_EXPIRES = 31
-    with assert_create_cert_signals():
-        stdout, stderr = cmd_e2e(["resign_cert", root_cert.serial, "--server"])
-    assert stderr == ""
+    stdout, stderr = cmd_e2e(["resign_cert", root_cert.serial, "--server"])
+    assert stderr == "WARNING: --profile is deprecated and will be removed on django-ca 2.4.0.\n"
 
     new = Certificate.objects.get(pub=stdout)
     assert new.not_after.date() == timezone.now().date() + timedelta(days=200)

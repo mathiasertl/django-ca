@@ -64,7 +64,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913, PLR0915
         self,
         cert: Certificate,
         ca: CertificateAuthority | None,
@@ -74,7 +74,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         profile: str | None,
         algorithm: AllowedHashTypes | None,
         # Authority Information Access extension
-        authority_information_access: x509.AuthorityInformationAccess,
+        authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension
         certificate_policies: x509.CertificatePolicies | None,
         certificate_policies_critical: bool,
@@ -100,6 +100,30 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         tls_feature_critical: bool,
         **options: Any,
     ) -> None:
+        if ca is not None:
+            self.stderr.write("WARNING: --ca is deprecated and will be removed on django-ca 2.4.0.")
+        if profile is not None:
+            self.stderr.write("WARNING: --profile is deprecated and will be removed on django-ca 2.4.0.")
+        if subject is not None:
+            self.stderr.write("WARNING: --subject is deprecated and will be removed on django-ca 2.4.0.")
+        if expires is not None:
+            self.stderr.write("WARNING: --expires is deprecated and will be removed on django-ca 2.4.0.")
+        if algorithm is not None:
+            self.stderr.write("WARNING: --algorithm is deprecated and will be removed on django-ca 2.4.0.")
+        if (
+            authority_information_access  # pylint: disable=too-many-boolean-expressions
+            or certificate_policies
+            or crl_full_names
+            or extended_key_usage
+            or issuer_alternative_name
+            or key_usage
+            or subject_alternative_name
+            or tls_feature
+        ):
+            self.stderr.write(
+                "WARNING: Specifying extensions is deprecated and will be removed on django-ca 2.4.0."
+            )
+
         if ca is None:
             ca = cert.ca
 
