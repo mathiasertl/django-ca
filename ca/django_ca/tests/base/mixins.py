@@ -24,9 +24,6 @@ from typing import Any
 from unittest import mock
 from urllib.parse import quote
 
-from cryptography import x509
-from cryptography.x509.oid import ExtensionOID
-
 from django.conf import settings
 from django.contrib.auth.models import User  # pylint: disable=imported-auth-user; for mypy
 from django.contrib.messages import get_messages
@@ -163,24 +160,6 @@ class TestCaseMixin(TestCaseProtocol):
     def assertPostRevoke(self, post: mock.Mock, cert: Certificate) -> None:  # pylint: disable=invalid-name
         """Assert that the post_revoke_cert signal was called."""
         post.assert_called_once_with(cert=cert, signal=post_revoke_cert, sender=Certificate)
-
-    def crl_distribution_points(
-        self,
-        full_name: Iterable[x509.GeneralName] | None = None,
-        relative_name: x509.RelativeDistinguishedName | None = None,
-        reasons: frozenset[x509.ReasonFlags] | None = None,
-        crl_issuer: Iterable[x509.GeneralName] | None = None,
-        critical: bool = False,
-    ) -> x509.Extension[x509.CRLDistributionPoints]:
-        """Shortcut for getting a CRLDistributionPoints extension."""
-        dpoint = x509.DistributionPoint(
-            full_name=full_name, relative_name=relative_name, reasons=reasons, crl_issuer=crl_issuer
-        )
-        return x509.Extension(
-            oid=ExtensionOID.CRL_DISTRIBUTION_POINTS,
-            critical=critical,
-            value=x509.CRLDistributionPoints([dpoint]),
-        )
 
     @property
     def hostname(self) -> str:
