@@ -200,6 +200,7 @@ def test_load_settings_from_environment() -> None:
             "DJANGO_CA_ENABLE_ADMIN": "yEs",
             "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR",
         },
+        clear=True,
     ):
         assert dict(load_settings_from_environment()) == {
             "ALLOWED_HOSTS": ["example.com", "example.net"],
@@ -233,6 +234,7 @@ def test_update_database_setting_from_environment_with_postgres_with_values() ->
             "POSTGRES_USER": "custom-user",
             "POSTGRES_DB": "custom-name",
         },
+        clear=True,
     ):
         update_database_setting_from_environment(databases)
     assert databases["default"] == {

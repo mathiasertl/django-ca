@@ -13,49 +13,20 @@
 
 """Module to parse ``pyproject.toml`` and augment with auto-generated values."""
 
-import semantic_version
 
-VersionTuple = tuple[int, int, int] | tuple[int, int, int, str, int]
+def get_last_version() -> str:
+    """Get the last version that was released based on the installed versiond."""
+    import django_ca  # pylint: disable=import-outside-toplevel
 
+    version = django_ca.__packaging_version__
 
-def get_semantic_version(version: VersionTuple | None = None) -> semantic_version.Version:
-    """Get the last django-ca release."""
-    if version is None:
-        # PYLINT NOTE: import django_ca only here so that it is not imported before coverage tests start
-        import django_ca  # pylint: disable=import-outside-toplevel
+    major, minor, patch = version.release
+    if version.is_prerelease or version.is_devrelease:
+        if patch != 0:
+            patch -= 1
+        elif minor != 0:
+            minor -= 1
+        else:
+            major -= 1
 
-        version = django_ca.VERSION
-
-    prerelease: tuple[str, ...] | None = None
-    if len(version) == 5:
-        prerelease = tuple(str(e) for e in version[3:5])
-    elif len(version) != 3:
-        raise ValueError(f"{version}: django_ca.VERSION must have either three or five elements.")
-
-    return semantic_version.Version(
-        major=version[0], minor=version[1], patch=version[2], prerelease=prerelease
-    )
-
-
-def get_last_version() -> semantic_version.Version:
-    """Get the last version that was released from ``django_ca.VERSION``."""
-    version = get_semantic_version()
-
-    # If this is a development release, just remove prerelease/build and return it
-    if version.prerelease or version.build:
-        version.prerelease = version.build = None
-        return version
-
-    if version.patch > 0:
-        version.patch -= 1
-        return version
-    if version.minor > 0:
-        version.minor -= 1
-        return version
-
-    # hardcoded branch for 2.0.0:
-    if version.minor == 0:
-        version.major = 1
-        version.minor = 29
-        return version
-    raise ValueError("Unable to get last release version.")
+    return ".".join(str(e) for e in (major, minor, patch))

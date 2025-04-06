@@ -64,10 +64,32 @@ class Command(DevCommand):
         #   https://github.com/docker/docker-py/issues/2230
         if args.debian:
             info(f"Building Debian based image as {tag}...")
-            self.run("docker", "build", "-t", tag, ".", env=env, cwd=cwd)
+            self.run(
+                "docker",
+                "build",
+                "-t",
+                tag,
+                "--build-arg",
+                f"DJANGO_CA_VERSION={release}",
+                ".",
+                env=env,
+                cwd=cwd,
+            )
         if args.alpine:
             alpine_tag = f"{tag}-alpine"
             info(f"Building Alpine based image as {alpine_tag}...")
-            self.run("docker", "build", "-t", alpine_tag, "-f", "Dockerfile.alpine", ".", env=env, cwd=cwd)
+            self.run(
+                "docker",
+                "build",
+                "-t",
+                alpine_tag,
+                "-f",
+                "Dockerfile.alpine",
+                "--build-arg",
+                f"DJANGO_CA_VERSION={release}",
+                ".",
+                env=env,
+                cwd=cwd,
+            )
 
         return release, tag

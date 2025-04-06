@@ -38,6 +38,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 
 ENV UV_PYTHON_PREFERENCE=only-system
 ENV UV_LINK_MODE=copy
+ARG DJANGO_CA_VERSION
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION
 RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
     uv sync --frozen --all-extras --no-default-groups --group docker --compile-bytecode
 

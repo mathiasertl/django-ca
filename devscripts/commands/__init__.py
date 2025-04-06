@@ -18,6 +18,7 @@ import importlib
 import os
 import pathlib
 import pkgutil
+import re
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -77,7 +78,8 @@ class DevCommand:
 
     def get_docker_tag(self, release: str) -> str:
         """Get the docker tag for the given release."""
-        return f"{config.DOCKER_TAG}:{release}"
+        safe_tag = re.sub(r"[^\w.-]", ".", release)
+        return f"{config.DOCKER_TAG}:{safe_tag}"
 
     def handle(self, args: argparse.Namespace) -> None:
         """Method that is supposed to be implemented by sub-commands."""

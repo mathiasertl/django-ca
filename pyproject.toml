@@ -2,7 +2,7 @@
 # Minimum requirements for the build system to execute (PEP-518)
 # >= 61: Add pyproject.toml support and setuptools.config.setupcfg.read_configuration
 # >= 68.1: "Promote pyproject.toml’s [tool.setuptools] out of beta." in the ChangeLog
-requires = ["setuptools>=68.1", "wheel"]
+requires = ["setuptools>=68.1", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [django-ca.release]
@@ -499,7 +499,6 @@ max-returns = 8
 max-statements = 60
 
 [tool.setuptools.dynamic]
-version = {attr = "django_ca.VERSION"}
 # NOTE: readme is equivalent to long_description in setup.cfg
 readme = {file = ["docs/source/intro.rst"], content-type = "text/x-rst"}
 
@@ -507,6 +506,9 @@ readme = {file = ["docs/source/intro.rst"], content-type = "text/x-rst"}
 where = ["ca"]
 include = ["django_ca*"]
 exclude = ["django_ca.tests*"]
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
 
 [tool.uv]
 default-groups = ["dev", "docs", "lint", "mypy", "local"]
@@ -553,6 +555,7 @@ local = [
     "docker>=7.1.0",
     "ipython>=7.28.0",
     "pytest-xdist>=3.6.1",
+    "setuptools-scm>=8.2.0",
     "tox>=4.18.0",
     "tox-uv>=1.25.0",
     "wheel-inspect>=1.7.2",

@@ -13,22 +13,22 @@
 
 """django-ca root module."""
 
-from typing import Any
+from importlib.metadata import PackageNotFoundError, version
 
-VersionTuple = tuple[int, int, int] | tuple[int, int, int, str, int]
+from packaging.version import Version as PackagingVersion
 
-# WARNING: This module MUST NOT include any dependencies, as it is read by setup.py
+try:
+    __version__ = version("django-ca")
 
-# Between releases: (Major, Minor, Patch, "dev", 1)
-# On a release: (Major, Minor, Patch)
-# https://www.python.org/dev/peps/pep-0440/
-# https://www.python.org/dev/peps/pep-0396/
-# https://www.python.org/dev/peps/pep-0386/
-VERSION: VersionTuple = (2, 3, 0, "dev", 1)
-
-# __version__ specified in PEP 0396, but we use the PEP 0440 format instead
-__version__ = ".".join([str(e) for e in VERSION[:3]])
-if len(VERSION) > 3:  # pragma: no cover
-    # NOTE: dev_elements hack here only to make mypy happy in both dev and non-dev versions
-    dev_elements: tuple[Any, ...] = VERSION[3:5]
-    __version__ += f".{''.join(str(e) for e in dev_elements)}"
+    __packaging_version__ = PackagingVersion(__version__)
+    VERSION: tuple[int | str, ...] = __packaging_version__.release
+    if __packaging_version__.dev:  # pragma: no cover
+        VERSION = (*VERSION, "dev", __packaging_version__.dev)
+    if __packaging_version__.pre:  # pragma: no cover
+        VERSION = (*VERSION, "pre", *__packaging_version__.pre)
+    if __packaging_version__.post:  # pragma: no cover
+        VERSION = (*VERSION, "post", __packaging_version__.post)
+    if __packaging_version__.local:  # pragma: no cover
+        VERSION = (*VERSION, __packaging_version__.local)
+except PackageNotFoundError:  # pragma: no cover  # package is not installed
+    pass
