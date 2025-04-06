@@ -64,7 +64,7 @@ extra_group.add_argument(
 extra_group.add_argument(
     "--extra",
     action="append",
-    choices=ALL_EXTRAS,
+    choices=[*ALL_EXTRAS, "none"],
     help="Test an extra from extras_require, can be given multiple times. Valid choices are %(choices)s.",
     metavar="EXTRA",
 )
@@ -148,7 +148,7 @@ except ImportError:
     pass
 
 # NOTE: extras are tested in the wheel-test-* stages in Dockerfile
-if args.extra:
+if args.extra and args.extra != ["none"]:
     print("Checking extras:", ", ".join(sorted(args.extra)))
 else:
     print("No extras checked.")
@@ -170,5 +170,7 @@ for extra in args.extra:
         from yaml import safe_load
     elif extra == "hsm":
         import pkcs11
+    elif extra == "none":  # alias to no actions.
+        pass
     else:
         raise ValueError(f"{extra}: Unknown extra encountered.")

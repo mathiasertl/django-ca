@@ -1,0 +1,118 @@
+name: Wheel
+on:
+  push:
+  pull_request:
+
+env:
+  UV_PYTHON_PREFERENCE: only-system
+  UV_NO_SYNC: 1
+
+jobs:
+  build:
+    name: Build wheel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acquire sources
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: "3.13"
+          architecture: x64
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5.3.1
+        with:
+          enable-cache: true
+
+      - name: Build wheel
+        run: uv build
+
+      - name: Archive Wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-packages
+          path: dist/
+
+  test:
+    name: Test wheel
+    runs-on: ubuntu-latest
+    needs: build
+
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        extra: [ api, celery, hsm, mysql, postgres, redis, yaml ]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /uv.lock
+            /pyproject.toml
+            /devscripts/standalone/test-imports.py
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5.3.1
+        with:
+          enable-cache: true
+
+      - name: Download wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: python-packages
+
+      - name: Create venv
+        run: uv venv
+
+      - name: Install tomllib (Python 3.10 only)
+        run: uv pip install tomli
+        if: ${{ matrix.python-version == '3.10' }}
+
+      - name: Install wheel (with extra)
+        run: uv pip install `ls django_ca-*.whl`[${{ matrix.extra }}]
+        if: ${{ matrix.extra != 'none' }}
+
+      - name: Install wheel (no extras)
+        run: uv pip install `ls django_ca-*.whl`
+        if: ${{ matrix.extra == 'none' }}
+
+      - name: Test imports
+        run: uv run python devscripts/standalone/test-imports.py --extra ${{ matrix.extra }}
+
+  publish-to-testpypi:
+    name: Publish to test.pypi.org
+
+    # Publish to TestPyPI for tags and on main.
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' }}
+
+    needs:
+      - test
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/django-ca
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          name: python-packages
+          path: dist/
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
