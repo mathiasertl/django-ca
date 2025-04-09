@@ -18,7 +18,7 @@ Enable ACMEv2 for a CA
 ======================
 
 A CA can only be used for issuing certificates via ACMEv2 if explicitly enabled.  You have to enable the
-feature for every CA individually. You an do so either in the admin interface or via the command line when
+feature for every CA individually. You can do so either in the admin interface or via the command line when
 creating a CA or editing it:
 
 .. code-block:: console
