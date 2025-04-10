@@ -2,6 +2,12 @@
 Quickstart with Docker
 ######################
 
+.. spelling::
+
+   mathiasertl
+   ghcr
+   io
+
 This guide provides instructions for running your own certificate authority using a plain Docker container.
 Using this setup allows you to run django-ca in an isolated environment that can be easily updated, but use
 external resources for a web server, database and cache.
@@ -126,6 +132,42 @@ Create a Docker network and start PostgreSQL and Redis:
 
 .. console-include::
    :include: /include/quickstart_with_docker/start-dependencies.yaml
+   :context: quickstart-with-docker
+
+Choose Docker image
+===================
+
+The Docker image is published in a Debian (the default) and an Alpine Linux based variant. In the examples
+below, we use the default, Debian based variant. For example, if you use |last-version|, you can either
+choose:
+
+* mathiasertl/django-ca:|last-version|
+* mathiasertl/django-ca:|last-version|-alpine
+
+The above images are updated if packaging issues or security vulnerabilities in dependencies are discovered.
+If you want to be sure that you can download the exact same image later, the same tags are also published with
+a numerical suffix, e.g. mathiasertl/django-ca:|last-version|-1.
+
+.. versionadded:: 2.3.0
+
+   Docker images are now also published to the GitHub container registry at ``ghcr.io``.
+
+Starting with 2.3.0, GitHubs container registry also stores the same django-ca images:
+
+* ghcr.io/mathiasertl/django-ca:|last-version|
+* ghcr.io/mathiasertl/django-ca:|last-version|-1
+* ghcr.io/mathiasertl/django-ca:|last-version|-alpine
+* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-1
+
+Verify attestations
+-------------------
+
+.. versionadded:: 2.3.0
+
+   Docker image attestations where added. Earlier images do *not* have attestations.
+
+.. console-include::
+   :include: /include/quickstart_with_docker/attest-image.yaml
    :context: quickstart-with-docker
 
 Start django-ca

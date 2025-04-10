@@ -1,0 +1,292 @@
+name: Docker
+on:
+  push:
+  pull_request:
+
+env:
+  UV_PYTHON_PREFERENCE: only-system
+  UV_NO_SYNC: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  calc-version:
+    name: Calculate version
+    runs-on: ubuntu-latest
+    outputs:
+      django-ca-version: ${{ steps.setuptools-scm.outputs.DJANGO_CA_VERSION }}
+    steps:
+      - name: Acquire sources
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: "3.13"
+          architecture: x64
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5.3.1
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --no-default-groups --group dist
+
+      - name: Calculate version
+        run: echo "DJANGO_CA_VERSION=$(uv run -q python -m setuptools_scm)" >> $GITHUB_ENV
+
+      - name: Export version
+        id: setuptools-scm
+        run: echo "DJANGO_CA_VERSION=$DJANGO_CA_VERSION" | tee -a $GITHUB_OUTPUT
+
+  test:
+    name: Test main image
+    runs-on: ubuntu-latest
+    needs:
+      - calc-version
+    env:
+      DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+
+    steps:
+      - name: Acquire sources
+        uses: actions/checkout@v4.1.1
+      - name: Build test stage
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: false
+          tags: test.${{ matrix.python-version }}
+          target: test
+          build-args: |
+            IMAGE=python:${{ matrix.python-version }}-slim-bookworm
+            DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
+
+  test-alpine:
+    name: Test Alpine image
+    runs-on: ubuntu-latest
+    needs:
+      - calc-version
+    env:
+      DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
+    strategy:
+      matrix:
+        alpine-version: [ "3.20", "3.21" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+
+    steps:
+      - name: Acquire sources
+        uses: actions/checkout@v4.1.1
+      - name: Build test stage
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: false
+          tags: test.${{ matrix.python-version }}
+          target: test
+          file: Dockerfile.alpine
+          build-args: |
+            IMAGE=python:${{ matrix.python-version }}-alpine${{ matrix.alpine-version }}
+            DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+    needs:
+      - calc-version
+      - test
+    env:
+      DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    outputs:
+      docker-tag: ${{ steps.meta.outputs.tags }}
+      docker-version: ${{ steps.meta.outputs.version }}
+      docker-digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - name: Acquire sources
+        uses: actions/checkout@v4.1.1
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        if: startsWith(github.ref, 'refs/tags/')  # only sign on tag pushes
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  build-alpine:
+    name: Build Alpine image
+    runs-on: ubuntu-latest
+    needs:
+      - calc-version
+      - test-alpine
+    env:
+      DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    outputs:
+      docker-tag: ${{ steps.meta.outputs.tags }}
+      docker-version: ${{ steps.meta.outputs.version }}
+      docker-digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - name: Acquire sources
+        uses: actions/checkout@v4.1.1
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+            suffix=-alpine
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          file: Dockerfile.alpine
+          build-args: |
+            DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        if: startsWith(github.ref, 'refs/tags/')  # only sign on tag pushes
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  upload:
+    name: Upload image
+    if: startsWith(github.ref, 'refs/tags/')  # only publish on tag pushes
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    env:
+      DOCKER_TAG: ${{ needs.build.outputs.docker-tag }}
+      DOCKER_VERSION: ${{ needs.build.outputs.docker-version }}
+      DOCKER_DIGEST: ${{ needs.build.outputs.docker-digest }}
+      DOCKERHUB_TAG: mathiasertl/django-ca:${{ needs.build.outputs.docker-version }}
+    environment:
+      name: Docker Hub
+      url: https://hub.docker.com/r/mathiasertl/django-ca
+    permissions:
+      attestations: write
+      id-token: write
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Pull ${{ env.REGISTRY }} image
+        run: docker pull $DOCKER_TAG
+
+      - name: Tag image
+        run: |
+          docker tag $DOCKER_TAG $DOCKERHUB_TAG
+          docker tag $DOCKER_TAG $DOCKERHUB_TAG-1
+
+      - name: Push to dockerhub
+        run: |
+          docker push $DOCKERHUB_TAG
+          docker push $DOCKERHUB_TAG-1
+
+      # https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: index.docker.io/mathiasertl/django-ca
+          subject-digest: ${{ env.DOCKER_DIGEST }}
+          push-to-registry: true
+
+  upload-alpine:
+    name: Upload Alpine image
+    if: startsWith(github.ref, 'refs/tags/')  # only publish on tag pushes
+    runs-on: ubuntu-latest
+    needs:
+      - build-alpine
+    env:
+      DOCKER_TAG: ${{ needs.build-alpine.outputs.docker-tag }}
+      DOCKER_VERSION: ${{ needs.build-alpine.outputs.docker-version }}
+      DOCKER_DIGEST: ${{ needs.build-alpine.outputs.docker-digest }}
+      DOCKERHUB_TAG: mathiasertl/django-ca:${{ needs.build-alpine.outputs.docker-version }}
+    environment:
+      name: Docker Hub
+      url: https://hub.docker.com/r/mathiasertl/django-ca
+    permissions:
+      attestations: write
+      id-token: write
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Pull ${{ env.REGISTRY }} image
+        run: docker pull $DOCKER_TAG
+
+      - name: Tag image
+        run: |
+          docker tag $DOCKER_TAG $DOCKERHUB_TAG
+          docker tag $DOCKER_TAG $DOCKERHUB_TAG-1
+
+      - name: Push to dockerhub
+        run: |
+          docker push $DOCKERHUB_TAG
+          docker push $DOCKERHUB_TAG-1
+
+      # https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: index.docker.io/mathiasertl/django-ca
+          subject-digest: ${{ env.DOCKER_DIGEST }}
+          push-to-registry: true

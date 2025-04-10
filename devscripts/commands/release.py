@@ -120,47 +120,19 @@ class Command(DevCommand):
                 self.command("clean")
 
                 # Build release artifacts
-                self.command("build", "wheel", "--release", args.release)
-                _release, docker_tag = self.command("build", "docker", "--release", args.release)
+                _release, _docker_tag = self.command("build", "docker", "--release", args.release)
                 ok("Finished building release artifacts.")
-            else:
-                docker_tag = self.get_docker_tag(args.release)
 
             self.command("validate", "docker", "--no-rebuild", "--release", args.release)
             self.command("validate", "docker-compose", "--no-rebuild", "--release", args.release)
-            self.command("validate", "wheel")
             ok("Finished validation.")
 
             if args.dry_run:
                 repo.delete_tag(git_tag)
             else:  # This is a real release, so upload artifacts
                 info("Uploading release artifacts...")
-
-                # Prepare alternative Docker tags
-                revision_tag = f"{docker_tag}-1"
-                latest_tag = f"{config.DOCKER_TAG}:latest"
-                self.run("docker", "tag", docker_tag, revision_tag)
-                self.run("docker", "tag", docker_tag, latest_tag)
-
-                alpine_tag = f"{docker_tag}-alpine"
-                alpine_latest_tag = f"{config.DOCKER_TAG}:latest"
-                alpine_revision_tag = f"{alpine_tag}-1"
-                self.run("docker", "tag", alpine_tag, alpine_revision_tag)
-                self.run("docker", "tag", alpine_tag, alpine_latest_tag)
-
                 # Push GIT tag
                 repo.remotes.origin.push(refspec=git_tag)
-
-                # Upload wheel
-                self.run("uv", "publish", "dist/*")
-
-                # Upload Docker image
-                self.run("docker", "push", docker_tag)
-                self.run("docker", "push", revision_tag)
-                self.run("docker", "push", latest_tag)
-                self.run("docker", "push", alpine_tag)
-                self.run("docker", "push", alpine_revision_tag)
-                self.run("docker", "push", alpine_latest_tag)
 
                 ok("Uploaded release artifacts.")
 

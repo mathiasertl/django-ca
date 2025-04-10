@@ -40,7 +40,6 @@ Test current state
 ******************
 
 * Make sure that :command:`tox` runs through for all environments.
-* Make sure that :command:`./dev.py docker-test` runs through.
 * Push the last commit and make sure that GitHub actions and Read The Docs run through.
 
 Test demo
@@ -97,10 +96,9 @@ The release script will:
 
 * Validate the current state in your repository.
 * Create a new signed git tag.
-* Build and validate the Python Wheel.
 * Build and test the Docker image.
 * Test the various tutorials.
-* Upload Python Wheel and Docker image.
+* Push the git tag.
 
 Update GitHub/Docker Hub
 ========================

@@ -511,7 +511,7 @@ exclude = ["django_ca.tests*"]
 local_scheme = "no-local-version"
 
 [tool.uv]
-default-groups = ["dev", "docs", "lint", "mypy", "local"]
+default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     # TODO: When adding a group here, make sure that dev.py validate state checks it
 #    [ { group = "django5.0" }, { group = "django5.1" }, ],
@@ -542,6 +542,9 @@ dev = [
     "termcolor>=2.5.0",
     "tomli>=2.2.1 ; python_full_version < '3.11'",
 ]
+dist = [
+    "setuptools-scm>=8.2.0",
+]
 docs = [
     "doc8>=1.1.2",
     "numpydoc>=1.8.0",
@@ -555,7 +558,6 @@ local = [
     "docker>=7.1.0",
     "ipython>=7.28.0",
     "pytest-xdist>=3.6.1",
-    "setuptools-scm>=8.2.0",
     "tox>=4.18.0",
     "tox-uv>=1.25.0",
     "wheel-inspect>=1.7.2",
@@ -591,4 +593,3 @@ docker = [
 "cryptography44" = ["cryptography~=44.0"]
 "acme3.2" = ["acme~=3.2.0"]
 "pydantic2.10" = ["pydantic~=2.10.0"]
-

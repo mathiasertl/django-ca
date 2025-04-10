@@ -631,6 +631,9 @@ dev = [
     { name = "termcolor" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
+dist = [
+    { name = "setuptools-scm" },
+]
 django5-1 = [
     { name = "django" },
 ]
@@ -657,7 +660,6 @@ local = [
     { name = "ipython", version = "8.34.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pytest-xdist" },
-    { name = "setuptools-scm" },
     { name = "tox" },
     { name = "tox-uv" },
     { name = "wheel-inspect" },
@@ -734,6 +736,7 @@ dev = [
     { name = "termcolor", specifier = ">=2.5.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.2.1" },
 ]
+dist = [{ name = "setuptools-scm", specifier = ">=8.2.0" }]
 django5-1 = [{ name = "django", specifier = "~=5.1.0" }]
 docker = [{ name = "uwsgi", specifier = "==2.0.28" }]
 docs = [
@@ -755,7 +758,6 @@ local = [
     { name = "docker", specifier = ">=7.1.0" },
     { name = "ipython", specifier = ">=7.28.0" },
     { name = "pytest-xdist", specifier = ">=3.6.1" },
-    { name = "setuptools-scm", specifier = ">=8.2.0" },
     { name = "tox", specifier = ">=4.18.0" },
     { name = "tox-uv", specifier = ">=1.25.0" },
     { name = "wheel-inspect", specifier = ">=1.7.2" },
