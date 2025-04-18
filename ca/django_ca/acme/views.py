@@ -68,7 +68,7 @@ from django_ca.acme.responses import (
 )
 from django_ca.acme.utils import parse_acme_csr
 from django_ca.conf import model_settings
-from django_ca.constants import REASON_CODES
+from django_ca.constants import JOSEPY_VERSION, REASON_CODES
 from django_ca.models import (
     AcmeAccount,
     AcmeAuthorization,
@@ -1206,7 +1206,11 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             ) from ex
 
         # Get cryptography certificate from ACME message
-        cg_cert = message.certificate.wrapped.to_cryptography()
+        if JOSEPY_VERSION >= (2, 0):  # pragma: only josepy>=2.0
+            cg_cert = message.certificate
+        else:  # pragma: only josepy<2.0
+            cg_cert = message.certificate.wrapped.to_cryptography()  # type: ignore[attr-defined]
+
         if not isinstance(cg_cert, x509.Certificate):  # pragma: no cover
             # COVERAGE NOTE: message deserialization already raises an error when no certificate is passed,
             # so this check here is just for more safety (and to make mypy happy).

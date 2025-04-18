@@ -8,7 +8,7 @@ env:
   UV_NO_SYNC: 1
   NEWEST_PYTHON: "3.13"
   NEWEST_CRYPTOGRAPHY: "44"
-  NEWEST_PYDANTIC: "2.10"
+  NEWEST_PYDANTIC: "2.11"
 
 jobs:
   run:
@@ -17,9 +17,9 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
-        django-version: [ "5.1" ]
+        django-version: [ "5.1", "5.2" ]
         cryptography-version: [ "44" ]
-        pydantic-version: [ "2.10" ]
+        pydantic-version: [ "2.10", "2.11" ]
 
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, pydantic ${{ matrix.pydantic-version }}
     steps:
@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v5.5.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64

@@ -77,6 +77,7 @@ PYTHON_VERSIONS = _load_versions(RELEASE["python"])
 CRYPTOGRAPHY_VERSIONS = cast(tuple[tuple[int], ...], _load_versions(RELEASE["cryptography"]))
 DJANGO_VERSIONS = _load_versions(RELEASE["django"])
 ACME_VERSIONS = _load_versions(RELEASE["acme"])
+JOSEPY_VERSIONS = _load_versions(RELEASE["josepy"])
 PYDANTIC_VERSIONS = _load_versions(RELEASE["pydantic"])
 
 # Newest versions of software components.
@@ -90,6 +91,7 @@ NEWEST_PYDANTIC_VERSION = PYDANTIC_VERSIONS[-1]
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 ACME_VERSION = packaging.version.parse(version("acme")).release
 PYDANTIC_VERSION = packaging.version.parse(version("pydantic")).release
+JOSEPY_VERSION = packaging.version.parse(version("josepy")).release
 
 NEWEST_PYTHON = sys.version_info[0:2] == NEWEST_PYTHON_VERSION
 NEWEST_CRYPTOGRAPHY = CRYPTOGRAPHY_VERSION[:1] == NEWEST_CRYPTOGRAPHY_VERSION

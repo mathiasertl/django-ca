@@ -139,19 +139,24 @@ def check_github_actions_tests() -> int:
         for _job_name, job in action_config["jobs"].items():
             check_github_action_versions(job, action_config["name"])
 
-            if workflow.name == "tests.yml":
-                matrix = job["strategy"]["matrix"]
-                errors += simple_diff(
-                    "Python versions", tuple(matrix["python-version"]), config.PYTHON_RELEASES
-                )
-
-                errors += simple_diff("Django versions", tuple(matrix["django-version"]), django_versions)
-                errors += simple_diff(
-                    "cryptography versions", tuple(matrix["cryptography-version"]), cg_versions
-                )
-                errors += simple_diff(
-                    "Pydantic versions", tuple(matrix["pydantic-version"]), pydantic_versions
-                )
+            if matrix := job.get("strategy", {}).get("matrix"):
+                for key, values in matrix.items():
+                    if key == "python-version":
+                        errors += simple_diff("Python versions", tuple(values), config.PYTHON_RELEASES)
+                    elif key == "django-version":
+                        errors += simple_diff("Django versions", tuple(values), django_versions)
+                    elif key == "cryptography-version":
+                        errors += simple_diff("cryptography versions", tuple(values), cg_versions)
+                    elif key == "pydantic-version":
+                        errors += simple_diff("Pydantic versions", tuple(values), pydantic_versions)
+                    elif key == "alpine-version":
+                        errors += simple_diff("Alpine versions", tuple(values), config.ALPINE_RELEASES)
+                    elif key == "extra":
+                        errors += simple_diff("Extras", tuple(values), tuple(config.EXTRAS))
+                    elif key in ("os", "language"):  # keys are ignored
+                        continue
+                    else:
+                        info(f"{key}: Unknown matrix element with values {values}.")
 
             # Check any NEWEST_* environment variables
             for key, value in action_config.get("env", {}).items():
@@ -245,7 +250,7 @@ def check_pyproject_toml() -> int:
         for m in filter(None, [re.search(r"Django :: ([0-9]\.[0-9]+)$", cf) for cf in classifiers])
     )
     if djver_cfs != config.DJANGO:
-        errors += err(f"Wrong python classifiers: Have {djver_cfs}, wanted {config.DJANGO}")
+        errors += err(f"Wrong Djanfo classifiers: Have {djver_cfs}, wanted {config.DJANGO}")
 
     for djver in config.DJANGO:
         if f"Framework :: Django :: {djver}" not in classifiers:
@@ -269,7 +274,7 @@ def check_pyproject_toml() -> int:
     if expected_acme_req not in install_requires:
         errors += err(f"{expected_acme_req}: Expected acme requirement not found.")
 
-    # Check dependency groups for tox and GitHub Actions.
+    # Check dependency groups used in  tox and GitHub Actions.
     for sw, versions in {
         "Django": config.DJANGO,
         "cryptography": config.CRYPTOGRAPHY,
@@ -287,9 +292,9 @@ def check_pyproject_toml() -> int:
         for version in versions:
             expected_group_key = f"{sw}{version}"
             expected_group = [f"{sw}~={version}.0"]
-            if actual_dj_group := config.PYPROJECT_TOML["dependency-groups"].get(expected_group_key):
-                if actual_dj_group != expected_group:
-                    errors += err(f"{expected_group_key}: Depends on {actual_dj_group}.")
+            if actual_group := config.PYPROJECT_TOML["dependency-groups"].get(expected_group_key):
+                if actual_group != expected_group:
+                    errors += err(f"{expected_group_key}: Depends on {actual_group}.")
             else:
                 errors += err(f"{expected_group_key}: Dependency group not found.")
 

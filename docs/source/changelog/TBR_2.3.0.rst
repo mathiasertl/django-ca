@@ -55,8 +55,9 @@ REST API
 Dependencies
 ************
 
-* Add support for ``Celery~=5.5.0``.
-* **BACKWARDS INCOMPATIBLE:** Dropped support for ``django~=4.2.0``, ``acme~=3.0.0`` and ``acme~=3.0.0``.
+* Add support for ``django~=5.2.0``, ``Celery~=5.5.0``, ``pydantic~=2.11.0``, ``acme~=3.3.0`` and
+  ``acme~=4.0.0``.
+* **BACKWARDS INCOMPATIBLE:** Dropped support for ``django~=4.2.0``, ``acme~=3.0.0`` and ``acme~=3.1.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Alpine 3.19.
 
 **********
@@ -90,6 +91,7 @@ Deprecation notices
 *******************
 
 * This is the last release to support ``Celery~=4.4.0``.
+* This is the last release to support ``acme~=3.2.0`` and ``acme~=3.3.0``.
 
 *****
 Views

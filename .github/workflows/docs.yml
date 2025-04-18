@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v5.5.0
         with:
           # Python 3.13 currently fails
           python-version: "3.12"
