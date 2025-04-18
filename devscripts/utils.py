@@ -243,6 +243,8 @@ def create_signed_cert(
     with open(signer_public_key_path, "rb") as stream:
         signer_public_key = x509.load_der_x509_certificate(stream.read())
 
+    signer_ski = signer_public_key.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+
     one_day = datetime.timedelta(1, 0, 0)
     private_key = rsa.generate_private_key(
         public_exponent=65537,
@@ -257,12 +259,16 @@ def create_signed_cert(
     builder = builder.not_valid_after(datetime.datetime.today() + (one_day * 30))
     builder = builder.serial_number(x509.random_serial_number())
     builder = builder.public_key(public_key)
-    builder = builder.add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname)]), critical=False)
 
+    # Add required extensions
+    builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+    builder = builder.add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname)]), critical=False)
+    builder = builder.add_extension(x509.SubjectKeyIdentifier.from_public_key(public_key), critical=False)
     builder = builder.add_extension(
-        x509.BasicConstraints(ca=False, path_length=None),
-        critical=True,
+        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(signer_ski.value), critical=False
     )
+
+    # Finally sign certificate
     certificate = builder.sign(private_key=signer_private_key, algorithm=hashes.SHA256())
 
     with open(private_key_path, "wb") as stream:
