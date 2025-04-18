@@ -421,7 +421,7 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
     def __dir__(self, object: Any = None) -> Iterable[str]:  # pylint: disable=redefined-builtin
         # Used by ipython for tab completion, see:
         #   http://ipython.org/ipython-doc/dev/config/integrating.html
-        return list(super().__dir__()) + list(self.__settings.model_fields)
+        return list(super().__dir__()) + list(self.settings_model.model_fields)
 
     def _connect_settings_changed(self) -> None:
         setting_changed.connect(self._reload_from_signal)
