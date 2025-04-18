@@ -11,7 +11,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean &&  \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-         lsb-release libxml2 netcat-openbsd postgresql-client mariadb-client
+         lsb-release netcat-openbsd postgresql-client mariadb-client
 
 # Add user (some tests check if it's impossible to write a file)
 RUN adduser --system --uid=9000 --group --disabled-login django-ca
