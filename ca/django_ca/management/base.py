@@ -83,7 +83,7 @@ class BinaryOutputWrapper(OutputWrapper):
     def __init__(self, out: typing.BinaryIO, ending: bytes = b"\n") -> None:
         super().__init__(out, ending=ending)  # type: ignore[arg-type]
 
-    def flush(self) -> None:
+    def flush(self) -> None:  # pragma: only django<5.2  # Django 5.2 no longer calls this function.
         """Overwritten from base class so we don't try to flush when the stream is already closed.
 
         Starting with Python 3.13, we see some untraceable teardown code call flush() despite the stream

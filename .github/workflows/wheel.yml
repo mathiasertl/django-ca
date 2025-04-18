@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v5.5.0
         with:
           python-version: "3.13"
           architecture: x64
@@ -32,7 +32,7 @@ jobs:
         run: uv build
 
       - name: Archive Wheel
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: python-packages
           path: dist/
@@ -48,7 +48,7 @@ jobs:
         extra: [ api, celery, hsm, mysql, postgres, redis, yaml ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
         with:
           sparse-checkout: |
             /uv.lock
@@ -57,7 +57,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Setup Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v5.5.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -68,7 +68,7 @@ jobs:
           enable-cache: true
 
       - name: Download wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.2.1
         with:
           name: python-packages
 
@@ -109,12 +109,12 @@ jobs:
 
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.2.1
         with:
           name: python-packages
           path: dist/
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
           repository-url: https://test.pypi.org/legacy/
 
@@ -132,12 +132,12 @@ jobs:
 
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.2.1
         with:
           name: python-packages
           path: dist/
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.12.4
 
   github-release:
     name: Sign artifacts and upload them to GitHub Release
@@ -151,7 +151,7 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.2.1
         with:
           name: python-packages
           path: dist/
