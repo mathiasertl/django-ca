@@ -19,13 +19,11 @@ from http import HTTPStatus
 from unittest import mock
 from unittest.mock import patch
 
-import josepy as jose
 import pyrfc3339
 
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
-from OpenSSL.crypto import X509Req
 
 from django.test import Client
 from django.urls import reverse
@@ -34,6 +32,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.acme.messages import CertificateRequest
+from django_ca.deprecation import josepy_certificate_request
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.assertions import (
@@ -86,8 +85,7 @@ def url(order: AcmeOrder) -> str:
 @pytest.fixture
 def message() -> CertificateRequest:
     """Default message sent to the server."""
-    req = X509Req.from_cryptography(CSR)
-    return CertificateRequest(csr=jose.util.ComparableX509(req))
+    return josepy_certificate_request(CSR)
 
 
 def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthority) -> None:
@@ -307,8 +305,7 @@ def test_csr_bad_algorithm(
     with open(FIXTURES_DIR / "md5.csr.pem", "rb") as stream:
         signed_csr = x509.load_pem_x509_csr(stream.read())
 
-    req = X509Req.from_cryptography(signed_csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(signed_csr)
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
         django_capture_on_commit_callbacks() as callbacks,
@@ -320,8 +317,7 @@ def test_csr_bad_algorithm(
 
     with open(FIXTURES_DIR / "sha1.csr.pem", "rb") as stream:
         signed_csr = x509.load_pem_x509_csr(stream.read())
-    req = X509Req.from_cryptography(signed_csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(signed_csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -356,8 +352,7 @@ def test_csr_valid_subject(
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
 
-    req = X509Req.from_cryptography(csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(csr)
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
         django_capture_on_commit_callbacks(execute=True) as callbacks,
@@ -394,8 +389,7 @@ def test_csr_subject_no_cn(
         .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
     )
     csr = csr_builder.sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-    req = X509Req.from_cryptography(csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -431,8 +425,7 @@ def test_csr_subject_no_domain(
         .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    req = X509Req.from_cryptography(csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -458,8 +451,7 @@ def test_csr_subject_not_in_order(
         .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    req = X509Req.from_cryptography(csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -484,8 +476,7 @@ def test_csr_no_san(
         .subject_name(x509.Name([]))
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    req = X509Req.from_cryptography(csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -514,8 +505,7 @@ def test_csr_different_names(
         )
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    req = X509Req.from_cryptography(csr)
-    message = CertificateRequest(csr=jose.util.ComparableX509(req))
+    message = josepy_certificate_request(csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,

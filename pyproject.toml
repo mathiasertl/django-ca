@@ -13,6 +13,7 @@ django = ["5.1", "5.2"]
 cryptography = ["44"]
 acme = ["3.2", "3.3", "4.0", ]
 pydantic = ["2.10", "2.11"]
+josepy = ["1.15", "2.0"]
 
 # https://alpinelinux.org/releases/
 alpine = [

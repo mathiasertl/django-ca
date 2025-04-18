@@ -41,6 +41,8 @@ from django_ca.tests.base.constants import (
     CRYPTOGRAPHY_VERSIONS,
     DJANGO_VERSIONS,
     FIXTURES_DIR,
+    JOSEPY_VERSION,
+    JOSEPY_VERSIONS,
     PYTHON_VERSIONS,
 )
 from django_ca.tests.base.utils import crl_distribution_points, distribution_point, uri
@@ -143,6 +145,11 @@ def setup_pragmas(cov: coverage.Coverage) -> None:
         version_str = ".".join([str(v) for v in ver])
         cg_version = cast(tuple[int], CRYPTOGRAPHY_VERSION[:1])
         exclude_versions(cov, "cryptography", cg_version, ver, version_str)
+
+    # exclude josepy-version specific code
+    for josepy_version in JOSEPY_VERSIONS:
+        version_str = ".".join([str(v) for v in josepy_version])
+        exclude_versions(cov, "josepy", JOSEPY_VERSION[:2], josepy_version, version_str)  # type: ignore[arg-type]
 
 
 def generate_pub_fixture(name: str) -> typing.Callable[[], x509.Certificate]:
