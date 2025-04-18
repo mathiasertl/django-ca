@@ -35,8 +35,11 @@ from django_ca.conf import model_settings
 from django_ca.key_backends.storages import StoragesOCSPBackend
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
+from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mocks import mock_celery_task
 from django_ca.tests.base.utils import cmd
+
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 def regenerate_ocsp_keys(*serials: str, stdout: str = "", stderr: str = "", **kwargs: Any) -> tuple[str, str]:
