@@ -3,7 +3,7 @@
 # https://docs.docker.com/build/dockerfile/release-notes/
 ARG IMAGE=python:3.13-slim-bookworm
 
-FROM $IMAGE as base
+FROM $IMAGE AS base
 WORKDIR /usr/src/django-ca
 
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
@@ -20,7 +20,7 @@ RUN adduser --system --uid=9000 --group --disabled-login django-ca
 ENV PATH="/usr/src/django-ca/.venv/bin:$PATH"
 ENV VIRTUAL_ENV=/usr/src/django-ca/.venv
 
-FROM base as build
+FROM base AS build
 
 # Install uv: https://docs.astral.sh/uv/guides/integration/docker/
 COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
@@ -46,7 +46,7 @@ RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
 ##############
 # Test stage #
 ##############
-FROM build as test
+FROM build AS test
 ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
 
@@ -75,7 +75,7 @@ RUN pytest -v --cov-report=html:/tmp/coverage --cov-report term-missing --cov-fa
 ###############
 # Build stage #
 ###############
-FROM build as prepare
+FROM build AS prepare
 
 COPY ca/ ca/
 COPY scripts/* ca/
@@ -121,4 +121,4 @@ WORKDIR /usr/src/django-ca/ca/
 ENV DJANGO_CA_SETTINGS=conf/
 ENV DJANGO_CA_SECRET_KEY_FILE=/var/lib/django-ca/certs/ca/shared/secret_key
 
-CMD ./uwsgi.sh
+CMD [ "./uwsgi.sh" ]
