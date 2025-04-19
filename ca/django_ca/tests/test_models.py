@@ -378,7 +378,14 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
     def test_unique_together(self) -> None:
         """Test that a thumbprint must be unique for the given CA."""
-        msg = r"^UNIQUE constraint failed: django_ca_acmeaccount\.ca_id, django_ca_acmeaccount\.thumbprint$"
+        if settings.DATABASE_BACKEND == "sqlite":
+            msg = (
+                r"^UNIQUE constraint failed: django_ca_acmeaccount\.ca_id, django_ca_acmeaccount\.thumbprint$"
+            )
+        elif settings.DATABASE_BACKEND == "postgres":
+            msg = "duplicate key value violates unique constraint"
+        else:
+            raise ValueError(f"{settings.DATABASE_BACKEND}: Unknown database backend.")
         with transaction.atomic(), pytest.raises(IntegrityError, match=msg):
             AcmeAccount.objects.create(ca=self.account1.ca, thumbprint=self.account1.thumbprint)
 
@@ -449,7 +456,12 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         assert auths[0].type == "dns"
         assert auths[0].value == "example.com"
 
-        msg = r"^UNIQUE constraint failed: django_ca_acmeauthorization\.order_id, django_ca_acmeauthorization\.type, django_ca_acmeauthorization\.value$"  # NOQA: E501
+        if settings.DATABASE_BACKEND == "sqlite":
+            msg = r"^UNIQUE constraint failed: django_ca_acmeauthorization\.order_id, django_ca_acmeauthorization\.type, django_ca_acmeauthorization\.value$"  # NOQA: E501
+        elif settings.DATABASE_BACKEND == "postgres":
+            msg = r"duplicate key value violates unique constraint"
+        else:
+            raise ValueError(f"{settings.DATABASE_BACKEND}: Unknown database backend.")
         with transaction.atomic(), pytest.raises(IntegrityError, match=msg):
             self.order1.add_authorizations([identifier])
 

@@ -32,12 +32,26 @@ ADMINS = (
 )
 
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
-    },
-}
+if _postgres_host := os.environ.get("POSTGRES_HOST"):
+    DATABASE_BACKEND = "postgres"
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": _postgres_host,
+            "PORT": int(os.environ.get("POSTGRES_PORT", "5432")),
+            "NAME": os.environ.get("POSTGRES_NAME", "postgres"),
+            "USER": os.environ.get("POSTGRES_USER", "postgres"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "django-ca-test-password"),
+        },
+    }
+else:
+    DATABASE_BACKEND = "sqlite"
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        },
+    }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
