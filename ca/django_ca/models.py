@@ -1335,10 +1335,11 @@ class AcmeAccount(DjangoCAModel):
         CertificateAuthority, on_delete=models.CASCADE, verbose_name=_("Certificate Authority")
     )
     # Full public key of the account
-    pem = models.TextField(verbose_name=_("Public key"), unique=True, blank=False, validators=[pem_validator])
+    # NOTE: Do not make PEM unique, it's incompatible with MySQL.
+    pem = models.TextField(verbose_name=_("Public key"), blank=False, validators=[pem_validator])
     # JSON Web Key thumbprint - a hash of the public key, see RFC 7638.
     #   NOTE: Only unique for the given CA to make hash collisions less likely
-    thumbprint = models.CharField(max_length=64)
+    thumbprint = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, default=acme_slug)
     kid = models.URLField(
         unique=True, validators=[URLValidator(schemes=("http", "https"))], verbose_name=_("Key ID")

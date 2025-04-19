@@ -376,24 +376,6 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.account1.ca.enabled = False
         assert not self.account1.usable
 
-    def test_unique_together(self) -> None:
-        """Test that a thumbprint must be unique for the given CA."""
-        if settings.DATABASE_BACKEND == "sqlite":
-            msg = (
-                r"^UNIQUE constraint failed: django_ca_acmeaccount\.ca_id, django_ca_acmeaccount\.thumbprint$"
-            )
-        elif settings.DATABASE_BACKEND == "postgres":
-            msg = "duplicate key value violates unique constraint"
-        elif settings.DATABASE_BACKEND == "mariadb":
-            msg = "Duplicate entry"
-        else:
-            raise ValueError(f"{settings.DATABASE_BACKEND}: Unknown database backend.")
-        with transaction.atomic(), pytest.raises(IntegrityError, match=msg):
-            AcmeAccount.objects.create(ca=self.account1.ca, thumbprint=self.account1.thumbprint)
-
-        # Works, because CA is different
-        AcmeAccount.objects.create(ca=self.account2.ca, thumbprint=self.account1.thumbprint)
-
     @override_settings(ALLOWED_HOSTS=["kid-test.example.net"])
     def test_set_kid(self) -> None:
         """Test set_kid()."""

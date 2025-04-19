@@ -10,28 +10,24 @@ env:
 
 jobs:
   run:
-    name: Django ${{ matrix.django-version }}, MariaDB ${{ matrix.mariadb-version }}
+    name: Django ${{ matrix.django-version }}, ${{ matrix.mariadb-image }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ ubuntu-latest ]
         django-version: [ "5.1", "5.2" ]
-        mariadb-version: [ "11" ]
+        mariadb-image: [ "mariadb:11", "mysql:9" ]
 
     services:
       mariadb:
-        image: mariadb:${{ matrix.mariadb-version }}
+        image: ${{ matrix.mariadb-image }}
         ports:
           - 3306:3306
         env:
           MARIADB_ROOT_PASSWORD: django-ca-test-password
           MARIADB_DATABASE: django_ca
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd "healthcheck.sh --connect"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          MYSQL_ROOT_PASSWORD: django-ca-test-password
+          MYSQL_DATABASE: django_ca
 
     steps:
       - name: Install APT dependencies

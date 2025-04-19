@@ -3,6 +3,13 @@
 ###########
 
 ********
+Database
+********
+
+* Update models to fully support MySQL and MariaDB.
+* Squash migrations for a faster setup process. Old migrations will be removed in ``django-ca~=2.5.0``.
+
+********
 Settings
 ********
 
