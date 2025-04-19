@@ -322,7 +322,14 @@ def cmd_e2e(
     if isinstance(stderr, BytesIO):
         stderr.buffer = stderr  # type: ignore[attr-defined]
 
-    with stdin_mock, mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
+    with (
+        stdin_mock,
+        mock.patch("sys.stdout", stdout),
+        mock.patch("sys.stderr", stderr),
+        # execute() closes all connections at the end. Somehow this is not an issue in SQLite3,
+        # but when using PostgreSQL, tests will fail from here onwards if we don't mock this.
+        mock.patch("django.core.management.base.connections.close_all", return_value=None),
+    ):
         util = ManagementUtility(["manage.py", *args])
         util.execute()
 

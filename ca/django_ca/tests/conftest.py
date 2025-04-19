@@ -22,6 +22,7 @@ from typing import Any
 
 import coverage
 
+from django.conf import settings
 from django.test import Client
 
 import pytest
@@ -91,15 +92,16 @@ def pytest_configure(config: "PytestConfig") -> None:
     installed_versions = {p.name: p.version for p in importlib.metadata.distributions()}
     for pkg in sorted(["Django", "acme", "cryptography", "celery", "idna", "josepy", "pydantic"]):
         print(f"* {pkg}: {installed_versions[pkg]}")
+    print(f"* Django DB engine: {settings.DATABASES['default']['ENGINE']}")
     print(f"* Selenium tests: {not skip_selenium}")
     if not skip_selenium:  # pragma: no cover
         print(f"    geckodriver at {GECKODRIVER_PATH}")
 
-    if not os.path.exists(GECKODRIVER_PATH) and not skip_selenium:  # pragma: no cover
-        raise pytest.UsageError(
-            f"{GECKODRIVER_PATH}: Please download geckodriver to {GECKODRIVER_PATH}: "
-            "https://selenium-python.readthedocs.io/installation.html#drivers"
-        )
+        if not os.path.exists(GECKODRIVER_PATH):  # pragma: no cover
+            raise pytest.UsageError(
+                f"{GECKODRIVER_PATH}: Please download geckodriver to {GECKODRIVER_PATH}: "
+                "https://selenium-python.readthedocs.io/installation.html#drivers"
+            )
 
 
 def pytest_collection_modifyitems(config: "PytestConfig", items: list[Any]) -> None:  # pragma: no cover
