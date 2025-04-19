@@ -138,7 +138,7 @@ and in your `.env <quickstart-docker-compose-.env>`_ file, set the variable:
 Add ``compose.yaml``
 ====================
 
-Docker-compose needs a configuration file, :download:`compose.yaml </_files/compose.yaml>`. You
+Docker Compose needs a configuration file, :download:`compose.yaml </_files/compose.yaml>`. You
 can also download the file for other versions `from github
 <https://github.com/mathiasertl/django-ca/blob/master/compose.yaml>`_.
 
@@ -153,7 +153,7 @@ bundled third-party Docker images.
 ==================================================================================== ===== ========== =======
 Version                                                                              Redis PostgreSQL NGINX
 ==================================================================================== ===== ========== =======
-`2.2.0 <https://github.com/mathiasertl/django-ca/blob/2.2.0/docker-compose.yml>`_    7     16         1.26
+`2.2.0 <https://github.com/mathiasertl/django-ca/blob/2.2.0/compose.yaml>`_          7     16         1.26
 `2.1.1 <https://github.com/mathiasertl/django-ca/blob/2.1.1/docker-compose.yml>`_    7     16         1.26
 `2.1.0 <https://github.com/mathiasertl/django-ca/blob/2.1.0/docker-compose.yml>`_    7     16         1.26
 `2.0.0 <https://github.com/mathiasertl/django-ca/blob/2.0.0/docker-compose.yml>`_    7     16         1.26
