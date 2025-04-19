@@ -39,9 +39,21 @@ if _postgres_host := os.environ.get("POSTGRES_HOST"):
             "ENGINE": "django.db.backends.postgresql",
             "HOST": _postgres_host,
             "PORT": int(os.environ.get("POSTGRES_PORT", "5432")),
-            "NAME": os.environ.get("POSTGRES_NAME", "postgres"),
+            "NAME": os.environ.get("POSTGRES_DB", "postgres"),
             "USER": os.environ.get("POSTGRES_USER", "postgres"),
             "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "django-ca-test-password"),
+        },
+    }
+elif _mariadb_host := os.environ.get("MARIADB_HOST"):
+    DATABASE_BACKEND = "mariadb"
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "HOST": _mariadb_host,
+            "PORT": int(os.environ.get("MARIADB_PORT", "3306")),
+            "NAME": os.environ.get("MARIADB_DATABASE", "django_ca"),
+            "USER": os.environ.get("MARIADB_USER", "root"),
+            "PASSWORD": os.environ.get("MARIADB_PASSWORD", "django-ca-test-password"),
         },
     }
 else:

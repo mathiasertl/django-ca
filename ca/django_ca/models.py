@@ -1198,7 +1198,6 @@ class CertificateRevocationList(DjangoCAModel):
                     "only_contains_user_certs",
                     "only_contains_ca_certs",
                     "only_contains_attribute_certs",
-                    "only_some_reasons",
                 ]
             ),
         )

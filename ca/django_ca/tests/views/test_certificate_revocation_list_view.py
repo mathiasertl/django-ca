@@ -21,6 +21,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
+from django.conf import settings
 from django.core.cache import cache
 from django.test import Client
 from django.urls import include, path, re_path, reverse
@@ -121,7 +122,12 @@ def test_with_cache_miss(
 
     with django_assert_num_queries(1) as captured:  # Only one query for fetching the CRL required
         response = client.get(default_url)
-    assert 'FROM "django_ca_certificaterevocationlist" INNER JOIN' in captured.captured_queries[0]["sql"]
+
+    if settings.DATABASE_BACKEND == "mariadb":
+        query = "FROM `django_ca_certificaterevocationlist` INNER JOIN"
+    else:
+        query = 'FROM "django_ca_certificaterevocationlist" INNER JOIN'
+    assert query in captured.captured_queries[0]["sql"]
 
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/pkix-crl"
