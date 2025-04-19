@@ -384,6 +384,8 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             )
         elif settings.DATABASE_BACKEND == "postgres":
             msg = "duplicate key value violates unique constraint"
+        elif settings.DATABASE_BACKEND == "mariadb":
+            msg = "Duplicate entry"
         else:
             raise ValueError(f"{settings.DATABASE_BACKEND}: Unknown database backend.")
         with transaction.atomic(), pytest.raises(IntegrityError, match=msg):
@@ -460,6 +462,8 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             msg = r"^UNIQUE constraint failed: django_ca_acmeauthorization\.order_id, django_ca_acmeauthorization\.type, django_ca_acmeauthorization\.value$"  # NOQA: E501
         elif settings.DATABASE_BACKEND == "postgres":
             msg = r"duplicate key value violates unique constraint"
+        elif settings.DATABASE_BACKEND == "mariadb":
+            msg = "Duplicate entry"
         else:
             raise ValueError(f"{settings.DATABASE_BACKEND}: Unknown database backend.")
         with transaction.atomic(), pytest.raises(IntegrityError, match=msg):

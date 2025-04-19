@@ -1,0 +1,65 @@
+name: MariaDB tests
+on:
+  push:
+  pull_request:
+
+env:
+  UV_PYTHON_PREFERENCE: only-system
+  UV_NO_SYNC: 1
+  MARIADB_HOST: "127.0.0.1"
+
+jobs:
+  run:
+    name: Django ${{ matrix.django-version }}, MariaDB ${{ matrix.mariadb-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        django-version: [ "5.1", "5.2" ]
+        mariadb-version: [ "11" ]
+
+    services:
+      mariadb:
+        image: mariadb:${{ matrix.mariadb-version }}
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_ROOT_PASSWORD: django-ca-test-password
+          MARIADB_DATABASE: django_ca
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd "healthcheck.sh --connect"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Install APT dependencies
+        run: sudo apt-get install -y softhsm2
+
+      - name: Acquire sources
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.5.0
+        with:
+          python-version: 3.13
+          architecture: x64
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5.3.1
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra api --extra celery --extra hsm --extra mysql --no-default-groups --group dev --group Django${{ matrix.django-version }}
+
+      - name: Run migrations
+        run: uv run python ca/manage.py migrate
+        env:
+          DJANGO_SETTINGS_MODULE: ca.test_settings
+
+      - name: Run tests
+        run: uv run pytest -v --cov-report term-missing --no-selenium

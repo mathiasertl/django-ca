@@ -16,6 +16,7 @@
 # pylint: disable=redefined-outer-name  # because of fixtures
 
 from http import HTTPStatus
+from typing import Any
 
 import josepy as jose
 import pyrfc3339
@@ -62,6 +63,10 @@ def test_basic(
     use_tz: bool,
 ) -> None:
     """Basic test for creating an account via ACME."""
+
+    def sorter(d: dict[str, Any]) -> Any:
+        return d["token"]
+
     settings.USE_TZ = use_tz
     resp = acme_request(client, url, root, b"", kid=kid)
     assert resp.status_code == HTTPStatus.OK, resp.content
@@ -71,10 +76,10 @@ def test_basic(
     assert len(challenges) == 2
 
     resp_data = resp.json()
-    resp_challenges = resp_data.pop("challenges")
+    actual_challenges = resp_data.pop("challenges")
     slug0 = challenges[0].slug
     slug1 = challenges[1].slug
-    assert resp_challenges == [
+    expected_challanges = [
         {
             "type": challenges[0].type,
             "status": "pending",
@@ -88,6 +93,7 @@ def test_basic(
             "url": f"http://{SERVER_NAME}/django_ca/acme/{root.serial}/chall/{slug1}/",
         },
     ]
+    assert sorted(actual_challenges, key=sorter) == sorted(expected_challanges, key=sorter)
 
     expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
     assert resp_data == {
