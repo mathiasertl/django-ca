@@ -146,34 +146,6 @@ def console_include(path: str, context: dict[str, Any]) -> Iterator[None]:
             run(args, check=False)
 
 
-def get_previous_release(current_release: str | None = None) -> str:
-    """Get the previous release based on git tags.
-
-    This function returns the name at the last tag that is a valid semantic version. Pre-release or build tags
-    are automatically excluded.  If `current_release` is given, it will be excluded from the list.
-    """
-    # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
-    import semantic_version  # pylint: disable=import-outside-toplevel
-    from git import Repo  # pylint: disable=import-outside-toplevel
-
-    repo = Repo(config.ROOT_DIR)
-    tags = [tag.name for tag in repo.tags]
-
-    # Exclude release tag if we are on a release
-    if current_release is not None:
-        tags = [tag for tag in tags if tag != current_release]
-
-    parsed_tags = []
-    for tag in tags:
-        try:
-            parsed_tags.append(semantic_version.Version(tag))
-        except ValueError:
-            continue
-
-    parsed_tags = sorted([tag for tag in parsed_tags if not tag.prerelease and not tag.build])
-    return str(parsed_tags[-1])
-
-
 def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for running a docker command."""
     return run(["docker", "run", "--rm", *args], **kwargs)

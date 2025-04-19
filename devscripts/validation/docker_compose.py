@@ -40,6 +40,7 @@ from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 from devscripts.validation.docker import docker_cp
+from devscripts.versions import get_last_version
 
 
 @contextmanager
@@ -97,7 +98,7 @@ def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
 
 
 def _run_py(container: str, code: str, env: dict[str, str] | None = None) -> str:
-    proc = _manage(container, "shell", "-c", code, capture_output=True, text=True, env=env)
+    proc = _manage(container, "shell", "-v", "0", "-c", code, capture_output=True, text=True, env=env)
     return typing.cast(str, proc.stdout)  # is a str because of text=True above
 
 
@@ -401,7 +402,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 assert len(certs) == 4, f"Found {len(certs)} certs instead of 4."
 
                 # sign certificates again to make sure that CAs are still present
-                cert_subject = _sign_certificates(csr_pem)
+                _sign_certificates(csr_pem)
 
     if errors == 0:
         ok("Tutorial successfully validated.")
@@ -421,7 +422,7 @@ def test_update(release: str) -> int:  # noqa: PLR0915
     info("Validating docker compose update...")
     errors = 0
     # Get the last release, so we can update
-    last_release = utils.get_previous_release(current_release=release)
+    last_release = get_last_version()
 
     with tempfile.TemporaryDirectory() as tmpdir:
         last_release_dest = utils.git_archive(last_release, tmpdir)
