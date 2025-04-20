@@ -6,7 +6,7 @@ services:
         environment:
             POSTGRES_PASSWORD: mysecretpassword
     backend:
-        command: ./celery.sh -l ${CELERY_LOG_LEVEL:-debug}
+        command: celery.sh -l ${CELERY_LOG_LEVEL:-debug}
         environment:
             DJANGO_CA_ALLOWED_HOSTS: ca.example.com localhost
             DJANGO_CA_CA_ENABLE_ACME: "true"

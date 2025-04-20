@@ -141,11 +141,16 @@ def _openssl_ocsp(
 
 def _validate_container_versions(release: str, env: dict[str, str] | None = None) -> int:
     errors = 0
+    beat_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", env=env).strip()
     backend_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", env=env).strip()
     frontend_ver = _run_py("frontend", "import django_ca; print(django_ca.__version__)", env=env).strip()
 
+    if beat_ver != backend_ver:
+        errors += err(f"beat and backend versions differ: {frontend_ver} vs. {backend_ver}")
     if backend_ver != frontend_ver:
         errors += err(f"frontend and backend versions differ: {frontend_ver} vs. {backend_ver}")
+    if beat_ver != release:
+        errors += err(f"backend container identifies as {backend_ver} instead of {release}.")
     if backend_ver != release:
         errors += err(f"backend container identifies as {backend_ver} instead of {release}.")
     if frontend_ver != release:
@@ -156,9 +161,12 @@ def _validate_container_versions(release: str, env: dict[str, str] | None = None
 
 def _validate_secret_key() -> int:
     code = "from django.conf import settings; print(settings.SECRET_KEY)"
+    beat_key = _run_py("beat", code).strip()
     backend_key = _run_py("backend", code).strip()
     frontend_key = _run_py("frontend", code).strip()
 
+    if beat_key != backend_key:
+        return err(f"Secret key in beat do not match backend: ({frontend_key} vs. {backend_key}")
     if backend_key != frontend_key:
         return err(f"Secret keys do not match ({frontend_key} vs. {backend_key}")
     if len(backend_key) < 32 or len(backend_key) > 128:

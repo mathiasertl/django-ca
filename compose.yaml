@@ -6,6 +6,11 @@ services:
         restart: unless-stopped
         volumes:
            - redis:/data
+        healthcheck:
+            test: [ "CMD", "nc", "-z", "localhost:6379" ]
+            timeout: 1s
+            start_interval: 1s
+            start_period: 3s
     db:
         # See also: https://www.postgresql.org/support/versioning/
         #   https://www.postgresql.org/developer/roadmap/
@@ -23,17 +28,24 @@ services:
         volumes:
             - pgdata_16:/var/lib/postgresql/data
         healthcheck:
-            test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-            interval: 3s
-            timeout: 3s
-            retries: 10
+            test: [ "CMD", "pg_isready" ]
+            timeout: 1s
+            start_interval: 1s
+            start_period: 10s
 
     beat:
         image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-        command: ./celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
+        command: celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
-            - cache
-            - db
+            cache:
+                condition: service_healthy
+            db:
+                condition: service_healthy
+        healthcheck:
+            test: [ "CMD-SHELL", "[ -d /proc/`cat /tmp/celerybeat.pid` ]" ]
+            timeout: 1s
+            start_interval: 1s
+            start_period: 30s
         networks:
             - cache
             - database
@@ -52,22 +64,22 @@ services:
             DJANGO_CA_SECRET_KEY:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
+            DJANGO_CA_STARTUP_COLLECTSTATIC: "0"
             POSTGRES_DB:
             POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
             POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
-            WAIT_FOR_CONNECTIONS: 'db:5432'
         restart: unless-stopped
         stop_grace_period: 30s
 
     backend:
         image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-        command: ./celery.sh -l ${CELERY_LOG_LEVEL:-warning}
+        command: celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
-            - cache
-            - db
+            beat:
+              condition: service_healthy
         networks:
             - cache
             - database
@@ -86,13 +98,17 @@ services:
             DJANGO_CA_SECRET_KEY:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
+            DJANGO_CA_STARTUP_MIGRATE: "0"
+            DJANGO_CA_STARTUP_CACHE_CRLS: "0"
+            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: "0"
+            DJANGO_CA_STARTUP_COLLECTSTATIC: "0"
+            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: "1"
             POSTGRES_DB:
             POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
             POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
-            WAIT_FOR_CONNECTIONS: 'db:5432'
         restart: unless-stopped
         stop_grace_period: 30s
 
@@ -121,6 +137,10 @@ services:
             DJANGO_CA_SECRET_KEY:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
+            DJANGO_CA_STARTUP_MIGRATE: "0"
+            DJANGO_CA_STARTUP_CACHE_CRLS: "0"
+            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: "0"
+            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: "1"
             # Instruct the startup script to copy nginx configuration template
             NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
             POSTGRES_DB:
@@ -129,12 +149,12 @@ services:
             POSTGRES_PASSWORD_FILE:
             POSTGRES_USER:
             POSTGRES_USER_FILE:
-            WAIT_FOR_CONNECTIONS: 'db:5432'
         restart: unless-stopped
         healthcheck:
             test: ["CMD", "nc", "-w", "1", "-z", "127.0.0.1", "1717"]
-            timeout: 3s
-            start_period: 30s
+            timeout: 1s
+            start_period: 20s
+            start_interval: 1s
             interval: 1s
         stop_signal: SIGINT
 
@@ -153,7 +173,7 @@ services:
             NGINX_PUBLIC_KEY:
             DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
         ports:
-            - 80:80
+            - "80:80"
         networks:
             - frontend
             - public

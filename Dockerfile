@@ -78,7 +78,6 @@ RUN pytest -v --cov-report=html:/tmp/coverage --cov-report term-missing --cov-fa
 FROM build AS prepare
 
 COPY ca/ ca/
-COPY scripts/* ca/
 COPY conf/ ca/conf/
 COPY uwsgi/ uwsgi/
 COPY nginx/ nginx/
@@ -113,6 +112,9 @@ RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/dja
 COPY --from=prepare /usr/src/django-ca/ ./
 RUN ln -s /usr/src/django-ca/ca/manage.py /usr/local/bin/manage
 
+COPY scripts/ /usr/src/django-ca/scripts/
+RUN ln -s /usr/src/django-ca/scripts/*.sh /usr/local/bin/
+
 USER django-ca:django-ca
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
@@ -121,4 +123,4 @@ WORKDIR /usr/src/django-ca/ca/
 ENV DJANGO_CA_SETTINGS=conf/
 ENV DJANGO_CA_SECRET_KEY_FILE=/var/lib/django-ca/certs/ca/shared/secret_key
 
-CMD [ "./uwsgi.sh" ]
+CMD [ "uwsgi.sh" ]

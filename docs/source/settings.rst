@@ -688,6 +688,44 @@ DJANGO_CA_SETTINGS
    If not set, the value of the ``CONFIGURATION_DIRECTORY`` environment variable (see
    :ref:`settings-global-environment-variables-systemd`) is used as a fallback.
 
+Startup (Docker only)
+=====================
+
+The startup scripts in the Docker container read environment variables that influence the startup behavior.
+
+By default, all ``manage.py`` commands are run on startup, but the :doc:`Compose setup
+</quickstart/docker_compose>` disables them on some containers to optimize startup times and ensure that they
+are only run once.
+
+DJANGO_CA_STARTUP_CACHE_CRLS
+   Set to ``0`` if you don't want to run :command:`manage.py cache_crls` on startup.
+
+DJANGO_CA_STARTUP_CHECK
+   Set to ``0`` if you don't want to run :command:`manage.py check` on startup.
+
+DJANGO_CA_STARTUP_COLLECTSTATIC
+   Set to ``0`` if you don't want to run :command:`manage.py collectstatic` on startup.
+
+DJANGO_CA_STARTUP_MIGRATE
+   Set to ``0`` if you don't want to run :command:`manage.py migrate` on startup.
+
+DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS
+   Set to ``0`` if you don't want to run :command:`manage.py regenerate_ocsp_keys` on startup.
+
+DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS
+   A space-separated string in the form of ``hostname:port``, for example ``db.example.com:5432``. If set, the
+   startup script will make a TCP connection attempt until the connection succeeds. This can be useful to
+   ensure that the main application does not start unless other systems are running.
+
+   This is useful if the startup script is configured to run other ``manage.py`` commands that require access
+   to the database. Note that the :doc:`Compose setup </quickstart/docker_compose>` already asserts that via
+   healthcheck commands.
+
+DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE
+   Set to ``1`` to wait for the secret key file to be created elsewhere. This is used in the Compose setup to
+   ensure that one container generates and writes a secret key to a file and the other containers then read
+   that file.
+
 
 Databases
 =========
