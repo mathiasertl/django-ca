@@ -54,7 +54,7 @@ services:
             - backend_ca_dir:/var/lib/django-ca/certs/
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-        environment:
+        environment: &environment
             DJANGO_CA_ALLOWED_HOSTS:
             DJANGO_CA_CA_DEFAULT_CA:
             DJANGO_CA_CA_DEFAULT_HOSTNAME:
@@ -64,7 +64,13 @@ services:
             DJANGO_CA_SECRET_KEY:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
             DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
-            DJANGO_CA_STARTUP_COLLECTSTATIC: "0"
+            DJANGO_CA_STARTUP_CACHE_CRLS:
+            DJANGO_CA_STARTUP_CHECK:
+            DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-0}
+            DJANGO_CA_STARTUP_MIGRATE:
+            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS:
+            DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS:
+            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:
             POSTGRES_DB:
             POSTGRES_DB_FILE:
             POSTGRES_PASSWORD:
@@ -89,26 +95,11 @@ services:
             - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
         environment:
-            DJANGO_CA_ALLOWED_HOSTS:
-            DJANGO_CA_CA_DEFAULT_CA:
-            DJANGO_CA_CA_DEFAULT_HOSTNAME:
-            DJANGO_CA_CA_ENABLE_ACME:
-            DJANGO_CA_CA_ENABLE_REST_API:
-            DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
-            DJANGO_CA_SECRET_KEY:
-            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
-            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
-            DJANGO_CA_STARTUP_MIGRATE: "0"
-            DJANGO_CA_STARTUP_CACHE_CRLS: "0"
-            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: "0"
-            DJANGO_CA_STARTUP_COLLECTSTATIC: "0"
-            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: "1"
-            POSTGRES_DB:
-            POSTGRES_DB_FILE:
-            POSTGRES_PASSWORD:
-            POSTGRES_PASSWORD_FILE:
-            POSTGRES_USER:
-            POSTGRES_USER_FILE:
+            <<: *environment
+            DJANGO_CA_STARTUP_CACHE_CRLS: ${DJANGO_CA_STARTUP_CACHE_CRLS:-0}
+            DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
+            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS:-0}
+            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
         restart: unless-stopped
         stop_grace_period: 30s
 
@@ -128,27 +119,14 @@ services:
             - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
             - nginx_templates:/var/lib/django-ca/nginx/templates/
         environment:
-            DJANGO_CA_ALLOWED_HOSTS:
-            DJANGO_CA_CA_DEFAULT_CA:
-            DJANGO_CA_CA_DEFAULT_HOSTNAME:
-            DJANGO_CA_CA_ENABLE_ACME:
-            DJANGO_CA_CA_ENABLE_REST_API:
-            DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
-            DJANGO_CA_SECRET_KEY:
-            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
-            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
-            DJANGO_CA_STARTUP_MIGRATE: "0"
-            DJANGO_CA_STARTUP_CACHE_CRLS: "0"
-            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: "0"
-            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: "1"
+            <<: *environment
+            DJANGO_CA_STARTUP_CACHE_CRLS: ${DJANGO_CA_STARTUP_CACHE_CRLS:-0}
+            DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-1}
+            DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
+            DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS:-0}
+            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
             # Instruct the startup script to copy nginx configuration template
             NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
-            POSTGRES_DB:
-            POSTGRES_DB_FILE:
-            POSTGRES_PASSWORD:
-            POSTGRES_PASSWORD_FILE:
-            POSTGRES_USER:
-            POSTGRES_USER_FILE:
         restart: unless-stopped
         healthcheck:
             test: ["CMD", "nc", "-w", "1", "-z", "127.0.0.1", "1717"]

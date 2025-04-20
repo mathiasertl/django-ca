@@ -701,7 +701,9 @@ DJANGO_CA_STARTUP_CACHE_CRLS
    Set to ``0`` if you don't want to run :command:`manage.py cache_crls` on startup.
 
 DJANGO_CA_STARTUP_CHECK
-   Set to ``0`` if you don't want to run :command:`manage.py check` on startup.
+   Set to ``0`` if you don't want to run :command:`manage.py check` (see Djangos `system check framework
+   <https://docs.djangoproject.com/en/dev/ref/checks/>`_ on startup. This will save a second or two in
+   container startup time.
 
 DJANGO_CA_STARTUP_COLLECTSTATIC
    Set to ``0`` if you don't want to run :command:`manage.py collectstatic` on startup.
@@ -725,7 +727,6 @@ DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE
    Set to ``1`` to wait for the secret key file to be created elsewhere. This is used in the Compose setup to
    ensure that one container generates and writes a secret key to a file and the other containers then read
    that file.
-
 
 Databases
 =========
