@@ -17,6 +17,10 @@ Settings
   parameters instead.
 * CA_CRL_PROFILES: The ``encoding`` parameter was removed (deprecated since 2.1.0). All encodings are now
   always available.
+* Add support for ``MARIADB_*`` environment variables to configure MariaDB when using django-ca as a project.
+  See :ref:`settings-django-ca-databases` for more information.
+* When using the django-ca Docker container, allow configuration of which ``manage.py`` commands are run on
+  startup. See :ref:`settings-django-ca-startup` for more information.
 
 ************
 Command-line

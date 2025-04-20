@@ -688,6 +688,8 @@ DJANGO_CA_SETTINGS
    If not set, the value of the ``CONFIGURATION_DIRECTORY`` environment variable (see
    :ref:`settings-global-environment-variables-systemd`) is used as a fallback.
 
+.. _settings-django-ca-startup:
+
 Startup (Docker only)
 =====================
 
@@ -728,6 +730,8 @@ DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE
    ensure that one container generates and writes a secret key to a file and the other containers then read
    that file.
 
+.. _settings-django-ca-databases:
+
 Databases
 =========
 
@@ -759,6 +763,10 @@ POSTGRES_DB, POSTGRES_DB_FILE, POSTGRES_USER, POSTGRES_USER_FILE, POSTGRES_PASSW
 MYSQL_DATABASE, MYSQL_DATABASE_FILE, MYSQL_USER, MYSQL_USER_FILE, MYSQL_PASSWORD, MYSQL_PASSWORD_FILE
    Access details to a MySQL database. See the `Docker image documentation <https://hub.docker.com/_/mysql>`__
    for more information.
+
+MARIADB_DATABASE, MARIADB_DATABASE_FILE, MARIADB_USER, MARIADB_USER_FILE, MARIADB_PASSWORD, MARIADB_PASSWORD_FILE
+   Access details to a MariaDB database. See the `Docker image documentation
+   <https://hub.docker.com/_/mariadb>`__ for more information.
 
 .. _settings-global-environment-variables-nginx:
 

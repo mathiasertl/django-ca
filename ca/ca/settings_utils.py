@@ -224,3 +224,7 @@ def update_database_setting_from_environment(databases: dict[str, dict[str, Any]
         _set_db_setting(databases, "PASSWORD", "MYSQL_PASSWORD")
         _set_db_setting(databases, "USER", "MYSQL_USER")
         _set_db_setting(databases, "NAME", "MYSQL_DATABASE")
+
+        _set_db_setting(databases, "PASSWORD", "MARIADB_PASSWORD")
+        _set_db_setting(databases, "USER", "MARIADB_USER")
+        _set_db_setting(databases, "NAME", "MARIADB_DATABASE")
