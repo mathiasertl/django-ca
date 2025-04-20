@@ -52,4 +52,4 @@ if [ -n "${WAIT_FOR_CONNECTIONS}" ]; then
 fi
 
 set -x
-exec celery -A ca worker "$@"
+exec celery -A ca beat -s /var/lib/django-ca/celerybeat-schedule "$@"

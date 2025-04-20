@@ -28,8 +28,42 @@ services:
             timeout: 3s
             retries: 10
 
+    beat:
+        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
+        command: ./celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
+        depends_on:
+            - cache
+            - db
+        networks:
+            - cache
+            - database
+            - public
+        volumes:
+            - backend_ca_dir:/var/lib/django-ca/certs/
+            - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
+            - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
+        environment:
+            DJANGO_CA_ALLOWED_HOSTS:
+            DJANGO_CA_CA_DEFAULT_CA:
+            DJANGO_CA_CA_DEFAULT_HOSTNAME:
+            DJANGO_CA_CA_ENABLE_ACME:
+            DJANGO_CA_CA_ENABLE_REST_API:
+            DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
+            DJANGO_CA_SECRET_KEY:
+            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
+            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
+            POSTGRES_DB:
+            POSTGRES_DB_FILE:
+            POSTGRES_PASSWORD:
+            POSTGRES_PASSWORD_FILE:
+            POSTGRES_USER:
+            POSTGRES_USER_FILE:
+            WAIT_FOR_CONNECTIONS: 'db:5432'
+        restart: unless-stopped
+        stop_grace_period: 30s
+
     backend:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-2.2.1}
+        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
         command: ./celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             - cache
@@ -63,7 +97,7 @@ services:
         stop_grace_period: 30s
 
     frontend:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-2.2.1}
+        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
         depends_on:
             - cache
             - db

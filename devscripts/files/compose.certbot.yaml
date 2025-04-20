@@ -2,6 +2,9 @@ services:
     db:
         environment:
             POSTGRES_PASSWORD: mysecretpassword
+    beat:
+        environment:
+            POSTGRES_PASSWORD: mysecretpassword
     backend:
         command: ./celery.sh -l ${CELERY_LOG_LEVEL:-debug}
         environment:
