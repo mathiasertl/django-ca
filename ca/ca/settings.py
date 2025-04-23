@@ -219,7 +219,7 @@ CELERY_BEAT_SCHEDULE = {
     "acme-cleanup": {
         # ACME cleanup runs once a day
         "task": "django_ca.tasks.acme_cleanup",
-        "schedule": 86400,
+        "schedule": 300,
     },
 }
 

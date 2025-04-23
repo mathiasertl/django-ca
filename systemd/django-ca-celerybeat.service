@@ -7,7 +7,7 @@ Type=simple
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
 EnvironmentFile=/etc/django-ca/systemd.conf
 EnvironmentFile=-/etc/django-ca/systemd-local.conf
-ExecStart=/bin/sh -c '${INSTALL_BASE}/venv/bin/celery -A ca beat  \
+ExecStart=/bin/sh -c '${VIRTUAL_ENV}/bin/celery -A ca beat  \
     --schedule=${STATE_DIRECTORY}/schedule.db \
     --pidfile=${RUNTIME_DIRECTORY}/celerybeat.pid \
     --logfile=${LOGS_DIRECTORY}/celerybeat.log --loglevel=${CELERYD_LOG_LEVEL}'

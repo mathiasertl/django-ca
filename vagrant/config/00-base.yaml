@@ -1,0 +1,57 @@
+######################
+# django-ca settings #
+######################
+# django-ca has many custom settings, but defaults are usually fine. The only django-ca specific setting you
+# have to configure is CA_DEFAULT_HOSTNAME. For more documentation on settings, see:
+#   https://django-ca.readthedocs.io/en/latest/settings.html
+
+# The hostname for your CA.
+# WARNING: Changing this requires new CAs (because the hostname goes into the certificates).
+CA_DEFAULT_HOSTNAME: "$CA_DEFAULT_HOSTNAME"
+
+# The URL base path used for ACMEv2/OCSP/CRL URLs. If given, the path **must** end with a slash.
+#
+# If you're upgrading from a previous version and have existing CAs, uncomment or set to "django_ca/".
+#
+# WARNING: Changing this requires new CAs (because the path goes into the certificates).
+CA_URL_PATH: ""
+
+# Secret key used by this installation. Generate e.g. with "openssl rand -base64 32".
+SECRET_KEY: "secret-key"
+
+# Static files are required for the admin interface and API documentation
+STATIC_ROOT: /opt/django-ca/www/static/
+
+# Database configuration
+DATABASES:
+    default:
+        ENGINE: django.db.backends.postgresql
+        HOST: 192.168.56.11
+        PORT: 5432
+        NAME: django_ca
+        USER: django_ca
+        PASSWORD: db-password
+
+# Where django-ca will store private keys
+CA_DIR: /opt/django-ca/home/files/
+
+# Enable optional features
+CA_ENABLE_ACME: true
+CA_ENABLE_API: true
+
+# Cache configuration
+CACHES:
+    default:
+        BACKEND: django.core.cache.backends.redis.RedisCache
+        LOCATION: redis://192.168.56.12:6379
+        OPTIONS:
+            db: "1"
+
+###################
+# Celery settings #
+###################
+# Celery has more settings, see:
+#   https://docs.celeryproject.org/en/stable/userguide/configuration.html
+
+# django-ca will use Celery as an asynchronous task worker
+CELERY_BROKER_URL: "amqp://django-ca:broker-password@192.168.56.10:5672/django-ca"

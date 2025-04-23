@@ -18,10 +18,12 @@ FORCE_USER=${FORCE_USER:-$SYSTEM_USER}
 # Export CONFIGURATION_DIRECTORY, as settings.py will load this variable to look for YAML config files.
 export CONFIGURATION_DIRECTORY
 
+PYTHON="${VIRTUAL_ENV}/bin/python"
+
 # Finally, call manage.py
 if [ -z "$FORCE_USER" ]; then
-    ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py "$@"
+    ${PYTHON} ${INSTALL_BASE}/ca/manage.py "$@"
 else
     # NOTE: This su abomination is the only way I could figure out how to pass "$@" to manage.py.
-    su $FORCE_USER -s /bin/sh -c 'exec "$0" "$@"' -- ${INSTALL_BASE}/venv/bin/python ${INSTALL_BASE}/src/django-ca/ca/manage.py "$@"
+    su $FORCE_USER -s /bin/sh -c 'exec "$0" "$@"' -- $PYTHON ${INSTALL_BASE}/ca/manage.py "$@"
 fi
