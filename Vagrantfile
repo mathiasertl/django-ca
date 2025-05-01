@@ -1,7 +1,7 @@
 BOX_BASE = "ubuntu/jammy64"
 ENVIRONMENT = {
     INSTALL_BASE: '/opt/django-ca/src/django-ca',
-    CA_DEFAULT_HOSTNAME: ENV.fetch('CA_DEFAULT_HOSTNAME', 'localhost'),
+    CA_DEFAULT_HOSTNAME: ENV.fetch('CA_DEFAULT_HOSTNAME', 'django-ca.internal'),
     USE_UV: ENV.fetch('USE_UV', '1'),
     UV_CONCURRENT_BUILDS: '1',
     UV_CONCURRENT_INSTALLS: '1',

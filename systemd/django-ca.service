@@ -6,7 +6,7 @@ After=syslog.target network.target
 EnvironmentFile=/etc/%N/systemd.conf
 EnvironmentFile=-/etc/%N/systemd-local.conf
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
-ExecStart=/usr/bin/uwsgi \
+ExecStart=/opt/django-ca/src/django-ca/.venv/bin/uwsgi \
         --ini ${INSTALL_BASE}/uwsgi/source.ini \
         --socket ${RUNTIME_DIRECTORY}/uwsgi.socket $UWSGI_OPTS
 User=%N

@@ -46,7 +46,7 @@ server {
         include /etc/nginx/uwsgi_params;
     }
     location /static/ {
-        root   /opt/django-ca/www/static/;
+        root   /opt/django-ca/www/;
     }
 
     error_page   500 502 503 504  /50x.html;

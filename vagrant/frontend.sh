@@ -4,7 +4,30 @@ CA_DEFAULT_HOSTNAME=${CA_DEFAULT_HOSTNAME:-localhost}
 export CA_DEFAULT_HOSTNAME
 
 # Install dependencies only required on the frontend service
-apt-get install -y nginx uwsgi uwsgi-plugin-python3
+apt-get install -y nginx
+
+# Create virtualenv
+cd "${INSTALL_BASE}"
+if [ "$USE_UV" = "1" ]; then
+  UV_PYTHON_INSTALL_DIR=/opt/django-ca/python/ uv venv --managed-python
+
+  # Install python-pkcs11 and psycopg separately to prevent parallel builds and thus OOM errors.
+  # NOTE: concurrent-* settings seem to have no effect (also tried env variables).
+  uv pip install python-pkcs11
+  uv pip install "psycopg[c]"
+
+  # CC and LIBRARY_PATH required to compile uWSGI.
+  CC=gcc LIBRARY_PATH=/opt/django-ca/python/cpython-3.13.3-linux-x86_64-gnu/lib/ \
+  SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION \
+    uv sync --no-default-groups --group uwsgi --all-extras --no-extra mysql --no-extra hsm
+else
+  python3 -m venv .venv/
+  .venv/bin/pip install -U pip setuptools wheel setuptools-scm
+  CC=gcc LIBRARY_PATH=/opt/django-ca/python/cpython-3.13.3-linux-x86_64-gnu/lib/ \
+  SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION \
+    .venv/bin/pip install -e ".[api,celery,postgres,redis,yaml]" --group uwsgi
+fi
+
 
 # Add django-ca user to the www-data group, so that it can set permissions to the socket
 adduser django-ca www-data
