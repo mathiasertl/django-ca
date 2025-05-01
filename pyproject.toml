@@ -97,6 +97,7 @@ name = "django-ca"
 authors = [
     {name = "Mathias Ertl", email = "mati@er.tl"},
 ]
+license = "GPL-3.0-or-later"
 description = "A Django app providing a TLS certificate authority."
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -105,7 +106,6 @@ classifiers = [
     "Framework :: Django",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
