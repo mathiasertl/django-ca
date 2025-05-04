@@ -32,6 +32,8 @@ def _test_version(docker_tag: str, release: str) -> int:
         docker_tag,
         "manage",
         "shell",
+        "-v",
+        "0",
         "-c",
         "import django_ca; print(django_ca.__version__)",
         capture_output=True,

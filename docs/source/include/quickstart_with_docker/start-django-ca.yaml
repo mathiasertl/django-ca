@@ -20,6 +20,7 @@ commands:
     - command: >
         docker run -d
             -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ postgres_host }}:5432
+            -e DJANGO_CA_STARTUP_COLLECTSTATIC=0
             -v {{ pwd }}/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml
             -v backend_ca_dir:/var/lib/django-ca/certs/
             -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
