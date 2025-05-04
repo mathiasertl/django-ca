@@ -1,5 +1,5 @@
 upstream django_ca_frontend {
-    server unix:///run/django-ca/uwsgi.socket;
+    server unix:/run/django-ca.socket;
 }
 
 server {
@@ -33,6 +33,7 @@ server {
     ssl_certificate     /etc/ssl/${CA_DEFAULT_HOSTNAME}.pem;
     include /opt/django-ca/src/django-ca/nginx/include.d/ssl.conf;
     include /opt/django-ca/src/django-ca/nginx/include.d/headers.conf;
+    include /opt/django-ca/src/django-ca/nginx/include.d/proxy.conf;
 
     include /opt/django-ca/src/django-ca/nginx/include.d/acme.conf;
     include /opt/django-ca/src/django-ca/nginx/include.d/api.conf;
@@ -42,8 +43,7 @@ server {
     include /etc/nginx/templates/include.d/https/*.conf;
 
     location /admin/ {
-        uwsgi_pass django_ca_frontend;
-        include /etc/nginx/uwsgi_params;
+        try_files "" @django_ca;
     }
     location /static/ {
         root   /opt/django-ca/www/;

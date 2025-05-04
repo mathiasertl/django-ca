@@ -16,29 +16,27 @@ if [ "$USE_UV" = "1" ]; then
   uv pip install python-pkcs11
   uv pip install "psycopg[c]"
 
-  # CC and LIBRARY_PATH required to compile uWSGI.
-  CC=gcc LIBRARY_PATH=/opt/django-ca/python/cpython-3.13.3-linux-x86_64-gnu/lib/ \
   SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION \
-    uv sync --no-default-groups --group uwsgi --all-extras --no-extra mysql --no-extra hsm
+    uv sync --no-default-groups --group gunicorn --all-extras --no-extra mysql --no-extra hsm
 else
   python3 -m venv .venv/
-  .venv/bin/pip install -U pip setuptools wheel setuptools-scm
-  CC=gcc LIBRARY_PATH=/opt/django-ca/python/cpython-3.13.3-linux-x86_64-gnu/lib/ \
+  .venv/bin/pip install -U pip setuptools wheel
   SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION \
-    .venv/bin/pip install -e ".[api,celery,postgres,redis,yaml]" --group uwsgi
+    .venv/bin/pip install -e ".[api,celery,postgres,redis,yaml]" --group gunicorn
 fi
 
-
-# Add django-ca user to the www-data group, so that it can set permissions to the socket
-adduser django-ca www-data
+# Copy Gunicorn configuration
+cp "${INSTALL_BASE}/gunicorn/gunicorn.conf.py" /etc/django-ca/
 
 # Set up SystemD (Note: SystemD configuration is already copied in common-django-ca.sh)
 ln -s "${INSTALL_BASE}/systemd/django-ca.service" /etc/systemd/system/
+ln -s "${INSTALL_BASE}/systemd/django-ca.socket" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable django-ca
+systemctl enable django-ca.service
+systemctl enable django-ca.socket
 
-# Finally start services
-systemctl start django-ca
+# Start the socket (Gunicorn will start automatically upon first request).
+systemctl start django-ca.socket
 
 # Collect static files
 mkdir -p /opt/django-ca/www/static/

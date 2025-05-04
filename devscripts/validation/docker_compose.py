@@ -393,7 +393,7 @@ def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # no
                 info(
                     f"""Test admin interface at
 
-    * URL: https://{_ca_default_hostname}/admin
+    * URL: https://{_ca_default_hostname}/admin/
     * Credentials: user/nopass
 """
                 )

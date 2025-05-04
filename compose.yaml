@@ -125,11 +125,13 @@ services:
             DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
             DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS:-0}
             DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
+            # Pass through Gunicorn configuration
+            GUNICORN_CMD_ARGS:
             # Instruct the startup script to copy nginx configuration template
             NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
         restart: unless-stopped
         healthcheck:
-            test: ["CMD", "nc", "-w", "1", "-z", "127.0.0.1", "1717"]
+            test: ["CMD", "nc", "-w", "1", "-z", "127.0.0.1", "8000"]
             timeout: 1s
             start_period: 20s
             start_interval: 1s

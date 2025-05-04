@@ -2,12 +2,12 @@
 
 . /usr/src/django-ca/scripts/include.d/functions.sh
 
-DJANGO_CA_UWSGI_INI=${DJANGO_CA_UWSGI_INI:-/usr/src/django-ca/uwsgi/uwsgi.ini}
-DJANGO_CA_UWSGI_PARAMS=${DJANGO_CA_UWSGI_PARAMS:-}
+GUNICORN_CONFIG_FILE=${GUNICORN_CONFIG_FILE:-/usr/src/django-ca/gunicorn/gunicorn.conf.py}
+GUNICORN_CMD_ARGS=${GUNICORN_CMD_ARGS:---bind=0.0.0.0}
 DJANGO_CA_LIB_DIR=${DJANGO_CA_LIB_DIR:-/var/lib/django-ca}
 
-if [ ! -e ${DJANGO_CA_UWSGI_INI} ]; then
-    echo "${DJANGO_CA_UWSGI_INI}: No such file or directory."
+if [ ! -e ${GUNICORN_CONFIG_FILE} ]; then
+    echo "${GUNICORN_CONFIG_FILE}: No such file or directory."
     exit 1
 fi
 
@@ -26,7 +26,7 @@ if [ -n "${NGINX_TEMPLATE}" ]; then
         cp -pf ${NGINX_TEMPLATE_SOURCE_DIR}include.d/*.conf.template "${NGINX_TEMPLATE_DIR}/include.d/"
 
         # Include http/https directories if they exist. This allows specialized containers to add
-        # their own nginx configuration.
+        # their own NGINX configuration.
         if [ -d "${NGINX_TEMPLATE_SOURCE_DIR}include.d/http" ]; then
           mkdir -p "${NGINX_TEMPLATE_DIR}/include.d/http"
           cp -rf ${NGINX_TEMPLATE_SOURCE_DIR}include.d/http/* "${NGINX_TEMPLATE_DIR}/include.d/http/"
@@ -46,5 +46,7 @@ create_secret_key
 wait_for_connections
 run_manage_commands
 
+export GUNICORN_CMD_ARGS
+
 set -x
-uwsgi --ini ${DJANGO_CA_UWSGI_INI} ${DJANGO_CA_UWSGI_PARAMS} "$@"
+gunicorn --config ${GUNICORN_CONFIG_FILE} "$@" ca.wsgi:application

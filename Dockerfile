@@ -41,7 +41,7 @@ ENV UV_LINK_MODE=copy
 ARG DJANGO_CA_VERSION
 ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION
 RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
-    uv sync --frozen --all-extras --no-default-groups --group uwsgi --compile-bytecode
+    uv sync --frozen --all-extras --no-default-groups --group gunicorn --compile-bytecode
 
 ##############
 # Test stage #
@@ -79,7 +79,7 @@ FROM build AS prepare
 
 COPY ca/ ca/
 COPY conf/ ca/conf/
-COPY uwsgi/ uwsgi/
+COPY gunicorn/ gunicorn/
 COPY nginx/ nginx/
 
 COPY devscripts/standalone/ devscripts/standalone/
@@ -123,4 +123,4 @@ WORKDIR /usr/src/django-ca/ca/
 ENV DJANGO_CA_SETTINGS=conf/
 ENV DJANGO_CA_SECRET_KEY_FILE=/var/lib/django-ca/certs/ca/shared/secret_key
 
-CMD [ "uwsgi.sh" ]
+CMD [ "gunicorn.sh" ]

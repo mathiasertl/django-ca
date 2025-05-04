@@ -5,6 +5,7 @@ server {
     server_name  ${NGINX_HOST};
 
     include /etc/nginx/templates/include.d/admin.conf;
+    include /etc/nginx/templates/include.d/proxy.conf;
     include /etc/nginx/conf.d/include.d/acme.conf;
     include /etc/nginx/conf.d/include.d/api.conf;
     include /etc/nginx/conf.d/include.d/ca.conf;

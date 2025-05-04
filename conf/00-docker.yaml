@@ -8,5 +8,11 @@ LOGIN_URL: /admin/login/
 MEDIA_ROOT: /usr/share/django-ca/media/
 STATIC_ROOT: /usr/share/django-ca/static/
 
+# This header is set by nginx to mark forwarded requests that used HTTPS.
+# The setting is required get CSRF protection working.
+SECURE_PROXY_SSL_HEADER:
+  - HTTP_X_FORWARDED_PROTO
+  - https
+
 # custom settings
 CA_DIR: /var/lib/django-ca/certs

@@ -4,6 +4,7 @@ server {
     listen       ${NGINX_PORT};
     server_name  ${NGINX_HOST};
 
+    include /etc/nginx/templates/include.d/proxy.conf;
     include /etc/nginx/conf.d/include.d/ca.conf;
 
     # Include any custom extra configuration
@@ -33,6 +34,7 @@ server {
     ssl_certificate     ${NGINX_PUBLIC_KEY};
     include /etc/nginx/templates/include.d/ssl.conf;
     include /etc/nginx/templates/include.d/headers.conf;
+    include /etc/nginx/templates/include.d/proxy.conf;
 
     include /etc/nginx/conf.d/include.d/acme.conf;
     include /etc/nginx/conf.d/include.d/api.conf;

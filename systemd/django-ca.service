@@ -1,23 +1,26 @@
 [Unit]
 Description=django-ca application server
+Requires=django-ca.socket
 After=syslog.target network.target
 
 [Service]
+Type=notify
+NotifyAccess=main
 EnvironmentFile=/etc/%N/systemd.conf
 EnvironmentFile=-/etc/%N/systemd-local.conf
 WorkingDirectory=/opt/django-ca/src/django-ca/ca
-ExecStart=/opt/django-ca/src/django-ca/.venv/bin/uwsgi \
-        --ini ${INSTALL_BASE}/uwsgi/source.ini \
-        --socket ${RUNTIME_DIRECTORY}/uwsgi.socket $UWSGI_OPTS
+ExecStart=/opt/django-ca/src/django-ca/.venv/bin/gunicorn \
+        --config ${CONFIGURATION_DIRECTORY}/gunicorn.conf.py \
+        ca.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
 User=%N
 Group=%N
 ConfigurationDirectory=%N
 RuntimeDirectory=%N
 Restart=on-failure
-KillSignal=SIGQUIT
-Type=notify
-#StandardError=syslog
-NotifyAccess=all
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
