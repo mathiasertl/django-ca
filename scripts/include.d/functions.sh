@@ -46,7 +46,8 @@ EOF
 wait_for_connections() {
   if [ -n "${DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS}" ]; then
     for conn in ${DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS}; do
-      conn=${conn//:/ /}
+      # NOTE: using subshell with sed here to ensure maximum portability.
+      conn=$(echo $conn | sed 's/:/ /')
       while ! nc -z $conn; do
         echo "Wait for $conn..."
         sleep 0.1 # wait for 1/10 of the second before check again
