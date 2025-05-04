@@ -165,7 +165,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
     form = X509CertMixinAdminForm  # type: ignore[assignment]  # django-stubs false positive
     x509_fieldset_index: int
     model: type[X509CertMixinTypeVar]
-    readonly_fields: tuple[str, ...] = (
+    readonly_fields: ClassVar[tuple[str, ...]] = (
         "issuer_field",
         "not_after",
         "not_before",
@@ -369,10 +369,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
 class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], CertificateAuthorityAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.CertificateAuthority`."""
 
-    # TYPEHINT NOTE: django-stubs does not define this as ClassVar in the base class.
-    formfield_overrides: ClassVar[FormfieldOverrides] = {  # type: ignore[misc]
-        models.URLField: {"assume_scheme": "https"}
-    }
+    formfield_overrides: ClassVar[FormfieldOverrides] = {models.URLField: {"assume_scheme": "https"}}
     fieldsets = (
         (
             None,
@@ -1156,10 +1153,7 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
     class AcmeAccountAdmin(AcmeAccountAdminBase):
         """ModelAdmin class for :py:class:`~django_ca.models.AcmeAccount`."""
 
-        # TYPEHINT NOTE: django-stubs does not define this as ClassVar in the base class.
-        formfield_overrides: ClassVar[FormfieldOverrides] = {  # type: ignore[misc]
-            models.URLField: {"assume_scheme": "https"}
-        }
+        formfield_overrides: ClassVar[FormfieldOverrides] = {models.URLField: {"assume_scheme": "https"}}
         list_display = ("first_contact", "ca", "slug", "status", "created", "terms_of_service_agreed")
         list_filter = ("ca", "status", "terms_of_service_agreed")
         readonly_fields = ("pem", "created")
