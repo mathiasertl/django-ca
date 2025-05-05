@@ -18,6 +18,10 @@ This tutorial will give you a CA with
 * Certificate revocation using CRLs and OCSP.
 * (Optional) ACMEv2 support (= get certificates using certbot).
 
+************
+Requirements
+************
+
 .. jinja:: requirements-from-source
    :file: /include/guide-requirements.rst.jinja
    :header_update_levels:
@@ -25,9 +29,13 @@ This tutorial will give you a CA with
 Required software
 =================
 
-.. jinja:: full-requirements-from-source
-   :file: /include/guide-full-requirements.rst.jinja
-   :header_update_levels:
+To run **django-ca**, you need Python. You will also need at least a `supported database
+<https://docs.djangoproject.com/en/4.0/ref/databases/>`_ and a web server (like NGINX or Apache) to serve
+static files.
+
+In our guide, we are going to run PostgreSQL as a database, Redis as a cache and NGINX as a front-facing web
+server installed via APT. Please refer to your operating system installation instructions for how to install
+the software on your own.
 
 On Debian/Ubuntu, simply do:
 

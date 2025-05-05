@@ -8,6 +8,10 @@ Django project. This setup allows you to integrate django-ca into an existing Dj
 In this guide we do not cover creating your own Django project, deployment strategies or regular Python or
 Django development.
 
+************
+Requirements
+************
+
 .. jinja:: requirements-as-py
    :file: include/guide-requirements.rst.jinja
    :header_update_levels:
