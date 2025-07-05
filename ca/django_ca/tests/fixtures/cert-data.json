@@ -4297,67 +4297,6 @@
             ],
             "type": "cert"
         },
-        "godaddy_g2_root": {
-            "cat": "sphinx-contrib",
-            "cn": "Go Daddy Root Certificate Authority - G2",
-            "csr_filename": false,
-            "extensions": [
-                {
-                    "critical": true,
-                    "type": "basic_constraints",
-                    "value": {
-                        "ca": true,
-                        "path_length": null
-                    }
-                },
-                {
-                    "critical": true,
-                    "type": "key_usage",
-                    "value": [
-                        "crl_sign",
-                        "key_cert_sign"
-                    ]
-                },
-                {
-                    "critical": false,
-                    "type": "subject_key_identifier",
-                    "value": "OpqFBxBnKLbv9r0FQW4gwZTaD94="
-                }
-            ],
-            "key_filename": false,
-            "key_type": "RSA",
-            "md5": "80:3A:BC:22:C1:E6:FB:8D:9B:3B:27:4A:32:1B:9A:01",
-            "name": "godaddy_g2_root",
-            "path_length": null,
-            "pub_filename": "godaddy_g2_root.pem",
-            "serial": "0",
-            "sha1": "47:BE:AB:C9:22:EA:E8:0E:78:78:34:62:A7:9F:45:C2:54:FD:E6:8B",
-            "sha256": "45:14:0B:32:47:EB:9C:C8:C5:B4:F0:D7:B5:30:91:F7:32:92:08:9E:6E:5A:63:E2:74:9D:D3:AC:A9:19:8E:DA",
-            "sha512": "C5:09:CD:54:52:65:9A:E9:4C:67:3A:47:B6:8E:2C:0A:A8:AD:17:78:04:C8:AE:29:49:30:6E:92:32:B7:0A:B5:B5:33:4D:1A:BE:53:A2:5E:CA:F0:C6:09:87:1B:33:84:97:73:B4:ED:F2:77:DD:34:60:69:03:8F:69:5D:76:FB",
-            "subject": [
-                {
-                    "oid": "2.5.4.6",
-                    "value": "US"
-                },
-                {
-                    "oid": "2.5.4.8",
-                    "value": "Arizona"
-                },
-                {
-                    "oid": "2.5.4.7",
-                    "value": "Scottsdale"
-                },
-                {
-                    "oid": "2.5.4.10",
-                    "value": "GoDaddy.com, Inc."
-                },
-                {
-                    "oid": "2.5.4.3",
-                    "value": "Go Daddy Root Certificate Authority - G2"
-                }
-            ],
-            "type": "ca"
-        },
         "google_g3": {
             "cat": "sphinx-contrib",
             "cn": "Google Internet Authority G3",

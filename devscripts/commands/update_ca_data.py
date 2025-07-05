@@ -141,11 +141,6 @@ cas: dict[str, CertInfo] = {
         "last": "2019-04-19",
         "info": "Root CA",
     },
-    "godaddy_g2_root.pem": {
-        "name": "Go Daddy G2",
-        "last": "2019-04-19",
-        "info": "Root CA",
-    },
     "godaddy_g2_intermediate.pem": {
         "name": "Go Daddy G2 Intermediate",
         "last": "2019-04-19",
@@ -484,7 +479,7 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
 def update_crl_data() -> None:  # pylint: disable=too-many-locals
     """Update CRL data."""
     # pylint: disable=import-outside-toplevel  # django is not configured at top level
-    from django_ca.utils import bytes_to_hex, format_general_name
+    from django_ca.utils import bytes_to_hex, format_general_name  # noqa: PLC0415
 
     # pylint: enable=import-outside-toplevel
 

@@ -1411,53 +1411,6 @@ Digest:
   SHA-512: {sha512}
 
 {pub[pem]}""",
-    "godaddy_g2_root": """* Name: {name}
-* Enabled: Yes
-* Subject:
-  * countryName (C): US
-  * stateOrProvinceName (ST): Arizona
-  * localityName (L): Scottsdale
-  * organizationName (O): GoDaddy.com, Inc.
-  * commonName (CN): Go Daddy Root Certificate Authority - G2
-* Serial: {serial_colons}
-* Issuer:
-  * countryName (C): US
-  * stateOrProvinceName (ST): Arizona
-  * localityName (L): Scottsdale
-  * organizationName (O): GoDaddy.com, Inc.
-  * commonName (CN): Go Daddy Root Certificate Authority - G2
-* Not valid before: {not_before_str}
-* Not valid after: {not_after_str}
-* Status: Valid
-
-Certificate Authority information:
-* Certificate authority is a root CA.
-* Certificate authority has no children.
-* Maximum levels of sub-CAs (path length): unlimited
-
-Key storage options:
-* backend: default
-* path: godaddy_g2_root.key
-
-ACMEv2 support:
-* Enabled: True
-* Requires contact: True
-
-Certificate extensions:
-* Basic Constraints{basic_constraints_critical}:
-{basic_constraints_text}
-* Key Usage{key_usage_critical}:
-{key_usage_text}
-* Subject Key Identifier{subject_key_identifier_critical}:
-{subject_key_identifier_text}
-
-No certificate extensions for signed certificates.
-
-Digest:
-  SHA-256: {sha256}
-  SHA-512: {sha512}
-
-{pub[pem]}""",
     "google_g3": """* Name: {name}
 * Enabled: Yes
 * Subject:

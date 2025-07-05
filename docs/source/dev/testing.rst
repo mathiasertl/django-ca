@@ -75,24 +75,24 @@ Generated fixtures
 `contrib_{ca_name}` - :py:class:`~django_ca.models.CertificateAuthority`
     Certificate authority model for a contributed certificate.
 
-    Examples: ``contrib_godaddy_g2_root``, ``contrib_geotrust`` and ``contrib_startssl_class3``.
+    Examples: ``contrib_geotrust`` and ``contrib_startssl_class3``.
 
 `contrib_{ca_name}_cert` - :py:class:`~django_ca.models.Certificate`
     Certificate model for contributed certificates loaded from test fixture data.
 
-    Examples: ``contrib_godaddy_g2_root_cert``, ``contrib_geotrust_cert`` and
+    Examples: ``contrib_geotrust_cert`` and
     ``contrib_startssl_class3_cert``.
 
 `contrib_{ca_name}_cert_pub` - :py:class:`~cryptography.x509.Certificate`
     Certificate for contributed certificates loaded from test fixture data.
 
-    Examples: ``contrib_godaddy_g2_root_cert_pub``, ``contrib_geotrust_cert_pub`` and
+    Examples: ``contrib_geotrust_cert_pub`` and
     ``contrib_startssl_class3_cert_pub``.
 
 `contrib_{ca_name}_pub` - :py:class:`~cryptography.x509.Certificate`
     Certificate for contributed certificate authorities loaded from test fixture data.
 
-    Examples: ``contrib_godaddy_g2_root_pub``, ``contrib_geotrust_pub`` and ``contrib_startssl_class3_pub``.
+    Examples: ``contrib_geotrust_pub`` and ``contrib_startssl_class3_pub``.
 
 `usable_{ca_name}` - :py:class:`~django_ca.models.CertificateAuthority`
     Certificate authority model with usable private key files.

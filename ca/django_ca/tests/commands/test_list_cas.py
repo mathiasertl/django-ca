@@ -91,7 +91,6 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             f" - {CERT_DATA['digicert_global_root']['name']}\n"
             f"{CERT_DATA['identrust_root_1']['serial_colons']} - {CERT_DATA['identrust_root_1']['name']}\n"
             f"{CERT_DATA['startssl_root']['serial_colons']} - {CERT_DATA['startssl_root']['name']}\n"
-            f"{CERT_DATA['godaddy_g2_root']['serial_colons']} - {CERT_DATA['godaddy_g2_root']['name']}\n"
             f"{CERT_DATA['comodo']['serial_colons']} - {CERT_DATA['comodo']['name']}\n"
         )
         assert stderr == ""

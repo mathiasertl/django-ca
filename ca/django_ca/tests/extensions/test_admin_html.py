@@ -218,7 +218,6 @@ class CertificateExtensionTestCase(TestCaseMixin, TestCase):
   </li>
 </ul>""",
         },
-        "godaddy_g2_root": {},
         "google_g3": {
             ExtensionOID.BASIC_CONSTRAINTS: "CA: True, path length: 0",
             ExtensionOID.CERTIFICATE_POLICIES: """<ul><li>Unknown OID (2.23.140.1.2.2):
