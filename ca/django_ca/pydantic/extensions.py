@@ -839,7 +839,7 @@ else:
     PrivateKeyUsagePeriodModelBase = ExtensionModel
 
 
-class PrivateKeyUsagePeriodModel(PrivateKeyUsagePeriodModelBase):
+class PrivateKeyUsagePeriodModel(PrivateKeyUsagePeriodModelBase):  # pragma: only cryptography>=45
     """Pydantic model for a :py:class:`~cg:cryptography.x509.PrivateKeyUsagePeriod` extension.
 
     .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<45``.

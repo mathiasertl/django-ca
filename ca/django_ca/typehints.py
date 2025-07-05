@@ -18,11 +18,16 @@ import ipaddress
 import sys
 from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar
 
+import packaging.version
+
+import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandParser
+
+CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
 
@@ -256,16 +261,27 @@ ConfigurableExtensionType = (
 #: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension types
 #: that are either derived from the issuer or the certificates public key or that must not be configured by
 #: the user.
-EndEntityCertificateExtensionType = (
-    ConfigurableExtensionType
-    | x509.AuthorityKeyIdentifier
-    | x509.BasicConstraints
-    | x509.PrecertificateSignedCertificateTimestamps
-    | x509.SignedCertificateTimestamps
-    | x509.SubjectInformationAccess
-    | x509.SubjectKeyIdentifier
-    | x509.PrivateKeyUsagePeriod
-)
+if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
+    EndEntityCertificateExtensionType = (
+        ConfigurableExtensionType
+        | x509.AuthorityKeyIdentifier
+        | x509.BasicConstraints
+        | x509.PrecertificateSignedCertificateTimestamps
+        | x509.SignedCertificateTimestamps
+        | x509.SubjectInformationAccess
+        | x509.SubjectKeyIdentifier
+    )
+else:  # pragma: only cryptography>=45
+    EndEntityCertificateExtensionType = (
+        ConfigurableExtensionType
+        | x509.AuthorityKeyIdentifier
+        | x509.BasicConstraints
+        | x509.PrecertificateSignedCertificateTimestamps
+        | x509.PrivateKeyUsagePeriod
+        | x509.SignedCertificateTimestamps
+        | x509.SubjectInformationAccess
+        | x509.SubjectKeyIdentifier
+    )
 
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in any certificate.
 #:
@@ -296,16 +312,27 @@ ConfigurableExtension = (
     | x509.Extension[x509.TLSFeature]
 )
 
-EndEntityCertificateExtension = (
-    ConfigurableExtension
-    | x509.Extension[x509.AuthorityKeyIdentifier]
-    | x509.Extension[x509.BasicConstraints]
-    | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
-    | x509.Extension[x509.PrivateKeyUsagePeriod]
-    | x509.Extension[x509.SignedCertificateTimestamps]
-    | x509.Extension[x509.SubjectInformationAccess]
-    | x509.Extension[x509.SubjectKeyIdentifier]
-)
+if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
+    EndEntityCertificateExtension = (
+        ConfigurableExtension
+        | x509.Extension[x509.AuthorityKeyIdentifier]
+        | x509.Extension[x509.BasicConstraints]
+        | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
+        | x509.Extension[x509.SignedCertificateTimestamps]
+        | x509.Extension[x509.SubjectInformationAccess]
+        | x509.Extension[x509.SubjectKeyIdentifier]
+    )
+else:  # pragma: only cryptography>=45
+    EndEntityCertificateExtension = (
+        ConfigurableExtension
+        | x509.Extension[x509.AuthorityKeyIdentifier]
+        | x509.Extension[x509.BasicConstraints]
+        | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
+        | x509.Extension[x509.PrivateKeyUsagePeriod]
+        | x509.Extension[x509.SignedCertificateTimestamps]
+        | x509.Extension[x509.SubjectInformationAccess]
+        | x509.Extension[x509.SubjectKeyIdentifier]
+    )
 CertificateExtension = (
     EndEntityCertificateExtension
     | x509.Extension[x509.InhibitAnyPolicy]

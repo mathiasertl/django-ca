@@ -1632,11 +1632,9 @@ class AcmeChallenge(DjangoCAModel):
     # Possible challenges
     TYPE_HTTP_01 = "http-01"
     TYPE_DNS_01 = "dns-01"
-    TYPE_TLS_ALPN_01 = "tls-alpn-01"
     TYPE_CHOICES = (
         (TYPE_HTTP_01, _("HTTP Challenge")),
         (TYPE_DNS_01, _("DNS Challenge")),
-        (TYPE_TLS_ALPN_01, _("TLS ALPN Challenge")),
     )
 
     # RFC 8555, 8: "Possible values are "pending", "processing", "valid", and "invalid"."
@@ -1698,10 +1696,10 @@ class AcmeChallenge(DjangoCAModel):
         token = self.token.encode()
         if self.type == AcmeChallenge.TYPE_HTTP_01:
             return challenges.HTTP01(token=token)
-        if self.type == AcmeChallenge.TYPE_DNS_01:
+        if self.type == AcmeChallenge.TYPE_DNS_01:  # pragma: no branch
             return challenges.DNS01(token=token)
 
-        raise ValueError(f"{self.type}: Unsupported challenge type.")
+        raise ValueError(f"{self.type}: Unsupported challenge type.")  # pragma: no cover
 
     @property
     def acme_validated(self) -> datetime | None:
@@ -1731,9 +1729,9 @@ class AcmeChallenge(DjangoCAModel):
 
         if self.type == AcmeChallenge.TYPE_HTTP_01:
             return value
-        if self.type == AcmeChallenge.TYPE_DNS_01:
+        if self.type == AcmeChallenge.TYPE_DNS_01:  # pragma: no branch
             return jose.b64.b64encode(hashlib.sha256(value).digest())
-        raise ValueError(f"{self.type}: Unsupported challenge type.")
+        raise ValueError(f"{self.type}: Unsupported challenge type.")  # pragma: no cover
 
     def get_challenge(self, request: HttpRequest) -> "messages.ChallengeBody":
         """Get the ACME challenge body for this challenge.

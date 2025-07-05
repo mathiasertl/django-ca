@@ -334,14 +334,7 @@ def acme_validate_challenge(challenge_pk: int) -> None:
             log.exception(ex)
     elif challenge.type == AcmeChallenge.TYPE_DNS_01:
         challenge_valid = validate_dns_01(challenge)
-
-    # TODO: support ALPN_01 challenges
-    # elif challenge.type == AcmeChallenge.TYPE_TLS_ALPN_01:
-    #     host = socket.gethostbyname(value)
-    #     sni_cert = crypto_util.probe_sni(
-    #         host=host, port=443, name=value, alpn_protocols=[TlsAlpnProtocol.V1]
-    #     )
-    else:
+    else:  # pragma: no cover
         log.error("%s: Challenge type is not supported.", challenge)
 
     # Transition state of the challenge depending on if the challenge is valid or not. RFC8555, Section 7.1.6:

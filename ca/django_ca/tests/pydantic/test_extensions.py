@@ -87,7 +87,7 @@ from django_ca.tests.pydantic.base import (
     assert_cryptography_model,
     assert_validation_errors,
 )
-from django_ca.typehints import AlternativeNameExtensionType, AlternativeNameTypeVar
+from django_ca.typehints import CRYPTOGRAPHY_VERSION, AlternativeNameExtensionType, AlternativeNameTypeVar
 
 DISTRIBUTION_POINT_REASONS_ERROR = (
     "Input should be 'aa_compromise', 'affiliation_changed', 'ca_compromise', 'certificate_hold', "
@@ -1510,6 +1510,7 @@ def test_precert_poison_errors() -> None:
         (datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc), None),
     ),
 )
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="cryptography check was added in version 45")
 def test_private_key_usage_period(
     critical: bool | None, not_before: datetime | None, not_after: datetime | None
 ) -> None:
@@ -1549,6 +1550,7 @@ def test_private_key_usage_period(
         ),
     ),
 )
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="cryptography check was added in version 45")
 def test_private_key_usage_period_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
     """Test validation errors for the PrivateKeyUsagePeriod."""
     assert_validation_errors(PrivateKeyUsagePeriodModel, parameters, expected_errors)

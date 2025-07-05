@@ -187,22 +187,6 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
             f"INFO:django_ca.tasks:{self.chall!s} is invalid",
         ]
 
-    def test_unsupported_challenge(self) -> None:
-        """Test what happens when challenge type is not supported."""
-        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
-        self.chall.save()
-
-        with (
-            self.mock_challenge(call_count=0, content=b"foo", token="foo"),
-            self.assertLogs("django_ca.tasks", "DEBUG") as logcm,
-        ):
-            tasks.acme_validate_challenge(self.chall.pk)
-        self.assertInvalid()
-        assert logcm.output == [
-            f"ERROR:django_ca.tasks:{self.chall!s}: Challenge type is not supported.",
-            f"INFO:django_ca.tasks:{self.chall!s} is invalid",
-        ]
-
     def test_basic(self) -> None:
         """Test validation actually working."""
         with self.mock_challenge():

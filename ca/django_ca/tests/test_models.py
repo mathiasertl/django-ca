@@ -620,11 +620,6 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall.save()
         assert self.chall.expected == b"LoNgngEeuLw4rWDFpplPA0XBp9dd9spzuuqbsRFcKug"
 
-        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
-        self.chall.save()
-        with pytest.raises(ValueError, match=r"^tls-alpn-01: Unsupported challenge type\.$"):
-            self.chall.expected  # noqa: B018
-
     def test_get_challenge(self) -> None:
         """Test the get_challenge() function."""
         body = self.chall.get_challenge(RequestFactory().get("/"))

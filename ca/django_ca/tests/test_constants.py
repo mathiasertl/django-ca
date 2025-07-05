@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from django_ca import constants, typehints
-from django_ca.constants import ExtensionOID
+from django_ca.constants import CRYPTOGRAPHY_VERSION, ExtensionOID
 from django_ca.typehints import GeneralNames, HashAlgorithms
 
 
@@ -71,6 +71,8 @@ def test_certificate_extension_keys_typehints() -> None:
     ]
     expected = sorted((ext.oid for ext in extension_types), key=oid_sorter)
     actual = sorted(constants.CERTIFICATE_EXTENSION_KEYS, key=oid_sorter)
+    if CRYPTOGRAPHY_VERSION < (45,):
+        actual.remove(x509.ObjectIdentifier("2.5.29.16"))  # Remove PrivateKeyUsagePeriod
     assert actual == expected
 
 
@@ -111,6 +113,10 @@ def test_end_entity_certificate_extension_keys_typehints() -> None:
         (ext.oid for ext in get_args(typehints.EndEntityCertificateExtensionType)), key=oid_sorter
     )
     actual = sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS, key=oid_sorter)
+
+    if CRYPTOGRAPHY_VERSION < (45,):
+        actual.remove(x509.ObjectIdentifier("2.5.29.16"))  # Add PrivateKeyUsagePeriod
+
     assert actual == expected
 
 

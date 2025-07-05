@@ -478,7 +478,7 @@ class IssuingDistributionPointValueModel(CryptographyModel[x509.IssuingDistribut
         )
 
 
-class PrivateKeyUsagePeriodValueModel(PrivateKeyUsagePeriodValueModelBase):
+class PrivateKeyUsagePeriodValueModel(PrivateKeyUsagePeriodValueModelBase):  # pragma: only cryptography>=45
     """Pydantic model wrapping ``PrivateKeyUsagePeriod``."""
 
     model_config = ConfigDict(from_attributes=True)

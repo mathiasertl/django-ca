@@ -205,5 +205,3 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         """Test passing an ACME challenge of the wrong type."""
         with pytest.raises(ValueError, match=r"^This function can only validate DNS-01 challenges$"):
             validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_HTTP_01))
-        with pytest.raises(ValueError, match=r"^This function can only validate DNS-01 challenges$"):
-            validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_TLS_ALPN_01))
