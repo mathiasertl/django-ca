@@ -85,6 +85,9 @@ class StoragesBackend(
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, StoragesBackend) and self.storage_alias == other.storage_alias
 
+    def __hash__(self) -> int:  # pragma: no cover
+        return hash(self.storage_alias)
+
     def _add_password_argument(self, group: ArgumentGroup) -> None:
         group.add_argument(
             f"--{self.argparse_prefix}password",

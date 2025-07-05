@@ -110,7 +110,7 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     cg_dps4: CRLExtensionType
 
     @classproperty  # pylint: disable-next=no-self-argument
-    def test_values(cls) -> TestValues:  # type: ignore[override]  # similar enough
+    def test_values(cls) -> TestValues:
         """Overwritten because we access ext_class_type, so we can use subclasses."""
         rdn1 = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}]
 
@@ -791,7 +791,7 @@ class TestIssuerAlternativeName(ExtensionTestCaseMixin):
     dns2 = value4 = "example.net"
 
     @classproperty  # pylint: disable-next=no-self-argument
-    def test_values(cls) -> TestValues:  # type: ignore[override]  # it's similar enough
+    def test_values(cls) -> TestValues:
         """Overwritten because we access ext_class_type, so we can use subclasses."""
         return {
             "uri": {

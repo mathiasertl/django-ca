@@ -75,7 +75,7 @@ def test_doctests() -> None:
         ),
     ),
 )
-def test_name_attribute(parameters: dict[str, Any], name_attr: x509.NameAttribute) -> None:
+def test_name_attribute(parameters: dict[str, Any], name_attr: "x509.NameAttribute[str | bytes]") -> None:
     """Test NameAttributeModel."""
     assert_cryptography_model(NameAttributeModel, parameters, name_attr)
 
@@ -144,7 +144,7 @@ def test_name_attribute_empty_common_name(oid: Any) -> None:
         ),
     ),
 )
-def test_name(serialized: list[dict[str, Any]], expected: list[x509.NameAttribute]) -> None:
+def test_name(serialized: list[dict[str, Any]], expected: list["x509.NameAttribute[str | bytes]"]) -> None:
     """Test NameModel."""
     assert_cryptography_model(NameModel, {"root": serialized}, x509.Name(expected))  # type: ignore[type-var]
 

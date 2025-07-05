@@ -58,7 +58,7 @@ if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
-class Profile:
+class Profile:  # noqa: PLW1641
     """A certificate profile defining properties and extensions of a certificate.
 
     Instances of this class usually represent profiles defined in :ref:`CA_PROFILES <settings-ca-profiles>`,
@@ -602,6 +602,9 @@ class DefaultProfileProxy:
         if not isinstance(other, DefaultProfileProxy | Profile):
             return False
         return profiles[model_settings.CA_DEFAULT_PROFILE] == other
+
+    def __hash__(self) -> int:  # pragma: no cover
+        return hash(id(self))
 
     def __repr__(self) -> str:
         return f"<DefaultProfile: {self.name}>"

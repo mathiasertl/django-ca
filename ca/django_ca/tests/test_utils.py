@@ -295,9 +295,9 @@ class MergeX509NamesTestCase(TestCase):
 
     def assertMerged(  # pylint: disable=invalid-name  # unittest standard
         self,
-        base: Iterable[x509.NameAttribute],
-        update: Iterable[x509.NameAttribute],
-        merged: Iterable[x509.NameAttribute],
+        base: Iterable["x509.NameAttribute[str | bytes]"],
+        update: Iterable["x509.NameAttribute[str | bytes]"],
+        merged: Iterable["x509.NameAttribute[str | bytes]"],
     ) -> None:
         """Assert that the given base and update are merged to the expected value."""
         base_name = x509.Name(base)

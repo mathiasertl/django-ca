@@ -31,9 +31,7 @@ class DjangoCAConfig(AppConfig):
     verbose_name = _("Certificate Authority")
 
     def ready(self) -> None:
-        # pylint: disable=import-outside-toplevel  # that's how checks work
-
-        from django_ca import checks  # NOQA: F401  # import already registers the checks
+        from django_ca import checks  # noqa  # import already registers the checks
 
         # log_settings_files = os.environ.get("CA_LOG_SETTINGS_FILES", "").lower()
         # if log_settings_files in ("1", "true", "yes"):

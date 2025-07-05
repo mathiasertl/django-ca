@@ -21,7 +21,6 @@ from typing import Any, ClassVar
 import yaml
 from docutils.nodes import paragraph
 from docutils.parsers.rst import directives
-from docutils.parsers.rst.states import Body
 from docutils.statemachine import StringList
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.typing import OptionSpec
@@ -86,7 +85,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
         node = paragraph()
         text = self.get_text()
         lines = StringList(text.splitlines())
-        state: Body = self.state
+        state = self.state
         state.nested_parse(lines, 0, node)
         return [node]
 

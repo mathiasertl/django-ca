@@ -494,6 +494,7 @@ qualname_overrides = {
     "cryptography.hazmat.bindings._rust.ocsp.OCSPResponse": "cg:cryptography.x509.ocsp.OCSPResponse",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
+    "cryptography.x509.extensions.PrivateKeyUsagePeriod": "cg:cryptography.x509.PrivateKeyUsagePeriod",
     "cryptography.hazmat.primitives._asymmetric.AsymmetricPadding": "cg:cryptography.hazmat.primitives.asymmetric.padding.AsymmetricPadding",  # noqa: E501
     # These only happen when building on GitHub actions (2024-06-27)
     "BytesIO": "python:io.BytesIO",

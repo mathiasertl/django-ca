@@ -38,7 +38,7 @@ _NAME_ATTRIBUTE_VALUE_DESCRIPTION = (
 )
 
 
-class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
+class NameAttributeModel(CryptographyModel["x509.NameAttribute[str | bytes]"]):
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.NameAttribute`.
 
     For the `oid`, you can either use a dotted string or an alias from
@@ -93,7 +93,7 @@ class NameAttributeModel(CryptographyModel[x509.NameAttribute]):
         return self
 
     @property
-    def cryptography(self) -> x509.NameAttribute:
+    def cryptography(self) -> "x509.NameAttribute[str | bytes]":
         """The :py:class:`~cg:cryptography.x509.NameAttribute` instance for this model."""
         oid = x509.ObjectIdentifier(self.oid)
         if oid == NameOID.X500_UNIQUE_IDENTIFIER:

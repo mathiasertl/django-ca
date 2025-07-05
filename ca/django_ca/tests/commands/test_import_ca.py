@@ -257,7 +257,7 @@ def test_secondary_key_backend(ca_name: str) -> None:
     assert ca.key_backend_alias == "secondary"
     assert ca.key_backend_options["path"].startswith("secondary-ca-path")
     assert isinstance(ca.key_backend, StoragesBackend)
-    assert ca.key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=b"foobar"))  # type: ignore[attr-defined]
+    assert ca.key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=b"foobar"))
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # b/c of signature validation in the end.

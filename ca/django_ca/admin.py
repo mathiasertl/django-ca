@@ -1132,7 +1132,7 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
         title = _("Expired")
         parameter_name = "expired"
 
-        def lookups(  # type: ignore  # we are more specific here
+        def lookups(
             self, request: HttpRequest, model_admin: ModelAdminBase
         ) -> list[tuple[str, "StrPromise"]]:
             return [

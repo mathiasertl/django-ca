@@ -314,6 +314,7 @@ disable = [
     "unused-variable",
 
     # covered by ruff/pylint:
+    "import-outside-toplevel",  # ruff: PLC0415
     "typevar-name-incorrect-variance", # ruff: PLC0105
     "typevar-double-variance",  # ruff: PLC0131
     "single-string-used-for-slots", # ruff: PLC0205

@@ -110,7 +110,7 @@ def format_name_rfc4514(subject: x509.Name | x509.RelativeDistinguishedName) -> 
     return subject.rfc4514_string(attr_name_overrides=constants.RFC4514_NAME_OVERRIDES)
 
 
-def _serialize_name_attribute_value(name_attribute: x509.NameAttribute) -> str:
+def _serialize_name_attribute_value(name_attribute: "x509.NameAttribute[str | bytes]") -> str:
     if isinstance(name_attribute.value, bytes):
         return bytes_to_hex(name_attribute.value)
     return name_attribute.value
@@ -269,7 +269,7 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
         >>> merge_x509_names(base, update)
         <Name(C=AT,O=Example Org,OU=Example Org Unit,CN=example.com)>
     """
-    attributes: list[x509.NameAttribute] = []
+    attributes: list[x509.NameAttribute[str | bytes]] = []
     if any(name_attr.oid not in model_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
         raise ValueError(f"{format_name_rfc4514(base)}: Unsortable name")
     if any(name_attr.oid not in model_settings.CA_DEFAULT_NAME_ORDER for name_attr in update):

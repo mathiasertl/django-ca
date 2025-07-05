@@ -72,7 +72,7 @@ class Command(DevCommand):
         base_url: str,
     ) -> None:
         """Output demo info to the user."""
-        from django.urls import reverse  # pylint: disable=import-outside-toplevel  # see handle() imports
+        from django.urls import reverse  # noqa: PLC0415
 
         base_url = base_url.rstrip("/")
         ca_names = ("root", "child", "dsa", "ec", "ed448", "ed25519")
@@ -135,12 +135,9 @@ class Command(DevCommand):
         self, ca_dir: str, model_settings: "SettingsProxy", fixture_data: "FixtureData"
     ) -> dict[str, "CertificateAuthority"]:
         """Save loaded fixture data to database."""
-        # pylint: disable=import-outside-toplevel  # see handle() imports
-        from django.contrib.auth import get_user_model
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
 
-        from django_ca.models import Certificate, CertificateAuthority
-
-        # pylint: enable=import-outside-toplevel
+        from django_ca.models import Certificate, CertificateAuthority  # noqa: PLC0415
 
         loaded_cas = {}
         certs = fixture_data["certs"]
@@ -216,14 +213,11 @@ class Command(DevCommand):
 
         self.setup_django("ca.settings")
 
-        # pylint: disable=import-outside-toplevel; have to call setup_django() first
-        from django.conf import settings
-        from django.core.management import call_command as manage
+        from django.conf import settings  # noqa: PLC0415 # have to call setup_django() first
+        from django.core.management import call_command as manage  # noqa: PLC0415
 
-        from django_ca.conf import model_settings
-        from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
-
-        # pylint: enable=import-outside-toplevel
+        from django_ca.conf import model_settings  # noqa: PLC0415
+        from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions  # noqa: PLC0415
 
         self.UsePrivateKeyOptions = StoragesUsePrivateKeyOptions  # pylint: disable=invalid-name
 

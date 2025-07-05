@@ -256,11 +256,6 @@ ConfigurableExtensionType = (
     | x509.TLSFeature
 )
 
-#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
-#:
-#: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension types
-#: that are either derived from the issuer or the certificates public key or that must not be configured by
-#: the user.
 if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
     EndEntityCertificateExtensionType = (
         ConfigurableExtensionType
@@ -272,7 +267,12 @@ if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
         | x509.SubjectKeyIdentifier
     )
 else:  # pragma: only cryptography>=45
-    EndEntityCertificateExtensionType = (
+    #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
+    #:
+    #: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension
+    #: types that are either derived from the issuer or the certificates public key or that must not be
+    #: configured by the user.
+    EndEntityCertificateExtensionType = (  # type: ignore[misc]
         ConfigurableExtensionType
         | x509.AuthorityKeyIdentifier
         | x509.BasicConstraints
@@ -323,7 +323,7 @@ if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
         | x509.Extension[x509.SubjectKeyIdentifier]
     )
 else:  # pragma: only cryptography>=45
-    EndEntityCertificateExtension = (
+    EndEntityCertificateExtension = (  # type: ignore[misc]
         ConfigurableExtension
         | x509.Extension[x509.AuthorityKeyIdentifier]
         | x509.Extension[x509.BasicConstraints]

@@ -47,9 +47,8 @@ DSA_PATHLEN = 3
 
 def recreate_crls(dest: Path) -> None:
     """Recreate CRLs for the root CA."""
-    # pylint: disable=import-outside-toplevel  # django-ca needs to be set up.
-    from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
-    from django_ca.models import CertificateAuthority, CertificateRevocationList
+    from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions  # noqa: PLC0415
+    from django_ca.models import CertificateAuthority, CertificateRevocationList  # noqa: PLC0415
 
     root = CertificateAuthority.objects.get(name="root")
     key_backend_options = StoragesUsePrivateKeyOptions.model_validate(
@@ -90,10 +89,9 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
     cert_validity: int,
 ) -> None:
     """Main entry function to recreate fixtures."""
-    # pylint: disable=import-outside-toplevel  # django needs to be set up
-    from django.core.management import call_command as manage
+    from django.core.management import call_command as manage  # noqa: PLC0415
 
-    from devscripts.recreate_fixtures_helpers import (
+    from devscripts.recreate_fixtures_helpers import (  # noqa: PLC0415
         CertificateEncoder,
         _generate_contrib_files,
         create_cas,
@@ -102,7 +100,6 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
         regenerate_ocsp_files,
     )
 
-    # pylint: enable=import-outside-toplevel
     # The time-offsets from now from which CAs/certs are valid starts 25 days in the past, with the largest
     # offset being 20 days. So the latest not_before of any certs is five days in the past from when you run
     # this script.
@@ -634,19 +631,15 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
             cert_values["csr_filename"] = False
 
         if cert_values.get("type") == "ca":
-            data[cert_name].setdefault("not_after", timedelta(days=ca_validity))
+            cert_values.setdefault("not_after", timedelta(days=ca_validity))
         else:
             if common_name := next(
-                (
-                    attr
-                    for attr in data[cert_name]["subject"]
-                    if attr["oid"] == NameOID.COMMON_NAME.dotted_string
-                ),
+                (attr for attr in cert_values["subject"] if attr["oid"] == NameOID.COMMON_NAME.dotted_string),
                 None,  # empty-subject has no common name
             ):
                 data[cert_name]["cn"] = common_name["value"]
 
-            data[cert_name].setdefault("not_after", timedelta(days=cert_validity))
+            cert_values.setdefault("not_after", timedelta(days=cert_validity))
 
     ocsp_data = {}
     if not only_contrib:

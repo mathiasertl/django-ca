@@ -486,7 +486,8 @@ class PrivateKeyUsagePeriodValueModel(PrivateKeyUsagePeriodValueModelBase):  # p
     not_after: datetime | None = None
 
     @model_validator(mode="after")
-    def validate(self) -> Self:
+    def validate_values(self) -> Self:
+        """Validate that at least one value is set, and order of values."""
         if self.not_before is None and self.not_after is None:
             raise ValueError("At least one of not_before and not_after must be set.")
         if self.not_before and self.not_after and self.not_after <= self.not_before:

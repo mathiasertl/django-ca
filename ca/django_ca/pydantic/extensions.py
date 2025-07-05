@@ -855,7 +855,7 @@ class PrivateKeyUsagePeriodModel(PrivateKeyUsagePeriodModelBase):  # pragma: onl
     value: PrivateKeyUsagePeriodValueModel
 
     @property
-    def extension_type(self) -> "x509.PrivateKeyUsagePeriodValueModel":
+    def extension_type(self) -> "x509.PrivateKeyUsagePeriod":
         """Convert to a :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier` instance."""
         return self.value.cryptography
 

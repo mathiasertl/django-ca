@@ -73,6 +73,9 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, DummyBackend)
 
+    def __hash__(self) -> int:
+        return hash(id(self))
+
     def get_create_private_key_options(
         self,
         key_type: ParsableKeyType,
@@ -336,12 +339,12 @@ def cmd_e2e(
     return stdout.getvalue(), stderr.getvalue()
 
 
-def cn(value: str) -> x509.NameAttribute:
+def cn(value: str) -> "x509.NameAttribute[str]":
     """Shortcut for creating a common name attr."""
     return x509.NameAttribute(NameOID.COMMON_NAME, value)
 
 
-def country(value: str) -> x509.NameAttribute:
+def country(value: str) -> "x509.NameAttribute[str]":
     """Shortcut for creating a country attr."""
     return x509.NameAttribute(NameOID.COUNTRY_NAME, value)
 
@@ -538,7 +541,7 @@ def subject_key_identifier(
     return x509.Extension(oid=ExtensionOID.SUBJECT_KEY_IDENTIFIER, critical=False, value=ski)
 
 
-def state(value: str) -> x509.NameAttribute:
+def state(value: str) -> "x509.NameAttribute[str]":
     """Return a state name attr."""
     return x509.NameAttribute(oid=NameOID.STATE_OR_PROVINCE_NAME, value=value)
 

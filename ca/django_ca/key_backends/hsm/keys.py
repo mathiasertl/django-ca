@@ -66,7 +66,11 @@ class PKCS11PrivateKeyMixin:
 
     def __copy__(self) -> Self:  # pragma: no cover
         return type(self)(
-            self.session, self.key_id, self.key_label, self.pkcs11_private_key, self.pkcs11_public_key
+            self._session,
+            self._key_id.decode(),
+            self._key_label,
+            self._pkcs11_private_key,
+            self._pkcs11_public_key,
         )
 
     def decrypt(self, ciphertext: bytes, padding: AsymmetricPadding) -> bytes:
@@ -260,7 +264,11 @@ class PKCS11EllipticCurvePrivateKey(PKCS11PrivateKeyMixin, ec.EllipticCurvePriva
         public_key = encode_ec_public_key(self.pkcs11_public_key)
         return cast(ec.EllipticCurvePublicKey, load_der_public_key(public_key))
 
-    def sign(self, data: bytes, signature_algorithm: ec.EllipticCurveSignatureAlgorithm) -> bytes:
+    def sign(
+        self,
+        data: bytes | bytearray | memoryview,
+        signature_algorithm: ec.EllipticCurveSignatureAlgorithm,
+    ) -> bytes:
         if isinstance(signature_algorithm.algorithm, hashes.SHA224):
             hasher = hashlib.sha224()
         elif isinstance(signature_algorithm.algorithm, hashes.SHA256):
@@ -287,7 +295,7 @@ class PKCS11EllipticCurvePrivateKey(PKCS11PrivateKeyMixin, ec.EllipticCurvePriva
 
 
 # pylint: disable-next=abstract-method  # private key functions are deliberately not implemented in base.
-class PKCS11Ed25519PrivateKey(
+class PKCS11Ed25519PrivateKey(  # type: ignore[misc]  # mypy complains about sign() not matching.
     PKCS11EdwardsPrivateKeyMixin[ed25519.Ed25519PublicKey], ed25519.Ed25519PrivateKey
 ):
     """Private key implementation for Ed25519 keys stored in a HSM."""
@@ -296,7 +304,9 @@ class PKCS11Ed25519PrivateKey(
 
 
 # pylint: disable-next=abstract-method  # private key functions are deliberately not implemented in base.
-class PKCS11Ed448PrivateKey(PKCS11EdwardsPrivateKeyMixin[ed448.Ed448PublicKey], ed448.Ed448PrivateKey):
+class PKCS11Ed448PrivateKey(  # type: ignore[misc]  # mypy complains about sign() not matching.
+    PKCS11EdwardsPrivateKeyMixin[ed448.Ed448PublicKey], ed448.Ed448PrivateKey
+):
     """Private key implementation for Ed448 keys stored in a HSM."""
 
     public_key_algorithm = "ed448"

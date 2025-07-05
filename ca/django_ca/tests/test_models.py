@@ -136,7 +136,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         pub = bytearray(self.pub["der"])
         csr = bytearray(self.csr["parsed"].public_bytes(Encoding.DER))
         cert = Certificate.objects.create(
-            pub=pub,
+            pub=pub,  # type: ignore[misc] # what we test
             csr=csr,
             ca=self.ca,
             not_after=timezone.now(),
@@ -156,7 +156,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
         pub = memoryview(self.pub["der"])
         csr = memoryview(self.csr["parsed"].public_bytes(Encoding.DER))
         cert = Certificate.objects.create(
-            pub=pub,
+            pub=pub,  # type: ignore[misc]
             csr=csr,
             ca=self.ca,
             not_after=timezone.now(),

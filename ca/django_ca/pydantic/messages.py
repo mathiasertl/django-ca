@@ -87,8 +87,7 @@ class SignCertificateMessage(ResignCertificateMessage):
         },
     )
     extensions: list[ConfigurableExtensionModel] | None = Field(
-        default_factory=list,  # type: ignore[arg-type]  # false positive
-        description="**Optional** additional extensions to add to the certificate.",
+        default_factory=list, description="**Optional** additional extensions to add to the certificate."
     )
     profile: str = Field(
         description="Issue the certificate with the given profile.",

@@ -246,7 +246,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
                 % {"key_type": ca.key_type},
             )
 
-        common_names: list[x509.NameAttribute] = []
+        common_names: list[x509.NameAttribute[str | bytes]] = []
         if subject is not None:
             common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
 

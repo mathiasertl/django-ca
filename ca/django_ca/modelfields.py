@@ -109,6 +109,9 @@ class LazyField(Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta)
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and self._bytes == other._bytes
 
+    def __hash__(self) -> int:  # pragma: no cover
+        return hash(self._bytes)
+
     def __repr__(self) -> str:
         name = self.__class__.__name__
         value = self.loaded.subject.rfc4514_string()

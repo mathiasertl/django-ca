@@ -575,7 +575,7 @@ class KeyBackends(KeyBackendsProxy[KeyBackend[BaseModel, BaseModel, BaseModel]])
     """A key backend handler similar to Django's storages or caches handler."""
 
     _setting = "CA_KEY_BACKENDS"
-    _type = KeyBackend
+    _type = KeyBackend  # type: ignore[assignment]
 
 
 class OCSPKeyBackends(KeyBackendsProxy[OCSPKeyBackend]):

@@ -91,7 +91,7 @@ def _wait_for(
 def console_include(path: str, context: dict[str, Any]) -> Iterator[None]:
     """Run a console-include from the django_ca_sphinx Sphinx extension."""
     # PYLINT NOTE: lazy import so that just importing this module has no external dependencies
-    import jinja2  # pylint: disable=import-outside-toplevel
+    import jinja2  # noqa: PLC0415
 
     env = jinja2.Environment(autoescape=False, undefined=jinja2.StrictUndefined)
 

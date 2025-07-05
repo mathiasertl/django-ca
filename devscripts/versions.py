@@ -16,7 +16,7 @@
 
 def get_last_version() -> str:
     """Get the last version that was released based on the installed versiond."""
-    import django_ca  # pylint: disable=import-outside-toplevel
+    import django_ca  # noqa: PLC0415
 
     version = django_ca.__packaging_version__
 

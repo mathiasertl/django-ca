@@ -14,7 +14,6 @@
 """Utility functions for OCSP tests."""
 
 import base64
-import typing
 from http import HTTPStatus
 
 from cryptography import x509
@@ -40,7 +39,7 @@ def generate_ocsp_key(ca: CertificateAuthority) -> tuple[CertificateIssuerPrivat
     assert ocsp_cert is not None
     ocsp_key_backend = ca.ocsp_key_backend
     assert isinstance(ocsp_key_backend, StoragesOCSPBackend)
-    private_key = typing.cast(CertificateIssuerPrivateKeyTypes, ocsp_key_backend.load_private_key(ca))
+    private_key = ocsp_key_backend.load_private_key(ca)
     return private_key, ocsp_cert
 
 

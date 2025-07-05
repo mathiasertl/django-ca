@@ -66,6 +66,9 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, DBBackend)
 
+    def __hash__(self) -> int:  # pragma: no cover
+        return hash(id(self))
+
     def add_create_private_key_group(self, parser: CommandParser) -> ArgumentGroup | None:
         return None
 

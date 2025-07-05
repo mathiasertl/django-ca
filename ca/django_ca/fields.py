@@ -400,7 +400,7 @@ class ExtendedKeyUsageField(MultipleChoiceExtensionField[x509.ExtendedKeyUsage])
     """Form field for a :py:class:`~cg:cryptography.x509.ExtendedKeyUsage` extension."""
 
     extension_type = x509.ExtendedKeyUsage
-    choices = _EXTENDED_KEY_USAGE_CHOICES
+    choices = _EXTENDED_KEY_USAGE_CHOICES  # type: ignore[assignment] # we are more specific
     widget = widgets.ExtendedKeyUsageWidget
 
     def get_values(self, value: list[str]) -> x509.ExtendedKeyUsage | None:
@@ -424,7 +424,7 @@ class IssuerAlternativeNameField(AlternativeNameField[x509.IssuerAlternativeName
 class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
     """Form field for a :py:class:`~cg:cryptography.x509.KeyUsage` extension."""
 
-    choices = sorted(KEY_USAGE_NAMES.items(), key=lambda t: t[1])
+    choices = sorted(KEY_USAGE_NAMES.items(), key=lambda t: t[1])  # type: ignore[assignment]  # we are more specific
 
     extension_type = x509.KeyUsage
     widget = widgets.KeyUsageWidget
@@ -458,7 +458,7 @@ class TLSFeatureField(MultipleChoiceExtensionField[x509.TLSFeature]):
     """Form field for a :py:class:`~cg:cryptography.x509.TLSFeature` extension."""
 
     extension_type = x509.TLSFeature
-    choices = (
+    choices = (  # type: ignore[assignment]  # we are more specific
         (x509.TLSFeatureType.status_request.name, "status_request (OCSPMustStaple)"),
         (x509.TLSFeatureType.status_request_v2.name, "status_request_v2 (MultipleCertStatusRequest)"),
     )  # TODO: choices can also be a function - better for testing for completeness

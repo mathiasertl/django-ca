@@ -31,7 +31,7 @@ from devscripts.out import warn
 
 def format_name(name: x509.Name | x509.RelativeDistinguishedName) -> str:
     """Wrapper around format_name_rfc4514 avoiding a top-level import."""
-    from django_ca.utils import format_name_rfc4514  # pylint: disable=import-outside-toplevel
+    from django_ca.utils import format_name_rfc4514  # noqa: PLC0415
 
     return format_name_rfc4514(name)
 
@@ -265,11 +265,9 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
     """Update certificate/ca data."""
     # pylint: disable=too-many-locals; there are many extensions
 
-    # pylint: disable=import-outside-toplevel  # django is not configured at top level
-    from django_ca import constants
-    from django_ca.utils import bytes_to_hex, format_general_name
-
-    # pylint: enable=import-outside-toplevel
+    # django is not configured at top level
+    from django_ca import constants  # noqa: PLC0415
+    from django_ca.utils import bytes_to_hex, format_general_name  # noqa: PLC0415
 
     cert_values: dict[str, list[Sequence[str]]] = {
         "subject": [
@@ -459,7 +457,7 @@ def update_cert_data(  # noqa: PLR0912,PLR0915
             if isinstance(row[0], list):
                 cert_values[key].append([cert_name] + row[0])
                 for mrow in row[1:]:
-                    cert_values[key].append(["", ""] + mrow[1:])
+                    cert_values[key].append(["", "", *mrow[1:]])
             else:
                 cert_values[key].append([cert_name, *row])
 

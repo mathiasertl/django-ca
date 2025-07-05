@@ -277,7 +277,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         )
 
     @pytest.fixture
-    def main_account(self) -> AcmeAccount:  # type: ignore[override]
+    def main_account(self) -> AcmeAccount:
         return self.account2
 
     @unittest.skip("Test only tests base functionality, but does not work with unusual KID/JWK setup.")
