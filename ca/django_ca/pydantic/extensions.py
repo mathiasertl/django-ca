@@ -105,6 +105,7 @@ from django_ca.pydantic.extension_attributes import (
     NameConstraintsValueModel,
     PolicyConstraintsValueModel,
     PolicyInformationModel,
+    PrivateKeyUsagePeriodValueModel,
     SignedCertificateTimestampModel,
     UnrecognizedExtensionValueModel,
 )
@@ -118,15 +119,10 @@ from django_ca.typehints import (
     InformationAccessTypeVar,
     KeyUsages,
     NoValueExtensionTypeVar,
+    Self,
     SerializedPydanticExtension,
     SignedCertificateTimestampTypeVar,
 )
-
-if TYPE_CHECKING:
-    from typing import Self
-
-    from pydantic.main import IncEx
-
 
 ###############
 # Base models #
@@ -183,8 +179,8 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
             self,
             *,
             mode: Literal["json", "python"] | str = "python",
-            include: IncEx | None = None,
-            exclude: IncEx | None = None,
+            include: "IncEx" | None = None,
+            exclude: "IncEx" | None = None,
             by_alias: bool = False,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -836,6 +832,34 @@ class PrecertificateSignedCertificateTimestampsModel(
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS]
 
 
+if TYPE_CHECKING:
+    PrivateKeyUsagePeriodModelBase = ExtensionModel[x509.PrivateKeyUsagePeriod]
+    from pydantic.main import IncEx
+else:
+    PrivateKeyUsagePeriodModelBase = ExtensionModel
+
+
+class PrivateKeyUsagePeriodModel(PrivateKeyUsagePeriodModelBase):
+    """Pydantic model for a :py:class:`~cg:cryptography.x509.PrivateKeyUsagePeriod` extension.
+
+    .. NOTE:: This class will not be able to produce a cryptography instance when using ``cryptography<45``.
+
+    .. versionadded:: 2.3.0
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    type: Literal["private_key_usage_period"] = Field(default="private_key_usage_period", repr=False)
+    critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.PRIVATE_KEY_USAGE_PERIOD]
+    requires_critical = False  # Extension must not be marked as critical
+    value: PrivateKeyUsagePeriodValueModel
+
+    @property
+    def extension_type(self) -> "x509.PrivateKeyUsagePeriodValueModel":
+        """Convert to a :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier` instance."""
+        return self.value.cryptography
+
+
 class SignedCertificateTimestampsModel(SignedCertificateTimestampBaseModel[x509.SignedCertificateTimestamps]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.SignedCertificateTimestamps` extension.
 
@@ -985,6 +1009,7 @@ EXTENSION_MODEL_OIDS: "MappingProxyType[type[ExtensionModel[Any]], x509.ObjectId
         PolicyConstraintsModel: ExtensionOID.POLICY_CONSTRAINTS,
         PrecertPoisonModel: ExtensionOID.PRECERT_POISON,
         PrecertificateSignedCertificateTimestampsModel: ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS,
+        PrivateKeyUsagePeriodModel: ExtensionOID.PRIVATE_KEY_USAGE_PERIOD,
         SignedCertificateTimestampsModel: ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS,
         SubjectAlternativeNameModel: ExtensionOID.SUBJECT_ALTERNATIVE_NAME,
         SubjectInformationAccessModel: ExtensionOID.SUBJECT_INFORMATION_ACCESS,
@@ -1049,6 +1074,7 @@ CertificateExtensionModel = Annotated[
         | PolicyConstraintsModel
         | PrecertPoisonModel
         | PrecertificateSignedCertificateTimestampsModel
+        | PrivateKeyUsagePeriodModel
         | SignedCertificateTimestampsModel
         | SubjectAlternativeNameModel
         | SubjectInformationAccessModel

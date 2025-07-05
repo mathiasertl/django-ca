@@ -36,6 +36,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
+from django_ca.typehints import Self
+
 EdwardsPublicKeyTypeVar = TypeVar("EdwardsPublicKeyTypeVar", ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)
 
 
@@ -61,6 +63,11 @@ class PKCS11PrivateKeyMixin:
         self._pkcs11_public_key = pkcs11_public_key
 
         super().__init__()
+
+    def __copy__(self) -> Self:  # pragma: no cover
+        return type(self)(
+            self.session, self.key_id, self.key_label, self.pkcs11_private_key, self.pkcs11_public_key
+        )
 
     def decrypt(self, ciphertext: bytes, padding: AsymmetricPadding) -> bytes:
         raise NotImplementedError(

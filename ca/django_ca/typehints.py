@@ -118,6 +118,7 @@ EndEntityCertificateExtensionKeys = (
         "authority_key_identifier",  # derived from the issuer
         "basic_constraints",  # must not be configured by a user
         "precertificate_signed_certificate_timestamps",  # added by the CA
+        "private_key_usage_period",
         "signed_certificate_timestamps",  # added by the CA
         "subject_information_access",
         "subject_key_identifier",  # derived from the certificates public key
@@ -263,6 +264,7 @@ EndEntityCertificateExtensionType = (
     | x509.SignedCertificateTimestamps
     | x509.SubjectInformationAccess
     | x509.SubjectKeyIdentifier
+    | x509.PrivateKeyUsagePeriod
 )
 
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in any certificate.
@@ -299,6 +301,7 @@ EndEntityCertificateExtension = (
     | x509.Extension[x509.AuthorityKeyIdentifier]
     | x509.Extension[x509.BasicConstraints]
     | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
+    | x509.Extension[x509.PrivateKeyUsagePeriod]
     | x509.Extension[x509.SignedCertificateTimestamps]
     | x509.Extension[x509.SubjectInformationAccess]
     | x509.Extension[x509.SubjectKeyIdentifier]

@@ -15,7 +15,7 @@
 
 import base64
 from datetime import datetime
-from typing import Annotated, Any, Literal, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn
 
 from annotated_types import MaxLen, MinLen
 from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
@@ -30,7 +30,12 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet, OIDType
-from django_ca.typehints import DistributionPointReasons, LogEntryTypes
+from django_ca.typehints import DistributionPointReasons, LogEntryTypes, Self
+
+if TYPE_CHECKING:
+    PrivateKeyUsagePeriodValueModelBase = CryptographyModel[x509.PrivateKeyUsagePeriod]
+else:
+    PrivateKeyUsagePeriodValueModelBase = CryptographyModel
 
 _NOTICE_REFERENCE_DESCRIPTION = (
     "A NoticeReferenceModel consists of an optional *organization* and an optional list of *notice_numbers*."
@@ -471,6 +476,26 @@ class IssuingDistributionPointValueModel(CryptographyModel[x509.IssuingDistribut
             full_name=full_name,
             relative_name=relative_name,
         )
+
+
+class PrivateKeyUsagePeriodValueModel(PrivateKeyUsagePeriodValueModelBase):
+    """Pydantic model wrapping ``PrivateKeyUsagePeriod``."""
+
+    model_config = ConfigDict(from_attributes=True)
+    not_before: datetime | None = None
+    not_after: datetime | None = None
+
+    @model_validator(mode="after")
+    def validate(self) -> Self:
+        if self.not_before is None and self.not_after is None:
+            raise ValueError("At least one of not_before and not_after must be set.")
+        if self.not_before and self.not_after and self.not_after <= self.not_before:
+            raise ValueError("not_after cannot be before not_before.")
+        return self
+
+    @property
+    def cryptography(self) -> "x509.PrivateKeyUsagePeriod":
+        return x509.PrivateKeyUsagePeriod(not_before=self.not_before, not_after=self.not_after)
 
 
 class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency.SignedCertificateTimestamp]):

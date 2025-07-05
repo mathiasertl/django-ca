@@ -575,11 +575,6 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         self.chall.type = AcmeChallenge.TYPE_DNS_01
         self.assertChallenge(self.chall.acme_challenge, "dns-01", self.chall.token.encode(), challenges.DNS01)
 
-        self.chall.type = AcmeChallenge.TYPE_TLS_ALPN_01
-        self.assertChallenge(
-            self.chall.acme_challenge, "tls-alpn-01", self.chall.token.encode(), challenges.TLSALPN01
-        )
-
         self.chall.type = "foo"
         with pytest.raises(ValueError, match=r"^foo: Unsupported challenge type\.$"):
             self.chall.acme_challenge  # noqa: B018

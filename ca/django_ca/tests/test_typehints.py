@@ -27,6 +27,12 @@ def _oid_sorter(oid: x509.ObjectIdentifier) -> str:
     return oid.dotted_string
 
 
+def _extension_type_sorter(extension_type: type[x509.ExtensionType]) -> str:
+    if extension_type == x509.UnrecognizedExtension:
+        return ""
+    return extension_type.oid.dotted_string
+
+
 def test_configurable_extension_keys() -> None:
     """Test that ConfigurableExtensionKeys matches ConfigurableExtensionType."""
     keys = get_args(typehints.ConfigurableExtensionKeys)
@@ -57,4 +63,6 @@ def test_end_entity_certificate_extension_keys() -> None:
 )
 def test_extension_types_equality(extension_types: Any, extensions: Any) -> None:
     """Test that extension_types typehints match the full extension typehints."""
-    assert get_args(extension_types) == tuple(get_args(ext)[0] for ext in get_args(extensions))
+    assert sorted(get_args(extension_types), key=_extension_type_sorter) == sorted(
+        list(get_args(ext)[0] for ext in get_args(extensions)), key=_extension_type_sorter
+    )

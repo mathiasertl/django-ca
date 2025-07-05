@@ -338,7 +338,7 @@ def test_authority_information_access_field_with_empty_value(
 @pytest.mark.parametrize(
     ("ser_ca_issuers", "ser_ocsp", "error"),
     (
-        (({"type": "DNS", "value": "http://example.com"},), (), ""),
+        (({"type": "DNS", "value": "http://example.com"},), (), None),
         (({"type": "IP", "value": "example.com"},), (), "example.com: Could not parse IP address"),
     ),
 )

@@ -351,7 +351,6 @@ def _load_pub(data: dict[str, Any]) -> PubDict:
         key_data = stream.read()
 
     if _cert_data["cat"] == "sphinx-contrib":
-        print(data["pub_path"])
         parsed = x509.load_pem_x509_certificate(key_data)
         pem = key_data.decode("utf-8")
         der = parsed.public_bytes(Encoding.DER)

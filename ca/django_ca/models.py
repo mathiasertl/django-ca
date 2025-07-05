@@ -1700,8 +1700,6 @@ class AcmeChallenge(DjangoCAModel):
             return challenges.HTTP01(token=token)
         if self.type == AcmeChallenge.TYPE_DNS_01:
             return challenges.DNS01(token=token)
-        if self.type == AcmeChallenge.TYPE_TLS_ALPN_01:
-            return challenges.TLSALPN01(token=token)
 
         raise ValueError(f"{self.type}: Unsupported challenge type.")
 

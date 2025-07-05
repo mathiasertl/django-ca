@@ -70,6 +70,9 @@ class ExtensionOID(_ExtensionOID):
     currently supported versions of cryptography.
     """
 
+    if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
+        PRIVATE_KEY_USAGE_PERIOD = x509.ObjectIdentifier("2.5.29.16")
+
 
 ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = MappingProxyType(
     {
@@ -129,11 +132,15 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
 
+    if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
+        BUNDLE_SECURITY = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.35")
+
 
 #: Map of ExtendedKeyUsageOIDs to names in RFC 5280 (and other RFCs).
 EXTENDED_KEY_USAGE_NAMES = MappingProxyType(
     {
         ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "anyExtendedKeyUsage",
+        ExtendedKeyUsageOID.BUNDLE_SECURITY: "bundleSecurity",
         ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY: "certificateTransparency",
         ExtendedKeyUsageOID.CLIENT_AUTH: "clientAuth",
         ExtendedKeyUsageOID.CODE_SIGNING: "codeSigning",
@@ -159,6 +166,7 @@ EXTENDED_KEY_USAGE_OIDS = MappingProxyType({v: k for k, v in EXTENDED_KEY_USAGE_
 EXTENDED_KEY_USAGE_HUMAN_READABLE_NAMES = MappingProxyType(
     {
         ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE: "Any Extended Key Usage",
+        ExtendedKeyUsageOID.BUNDLE_SECURITY: "Bundle Security",
         ExtendedKeyUsageOID.CERTIFICATE_TRANSPARENCY: "Certificate Transparency",
         ExtendedKeyUsageOID.CLIENT_AUTH: "SSL/TLS Web Client Authentication",
         ExtendedKeyUsageOID.CODE_SIGNING: "Code signing",
@@ -212,6 +220,7 @@ EXTENSION_CRITICAL_HELP = MappingProxyType(
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: _(  # defined in RFC 6962
             "may or may not be critical (recommended: non-critical)"
         ),
+        ExtensionOID.PRIVATE_KEY_USAGE_PERIOD: _("MUST NOT be critical"),
         ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: _(  # defined in RFC 6962
             "may or may not be critical (recommended: non-critical)"
         ),
@@ -246,6 +255,7 @@ EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
         ExtensionOID.POLICY_MAPPINGS: True,  # SHOULD mark this extension as critical
         ExtensionOID.PRECERT_POISON: True,  # RFC 6962: "critical poison extension"
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: False,  # RFC 6962 doesn't say
+        ExtensionOID.PRIVATE_KEY_USAGE_PERIOD: False,
         ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: False,  # RFC 6962 doesn't say
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: False,  # SHOULD mark the extension as non-critical.
         ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: False,  # MUST mark this extension as non-critical
@@ -285,6 +295,7 @@ END_ENTITY_CERTIFICATE_EXTENSION_KEYS: MappingProxyType[
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
         ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
+        ExtensionOID.PRIVATE_KEY_USAGE_PERIOD: "private_key_usage_period",
         ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
         ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",
@@ -356,6 +367,7 @@ EXTENSION_NAMES = MappingProxyType(
         ExtensionOID.POLICY_MAPPINGS: "Policy Mappings",
         ExtensionOID.PRECERT_POISON: "Precert Poison",  # RFC 7633
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "Precertificate Signed Certificate Timestamps",  # RFC 7633  # NOQA: E501
+        ExtensionOID.PRIVATE_KEY_USAGE_PERIOD: "Private Key Usage Period",
         ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "Signed Certificate Timestamps",  # RFC 7633
         ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "Subject Alternative Name",
         ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES: "Subject Directory Attributes",

@@ -14,6 +14,7 @@
 """Test Pydantic models for extensions."""
 
 import re
+from datetime import datetime, timezone as tz
 from typing import Any, get_args
 
 from pydantic import ValidationError
@@ -70,6 +71,7 @@ from django_ca.pydantic.extensions import (
     PolicyConstraintsModel,
     PrecertificateSignedCertificateTimestampsModel,
     PrecertPoisonModel,
+    PrivateKeyUsagePeriodModel,
     SignedCertificateTimestampsModel,
     SubjectAlternativeNameModel,
     SubjectInformationAccessModel,
@@ -1497,6 +1499,59 @@ def test_precert_poison(critical: bool | None) -> None:
 def test_precert_poison_errors() -> None:
     """Test validation errors for the PolicyConstraintsModel."""
     assert_validation_errors(PrecertPoisonModel, {"critical": False}, [MUST_BE_CRITICAL_ERROR])
+
+
+@pytest.mark.parametrize("critical", (False, None))
+@pytest.mark.parametrize(
+    ("not_before", "not_after"),
+    (
+        (datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc), datetime(2025, 7, 5, 11, 51, tzinfo=tz.utc)),
+        (None, datetime(2025, 7, 5, 11, 51, tzinfo=tz.utc)),
+        (datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc), None),
+    ),
+)
+def test_private_key_usage_period(
+    critical: bool | None, not_before: datetime | None, not_after: datetime | None
+) -> None:
+    """Test the PrivateKeyUsagePeriodModel."""
+    value = {"not_before": not_before, "not_after": not_after}
+    extension_type = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
+    assert_extension_model(PrivateKeyUsagePeriodModel, value, extension_type, critical)
+
+
+@pytest.mark.parametrize(
+    ("parameters", "expected_errors"),
+    (
+        (
+            {"value": {}},
+            [
+                (
+                    "value_error",
+                    ("value",),
+                    "Value error, At least one of not_before and not_after must be set.",
+                ),
+            ],
+        ),
+        (
+            {
+                "value": {
+                    "not_after": datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc),
+                    "not_before": datetime(2025, 7, 5, 11, 51, tzinfo=tz.utc),
+                }
+            },
+            [
+                (
+                    "value_error",
+                    ("value",),
+                    "Value error, not_after cannot be before not_before.",
+                ),
+            ],
+        ),
+    ),
+)
+def test_private_key_usage_period_errors(parameters: dict[str, Any], expected_errors: ExpectedErrors) -> None:
+    """Test validation errors for the PrivateKeyUsagePeriod."""
+    assert_validation_errors(PrivateKeyUsagePeriodModel, parameters, expected_errors)
 
 
 def test_precertificate_signed_certificate_timestamps(
