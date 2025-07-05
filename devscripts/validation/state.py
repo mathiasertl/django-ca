@@ -116,7 +116,7 @@ def check_github_action_versions(job: dict[str, Any], name: str) -> int:
                 if name == "Documentation":
                     info("Known outdated version for Sphinx.")
                 else:
-                    py_version = step_config["with"]["python-version"]
+                    py_version = str(step_config["with"]["python-version"])
                     newest_python = config.PYTHON_RELEASES[-1]
                     if py_version not in ("${{ matrix.python-version }}", newest_python):
                         errors += err(f"Outdated Python version: {py_version} (newest: {newest_python})")
@@ -137,7 +137,7 @@ def check_github_actions_tests() -> int:
             action_config = yaml.safe_load(stream)
 
         for _job_name, job in action_config["jobs"].items():
-            check_github_action_versions(job, action_config["name"])
+            errors += check_github_action_versions(job, action_config["name"])
 
             if matrix := job.get("strategy", {}).get("matrix"):
                 for key, values in matrix.items():
