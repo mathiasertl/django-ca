@@ -16,6 +16,7 @@
 import os
 import sys
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 from sphinx.addnodes import document, pending_xref
@@ -95,6 +96,7 @@ extensions = [
     "sphinxcontrib.openapi",
     "sphinxcontrib.jquery",
     "django_ca_sphinx",
+    "structured_tutorials.sphinx",
 ]
 
 if spelling is not None:
@@ -109,6 +111,7 @@ numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
 manpages_url = "https://manpages.debian.org/{page}.{section}"
 
+tutorial_root = Path(_ROOT_DIR)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

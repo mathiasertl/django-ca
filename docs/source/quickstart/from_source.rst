@@ -2,6 +2,8 @@
 Quickstart from source
 ######################
 
+.. tutorial:: tutorials/quickstart_from_source.yaml
+
 This guide provides instructions for running your own certificate authority by installing django-ca from
 source. This method requires a lot of manual configuration and a lot of expert knowledge, but is a good choice
 if you use an exotic system or other options do not work for you for some reason. If you're looking for a
@@ -25,6 +27,28 @@ Requirements
 .. jinja:: requirements-from-source
    :file: /include/guide-requirements.rst.jinja
    :header_update_levels:
+
+General setup overview
+======================
+
+We're going to show different hosts, but can all run on one host too
+graph of hosts
+all servers up to date
+
+Setup a broker
+==============
+
+**django-ca** uses `Celery <https://docs.celeryq.dev/en/stable/index.html>`__ to distribute tasks (such as
+issuing new certificates) and to schedule regular tasks (e.g. regenerate CRLs). Celery supports several
+transports (`overview
+<https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html>`_), and we are showing
+both RabbitMQ and Redis setups here.
+
+.. part:: setup-broker
+
+... and now as non-root, clone source:
+
+.. part:: clone-source
 
 Required software
 =================

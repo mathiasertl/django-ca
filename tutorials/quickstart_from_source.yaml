@@ -1,0 +1,28 @@
+context:
+  documentation: {}
+parts:
+  - id: setup-broker
+    alternatives:
+      rabbitmq:
+        description: RabbitMQ requires that you create a username and vhost after installation.
+      redis:
+        description: Redis installation is quite straight forward.
+    commands:
+      # Configure permissions for django-ca, see also:
+      #   https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/rabbitmq.html
+      - command: apt install {% if execution %}-y {% endif %}rabbitmq-server
+        alternative: rabbitmq
+        documentation:
+          output: ...
+      - command: rabbitmqctl add_user django-ca broker-password
+        alternative: rabbitmq
+      - command: rabbitmqctl add_vhost django-ca
+        alternative: rabbitmq
+      - command: apt install {% if execution %}-y {% endif %} redis
+        alternative: redis
+      #- rabbitmqctl set_user_tags django-ca django-ca
+      #- 'rabbitmqctl set_permissions -p django-ca django-ca ".*" ".*" ".*"'
+
+  - id: clone-source
+    commands:
+      - git clone
