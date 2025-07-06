@@ -23,18 +23,23 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, N
 from django.utils.functional import classproperty
 from django.utils.safestring import mark_safe
 
+import pytest
 from pytest_django.asserts import assertInHTML
 
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, ExtendedKeyUsageOID
 from django_ca.extensions import extension_as_text
 from django_ca.extensions.utils import extension_as_admin_html
 from django_ca.tests.base.utils import dns, rdn, uri
-from django_ca.typehints import CertificateExtension, CertificateExtensionType, CRLExtensionType
+from django_ca.typehints import (
+    CRYPTOGRAPHY_VERSION,
+    CertificateExtension,
+    CertificateExtensionType,
+    CRLExtensionType,
+)
 
 
 class _ExtensionExampleDict(typing.TypedDict):
     admin_html: str
-    serialized: Any
     extension_type: CertificateExtensionType
     text: "str"
 
@@ -42,7 +47,6 @@ class _ExtensionExampleDict(typing.TypedDict):
 class ExtensionExampleDict(_ExtensionExampleDict, total=False):
     """Value used to define generic test cases."""
 
-    serialized_alternatives: list[Any]
     extension_type_alternatives: list[CertificateExtensionType]
 
 
@@ -53,9 +57,6 @@ def pytest_generate_tests(metafunc: Any) -> None:
     """Generate parametrized test functions based on test_values property."""
     if hasattr(metafunc.cls, "test_values"):
         func_arg_list = metafunc.cls.test_values
-        metafunc.parametrize("name,config", tuple(func_arg_list.items()))
-    elif hasattr(metafunc.cls, "get_test_values"):
-        func_arg_list = metafunc.cls.get_test_values()
         metafunc.parametrize("name,config", tuple(func_arg_list.items()))
 
 
@@ -116,40 +117,12 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     @classproperty  # pylint: disable-next=no-self-argument
     def test_values(cls) -> ExtensionExampleValues:
         """Overwritten because we access ext_class_type, so we can use subclasses."""
-        rdn1 = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}]
-
-        s1 = {"full_name": [f"URI:{cls.uri1}"]}
-        s2 = {"full_name": [f"URI:{cls.uri1}", f"DNS:{cls.dns1}"]}
-        s3 = {"relative_name": rdn1}
-        s4 = {
-            "full_name": [f"URI:{cls.uri2}"],
-            "crl_issuer": [f"URI:{cls.uri3}"],
-            "reasons": ["ca_compromise", "key_compromise"],
-        }
-        s5 = {
-            "full_name": [f"URI:{cls.uri2}"],
-            "crl_issuer": [f"URI:{cls.uri3}"],
-            "reasons": [x509.ReasonFlags.ca_compromise, x509.ReasonFlags.key_compromise],
-        }
-        s6 = {
-            "full_name": [f"URI:{cls.uri2}"],
-            "crl_issuer": [f"URI:{cls.uri3}"],
-            "reasons": ["cACompromise", "keyCompromise"],
-        }
-
         return {
             "one": {
                 "admin_html": f"""DistributionPoint:
   <ul>
       <li>Full Name: URI:{cls.uri1}</li>
   </ul>""",
-                "serialized_alternatives": [
-                    [s1],
-                    [cls.cg_dp1],
-                    [{"full_name": [cls.uri1]}],
-                    [{"full_name": [uri(cls.uri1)]}],
-                ],
-                "serialized": [s1],
                 "extension_type": cls.cg_dps1,
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{cls.uri1}",
             },
@@ -158,13 +131,6 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
   <ul>
       <li>Full Name: URI:{cls.uri1}, DNS:{cls.dns1}</li>
   </ul>""",
-                "serialized_alternatives": [
-                    [s2],
-                    [cls.cg_dp2],
-                    [{"full_name": [cls.uri1, cls.dns1]}],
-                    [{"full_name": [uri(cls.uri1), dns(cls.dns1)]}],
-                ],
-                "serialized": [s2],
                 "extension_type": cls.cg_dps2,
                 "text": f"* DistributionPoint:\n  * Full Name:\n    * URI:{cls.uri1}\n    * DNS:{cls.dns1}",
             },
@@ -173,8 +139,6 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
   <ul>
       <li>Relative Name:<ul><li>commonName (CN): example.com</li></ul></li>
   </ul>""",
-                "serialized_alternatives": [[s3], [cls.cg_dp3], [{"relative_name": cls.cg_rdn1}]],
-                "serialized": [s3],
                 "extension_type": cls.cg_dps3,
                 "text": "* DistributionPoint:\n  * Relative Name:\n    * commonName (CN): example.com",
             },
@@ -185,8 +149,6 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
       <li>CRL Issuer: URI:{cls.uri3}</li>
       <li>Reasons: ca_compromise, key_compromise</li>
   </ul>""",
-                "serialized_alternatives": [[s4], [s5], [s6], [cls.cg_dp4]],
-                "serialized": [s4],
                 "extension_type": cls.cg_dps4,
                 "text": f"""* DistributionPoint:
   * Full Name:
@@ -215,11 +177,6 @@ class TestAuthorityInformationAccess(ExtensionTestCaseMixin):
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri1))]
             ),
-            "serialized": {"issuers": [f"URI:{uri1}"]},
-            "serialized_alternatives": [
-                {"issuers": [uri1]},
-                {"issuers": [uri(uri1)]},
-            ],
             "text": f"CA Issuers:\n  * URI:{uri1}",
         },
         "ocsp": {
@@ -227,11 +184,6 @@ class TestAuthorityInformationAccess(ExtensionTestCaseMixin):
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri2))]
             ),
-            "serialized": {"ocsp": [f"URI:{uri2}"]},
-            "serialized_alternatives": [
-                {"ocsp": [uri2]},
-                {"ocsp": [uri(uri2)]},
-            ],
             "text": f"OCSP:\n  * URI:{uri2}",
         },
         "both": {
@@ -242,11 +194,6 @@ class TestAuthorityInformationAccess(ExtensionTestCaseMixin):
                     x509.AccessDescription(AuthorityInformationAccessOID.CA_ISSUERS, uri(uri2)),
                 ]
             ),
-            "serialized": {"ocsp": [f"URI:{uri1}"], "issuers": [f"URI:{uri2}"]},
-            "serialized_alternatives": [
-                {"ocsp": [uri1], "issuers": [uri2]},
-                {"ocsp": [uri(uri1)], "issuers": [uri(uri2)]},
-            ],
             "text": f"CA Issuers:\n  * URI:{uri2}\nOCSP:\n  * URI:{uri1}",
         },
         "multiple": {
@@ -260,15 +207,6 @@ OCSP:
   <li>URI:{uri1}</li>
   <li>URI:{uri2}</li>
 </ul>""",
-            "serialized_alternatives": [
-                {"ocsp": [uri1, uri2], "issuers": [uri3, uri4]},
-                {"ocsp": [uri1, uri(uri2)], "issuers": [uri3, uri(uri4)]},
-                {"ocsp": [uri(uri1), uri(uri2)], "issuers": [uri(uri3), uri(uri4)]},
-            ],
-            "serialized": {
-                "ocsp": [f"URI:{uri1}", f"URI:{uri2}"],
-                "issuers": [f"URI:{uri3}", f"URI:{uri4}"],
-            },
             "extension_type": x509.AuthorityInformationAccess(
                 descriptions=[
                     x509.AccessDescription(AuthorityInformationAccessOID.OCSP, uri(uri1)),
@@ -301,22 +239,16 @@ class TestAuthorityKeyIdentifier(ExtensionTestCaseMixin):
         "one": {
             "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex1}</span></li></ul>",
             "extension_type": x509.AuthorityKeyIdentifier(b1, None, None),
-            "serialized": {"key_identifier": hex1},
-            "serialized_alternatives": [hex1, {"key_identifier": hex1}],
             "text": f"* KeyID: {hex1}",
         },
         "two": {
             "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex2}</span></li></ul>",
             "extension_type": x509.AuthorityKeyIdentifier(b2, None, None),
-            "serialized": {"key_identifier": hex2},
-            "serialized_alternatives": [hex2],
             "text": f"* KeyID: {hex2}",
         },
         "three": {
             "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex3}</span></li></ul>",
             "extension_type": x509.AuthorityKeyIdentifier(b3, None, None),
-            "serialized": {"key_identifier": hex3},
-            "serialized_alternatives": [hex3],
             "text": f"* KeyID: {hex3}",
         },
         "issuer/serial": {
@@ -329,14 +261,6 @@ class TestAuthorityKeyIdentifier(ExtensionTestCaseMixin):
     </li>
 </ul>""",
             "extension_type": x509.AuthorityKeyIdentifier(None, [dns(dns1)], s1),
-            "serialized": {
-                "authority_cert_issuer": [f"DNS:{dns1}"],
-                "authority_cert_serial_number": s1,
-            },
-            "serialized_alternatives": [
-                {"authority_cert_issuer": [dns1], "authority_cert_serial_number": s1},
-                {"authority_cert_issuer": [dns1], "authority_cert_serial_number": str(s1)},
-            ],
             "text": f"* Issuer:\n  * DNS:{dns1}\n* Serial: {s1}",
         },
     }
@@ -352,34 +276,22 @@ class TestBasicConstraints(ExtensionTestCaseMixin):
         "no_ca": {
             "admin_html": "CA: False",
             "extension_type": x509.BasicConstraints(ca=False, path_length=None),
-            "serialized": {"ca": False},
-            "serialized_alternatives": [
-                {"ca": False},
-                {"ca": False, "path_length": 3},  # ignored b/c ca=False
-                {"ca": False, "path_length": None},  # ignored b/c ca=False
-            ],
             "text": "CA:FALSE",
         },
         "no_path_length": {
             # include div to make sure that there's no path length
             "admin_html": "CA: True",
             "extension_type": x509.BasicConstraints(ca=True, path_length=None),
-            "serialized": {"ca": True, "path_length": None},
-            "serialized_alternatives": [{"ca": True}, {"ca": True, "path_length": None}],
             "text": "CA:TRUE",
         },
         "path_length_zero": {
             "admin_html": "CA: True, path length: 0",
             "extension_type": x509.BasicConstraints(ca=True, path_length=0),
-            "serialized": {"ca": True, "path_length": 0},
-            "serialized_alternatives": [{"ca": True, "path_length": 0}],
             "text": "CA:TRUE, path length:0",
         },
         "path_length_three": {
             "admin_html": "CA: True, path length: 3",
             "extension_type": x509.BasicConstraints(ca=True, path_length=3),
-            "serialized": {"ca": True, "path_length": 3},
-            "serialized_alternatives": [{"ca": True, "path_length": 3}],
             "text": "CA:TRUE, path length:3",
         },
     }
@@ -494,8 +406,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": f"<ul><li>Unknown OID ({oid}):<ul><li>text1</li></li></ul>",
-            "serialized_alternatives": [[un1], [un1_1], [xpi1]],
-            "serialized": [un1],
             "extension_type": xcp1,
             "text": f"* Policy Identifier: {oid}\n  Policy Qualifiers:\n  * text1",
         },
@@ -512,8 +422,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
         </ul>
     </li>
 </ul>""",
-            "serialized_alternatives": [[un2], [un2_1], [xpi2]],
-            "serialized": [un2],
             "extension_type": xcp2,
             "text": f"""* Policy Identifier: {oid}
   Policy Qualifiers:
@@ -535,8 +443,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
         </ul>
     </li>
 </ul>""",
-            "serialized_alternatives": [[un3], [un3_1], [xpi3]],
-            "serialized": [un3],
             "extension_type": xcp3,
             "text": f"""* Policy Identifier: {oid}
   Policy Qualifiers:
@@ -565,8 +471,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
         </ul>
     </li>
 </ul>""",
-            "serialized_alternatives": [[un4], [xpi4]],
-            "serialized": [un4],
             "extension_type": xcp4,
             "text": f"""* Policy Identifier: {oid}
   Policy Qualifiers:
@@ -610,12 +514,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     </ul>
   </li>
 </ul>""",
-            "serialized_alternatives": [
-                [un1, un2, un4],
-                [xpi1, xpi2, xpi4],
-                [un1, xpi2, un4],
-            ],
-            "serialized": [un1, un2, un4],
             "extension_type": xcp5,
             "text": f"""* Policy Identifier: {oid}
   Policy Qualifiers:
@@ -642,10 +540,8 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     </ul>
   </li>
 </ul>""",
-            "serialized": [un6],
             "extension_type": xcp6,
             "text": f"* Policy Identifier: {oid}\n  No Policy Qualifiers",
-            "serialized_alternatives": [[un6], [xpi6]],
         },
         "seven": {
             "admin_html": f"""<ul>
@@ -665,7 +561,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     </ul>
   </li>
 </ul>""",
-            "serialized": [un7],
             "extension_type": xcp7,
             "text": f"""* Policy Identifier: {oid}
   Policy Qualifiers:
@@ -673,7 +568,6 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     * Explicit Text: {text5}
     * Notice Reference:
       * Notice Numbers: [1]""",
-            "serialized_alternatives": [[un7], [xpi7]],
         },
     }
 
@@ -688,13 +582,6 @@ class TestExtendedKeyUsage(ExtensionTestCaseMixin):
         "one": {
             "admin_html": "<ul><li>serverAuth</li></ul>",
             "extension_type": x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
-            "serialized": ["serverAuth"],
-            "serialized_alternatives": [
-                {"serverAuth"},
-                {ExtendedKeyUsageOID.SERVER_AUTH},
-                [ExtendedKeyUsageOID.SERVER_AUTH],
-                [ExtendedKeyUsageOID.SERVER_AUTH.dotted_string],
-            ],
             "text": "* serverAuth",
         },
         "two": {
@@ -702,13 +589,6 @@ class TestExtendedKeyUsage(ExtensionTestCaseMixin):
             "extension_type": x509.ExtendedKeyUsage(
                 [ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH]
             ),
-            "serialized": ["clientAuth", "serverAuth"],
-            "serialized_alternatives": [
-                {"serverAuth", "clientAuth"},
-                {ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH},
-                [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
-                [ExtendedKeyUsageOID.SERVER_AUTH, "clientAuth"],
-            ],
             "text": "* clientAuth\n* serverAuth",
         },
         "three": {
@@ -720,26 +600,6 @@ class TestExtendedKeyUsage(ExtensionTestCaseMixin):
                     ExtendedKeyUsageOID.TIME_STAMPING,
                 ]
             ),
-            "serialized": ["clientAuth", "serverAuth", "timeStamping"],
-            "serialized_alternatives": [
-                {"serverAuth", "clientAuth", "timeStamping"},
-                {
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                },
-                {ExtendedKeyUsageOID.CLIENT_AUTH, "serverAuth", ExtendedKeyUsageOID.TIME_STAMPING},
-                [
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                ],
-                [
-                    ExtendedKeyUsageOID.TIME_STAMPING,
-                    ExtendedKeyUsageOID.SERVER_AUTH,
-                    ExtendedKeyUsageOID.CLIENT_AUTH,
-                ],
-            ],
             "text": "* clientAuth\n* serverAuth\n* timeStamping",
         },
     }
@@ -765,20 +625,8 @@ class TestInhibitAnyPolicy(ExtensionTestCaseMixin):
     ext_class_name = "InhibitAnyPolicy"
 
     test_values: ClassVar[ExtensionExampleValues] = {
-        "zero": {
-            "admin_html": "skip certs: 0",
-            "serialized_alternatives": [0],
-            "serialized": 0,
-            "extension_type": x509.InhibitAnyPolicy(0),
-            "text": "0",
-        },
-        "one": {
-            "admin_html": "skip certs: 1",
-            "serialized_alternatives": [1],
-            "serialized": 1,
-            "extension_type": x509.InhibitAnyPolicy(1),
-            "text": "1",
-        },
+        "zero": {"admin_html": "skip certs: 0", "extension_type": x509.InhibitAnyPolicy(0), "text": "0"},
+        "one": {"admin_html": "skip certs: 1", "extension_type": x509.InhibitAnyPolicy(1), "text": "1"},
     }
 
 
@@ -801,27 +649,16 @@ class TestIssuerAlternativeName(ExtensionTestCaseMixin):
             "uri": {
                 "admin_html": f"<ul><li>URI:{cls.uri1}</li></ul>",
                 "extension_type": cls.ext_class_type([uri(cls.uri1)]),
-                "serialized_alternatives": [[cls.uri1], [uri(cls.uri1)]],
-                "serialized": [f"URI:{cls.uri1}"],
                 "text": f"* URI:{cls.uri1}",
             },
             "dns": {
                 "admin_html": f"<ul><li>DNS:{cls.dns1}</li></ul>",
                 "extension_type": cls.ext_class_type([dns(cls.dns1)]),
-                "serialized": [f"DNS:{cls.dns1}"],
-                "serialized_alternatives": [[cls.dns1], [dns(cls.dns1)]],
                 "text": f"* DNS:{cls.dns1}",
             },
             "both": {
                 "admin_html": f"<ul><li>URI:{cls.uri1}</li><li>DNS:{cls.dns1}</li></ul>",
                 "extension_type": cls.ext_class_type([uri(cls.uri1), dns(cls.dns1)]),
-                "serialized": [f"URI:{cls.uri1}", f"DNS:{cls.dns1}"],
-                "serialized_alternatives": [
-                    [cls.uri1, cls.dns1],
-                    [uri(cls.uri1), dns(cls.dns1)],
-                    [cls.uri1, dns(cls.dns1)],
-                    [uri(cls.uri1), cls.dns1],
-                ],
                 "text": f"* URI:{cls.uri1}\n* DNS:{cls.dns1}",
             },
             "all": {
@@ -831,18 +668,6 @@ class TestIssuerAlternativeName(ExtensionTestCaseMixin):
                 "extension_type": cls.ext_class_type(
                     [uri(cls.uri1), uri(cls.uri2), dns(cls.dns1), dns(cls.dns2)]
                 ),
-                "serialized": [
-                    f"URI:{cls.uri1}",
-                    f"URI:{cls.uri2}",
-                    f"DNS:{cls.dns1}",
-                    f"DNS:{cls.dns2}",
-                ],
-                "serialized_alternatives": [
-                    [cls.uri1, cls.uri2, cls.dns1, cls.dns2],
-                    [uri(cls.uri1), uri(cls.uri2), cls.dns1, cls.dns2],
-                    [cls.uri1, cls.uri2, dns(cls.dns1), dns(cls.dns2)],
-                    [uri(cls.uri1), uri(cls.uri2), dns(cls.dns1), dns(cls.dns2)],
-                ],
                 "text": f"* URI:{cls.uri1}\n* URI:{cls.uri2}\n* DNS:{cls.dns1}\n* DNS:{cls.dns2}",
             },
             "order": {  # same as "all" above but other order
@@ -852,18 +677,6 @@ class TestIssuerAlternativeName(ExtensionTestCaseMixin):
                 "extension_type": cls.ext_class_type(
                     [dns(cls.dns2), dns(cls.dns1), uri(cls.uri2), uri(cls.uri1)]
                 ),
-                "serialized": [
-                    f"DNS:{cls.dns2}",
-                    f"DNS:{cls.dns1}",
-                    f"URI:{cls.uri2}",
-                    f"URI:{cls.uri1}",
-                ],
-                "serialized_alternatives": [
-                    [cls.dns2, cls.dns1, cls.uri2, cls.uri1],
-                    [dns(cls.dns2), dns(cls.dns1), cls.uri2, cls.uri1],
-                    [cls.dns2, cls.dns1, uri(cls.uri2), uri(cls.uri1)],
-                    [dns(cls.dns2), dns(cls.dns1), uri(cls.uri2), uri(cls.uri1)],
-                ],
                 "text": f"* DNS:{cls.dns2}\n* DNS:{cls.dns1}\n* URI:{cls.uri2}\n* URI:{cls.uri1}",
             },
         }
@@ -889,8 +702,6 @@ class TestKeyUsage(ExtensionTestCaseMixin):
                 encipher_only=False,
                 decipher_only=False,
             ),
-            "serialized": ["key_agreement"],
-            "serialized_alternatives": [{"key_agreement"}, ["keyAgreement"]],
             "text": "* keyAgreement",
         },
         "two": {
@@ -906,13 +717,6 @@ class TestKeyUsage(ExtensionTestCaseMixin):
                 encipher_only=False,
                 decipher_only=False,
             ),
-            "serialized": ["key_agreement", "key_encipherment"],
-            "serialized_alternatives": [
-                {"key_agreement", "key_encipherment"},
-                ["keyAgreement", "keyEncipherment"],
-                ["keyEncipherment", "keyAgreement"],
-                ["keyEncipherment", "key_agreement"],
-            ],
             "text": "* keyAgreement\n* keyEncipherment",
         },
         "three": {
@@ -928,14 +732,6 @@ class TestKeyUsage(ExtensionTestCaseMixin):
                 encipher_only=False,
                 decipher_only=False,
             ),
-            "serialized": ["content_commitment", "key_agreement", "key_encipherment"],
-            "serialized_alternatives": [
-                {"key_agreement", "key_encipherment", "content_commitment"},
-                ["keyAgreement", "keyEncipherment", "nonRepudiation"],
-                ["nonRepudiation", "keyAgreement", "keyEncipherment"],
-                ["nonRepudiation", "keyAgreement", "keyEncipherment"],
-                ["content_commitment", "key_agreement", "key_encipherment"],
-            ],
             "text": "* keyAgreement\n* keyEncipherment\n* nonRepudiation",
         },
     }
@@ -953,36 +749,15 @@ class TestNameConstraints(ExtensionTestCaseMixin):
         "permitted": {
             "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul>",
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
-            "serialized": {"permitted": [f"DNS:{d1}"]},
-            "serialized_alternatives": [
-                {"permitted": [d1]},
-                {"permitted": [f"DNS:{d1}"]},
-                {"permitted": [dns(d1)]},
-                {"permitted": [dns(d1)], "excluded": []},
-            ],
             "text": f"Permitted:\n  * DNS:{d1}",
         },
         "excluded": {
             "admin_html": f"Excluded:<ul><li>DNS:{d1}</li></ul>",
-            "serialized": {"excluded": [f"DNS:{d1}"]},
-            "serialized_alternatives": [
-                {"excluded": [d1]},
-                {"excluded": [f"DNS:{d1}"]},
-                {"excluded": [dns(d1)]},
-                {"excluded": [dns(d1)], "permitted": []},
-            ],
             "extension_type": x509.NameConstraints(permitted_subtrees=None, excluded_subtrees=[dns(d1)]),
             "text": f"Excluded:\n  * DNS:{d1}",
         },
         "both": {
             "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul> Excluded:<ul><li>DNS:{d2}</li></ul>",
-            "serialized": {"excluded": [f"DNS:{d2}"], "permitted": [f"DNS:{d1}"]},
-            "serialized_alternatives": [
-                {"permitted": [d1], "excluded": [d2]},
-                {"permitted": [f"DNS:{d1}"], "excluded": [f"DNS:{d2}"]},
-                {"permitted": [dns(d1)], "excluded": [dns(d2)]},
-                {"permitted": [dns(d1)], "excluded": [d2]},
-            ],
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=[dns(d2)]),
             "text": f"Permitted:\n  * DNS:{d1}\nExcluded:\n  * DNS:{d2}",
         },
@@ -998,7 +773,6 @@ class TestOCSPNoCheck(ExtensionTestCaseMixin):
     test_values: ClassVar[ExtensionExampleValues] = {
         "empty": {
             "admin_html": "Yes",
-            "serialized": None,
             "extension_type": x509.OCSPNoCheck(),
             "text": "Yes",
         },
@@ -1014,36 +788,26 @@ class TestPolicyConstraints(ExtensionTestCaseMixin):
     test_values: ClassVar[ExtensionExampleValues] = {
         "rep_zero": {
             "admin_html": "<ul><li>RequireExplicitPolicy: 0</li></ul>",
-            "serialized_alternatives": [{"require_explicit_policy": 0}],
-            "serialized": {"require_explicit_policy": 0},
             "extension_type": x509.PolicyConstraints(require_explicit_policy=0, inhibit_policy_mapping=None),
             "text": "* RequireExplicitPolicy: 0",
         },
         "rep_one": {
             "admin_html": "<ul><li>RequireExplicitPolicy: 1</li></ul>",
-            "serialized_alternatives": [{"require_explicit_policy": 1}],
-            "serialized": {"require_explicit_policy": 1},
             "extension_type": x509.PolicyConstraints(require_explicit_policy=1, inhibit_policy_mapping=None),
             "text": "* RequireExplicitPolicy: 1",
         },
         "iap_zero": {
             "admin_html": "<ul><li>InhibitPolicyMapping: 0</li></ul>",
-            "serialized_alternatives": [{"inhibit_policy_mapping": 0}],
-            "serialized": {"inhibit_policy_mapping": 0},
             "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=0),
             "text": "* InhibitPolicyMapping: 0",
         },
         "iap_one": {
             "admin_html": "<ul><li>InhibitPolicyMapping: 1</li></ul>",
-            "serialized_alternatives": [{"inhibit_policy_mapping": 1}],
-            "serialized": {"inhibit_policy_mapping": 1},
             "extension_type": x509.PolicyConstraints(require_explicit_policy=None, inhibit_policy_mapping=1),
             "text": "* InhibitPolicyMapping: 1",
         },
         "both": {
             "admin_html": "<ul><li>InhibitPolicyMapping: 2</li><li>RequireExplicitPolicy: 3</li></ul>",
-            "serialized_alternatives": [{"inhibit_policy_mapping": 2, "require_explicit_policy": 3}],
-            "serialized": {"inhibit_policy_mapping": 2, "require_explicit_policy": 3},
             "extension_type": x509.PolicyConstraints(require_explicit_policy=3, inhibit_policy_mapping=2),
             "text": "* InhibitPolicyMapping: 2\n* RequireExplicitPolicy: 3",
         },
@@ -1059,21 +823,22 @@ class TestPrecertPoison(ExtensionTestCaseMixin):
     test_values: ClassVar[ExtensionExampleValues] = {
         "empty": {
             "admin_html": "Yes",
-            "serialized": None,
             "extension_type": x509.PrecertPoison(),
             "text": "Yes",
         },
     }
 
 
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="cryptography check was added in version 45")
 class TestPrivateKeyUsagePeriod(ExtensionTestCaseMixin):
     """Test the PrivateKeyUsagePeriod extennsion."""
 
     ext_class_key = "private_key_usage_period"
     ext_class_name = "PrivateKeyUsagePeriod"
 
-    @classmethod
-    def get_test_values(self) -> ExtensionExampleValues:
+    @classproperty  # pylint: disable-next=no-self-argument
+    def test_values(cls) -> ExtensionExampleValues:
+        """Overwritten as not all cryptography versions support this extension yet."""
         return {
             "not_before": {
                 "admin_html": "<ul><li>Not before: 2025-07-06T00:00:00+00:00</li></ul>",
@@ -1366,22 +1131,16 @@ class TestSubjectKeyIdentifierTestCase(ExtensionTestCaseMixin):
         "one": {
             "admin_html": hex1,
             "extension_type": x509.SubjectKeyIdentifier(b1),
-            "serialized": hex1,
-            "serialized_alternatives": [x509.SubjectKeyIdentifier(b1), b1, hex1],
             "text": hex1,
         },
         "two": {
             "admin_html": hex2,
             "extension_type": x509.SubjectKeyIdentifier(b2),
-            "serialized": hex2,
-            "serialized_alternatives": [x509.SubjectKeyIdentifier(b2), b2, hex2],
             "text": hex2,
         },
         "three": {
             "admin_html": hex3,
             "extension_type": x509.SubjectKeyIdentifier(b3),
-            "serialized": hex3,
-            "serialized_alternatives": [x509.SubjectKeyIdentifier(b3), b3, hex3],
             "text": hex3,
         },
     }
@@ -1397,7 +1156,6 @@ class TestTLSFeature(ExtensionTestCaseMixin):
         "one": {
             "admin_html": "<ul><li>status_request (OCSPMustStaple)</li></ul>",
             "extension_type": x509.TLSFeature(features=[x509.TLSFeatureType.status_request]),
-            "serialized": ["status_request"],
             "text": "* status_request (OCSPMustStaple)",
         },
         "two": {
@@ -1411,18 +1169,11 @@ class TestTLSFeature(ExtensionTestCaseMixin):
                     features=[x509.TLSFeatureType.status_request_v2, x509.TLSFeatureType.status_request]
                 )
             ],
-            "serialized": ["status_request", "status_request_v2"],
-            "serialized_alternatives": [
-                ["status_request_v2", "status_request"],
-                [x509.TLSFeatureType.status_request, x509.TLSFeatureType.status_request_v2],
-                [x509.TLSFeatureType.status_request_v2, x509.TLSFeatureType.status_request],
-            ],
             "text": "* status_request (OCSPMustStaple)\n* status_request_v2 (MultipleCertStatusRequest)",
         },
         "three": {
             "admin_html": "<ul><li>status_request_v2 (MultipleCertStatusRequest)</li></ul>",
             "extension_type": x509.TLSFeature(features=[x509.TLSFeatureType.status_request_v2]),
-            "serialized": ["status_request_v2"],
             "text": "* status_request_v2 (MultipleCertStatusRequest)",
         },
     }

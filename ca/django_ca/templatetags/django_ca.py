@@ -44,8 +44,9 @@ register.filter("signed_certificate_timestamp_values", signed_certificate_timest
 
 
 @register.filter
-def utc(value: datetime) -> datetime:
-    if value.tzinfo is None:
+def utc(value: datetime) -> datetime:  # pragma: only cryptography>=45
+    """Attach a utc timezone to the given datetime if no tzinfo is set."""
+    if value.tzinfo is None:  # pragma: no cover  # we always pass a TZ currently.
         value = value.replace(tzinfo=timezone.utc)
     return value
 

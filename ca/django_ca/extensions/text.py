@@ -200,7 +200,9 @@ def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
     return "\n".join(lines)
 
 
-def _private_key_usage_period_as_text(value: "x509.PrivateKeyUsagePeriod"):
+def _private_key_usage_period_as_text(  # pragma: only cryptography>=45
+    value: "x509.PrivateKeyUsagePeriod",
+) -> str:
     lines = []
     if value.not_before:
         not_before = value.not_before
