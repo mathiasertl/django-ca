@@ -1,0 +1,9 @@
+{% extends "django_ca/admin/extensions/base/base.html" %}
+{% load i18n django_ca %}
+
+{# PrivateKeyUsagePeriod extension #}
+{% block content %}<ul>
+{% if value.not_before %}<li>Not before: {{ value.not_before|utc|date:"c" }}</li>{% endif %}
+{% if value.not_after %}<li>Not after: {{ value.not_after|utc|date:"c" }}</li>{% endif %}
+</ul>{% endblock content %}
+.

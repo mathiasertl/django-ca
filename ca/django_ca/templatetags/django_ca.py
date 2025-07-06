@@ -14,6 +14,7 @@
 """Template tags used by the admin interface."""
 
 from collections.abc import Iterable
+from datetime import datetime, timezone
 from typing import Any
 
 from cryptography import x509
@@ -40,6 +41,13 @@ register = template.Library()
 register.filter("name_for_display", name_for_display)
 register.filter("key_usage_items", key_usage_items)
 register.filter("signed_certificate_timestamp_values", signed_certificate_timestamp_values)
+
+
+@register.filter
+def utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value
 
 
 @register.filter

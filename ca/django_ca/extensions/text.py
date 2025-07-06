@@ -14,6 +14,7 @@
 """Functions to render extensions as text."""
 
 import textwrap
+from datetime import timezone
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -199,6 +200,21 @@ def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
     return "\n".join(lines)
 
 
+def _private_key_usage_period_as_text(value: "x509.PrivateKeyUsagePeriod"):
+    lines = []
+    if value.not_before:
+        not_before = value.not_before
+        if not_before.tzinfo is None:  # pragma: no branch (value currently is w/o timezone)
+            not_before = not_before.replace(tzinfo=timezone.utc)
+        lines.append(f"* Not before: {not_before.isoformat()}")
+    if value.not_after:
+        not_after = value.not_after
+        if not_after.tzinfo is None:  # pragma: no branch (value currently is w/o timezone)
+            not_after = not_after.replace(tzinfo=timezone.utc)
+        lines.append(f"* Not after: {not_after.isoformat()}")
+    return "\n".join(lines)
+
+
 def _signed_certificate_timestamps_as_text(value: typehints.SignedCertificateTimestampType) -> str:
     lines = []
     for sct in value:
@@ -257,6 +273,10 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # noqa: PLR0911
         return _name_constraints_as_text(value)
     if isinstance(value, x509.PolicyConstraints):
         return _policy_constraints_as_text(value)
+    if hasattr(x509, "PrivateKeyUsagePeriod") and isinstance(  # pragma: cryptography>=45 branch
+        value, x509.PrivateKeyUsagePeriod
+    ):
+        return _private_key_usage_period_as_text(value)
     if isinstance(value, x509.SubjectKeyIdentifier):
         return bytes_to_hex(value.key_identifier)
     if isinstance(value, x509.TLSFeature):

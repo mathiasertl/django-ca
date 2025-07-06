@@ -14,6 +14,7 @@
 """Test various extension values for serialization, parsing and text representation."""
 
 import typing
+from datetime import datetime
 from typing import Any, ClassVar, cast
 
 from cryptography import x509
@@ -52,6 +53,9 @@ def pytest_generate_tests(metafunc: Any) -> None:
     """Generate parametrized test functions based on test_values property."""
     if hasattr(metafunc.cls, "test_values"):
         func_arg_list = metafunc.cls.test_values
+        metafunc.parametrize("name,config", tuple(func_arg_list.items()))
+    elif hasattr(metafunc.cls, "get_test_values"):
+        func_arg_list = metafunc.cls.get_test_values()
         metafunc.parametrize("name,config", tuple(func_arg_list.items()))
 
 
@@ -1060,6 +1064,36 @@ class TestPrecertPoison(ExtensionTestCaseMixin):
             "text": "Yes",
         },
     }
+
+
+class TestPrivateKeyUsagePeriod(ExtensionTestCaseMixin):
+    """Test the PrivateKeyUsagePeriod extennsion."""
+
+    ext_class_key = "private_key_usage_period"
+    ext_class_name = "PrivateKeyUsagePeriod"
+
+    @classmethod
+    def get_test_values(self) -> ExtensionExampleValues:
+        return {
+            "not_before": {
+                "admin_html": "<ul><li>Not before: 2025-07-06T00:00:00+00:00</li></ul>",
+                "extension_type": x509.PrivateKeyUsagePeriod(not_before=datetime(2025, 7, 6), not_after=None),
+                "text": "* Not before: 2025-07-06T00:00:00+00:00",
+            },
+            "not_after": {
+                "admin_html": "<ul><li>Not after: 2025-07-06T00:00:00+00:00</li></ul>",
+                "extension_type": x509.PrivateKeyUsagePeriod(not_before=None, not_after=datetime(2025, 7, 6)),
+                "text": "* Not after: 2025-07-06T00:00:00+00:00",
+            },
+            "both": {
+                "admin_html": "<ul><li>Not before: 2025-07-05T00:00:00+00:00</li>"
+                "<li>Not after: 2025-07-06T00:00:00+00:00</li></ul>",
+                "extension_type": x509.PrivateKeyUsagePeriod(
+                    not_before=datetime(2025, 7, 5), not_after=datetime(2025, 7, 6)
+                ),
+                "text": "* Not before: 2025-07-05T00:00:00+00:00\n* Not after: 2025-07-06T00:00:00+00:00",
+            },
+        }
 
 
 class TestPrecertificateSignedCertificateTimestamps:
