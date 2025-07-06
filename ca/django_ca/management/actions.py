@@ -17,7 +17,7 @@ import abc
 import argparse
 import getpass
 import typing
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -148,6 +148,39 @@ class CertificateAuthorityAction(SingleValueAction[str, CertificateAuthority]):
             raise argparse.ArgumentError(self, f"{value}: Multiple Certificate authorities match.") from ex
 
         return ca
+
+
+class DatetimeAction(SingleValueAction[str, datetime]):
+    """Action for passing a datetime via the command-line.
+
+    The returned datetime value is guaranteed to have a timezone attached to it.
+    """
+
+    def __init__(self, precision: Literal["s", "m", "h"] | None = None, **kwargs: Any) -> None:
+        kwargs.setdefault("metavar", "YYYY-mm-ddTHH:MM:SS")
+        super().__init__(**kwargs)
+        self.precision = precision
+
+    def parse_value(self, value: str) -> datetime:
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError as ex:
+            example = datetime.now(tz=timezone.utc).isoformat()
+            raise argparse.ArgumentError(
+                self, f"{value}: Must be a valid ISO 8601 datetime format (example: {example})."
+            ) from ex
+
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+
+        if self.precision in ("s", "m", "h"):
+            parsed = parsed.replace(microsecond=0)
+            if self.precision in ("m", "h"):
+                parsed = parsed.replace(second=0)
+                if self.precision in ("h",):
+                    parsed = parsed.replace(minute=0)
+
+        return parsed
 
 
 class ExpiresAction(SingleValueAction[str, timedelta]):

@@ -16,14 +16,14 @@
 import io
 import os
 import shutil
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import CertificatePoliciesOID, ExtendedKeyUsageOID, ExtensionOID, NameOID
+from cryptography.x509.oid import CertificatePoliciesOID, ExtendedKeyUsageOID, NameOID
 
 from django.core.files.storage import storages
 from django.urls import reverse
@@ -33,6 +33,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
+from django_ca.constants import ExtensionOID
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import (
     assert_authority_key_identifier,
@@ -60,6 +61,7 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
+from django_ca.typehints import CRYPTOGRAPHY_VERSION
 
 csr: bytes = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
 
@@ -454,6 +456,84 @@ def test_extensions_with_non_default_critical(
     assert cert.extensions[x509.SubjectAlternativeName.oid] == subject_alternative_name(
         uri("https://example.net"), critical=True
     )
+
+
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="extension was added in version 45")
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    (
+        (
+            ["--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00"],
+            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": None},
+        ),
+        (
+            [
+                "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
+            ],
+            {"not_before": None, "not_after": datetime(2011, 11, 4, 1, 5, 24)},
+        ),
+        (
+            [
+                "--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00",
+                "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
+            ],
+            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": datetime(2011, 11, 4, 1, 5, 24)},
+        ),
+    ),
+)
+def test_private_key_usage_period_extension_with_support(
+    usable_root: CertificateAuthority, rfc4514_subject: str, args: list[str], expected: dict[str, datetime]
+) -> None:
+    """Test the PrivateKeyUsagePeriod with a cryptography version that has support for it."""
+    cmdline = ["sign_cert", f"--subject={rfc4514_subject}", f"--ca={usable_root.serial}"]
+
+    with assert_create_cert_signals() as (pre, post):
+        stdout, stderr = cmd_e2e([*cmdline, *args], stdin=csr)
+    assert stderr == ""
+
+    cert = Certificate.objects.get()
+
+    value = x509.PrivateKeyUsagePeriod(**expected)
+    extension = x509.Extension(oid=ExtensionOID.PRIVATE_KEY_USAGE_PERIOD, critical=False, value=value)
+    assert cert.extensions[ExtensionOID.PRIVATE_KEY_USAGE_PERIOD] == extension
+
+
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="extension was added in version 45")
+def test_private_key_usage_period_extension_with_not_after_before_not_before(
+    usable_root: CertificateAuthority, subject: x509.Name
+) -> None:
+    """Test error when not_after is before not_before."""
+    with assert_command_error(r"^PrivateKeyUsagePeriod: not_after must be after not_before\.$"):
+        sign_cert(
+            usable_root,
+            subject,
+            private_key_usage_period_not_before=datetime(2011, 11, 4, 1, 5, 24),
+            private_key_usage_period_not_after=datetime(2011, 11, 4, 0, 5, 23),
+        )
+
+
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION >= (45,), reason="extension was added in version 45")
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        {"private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23)},
+        {"private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24)},
+        {
+            "private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23),
+            "private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24),
+        },
+    ),
+)
+def test_private_key_usage_period_extension_without_support(
+    usable_root: CertificateAuthority,
+    subject: x509.Name,
+    kwargs: dict[str, datetime],
+) -> None:
+    """Test error when extension is not supported."""
+    with assert_command_error(
+        r"^The installed version of cryptography does not support the PrivateKeyUsagePeriod extension\.$"
+    ):
+        sign_cert(usable_root, subject, **kwargs)
 
 
 def test_extensions_with_formatting(

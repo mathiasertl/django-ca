@@ -24,7 +24,7 @@ from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django.conf import settings
 from django.core.management.base import (
@@ -38,11 +38,14 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
 from django_ca.conf import model_settings
+from django_ca.constants import ExtensionOID
 from django_ca.management import actions, mixins
+from django_ca.management.actions import DatetimeAction
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import (
+    CRYPTOGRAPHY_VERSION,
     ActionsContainer,
     AllowedHashTypes,
     ArgumentGroup,
@@ -517,6 +520,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
         self.add_ocsp_no_check_group(parser)
+        self.add_private_key_usage_period_group(parser)
         self.add_subject_alternative_name_group(parser, additional_option_strings=("--alt",))
         self.add_tls_feature_group(parser)
 
@@ -549,6 +553,26 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             "--ocsp-no-check", default=False, action="store_true", help=f"Add the {ext_name} extension."
         )
         self.add_critical_option(group, ExtensionOID.OCSP_NO_CHECK)
+
+    def add_private_key_usage_period_group(self, parser: CommandParser) -> None:
+        """Add arguments for the PrivateKeyUsagePeriod extension."""
+        ext_name = constants.EXTENSION_NAMES[ExtensionOID.PRIVATE_KEY_USAGE_PERIOD]
+        group = parser.add_argument_group(
+            f"{ext_name} extension",
+            f"The {ext_name}  extension indicates the period of use for the private key.",
+        )
+        group.add_argument(
+            "--private-key-usage-period-not-before",
+            action=DatetimeAction,
+            precision="s",
+            help="Earliest possible usage of the private key.",
+        )
+        group.add_argument(
+            "--private-key-usage-period-not-after",
+            action=DatetimeAction,
+            precision="s",
+            help="Latest possible usage of the private key.",
+        )
 
     def add_subject_group(self, parser: CommandParser) -> None:
         """Add argument for a subject."""
@@ -583,6 +607,41 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             raise CommandError(
                 f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."
             )
+
+    def get_private_key_usage_period(
+        self, extensions: list[ConfigurableExtension], not_before: datetime | None, not_after: datetime | None
+    ) -> None:
+        """Get the PrivateKeyUsagePeriod, if set."""
+        if not_before is None and not_after is None:  # exit early if neither value is set
+            return
+
+        if CRYPTOGRAPHY_VERSION < (45,):  # pragma: cryptography<45 branch
+            raise CommandError(
+                "The installed version of cryptography does not support the PrivateKeyUsagePeriod extension."
+            )
+
+        if not_before and not_after and not_before > not_after:
+            # Later validation will also catch this, but raise CommandError here for better error messages
+            raise CommandError("PrivateKeyUsagePeriod: not_after must be after not_before.")
+
+        value = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
+        self.add_extension(extensions, value, critical=False)
+
+    def get_end_entity_extensions(
+        self,  # pylint: disable=unused-argument
+        # PrivateKeyUsagePeriod extension
+        private_key_usage_period_not_before: datetime | None,
+        private_key_usage_period_not_after: datetime | None,
+        **options: Any,
+    ) -> list[ConfigurableExtension]:
+        """Get extensions for end-entity certificates from the command line."""
+        extensions: list[ConfigurableExtension] = []
+
+        self.get_private_key_usage_period(
+            extensions, private_key_usage_period_not_before, private_key_usage_period_not_after
+        )
+
+        return extensions
 
 
 class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class

@@ -95,22 +95,41 @@ LogEntryTypes = Literal["precertificate", "x509_certificate"]
 #: Serialized access method for :py:class:`~cg:cryptography.x509.AccessDescription` instances.
 AccessMethods = Literal["ocsp", "ca_issuers", "ca_repository"]
 
-#: Extension keys for extensions that may be configured by the user when issuing certificates.
-ConfigurableExtensionKeys = Literal[
-    "admissions",
-    "authority_information_access",
-    "certificate_policies",
-    "crl_distribution_points",
-    "extended_key_usage",
-    "freshest_crl",
-    "issuer_alternative_name",
-    "key_usage",
-    "ms_certificate_template",
-    "ocsp_no_check",
-    "precert_poison",
-    "subject_alternative_name",
-    "tls_feature",
-]
+if CRYPTOGRAPHY_VERSION >= (45,):  # pragma: cryptography>=45 branch
+    #: Extension keys for extensions that may be configured by the user when issuing certificates.
+    ConfigurableExtensionKeys = Literal[
+        "admissions",
+        "authority_information_access",
+        "certificate_policies",
+        "crl_distribution_points",
+        "extended_key_usage",
+        "freshest_crl",
+        "issuer_alternative_name",
+        "key_usage",
+        "ms_certificate_template",
+        "ocsp_no_check",
+        "precert_poison",
+        "private_key_usage_period",
+        "subject_alternative_name",
+        "tls_feature",
+    ]
+else:  # pragma: cryptography<45 branch
+    #: Extension keys for extensions that may be configured by the user when issuing certificates.
+    ConfigurableExtensionKeys = Literal[  # type: ignore[misc]
+        "admissions",
+        "authority_information_access",
+        "certificate_policies",
+        "crl_distribution_points",
+        "extended_key_usage",
+        "freshest_crl",
+        "issuer_alternative_name",
+        "key_usage",
+        "ms_certificate_template",
+        "ocsp_no_check",
+        "precert_poison",
+        "subject_alternative_name",
+        "tls_feature",
+    ]
 
 #: Extension keys for extensions that may occur in an end entity certificate.
 #:
@@ -123,7 +142,6 @@ EndEntityCertificateExtensionKeys = (
         "authority_key_identifier",  # derived from the issuer
         "basic_constraints",  # must not be configured by a user
         "precertificate_signed_certificate_timestamps",  # added by the CA
-        "private_key_usage_period",
         "signed_certificate_timestamps",  # added by the CA
         "subject_information_access",
         "subject_key_identifier",  # derived from the certificates public key
@@ -239,49 +257,56 @@ CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 ################
 # Type aliases #
 ################
-#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
-ConfigurableExtensionType = (
-    x509.Admissions
-    | x509.AuthorityInformationAccess
-    | x509.CertificatePolicies
-    | x509.CRLDistributionPoints
-    | x509.ExtendedKeyUsage
-    | x509.FreshestCRL
-    | x509.IssuerAlternativeName
-    | x509.KeyUsage
-    | x509.MSCertificateTemplate
-    | x509.OCSPNoCheck
-    | x509.PrecertPoison
-    | x509.SubjectAlternativeName
-    | x509.TLSFeature
-)
-
-if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
-    EndEntityCertificateExtensionType = (
-        ConfigurableExtensionType
-        | x509.AuthorityKeyIdentifier
-        | x509.BasicConstraints
-        | x509.PrecertificateSignedCertificateTimestamps
-        | x509.SignedCertificateTimestamps
-        | x509.SubjectInformationAccess
-        | x509.SubjectKeyIdentifier
-    )
-else:  # pragma: only cryptography>=45
-    #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
-    #:
-    #: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension
-    #: types that are either derived from the issuer or the certificates public key or that must not be
-    #: configured by the user.
-    EndEntityCertificateExtensionType = (  # type: ignore[misc]
-        ConfigurableExtensionType
-        | x509.AuthorityKeyIdentifier
-        | x509.BasicConstraints
-        | x509.PrecertificateSignedCertificateTimestamps
+if CRYPTOGRAPHY_VERSION >= (45,):  # pragma: only cryptography>=45
+    #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
+    ConfigurableExtensionType = (
+        x509.Admissions
+        | x509.AuthorityInformationAccess
         | x509.PrivateKeyUsagePeriod
-        | x509.SignedCertificateTimestamps
-        | x509.SubjectInformationAccess
-        | x509.SubjectKeyIdentifier
+        | x509.CertificatePolicies
+        | x509.CRLDistributionPoints
+        | x509.ExtendedKeyUsage
+        | x509.FreshestCRL
+        | x509.IssuerAlternativeName
+        | x509.KeyUsage
+        | x509.MSCertificateTemplate
+        | x509.OCSPNoCheck
+        | x509.PrecertPoison
+        | x509.SubjectAlternativeName
+        | x509.TLSFeature
     )
+else:  # pragma: only cryptography<45
+    #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that can be configured by the user.
+    ConfigurableExtensionType = (  # type: ignore[misc]
+        x509.Admissions
+        | x509.AuthorityInformationAccess
+        | x509.CertificatePolicies
+        | x509.CRLDistributionPoints
+        | x509.ExtendedKeyUsage
+        | x509.FreshestCRL
+        | x509.IssuerAlternativeName
+        | x509.KeyUsage
+        | x509.MSCertificateTemplate
+        | x509.OCSPNoCheck
+        | x509.PrecertPoison
+        | x509.SubjectAlternativeName
+        | x509.TLSFeature
+    )
+
+#: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
+#:
+#: This union is based on :py:attr:`~django_ca.typehints.ConfigurableExtensionType` and adds extension
+#: types that are either derived from the issuer or the certificates public key or that must not be
+#: configured by the user.
+EndEntityCertificateExtensionType = (
+    ConfigurableExtensionType
+    | x509.AuthorityKeyIdentifier
+    | x509.BasicConstraints
+    | x509.PrecertificateSignedCertificateTimestamps
+    | x509.SignedCertificateTimestamps
+    | x509.SubjectInformationAccess
+    | x509.SubjectKeyIdentifier
+)
 
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in any certificate.
 #:
@@ -296,43 +321,51 @@ CertificateExtensionType = (
 )
 
 
-ConfigurableExtension = (
-    x509.Extension[x509.Admissions]
-    | x509.Extension[x509.AuthorityInformationAccess]
-    | x509.Extension[x509.CertificatePolicies]
-    | x509.Extension[x509.CRLDistributionPoints]
-    | x509.Extension[x509.ExtendedKeyUsage]
-    | x509.Extension[x509.FreshestCRL]
-    | x509.Extension[x509.IssuerAlternativeName]
-    | x509.Extension[x509.KeyUsage]
-    | x509.Extension[x509.MSCertificateTemplate]
-    | x509.Extension[x509.OCSPNoCheck]
-    | x509.Extension[x509.PrecertPoison]
-    | x509.Extension[x509.SubjectAlternativeName]
-    | x509.Extension[x509.TLSFeature]
+if CRYPTOGRAPHY_VERSION >= (45,):  # pragma: cryptography>=45 branch
+    ConfigurableExtension = (
+        x509.Extension[x509.Admissions]
+        | x509.Extension[x509.AuthorityInformationAccess]
+        | x509.Extension[x509.CertificatePolicies]
+        | x509.Extension[x509.CRLDistributionPoints]
+        | x509.Extension[x509.ExtendedKeyUsage]
+        | x509.Extension[x509.FreshestCRL]
+        | x509.Extension[x509.IssuerAlternativeName]
+        | x509.Extension[x509.KeyUsage]
+        | x509.Extension[x509.MSCertificateTemplate]
+        | x509.Extension[x509.OCSPNoCheck]
+        | x509.Extension[x509.PrecertPoison]
+        | x509.Extension[x509.PrivateKeyUsagePeriod]
+        | x509.Extension[x509.SubjectAlternativeName]
+        | x509.Extension[x509.TLSFeature]
+    )
+else:  # pragma: cryptography<45 branch
+    ConfigurableExtension = (  # type: ignore[misc]
+        x509.Extension[x509.Admissions]
+        | x509.Extension[x509.AuthorityInformationAccess]
+        | x509.Extension[x509.CertificatePolicies]
+        | x509.Extension[x509.CRLDistributionPoints]
+        | x509.Extension[x509.ExtendedKeyUsage]
+        | x509.Extension[x509.FreshestCRL]
+        | x509.Extension[x509.IssuerAlternativeName]
+        | x509.Extension[x509.KeyUsage]
+        | x509.Extension[x509.MSCertificateTemplate]
+        | x509.Extension[x509.OCSPNoCheck]
+        | x509.Extension[x509.PrecertPoison]
+        | x509.Extension[x509.SubjectAlternativeName]
+        | x509.Extension[x509.TLSFeature]
+    )
+
+
+EndEntityCertificateExtension = (
+    ConfigurableExtension
+    | x509.Extension[x509.AuthorityKeyIdentifier]
+    | x509.Extension[x509.BasicConstraints]
+    | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
+    | x509.Extension[x509.SignedCertificateTimestamps]
+    | x509.Extension[x509.SubjectInformationAccess]
+    | x509.Extension[x509.SubjectKeyIdentifier]
 )
 
-if CRYPTOGRAPHY_VERSION < (45,):  # pragma: only cryptography<45
-    EndEntityCertificateExtension = (
-        ConfigurableExtension
-        | x509.Extension[x509.AuthorityKeyIdentifier]
-        | x509.Extension[x509.BasicConstraints]
-        | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
-        | x509.Extension[x509.SignedCertificateTimestamps]
-        | x509.Extension[x509.SubjectInformationAccess]
-        | x509.Extension[x509.SubjectKeyIdentifier]
-    )
-else:  # pragma: only cryptography>=45
-    EndEntityCertificateExtension = (  # type: ignore[misc]
-        ConfigurableExtension
-        | x509.Extension[x509.AuthorityKeyIdentifier]
-        | x509.Extension[x509.BasicConstraints]
-        | x509.Extension[x509.PrecertificateSignedCertificateTimestamps]
-        | x509.Extension[x509.PrivateKeyUsagePeriod]
-        | x509.Extension[x509.SignedCertificateTimestamps]
-        | x509.Extension[x509.SubjectInformationAccess]
-        | x509.Extension[x509.SubjectKeyIdentifier]
-    )
 CertificateExtension = (
     EndEntityCertificateExtension
     | x509.Extension[x509.InhibitAnyPolicy]

@@ -18,7 +18,6 @@ import os
 import sys
 from collections.abc import Iterator
 from datetime import timedelta
-from io import StringIO
 from typing import Any
 from unittest import mock
 
@@ -40,6 +39,7 @@ from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import dns, key_usage, override_tmpcadir, uri
+from django_ca.tests.management.conftest import assert_parser_error
 
 
 @pytest.fixture
@@ -70,22 +70,6 @@ def key_backend_parser(settings: SettingsWrapper) -> Iterator[argparse.ArgumentP
 
     # Make sure that no key backends are loaded after the test.
     key_backends._reset()  # pylint: disable=protected-access
-
-
-def assert_parser_error(
-    parser: argparse.ArgumentParser, args: list[str], expected: str, **kwargs: Any
-) -> str:
-    """Assert that given args throw a parser error."""
-    kwargs.setdefault("script", os.path.basename(sys.argv[0]))
-    expected = expected.format(**kwargs)
-
-    buf = StringIO()
-    with pytest.raises(SystemExit), mock.patch("sys.stderr", buf):
-        parser.parse_args(args)
-
-    output = buf.getvalue()
-    assert output == expected
-    return output
 
 
 class ParserTestCaseMixin(TestCaseMixin):

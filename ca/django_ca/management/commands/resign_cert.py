@@ -144,7 +144,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             subject = cert.subject
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtension] = []
+        extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(**options)
 
         if authority_information_access is not None:
             self.add_extension(

@@ -116,7 +116,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtension] = []
+        extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(**options)
 
         if authority_information_access is not None:
             self.add_extension(

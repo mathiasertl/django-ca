@@ -21,7 +21,6 @@ import pytest
 
 from django_ca import constants, typehints
 from django_ca.tests.test_constants import oid_sorter
-from django_ca.typehints import CRYPTOGRAPHY_VERSION
 
 
 def _oid_sorter(oid: x509.ObjectIdentifier) -> str:
@@ -51,8 +50,6 @@ def test_end_entity_certificate_extension_keys() -> None:
         (get_args(ext)[0].oid for ext in get_args(typehints.EndEntityCertificateExtension)), key=oid_sorter
     )
     actual = sorted((constants.END_ENTITY_CERTIFICATE_EXTENSION_KEY_OIDS[v] for v in keys), key=oid_sorter)
-    if CRYPTOGRAPHY_VERSION < (45,):
-        actual.remove(x509.ObjectIdentifier("2.5.29.16"))  # Remove PrivateKeyUsagePeriod
     assert actual == expected
 
 

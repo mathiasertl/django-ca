@@ -2,6 +2,8 @@
 2.3.0 (TBR)
 ###########
 
+* Add support for the `PrivateKeyUsagePeriod` extension. Support requires that you use ``cryptography>=45``.
+
 ********
 Database
 ********

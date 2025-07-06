@@ -279,6 +279,7 @@ CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, Configurabl
             ExtensionOID.MS_CERTIFICATE_TEMPLATE: "ms_certificate_template",
             ExtensionOID.OCSP_NO_CHECK: "ocsp_no_check",  # RFC 2560 does not really define a spelling
             ExtensionOID.PRECERT_POISON: "precert_poison",  # RFC 7633
+            ExtensionOID.PRIVATE_KEY_USAGE_PERIOD: "private_key_usage_period",
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME: "subject_alternative_name",
             ExtensionOID.TLS_FEATURE: "tls_feature",  # RFC 7633
         }
@@ -295,7 +296,6 @@ END_ENTITY_CERTIFICATE_EXTENSION_KEYS: MappingProxyType[
         ExtensionOID.AUTHORITY_KEY_IDENTIFIER: "authority_key_identifier",
         ExtensionOID.BASIC_CONSTRAINTS: "basic_constraints",
         ExtensionOID.PRECERT_SIGNED_CERTIFICATE_TIMESTAMPS: "precertificate_signed_certificate_timestamps",  # RFC 7633  # NOQA: E501
-        ExtensionOID.PRIVATE_KEY_USAGE_PERIOD: "private_key_usage_period",
         ExtensionOID.SIGNED_CERTIFICATE_TIMESTAMPS: "signed_certificate_timestamps",  # RFC 7633
         ExtensionOID.SUBJECT_INFORMATION_ACCESS: "subject_information_access",
         ExtensionOID.SUBJECT_KEY_IDENTIFIER: "subject_key_identifier",

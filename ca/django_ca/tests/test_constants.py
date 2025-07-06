@@ -62,8 +62,11 @@ def test_certificate_extension_keys_typehints() -> None:
     # "unknown" does not exist in constants, as there is no OID to map to, obviously.
     expected.remove("unknown")
 
+    if CRYPTOGRAPHY_VERSION < (45,):
+        expected.append("private_key_usage_period")
+
     # Values of END_ENTITY_CERTIFICATE_EXTENSION_KEYS match exactly the Literal -> did not forget any value.
-    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS.values()) == expected
+    assert sorted(constants.CERTIFICATE_EXTENSION_KEYS.values()) == sorted(expected)
 
     # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
     extension_types = [
@@ -78,13 +81,16 @@ def test_certificate_extension_keys_typehints() -> None:
 
 def test_configurable_extension_keys_typehints() -> None:
     """Test that CONFIGURABLE_EXTENSION_KEYS has matching keys and values."""
-    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS.values()) == sorted(
-        get_args(typehints.ConfigurableExtensionKeys)
-    )
+    expected = sorted(get_args(typehints.ConfigurableExtensionKeys))
+    if CRYPTOGRAPHY_VERSION < (45,):
+        expected.append("private_key_usage_period")
+    assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS.values()) == sorted(expected)
 
     # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
     expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionType)), key=oid_sorter)
     actual = sorted(constants.CONFIGURABLE_EXTENSION_KEYS, key=oid_sorter)
+    if CRYPTOGRAPHY_VERSION < (45,):
+        actual.remove(ExtensionOID.PRIVATE_KEY_USAGE_PERIOD)
     assert actual == expected
 
 
@@ -105,8 +111,11 @@ def test_end_entity_certificate_extension_keys_typehints() -> None:
     configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKeys)
     expected = sorted(get_args(configurable_keys) + get_args(added_keys))
 
+    if CRYPTOGRAPHY_VERSION < (45,):
+        expected.append("private_key_usage_period")
+
     # Values of END_ENTITY_CERTIFICATE_EXTENSION_KEYS match exactly the Literal -> did not forget any value.
-    assert sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS.values()) == expected
+    assert sorted(constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS.values()) == sorted(expected)
 
     # check that all keys (=Object identifiers) occur in ConfigurableExtensionType
     expected = sorted(

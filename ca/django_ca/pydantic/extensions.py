@@ -1047,6 +1047,7 @@ ConfigurableExtensionModel = Annotated[
         | MSCertificateTemplateModel
         | OCSPNoCheckModel
         | PrecertPoisonModel
+        | PrivateKeyUsagePeriodModel
         | SubjectAlternativeNameModel
         | TLSFeatureModel,
         Field(discriminator="type"),
