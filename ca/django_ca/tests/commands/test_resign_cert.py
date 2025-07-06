@@ -52,7 +52,6 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
-from django_ca.typehints import CRYPTOGRAPHY_VERSION
 
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
@@ -466,70 +465,6 @@ def test_no_extensions_cert_with_overrides_with_non_default_critical(
     assert extensions[ExtensionOID.TLS_FEATURE] == tls_feature(
         x509.TLSFeatureType.status_request, critical=True
     )
-
-
-@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="extension was added in version 45")
-@pytest.mark.usefixtures("usable_child")
-@pytest.mark.parametrize(
-    ("args", "expected"),
-    (
-        (
-            ["--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00"],
-            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": None},
-        ),
-        (
-            [
-                "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
-            ],
-            {"not_before": None, "not_after": datetime(2011, 11, 4, 1, 5, 24)},
-        ),
-        (
-            [
-                "--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00",
-                "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
-            ],
-            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": datetime(2011, 11, 4, 1, 5, 24)},
-        ),
-    ),
-)
-def test_private_key_usage_period_extension_with_support(
-    no_extensions: Certificate, args: list[str], expected: dict[str, datetime]
-) -> None:
-    """Test the PrivateKeyUsagePeriod with a cryptography version that has support for it."""
-    cmdline = ["resign_cert", no_extensions.serial]
-
-    with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = cmd_e2e([*cmdline, *args])
-    assert stderr == ""
-
-    cert = Certificate.objects.exclude(pk=no_extensions.pk).get()
-
-    value = x509.PrivateKeyUsagePeriod(**expected)
-    extension = x509.Extension(oid=ExtensionOID.PRIVATE_KEY_USAGE_PERIOD, critical=False, value=value)
-    assert cert.extensions[ExtensionOID.PRIVATE_KEY_USAGE_PERIOD] == extension
-
-
-@pytest.mark.skipif(CRYPTOGRAPHY_VERSION >= (45,), reason="extension was added in version 45")
-@pytest.mark.usefixtures("usable_root")
-@pytest.mark.parametrize(
-    "kwargs",
-    (
-        {"private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23)},
-        {"private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24)},
-        {
-            "private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23),
-            "private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24),
-        },
-    ),
-)
-def test_private_key_usage_period_extension_without_support(
-    root_cert: Certificate, kwargs: dict[str, Any]
-) -> None:
-    """Test error when extension is not supported."""
-    with assert_command_error(
-        r"^The installed version of cryptography does not support the PrivateKeyUsagePeriod extension\.$"
-    ):
-        cmd("resign_cert", root_cert.serial, **kwargs)
 
 
 @pytest.mark.usefixtures("usable_root")

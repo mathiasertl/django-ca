@@ -41,6 +41,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
 
     add_extensions_help = "Override certificate extensions."
     subject_help = "Override subject for new certificate."
+    resign = True
 
     def add_arguments(self, parser: CommandParser) -> None:
         self.add_base_args(parser, no_default_ca=True)
@@ -144,7 +145,7 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             subject = cert.subject
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(**options)
+        extensions: list[ConfigurableExtension] = []
 
         if authority_information_access is not None:
             self.add_extension(

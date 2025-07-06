@@ -495,6 +495,8 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
 
     add_extensions_help = ""  # concrete classes should set this
     subject_help: typing.ClassVar  # concrete classes should set this
+    # temporary so that we can not add some extensions for resign, until it's completely removed:
+    resign: bool = False
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> ArgumentGroup:
         """Add common arguments for signing certificates."""
@@ -520,7 +522,8 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
         self.add_ocsp_no_check_group(parser)
-        self.add_private_key_usage_period_group(parser)
+        if self.resign is False:
+            self.add_private_key_usage_period_group(parser)
         self.add_subject_alternative_name_group(parser, additional_option_strings=("--alt",))
         self.add_tls_feature_group(parser)
 
@@ -542,7 +545,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         return general_group
 
     def add_ocsp_no_check_group(self, parser: CommandParser) -> None:
-        """Add argument group for the OCSPNoCheck extension."""
+        """Add arguments for the OCSPNoCheck extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.OCSP_NO_CHECK]
         group = parser.add_argument_group(
             f"{ext_name} extension",
@@ -608,38 +611,96 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
                 f"Certificate would outlive CA, maximum expiry for this CA is {max_days} days."
             )
 
-    def get_private_key_usage_period(
+    def add_private_key_usage_period(
         self, extensions: list[ConfigurableExtension], not_before: datetime | None, not_after: datetime | None
     ) -> None:
         """Get the PrivateKeyUsagePeriod, if set."""
         if not_before is None and not_after is None:  # exit early if neither value is set
             return
 
+        # pylint: disable-next=no-else-raise # we use else deliberately for better coverage.
         if CRYPTOGRAPHY_VERSION < (45,):  # pragma: cryptography<45 branch
             raise CommandError(
                 "The installed version of cryptography does not support the PrivateKeyUsagePeriod extension."
             )
+        else:  # pragma: cryptography>=45 branch
+            if not_before and not_after and not_before > not_after:
+                # Later validation will also catch this, but raise CommandError here for better error messages
+                raise CommandError("PrivateKeyUsagePeriod: not_after must be after not_before.")
 
-        if not_before and not_after and not_before > not_after:
-            # Later validation will also catch this, but raise CommandError here for better error messages
-            raise CommandError("PrivateKeyUsagePeriod: not_after must be after not_before.")
+            value = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
+            self.add_extension(extensions, value, critical=False)
 
-        value = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
-        self.add_extension(extensions, value, critical=False)
-
-    def get_end_entity_extensions(
+    def get_end_entity_extensions(  # noqa: PLR0913
         self,  # pylint: disable=unused-argument
+        # Authority Information Access extension
+        authority_information_access: x509.AuthorityInformationAccess | None,
+        # Certificate Policies extension
+        certificate_policies: x509.CertificatePolicies | None,
+        certificate_policies_critical: bool,
+        # CRL Distribution Points extension
+        crl_full_names: list[x509.GeneralName] | None,
+        crl_distribution_points_critical: bool,
+        # Extended Key Usage extension
+        extended_key_usage: x509.ExtendedKeyUsage | None,
+        extended_key_usage_critical: bool,
+        # Issuer Alternative Name extension:
+        issuer_alternative_name: x509.IssuerAlternativeName | None,
+        # Key Usage extension
+        key_usage: x509.KeyUsage | None,
+        key_usage_critical: bool,
+        # OCSP No Check extension
+        ocsp_no_check: bool,
+        ocsp_no_check_critical: bool,
         # PrivateKeyUsagePeriod extension
         private_key_usage_period_not_before: datetime | None,
         private_key_usage_period_not_after: datetime | None,
+        # Subject Alternative Name extension
+        subject_alternative_name: x509.SubjectAlternativeName | None,
+        subject_alternative_name_critical: bool,
+        # TLSFeature extension
+        tls_feature: x509.TLSFeature | None,
+        tls_feature_critical: bool,
         **options: Any,
     ) -> list[ConfigurableExtension]:
         """Get extensions for end-entity certificates from the command line."""
         extensions: list[ConfigurableExtension] = []
 
-        self.get_private_key_usage_period(
+        if authority_information_access is not None:
+            self.add_extension(
+                extensions,
+                authority_information_access,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
+            )
+        if certificate_policies is not None:
+            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
+        if crl_full_names is not None:
+            distribution_point = x509.DistributionPoint(
+                full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
+            )
+            self.add_extension(
+                extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
+            )
+        if extended_key_usage is not None:
+            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
+        if issuer_alternative_name is not None:
+            self.add_extension(
+                extensions,
+                issuer_alternative_name,
+                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
+            )
+        if key_usage is not None:
+            self.add_extension(extensions, key_usage, key_usage_critical)
+        if ocsp_no_check is True:
+            self.add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
+        self.add_private_key_usage_period(
             extensions, private_key_usage_period_not_before, private_key_usage_period_not_after
         )
+
+        if subject_alternative_name is not None:
+            self.add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
+        if tls_feature is not None:
+            self.add_extension(extensions, tls_feature, tls_feature_critical)
 
         return extensions
 

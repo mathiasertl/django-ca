@@ -21,11 +21,10 @@ from datetime import timedelta
 from typing import Any
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID, NameOID
+from cryptography.x509.oid import NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
-from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
@@ -67,7 +66,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913
+    def handle(  # pylint: disable=too-many-locals
         self,
         ca: CertificateAuthority,
         subject: x509.Name | None,
@@ -78,31 +77,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         profile: str | None,
         out: str | None,
         algorithm: AllowedHashTypes | None,
-        # Authority Information Access extension
-        authority_information_access: x509.AuthorityInformationAccess,
-        # Certificate Policies extension
-        certificate_policies: x509.CertificatePolicies | None,
-        certificate_policies_critical: bool,
-        # CRL Distribution Points extension
-        crl_full_names: list[x509.GeneralName] | None,
-        crl_distribution_points_critical: bool,
-        # Extended Key Usage extension
-        extended_key_usage: x509.ExtendedKeyUsage | None,
-        extended_key_usage_critical: bool,
-        # Issuer Alternative Name extension:
-        issuer_alternative_name: x509.IssuerAlternativeName | None,
-        # Key Usage extension
-        key_usage: x509.KeyUsage | None,
-        key_usage_critical: bool,
-        # OCSP No Check extension
-        ocsp_no_check: bool,
-        ocsp_no_check_critical: bool,
-        # Subject Alternative Name extension
+        # Subject Alternative Name extension - used in the function directly
         subject_alternative_name: x509.SubjectAlternativeName | None,
-        subject_alternative_name_critical: bool,
-        # TLSFeature extension
-        tls_feature: x509.TLSFeature | None,
-        tls_feature_critical: bool,
         **options: Any,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
@@ -112,43 +88,13 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         # Get key backend options and validate backend-specific options
         key_backend_options, algorithm = self.get_signing_options(ca, algorithm, options)
 
-        # get list of watchers
+        # get a list of watchers
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(**options)
-
-        if authority_information_access is not None:
-            self.add_extension(
-                extensions,
-                authority_information_access,
-                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            )
-        if certificate_policies is not None:
-            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
-        if crl_full_names is not None:
-            distribution_point = x509.DistributionPoint(
-                full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
-            )
-            self.add_extension(
-                extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
-            )
-        if extended_key_usage is not None:
-            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
-        if issuer_alternative_name is not None:
-            self.add_extension(
-                extensions,
-                issuer_alternative_name,
-                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            )
-        if key_usage is not None:
-            self.add_extension(extensions, key_usage, key_usage_critical)
-        if ocsp_no_check is True:
-            self.add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
-        if subject_alternative_name is not None:
-            self.add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
-        if tls_feature is not None:
-            self.add_extension(extensions, tls_feature, tls_feature_critical)
+        extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(
+            subject_alternative_name=subject_alternative_name, **options
+        )
 
         cname = None
         if subject is not None:

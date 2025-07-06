@@ -45,7 +45,7 @@ class ExtensionExampleDict(_ExtensionExampleDict, total=False):
     extension_type_alternatives: list[CertificateExtensionType]
 
 
-TestValues = dict[str, ExtensionExampleDict]
+ExtensionExampleValues = dict[str, ExtensionExampleDict]
 
 
 def pytest_generate_tests(metafunc: Any) -> None:
@@ -59,7 +59,7 @@ class ExtensionTestCaseMixin:
     """Mixin class for all extension types."""
 
     ext_class_key: str
-    test_values: ClassVar[TestValues]
+    test_values: ClassVar[ExtensionExampleValues]
 
     def test_as_admin_html(self, name: str, config: ExtensionExampleDict) -> None:
         """Test the ``extension_as_admin_html`` function."""
@@ -110,7 +110,7 @@ class CRLDistributionPointsTestCaseMixin(ExtensionTestCaseMixin):
     cg_dps4: CRLExtensionType
 
     @classproperty  # pylint: disable-next=no-self-argument
-    def test_values(cls) -> TestValues:
+    def test_values(cls) -> ExtensionExampleValues:
         """Overwritten because we access ext_class_type, so we can use subclasses."""
         rdn1 = [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}]
 
@@ -205,7 +205,7 @@ class TestAuthorityInformationAccess(ExtensionTestCaseMixin):
     uri3 = "https://example3.org"
     uri4 = "https://example4.at"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "issuer": {
             "admin_html": f"CA Issuers:<ul><li>URI:{uri1}</li></ul>",
             "extension_type": x509.AuthorityInformationAccess(
@@ -293,7 +293,7 @@ class TestAuthorityKeyIdentifier(ExtensionTestCaseMixin):
     dns1 = "example.org"
     s1 = 0
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": f"<ul><li>Key ID: <span class='django-ca-serial'>{hex1}</span></li></ul>",
             "extension_type": x509.AuthorityKeyIdentifier(b1, None, None),
@@ -344,7 +344,7 @@ class TestBasicConstraints(ExtensionTestCaseMixin):
     ext_class_key = "basic_constraints"
     ext_class_name = "BasicConstraints"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "no_ca": {
             "admin_html": "CA: False",
             "extension_type": x509.BasicConstraints(ca=False, path_length=None),
@@ -487,7 +487,7 @@ class TestCertificatePolicies(ExtensionTestCaseMixin):
     xcp6 = x509.CertificatePolicies(policies=[xpi6])
     xcp7 = x509.CertificatePolicies(policies=[xpi7])
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": f"<ul><li>Unknown OID ({oid}):<ul><li>text1</li></li></ul>",
             "serialized_alternatives": [[un1], [un1_1], [xpi1]],
@@ -680,7 +680,7 @@ class TestExtendedKeyUsage(ExtensionTestCaseMixin):
     ext_class_key = "extended_key_usage"
     ext_class_name = "ExtendedKeyUsage"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": "<ul><li>serverAuth</li></ul>",
             "extension_type": x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
@@ -760,7 +760,7 @@ class TestInhibitAnyPolicy(ExtensionTestCaseMixin):
     ext_class_key = "inhibit_any_policy"
     ext_class_name = "InhibitAnyPolicy"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "zero": {
             "admin_html": "skip certs: 0",
             "serialized_alternatives": [0],
@@ -791,7 +791,7 @@ class TestIssuerAlternativeName(ExtensionTestCaseMixin):
     dns2 = value4 = "example.net"
 
     @classproperty  # pylint: disable-next=no-self-argument
-    def test_values(cls) -> TestValues:
+    def test_values(cls) -> ExtensionExampleValues:
         """Overwritten because we access ext_class_type, so we can use subclasses."""
         return {
             "uri": {
@@ -871,7 +871,7 @@ class TestKeyUsage(ExtensionTestCaseMixin):
     ext_class_key = "key_usage"
     ext_class_name = "KeyUsage"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": "<ul><li>keyAgreement</li></ul>",
             "extension_type": x509.KeyUsage(
@@ -945,7 +945,7 @@ class TestNameConstraints(ExtensionTestCaseMixin):
 
     d1 = "example.com"
     d2 = "example.net"
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "permitted": {
             "admin_html": f"Permitted:<ul><li>DNS:{d1}</li></ul>",
             "extension_type": x509.NameConstraints(permitted_subtrees=[dns(d1)], excluded_subtrees=None),
@@ -991,7 +991,7 @@ class TestOCSPNoCheck(ExtensionTestCaseMixin):
     ext_class_key = "ocsp_no_check"
     ext_class_name = "OCSPNoCheck"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "empty": {
             "admin_html": "Yes",
             "serialized": None,
@@ -1007,7 +1007,7 @@ class TestPolicyConstraints(ExtensionTestCaseMixin):
     ext_class_key = "policy_constraints"
     ext_class_name = "PolicyConstraints"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "rep_zero": {
             "admin_html": "<ul><li>RequireExplicitPolicy: 0</li></ul>",
             "serialized_alternatives": [{"require_explicit_policy": 0}],
@@ -1052,7 +1052,7 @@ class TestPrecertPoison(ExtensionTestCaseMixin):
     ext_class_key = "precert_poison"
     ext_class_name = "PrecertPoison"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "empty": {
             "admin_html": "Yes",
             "serialized": None,
@@ -1328,7 +1328,7 @@ class TestSubjectKeyIdentifierTestCase(ExtensionTestCaseMixin):
     b1 = b"333333"
     b2 = b"DDDDDD"
     b3 = b"UUUUUU"
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": hex1,
             "extension_type": x509.SubjectKeyIdentifier(b1),
@@ -1359,7 +1359,7 @@ class TestTLSFeature(ExtensionTestCaseMixin):
     ext_class_key = "tls_feature"
     ext_class_name = "TLSFeature"
 
-    test_values: ClassVar[TestValues] = {
+    test_values: ClassVar[ExtensionExampleValues] = {
         "one": {
             "admin_html": "<ul><li>status_request (OCSPMustStaple)</li></ul>",
             "extension_type": x509.TLSFeature(features=[x509.TLSFeatureType.status_request]),
