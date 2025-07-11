@@ -13,9 +13,11 @@
 
 """Test basic views."""
 
-# pylint: disable=redefined-outer-name  # because of test fixtures
+from datetime import timedelta
 
+# pylint: disable=redefined-outer-name  # because of test fixtures
 from http import HTTPStatus
+from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -217,6 +219,25 @@ def test_with_object_not_in_database(
     assert response.status_code == HTTPStatus.OK
     assert response["Content-Type"] == "application/pkix-crl"
     assert response.content == root_crl.data
+
+
+def test_with_expired_crl(
+    client: Client,
+    freezer: Any,
+    usable_root: CertificateAuthority,
+    default_url: str,
+    root_crl: CertificateRevocationList,
+) -> None:
+    """Fetch a full CRL where the CRL in the database is expired."""
+    cache.clear()
+    freezer.move_to(root_crl.next_update + timedelta(hours=1))
+    response = client.get(default_url)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response["Content-Type"] == "application/pkix-crl"
+    assert response.content != root_crl.data
+    assert root_crl.number == 0
+    assert_crl(response.content, expected=[], encoding=Encoding.DER, signer=usable_root, crl_number=1)
 
 
 def test_force_encoding(client: Client, default_url: str, root_crl: CertificateRevocationList) -> None:

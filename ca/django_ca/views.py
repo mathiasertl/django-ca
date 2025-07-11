@@ -45,6 +45,7 @@ from cryptography.x509.ocsp import OCSPResponse, OCSPResponseBuilder
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseServerError
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
@@ -128,6 +129,8 @@ class CertificateRevocationListView(View):
 
         # CRL is not cached, try to retrieve it from the database.
         if encoded_crl is None:
+            now = timezone.now()
+
             crl_qs: CertificateRevocationListQuerySet = (
                 CertificateRevocationList.objects.scope(
                     serial=serial,
@@ -135,7 +138,10 @@ class CertificateRevocationListView(View):
                     only_contains_user_certs=self.only_contains_user_certs,
                     only_contains_attribute_certs=self.only_contains_attribute_certs,
                     only_some_reasons=self.only_some_reasons,
-                ).filter(data__isnull=False)  # Only objects that have CRL data associated with it
+                )
+                .exclude(next_update__lt=now)
+                .exclude(last_update__gt=now)
+                .filter(data__isnull=False)  # Only objects that have CRL data associated with it
             )
             crl_obj: CertificateRevocationList | None = crl_qs.newest()
 
@@ -144,7 +150,7 @@ class CertificateRevocationListView(View):
                 ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
 
                 key_backend_options = self.get_key_backend_options(ca)
-                expires = datetime.now(tz=tz.utc) + timedelta(seconds=self.expires)
+                expires = now + timedelta(seconds=self.expires)
                 crl_obj = CertificateRevocationList.objects.create_certificate_revocation_list(
                     ca=ca,
                     key_backend_options=key_backend_options,

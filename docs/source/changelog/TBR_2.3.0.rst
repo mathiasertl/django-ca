@@ -3,6 +3,8 @@
 ###########
 
 * Add support for the `PrivateKeyUsagePeriod` extension. Support requires that you use ``cryptography>=45``.
+* Regenerate CRL in view if newest CRL is expired (fixes (`#167
+  <https://github.com/mathiasertl/django-ca/issues/167>`_).
 
 ********
 Database
