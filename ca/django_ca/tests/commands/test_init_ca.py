@@ -603,6 +603,15 @@ def test_api_arguments(hostname: str, ca_name: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
+def test_leading_zero(hostname: str, ca_name: str) -> None:
+    """Assert that CA serials are stored without leading zeroes."""
+    with mock.patch("django_ca.managers.x509.random_serial_number", return_value=16 * 16 * 16 - 1):
+        ca = init_ca(name=ca_name)
+    assert ca.serial == "FFF"
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
 def test_disabled_arguments(settings: SettingsWrapper) -> None:
     """Test that ACME/REST API options don't work when feature is disabled."""
     settings.CA_ENABLE_ACME = False

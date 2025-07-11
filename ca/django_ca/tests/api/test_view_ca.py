@@ -53,6 +53,16 @@ def test_view_expired_ca(api_client: Client, root_response: dict[str, Any]) -> N
     assert response.json() == root_response, response.json()
 
 
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_with_leading_zeroes(api_client: Client, root_response: dict[str, Any]) -> None:
+    """Test that leading zeros in serials are trimmed."""
+    serial = f"000{CERT_DATA['root']['serial']}"
+    zero_path = reverse_lazy("django_ca:api:view_certificate_authority", kwargs={"serial": serial})
+    response = api_client.get(zero_path)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.json() == root_response, response.json()
+
+
 class TestPermissions(APIPermissionTestBase):
     """Test permissions for this view."""
 
