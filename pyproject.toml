@@ -131,7 +131,7 @@ dependencies = [
     "django-object-actions>=4.2.0",
     "dnspython>=2.6",
     "idna>=3.8",
-    "josepy>=1.13.0",
+    "josepy>=1.15.0",
     "packaging",
     "pydantic>=2.10",
     "requests>=2.30",

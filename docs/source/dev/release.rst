@@ -11,7 +11,7 @@ Preparation
 Run these steps when you begin to create a new release:
 
 * Double-check that the changelog is up to date.
-* Update requirements in :file:`pyproject.toml` (use :command:`uv pip list --outdated`).
+* Update requirements in :file:`pyproject.toml`.
 * Check versions of major software dependencies and:
 
   * Update ``[django-ca.release]`` in :file:`pyproject.toml` with current minor versions.
@@ -19,14 +19,13 @@ Run these steps when you begin to create a new release:
 
 * Update table in ``docs/source/quickstart/as_app.rst``
 * Run :command:`./dev.py validate state` and fix any errors.
-* Update version in ``ca/django_ca/__init__.py``.
 
 Upgrade ``uv.lock``
 ===================
 
 Create a file with pinned requirements, so that users can reliably reproduce a setup::
 
-   $ uv sync --upgrade
+   $ uv sync --all-extras --upgrade
 
 Docker Compose
 ==============
@@ -84,6 +83,14 @@ Test admin interface
 * Check if the profile selection when creating a certificate works.
 * Check if pasting a CSR shows values from the CSR next to the "Subject" field.
 
+Test tutorials
+==============
+
+Validate that the tutorials are still working::
+
+    $ ./dev.py validate docker
+    $ ./dev.py validate docker-compose --no-rebuild
+
 ****************
 Create a release
 ****************
@@ -110,7 +117,6 @@ Update GitHub/Docker Hub
 After a release
 ***************
 
-* Update version in ``ca/django_ca/__init__.py``.
 * Start new changelog entry in ``docs/source/changelog/``.
 * Update :file:`ca/django_ca/deprecation.py` and remove code marked by such warnings.
 * Search for deprecation comments that could be removed::

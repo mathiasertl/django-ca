@@ -3,6 +3,7 @@
 ###########
 
 * Add support for the `PrivateKeyUsagePeriod` extension. Support requires that you use ``cryptography>=45``.
+* Switch from uWSGI to `Gunicorn <https://gunicorn.org/>`_.
 * Regenerate CRL in view if newest CRL is expired (fixes (`#167
   <https://github.com/mathiasertl/django-ca/issues/167>`_).
 
@@ -105,8 +106,12 @@ Python API
 Deprecation notices
 *******************
 
+* This is the last release to support ``Django~=5.1.0``.
+* This is the last release to support ``cryptography~=44.0``.
 * This is the last release to support ``Celery~=4.4.0``.
-* This is the last release to support ``acme~=3.2.0`` and ``acme~=3.3.0``.
+* This is the last release to support ``pydantic~=2.10.0``.
+* This is the last release to support ``acme~=3.2.0``, ``acme~=3.3.0``, ``acme~=4.0.0`` and
+  `josepy~=1.15.0``.
 
 *****
 Views

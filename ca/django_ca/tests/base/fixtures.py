@@ -329,7 +329,7 @@ def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
     objectstore.backend = file
 
     # ERROR, WARNING, INFO, DEBUG
-    log.level = DEBUG
+    log.level = ERROR
 
     # If CKF_REMOVABLE_DEVICE flag should be set
     slots.removable = false
