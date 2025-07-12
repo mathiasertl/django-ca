@@ -129,6 +129,23 @@ def test_validate_past(root_cert: Certificate) -> None:
         root_cert.full_clean()
 
 
+@pytest.mark.parametrize("serial", ("0", "0ABC", "abc", "xx"))
+def test_model_validation_with_invalid_serial(
+    root: CertificateAuthority, root_cert_pub: x509.Certificate, serial: str
+) -> None:
+    """Test serial validation."""
+    cert = Certificate(
+        pub=root_cert_pub,
+        ca=root,
+        not_after=timezone.now(),
+        not_before=timezone.now(),
+        cn="foo",
+        serial=serial,
+    )
+    with assert_validation_error({"serial": ["Enter a valid value."]}):
+        cert.full_clean()
+
+
 @pytest.mark.parametrize(("name", "algorithm"), (("sha256", hashes.SHA256()), ("sha512", hashes.SHA512())))
 def test_get_fingerprint(name: str, algorithm: hashes.HashAlgorithm, usable_cert: Certificate) -> None:
     """Test getting the fingerprint value."""

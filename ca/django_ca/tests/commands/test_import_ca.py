@@ -14,6 +14,7 @@
 """Test the import_ca management command."""
 
 import typing
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, cast
 from unittest import mock
@@ -21,9 +22,15 @@ from unittest import mock
 import pkcs11
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey
-from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    load_der_private_key,
+)
 
 from django.conf import settings
 from django.core.management import CommandError
@@ -56,6 +63,7 @@ from django_ca.tests.base.utils import (
     issuer_alternative_name,
     uri,
 )
+from django_ca.utils import get_cert_builder
 
 pytestmark = [pytest.mark.usefixtures("tmpcadir"), pytest.mark.usefixtures("db")]
 
@@ -345,6 +353,41 @@ def test_with_db_backend(usable_ca_name_by_type: str, subject: x509.Name) -> Non
     csr = cert_data["csr"]["parsed"]
     cert = Certificate.objects.create_cert(ca, DBUsePrivateKeyOptions(), csr, subject=subject)
     assert_signature([ca], cert)
+
+
+@pytest.mark.parametrize(
+    ("serial", "expected"),
+    (
+        (16 * 16 * 16 - 1, "FFF"),
+        (  # GitHub issue #169
+            87246075353530559249444958225944207151078527808,
+            "F483FD3C612F848B2C4DCCBF889A6EA980F5340",
+        ),
+    ),
+)
+def test_with_leading_zero_serial(tmpcadir: Path, subject: x509.Name, serial: int, expected: str) -> None:
+    """Try importing a CA where the serial has uneven number of hex characters ("loeading zero")."""
+    cert_data = CERT_DATA["root"]
+    key_path = cert_data["key_path"]
+    pem_path = tmpcadir / "input.pem"
+    with open(key_path, "rb") as stream:
+        key = load_der_private_key(stream.read(), password=None)
+
+    not_after = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    builder = get_cert_builder(not_after, serial=serial)
+    builder = builder.public_key(key.public_key())  # type: ignore[arg-type]
+    builder = builder.issuer_name(subject)
+    builder = builder.subject_name(subject)
+    cert = builder.sign(private_key=key, algorithm=hashes.SHA256())  # type: ignore[arg-type]
+    with open(pem_path, "wb") as stream:
+        stream.write(cert.public_bytes(Encoding.PEM))
+
+    import_ca("leading-zero", key_path, pem_path, key_backend=key_backends["db"])
+
+    ca = CertificateAuthority.objects.get(name="leading-zero")
+    assert ca.key_backend.is_usable(ca) is True
+    assert ca.key_backend.check_usable(ca, DBUsePrivateKeyOptions()) is None
+    assert ca.serial == expected
 
 
 def test_bogus_public_key(ca_name: str) -> None:

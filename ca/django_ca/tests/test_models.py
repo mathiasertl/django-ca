@@ -242,7 +242,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             not_after=timezone.now(),
             not_before=timezone.now(),
             cn="foo",
-            serial="0",
+            serial="1",
         )
         cert.full_clean()
         assert cert.pub.loaded == self.pub["parsed"]
@@ -255,7 +255,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             not_after=timezone.now(),
             not_before=timezone.now(),
             cn="foo",
-            serial="0",
+            serial="1",
         )
         cert.full_clean()
         assert cert.pub.loaded == self.pub["parsed"]
@@ -270,7 +270,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             not_after=timezone.now(),
             not_before=timezone.now(),
             cn="foo",
-            serial="0",
+            serial="1",
         )
         cert.full_clean()
         assert cert.pub.loaded == self.pub["parsed"]

@@ -42,7 +42,7 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, URLValidator
+from django.core.validators import MinValueValidator, RegexValidator, URLValidator
 from django.db import models
 from django.http import HttpRequest
 from django.urls import reverse
@@ -253,7 +253,7 @@ class X509CertMixin(DjangoCAModel):
 
     pub = CertificateField(verbose_name=_("Public key"))
     cn = models.CharField(max_length=128, verbose_name=_("CommonName"))
-    serial = models.CharField(max_length=64, unique=True)
+    serial = models.CharField(max_length=64, unique=True, validators=[RegexValidator(r"^[1-9A-F][0-9A-F]*$")])
 
     # revocation information
     revoked = models.BooleanField(default=False)
