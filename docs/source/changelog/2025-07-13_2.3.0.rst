@@ -1,6 +1,6 @@
-###########
-2.3.0 (TBR)
-###########
+##################
+2.3.0 (2025-07-13)
+##################
 
 * Add support for the `PrivateKeyUsagePeriod` extension. Support requires that you use ``cryptography>=45``.
 * Switch from uWSGI to `Gunicorn <https://gunicorn.org/>`_.
@@ -11,8 +11,10 @@
 Database
 ********
 
-* Update models to fully support MySQL and MariaDB.
+* Update models to fully support MySQL and MariaDB (fixes (`#165
+  <https://github.com/mathiasertl/django-ca/issues/165>`_).
 * Squash migrations for a faster setup process. Old migrations will be removed in ``django-ca~=2.5.0``.
+* Add GitHub Actions workflows to run the test suite in recent versions of MariaDB, MySQL and PostgreSQL.
 
 ********
 Settings
@@ -71,8 +73,8 @@ REST API
 Dependencies
 ************
 
-* Add support for ``django~=5.2.0``, ``Celery~=5.5.0``, ``pydantic~=2.11.0``, ``acme~=3.3.0`` and
-  ``acme~=4.0.0``.
+* Add support for ``django~=5.2.0``, ``Celery~=5.5.0``, ``pydantic~=2.11.0``, ``acme~=3.2.0``,
+  ``acme~=3.3.0``, ``acme~=4.0.0`` and ``acme~=4.1.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``django~=4.2.0``, ``acme~=3.0.0`` and ``acme~=3.1.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Alpine 3.19.
 
@@ -111,7 +113,7 @@ Deprecation notices
 * This is the last release to support ``Celery~=4.4.0``.
 * This is the last release to support ``pydantic~=2.10.0``.
 * This is the last release to support ``acme~=3.2.0``, ``acme~=3.3.0``, ``acme~=4.0.0`` and
-  `josepy~=1.15.0``.
+  ``josepy~=1.15.0``.
 
 *****
 Views
