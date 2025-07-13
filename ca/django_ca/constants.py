@@ -15,7 +15,6 @@
 
 import enum
 from collections import defaultdict
-from importlib.metadata import version
 from types import MappingProxyType
 
 import packaging.version
@@ -60,7 +59,6 @@ from django_ca.typehints import (
 )
 
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
-JOSEPY_VERSION = packaging.version.parse(version("josepy")).release
 
 
 class ExtensionOID(_ExtensionOID):

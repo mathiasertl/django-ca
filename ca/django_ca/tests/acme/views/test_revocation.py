@@ -25,7 +25,6 @@ from acme.messages import Revocation
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-from OpenSSL.crypto import X509, X509Req
 
 from django.test import Client
 from django.urls import reverse
@@ -34,8 +33,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
-from django_ca.constants import JOSEPY_VERSION, ReasonFlags
-from django_ca.deprecation import josepy_revocation
+from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import (
     AcmeAccount,
@@ -67,7 +65,7 @@ def url() -> str:
 @pytest.fixture
 def message() -> Revocation:
     """Default message sent to the server."""
-    return josepy_revocation(CERT_DATA["root-cert"]["pub"]["parsed"])
+    return Revocation(certificate=CERT_DATA["root-cert"]["pub"]["parsed"])
 
 
 class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocation]):
@@ -86,14 +84,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
     def get_message(self, **kwargs: Any) -> Revocation:
         """Get default message."""
         default_certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
-        if JOSEPY_VERSION >= (2, 0):
-            kwargs.setdefault("certificate", default_certificate)
-        else:
-            kwargs.setdefault(
-                "certificate",
-                # pylint: disable-next=no-member
-                jose.util.ComparableX509(X509.from_cryptography(default_certificate)),  # type: ignore[attr-defined]
-            )
+        kwargs.setdefault("certificate", default_certificate)
         return Revocation(**kwargs)
 
     @unittest.skip("Not applicable (we accept both JWK and JID).")
@@ -189,7 +180,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
             root_cert.ca, StoragesUsePrivateKeyOptions(password=None)
         )
         cert = builder.sign(private_key=ca_key, algorithm=model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
-        message = josepy_revocation(cert)  # type: ignore[arg-type]
+        message = Revocation(certificate=cert)  # type: ignore[arg-type]
 
         resp = self.acme(client, url, usable_root, message, kid=kid)
         assert_unauthorized(resp, usable_root, "Certificate does not match records.")
@@ -197,12 +188,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
     def test_pass_csr(self, client: Client, url: str, root: CertificateAuthority, kid: str) -> None:
         """Send a CSR instead of a certificate."""
         cert = CERT_DATA["root-cert"]["csr"]["parsed"]
-        if JOSEPY_VERSION >= (2, 0):
-            message = self.csr_class(certificate=cert)
-        else:
-            req = X509Req.from_cryptography(cert)
-            # pylint: disable-next=no-member
-            message = self.csr_class(certificate=jose.util.ComparableX509(req))  # type: ignore[attr-defined]
+        message = self.csr_class(certificate=cert)
         resp = self.acme(client, url, root, message, kid=kid)
         assert_malformed(resp, root, "Could not decode 'certificate'", regex=True)
 
@@ -322,11 +308,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         AcmeCertificate.objects.create(order=order, cert=no_extensions)
 
         url = reverse("django_ca:acme-revoke", kwargs={"serial": CERT_DATA["child"]["serial"]})
-        if JOSEPY_VERSION >= (2, 0):
-            message_cert = no_extensions.pub.loaded
-        else:
-            # pylint: disable-next=no-member
-            message_cert = jose.util.ComparableX509(X509.from_cryptography(no_extensions.pub.loaded))  # type: ignore[attr-defined]
+        message_cert = no_extensions.pub.loaded
         resp = self.acme(client, url, child, self.get_message(certificate=message_cert))
         assert_unauthorized(resp, child, "Account does not hold necessary authorizations.")
 
@@ -343,11 +325,7 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         AcmeCertificate.objects.create(order=order, cert=alt_extensions)
 
         url = reverse("django_ca:acme-revoke", kwargs={"serial": CERT_DATA["child"]["serial"]})
-        if JOSEPY_VERSION >= (2, 0):
-            message_cert = alt_extensions.pub.loaded
-        else:
-            # pylint: disable-next=no-member
-            message_cert = jose.util.ComparableX509(X509.from_cryptography(alt_extensions.pub.loaded))  # type: ignore[attr-defined]
+        message_cert = alt_extensions.pub.loaded
         resp = self.acme(client, url, child, self.get_message(certificate=message_cert))
         assert_unauthorized(resp, child, "Certificate contains non-DNS subjectAlternativeNames.")
 

@@ -19,15 +19,6 @@ from collections.abc import Callable
 from inspect import signature
 from typing import Any, TypeVar, cast
 
-import josepy as jose
-from acme.messages import Revocation
-
-from cryptography import x509
-from OpenSSL.crypto import X509, X509Req
-
-from django_ca.acme.messages import CertificateRequest
-from django_ca.constants import JOSEPY_VERSION
-
 # IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -131,23 +122,3 @@ def deprecate_type(
         return cast(F, wrapper)
 
     return decorator_deprecate
-
-
-def josepy_certificate_request(csr: x509.CertificateSigningRequest) -> CertificateRequest:
-    """Wrapper function to get a CertificateRequest message."""
-    if JOSEPY_VERSION >= (2, 0):  # pragma: only josepy>=2.0
-        return CertificateRequest(csr=csr)
-    return CertificateRequest(  # pragma: only josepy<2.0
-        # pylint: disable-next=no-member
-        csr=jose.util.ComparableX509(X509Req.from_cryptography(csr))  # type: ignore[attr-defined]
-    )
-
-
-def josepy_revocation(cert: CertificateRequest) -> Revocation:
-    """Wrapper function to get a Revocation message."""
-    if JOSEPY_VERSION >= (2, 0):  # pragma: josepy>=2.0 branch
-        return Revocation(certificate=cert)
-    return Revocation(  # pragma: only josepy<2.0
-        # pylint: disable-next=no-member
-        certificate=jose.util.ComparableX509(X509.from_cryptography(cert))  # type: ignore[attr-defined]
-    )

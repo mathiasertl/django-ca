@@ -32,7 +32,6 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.acme.messages import CertificateRequest
-from django_ca.deprecation import josepy_certificate_request
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.assertions import (
@@ -85,7 +84,7 @@ def url(order: AcmeOrder) -> str:
 @pytest.fixture
 def message() -> CertificateRequest:
     """Default message sent to the server."""
-    return josepy_certificate_request(CSR)
+    return CertificateRequest(csr=CSR)
 
 
 def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthority) -> None:
@@ -305,7 +304,7 @@ def test_csr_bad_algorithm(
     with open(FIXTURES_DIR / "md5.csr.pem", "rb") as stream:
         signed_csr = x509.load_pem_x509_csr(stream.read())
 
-    message = josepy_certificate_request(signed_csr)
+    message = CertificateRequest(csr=signed_csr)
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
         django_capture_on_commit_callbacks() as callbacks,
@@ -317,7 +316,7 @@ def test_csr_bad_algorithm(
 
     with open(FIXTURES_DIR / "sha1.csr.pem", "rb") as stream:
         signed_csr = x509.load_pem_x509_csr(stream.read())
-    message = josepy_certificate_request(signed_csr)
+    message = CertificateRequest(csr=signed_csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -352,7 +351,7 @@ def test_csr_valid_subject(
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
 
-    message = josepy_certificate_request(csr)
+    message = CertificateRequest(csr=csr)
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
         django_capture_on_commit_callbacks(execute=True) as callbacks,
@@ -389,7 +388,7 @@ def test_csr_subject_no_cn(
         .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
     )
     csr = csr_builder.sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
-    message = josepy_certificate_request(csr)
+    message = CertificateRequest(csr=csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -425,7 +424,7 @@ def test_csr_subject_no_domain(
         .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    message = josepy_certificate_request(csr)
+    message = CertificateRequest(csr=csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -451,7 +450,7 @@ def test_csr_subject_not_in_order(
         .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    message = josepy_certificate_request(csr)
+    message = CertificateRequest(csr=csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -476,7 +475,7 @@ def test_csr_no_san(
         .subject_name(x509.Name([]))
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    message = josepy_certificate_request(csr)
+    message = CertificateRequest(csr=csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
@@ -505,7 +504,7 @@ def test_csr_different_names(
         )
         .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
     )
-    message = josepy_certificate_request(csr)
+    message = CertificateRequest(csr=csr)
 
     with (
         patch("django_ca.acme.views.run_task") as mockcm,
