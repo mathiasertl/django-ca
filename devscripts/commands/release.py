@@ -88,16 +88,6 @@ class Command(DevCommand):
             err("Repository has untracked changes.")
             sys.exit(1)
 
-        # Make sure that user passed a valid semantic version
-        ver = self.semantic_version.Version(release)
-        if ver.prerelease or ver.build:
-            raise CommandError("Version has prerelease or build number.")
-
-        # Make sure that the software identifies as the right version
-        version = self.django_ca.__version__
-        if version != release:
-            raise CommandError(f"ca/django_ca/__init__.py: Version is {version}")
-
         # Make sure that the docker compose files are present and default to the about-to-be-released version
         if docker_compose.validate_docker_compose_files(release) != 0:
             raise CommandError("docker compose files in inconsistent state.")
