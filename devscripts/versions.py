@@ -20,7 +20,11 @@ def get_last_version() -> str:
 
     version = django_ca.__packaging_version__
 
-    major, minor, patch = version.release
+    try:
+        major, minor, patch = version.release
+    except ValueError as ex:
+        raise ValueError(ex, version, version.release) from ex
+
     if version.is_prerelease or version.is_devrelease:
         if patch != 0:
             patch -= 1
