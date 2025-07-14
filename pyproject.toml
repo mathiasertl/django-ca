@@ -141,7 +141,7 @@ dependencies = [
 
 [project.optional-dependencies]
 api = ["django-ninja>=1.1"]
-celery = ["celery>=5.4"]
+celery = ["celery>=5.5"]
 hsm = ["python-pkcs11>=0.7"]
 mysql = ["mysqlclient"]
 postgres = ["psycopg[c,pool]>=3.1"]
