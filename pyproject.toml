@@ -12,7 +12,7 @@ python = ["3.10", "3.11", "3.12", "3.13"]
 django = ["5.1", "5.2"]
 cryptography = ["44", "45"]
 acme = [ "4.1" ]
-pydantic = ["2.10", "2.11"]
+pydantic = ["2.11"]
 josepy = ["2.0"]
 
 # https://alpinelinux.org/releases/
@@ -133,7 +133,7 @@ dependencies = [
     "idna>=3.8",
     "josepy>=2.0.0",
     "packaging",
-    "pydantic>=2.10",
+    "pydantic>=2.11",
     "requests>=2.30",
     # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
     "typing_extensions>=4.6.0;python_version<'3.12'",
@@ -523,7 +523,7 @@ conflicts = [
     [ { group = "django5.1" }, { group = "django5.2" }, ],
     [ { group = "cryptography44" }, { group = "cryptography45" }, ],
     #[ { group = "acme3.2" }, { group = "acme3.3" }, { group = "acme4.0" }, { group = "acme4.1" } ],
-    [ { group = "pydantic2.10" }, { group = "pydantic2.11" } ],
+    #[ { group = "pydantic2.10" }, { group = "pydantic2.11" } ],
 ]
 
 [dependency-groups]
@@ -603,5 +603,4 @@ gunicorn = [ "gunicorn>=23" ]
 "cryptography44" = ["cryptography~=44.0"]
 "cryptography45" = ["cryptography~=45.0"]
 "acme4.1" = ["acme~=4.1.0"]
-"pydantic2.10" = ["pydantic~=2.10.0"]
 "pydantic2.11" = ["pydantic~=2.11.0"]
