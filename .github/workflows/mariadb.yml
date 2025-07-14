@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        django-version: [ "5.1", "5.2" ]
+        django-version: [ "5.2" ]
         mariadb-image: [ "mariadb:11", "mysql:9" ]
 
     services:

@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.10", "3.11", "3.12", "3.13"]
 # https://www.djangoproject.com/download/
-django = ["5.1", "5.2"]
+django = ["5.2"]
 cryptography = ["45"]
 acme = [ "4.1" ]
 pydantic = ["2.11"]
@@ -102,7 +102,6 @@ license = "GPL-3.0-or-later"
 description = "A Django app providing a TLS certificate authority."
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "Framework :: Django :: 5.1",
     "Framework :: Django :: 5.2",
     "Framework :: Django",
     "Intended Audience :: Developers",
@@ -124,7 +123,7 @@ dynamic = ["version", "readme"]
 # Dependency information
 requires-python = ">=3.10"
 dependencies = [
-    "Django>=5.1",
+    "Django>=5.2",
     "acme>=4.1",
     "asn1crypto>=1.5",
     "cryptography>=45",
@@ -598,7 +597,7 @@ gunicorn = [ "gunicorn>=23" ]
 
 # Dependency groups for use in test matrices (tox, GitHub actions, ...)
 # NOTE: don't forget to add conflicts in [tool.uv] above.
-"Django5.1" = ["Django~=5.1.0"]
+#"Django5.1" = ["Django~=5.1.0"]
 "Django5.2" = ["Django~=5.2.0"]
 #"cryptography44" = ["cryptography~=44.0"]
 "cryptography45" = ["cryptography~=45.0"]
