@@ -45,7 +45,6 @@ from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import (
-    CRYPTOGRAPHY_VERSION,
     ActionsContainer,
     AllowedHashTypes,
     ArgumentGroup,
@@ -618,18 +617,12 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         if not_before is None and not_after is None:  # exit early if neither value is set
             return
 
-        # pylint: disable-next=no-else-raise # we use else deliberately for better coverage.
-        if CRYPTOGRAPHY_VERSION < (45,):  # pragma: cryptography<45 branch
-            raise CommandError(
-                "The installed version of cryptography does not support the PrivateKeyUsagePeriod extension."
-            )
-        else:  # pragma: cryptography>=45 branch
-            if not_before and not_after and not_before > not_after:
-                # Later validation will also catch this, but raise CommandError here for better error messages
-                raise CommandError("PrivateKeyUsagePeriod: not_after must be after not_before.")
+        if not_before and not_after and not_before > not_after:
+            # Later validation will also catch this, but raise CommandError here for better error messages
+            raise CommandError("PrivateKeyUsagePeriod: not_after must be after not_before.")
 
-            value = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
-            self.add_extension(extensions, value, critical=False)
+        value = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
+        self.add_extension(extensions, value, critical=False)
 
     def get_end_entity_extensions(  # pylint: disable=too-many-locals # noqa: PLR0913
         self,  # pylint: disable=unused-argument

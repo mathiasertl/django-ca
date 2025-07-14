@@ -12,6 +12,6 @@ Features:
 #. Private key storage on the file system, in the database or in a Hardware Security Module (HSM).
 #. Management via command line and/or via Django's admin interface.
 #. Get email notifications about certificates about to expire.
-#. Written in Python 3.10+, Django 5.1+ and cryptography 44+.
+#. Written in Python 3.10+, Django 5.1+ and cryptography 45+.
 
 Please see https://django-ca.readthedocs.org for the most recent documentation.

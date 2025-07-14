@@ -68,9 +68,6 @@ class ExtensionOID(_ExtensionOID):
     currently supported versions of cryptography.
     """
 
-    if CRYPTOGRAPHY_VERSION < (45,):  # pragma: cryptography<45 branch
-        PRIVATE_KEY_USAGE_PERIOD = x509.ObjectIdentifier("2.5.29.16")
-
 
 ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = MappingProxyType(
     {
@@ -129,9 +126,6 @@ class ExtendedKeyUsageOID(_ExtendedKeyUsageOID):
     # mobile Driving Licence or mDL (see ISO/IEC DIS 18013-5, GitHub PR #81)
     MDL_DOCUMENT_SIGNER = x509.ObjectIdentifier("1.0.18013.5.1.2")
     MDL_JWS_CERTIFICATE = x509.ObjectIdentifier("1.0.18013.5.1.3")
-
-    if CRYPTOGRAPHY_VERSION < (45,):  # pragma: cryptography<45 branch
-        BUNDLE_SECURITY = x509.ObjectIdentifier("1.3.6.1.5.5.7.3.35")
 
 
 #: Map of ExtendedKeyUsageOIDs to names in RFC 5280 (and other RFCs).

@@ -25,7 +25,7 @@ Documentation is available at https://django-ca.readthedocs.org/.
 4. Private key storage on the file system, in the database or in a Hardware Security Module (HSM).
 5. Management via command line and/or via Django's admin interface.
 6. Get email notifications about certificates about to expire.
-7. Written in Python 3.10+, Django 5.1+ and cryptography 44+.
+7. Written in Python 3.10+, Django 5.1+ and cryptography 45+.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 

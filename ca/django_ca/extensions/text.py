@@ -200,7 +200,7 @@ def _policy_constraints_as_text(value: x509.PolicyConstraints) -> str:
     return "\n".join(lines)
 
 
-def _private_key_usage_period_as_text(  # pragma: only cryptography>=45
+def _private_key_usage_period_as_text(
     value: "x509.PrivateKeyUsagePeriod",
 ) -> str:
     lines = []
@@ -275,9 +275,7 @@ def extension_as_text(value: x509.ExtensionType) -> str:  # noqa: PLR0911
         return _name_constraints_as_text(value)
     if isinstance(value, x509.PolicyConstraints):
         return _policy_constraints_as_text(value)
-    if hasattr(x509, "PrivateKeyUsagePeriod") and isinstance(  # pragma: cryptography>=45 branch
-        value, x509.PrivateKeyUsagePeriod
-    ):
+    if isinstance(value, x509.PrivateKeyUsagePeriod):
         return _private_key_usage_period_as_text(value)
     if isinstance(value, x509.SubjectKeyIdentifier):
         return bytes_to_hex(value.key_identifier)
