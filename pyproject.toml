@@ -412,17 +412,6 @@ filterwarnings = [
     "error:::acme",
     "error:::josepy",
     "error:::pydantic",
-    
-    # acme==2.11.0; https://github.com/certbot/certbot/issues/8492
-    #               https://github.com/certbot/certbot/issues/9828
-    # josepy==1.14.0;
-    #   Both acme and josepy use pyOpenSSL extensively.
-    "ignore:X509Extension support in pyOpenSSL is deprecated",
-    "ignore:CSR support in pyOpenSSL is deprecated.",
-
-    # josepy==1.15.0 emits this warning about a breaking change in 2.0. Can be removed once support for <2.0
-    # is dropped.
-    "ignore:The next major version of josepy will remove josepy.util.ComparableX509",
 
     # django-ninja==1.3.0; https://github.com/vitalik/django-ninja/issues/1093
     #   A left-over from the migration to Pydantic 2.0.

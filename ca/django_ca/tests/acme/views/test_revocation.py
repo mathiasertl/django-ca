@@ -180,7 +180,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
             root_cert.ca, StoragesUsePrivateKeyOptions(password=None)
         )
         cert = builder.sign(private_key=ca_key, algorithm=model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
-        message = Revocation(certificate=cert)  # type: ignore[arg-type]
+        message = Revocation(certificate=cert)
 
         resp = self.acme(client, url, usable_root, message, kid=kid)
         assert_unauthorized(resp, usable_root, "Certificate does not match records.")
