@@ -125,6 +125,8 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
 
       - name: Build and push Docker image
         id: push
@@ -230,11 +232,13 @@ jobs:
 
       - name: Tag image
         run: |
+          docker tag $DOCKER_TAG mathiasertl/django-ca:latest
           docker tag $DOCKER_TAG $DOCKERHUB_TAG
           docker tag $DOCKER_TAG $DOCKERHUB_TAG-1
 
       - name: Push to dockerhub
         run: |
+          docker push mathiasertl/django-ca:latest
           docker push $DOCKERHUB_TAG
           docker push $DOCKERHUB_TAG-1
 
