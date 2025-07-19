@@ -31,7 +31,3 @@ Command-line
   ``--user-notice``, ``--crl-full-name``, ``--issuer-alternative-name``, ``--extended-key-usage``,
   ``--key-usage``, ``--ocsp-no-check``, ``--subject-alternative-name`` and ``--tls-feature``, as well as all
   arguments to mark extensions as (not) critical, will be removed. Deprecated since ``django-ca==2.3.0``.
-* :command:`manage.py regenerate_ocsp_keys` will no longer allow specifying certificate details for delegate
-  certificates. The ``--profile``, ``--expires``, ``--key-type``, ``--key-size``, ``--elliptic-curve`` and
-  ``--algorithm`` arguments will be removed.
-

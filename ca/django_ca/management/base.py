@@ -57,16 +57,6 @@ if typing.TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
 
 
-def add_elliptic_curve(parser: ActionsContainer, prefix: str = "") -> None:
-    """Add --elliptic-curve option."""
-    default = model_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
-    parser.add_argument(
-        f"--{prefix}elliptic-curve",
-        action=actions.EllipticCurveAction,
-        help=f"Elliptic Curve used for EC keys (default: {default}).",
-    )
-
-
 def add_key_size(parser: ActionsContainer) -> None:
     """Add --key-size option (2048, 4096, ...)."""
     parser.add_argument(
@@ -364,17 +354,6 @@ class BaseCommand(
     ) -> None:
         """Add subject option."""
         parser.add_argument(arg, action=actions.NameAction, metavar=metavar, help=help_text)
-
-    def add_key_type(
-        self, parser: ActionsContainer, default: str | None, default_text: str = "%(default)s"
-    ) -> None:
-        """Add --key-type option (type of private key - RSA/DSA/EC/Ed25519/Ed448)."""
-        parser.add_argument(
-            "--key-type",
-            choices=["RSA", "DSA", "EC", "Ed25519", "Ed448"],
-            default=default,
-            help=f"Key type for the private key (default: {default_text}).",
-        )
 
     def add_profile(self, parser: CommandParser, help_text: str) -> None:
         """Add profile-related options."""

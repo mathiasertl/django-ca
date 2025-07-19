@@ -55,6 +55,7 @@ from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
+from django_ca.deprecation import RemovedInDjangoCA250Warning, deprecate_argument
 from django_ca.extensions import get_extension_name
 from django_ca.key_backends import KeyBackend, OCSPKeyBackend, key_backends, ocsp_key_backends
 from django_ca.managers import (
@@ -871,6 +872,12 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             signature_algorithm=signature_algorithm,
         )
 
+    @deprecate_argument("key_type", RemovedInDjangoCA250Warning)
+    @deprecate_argument("key_size", RemovedInDjangoCA250Warning)
+    @deprecate_argument("elliptic_curve", RemovedInDjangoCA250Warning)
+    @deprecate_argument("profile", RemovedInDjangoCA250Warning)
+    @deprecate_argument("algorithm", RemovedInDjangoCA250Warning)
+    @deprecate_argument("not_after", RemovedInDjangoCA250Warning)
     def generate_ocsp_key(
         self,
         key_backend_options: BaseModel,
@@ -885,55 +892,36 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     ) -> Optional["Certificate"]:
         """Generate OCSP authorized responder certificate.
 
-        By default, the certificate will have the same private and public key types as the signing certificate
-        authority. The certificate's subject will be the common name of the certificate authority with the
-        suffix `OCSP responder delegate certificate` added, all other subject fields are discarded.
+        This method is intended to be called by a regular, automated job to renew the CAs delegate
+        certificates.
 
-        RFC 6960 does not specify much about how a certificate for an authorized responder should look like.
+        The private key will use the same key type and key parameters as the CAs private key, and the signing
+        algorithm will be the same as the one used in the CAs certificate. The subject will be the common name
+        of the certificate authority with the suffix `OCSP responder delegate certificate` added, all other
+        subject fields are discarded.
+
+        RFC 6960 does not specify much about what a certificate for an authorized responder should look like.
         The default ``ocsp`` profile will create a valid certificate that is usable for all known
-        applications, but you a different profile can be used to add any extension values to the certificate.
+        applications, extend it to modify the certificate returned by this function.
 
         .. seealso::
 
             `RFC 6960: Online Certificate Status Protocol - OCSP <https://www.rfc-editor.org/rfc/rfc6960>`_
+
+        .. deprecated:: 2.4.0
+
+           The `key_type`, `key_size`, `elliptic_curve`, `profile`, `algorithm` and `not_after` arguments are
+           deprecated and will be removed in ``django_ca~=2.4.0``.
 
         .. deprecated:: 2.1.0
 
            The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
            instead.
 
-        .. versionchanged:: 1.26.0
-
-           * Added the `force` option.
-           * Do not regenerate keys if they don't expire within :ref:`CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
-             <settings-ca-ocsp-responder-certificate-renewal>`.
-
-        .. versionchanged:: 1.23.0
-
-           * The `ecc_curve` option was renamed to ``elliptic_curve``.
-           * The `key_type`, `key_size`, `elliptic_curve` and `algorithm` parameters now default to what was
-             used in the certificate authority.
-
         Parameters
         ----------
         key_backend_options : BaseModel
             Options required for using the private key of the certificate authority.
-        profile : str, optional
-            The profile to use for generating the certificate. The default is ``"ocsp"``.
-        not_after : int or datetime, optional
-            Number of days or datetime when this certificate expires. The default is ``3`` (OCSP certificates
-            are usually renewed frequently).
-        algorithm : :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm`, optional
-            Hash algorithm used for signing the OCSP key. Defaults to the algorithm the certificate authority
-            was signed with.
-        key_size : int, optional
-            The key size of the private key, defaults to :ref:`CA_DEFAULT_KEY_SIZE
-            <settings-ca-default-key-size>`.
-        key_type : {"RSA", "DSA", "EC", "Ed25519", "Ed448"}, optional
-            The private key type to use. The default is to use the same key type as the signing CA.
-        elliptic_curve : :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`, optional
-            An elliptic curve to use for EC keys. This parameter is ignored if ``key_type`` is not ``"EC"``.
-            Defaults to the :ref:`CA_DEFAULT_ELLIPTIC_CURVE <settings-ca-default-elliptic-curve>`.
         autogenerated : bool, optional
             Set the ``autogenerated`` flag of the certificate. ``True`` by default, since this method is
             usually automatically invoked on a regular basis.

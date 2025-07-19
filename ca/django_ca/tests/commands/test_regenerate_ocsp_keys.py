@@ -11,8 +11,6 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-# pylint: disable=redefined-outer-name  # for fixture names
-
 """Test the regenerate_ocsp_keys management command."""
 
 import typing
@@ -21,8 +19,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec, ed448, rsa
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
@@ -125,43 +121,6 @@ def test_with_serial(usable_root: CertificateAuthority) -> None:
     assert certificate != new_cert
 
 
-def test_with_key_size(usable_root: CertificateAuthority) -> None:
-    """Test creating an RSA key with explicit key size."""
-    regenerate_ocsp_keys(
-        usable_root.serial,
-        key_size=1024,
-        stderr="WARNING: --key-size is deprecated and will be removed on django-ca 2.4.0.\n",
-    )
-    certificate = assert_key(usable_root)
-    public_key = certificate.public_key()
-    assert isinstance(public_key, rsa.RSAPublicKey)
-    assert public_key.key_size == 1024
-
-
-def test_ec_with_curve(usable_ec: CertificateAuthority) -> None:
-    """Test creating an EC key with explicit elliptic curve."""
-    regenerate_ocsp_keys(
-        usable_ec.serial,
-        elliptic_curve=ec.SECP384R1(),
-        stderr="WARNING: --elliptic-curve is deprecated and will be removed on django-ca 2.4.0.\n",
-    )
-    certificate = assert_key(usable_ec)
-    public_key = certificate.public_key()
-    assert isinstance(public_key, ec.EllipticCurvePublicKey)
-    assert isinstance(public_key.curve, ec.SECP384R1)
-
-
-def test_with_hash_algorithm(usable_root: CertificateAuthority) -> None:
-    """Test the hash algorithm option."""
-    regenerate_ocsp_keys(
-        usable_root.serial,
-        algorithm=hashes.SHA384(),
-        stderr="WARNING: --algorithm is deprecated and will be removed on django-ca 2.4.0.\n",
-    )
-    certificate = assert_key(usable_root)
-    assert isinstance(certificate.signature_hash_algorithm, hashes.SHA384)
-
-
 def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
     """Basic test."""
     settings.CA_USE_CELERY = True
@@ -181,38 +140,6 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
     ):
         regenerate_ocsp_keys(usable_root.serial)
     assert_no_key(usable_root.serial)
-
-
-def test_with_key_type(usable_root: CertificateAuthority) -> None:
-    """Test creating an Ed448-based OCSP key for an RSA-based CA."""
-    regenerate_ocsp_keys(
-        usable_root.serial,
-        key_type="Ed448",
-        stderr="WARNING: --key-type is deprecated and will be removed on django-ca 2.4.0.\n",
-    )
-    assert_key(usable_root, key_type=ed448.Ed448PublicKey)
-
-
-def test_with_expires(usable_root: CertificateAuthority) -> None:
-    """Test creating an OCSP key with a custom expiry."""
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    regenerate_ocsp_keys(
-        usable_root.serial,
-        expires=timedelta(days=15),
-        stderr="WARNING: --expires is deprecated and will be removed on django-ca 2.4.0.\n",
-    )
-    cert = assert_key(usable_root)
-    assert cert.not_valid_after_utc == now + timedelta(days=15)
-
-
-def test_with_profile(usable_root: CertificateAuthority) -> None:
-    """Test creating an OCSP key with a custom profile."""
-    regenerate_ocsp_keys(
-        usable_root.serial,
-        profile="webserver",
-        stderr="WARNING: --profile is deprecated and will be removed on django-ca 2.4.0.\n",
-    )
-    assert_key(usable_root, profile="webserver")
 
 
 def test_without_serial(
