@@ -463,8 +463,6 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
 
     add_extensions_help = ""  # concrete classes should set this
     subject_help: typing.ClassVar  # concrete classes should set this
-    # temporary so that we can not add some extensions for resign, until it's completely removed:
-    resign: bool = False
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> ArgumentGroup:
         """Add common arguments for signing certificates."""
@@ -490,8 +488,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         self.add_extended_key_usage_group(parser)
         self.add_key_usage_group(parser)
         self.add_ocsp_no_check_group(parser)
-        if self.resign is False:
-            self.add_private_key_usage_period_group(parser)
+        self.add_private_key_usage_period_group(parser)
         self.add_subject_alternative_name_group(parser, additional_option_strings=("--alt",))
         self.add_tls_feature_group(parser)
 

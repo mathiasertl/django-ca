@@ -20,17 +20,17 @@ from datetime import timedelta
 from typing import Any
 
 from cryptography import x509
-from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca import constants
 from django_ca.conf import model_settings
+from django_ca.constants import ExtensionOID
+from django_ca.management import actions
 from django_ca.management.actions import CertificateAction
 from django_ca.management.base import BaseSignCertCommand
-from django_ca.models import Certificate, CertificateAuthority, Watcher
+from django_ca.models import Certificate, Watcher
 from django_ca.profiles import Profile, profiles
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtension
 
 
 class Command(BaseSignCertCommand):
@@ -41,21 +41,32 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
 
     add_extensions_help = "Override certificate extensions."
     subject_help = "Override subject for new certificate."
-    resign = True
 
     def add_arguments(self, parser: CommandParser) -> None:
-        self.add_base_args(parser, no_default_ca=True)
-        self.add_profile(parser, """Use given profile to determine certificate expiry.""")
+        self.add_use_private_key_arguments(parser)
+        parser.add_argument(
+            "--expires",
+            action=actions.ExpiresAction,
+            help=f"Sign the certificate for DAYS days (default: {model_settings.CA_DEFAULT_EXPIRES})",
+        )
+        parser.add_argument(
+            "--watch",
+            metavar="EMAIL",
+            action="append",
+            default=[],
+            help="Email EMAIL when this certificate expires (may be given multiple times)",
+        )
+        parser.add_argument(
+            "--out", metavar="FILE", help="Save signed certificate to FILE. If omitted, print to stdout."
+        )
         parser.add_argument(
             "cert", action=CertificateAction, allow_revoked=True, help="The certificate to resign."
         )
 
-    def get_profile(self, profile: str | None, cert: Certificate) -> Profile:
+    def get_profile(self, cert: Certificate) -> Profile:
         """Get requested profile based on command line and given certificate."""
-        if profile is not None:
-            return profiles[profile]
         if cert.profile == "":
-            return profiles[None]
+            return profiles[None]  # return default profile
 
         try:
             return profiles[cert.profile]
@@ -65,75 +76,19 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
                 f'Profile "{cert.profile}" for original certificate is no longer defined, please set one via the command line.'  # NOQA: E501
             )
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912, PLR0913, PLR0915
+    def handle(
         self,
         cert: Certificate,
-        ca: CertificateAuthority | None,
-        subject: x509.Name | None,
         expires: timedelta | None,
         watch: list[str],
-        profile: str | None,
-        algorithm: AllowedHashTypes | None,
-        # Authority Information Access extension
-        authority_information_access: x509.AuthorityInformationAccess | None,
-        # Certificate Policies extension
-        certificate_policies: x509.CertificatePolicies | None,
-        certificate_policies_critical: bool,
-        # CRL Distribution Points extension
-        crl_full_names: list[x509.GeneralName] | None,
-        crl_distribution_points_critical: bool,
-        # Extended Key Usage extension
-        extended_key_usage: x509.ExtendedKeyUsage | None,
-        extended_key_usage_critical: bool,
-        # Issuer Alternative Name extension:
-        issuer_alternative_name: x509.IssuerAlternativeName | None,
-        # Key Usage extension
-        key_usage: x509.KeyUsage | None,
-        key_usage_critical: bool,
-        # OCSP No Check extension
-        ocsp_no_check: bool,
-        ocsp_no_check_critical: bool,
-        # Subject Alternative Name extension
-        subject_alternative_name: x509.SubjectAlternativeName | None,
-        subject_alternative_name_critical: bool,
-        # TLSFeature extension
-        tls_feature: x509.TLSFeature | None,
-        tls_feature_critical: bool,
         **options: Any,
     ) -> None:
-        if ca is not None:
-            self.stderr.write("WARNING: --ca is deprecated and will be removed on django-ca 2.4.0.")
-        if profile is not None:
-            self.stderr.write("WARNING: --profile is deprecated and will be removed on django-ca 2.4.0.")
-        if subject is not None:
-            self.stderr.write("WARNING: --subject is deprecated and will be removed on django-ca 2.4.0.")
-        if expires is not None:
-            self.stderr.write("WARNING: --expires is deprecated and will be removed on django-ca 2.4.0.")
-        if algorithm is not None:
-            self.stderr.write("WARNING: --algorithm is deprecated and will be removed on django-ca 2.4.0.")
-        if (
-            authority_information_access  # pylint: disable=too-many-boolean-expressions
-            or certificate_policies
-            or crl_full_names
-            or extended_key_usage
-            or issuer_alternative_name
-            or key_usage
-            or subject_alternative_name
-            or tls_feature
-        ):
-            self.stderr.write(
-                "WARNING: Specifying extensions is deprecated and will be removed on django-ca 2.4.0."
-            )
-
-        if ca is None:
-            ca = cert.ca
-
-        profile_obj = self.get_profile(profile, cert)
-        self.verify_certificate_authority(ca=ca, expires=expires, profile=profile_obj)
+        profile_obj = self.get_profile(cert)
+        self.verify_certificate_authority(ca=cert.ca, expires=expires, profile=profile_obj)
 
         # Get key backend options
         # Get key backend options and validate backend-specific options
-        key_backend_options, algorithm = self.get_signing_options(ca, algorithm, options)
+        key_backend_options, algorithm = self.get_signing_options(cert.ca, cert.algorithm, options)
 
         # get list of watchers
         if watch:
@@ -141,43 +96,8 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         else:
             watchers = list(cert.watchers.all())
 
-        if subject is None:
-            subject = cert.subject
-
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtension] = []
-
-        if authority_information_access is not None:
-            self.add_extension(
-                extensions,
-                authority_information_access,
-                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
-            )
-        if certificate_policies is not None:
-            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
-        if crl_full_names is not None:
-            distribution_point = x509.DistributionPoint(
-                full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
-            )
-            self.add_extension(
-                extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
-            )
-        if extended_key_usage is not None:
-            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
-        if issuer_alternative_name is not None:
-            self.add_extension(
-                extensions,
-                issuer_alternative_name,
-                constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
-            )
-        if key_usage is not None:
-            self.add_extension(extensions, key_usage, key_usage_critical)
-        if ocsp_no_check is True:
-            self.add_extension(extensions, x509.OCSPNoCheck(), ocsp_no_check_critical)
-        if subject_alternative_name is not None:
-            self.add_extension(extensions, subject_alternative_name, subject_alternative_name_critical)
-        if tls_feature is not None:
-            self.add_extension(extensions, tls_feature, tls_feature_critical)
+        extensions: list[x509.Extension[x509.ExtensionType]] = []
 
         # Copy over extensions from the original certificate (if not passed via the command-line)
         for oid, extension in cert.extensions.items():
@@ -190,36 +110,18 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
             if oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
                 continue
 
-            # Add extensions not already added via the command line
-            if next((ext for ext in extensions if ext.oid == oid), None) is None:
-                # TYPEHINT NOTE: Extensions from the original certificate may in fact be any extension, as
-                # an imported certificate could add custom ones.
-                extensions.append(extension)  # type: ignore[arg-type]
-
-        # Verify that we have either a Common Name in the subject or a Subject Alternative Name extension
-        # NOTE: This can only happen here in two edge cases:
-        #   * Pass a subject without common name AND a certificate does *not* have a subject alternative name.
-        #   * An imported certificate that has neither Common Name nor subject alternative name.
-        common_names = subject.get_attributes_for_oid(NameOID.COMMON_NAME)
-        has_subject_alternative_name = next(
-            (ext for ext in extensions if ext.oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME), None
-        )
-        if not common_names and has_subject_alternative_name is None:
-            raise CommandError(
-                "Must give at least a Common Name in --subject or one or more "
-                "--subject-alternative-name/--name arguments."
-            )
+            extensions.append(extension)
 
         try:
             cert = Certificate.objects.create_cert(
-                ca=ca,
+                ca=cert.ca,
                 key_backend_options=key_backend_options,
                 csr=cert.csr.loaded,
                 profile=profile_obj,
                 not_after=expires,
-                subject=subject,
+                subject=cert.subject,
                 algorithm=algorithm,
-                extensions=extensions,
+                extensions=extensions,  # type: ignore[arg-type]
             )
         except Exception as ex:
             raise CommandError(ex) from ex

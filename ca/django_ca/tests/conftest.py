@@ -31,11 +31,13 @@ from _pytest.config.argparsing import Parser
 from pytest_cov.plugin import CovPlugin
 
 from ca import settings_utils  # noqa: F401  # to get rid of pytest warnings for untested modules
+from django_ca.key_backends.hsm import HSMBackend
 from django_ca.tests.base.conftest_helpers import (
     contrib_ca_names,
     contrib_cert_names,
     generate_ca_fixture,
     generate_cert_fixture,
+    generate_hsm_ca_fixture,
     generate_pub_fixture,
     generate_usable_ca_fixture,
     setup_pragmas,
@@ -165,3 +167,7 @@ for cert_name in usable_cert_names:
 for cert_name in contrib_cert_names:
     # raise Exception(contrib_cert_names, cert_name.replace("-", "_"))
     globals()[f"contrib_{cert_name.replace('-', '_')}"] = generate_cert_fixture(cert_name)
+
+for key_type in HSMBackend.supported_key_types:
+    globals()[f"hsm_{key_type}_ca"] = generate_hsm_ca_fixture(key_type)
+    globals()[f"cert_with{key_type}_ca"] = generate_hsm_ca_fixture(key_type)

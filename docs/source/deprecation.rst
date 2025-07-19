@@ -25,9 +25,4 @@ REST API
 Command-line
 ============
 
-* :command:`manage.py resign_cert` will no longer allow you to change certificate details when resigning a
-  certificate. The ``--ca``, ``--subject``, ``--profile``, ``--algorithm``,
-  ``--ocsp-responder``, ``--ca-issuer``, ``--policy-identifier``, ``--certification-practice-statement``,
-  ``--user-notice``, ``--crl-full-name``, ``--issuer-alternative-name``, ``--extended-key-usage``,
-  ``--key-usage``, ``--ocsp-no-check``, ``--subject-alternative-name`` and ``--tls-feature``, as well as all
-  arguments to mark extensions as (not) critical, will be removed. Deprecated since ``django-ca==2.3.0``.
+
