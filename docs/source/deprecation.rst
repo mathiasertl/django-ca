@@ -35,17 +35,3 @@ Command-line
   certificates. The ``--profile``, ``--expires``, ``--key-type``, ``--key-size``, ``--elliptic-curve`` and
   ``--algorithm`` arguments will be removed.
 
-Dependencies
-============
-
-* Drop support for ``Celery~=5.4.0``. Deprecated since ``django-ca==2.3.0``.
-
-***********
-2.3.0 (TBR)
-***********
-
-Dependencies
-============
-
-* Drop support for ``josepy~=1.15.0``.
-
