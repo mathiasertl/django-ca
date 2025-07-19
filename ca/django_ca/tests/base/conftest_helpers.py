@@ -17,8 +17,9 @@ import os
 import shutil
 import sys
 import typing
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import coverage
 
@@ -34,6 +35,9 @@ from _pytest.fixtures import SubRequest
 
 from django_ca import constants
 from django_ca.conf import model_settings
+from django_ca.key_backends.hsm import HSMBackend
+from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
+from django_ca.key_backends.hsm.typehints import SupportedKeyType
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import (
     CERT_DATA,
@@ -296,6 +300,38 @@ def load_ca(
     ca.full_clean()
     ca.save()
     return ca
+
+
+def generate_hsm_ca_fixture(
+    key_type: SupportedKeyType,
+) -> typing.Callable[[Literal[None], HSMBackend, x509.Name], Certificate]:
+    """Generate a fixture to initialize an HSM CA."""
+
+    @pytest.fixture
+    def fixture(
+        db: Literal[None],  # pylint: disable=unused-argument
+        hsm_backend: HSMBackend,
+        subject: x509.Name,
+    ) -> CertificateAuthority:
+        if key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:  # pragma: no cover
+            pytest.xfail(f"{key_type}: Algorithm not supported on this platform.")
+
+        name = f"hsm_{key_type}_ca".lower()
+        key_backend_options = HSMCreatePrivateKeyOptions(
+            user_pin=hsm_backend.user_pin, key_label=name, key_type=key_type, elliptic_curve=None
+        )
+        ca = CertificateAuthority.objects.init(
+            name=name,
+            key_backend=hsm_backend,
+            key_backend_options=key_backend_options,
+            key_type=key_type,
+            subject=subject,
+            not_after=datetime.now(tz=timezone.utc) + timedelta(days=720),
+        )
+        assert isinstance(ca.key_backend, HSMBackend)
+        return ca
+
+    return fixture
 
 
 def load_cert(

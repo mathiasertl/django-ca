@@ -19,9 +19,9 @@ import copy
 import os
 import subprocess
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 from unittest import mock
 
 from cryptography import x509
@@ -41,7 +41,6 @@ from django_ca.conf import model_settings
 from django_ca.key_backends import key_backends, ocsp_key_backends
 from django_ca.key_backends.db.backend import DBBackend
 from django_ca.key_backends.hsm import HSMBackend, HSMOCSPBackend
-from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
 from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
@@ -405,26 +404,13 @@ def db_backend() -> DBBackend:
 
 @pytest.fixture(params=HSMBackend.supported_key_types)
 def usable_hsm_ca(  # pragma: hsm
-    request: "SubRequest", ca_name: str, subject: x509.Name, hsm_backend: HSMBackend
+    request: "SubRequest",
+    db: Literal[None],  # pylint: disable=unused-argument
 ) -> CertificateAuthority:
     """Parametrized fixture yielding a certificate authority for every key type."""
-    request.getfixturevalue("db")
     key_type = request.param
-
-    if key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:  # pragma: no cover
-        pytest.xfail(f"{key_type}: Algorithm not supported on this platform.")
-
-    key_backend_options = HSMCreatePrivateKeyOptions(
-        user_pin=hsm_backend.user_pin, key_label=ca_name, key_type=key_type, elliptic_curve=None
-    )
-    ca = CertificateAuthority.objects.init(
-        name=ca_name,
-        key_backend=hsm_backend,
-        key_backend_options=key_backend_options,
-        key_type=key_type,
-        subject=subject,
-        not_after=datetime.now(tz=timezone.utc) + timedelta(days=720),
-    )
+    ca = request.getfixturevalue(f"hsm_{key_type}_ca")
+    assert isinstance(ca, CertificateAuthority)
     assert isinstance(ca.key_backend, HSMBackend)
     return ca
 
