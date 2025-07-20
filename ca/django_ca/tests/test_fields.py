@@ -32,7 +32,8 @@ from pytest_django.asserts import assertInHTML
 
 from django_ca import fields
 from django_ca.conf import model_settings
-from django_ca.constants import KEY_USAGE_NAMES, REVOCATION_REASONS
+from django_ca.constants import REVOCATION_REASONS
+from django_ca.pydantic import KeyUsageModel
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -405,11 +406,11 @@ class KeyUsageFieldTestCase(TestCase, FieldTestCaseMixin):
         """Test rendering for all profiles."""
         field = self.field_class()
 
-        key_usage_choices = {v: k for k, v in KEY_USAGE_NAMES.items()}
-
         for profile in model_settings.CA_PROFILES.values():
-            choices = profile.extensions["key_usage"]["value"]
-            choices = [key_usage_choices[choice] for choice in choices]
+            key_usage_extension = profile.extensions["key_usage"]
+            assert isinstance(key_usage_extension, KeyUsageModel)
+            choices = key_usage_extension.value
+            assert isinstance(choices, list)
 
             ext = key_usage(**{choice: True for choice in choices})
             raw_html = field.widget.render(name="unused", value=ext)

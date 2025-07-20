@@ -83,8 +83,8 @@ from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import (
     ConfigurableExtensionDict,
+    ConfigurableExtensionKeys,
     CRLExtensionType,
-    EndEntityCertificateExtensionKeys,
     HashAlgorithms,
     X509CertMixinTypeVar,
 )
@@ -97,7 +97,7 @@ FormfieldOverrides = dict[type["models.Field[Any, Any]"], dict[str, Any]]
 log = logging.getLogger(__name__)
 
 #: Tuple of extensions that can be set when creating a new certificate via the admin interface.
-CERTIFICATE_EXTENSIONS: tuple[EndEntityCertificateExtensionKeys, ...] = tuple(
+CERTIFICATE_EXTENSIONS: tuple[ConfigurableExtensionKeys, ...] = tuple(
     sorted(
         [
             "authority_information_access",
@@ -707,7 +707,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             data[ca.pk] = {
                 "signature_hash_algorithm": hash_algorithm_name,
-                "extensions": [ext.model_dump(mode="json") for ext in extensions],
+                "extensions": {ext.type: ext.model_dump(mode="json") for ext in extensions},
                 "name": ca.name,
             }
         return data
@@ -811,9 +811,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             )
 
             for key in CERTIFICATE_EXTENSIONS:
-                ext = profile.extensions.get(EXTENSION_KEY_OIDS[key])
+                ext = profile.extensions.get(key)
                 if ext is not None:
-                    data[key] = ext
+                    data[key] = ext.cryptography
 
         data["algorithm"] = hash_algorithm_name
 
@@ -828,7 +828,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         extra_context = extra_context or {}
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
         extra_context["name_to_rfc4514_url"] = reverse(f"admin:{self.name_to_rfc4514_view_name}")
-        extra_context["profiles"] = {profile.name: profile.serialize() for profile in profiles}
+        extra_context["profiles"] = {profile.name: profile.model_dump(mode="json") for profile in profiles}
         extra_context["cas"] = self.get_ca_details()
 
         extra_context["oid_names"] = {
@@ -921,7 +921,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             "title": _("Resign %s for %s") % (obj._meta.verbose_name, obj),
             "original_obj": obj,
             "object_action": _("Resign"),
-            "profiles": {profile.name: profile.serialize() for profile in profiles},
+            "profiles": {profile.name: profile.model_dump(mode="json") for profile in profiles},
             "oid_names": {oid.dotted_string: name for oid, name in constants.NAME_OID_DISPLAY_NAMES.items()},
             "django_ca_action": "resign",
         }
@@ -1060,38 +1060,40 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
                     extensions[EXTENSION_KEY_OIDS[key]] = data[key]
 
             # Update extensions from the profile that cannot (yet) be changed in the web interface
-            for oid, ext in profile.extensions.items():
+            for ext_model in profile.extensions.values():
                 # If the extension is set to None by the profile, we do not add or modify it
                 # (A none value means that the extension is unset if the profile is selected by the user)
-                if ext is None:
+                if ext_model is None:
                     continue
+
+                extension = ext_model.cryptography
+                oid = extension.oid
 
                 # We currently only support the first distribution point, append others from profile
                 if (
                     oid in (ExtensionOID.CRL_DISTRIBUTION_POINTS, ExtensionOID.FRESHEST_CRL)
                     and oid in extensions
                 ):
-                    profile_ext = cast(CRLExtensionType, ext.value)
+                    profile_ext = cast(CRLExtensionType, extension.value)
 
                     if len(profile_ext) > 1:  # pragma: no branch  # false positive
                         form_ext = cast(x509.Extension[CRLExtensionType], extensions[oid])
                         distribution_points = form_ext.value.__class__(list(form_ext.value) + profile_ext[1:])
-                        extension = x509.Extension(
+                        # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
+                        extension = x509.Extension(  # type: ignore[assignment]
                             oid=oid, critical=form_ext.critical, value=distribution_points
                         )
 
                         # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
-                        extensions[oid] = extension  # type: ignore[assignment]
+                        extensions[oid] = extension
 
                     continue
 
-                if (
-                    END_ENTITY_CERTIFICATE_EXTENSION_KEYS[oid] in CERTIFICATE_EXTENSIONS
-                ):  # already handled in form
+                if ext_model.type in CERTIFICATE_EXTENSIONS:  # already handled in form
                     continue
 
                 # Add any extension from the profile currently not changeable in the web interface
-                extensions[oid] = ext  # pragma: no cover  # all extensions should be handled above!
+                extensions[oid] = extension  # pragma: no cover  # all extensions should be handled above!
 
             ca: CertificateAuthority = data["ca"]
             certificate = ca.sign(

@@ -13,11 +13,16 @@
 
 """Test type aliases for Pydantic from django_ca.pydantic.type_aliases."""
 
+import json
+
 from pydantic import BaseModel
+
+from django.utils.functional import Promise
+from django.utils.translation import gettext_lazy
 
 import pytest
 
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, Serial
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, PromiseTypeAlias, Serial
 
 
 class JSONSerializableBytesModel(BaseModel):
@@ -30,6 +35,12 @@ class SerialModel(BaseModel):
     """Test class to test the Serial type alias."""
 
     value: Serial
+
+
+class PromiseModel(BaseModel):
+    """Test class for PromiseTypeAlias."""
+
+    value: PromiseTypeAlias
 
 
 @pytest.mark.parametrize(
@@ -75,7 +86,6 @@ def test_serial(value: str, validated: str) -> None:
     model = SerialModel(value=value)
     assert model.value == validated
     assert SerialModel.model_validate({"value": value}).value == validated
-    assert SerialModel.model_validate({"value": value}).value == validated
     assert SerialModel.model_validate({"value": validated}).value == validated
     assert SerialModel.model_validate({"value": validated}, strict=True).value == validated
     assert model.model_dump() == {"value": validated}
@@ -96,3 +106,20 @@ def test_serial_errors(value: str) -> None:
     """Test invalid values for the Serial type alias."""
     with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
         SerialModel(value=value)
+
+
+@pytest.mark.parametrize(("value", "validated"), (("a", gettext_lazy("a")),))
+def test_promise_type_alias(value: str, validated: Promise) -> None:
+    """Test PromiseTypeAlias."""
+    model = PromiseModel(value=value)
+    assert model.value == validated
+    assert PromiseModel.model_validate({"value": value}).value == validated
+    assert PromiseModel.model_validate({"value": validated}).value == validated
+    assert PromiseModel.model_validate({"value": validated}, strict=True).value == validated
+    assert model.model_dump() == {"value": validated}
+    assert model.model_dump(mode="json") == {"value": value} == {"value": str(validated)}
+
+    # Test JSON validation:
+    json_data = json.dumps({"value": value})
+    assert PromiseModel.model_validate_json(json_data).value == validated
+    assert PromiseModel.model_validate_json(json_data, strict=True).value == validated

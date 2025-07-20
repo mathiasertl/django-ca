@@ -583,7 +583,7 @@ def test_create_cert(usable_root: CertificateAuthority, subject: x509.Name) -> N
         cert = Certificate.objects.create_cert(usable_root, key_backend_options, csr, subject=subject)
     assert cert.subject == subject
     # TYPEHINT NOTE: default profile always has extensions, so override here
-    assert_extensions(cert, list(profile.extensions.values()))  # type: ignore[arg-type]
+    assert_extensions(cert, [ext.cryptography for ext in profile.extensions.values()])  # type: ignore[union-attr]
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])

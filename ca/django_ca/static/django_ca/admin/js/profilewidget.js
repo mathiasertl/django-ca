@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Finally, update extensions:
             await update_extensions(profile.extensions);
-            clear_extensions(profile.clear_extensions);
+            clear_extensions(profile.extensions);
         });
     });
 });

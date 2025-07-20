@@ -14,10 +14,9 @@
 """Shared code for Pydantic-related tests."""
 
 import re
-import typing
 from typing import Any, TypeVar, Union
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 import pytest
 
@@ -39,24 +38,8 @@ def assert_cryptography_model(
     return model  # for any further tests on the model
 
 
-@typing.overload
 def assert_validation_errors(
-    model_class: type[CryptographyModelTypeVar],
-    parameters: dict[str, Any],
-    expected_errors: ExpectedErrors,
-) -> None: ...
-
-
-@typing.overload
-def assert_validation_errors(
-    model_class: type[CryptographyRootModelTypeVar],
-    parameters: list[dict[str, Any]],
-    expected_errors: ExpectedErrors,
-) -> None: ...
-
-
-def assert_validation_errors(
-    model_class: type[CryptographyModelTypeVar] | type[CryptographyRootModelTypeVar],
+    model_class: type[BaseModel],
     parameters: list[dict[str, Any]] | dict[str, Any],
     expected_errors: ExpectedErrors,
 ) -> None:

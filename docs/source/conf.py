@@ -530,6 +530,7 @@ nitpick_ignore = [
     ("py:class", "argparse._ArgumentGroup"),
     ("py:class", "doctest.TestResults"),
     # undocumented Django:
+    ("py:class", "django.utils.functional.Promise"),
     ("py:class", "django.core.management.base.CommandParser"),
     # asn1crypto is really used only for OtherNames, so we do not link it
     ("py:class", "asn1crypto.core.Primitive"),

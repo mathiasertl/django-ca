@@ -5,14 +5,25 @@
 /**
  * Clear extensions with the given extension keys.
  */
-const clear_extensions = function(extension_keys) {
-    extension_keys.forEach((key) => {
+const clear_extensions = function(extensions) {
+    if (typeof extensions === "undefined" || typeof extensions !== 'object') {
+        console.error("clear_extensions() received invalid object:", typeof extensions)
+        return;
+    };
+
+    Object.entries(extensions).forEach((ext) => {
+        const [key, value] = ext;
+
+        // Check if extension is configured to be cleared...
+        if (value !== null) {
+            return;  // ... it is not.
+        }
         let field = document.querySelector(".form-row.field-" + key);
 
         // Unset critical flag
-		field.querySelector('.labeled-checkbox.critical input').checked = false;
+        field.querySelector('.labeled-checkbox.critical input').checked = false;
 
-		if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(key)) {
+        if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(key)) {
             set_select_multiple(field.querySelector("select"), []);
         } else if (['crl_distribution_points', 'freshest_crl'].includes(key)) {
             field.querySelector('textarea#id_' + key + '_0').value = "";
@@ -27,7 +38,7 @@ const clear_extensions = function(extension_keys) {
             field.querySelector('textarea#id_' + key + '_1').value = "";
         } else if (key === "certificate_policies") {
             field.querySelector('input#id_' + key + '_0').value = "";
-		    field.querySelector('textarea#id_' + key + '_1').value = "";
+            field.querySelector('textarea#id_' + key + '_1').value = "";
             field.querySelector('textarea#id_' + key + '_2').value = "";
         } else if (key === "ocsp_no_check") {
             field.querySelector('.labeled-checkbox.include input').checked = false;
@@ -42,15 +53,23 @@ const clear_extensions = function(extension_keys) {
  * Update given extensions.
  */
 const update_extensions = async function(extensions) {
-    if (typeof extensions === "undefined" || ! Array.isArray(extensions)) {
+    if (typeof extensions === "undefined" || typeof extensions !== 'object') {
+        console.error("clear_extensions() received invalid object:", typeof extensions)
         return;
     };
 
-    extensions.forEach(async (ext) => {
+    Object.entries(extensions).forEach(async (entry) => {
+        const [key, ext] = entry;
+
+        // If extension value is null, it is handled by clear_extensions()
+        if (ext === null) {
+            return;
+        }
+
         let field = document.querySelector(".form-row.field-" + ext.type);
 
         // profile serialization will make sure that any not-null extension will have a critical value
-		field.querySelector('.labeled-checkbox.critical input').checked = ext.critical;
+        field.querySelector('.labeled-checkbox.critical input').checked = ext.critical;
 
         if (['extended_key_usage', 'key_usage', 'tls_feature'].includes(ext.type)) {
             set_select_multiple(field.querySelector("select"), ext.value);
@@ -90,30 +109,30 @@ const update_extensions = async function(extensions) {
             field.querySelector('textarea#id_' + ext.type + '_1').value = ocsp;
         } else if (ext.type === "certificate_policies") {
             // We only support one policy information object, return if there are more
-		    if (ext.value.length > 1) {
-		        return;
-		    }
-		    let policy_information = ext.value[0];
+            if (ext.value.length > 1) {
+                return;
+            }
+            let policy_information = ext.value[0];
 
-		    // set policy identifier
-		    field.querySelector('input#id_' + ext.type + '_0').value = policy_information.policy_identifier;
+            // set policy identifier
+            field.querySelector('input#id_' + ext.type + '_0').value = policy_information.policy_identifier;
 
-		    let cps = [];
-		    let explicit_text = "";
+            let cps = [];
+            let explicit_text = "";
 
             // support for policy qualifiers is currently extremely limited. We map all str qualifiers into
             // a newline-separated list, and use the first explicit text defined in any user notice.
-		    if (policy_information.policy_qualifiers) {
-		        policy_information.policy_qualifiers.map(qualifier => {
-		            if (typeof qualifier == "string") {
+            if (policy_information.policy_qualifiers) {
+                policy_information.policy_qualifiers.map(qualifier => {
+                    if (typeof qualifier == "string") {
                         cps.push(qualifier);
                     } else if (explicit_text == "" && qualifier.explicit_text) {
                         explicit_text = qualifier.explicit_text;
                     }
-		        });
-		    }
+                });
+            }
 
-		    field.querySelector('textarea#id_' + ext.type + '_1').value = cps.join("\n");
+            field.querySelector('textarea#id_' + ext.type + '_1').value = cps.join("\n");
             field.querySelector('textarea#id_' + ext.type + '_2').value = explicit_text;
         } else if (ext.type === "ocsp_no_check") {
             field.querySelector('.labeled-checkbox.include input').checked = true;

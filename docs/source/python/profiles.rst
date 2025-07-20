@@ -25,7 +25,7 @@ But you can also create your own profile manually to create a special type of ce
 
    >>> from django_ca.models import CertificateAuthority
    >>> profile = Profile(
-   ...     'example',
+   ...     name='example',
    ...     subject=x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, 'AT')]),
    ...     extensions={'ocsp_no_check': {}}
    ... )

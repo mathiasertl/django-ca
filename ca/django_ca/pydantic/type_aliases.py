@@ -15,12 +15,17 @@
 
 import base64
 from collections.abc import Hashable
+from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
+from annotated_types import Ge
 from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
 
 from cryptography import x509
 
+from django.utils.functional import Promise
+
+from django_ca.pydantic.schemas import get_promise_schema
 from django_ca.pydantic.validators import (
     base64_encoded_str_validator,
     elliptic_curve_validator,
@@ -33,11 +38,20 @@ from django_ca.pydantic.validators import (
     reason_flag_crl_scope_validator,
     reason_flag_validator,
     serial_validator,
+    timedelta_as_number_parser,
     unique_validator,
 )
 from django_ca.typehints import EllipticCurves, HashAlgorithms
 
 T = TypeVar("T", bound=type[Any])
+
+
+PromiseTypeAlias = Annotated[Promise, get_promise_schema(), Field(validate_default=True)]
+"""Type alias for Djangos lazily translated strings.
+
+Translated strings will be evaluated (= translated) upon JSON serialization. For JSON schemas, this type alias
+identifies itself as a normal string. 
+"""
 
 
 #: A bytes type that validates strings as base64-encoded strings and serializes as such when using JSON.
@@ -96,6 +110,9 @@ HashAlgorithmName = Annotated[HashAlgorithms, BeforeValidator(hash_algorithm_val
 
 This type will also accept instances of |HashAlgorithm| and convert them transparently.
 """
+
+DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
+PositiveTimedelta = Annotated[timedelta, Ge(timedelta(seconds=0))]
 
 UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])
 UniqueElementsTuple = Annotated[UniqueTupleTypeVar, AfterValidator(unique_validator)]

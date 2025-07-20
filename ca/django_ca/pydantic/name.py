@@ -87,9 +87,9 @@ class NameAttributeModel(CryptographyModel["x509.NameAttribute[str | bytes]"]):
         if self.oid in country_code_oids and len(self.value) != 2:
             raise ValueError(f"{self.value}: Must have exactly two characters")
 
-        if self.oid == NameOID.COMMON_NAME.dotted_string and not self.value:
+        if self.oid == NameOID.COMMON_NAME.dotted_string and not 1 <= len(self.value) <= 64:
             name = constants.NAME_OID_NAMES[NameOID.COMMON_NAME]
-            raise ValueError(f"{name} must not be an empty value")
+            raise ValueError(f"{name} length must be >= 1 and <= 64, but it was {len(self.value)}")
         return self
 
     @property

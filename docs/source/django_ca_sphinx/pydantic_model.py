@@ -59,7 +59,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
 
     def get_code(self, prefix: str, suffix: str) -> tuple[str, str]:
         """Load Python code from a file in `/include/pydantic/{prefix}_{suffix}`."""
-        # Get path to included Python file
+        # Get the path to the included Python file
         rel_filename, filename = self.env.relfn2path(f"/include/pydantic/{prefix}_{suffix}.py")
         self.env.note_dependency(rel_filename)
 
@@ -106,13 +106,13 @@ class PydanticModelDirective(PydanticModelDirectiveBase):
         model_filename, model_code = self.get_code(model_prefix, "model")
         cryptography_filename, cryptography_code = self.get_code(cryptography_prefix, "cryptography")
 
-        # Get value of the last line in the included cryptography file
+        # Get the value of the last line in the included cryptography file
         try:
             extension: x509.Extension[x509.ExtensionType] = self.exec_with_return(cryptography_code)
         except Exception as ex:
             raise RuntimeError(f"{cryptography_filename}: Cannot execute code: {ex}") from ex
 
-        # Get value of the last line in the included Model file
+        # Get the value of the last line in the included Model file
         try:
             model: CryptographyModel[Any] = self.exec_with_return(model_code)
         except Exception as ex:
@@ -171,13 +171,13 @@ class PydanticProfileExtensionDirective(PydanticModelDirectiveBase):
         model_filename, model_code = self.get_code(self.arguments[0], "model")
         profile_filename, profile_code = self.get_code(self.arguments[0], "profile")
 
-        # Get value of the last line in the included Model file
+        # Get the value of the last line in the included Model file
         try:
             model: ExtensionModel[Any] = self.exec_with_return(model_code)
         except Exception as ex:
             raise RuntimeError(f"{model_filename}: Cannot execute code: {ex}") from ex
 
-        # Get value of the last line in the included profile file
+        # Get the value of the last line in the included profile file
         try:
             global_vars: dict[str, Any] = {}
             exec(profile_code, global_vars)  # pylint: disable=exec-used
@@ -189,8 +189,8 @@ class PydanticProfileExtensionDirective(PydanticModelDirectiveBase):
         profile_data_from_model = {"extensions": {model.type: data}}
         ca_profiles_from_model = {"CA_PROFILES": {profile_name: profile_data_from_model}}
 
-        profile_from_model = Profile(profile_name, **profile_data_from_model)  # type: ignore[arg-type]
-        profile_from_python = Profile(profile_name, **profile_data_from_python)
+        profile_from_model = Profile(name=profile_name, **profile_data_from_model)
+        profile_from_python = Profile(name=profile_name, **profile_data_from_python)
         assert profile_from_model == profile_from_python, self.diff(
             profile_data_from_model, profile_data_from_python, model_filename, profile_filename, "Profiles"
         )

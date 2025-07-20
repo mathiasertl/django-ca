@@ -41,6 +41,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from django_ca.conf import model_settings
 from django_ca.constants import (
+    CONFIGURABLE_EXTENSION_KEYS,
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     EXTENSION_DEFAULT_CRITICAL,
     HASH_ALGORITHM_NAMES,
@@ -50,11 +51,7 @@ from django_ca.fields import CertificateSigningRequestField
 from django_ca.forms import CreateCertificateForm
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
-from django_ca.pydantic.extensions import (
-    EXTENSION_MODELS,
-    AuthorityInformationAccessModel,
-    CRLDistributionPointsModel,
-)
+from django_ca.pydantic.extensions import AuthorityInformationAccessModel, CRLDistributionPointsModel
 from django_ca.tests.admin.assertions import assert_css
 from django_ca.tests.admin.base import AddCertificateSeleniumTestCase, CertificateModelAdminTestCaseMixin
 from django_ca.tests.base.assertions import (
@@ -718,10 +715,11 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
         self, profile: Profile, oid: x509.ObjectIdentifier, default: Any = None
     ) -> SerializedPydanticExtension:
         """Get expected value for a given extension for the given profile."""
-        model_class = EXTENSION_MODELS[oid]
-        if oid in profile.extensions:
-            model = model_class.model_validate(profile.extensions[oid])
-            return model.model_dump()
+        ext_key = CONFIGURABLE_EXTENSION_KEYS[oid]
+        if ext_key in profile.extensions:
+            ext_value = profile.extensions[ext_key]
+            if ext_value is not None:
+                return ext_value.model_dump()
         return {
             "type": END_ENTITY_CERTIFICATE_EXTENSION_KEYS[oid],
             "value": default,
@@ -1515,6 +1513,7 @@ class TestAddCertificateWebTest:
         usable_root.save()
 
         response = django_app.get(Certificate.admin_add_url, user=admin_user.username)
+        assert response.status_code == HTTPStatus.OK
         assert (
             "Received multiple DistributionPoints, only the first can be changed in the web interface."
             in caplog.text

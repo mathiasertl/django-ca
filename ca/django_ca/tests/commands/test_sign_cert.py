@@ -35,6 +35,7 @@ from pytest_django.fixtures import SettingsWrapper
 from django_ca.conf import model_settings
 from django_ca.constants import ExtensionOID
 from django_ca.models import Certificate, CertificateAuthority
+from django_ca.pydantic import NameModel
 from django_ca.tests.base.assertions import (
     assert_authority_key_identifier,
     assert_command_error,
@@ -250,7 +251,8 @@ def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuth
     cert = Certificate.objects.get()
     assert_post_issue_cert(post, cert)
     assert_signature([usable_root], cert)
-    assert cert.pub.loaded.subject == model_settings.CA_DEFAULT_SUBJECT
+    assert isinstance(model_settings.CA_DEFAULT_SUBJECT, NameModel)
+    assert cert.pub.loaded.subject == model_settings.CA_DEFAULT_SUBJECT.cryptography
     assert_authority_key_identifier(usable_root, cert)
     assert stdout == f"Please paste the CSR:\n{cert.pub.pem}"
     assert cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == san

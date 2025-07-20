@@ -14,6 +14,7 @@
 """Test :py:mod:`django_ca.profiles`."""
 
 import doctest
+import re
 from datetime import timedelta
 from typing import Any
 
@@ -33,8 +34,9 @@ from django_ca.constants import (
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
+from django_ca.pydantic import NameModel
 from django_ca.signals import pre_sign_cert
-from django_ca.tests.base.assertions import assert_extensions
+from django_ca.tests.base.assertions import assert_extensions, assert_removed_in_250
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.mocks import mock_signal
@@ -54,6 +56,7 @@ from django_ca.tests.base.utils import (
     subject_key_identifier,
     uri,
 )
+from django_ca.tests.pydantic.base import assert_validation_errors
 
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
@@ -135,41 +138,20 @@ def test_default_proxy_eq() -> None:
     assert profile != ["not-equal"]  # we are not equal to arbitrary stuff
 
 
-def test_eq() -> None:
-    """Test profile equality."""
-    prof = None
-    for name in model_settings.CA_PROFILES:
-        assert prof != profiles[name]
-        prof = profiles[name]
-        assert prof == prof  # noqa: PLR0124  # this is what we're testing
-        assert prof is not None
-        assert prof != -1
-
-
-def test_str() -> None:
-    """Test str()."""
-    for name in model_settings.CA_PROFILES:
-        assert str(profiles[name]) == f"<Profile: {name}>"
-
-
-def test_repr() -> None:
-    """Test repr()."""
-    for name in model_settings.CA_PROFILES:
-        assert repr(profiles[name]) == f"<Profile: {name}>"
-
-
 def test_init_django_ca_values(subject: x509.Name) -> None:
     """Test passing serialized extensions leads to equal profiles."""
-    prof1 = Profile("test", subject=subject, extensions={"ocsp_no_check": {}})
-    prof2 = Profile("test", subject=subject, extensions={"ocsp_no_check": ocsp_no_check()})
+    prof1 = Profile(name="test", subject=subject, extensions={"ocsp_no_check": {}})
+    prof2 = Profile(name="test", subject=subject, extensions={"ocsp_no_check": ocsp_no_check()})
+    assert prof1.extensions == prof2.extensions
     assert prof1 == prof2
 
 
 def test_init_none_extension() -> None:
     """Test profiles that explicitly deactivate an extension."""
-    prof = Profile("test", extensions={"ocsp_no_check": None})
-    assert prof.extensions == {ExtensionOID.OCSP_NO_CHECK: None}
-    assert prof.serialize()["clear_extensions"] == ["ocsp_no_check"]
+    prof = Profile(name="test", extensions={"ocsp_no_check": None})
+    assert prof.extensions == {"ocsp_no_check": None}
+    with assert_removed_in_250(None):
+        assert prof.serialize()["clear_extensions"] == ["ocsp_no_check"]
 
 
 def test_init_no_subject(settings: SettingsWrapper) -> None:
@@ -177,47 +159,58 @@ def test_init_no_subject(settings: SettingsWrapper) -> None:
     # doesn't really occur in the wild, because model_settings updates CA_PROFILES with the default
     # subject. But it still seems sensible to support this
     settings.CA_DEFAULT_SUBJECT = ({"oid": "CN", "value": "testcase"},)
-    prof = Profile("test")
-    assert prof.subject == x509.Name([cn("testcase")])
+    prof = Profile(name="test")
+    assert isinstance(prof.subject, NameModel)
+    # pylint: disable-next=no-member  # issue with pylint
+    assert prof.subject.cryptography == x509.Name([cn("testcase")])
 
 
 def test_init_x509_subject(subject: x509.Name) -> None:
     """Test passing a cryptography subject."""
-    prof = Profile("test", subject=subject)
-    assert prof.subject == subject
+    prof = Profile(name="test", subject=subject)
+    assert isinstance(prof.subject, NameModel)
+    # pylint: disable-next=no-member  # issue with pylint
+    assert prof.subject.cryptography == subject
 
 
 def test_init_expires() -> None:
     """Test the `expire` parameter."""
     exp = timedelta(hours=3)
-    prof = Profile("example", expires=exp)
+    prof = Profile(name="example", expires=exp)
     assert prof.expires == exp
 
 
 def test_init_with_unsupported_extension() -> None:
     """Test creating a profile with an extension that should not be in a profile."""
-    with pytest.raises(ValueError, match=r"^inhibit_any_policy: Extension cannot be used in a profile\.$"):
-        # TYPEHINT NOTE: This is what we're testing.
-        Profile("test", extensions={"inhibit_any_policy": None})  # type: ignore[dict-item]
+    assert_validation_errors(
+        Profile,
+        {"name": "wrong-algorithm", "extensions": {"inhibit_any_policy": None}},
+        [
+            (
+                "literal_error",
+                ("extensions", "inhibit_any_policy", "[key]"),
+                re.compile("Input should be 'admissions'"),
+            )
+        ],
+    )
 
 
 def test_init_with_non_matching_extension() -> None:
     """Test creating a profile with an extension that should not be in a profile."""
-    with pytest.raises(ValueError, match=r"^ocsp_no_check: .*Extension does not match key\.$"):
+    with pytest.raises(ValueError, match=r"ocsp_no_check: key_usage: Extension does not match key\."):
         # TYPEHINT NOTE: This is what we're testing.
-        Profile("test", extensions={"ocsp_no_check": key_usage(key_agreement=True)})
+        Profile(name="test", extensions={"ocsp_no_check": key_usage(key_agreement=True)})
 
 
 def test_init_with_invalid_extension_type() -> None:
     """Test creating a profile with a completely invalid extension type."""
-    with pytest.raises(TypeError, match=r"^Profile test, extension key_usage: True: Unsupported type$"):
+    with pytest.raises(
+        ValueError, match=r"Input should be a valid dictionary or object to extract fields from"
+    ):
         # TYPEHINT NOTE: This is what we're testing
         Profile(
-            "test",
-            extensions={
-                # TYPEHINT NOTE: This is what we're testing.
-                END_ENTITY_CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True  # type: ignore[dict-item]
-            },
+            name="test",
+            extensions={END_ENTITY_CERTIFICATE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: True},
         )
 
 
@@ -225,7 +218,7 @@ def test_create_cert(usable_root: CertificateAuthority, subject: x509.Name) -> N
     """Create a certificate with minimal parameters."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-    prof = Profile("example")
+    prof = Profile(name="example")
     with mock_signal(pre_sign_cert) as pre:
         cert = create_cert(prof, usable_root, csr, subject=subject, add_issuer_alternative_name=False)
     assert pre.call_count == 1
@@ -240,7 +233,7 @@ def test_create_cert_with_alternative_values(usable_root: CertificateAuthority, 
     country_name = x509.NameAttribute(NameOID.COUNTRY_NAME, "AT")
     subject = x509.Name([country_name, x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
 
-    prof = Profile("example", subject=False)
+    prof = Profile(name="example", subject=None)
 
     with mock_signal(pre_sign_cert) as pre:
         cert = create_cert(
@@ -273,7 +266,7 @@ def test_create_cert_with_overrides(usable_root: CertificateAuthority, hostname:
     expected_subject = x509.Name([country("US"), state("California"), san_francisco, cn(hostname)])
 
     prof = Profile(
-        "example",
+        name="example",
         subject=x509.Name([country("DE"), san_francisco]),
         add_crl_url=False,
         add_ocsp_url=False,
@@ -322,7 +315,7 @@ def test_create_cert_with_overrides(usable_root: CertificateAuthority, hostname:
 def test_create_cert_with_none_extension(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test passing an extension that is removed by the profile."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    prof = Profile("example", extensions={"ocsp_no_check": None})
+    prof = Profile(name="example", extensions={"ocsp_no_check": None})
 
     with mock_signal(pre_sign_cert) as pre:
         cert = create_cert(prof, usable_root, csr, subject=subject, extensions=[ocsp_no_check()])
@@ -334,7 +327,7 @@ def test_create_cert_with_add_distribution_point_with_ca_crldp(
     usable_root: CertificateAuthority, subject: x509.Name
 ) -> None:
     """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
-    prof = Profile("example")
+    prof = Profile(name="example")
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
     # Add CRL Distribution Points extension to CA
@@ -375,7 +368,7 @@ def test_create_cert_with_with_algorithm(usable_root: CertificateAuthority, subj
     """Test a profile that manually overrides the algorithm."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-    prof = Profile("example", algorithm="SHA-512")
+    prof = Profile(name="example", algorithm="SHA-512")
 
     # Make sure that algorithm does not match what is the default profile above, so that we can test it
     assert isinstance(usable_root.algorithm, hashes.SHA256)
@@ -399,7 +392,7 @@ def test_create_cert_with_issuer_alternative_name_override(
     usable_root: CertificateAuthority, subject: x509.Name
 ) -> None:
     """Pass a custom Issuer Alternative Name which overwrites the CA value."""
-    prof = Profile("example")
+    prof = Profile(name="example")
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
     # Add CRL url to CA
@@ -439,7 +432,7 @@ def test_create_cert_with_merge_authority_information_access_existing_values(
     usable_root: CertificateAuthority, subject: x509.Name
 ) -> None:
     """Pass a custom distribution point when creating the cert, which matches ca.crl_url."""
-    prof = Profile("example")
+    prof = Profile(name="example")
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
     # Set Authority Information Access extesion
@@ -495,7 +488,7 @@ def test_create_cert_with_extensions(usable_root: CertificateAuthority, subject:
         oid=unknown_oid, critical=True, value=x509.UnrecognizedExtension(oid=unknown_oid, value=b"abc")
     )
 
-    prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+    prof = Profile(name="example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
     with mock_signal(pre_sign_cert) as pre:
         cert = create_cert(
             prof,
@@ -530,7 +523,7 @@ def test_create_cert_with_unrecognized_extensions(
         oid=unknown_oid, critical=True, value=x509.UnrecognizedExtension(oid=unknown_oid, value=b"abc")
     )
 
-    prof = Profile("example")
+    prof = Profile(name="example")
     with mock_signal(pre_sign_cert) as pre, pytest.raises(ValueError, match=r"Extension cannot be set"):
         create_cert(prof, usable_root, csr, subject=subject, extensions=[unknown_ext])
     assert pre.call_count == 0
@@ -540,7 +533,7 @@ def test_create_cert_with_extension_overrides(usable_root: CertificateAuthority,
     """Test that all extensions can be overwritten when creating a new certificate."""
     # Profile with extensions (will be overwritten by the command line).
     prof = Profile(
-        "example",
+        name="example",
         extensions={
             CONFIGURABLE_EXTENSION_KEYS[
                 ExtensionOID.AUTHORITY_INFORMATION_ACCESS
@@ -585,7 +578,7 @@ def test_create_cert_with_partial_authority_information_access_override(
 ) -> None:
     """Test partial overwriting of the Authority Information Access extension."""
     prof = Profile(
-        "example",
+        name="example",
         extensions={
             CONFIGURABLE_EXTENSION_KEYS[
                 ExtensionOID.AUTHORITY_INFORMATION_ACCESS
@@ -661,7 +654,7 @@ def test_create_cert_with_no_cn_no_san(usable_root: CertificateAuthority) -> Non
     """Test creating a cert with no cn in san."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
 
-    prof = Profile("example")
+    prof = Profile(name="example")
     msg = r"^Must name at least a CN or a subjectAlternativeName\.$"
     with mock_signal(pre_sign_cert) as pre, pytest.raises(ValueError, match=msg):
         create_cert(prof, usable_root, csr, subject=None)
@@ -672,33 +665,37 @@ def test_create_cert_with_no_cn_no_san(usable_root: CertificateAuthority) -> Non
 def test_create_cert_with_no_valid_cn_in_san(usable_root: CertificateAuthority) -> None:
     """Test what happens when the SAN has nothing usable as CN."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
-    prof = Profile("example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
+    prof = Profile(name="example", extensions={CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.OCSP_NO_CHECK]: {}})
     san = subject_alternative_name(x509.RegisteredID(ExtensionOID.OCSP_NO_CHECK))
 
     with mock_signal(pre_sign_cert) as pre:
         cert = create_cert(prof, usable_root, csr, extensions=[san])
     assert pre.call_count == 1
-    assert cert.subject == model_settings.CA_DEFAULT_SUBJECT
+    assert isinstance(model_settings.CA_DEFAULT_SUBJECT, NameModel)
+    assert cert.subject == model_settings.CA_DEFAULT_SUBJECT.cryptography
 
 
-def test_create_cert_with_unknown_signature_hash_algorithm() -> None:
+def test_init_with_unknown_signature_hash_algorithm() -> None:
     """Test passing an unknown hash algorithm."""
-    with pytest.raises(ValueError, match=r"^foo: Unknown hash algorithm\.$"):
-        Profile("wrong-algorithm", algorithm="foo")  # type: ignore[arg-type]
+    assert_validation_errors(
+        Profile,
+        {"name": "wrong-algorithm", "algorithm": "foo"},
+        [("literal_error", ("algorithm",), re.compile("Input should be 'SHA-224'"))],
+    )
 
 
 def test_create_cert_with_no_valid_subject(settings: SettingsWrapper, root: CertificateAuthority) -> None:
     """Test case where no subject at all could be determined."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     settings.CA_DEFAULT_SUBJECT = None
-    prof = Profile("test")
+    prof = Profile(name="test")
     with pytest.raises(ValueError, match=r"^Cannot determine subject for certificate\.$"):
         create_cert(prof, root, csr)
 
 
 def test_create_cert_with_unsupported_extension(root: CertificateAuthority) -> None:
     """Test creating a certificate with an unsupported extension."""
-    prof = Profile("test")
+    prof = Profile(name="test")
     with pytest.raises(ValueError, match=r"Extension cannot be set when creating a certificate\.$"):
         prof.create_cert(
             root,
@@ -716,7 +713,7 @@ def test_serialize() -> None:
     desc = "foo bar"
     key_usage_items = ["digital_signature"]
     prof = Profile(
-        "test",
+        name="test",
         algorithm="SHA-512",
         description=desc,
         subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
@@ -725,17 +722,18 @@ def test_serialize() -> None:
             CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
         },
     )
-    assert prof.serialize() == {
-        "name": "test",
-        "algorithm": "SHA-512",
-        "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}],
-        "description": desc,
-        "clear_extensions": ["extended_key_usage"],
-        "extensions": [
-            {
-                "type": "key_usage",
-                "value": key_usage_items,
-                "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
-            },
-        ],
-    }
+    with assert_removed_in_250(None):
+        assert prof.serialize() == {
+            "name": "test",
+            "algorithm": "SHA-512",
+            "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}],
+            "description": desc,
+            "clear_extensions": ["extended_key_usage"],
+            "extensions": [
+                {
+                    "type": "key_usage",
+                    "value": key_usage_items,
+                    "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
+                },
+            ],
+        }

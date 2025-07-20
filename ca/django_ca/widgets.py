@@ -167,7 +167,9 @@ class NameWidget(KeyValueWidget):
 
     def format_value(self, value: Any) -> str:
         if isinstance(value, x509.Name):
-            value = NameModel.model_validate(value).model_dump(mode="json")
+            value = NameModel.model_validate(value)
+        if isinstance(value, NameModel):
+            value = value.model_dump(mode="json")
         return super().format_value(value)
 
     class Media:
@@ -343,6 +345,7 @@ class DistributionPointWidget(ExtensionWidget):
     ) -> tuple[str, str, str, list[str], bool]:
         full_name = relative_name = crl_issuer = ""
         reasons: list[str] = []
+        print("### value", value, type(value))
 
         if value is None:
             return full_name, relative_name, crl_issuer, reasons, EXTENSION_DEFAULT_CRITICAL[self.oid]

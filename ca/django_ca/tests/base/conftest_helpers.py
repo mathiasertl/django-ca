@@ -312,7 +312,7 @@ def generate_hsm_ca_fixture(
         db: Literal[None],  # pylint: disable=unused-argument
         hsm_backend: HSMBackend,
         subject: x509.Name,
-    ) -> CertificateAuthority:
+    ) -> CertificateAuthority:  # pragma: hsm
         if key_type in settings.PKCS11_EXCLUDE_KEY_TYPES:  # pragma: no cover
             pytest.xfail(f"{key_type}: Algorithm not supported on this platform.")
 
