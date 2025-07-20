@@ -15,8 +15,10 @@
 
 import base64
 from collections.abc import Hashable
+from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
+from annotated_types import Ge
 from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
 
 from cryptography import x509
@@ -33,6 +35,7 @@ from django_ca.pydantic.validators import (
     reason_flag_crl_scope_validator,
     reason_flag_validator,
     serial_validator,
+    timedelta_as_number_parser,
     unique_validator,
 )
 from django_ca.typehints import EllipticCurves, HashAlgorithms
@@ -96,6 +99,9 @@ HashAlgorithmName = Annotated[HashAlgorithms, BeforeValidator(hash_algorithm_val
 
 This type will also accept instances of |HashAlgorithm| and convert them transparently.
 """
+
+DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
+PositiveTimedelta = Annotated[timedelta, Ge(timedelta(days=1))]
 
 UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])
 UniqueElementsTuple = Annotated[UniqueTupleTypeVar, AfterValidator(unique_validator)]
