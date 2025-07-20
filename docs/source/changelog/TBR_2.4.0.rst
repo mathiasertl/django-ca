@@ -2,6 +2,8 @@
 2.4.0 (TBR)
 ###########
 
+* OCSP responder certificates now have an empty subject.
+
 ************
 Command-line
 ************
@@ -24,3 +26,13 @@ Dependencies
 
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.10.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=3.2.0``, ``acme~=3.3.0`` and ``acme~=4.0.0``.
+
+**********
+Python API
+**********
+
+* :py:func:`CertificateManager.objects.create_cert()
+  <django_ca.managers.CertificateManager.create_cert>`
+  and :py:func:`Profile.create_cert() <django_ca.profiles.Profile.create_cert>` now allow creating a
+  certificate with neither a common name nor a Subject Alternative Name extension via the
+  `allow_empty_subject` flag.

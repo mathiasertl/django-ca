@@ -192,6 +192,7 @@ class Profile:  # noqa: PLW1641
         algorithm: AllowedHashTypes | None = None,
         extensions: Iterable[ConfigurableExtension] | None = None,
         allow_unrecognized_extensions: bool = False,
+        allow_empty_subject: bool = False,
         add_crl_url: bool | None = None,
         add_ocsp_url: bool | None = None,
         add_issuer_url: bool | None = None,
@@ -211,18 +212,17 @@ class Profile:  # noqa: PLW1641
             >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(...,CN=example.com)>, ...)>
 
+        .. versionchanged:: 2.4.0
+
+           The `allow_empty_subject` parameter was added.
+
+        .. versionchanged:: 2.3.0
+
+           The `expires` parameter was renamed to `not_after`.
+
         .. versionchanged:: 2.2.1
 
            The `allow_unrecognized_extensions` parameter was added.
-
-        .. deprecated:: 2.1.0
-
-           The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
-           instead.
-
-        .. versionchanged:: 1.26.0
-
-           All optional arguments have to be passed as keyword arguments.
 
         The function will add CRL, OCSP, Issuer and IssuerAlternativeName URLs based on the CA if the profile
         has the *add_crl_url*, *add_ocsp_url* and *add_issuer_url* and *add_issuer_alternative_name* values
@@ -257,6 +257,10 @@ class Profile:  # noqa: PLW1641
             Set to ``True`` to allow passing unrecognized extensions. The default is ``False``. Note that when
             setting this to ``True``, it is possible to pass almost any extension value without any sanity
             check, so you have to be extremely careful.
+        allow_empty_subject : bool, optional
+            Allow the certificate to contain no subject or Subject Alternative Name extension at all. By
+            default, this method will raise an error if there is neither a common name in the certificate's
+            subject nor a Subject Alternative Name extension.
         add_crl_url : bool, optional
             Override if any CRL URLs from the CA should be added to the CA. If not passed, the value set in
             the profile is used.
@@ -331,8 +335,10 @@ class Profile:  # noqa: PLW1641
             not_after = now + self.expires
         # else: it's a datetime
 
-        if not subject.get_attributes_for_oid(NameOID.COMMON_NAME) and not configurable_cert_extensions.get(
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        if (
+            allow_empty_subject is False
+            and not subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+            and not configurable_cert_extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         ):
             raise ValueError("Must name at least a CN or a subjectAlternativeName.")
 
