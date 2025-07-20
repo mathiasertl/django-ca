@@ -118,7 +118,9 @@ def test_name_attribute_country_code_errors(oid: str, value: str) -> None:
 )
 def test_name_attribute_empty_common_name(oid: Any) -> None:
     """Test validation for country codes."""
-    errors: ExpectedErrors = [("value_error", (), "Value error, commonName must not be an empty value")]
+    errors: ExpectedErrors = [
+        ("value_error", (), "Value error, commonName length must be >= 1 and <= 64, but it was 0")
+    ]
     assert_validation_errors(NameAttributeModel, {"oid": oid, "value": ""}, errors)
 
 

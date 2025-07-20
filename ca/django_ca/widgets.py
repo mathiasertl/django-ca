@@ -167,7 +167,9 @@ class NameWidget(KeyValueWidget):
 
     def format_value(self, value: Any) -> str:
         if isinstance(value, x509.Name):
-            value = NameModel.model_validate(value).model_dump(mode="json")
+            value = NameModel.model_validate(value)
+        if isinstance(value, NameModel):
+            value = value.model_dump(mode="json")
         return super().format_value(value)
 
     class Media:

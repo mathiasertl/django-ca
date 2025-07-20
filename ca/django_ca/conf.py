@@ -171,13 +171,6 @@ _DEFAULT_CA_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
-def _subject_validator(value: Any) -> Any:
-    return NameModel(value).cryptography
-
-
-Subject = Annotated[x509.Name, BeforeValidator(_subject_validator)]
-
-
 class CertificateRevocationListBaseModel(BaseModel):
     """Base model for CRL profiles and overrides."""
 
@@ -245,8 +238,8 @@ class ProfileConfigurationModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     description: str | Promise = ""
-    subject: Literal[False] | Subject | None = None
-    algorithm: AllowedHashTypes | None = None
+    subject: Literal[False] | NameModel | None = None
+    algorithm: HashAlgorithmName | None = None
     extensions: dict[ConfigurableExtensionKeys, dict[str, Any] | ConfigurableExtension | None] = Field(
         default_factory=dict
     )
@@ -302,7 +295,7 @@ class SettingsModel(BaseModel):
     CA_DEFAULT_PROFILE: str = "webserver"
     CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: HashAlgorithmName = "SHA-512"
     CA_DEFAULT_STORAGE_ALIAS: str = "django-ca"
-    CA_DEFAULT_SUBJECT: Subject | None = None
+    CA_DEFAULT_SUBJECT: NameModel | None = None
     CA_ENABLE_ACME: bool = True
     CA_ENABLE_REST_API: bool = False
     CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)

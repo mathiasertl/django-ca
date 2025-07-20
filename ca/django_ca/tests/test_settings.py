@@ -44,6 +44,7 @@ from ca.settings_utils import (
 )
 from django_ca import conf
 from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
+from django_ca.pydantic import NameModel
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.utils import country, state
@@ -589,16 +590,20 @@ def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: Settin
 def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x509.Name) -> None:
     """Test CA_DEFAULT_SUBJECT setting."""
     settings.CA_DEFAULT_SUBJECT = value
-    assert model_settings.CA_DEFAULT_SUBJECT == expected
+    if isinstance(expected, x509.Name):
+        assert isinstance(model_settings.CA_DEFAULT_SUBJECT, NameModel)
+        assert model_settings.CA_DEFAULT_SUBJECT.cryptography == expected
+    else:
+        assert model_settings.CA_DEFAULT_SUBJECT is None
 
 
 @pytest.mark.parametrize(
     ("value", "msg"),
     (
-        ([{"oid": "CN", "value": ""}], r"Value error, commonName must not be an empty value"),
+        ([{"oid": "CN", "value": ""}], r"commonName length must be >= 1 and <= 64, but it was 0"),
         (
             [{"oid": "CN", "value": "X" * 65}],
-            r"Value error, Attribute's length must be >= 1 and <= 64, but it was 65",
+            r"Value error, commonName length must be >= 1 and <= 64, but it was 65",
         ),
     ),
 )
@@ -686,13 +691,18 @@ def test_ca_profiles_override_subject(settings: SettingsWrapper, subject: Any, e
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES."""
     assert model_settings.CA_DEFAULT_SUBJECT != expected  # would defeat purpose of test
     settings.CA_PROFILES = {"client": {"subject": subject}}
-    assert model_settings.CA_PROFILES["client"].subject == expected
+    if isinstance(expected, x509.Name):
+        assert isinstance(model_settings.CA_PROFILES["client"].subject, NameModel)
+        assert model_settings.CA_PROFILES["client"].subject.cryptography == expected
+    else:
+        assert model_settings.CA_PROFILES["client"].subject is False
 
 
 def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsWrapper) -> None:
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES with deprecated values."""
     settings.CA_PROFILES = {"client": {"subject": [{"oid": "C", "value": "AT"}]}}
-    assert model_settings.CA_PROFILES["client"].subject == x509.Name([country("AT")])
+    assert isinstance(model_settings.CA_PROFILES["client"].subject, NameModel)
+    assert model_settings.CA_PROFILES["client"].subject.cryptography == x509.Name([country("AT")])
 
 
 @pytest.mark.parametrize(

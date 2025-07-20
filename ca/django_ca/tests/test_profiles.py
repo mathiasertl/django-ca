@@ -33,6 +33,7 @@ from django_ca.constants import (
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
+from django_ca.pydantic import NameModel
 from django_ca.signals import pre_sign_cert
 from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -178,13 +179,15 @@ def test_init_no_subject(settings: SettingsWrapper) -> None:
     # subject. But it still seems sensible to support this
     settings.CA_DEFAULT_SUBJECT = ({"oid": "CN", "value": "testcase"},)
     prof = Profile("test")
-    assert prof.subject == x509.Name([cn("testcase")])
+    assert isinstance(prof.subject, NameModel)
+    assert prof.subject.cryptography == x509.Name([cn("testcase")])
 
 
 def test_init_x509_subject(subject: x509.Name) -> None:
     """Test passing a cryptography subject."""
     prof = Profile("test", subject=subject)
-    assert prof.subject == subject
+    assert isinstance(prof.subject, NameModel)
+    assert prof.subject.cryptography == subject
 
 
 def test_init_expires() -> None:
@@ -678,7 +681,8 @@ def test_create_cert_with_no_valid_cn_in_san(usable_root: CertificateAuthority) 
     with mock_signal(pre_sign_cert) as pre:
         cert = create_cert(prof, usable_root, csr, extensions=[san])
     assert pre.call_count == 1
-    assert cert.subject == model_settings.CA_DEFAULT_SUBJECT
+    assert isinstance(model_settings.CA_DEFAULT_SUBJECT, NameModel)
+    assert cert.subject == model_settings.CA_DEFAULT_SUBJECT.cryptography
 
 
 def test_create_cert_with_unknown_signature_hash_algorithm() -> None:

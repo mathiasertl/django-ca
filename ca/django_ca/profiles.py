@@ -28,11 +28,7 @@ from django.urls import reverse
 
 from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.constants import (
-    CONFIGURABLE_EXTENSION_KEY_OIDS,
-    END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
-    HASH_ALGORITHM_NAMES,
-)
+from django_ca.constants import CONFIGURABLE_EXTENSION_KEY_OIDS, END_ENTITY_CERTIFICATE_EXTENSION_KEYS
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.pydantic.extensions import (
     CertificateExtension,
@@ -40,6 +36,7 @@ from django_ca.pydantic.extensions import (
     ExtensionModel,
 )
 from django_ca.pydantic.name import NameModel
+from django_ca.pydantic.type_aliases import HashAlgorithmName
 from django_ca.signals import pre_sign_cert
 from django_ca.typehints import (
     AllowedHashTypes,
@@ -50,7 +47,6 @@ from django_ca.typehints import (
     HashAlgorithms,
     ProfileExtensionValue,
     SerializedProfile,
-    SerializedPydanticName,
 )
 from django_ca.utils import merge_x509_names
 
@@ -75,7 +71,7 @@ class Profile:  # noqa: PLW1641
         <Profile: example>
     """
 
-    algorithm: AllowedHashTypes | None = None
+    algorithm: HashAlgorithmName | None = None
     expires: timedelta
     extensions: dict[x509.ObjectIdentifier, ConfigurableExtension | None]
 
@@ -100,17 +96,16 @@ class Profile:  # noqa: PLW1641
             extensions = {}
 
         if subject is None:
-            self.subject: x509.Name | None = model_settings.CA_DEFAULT_SUBJECT
+            self.subject: NameModel | None = model_settings.CA_DEFAULT_SUBJECT
         elif subject is False:
             self.subject = None
         else:
-            self.subject = subject
+            self.subject = NameModel.model_validate(subject)
 
         if algorithm is not None:
-            try:
-                self.algorithm = constants.HASH_ALGORITHM_TYPES[algorithm]()
-            except KeyError as ex:
-                raise ValueError(f"{algorithm}: Unknown hash algorithm.") from ex
+            self.algorithm = algorithm
+            if algorithm not in constants.HASH_ALGORITHM_TYPES:
+                raise ValueError(f"{algorithm}: Unknown hash algorithm.")
 
         if expires is None:
             self.expires = model_settings.CA_DEFAULT_EXPIRES
@@ -311,9 +306,9 @@ class Profile:  # noqa: PLW1641
 
         if self.subject is not None:
             if subject is not None:
-                subject = merge_x509_names(self.subject, subject)
+                subject = merge_x509_names(self.subject.cryptography, subject)
             else:
-                subject = self.subject
+                subject = self.subject.cryptography
 
         # Add first DNSName/IPAddress from subjectAlternativeName as commonName if not present in the subject
         subject = self._update_cn_from_san(subject, configurable_cert_extensions)
@@ -323,7 +318,7 @@ class Profile:  # noqa: PLW1641
 
         if algorithm is None and ca.algorithm:
             if self.algorithm is not None:
-                algorithm = self.algorithm
+                algorithm = constants.HASH_ALGORITHM_TYPES[self.algorithm]()
             else:
                 algorithm = ca.algorithm
 
@@ -398,14 +393,10 @@ class Profile:  # noqa: PLW1641
 
     def serialize(self) -> SerializedProfile:
         """Serialize the profile."""
-        algorithm = subject = None
+        subject = None
         if self.subject is not None:
             # TYPEHINT NOTE: mypy thinks that model_dump() returns List[NameAttributeModel]
-            subject = cast(
-                SerializedPydanticName, NameModel.model_validate(self.subject).model_dump(mode="json")
-            )
-        if self.algorithm is not None:
-            algorithm = HASH_ALGORITHM_NAMES[type(self.algorithm)]
+            subject = self.subject.model_dump(mode="json")
 
         profile_extensions = [ext for ext in self.extensions.values() if ext is not None]
         clear_extensions = [
@@ -417,7 +408,7 @@ class Profile:  # noqa: PLW1641
             "name": self.name,
             "description": self.description,
             "subject": subject,
-            "algorithm": algorithm,
+            "algorithm": self.algorithm,
             "extensions": [ext.model_dump(mode="json") for ext in extensions],
             "clear_extensions": clear_extensions,
         }
