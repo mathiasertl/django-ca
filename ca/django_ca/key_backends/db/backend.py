@@ -107,7 +107,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         options: DBCreatePrivateKeyOptions,
     ) -> tuple[CertificateIssuerPublicKeyTypes, DBUsePrivateKeyOptions]:
         encryption = serialization.NoEncryption()
-        key = generate_private_key(options.key_size, key_type, options.elliptic_curve)
+        key = generate_private_key(options.key_size, key_type, options.get_elliptic_curve())
         pem = key.private_bytes(
             encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=encryption
         )

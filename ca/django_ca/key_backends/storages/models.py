@@ -19,9 +19,12 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
+from cryptography.hazmat.primitives.asymmetric import ec
+
 from django_ca.conf import model_settings
+from django_ca.constants import ELLIPTIC_CURVE_TYPES
 from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveTypeAlias
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveName
 
 if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -35,7 +38,7 @@ class StoragesCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
 
     password: bytes | None
     path: Path
-    elliptic_curve: EllipticCurveTypeAlias | None = None
+    elliptic_curve: EllipticCurveName | None = None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "StoragesCreatePrivateKeyOptions":
@@ -45,6 +48,12 @@ class StoragesCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
         elif self.key_type != "EC" and self.elliptic_curve is not None:
             raise ValueError(f"Elliptic curves are not supported for {self.key_type} keys.")
         return self
+
+    def get_elliptic_curve(self) -> ec.EllipticCurve | None:
+        """Get the |EllipticCurve| instance for this model."""
+        if self.elliptic_curve is not None:
+            return ELLIPTIC_CURVE_TYPES[self.elliptic_curve]()
+        return None
 
 
 class StoragesStorePrivateKeyOptions(BaseModel):

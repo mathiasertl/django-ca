@@ -400,7 +400,7 @@ def validate_private_key_parameters(
         if key_size is not None:
             raise ValueError(f"Key size is not supported for {key_type} keys.")
         if elliptic_curve is None:
-            elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
+            elliptic_curve = model_settings.get_default_elliptic_curve()
         if not isinstance(elliptic_curve, ec.EllipticCurve):
             raise ValueError(f"{elliptic_curve}: Must be a subclass of ec.EllipticCurve")
 
@@ -433,8 +433,8 @@ def validate_public_key_parameters(
     if key_type in ("RSA", "DSA", "EC"):
         if algorithm is None:
             if key_type == "DSA":
-                return model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
-            return model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+                return model_settings.get_default_dsa_signature_hash_algorithm()
+            return model_settings.get_default_signature_hash_algorithm()
 
         if not isinstance(algorithm, hashes.HashAlgorithm):
             raise ValueError(f"{key_type}: algorithm must be an instance of hashes.HashAlgorithm.")

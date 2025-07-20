@@ -24,6 +24,7 @@ import josepy as jose
 from acme.messages import Revocation
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from django.test import Client
@@ -32,7 +33,6 @@ from django.urls import reverse
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import (
@@ -179,7 +179,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
         ca_key = usable_root.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
             root_cert.ca, StoragesUsePrivateKeyOptions(password=None)
         )
-        cert = builder.sign(private_key=ca_key, algorithm=model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)
+        cert = builder.sign(private_key=ca_key, algorithm=hashes.SHA256())
         message = Revocation(certificate=cert)
 
         resp = self.acme(client, url, usable_root, message, kid=kid)

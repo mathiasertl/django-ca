@@ -14,20 +14,17 @@
 """Reusable type aliases for Pydantic models."""
 
 import base64
-from collections.abc import Callable, Hashable
+from collections.abc import Hashable
 from typing import Annotated, Any, TypeVar
 
-from pydantic import AfterValidator, BeforeValidator, Field, GetPydanticSchema, PlainSerializer
-from pydantic_core import core_schema
-from pydantic_core.core_schema import IsInstanceSchema, LiteralSchema
+from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
 
-from django_ca import constants
 from django_ca.pydantic.validators import (
     base64_encoded_str_validator,
+    elliptic_curve_validator,
+    hash_algorithm_validator,
     int_to_hex_parser,
     is_power_two_validator,
     non_empty_validator,
@@ -38,47 +35,9 @@ from django_ca.pydantic.validators import (
     serial_validator,
     unique_validator,
 )
-from django_ca.typehints import AllowedHashTypes
+from django_ca.typehints import EllipticCurves, HashAlgorithms
 
 T = TypeVar("T", bound=type[Any])
-
-
-def _get_cryptography_schema(
-    cls: type[T] | list[T],
-    type_mapping: dict[str, type[T]],
-    name_mapping: dict[type[T], str],
-    json_serializer: Callable[[T], str] | None = None,
-    str_loader: Callable[[str], T] | None = None,
-) -> GetPydanticSchema:
-    if json_serializer is None:  # pragma: no branch
-
-        def json_serializer(instance: T) -> str:
-            return name_mapping[type(instance)]
-
-    if str_loader is None:  # pragma: no branch
-
-        def str_loader(value: str) -> T:
-            return type_mapping[value]()  # type: ignore[no-any-return,misc]  # false positive
-
-    json_schema = core_schema.chain_schema(
-        [
-            core_schema.literal_schema(list(type_mapping)),
-            core_schema.no_info_plain_validator_function(str_loader),
-        ]
-    )
-
-    if isinstance(cls, list):  # pragma: no cover
-        python_schema: LiteralSchema | IsInstanceSchema = core_schema.literal_schema(cls)
-    else:
-        python_schema = core_schema.is_instance_schema(cls)
-
-    return GetPydanticSchema(
-        lambda tp, handler: core_schema.json_or_python_schema(
-            json_schema=json_schema,
-            python_schema=core_schema.union_schema([python_schema, json_schema]),
-            serialization=core_schema.plain_serializer_function_ser_schema(json_serializer, when_used="json"),
-        )
-    )
 
 
 #: A bytes type that validates strings as base64-encoded strings and serializes as such when using JSON.
@@ -97,28 +56,6 @@ Base64EncodedBytes = Annotated[
 #: revocation list (CRL).
 CertificateRevocationListReasonCode = Annotated[
     x509.ReasonFlags, BeforeValidator(reason_flag_validator), AfterValidator(reason_flag_crl_scope_validator)
-]
-
-#: A type alias for :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve` instances.
-#:
-#: This type alias validates names from :py:attr:`~django_ca.constants.ELLIPTIC_CURVE_TYPES` and serializes
-#: to the canonical name in JSON. Models using this type alias can be used with strict schema validation.
-EllipticCurveTypeAlias = Annotated[
-    ec.EllipticCurve,
-    _get_cryptography_schema(
-        ec.EllipticCurve, constants.ELLIPTIC_CURVE_TYPES, constants.ELLIPTIC_CURVE_NAMES
-    ),
-]
-
-#: A type alias for :py:class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` instances.
-#:
-#: This type alias validates names from :py:attr:`~django_ca.constants.HASH_ALGORITHM_TYPES` and serializes
-#: to the canonical name in JSON. Models using this type alias can be used with strict schema validation.
-HashAlgorithmTypeAlias = Annotated[
-    AllowedHashTypes,
-    _get_cryptography_schema(
-        hashes.HashAlgorithm, constants.HASH_ALGORITHM_TYPES, constants.HASH_ALGORITHM_NAMES
-    ),
 ]
 
 
@@ -147,6 +84,18 @@ NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any]
 #:
 #: This type alias will also validate the x509 dotted string format.
 OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
+
+EllipticCurveName = Annotated[EllipticCurves, BeforeValidator(elliptic_curve_validator)]
+"""Annotated version of :py:attr:`~django_ca.typehints.EllipticCurves`.
+
+This type will also accept instances of |EllipticCurve| and convert them transparently.
+"""
+
+HashAlgorithmName = Annotated[HashAlgorithms, BeforeValidator(hash_algorithm_validator)]
+"""Annotated version of :py:attr:`~django_ca.typehints.HashAlgorithms`.
+
+This type will also accept instances of |HashAlgorithm| and convert them transparently.
+"""
 
 UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])
 UniqueElementsTuple = Annotated[UniqueTupleTypeVar, AfterValidator(unique_validator)]

@@ -422,7 +422,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
 
         key_size, elliptic_curve = validate_private_key_parameters("EC", None, None)
         assert key_size is None
-        assert isinstance(elliptic_curve, type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE))
+        assert isinstance(elliptic_curve, type(model_settings.get_default_elliptic_curve()))
 
         assert validate_private_key_parameters("Ed25519", None, None) == (None, None)
         assert validate_private_key_parameters("Ed448", None, None) == (None, None)
@@ -439,7 +439,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
     def test_wrong_values(self) -> None:
         """Test validating various bogus values."""
         key_size = model_settings.CA_DEFAULT_KEY_SIZE
-        elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
+        elliptic_curve = model_settings.get_default_elliptic_curve()
         with pytest.raises(ValueError, match="^FOOBAR: Unknown key type$"):
             validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[call-overload]
 

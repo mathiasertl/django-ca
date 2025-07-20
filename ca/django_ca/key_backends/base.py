@@ -40,6 +40,7 @@ from django.utils.module_loading import import_string
 
 from django_ca import constants
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
+from django_ca.constants import HASH_ALGORITHM_NAMES
 from django_ca.pydantic.type_aliases import PowerOfTwoInt
 from django_ca.typehints import (
     AllowedHashTypes,
@@ -382,15 +383,17 @@ class KeyBackend(
             return None
 
         # Compute the default hash algorithm
-        if algorithm is None:
-            if default is not None:
-                algorithm = default
-            elif key_type == "DSA":
-                algorithm = model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
-            else:
-                algorithm = model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
-
-        name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+        if algorithm is not None:
+            name = HASH_ALGORITHM_NAMES[type(algorithm)]
+        elif default is not None:
+            name = constants.HASH_ALGORITHM_NAMES[type(default)]
+            algorithm = default
+        elif key_type == "DSA":
+            name = model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
+            algorithm = model_settings.get_default_dsa_signature_hash_algorithm()
+        else:
+            name = model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+            algorithm = model_settings.get_default_signature_hash_algorithm()
 
         # Make sure that the selected signature hash algorithm works for this backend.
         if name not in self.supported_hash_algorithms:
@@ -425,8 +428,8 @@ class OCSPKeyBackend(KeyBackendBase):
         if key_type in ("Ed25519", "Ed448"):
             return None
         if key_type == "DSA":
-            return model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
-        return model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+            return model_settings.get_default_dsa_signature_hash_algorithm()
+        return model_settings.get_default_signature_hash_algorithm()
 
     def get_default_elliptic_curve(self, ca: "CertificateAuthority") -> ec.EllipticCurve:
         """Get the default elliptic curve used when creating OCSP private keys.
@@ -442,7 +445,7 @@ class OCSPKeyBackend(KeyBackendBase):
         public_key = ca.pub.loaded.public_key()
         if isinstance(public_key, ec.EllipticCurvePublicKey):
             return public_key.curve
-        return model_settings.CA_DEFAULT_ELLIPTIC_CURVE
+        return model_settings.get_default_elliptic_curve()
 
     def get_default_key_size(self, ca: "CertificateAuthority") -> int:
         """Get the default key size used when creating OCSP private keys.

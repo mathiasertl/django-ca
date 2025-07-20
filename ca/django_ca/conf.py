@@ -17,7 +17,7 @@ import copy
 from collections.abc import Iterable
 from datetime import timedelta
 from importlib.util import find_spec
-from typing import Annotated, Any, Generic, Literal, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Generic, Literal, TypeVar
 
 from annotated_types import Ge, Le
 from pydantic import (
@@ -30,7 +30,6 @@ from pydantic import (
 )
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from django.conf import settings as _settings
@@ -43,8 +42,8 @@ from django_ca import constants
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.type_aliases import (
     CertificateRevocationListReasonCode,
-    EllipticCurveTypeAlias,
-    HashAlgorithmTypeAlias,
+    EllipticCurveName,
+    HashAlgorithmName,
     PowerOfTwoInt,
     Serial,
     UniqueElementsTuple,
@@ -275,8 +274,8 @@ class SettingsModel(BaseModel):
         "ca": CertificateRevocationListProfile(only_contains_ca_certs=True),
     }
     CA_DEFAULT_CA: Serial | None = None
-    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA256()
-    CA_DEFAULT_ELLIPTIC_CURVE: EllipticCurveTypeAlias = ec.SECP256R1()
+    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: HashAlgorithmName = "SHA-256"
+    CA_DEFAULT_ELLIPTIC_CURVE: EllipticCurveName = "secp256r1"
     CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, DayValidator] = timedelta(days=365)
     CA_DEFAULT_HOSTNAME: str | None = None
     CA_DEFAULT_KEY_BACKEND: str = "default"
@@ -301,7 +300,7 @@ class SettingsModel(BaseModel):
     CA_DEFAULT_OCSP_KEY_BACKEND: str = "default"
     CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = "RSA"
     CA_DEFAULT_PROFILE: str = "webserver"
-    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: HashAlgorithmTypeAlias = hashes.SHA512()
+    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: HashAlgorithmName = "SHA-512"
     CA_DEFAULT_STORAGE_ALIAS: str = "django-ca"
     CA_DEFAULT_SUBJECT: Subject | None = None
     CA_ENABLE_ACME: bool = True
@@ -392,6 +391,18 @@ class SettingsModel(BaseModel):
             raise ValueError(f"CA_DEFAULT_KEY_SIZE cannot be lower then {self.CA_MIN_KEY_SIZE}")
         return self
 
+    def get_default_signature_hash_algorithm(self) -> AllowedHashTypes:
+        """Get the |HashAlgorithm| instance for this model."""
+        return constants.HASH_ALGORITHM_TYPES[self.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM]()
+
+    def get_default_dsa_signature_hash_algorithm(self) -> AllowedHashTypes:
+        """Get the |HashAlgorithm| instance for this model."""
+        return constants.HASH_ALGORITHM_TYPES[self.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM]()
+
+    def get_default_elliptic_curve(self) -> ec.EllipticCurve:
+        """Get the |EllipticCurve| instance for this model."""
+        return constants.ELLIPTIC_CURVE_TYPES[self.CA_DEFAULT_ELLIPTIC_CURVE]()
+
 
 BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 
@@ -409,7 +420,7 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
     """
 
     settings_model: type[BaseModelTypeVar]
-    __settings: BaseModelTypeVar
+    __settings__: BaseModelTypeVar
 
     def __init__(self, reload_on_change: bool = True) -> None:
         self.reload()
@@ -421,7 +432,8 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
     def __dir__(self, object: Any = None) -> Iterable[str]:  # pylint: disable=redefined-builtin
         # Used by ipython for tab completion, see:
         #   http://ipython.org/ipython-doc/dev/config/integrating.html
-        return list(super().__dir__()) + list(self.settings_model.model_fields)
+        getters = [getter for getter in dir(self.settings_model) if getter.startswith("get_")]
+        return list(super().__dir__()) + list(self.settings_model.model_fields) + getters
 
     def _connect_settings_changed(self) -> None:
         setting_changed.connect(self._reload_from_signal)
@@ -432,12 +444,12 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
     def reload(self) -> None:
         """Reload settings model from django settings."""
         try:
-            self.__settings = self.settings_model.model_validate(_settings)
+            self.__settings__ = self.settings_model.model_validate(_settings)
         except ValueError as ex:
             raise ImproperlyConfigured(str(ex)) from ex
 
     def __getattr__(self, item: str) -> Any:
-        return getattr(self.__settings, item)
+        return getattr(self.__settings__, item)
 
 
 class SettingsProxy(SettingsProxyBase[SettingsModel]):
@@ -447,7 +459,17 @@ class SettingsProxy(SettingsProxyBase[SettingsModel]):
     """
 
     settings_model = SettingsModel
-    __settings: SettingsModel  # pylint: disable=unused-private-member
+    __settings__: SettingsModel
+
+    if TYPE_CHECKING:
+        # pylint: disable=missing-function-docstring
+        # Our custom mypy plugin currently does not proxy getter methods, as I couldn't get this to
+        # work properly. We thus add some typehints here so that mypy (and PyCharm) finds these methods.
+        def get_default_signature_hash_algorithm(self) -> AllowedHashTypes: ...
+
+        def get_default_dsa_signature_hash_algorithm(self) -> AllowedHashTypes: ...
+
+        def get_default_elliptic_curve(self) -> ec.EllipticCurve: ...
 
 
 model_settings = SettingsProxy()

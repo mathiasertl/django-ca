@@ -22,6 +22,7 @@ from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
 from django.core.exceptions import ImproperlyConfigured
@@ -462,8 +463,7 @@ def test_ca_default_ca_with_invalid_value(settings: SettingsWrapper) -> None:
 
 def test_ca_default_dsa_signature_hash_algorithm_with_invalid_value(settings: SettingsWrapper) -> None:
     """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
-    msg = r"Input should be an instance of HashAlgorithm"
-    with assert_improperly_configured(msg):
+    with assert_improperly_configured(None):
         settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = "foo"
 
 
@@ -531,19 +531,39 @@ def test_ca_default_profile_not_defined(settings: SettingsWrapper) -> None:
         settings.CA_DEFAULT_PROFILE = "foo"
 
 
+def test_ca_default_elliptic_curve(settings: SettingsWrapper) -> None:
+    """Test ``CA_DEFAULT_ELLIPTIC_CURVE``."""
+    settings.CA_DEFAULT_ELLIPTIC_CURVE = ec.SECP256R1()
+    assert model_settings.CA_DEFAULT_ELLIPTIC_CURVE == "secp256r1"
+    assert isinstance(model_settings.get_default_elliptic_curve(), ec.SECP256R1)
+
+
 @pytest.mark.parametrize(("value", "expected"), (("SHA-224", hashes.SHA224), ("SHA3/384", hashes.SHA3_384)))
 def test_ca_default_signature_hash_algorithm(
     settings: SettingsWrapper, value: Any, expected: type[hashes.HashAlgorithm]
 ) -> None:
     """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
     settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = value
-    assert isinstance(model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM, expected)
+    assert model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM == value
+    assert isinstance(model_settings.get_default_signature_hash_algorithm(), expected)
+
+
+def test_ca_default_signature_hash_algorithm_with_hash(settings: SettingsWrapper) -> None:
+    """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
+    settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.SHA512()
+    assert model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM == "SHA-512"
+    assert isinstance(model_settings.get_default_signature_hash_algorithm(), hashes.SHA512)
+
+
+def test_ca_default_signature_hash_algorithm_with_unsupported_type(settings: SettingsWrapper) -> None:
+    """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
+    with assert_improperly_configured(rf"{hashes.BLAKE2b.name}: Hash algorithm is not supported\."):
+        settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.BLAKE2b(64)
 
 
 def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: SettingsWrapper) -> None:
     """Test invalid ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
-    msg = r"Input should be an instance of HashAlgorithm"
-    with assert_improperly_configured(msg):
+    with assert_improperly_configured(None):
         settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = "foo"
 
 

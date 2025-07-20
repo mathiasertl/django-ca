@@ -408,7 +408,7 @@ def assert_extensions(
 
 
 @contextmanager
-def assert_improperly_configured(msg: str) -> Iterator[None]:
+def assert_improperly_configured(msg: str | None) -> Iterator[None]:
     """Shortcut for testing that the code raises ImproperlyConfigured with the given message."""
     with pytest.raises(ImproperlyConfigured, match=msg):
         yield

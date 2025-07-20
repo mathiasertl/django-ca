@@ -181,7 +181,7 @@ class HSMBackend(
             # NOTE: Currently all curves supported by cryptography are also supported by this backend.
             #       If this changes, a check should be added here (if the default is not supported by the
             #       backend).
-            elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE.name
+            elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
 
         return HSMCreatePrivateKeyOptions(
             key_label=key_label,

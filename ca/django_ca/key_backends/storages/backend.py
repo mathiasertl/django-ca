@@ -183,7 +183,7 @@ class StoragesBackend(
         else:
             encryption = serialization.BestAvailableEncryption(options.password)
 
-        key = generate_private_key(options.key_size, key_type, options.elliptic_curve)
+        key = generate_private_key(options.key_size, key_type, options.get_elliptic_curve())
 
         der = key.private_bytes(
             encoding=Encoding.DER, format=PrivateFormat.PKCS8, encryption_algorithm=encryption

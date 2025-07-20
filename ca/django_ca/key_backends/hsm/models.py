@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel
 from django_ca.key_backends.hsm.typehints import SupportedKeyType
@@ -74,8 +73,7 @@ class HSMCreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel
     def validate_elliptic_curve(self) -> "HSMCreatePrivateKeyOptions":
         """Validate that the elliptic curve is not set for invalid key types."""
         if self.key_type == "EC" and self.elliptic_curve is None:
-            default_elliptic_curve_type = type(model_settings.CA_DEFAULT_ELLIPTIC_CURVE)
-            self.elliptic_curve = constants.ELLIPTIC_CURVE_NAMES[default_elliptic_curve_type]
+            self.elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         elif self.key_type != "EC" and self.elliptic_curve is not None:
             raise ValueError(f"Elliptic curves are not supported for {self.key_type} keys.")
         return self

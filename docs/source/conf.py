@@ -386,6 +386,7 @@ rst_epilog = f"""
 .. |PSS| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.padding.PSS`
 .. |MGF1| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.padding.MGF1`
 .. |EllipticCurveSignatureAlgorithm| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurveSignatureAlgorithm`
+.. |EllipticCurve| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve`
 .. |ECDSA| replace:: :py:class:`~cg:cryptography.hazmat.primitives.asymmetric.ec.ECDSA`
 .. _RFC 5280: https://datatracker.ietf.org/doc/html/rfc5280
 """  # noqa: E501

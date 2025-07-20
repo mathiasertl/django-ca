@@ -22,8 +22,11 @@ from urllib.parse import urlsplit
 import idna
 
 from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from django_ca import constants
+from django_ca.constants import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES
 
 T = TypeVar("T")
 
@@ -85,6 +88,13 @@ def dns_validator(name: str) -> str:
         raise ValueError(f"Invalid domain: {name}: {ex}") from ex
 
 
+def elliptic_curve_validator(value: Any) -> Any:
+    """Convert a |EllipticCurve| into a canonical name."""
+    if isinstance(value, ec.EllipticCurve):
+        return ELLIPTIC_CURVE_NAMES[type(value)]
+    return value
+
+
 def email_validator(addr: str) -> str:
     """Validate an email address.
 
@@ -116,6 +126,17 @@ def extended_key_usage_validator(value: str) -> str:
     """Convert human-readable ExtendedKeyUsage values into dotted strings."""
     if value in constants.EXTENDED_KEY_USAGE_OIDS:
         return constants.EXTENDED_KEY_USAGE_OIDS[value].dotted_string
+    return value
+
+
+def hash_algorithm_validator(value: Any) -> Any:
+    """Convert a :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` into a canonical name."""
+    if isinstance(value, hashes.HashAlgorithm):
+        try:
+            # TYPEHINT NOTE: unsupported/unknown hash algorithms are caught with KeyError below.
+            return HASH_ALGORITHM_NAMES[type(value)]  # type: ignore[index]
+        except KeyError as ex:
+            raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
     return value
 
 

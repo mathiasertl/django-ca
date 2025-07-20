@@ -132,7 +132,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
     algorithm = forms.ChoiceField(
         required=False,
         label=_("Signature hash algorithm"),
-        initial=constants.HASH_ALGORITHM_NAMES[type(model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)],
+        initial=model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM,
         choices=HASH_ALGORITHM_CHOICES,
         help_text=_(
             "SHA-512 is fine for RSA/EC-based certificate authorities, choose None for Ed448/Ed25519-based "

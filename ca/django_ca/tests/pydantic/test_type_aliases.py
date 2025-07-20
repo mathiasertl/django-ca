@@ -15,30 +15,9 @@
 
 from pydantic import BaseModel
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
-
 import pytest
 
-from django_ca import constants
-from django_ca.pydantic.type_aliases import (
-    Base64EncodedBytes,
-    EllipticCurveTypeAlias,
-    HashAlgorithmTypeAlias,
-    Serial,
-)
-
-
-class EllipticCurveTypeAliasModel(BaseModel):
-    """Test EllipticCurveTypeAlias."""
-
-    value: EllipticCurveTypeAlias
-
-
-class HashAlgorithmTypeAliasModel(BaseModel):
-    """Test HashAlgorithmTypeAlias."""
-
-    value: HashAlgorithmTypeAlias
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, Serial
 
 
 class JSONSerializableBytesModel(BaseModel):
@@ -51,67 +30,6 @@ class SerialModel(BaseModel):
     """Test class to test the Serial type alias."""
 
     value: Serial
-
-
-@pytest.mark.parametrize(("name", "curve_cls"), constants.ELLIPTIC_CURVE_TYPES.items())
-def test_elliptic_curve(name: str, curve_cls: type[ec.EllipticCurve]) -> None:
-    """Test EllipticCurveTypeAliasModel."""
-    model = EllipticCurveTypeAliasModel(value=name)
-    assert isinstance(model.value, curve_cls)
-
-    model = EllipticCurveTypeAliasModel(value=curve_cls())
-    assert isinstance(model.value, curve_cls)
-
-    model = EllipticCurveTypeAliasModel.model_validate({"value": name})
-    assert isinstance(model.value, curve_cls)
-
-    model = EllipticCurveTypeAliasModel.model_validate({"value": name}, strict=True)
-    assert isinstance(model.value, curve_cls)
-
-    assert isinstance(model.model_dump()["value"], curve_cls)
-    assert model.model_dump(mode="json") == {"value": name}
-
-    assert isinstance(
-        EllipticCurveTypeAliasModel.model_validate_json(model.model_dump_json()).value, curve_cls
-    )
-
-
-@pytest.mark.parametrize("value", ("", "wrong", True, 42, ec.SECP224R1))
-def test_elliptic_curve_errors(value: str) -> None:
-    """Test invalid values for EllipticCurveTypeAliasModel."""
-    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
-        EllipticCurveTypeAliasModel(value=value)
-
-
-@pytest.mark.parametrize(("name", "hash_cls"), constants.HASH_ALGORITHM_TYPES.items())
-def test_hash_algorithm(name: str, hash_cls: type[hashes.HashAlgorithm]) -> None:
-    """Test EllipticCurveTypeAliasModel."""
-    model = HashAlgorithmTypeAliasModel(value=name)
-    assert isinstance(model.value, hash_cls)
-
-    model = HashAlgorithmTypeAliasModel(value=hash_cls())
-    assert isinstance(model.value, hash_cls)
-
-    model = HashAlgorithmTypeAliasModel.model_validate({"value": name})
-    assert isinstance(model.value, hash_cls)
-
-    model = HashAlgorithmTypeAliasModel.model_validate({"value": name}, strict=True)
-    assert isinstance(model.value, hash_cls)
-
-    assert isinstance(model.model_dump()["value"], hash_cls)
-    assert model.model_dump(mode="json") == {"value": name}
-
-    assert isinstance(
-        HashAlgorithmTypeAliasModel.model_validate_json(model.model_dump_json()).value, hash_cls
-    )
-
-
-@pytest.mark.xfail  # This currently works, unfortunately.
-@pytest.mark.parametrize("hash_obj", (hashes.SM3(), hashes.BLAKE2b(64), hashes.BLAKE2s(32)))
-def test_hash_algorithm_unsupported_types(hash_obj: hashes.HashAlgorithm) -> None:
-    """Test that unsupported hash algorithm instances throw an error."""
-    with pytest.raises(ValueError):  # noqa: PT011  # pydantic controls the message
-        HashAlgorithmTypeAliasModel(value=hash_obj)
 
 
 @pytest.mark.parametrize(

@@ -78,4 +78,6 @@ def test_get_default_key_size(ec: CertificateAuthority) -> None:
 def test_get_default_ec_curve(root: CertificateAuthority) -> None:
     """Test getting the default elliptic curve for non-EC keys."""
     backend = StoragesOCSPBackend(alias="alias", storage_alias="django-ca", path="ocsp")
-    assert backend.get_default_elliptic_curve(root) == model_settings.CA_DEFAULT_ELLIPTIC_CURVE
+    assert isinstance(
+        backend.get_default_elliptic_curve(root), type(model_settings.get_default_elliptic_curve())
+    )

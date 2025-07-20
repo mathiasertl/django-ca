@@ -156,11 +156,10 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
             help="Key type for the private key (default: %(default)s).",
         )
         add_key_size(parser)
-        default_elliptic_curve = model_settings.CA_DEFAULT_ELLIPTIC_CURVE
         parser.add_argument(
             "--elliptic-curve",
             choices=sorted(elliptic_curves),
-            help=f"Elliptic Curve used for EC keys (default: {default_elliptic_curve.name}).",
+            help=f"Elliptic Curve used for EC keys (default: {model_settings.CA_DEFAULT_ELLIPTIC_CURVE}).",
         )
 
         # Add argument groups for backend-specific options.
@@ -176,10 +175,8 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
 
     def add_arguments(self, parser: CommandParser) -> None:
         # Load all supported key backend classes so that they can add command-line arguments.
-        default = constants.HASH_ALGORITHM_NAMES[type(model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM)]
-        dsa_default = constants.HASH_ALGORITHM_NAMES[
-            type(model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM)
-        ]
+        default = model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
+        dsa_default = model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
 
         general_group = self.add_general_args(parser)
         general_group.add_argument(

@@ -231,6 +231,7 @@ EllipticCurves = Literal[
     "brainpoolP384r1",
     "brainpoolP512r1",
 ]
+"""Valid elliptic curve names."""
 
 CertificateRevocationListEncodings = Literal[Encoding.PEM, Encoding.DER]
 CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
