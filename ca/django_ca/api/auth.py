@@ -44,7 +44,10 @@ class BasicAuth(HttpBasicAuth):
     def authenticate(
         self, request: HttpRequest, username: str, password: str
     ) -> Literal[False] | AbstractUser:
-        user = User.objects.get(username=username)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return False
 
         if user.check_password(password) is False:
             return False
