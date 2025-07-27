@@ -24,6 +24,8 @@ Command-line
     If you want to resign a certificate with other parameters, simply sign a new one with the same CSR.
   * Do not copy the IssuerAlternativeName and FreshestCRL extensions from the source certificate (the
     certificate authority should provide it instead).
+  * Unrecognized extensions (those not supported by cryptography) are now copied over verbatim from the
+    source certificate.
 
 ********
 REST API

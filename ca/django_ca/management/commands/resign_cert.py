@@ -112,7 +112,10 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
 
             # Extensions that are not configurable cannot be copied, as they would be rejected by the
             # profile.
-            if oid not in constants.CONFIGURABLE_EXTENSION_KEYS:
+            if (
+                not isinstance(extension.value, x509.UnrecognizedExtension)
+                and oid not in constants.CONFIGURABLE_EXTENSION_KEYS
+            ):
                 continue
 
             extensions.append(extension)
