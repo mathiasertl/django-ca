@@ -12,14 +12,18 @@ Command-line
 * **BACKWARDS INCOMPATIBLE:**  :command:`manage.py regenerate_ocsp_keys`: Removed the ``--key-type``,
   ``--key-size``, ``--elliptic-curve``, ``--profile``, ``algorithm`` and ``--expires`` parameters (deprecated
   since ``django-ca~=2.3.0``).
-* **BACKWARDS INCOMPATIBLE:**  :command:`manage.py resign_cert`: Removed the ``--ca``, ``--subject``,
-  ``--profile``, ``--algorithm``, ``--ocsp-responder``, ``--ca-issuer``, ``--policy-identifier``,
-  ``--certification-practice-statement``, ``--user-notice``, ``--crl-full-name``,
-  ``--issuer-alternative-name``, ``--extended-key-usage``, ``--key-usage``, ``--ocsp-no-check``,
-  ``--subject-alternative-name`` and ``--tls-feature``, as well as all arguments to mark extensions as (not)
-  critical (deprecated since ``django-ca~=2.3.0``).
+* :command:`manage.py resign_cert`:
 
-  If you want to resign a certificate with other parameters, simply sign a new one with the same CSR.
+  * **BACKWARDS INCOMPATIBLE:**  :command:`manage.py resign_cert`: Removed the ``--ca``, ``--subject``,
+    ``--profile``, ``--algorithm``, ``--ocsp-responder``, ``--ca-issuer``, ``--policy-identifier``,
+    ``--certification-practice-statement``, ``--user-notice``, ``--crl-full-name``,
+    ``--issuer-alternative-name``, ``--extended-key-usage``, ``--key-usage``, ``--ocsp-no-check``,
+    ``--subject-alternative-name`` and ``--tls-feature``, as well as all arguments to mark extensions as (not)
+    critical (deprecated since ``django-ca~=2.3.0``).
+
+    If you want to resign a certificate with other parameters, simply sign a new one with the same CSR.
+  * Do not copy the IssuerAlternativeName and FreshestCRL extensions from the source certificate (the
+    certificate authority should provide it instead).
 
 ********
 REST API

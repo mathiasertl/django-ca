@@ -102,7 +102,12 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         # Copy over extensions from the original certificate (if not passed via the command-line)
         for oid, extension in cert.extensions.items():
             # These extensions are handled by the manager itself based on the CA:
-            if oid in (ExtensionOID.AUTHORITY_INFORMATION_ACCESS, ExtensionOID.CRL_DISTRIBUTION_POINTS):
+            if oid in (
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+                ExtensionOID.CRL_DISTRIBUTION_POINTS,
+                ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+                ExtensionOID.FRESHEST_CRL,
+            ):
                 continue
 
             # Extensions that are not configurable cannot be copied, as they would be rejected by the
