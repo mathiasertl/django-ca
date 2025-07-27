@@ -21,6 +21,12 @@ Command-line
 
   If you want to resign a certificate with other parameters, simply sign a new one with the same CSR.
 
+********
+REST API
+********
+
+* Implement endpoint to fetch profiles (fixes (`#168 <https://github.com/mathiasertl/django-ca/issues/168>`_).
+
 ***************
 Admin interface
 ***************
