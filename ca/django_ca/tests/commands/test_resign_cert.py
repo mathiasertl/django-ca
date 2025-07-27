@@ -103,15 +103,35 @@ def test_with_dsa(dsa_cert: Certificate) -> None:
 @pytest.mark.usefixtures("usable_child")
 def test_all_extensions_certificate(all_extensions: Certificate) -> None:
     """Test resigning the all-extensions certificate."""
+    # Set sign_* to None, we expect those extensions to *not* appear in the resigned certificate, b/c they are
+    # administered by the signing CA.
+    ca: CertificateAuthority = all_extensions.ca
+    ca.sign_crl_distribution_points = None
+    ca.sign_issuer_alternative_name = None
+    ca.sign_certificate_policies = None
+    ca.sign_authority_information_access = None
+    ca.save()
+
     with assert_create_cert_signals():
         new = resign_cert(all_extensions.serial)
 
     assert_resigned(all_extensions, new)
     assert isinstance(new.algorithm, hashes.SHA256)
 
-    expected = all_extensions.extensions
+    # Filter out extensions administered by the signing CA.
+    expected = [
+        ext
+        for ext in all_extensions.pub.loaded.extensions
+        if ext.oid
+        not in (
+            ExtensionOID.CRL_DISTRIBUTION_POINTS,
+            ExtensionOID.FRESHEST_CRL,
+            ExtensionOID.ISSUER_ALTERNATIVE_NAME,
+            ExtensionOID.AUTHORITY_INFORMATION_ACCESS,
+        )
+    ]
     actual = new.extensions
-    assert sorted(expected.values(), key=lambda e: e.oid.dotted_string) == sorted(
+    assert sorted(expected, key=lambda e: e.oid.dotted_string) == sorted(
         actual.values(), key=lambda e: e.oid.dotted_string
     )
 
