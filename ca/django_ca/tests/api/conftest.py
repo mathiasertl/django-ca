@@ -134,6 +134,16 @@ class APIPermissionTestBase:
         assert response.json() == {"detail": "Unauthorized"}, response.json()
 
     @pytest.mark.django_db
+    def test_user_with_wrong_username(self, user: User, client: Client) -> None:
+        """Test that a user with the wrong user gets an HTTP 403 Unauthorized response."""
+        credentials = base64.b64encode(user.username.encode() + b"-wrong:password").decode()
+        client.defaults["HTTP_AUTHORIZATION"] = "Basic " + credentials
+
+        response = self.request(client)
+        assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+        assert response.json() == {"detail": "Unauthorized"}, response.json()
+
+    @pytest.mark.django_db
     def test_user_with_wrong_password(self, user: User, client: Client) -> None:
         """Test that a user with the wrong password gets an HTTP 403 Unauthorized response."""
         credentials = base64.b64encode(user.username.encode() + b":wrong-password").decode()
