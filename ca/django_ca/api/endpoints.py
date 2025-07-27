@@ -43,6 +43,7 @@ from django_ca.api.utils import get_certificate_authority
 from django_ca.constants import ExtensionOID
 from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
+from django_ca.profiles import Profile, profiles
 from django_ca.pydantic.messages import ResignCertificateMessage, SignCertificateMessage
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tasks import api_sign_certificate as sign_certificate_task, run_task
@@ -54,6 +55,33 @@ api = NinjaAPI(title="django-ca API", version=__version__, urls_namespace="djang
 def forbidden(request: WSGIRequest, exc: Exception) -> HttpResponse:  # pylint: disable=unused-argument
     """Add the exception handler for the Forbidden exception."""
     return api.create_response(request, {"detail": "Forbidden"}, status=HTTPStatus.FORBIDDEN)
+
+
+@api.get(
+    "/profiles/",
+    response=list[Profile],
+    auth=BasicAuth("django_ca.sign_certificate"),
+    summary="List available profiles",
+    tags=["Profiles"],
+)
+def list_profiles(request: WSGIRequest) -> list[Profile]:
+    """Retrieve a list of currently available profiles."""
+    return list(profiles)
+
+
+@api.get(
+    "/profiles/{str:name}/",
+    response=Profile,
+    auth=BasicAuth("django_ca.sign_certificate"),
+    summary="List available profiles",
+    tags=["Profiles"],
+)
+def view_profile(request: WSGIRequest, name: str) -> Profile:
+    """Retrieve the named profile."""
+    try:
+        return profiles[name]
+    except KeyError as ex:
+        raise Http404(f"{name}: Profile not found.") from ex
 
 
 @api.get(
