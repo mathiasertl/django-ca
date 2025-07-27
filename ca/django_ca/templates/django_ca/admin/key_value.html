@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="key-value-field">
+<div class="key-value-field key-value-field-{{ widget.name }}">
   {% block templates %}{% endblock %}
 
   {% include "django/forms/widgets/input.html" %}

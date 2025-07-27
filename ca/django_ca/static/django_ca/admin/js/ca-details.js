@@ -7,9 +7,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var ca = ca_data[select.value];
 
         // update extensions
+        clear_extensions({
+            'authority_information_access': null,
+            'certificate_policies': null,
+            'crl_distribution_points': null,
+            'freshest_crl': null,
+            'issuer_alternative_name': null,
+        })
         await update_extensions(ca.extensions);
 
-        var hash_algorithm_select = document.querySelector("select#id_algorithm");
+        var hash_algorithm_select = document.querySelector('select#id_algorithm');
         if (ca.signature_hash_algorithm === null) {
             hash_algorithm_select.value = "";
         } else {

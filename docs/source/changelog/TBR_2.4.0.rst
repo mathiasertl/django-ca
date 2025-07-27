@@ -21,6 +21,12 @@ Command-line
 
   If you want to resign a certificate with other parameters, simply sign a new one with the same CSR.
 
+***************
+Admin interface
+***************
+
+* Fix clearing/updating extensions when a new certificate authority is selected while signing certificates.
+
 ************
 Dependencies
 ************
