@@ -358,7 +358,7 @@ class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionMo
         parsed_json: JSON = super().from_db_value(value, expression, connection)
 
         if isinstance(parsed_json, dict) and "type" in parsed_json:
-            return self.model_class.model_validate(parsed_json, strict=True).cryptography
+            return self.model_class.model_validate(parsed_json).cryptography
 
         # The passed value looks like arbitrary data, so we give the implementing subclass the opportunity
         # to parse the value. parse_raw_extension() just raises ValidationError in the base class.

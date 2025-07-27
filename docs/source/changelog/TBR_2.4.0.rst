@@ -3,6 +3,7 @@
 ###########
 
 * OCSP responder certificates now have an empty subject.
+* Fix configuring CRL reasons for CRL distribution points for signing certificates.
 
 ************
 Command-line
