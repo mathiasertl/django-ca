@@ -47,7 +47,6 @@ from django_ca.constants import (
     HASH_ALGORITHM_NAMES,
     ExtendedKeyUsageOID,
 )
-from django_ca.fields import CertificateSigningRequestField
 from django_ca.forms import CreateCertificateForm
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, profiles
@@ -546,7 +545,10 @@ class TestSubmitAddView:
         assert response.status_code == HTTPStatus.OK
         assert not response.context["adminform"].form.is_valid()
         assert response.context["adminform"].form.errors == {
-            "csr": [CertificateSigningRequestField.simple_validation_error]
+            "csr": [
+                "Could not parse PEM-encoded CSR. They usually look like this: "
+                "<pre>-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----</pre>"
+            ]
         }
 
     def test_unparsable_csr(

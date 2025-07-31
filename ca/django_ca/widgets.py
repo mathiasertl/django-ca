@@ -23,7 +23,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from django import forms
 from django.forms import widgets
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
 from django_ca.conf import model_settings
@@ -238,7 +238,8 @@ class CriticalInput(LabeledCheckboxInput):
 
     def __init__(self, **kwargs: Any) -> None:
         self.oid = kwargs.pop("oid")
-        super().__init__(label=_("critical"), wrapper_classes=("critical",))
+        # TYPEHINT NOTE: django-stubs issue
+        super().__init__(label=_("critical"), wrapper_classes=("critical",))  # type: ignore[arg-type]
 
     def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context(*args, **kwargs)
@@ -333,7 +334,7 @@ class DistributionPointWidget(ExtensionWidget):
         GeneralNameKeyValueWidget(attrs={"class": "crl-issuer"}),
         SelectMultiple(choices=REVOCATION_REASONS, attrs={"class": "reasons"}),
     )
-    labels = (
+    labels = (  # type: ignore[assignment]  # django-stups typehints as str, but promise is OK
         _("Full name"),
         _("Relative name"),
         _("CRL issuer"),
@@ -381,11 +382,11 @@ class AuthorityInformationAccessWidget(ExtensionWidget):
         GeneralNameKeyValueWidget(attrs={"class": "ca-issuers"}),
         GeneralNameKeyValueWidget(attrs={"class": "ocsp"}),
     )
-    help_texts = (
+    help_texts = (  # type: ignore[assignment]  # django-stups typehints as str, but promise is OK
         _("Location(s) of the CA certificate."),
         _("Location(s) of the OCSP responder."),
     )
-    labels = (
+    labels = (  # type: ignore[assignment]  # django-stups typehints as str, but promise is OK
         _("CA issuers"),
         _("OCSP"),
     )
@@ -418,7 +419,7 @@ class CertificatePoliciesWidget(ExtensionWidget):
         forms.Textarea(attrs={"rows": 3}),  # practice statement
         forms.Textarea(attrs={"rows": 3}),  # explicit text
     )
-    help_texts = (
+    help_texts = (  # type: ignore[assignment]  # django-stups typehints as str, but promise is OK
         "",
         _(
             "A pointers (e.g. URLs) to a certification practice statement (CPS). Separate multiple pointers "
@@ -426,7 +427,7 @@ class CertificatePoliciesWidget(ExtensionWidget):
         ),
         _("A textual statement that can be displayed to the user"),
     )
-    labels = (
+    labels = (  # type: ignore[assignment]  # django-stups typehints as str, but promise is OK
         _("Policy Identifier"),
         _("Certificate Practice Statement(s)"),
         _("Explicit Text"),
@@ -464,7 +465,7 @@ class CertificatePoliciesWidget(ExtensionWidget):
 class CRLDistributionPointsWidget(DistributionPointWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.CRLDistributionPoints` extension."""
 
-    help_texts = (
+    help_texts = (  # type: ignore[assignment]  # django-stups typehints as str, but promise is OK
         _("Location(s) where to retrieve the CRL."),
         _(
             "X.500 Relative name to retrieve the CRL. RFC 5280 does not recommend setting this field. Cannot "
@@ -527,7 +528,12 @@ class IssuerAlternativeNameWidget(AlternativeNameWidget[x509.IssuerAlternativeNa
 class OCSPNoCheckWidget(ExtensionWidget):
     """Widget for a :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
 
-    extension_widgets = (LabeledCheckboxInput(label=_("included"), wrapper_classes=["include"]),)
+    extension_widgets = (
+        LabeledCheckboxInput(
+            label=_("included"),  # type: ignore[arg-type]  # django-stubs issue
+            wrapper_classes=["include"],
+        ),
+    )
     oid = ExtensionOID.OCSP_NO_CHECK
 
     def decompress(self, value: x509.Extension[x509.OCSPNoCheck] | None) -> tuple[bool, bool]:
