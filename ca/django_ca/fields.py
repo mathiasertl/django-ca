@@ -59,7 +59,7 @@ class CertificateSigningRequestField(forms.CharField):
     end = "-----END CERTIFICATE REQUEST-----"
     simple_validation_error = _(
         "Could not parse PEM-encoded CSR. They usually look like this: <pre>%(start)s\n...\n%(end)s</pre>"
-    ) % {"start": start, "end": end}
+    )
 
     def __init__(self, **kwargs: Any) -> None:
         # COVERAGE NOTE: Below condition is never false, as we never pass a custom help text.
@@ -99,7 +99,9 @@ openssl req -new -key priv.pem -out csr.pem -utf8 -batch -subj '/CN=example.com'
         This function is called during form validation.
         """
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
-            raise forms.ValidationError(mark_safe(self.simple_validation_error))
+            raise forms.ValidationError(
+                mark_safe(self.simple_validation_error % {"start": self.start, "end": self.end})
+            )
         try:
             return x509.load_pem_x509_csr(value.encode("utf-8"))
         except ValueError as ex:
