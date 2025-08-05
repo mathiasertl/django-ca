@@ -14,7 +14,7 @@
 """Tests for models used in the HSM key backend."""
 
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import create_autospec
 
 import pkcs11
 
@@ -45,13 +45,15 @@ def test_private_key_caching() -> None:
     obj = object()
     key_backend = cast(HSMBackend, key_backends["hsm"])
     with key_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
-        cert = PKCS11RSAPrivateKey(session, "foo", "bar")
-        with patch.object(session, "get_key", autospec=True, return_value=obj) as mock:
-            assert cert.pkcs11_private_key is obj
-            assert cert.pkcs11_private_key is obj
+        session_mock = create_autospec(session, spec_set=True)
+        session_mock.get_key = create_autospec(session.get_key, spec_set=True, return_value=obj)
+        cert = PKCS11RSAPrivateKey(session_mock, "foo", "bar")
+
+        assert cert.pkcs11_private_key is obj
+        assert cert.pkcs11_private_key is obj
 
         # Check that the mock was called only once
-        mock.assert_called_once_with(
+        session_mock.get_key.assert_called_once_with(
             key_type=pkcs11.KeyType.RSA, object_class=pkcs11.ObjectClass.PRIVATE_KEY, id=b"foo", label="bar"
         )
 
@@ -62,13 +64,15 @@ def test_public_key_caching() -> None:
     obj = object()
     key_backend = cast(HSMBackend, key_backends["hsm"])
     with key_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
-        cert = PKCS11RSAPrivateKey(session, "foo", "bar")
-        with patch.object(session, "get_key", autospec=True, return_value=obj) as mock:
-            assert cert.pkcs11_public_key is obj
-            assert cert.pkcs11_public_key is obj
+        session_mock = create_autospec(session, spec_set=True)
+        session_mock.get_key = create_autospec(session.get_key, spec_set=True, return_value=obj)
+
+        cert = PKCS11RSAPrivateKey(session_mock, "foo", "bar")
+        assert cert.pkcs11_public_key is obj
+        assert cert.pkcs11_public_key is obj
 
         # Check that the mock was called only once
-        mock.assert_called_once_with(
+        session_mock.get_key.assert_called_once_with(
             key_type=pkcs11.KeyType.RSA, object_class=pkcs11.ObjectClass.PUBLIC_KEY, id=b"foo", label="bar"
         )
 

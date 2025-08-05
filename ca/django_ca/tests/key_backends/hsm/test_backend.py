@@ -13,7 +13,7 @@
 
 """Main tests for the HSM backend."""
 
-from unittest.mock import patch
+from unittest.mock import create_autospec
 
 import pkcs11
 
@@ -42,16 +42,24 @@ def test_session_with_session_read_only_exception(hsm_backend: HSMBackend) -> No
     """Test exception message when SessionReadOnly() is raised."""
     with pytest.raises(pkcs11.PKCS11Error, match=r"^Attempting to write to a read-only session\.$"):  # noqa: PT012
         with hsm_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
-            with patch.object(session, "get_key", side_effect=pkcs11.SessionReadOnly()):
-                session.get_key()
+            session_mock = create_autospec(session, spec_set=True)
+            session_mock.get_key = create_autospec(
+                session.get_key, spec_set=True, side_effect=pkcs11.SessionReadOnly()
+            )
+
+            session_mock.get_key()
 
 
 def test_session_with_unknown_pkcs11_exception(hsm_backend: HSMBackend) -> None:
     """Test exception message when a generic PKCS11 error is raised."""
     with pytest.raises(pkcs11.PKCS11Error, match=r"^Unknown pkcs11 error \(SessionCount\)\.$"):  # noqa: PT012
         with hsm_backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN) as session:
-            with patch.object(session, "get_key", side_effect=pkcs11.SessionCount()):
-                session.get_key()
+            session_mock = create_autospec(session, spec_set=True)
+            session_mock.get_key = create_autospec(
+                session.get_key, spec_set=True, side_effect=pkcs11.SessionCount()
+            )
+
+            session_mock.get_key()
 
 
 @pytest.mark.usefixtures("softhsm_token")

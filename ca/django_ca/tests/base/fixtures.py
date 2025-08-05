@@ -60,7 +60,7 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 
 
 @pytest.fixture(params=all_cert_names)
-def any_cert(request: "SubRequest") -> Certificate:
+def any_cert(request: "SubRequest") -> str:
     """Parametrized fixture for absolutely *any* certificate name."""
     return request.param  # type: ignore[no-any-return]
 
