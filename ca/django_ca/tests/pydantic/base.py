@@ -22,17 +22,24 @@ import pytest
 
 from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 
+BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 CryptographyModelTypeVar = TypeVar("CryptographyModelTypeVar", bound=CryptographyModel[Any])
 CryptographyRootModelTypeVar = TypeVar("CryptographyRootModelTypeVar", bound=CryptographyRootModel[Any, Any])
 ExpectedErrors = list[tuple[str, tuple[str, ...], Union[str, "re.Pattern[str]"]]]
 
 
 def assert_cryptography_model(
-    model_class: type[CryptographyModelTypeVar], parameters: dict[str, Any], expected: Any
-) -> CryptographyModelTypeVar:
+    model_class: type[BaseModelTypeVar],
+    parameters: dict[str, Any],
+    expected: Any,
+    has_equality: bool = True,
+) -> BaseModelTypeVar:
     """Test that a cryptography model matches the expected value."""
     model = model_class(**parameters)
-    assert model.cryptography == expected
+
+    # many cryptography objects don't implement __eq__ :-(, so we have to disable this check sometimes.
+    if has_equality and isinstance(model, CryptographyModel | CryptographyRootModel):
+        assert model.cryptography == expected
     assert model == model_class.model_validate(expected), (model, expected)
     assert model == model_class.model_validate_json(model.model_dump_json())  # test JSON serialization
     return model  # for any further tests on the model
