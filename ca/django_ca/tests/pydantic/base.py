@@ -28,11 +28,15 @@ ExpectedErrors = list[tuple[str, tuple[str, ...], Union[str, "re.Pattern[str]"]]
 
 
 def assert_cryptography_model(
-    model_class: type[CryptographyModelTypeVar], parameters: dict[str, Any], expected: Any
+    model_class: type[CryptographyModelTypeVar],
+    parameters: dict[str, Any],
+    expected: Any,
+    has_equality: bool = True,
 ) -> CryptographyModelTypeVar:
     """Test that a cryptography model matches the expected value."""
     model = model_class(**parameters)
-    assert model.cryptography == expected
+    if has_equality:  # many cryptography objects don't implement __eq__ :-(
+        assert model.cryptography == expected
     assert model == model_class.model_validate(expected), (model, expected)
     assert model == model_class.model_validate_json(model.model_dump_json())  # test JSON serialization
     return model  # for any further tests on the model
