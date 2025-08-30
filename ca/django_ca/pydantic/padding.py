@@ -19,9 +19,9 @@ from pydantic import BeforeValidator, Field, model_validator
 
 from cryptography.hazmat.primitives.asymmetric import padding
 
-from django_ca.constants import HASH_ALGORITHM_TYPES
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import CryptographyModel
-from django_ca.pydantic.type_aliases import HashAlgorithmName
+from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmName
 
 
 def pss_salt_length_validator(value: Any) -> Any:
@@ -57,7 +57,7 @@ class PKCS1v15Model(CryptographyModel[padding.PKCS1v15]):
 class MGF1Model(CryptographyModel[padding.MGF1]):
     """Model for :class:`cg:~cryptography.hazmat.primitives.asymmetric.padding.MGF1`."""
 
-    algorithm: HashAlgorithmName
+    algorithm: AnnotatedSignatureHashAlgorithmName
 
     @model_validator(mode="before")
     @classmethod
@@ -71,7 +71,7 @@ class MGF1Model(CryptographyModel[padding.MGF1]):
     @property
     def cryptography(self) -> padding.MGF1:
         """Convert this model instance to a matching cryptography object."""
-        return padding.MGF1(algorithm=HASH_ALGORITHM_TYPES[self.algorithm]())
+        return padding.MGF1(algorithm=SIGNATURE_HASH_ALGORITHM_TYPES[self.algorithm]())
 
 
 class PSSModel(CryptographyModel[padding.PSS]):

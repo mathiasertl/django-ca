@@ -33,7 +33,7 @@ from django_ca.key_backends.hsm.keys import (
     PKCS11RSAPrivateKey,
 )
 from django_ca.key_backends.hsm.mixins import HSMKeyBackendMixin
-from django_ca.typehints import AllowedHashTypes, ParsableKeyType
+from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 from django_ca.utils import int_to_hex
 
 if TYPE_CHECKING:
@@ -92,7 +92,7 @@ class HSMOCSPBackend(HSMKeyBackendMixin, OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: AllowedHashTypes | None,
+        signature_hash_algorithm: SignatureHashAlgorithm | None,
     ) -> OCSPResponse:
         key_id = ca.ocsp_key_backend_options["private_key"]["key_id"]
         key_label = ca.ocsp_key_backend_options["private_key"]["key_label"]

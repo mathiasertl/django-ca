@@ -82,7 +82,12 @@ from django_ca.tests.base.utils import (
     subject_alternative_name,
     uri,
 )
-from django_ca.typehints import AllowedHashTypes, EllipticCurves, HashAlgorithms, ParsableKeyType
+from django_ca.typehints import (
+    EllipticCurveName,
+    ParsableKeyType,
+    SignatureHashAlgorithm,
+    SignatureHashAlgorithmName,
+)
 
 use_options = StoragesUsePrivateKeyOptions(password=None)
 
@@ -1151,7 +1156,7 @@ def test_hsm_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
 @pytest.mark.parametrize("algorithm", HSMBackend.supported_hash_algorithms)
 @pytest.mark.hsm
 def test_hsm_with_hash_algorithms(
-    ca_name: str, key_type: str, algorithm: HashAlgorithms, subject: x509.Name
+    ca_name: str, key_type: str, algorithm: SignatureHashAlgorithmName, subject: x509.Name
 ) -> None:
     """Basic test for creating a key in the HSM."""
     ca = init_ca(
@@ -1159,13 +1164,15 @@ def test_hsm_with_hash_algorithms(
         key_type=key_type,
         key_backend=key_backends["hsm"],
         hsm_key_label=ca_name,
-        algorithm=constants.HASH_ALGORITHM_TYPES[algorithm](),
+        algorithm=constants.SIGNATURE_HASH_ALGORITHM_TYPES[algorithm](),
     )
 
     assert ca.key_backend_alias == "hsm"
     assert ca.key_backend.is_usable(ca, HSMUsePrivateKeyOptions(user_pin=settings.PKCS11_USER_PIN))
     assert ca.key_type == key_type
-    assert isinstance(ca.pub.loaded.signature_hash_algorithm, constants.HASH_ALGORITHM_TYPES[algorithm])
+    assert isinstance(
+        ca.pub.loaded.signature_hash_algorithm, constants.SIGNATURE_HASH_ALGORITHM_TYPES[algorithm]
+    )
 
     # Sign a certificate to make sure that the key is actually usable
     cert_data = CERT_DATA["root-cert"]
@@ -1181,7 +1188,7 @@ def test_hsm_with_hash_algorithms(
 @pytest.mark.usefixtures("softhsm_token")
 @pytest.mark.parametrize("ec_curve", HSMBackend.supported_elliptic_curves)
 @pytest.mark.hsm
-def test_hsm_with_ec_options(ca_name: str, ec_curve: EllipticCurves) -> None:
+def test_hsm_with_ec_options(ca_name: str, ec_curve: EllipticCurveName) -> None:
     """Basic test for creating a key in the HSM."""
     if ec_curve in settings.PKCS11_EXCLUDE_ELLIPTIC_CURVES:
         pytest.xfail(f"{ec_curve}: Algorithm not supported on this platform.")
@@ -1388,9 +1395,11 @@ def test_hsm_with_no_parent_pins(ca_name: str, hsm_backend: HSMBackend) -> None:
 @pytest.mark.parametrize(
     "algorithm", (hashes.SHA3_224(), hashes.SHA3_256(), hashes.SHA3_384(), hashes.SHA3_512())
 )
-def test_hsm_with_rsa_with_unsupported_hash_algorithm(ca_name: str, algorithm: AllowedHashTypes) -> None:
+def test_hsm_with_rsa_with_unsupported_hash_algorithm(
+    ca_name: str, algorithm: SignatureHashAlgorithm
+) -> None:
     """Test error with unsupported SHA-3 hash algorithms."""
-    name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+    name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(algorithm)]
     msg = rf"^{name}: Algorithm not supported by hsm key backend\.$"
     assert CertificateAuthority.objects.count() == 0
     with assert_command_error(msg), assert_create_ca_signals(False, False):

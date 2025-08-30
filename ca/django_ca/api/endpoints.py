@@ -292,7 +292,7 @@ def resign_certificate(
 
     algorithm = None
     if cert.algorithm:
-        algorithm = constants.HASH_ALGORITHM_NAMES[type(cert.algorithm)]
+        algorithm = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(cert.algorithm)]
 
     message = SignCertificateMessage(
         key_backend_options=data.key_backend_options,

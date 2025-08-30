@@ -45,7 +45,12 @@ from django_ca.models import (
 )
 from django_ca.profiles import profiles
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage, SignCertificateMessage
-from django_ca.typehints import JSON, HashAlgorithms, SerializedPydanticExtension, SerializedPydanticName
+from django_ca.typehints import (
+    JSON,
+    SerializedPydanticExtension,
+    SerializedPydanticName,
+    SignatureHashAlgorithmName,
+)
 from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
@@ -172,7 +177,7 @@ def api_sign_certificate(
     order_pk: int,
     csr: str,
     subject: SerializedPydanticName,
-    algorithm: HashAlgorithms | None = None,
+    algorithm: SignatureHashAlgorithmName | None = None,
     not_after: str | None = None,
     extensions: list[SerializedPydanticExtension] | None = None,
     profile: str = model_settings.CA_DEFAULT_PROFILE,

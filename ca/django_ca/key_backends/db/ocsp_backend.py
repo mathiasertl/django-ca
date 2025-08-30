@@ -24,7 +24,7 @@ from cryptography.x509.ocsp import OCSPResponse, OCSPResponseBuilder
 
 from django_ca.key_backends import OCSPKeyBackend
 from django_ca.models import CertificateAuthority
-from django_ca.typehints import AllowedHashTypes, ParsableKeyType
+from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 from django_ca.utils import generate_private_key
 
 
@@ -58,7 +58,7 @@ class DBOCSPBackend(OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: AllowedHashTypes | None,
+        signature_hash_algorithm: SignatureHashAlgorithm | None,
     ) -> OCSPResponse:
         pem = ca.ocsp_key_backend_options["private_key"]["pem"].encode()
         key = typing.cast(CertificateIssuerPrivateKeyTypes, serialization.load_pem_private_key(pem, None))

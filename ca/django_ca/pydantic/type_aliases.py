@@ -41,7 +41,11 @@ from django_ca.pydantic.validators import (
     timedelta_as_number_parser,
     unique_validator,
 )
-from django_ca.typehints import EllipticCurves, HashAlgorithms, SignatureHashAlgorithmNameWithLegacy
+from django_ca.typehints import (
+    EllipticCurveName,
+    SignatureHashAlgorithmName,
+    SignatureHashAlgorithmNameWithLegacy,
+)
 
 T = TypeVar("T", bound=type[Any])
 
@@ -99,19 +103,21 @@ NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any]
 #: This type alias will also validate the x509 dotted string format.
 OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
 
-EllipticCurveName = Annotated[EllipticCurves, BeforeValidator(elliptic_curve_validator)]
-"""Annotated version of :py:attr:`~django_ca.typehints.EllipticCurves`.
+AnnotatedEllipticCurveName = Annotated[EllipticCurveName, BeforeValidator(elliptic_curve_validator)]
+"""Annotated version of :py:attr:`~django_ca.typehints.EllipticCurveName`.
 
 This type will also accept instances of |EllipticCurve| and convert them transparently.
 """
 
-HashAlgorithmName = Annotated[HashAlgorithms, BeforeValidator(SignatureHashAlgorithmValidator())]
-"""Annotated version of :py:attr:`~django_ca.typehints.HashAlgorithms`.
+AnnotatedSignatureHashAlgorithmName = Annotated[
+    SignatureHashAlgorithmName, BeforeValidator(SignatureHashAlgorithmValidator())
+]
+"""Annotated version of :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName`.
 
 This type will also accept instances of |HashAlgorithm| and convert them transparently.
 """
 
-SignatureHashAlgorithmNameWithLegacy = Annotated[
+AnnotatedSignatureHashAlgorithmNameWithLegacy = Annotated[
     SignatureHashAlgorithmNameWithLegacy, BeforeValidator(SignatureHashAlgorithmValidator(legacy=True))
 ]
 """Same as :attr:`~django_ca.pydantic.type_aliases.HashAlgorithmName`, but also accepts legacy algorithms."""

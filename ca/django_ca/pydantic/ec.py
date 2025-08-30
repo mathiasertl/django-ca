@@ -19,15 +19,15 @@ from pydantic import model_validator
 
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 
-from django_ca.constants import HASH_ALGORITHM_TYPES
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import CryptographyModel
-from django_ca.pydantic.type_aliases import HashAlgorithmName
+from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmName
 
 
 class ECDSAModel(CryptographyModel[ECDSA]):
     """Model for :class:`cg:~cryptography.hazmat.primitives.asymmetric.ec.ECDSA`."""
 
-    algorithm: HashAlgorithmName
+    algorithm: AnnotatedSignatureHashAlgorithmName
     deterministic_signing: bool
 
     @model_validator(mode="before")
@@ -42,5 +42,6 @@ class ECDSAModel(CryptographyModel[ECDSA]):
     def cryptography(self) -> ECDSA:
         """Convert this model instance to a matching cryptography object."""
         return ECDSA(
-            algorithm=HASH_ALGORITHM_TYPES[self.algorithm](), deterministic_signing=self.deterministic_signing
+            algorithm=SIGNATURE_HASH_ALGORITHM_TYPES[self.algorithm](),
+            deterministic_signing=self.deterministic_signing,
         )

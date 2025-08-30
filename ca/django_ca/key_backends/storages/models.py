@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from django_ca.conf import model_settings
 from django_ca.constants import ELLIPTIC_CURVE_TYPES
 from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, EllipticCurveName
+from django_ca.pydantic.type_aliases import AnnotatedEllipticCurveName, Base64EncodedBytes
 
 if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
@@ -38,7 +38,7 @@ class StoragesCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
 
     password: bytes | None
     path: Path
-    elliptic_curve: EllipticCurveName | None = None
+    elliptic_curve: AnnotatedEllipticCurveName | None = None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "StoragesCreatePrivateKeyOptions":

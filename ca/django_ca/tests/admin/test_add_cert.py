@@ -44,7 +44,7 @@ from django_ca.constants import (
     CONFIGURABLE_EXTENSION_KEYS,
     END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
     EXTENSION_DEFAULT_CRITICAL,
-    HASH_ALGORITHM_NAMES,
+    SIGNATURE_HASH_ALGORITHM_NAMES,
     ExtendedKeyUsageOID,
 )
 from django_ca.forms import CreateCertificateForm
@@ -83,14 +83,17 @@ from django_ca.tests.base.utils import (
     tls_feature,
     uri,
 )
-from django_ca.typehints import HashAlgorithms, SerializedPydanticExtension
+from django_ca.typehints import SerializedPydanticExtension, SignatureHashAlgorithmName
 
 CSR = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 def form_data(
-    csr: str, ca: CertificateAuthority, hostname: str, algorithm: HashAlgorithms | Literal[""] = "SHA-256"
+    csr: str,
+    ca: CertificateAuthority,
+    hostname: str,
+    algorithm: SignatureHashAlgorithmName | Literal[""] = "SHA-256",
 ) -> dict[str, str | bool | int | list[str]]:
     """Get basic form data to submit to the admin interface."""
     crldp = CRLDistributionPointsModel.model_validate(ca.sign_crl_distribution_points).model_dump(
@@ -186,7 +189,9 @@ class TestViewAddView:
         form = get_add_response_form(admin_client)
         assert_initial_field_value(form, "ca", usable_child)
         assert usable_child.algorithm is not None
-        assert_initial_field_value(form, "algorithm", HASH_ALGORITHM_NAMES[type(usable_child.algorithm)])
+        assert_initial_field_value(
+            form, "algorithm", SIGNATURE_HASH_ALGORITHM_NAMES[type(usable_child.algorithm)]
+        )
 
     @pytest.mark.usefixtures("usable_ed448")
     def test_with_ed448(self, admin_client: Client) -> None:

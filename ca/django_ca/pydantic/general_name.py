@@ -29,7 +29,7 @@ from django_ca.pydantic import validators
 from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import OIDType
-from django_ca.typehints import GeneralNames, IPAddressType, OtherNames
+from django_ca.typehints import GeneralName, IPAddressType, OtherName
 
 ip_address_classes = (
     ipaddress.IPv4Address,
@@ -89,7 +89,7 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
     """
 
     oid: OIDType
-    type: Annotated[OtherNames, BeforeValidator(other_name_type_aliases)]
+    type: Annotated[OtherName, BeforeValidator(other_name_type_aliases)]
     value: str | bool | datetime | int | None
 
     @classmethod
@@ -182,7 +182,7 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
        :cryptography-prefix: othername
     """
 
-    type: GeneralNames
+    type: GeneralName
 
     # Use a discriminated Union so that pydantic can more efficiently determine the type. Without
     # discrimination, passing large IPv4/IPv6 networks (which are iterable, just like a list of str intended

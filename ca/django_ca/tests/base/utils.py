@@ -50,7 +50,7 @@ from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.acme.views.constants import SERVER_NAME
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
-from django_ca.typehints import AllowedHashTypes, ArgumentGroup, CertificateExtension, ParsableKeyType
+from django_ca.typehints import ArgumentGroup, CertificateExtension, ParsableKeyType, SignatureHashAlgorithm
 from django_ca.utils import get_crl_cache_key
 
 
@@ -117,7 +117,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         ca: "CertificateAuthority",
         use_private_key_options: DummyModel,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
     ) -> x509.CertificateRevocationList:
         return None  # type: ignore[return-value]
 
@@ -127,7 +127,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         use_private_key_options: DummyModel,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,

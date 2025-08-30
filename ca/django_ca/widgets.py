@@ -31,7 +31,7 @@ from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, REV
 from django_ca.extensions.utils import certificate_policies_is_simple
 from django_ca.pydantic.general_name import GeneralNameModelList
 from django_ca.pydantic.name import NameModel
-from django_ca.typehints import AlternativeNameTypeVar, KeyUsages
+from django_ca.typehints import AlternativeNameTypeVar, KeyUsage
 
 log = logging.getLogger(__name__)
 
@@ -500,7 +500,7 @@ class KeyUsageWidget(MultipleChoiceExtensionWidget):
 
     oid = ExtensionOID.KEY_USAGE
 
-    def decompress(self, value: x509.Extension[x509.KeyUsage] | None) -> tuple[list[KeyUsages], bool]:
+    def decompress(self, value: x509.Extension[x509.KeyUsage] | None) -> tuple[list[KeyUsage], bool]:
         if value is None:
             return [], EXTENSION_DEFAULT_CRITICAL[self.oid]
         choices = []

@@ -33,9 +33,9 @@ from django_ca.management.actions import IntegerRangeAction, KeyBackendAction
 from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.typehints import (
     ActionsContainer,
-    AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
+    SignatureHashAlgorithm,
 )
 from django_ca.utils import add_colons
 
@@ -325,8 +325,8 @@ class UsePrivateKeyMixin:
                 backend.add_use_private_key_arguments(group)
 
     def get_signing_options(
-        self, ca: CertificateAuthority, algorithm: AllowedHashTypes | None, options: dict[str, Any]
-    ) -> tuple[BaseModel, AllowedHashTypes | None]:
+        self, ca: CertificateAuthority, algorithm: SignatureHashAlgorithm | None, options: dict[str, Any]
+    ) -> tuple[BaseModel, SignatureHashAlgorithm | None]:
         """Get variables required for signing a certificate."""
         try:
             key_backend_options = ca.key_backend.get_use_private_key_options(ca, options)

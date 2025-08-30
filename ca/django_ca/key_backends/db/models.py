@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from django_ca.conf import model_settings
 from django_ca.constants import ELLIPTIC_CURVE_TYPES
 from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel
-from django_ca.pydantic.type_aliases import EllipticCurveName
+from django_ca.pydantic.type_aliases import AnnotatedEllipticCurveName
 
 
 class DBCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
@@ -28,7 +28,7 @@ class DBCreatePrivateKeyOptions(CreatePrivateKeyOptionsBaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    elliptic_curve: EllipticCurveName | None = None
+    elliptic_curve: AnnotatedEllipticCurveName | None = None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "DBCreatePrivateKeyOptions":

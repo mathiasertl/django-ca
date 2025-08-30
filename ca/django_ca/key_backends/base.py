@@ -40,14 +40,14 @@ from django.utils.module_loading import import_string
 
 from django_ca import constants
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
-from django_ca.constants import HASH_ALGORITHM_NAMES
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_NAMES
 from django_ca.pydantic.type_aliases import PowerOfTwoInt
 from django_ca.typehints import (
-    AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
-    HashAlgorithms,
     ParsableKeyType,
+    SignatureHashAlgorithm,
+    SignatureHashAlgorithmName,
 )
 
 if typing.TYPE_CHECKING:
@@ -94,7 +94,9 @@ class KeyBackendBase:
     #: Hash algorithms supported by the key backend. This defines the choices for the ``--algorithm`` argument
     #: and the `algorithm` argument in :py:func:`~django_ca.key_backends.KeyBackend.sign_certificate` is
     #: guaranteed to be one of the named values.
-    supported_hash_algorithms: tuple[HashAlgorithms, ...] = tuple(constants.HASH_ALGORITHM_TYPES)
+    supported_hash_algorithms: tuple[SignatureHashAlgorithmName, ...] = tuple(
+        constants.SIGNATURE_HASH_ALGORITHM_TYPES
+    )
 
     #: Elliptic curves supported by this backend for elliptic curve keys. This defines the choices for the
     #: ``--elliptic-curve`` parameter and the `elliptic_curve` parameter in
@@ -342,7 +344,7 @@ class KeyBackend(
         use_private_key_options: UsePrivateKeyOptionsTypeVar,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -357,16 +359,16 @@ class KeyBackend(
         ca: "CertificateAuthority",
         use_private_key_options: UsePrivateKeyOptionsTypeVar,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
     ) -> x509.CertificateRevocationList:
         """Sign a certificate revocation list request."""
 
     def validate_signature_hash_algorithm(
         self,
         key_type: ParsableKeyType,
-        algorithm: AllowedHashTypes | None,
-        default: AllowedHashTypes | None = None,
-    ) -> AllowedHashTypes | None:
+        algorithm: SignatureHashAlgorithm | None,
+        default: SignatureHashAlgorithm | None = None,
+    ) -> SignatureHashAlgorithm | None:
         """Give a backend the opportunity to check the signature hash algorithm or return the default value.
 
         The `algorithm` is the one selected by the user, or ``None`` if no algorithm was selected. The
@@ -384,9 +386,9 @@ class KeyBackend(
 
         # Compute the default hash algorithm
         if algorithm is not None:
-            name = HASH_ALGORITHM_NAMES[type(algorithm)]
+            name = SIGNATURE_HASH_ALGORITHM_NAMES[type(algorithm)]
         elif default is not None:
-            name = constants.HASH_ALGORITHM_NAMES[type(default)]
+            name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(default)]
             algorithm = default
         elif key_type == "DSA":
             name = model_settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
@@ -418,7 +420,7 @@ class OCSPKeyBackend(KeyBackendBase):
         ca.ocsp_key_backend_options so it can be signed. You're not responsible for the public key at all.
         """
 
-    def get_csr_algorithm(self, key_type: ParsableKeyType) -> AllowedHashTypes | None:
+    def get_csr_algorithm(self, key_type: ParsableKeyType) -> SignatureHashAlgorithm | None:
         """Helper function to get a usable signing algorithm for the given key type.
 
         This function can be used to get a default signing algorithm when creating a CSR in
@@ -468,7 +470,7 @@ class OCSPKeyBackend(KeyBackendBase):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: AllowedHashTypes | None,
+        signature_hash_algorithm: SignatureHashAlgorithm | None,
     ) -> OCSPResponse:
         """Sign the given OCSP response."""
 
@@ -516,7 +518,7 @@ class CryptographyOCSPKeyBackend(OCSPKeyBackend):
         self,
         ca: "CertificateAuthority",
         builder: OCSPResponseBuilder,
-        signature_hash_algorithm: AllowedHashTypes | None,
+        signature_hash_algorithm: SignatureHashAlgorithm | None,
     ) -> OCSPResponse:
         private_key = self.load_private_key(ca)
         return builder.sign(private_key, signature_hash_algorithm)

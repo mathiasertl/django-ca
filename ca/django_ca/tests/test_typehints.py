@@ -34,16 +34,16 @@ def _extension_type_sorter(extension_type: type[x509.ExtensionType]) -> str:
 
 
 def test_configurable_extension_keys() -> None:
-    """Test that ConfigurableExtensionKeys matches ConfigurableExtensionType."""
-    keys = get_args(typehints.ConfigurableExtensionKeys)
+    """Test that ConfigurableExtensionKey matches ConfigurableExtensionType."""
+    keys = get_args(typehints.ConfigurableExtensionKey)
     expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionType)), key=oid_sorter)
     actual = sorted((constants.CONFIGURABLE_EXTENSION_KEY_OIDS[v] for v in keys), key=oid_sorter)
     assert actual == expected
 
 
 def test_end_entity_certificate_extension_keys() -> None:
-    """Test EndEntityCertificateExtensionKeys matches EndEntityCertificateExtension."""
-    configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKeys)
+    """Test EndEntityCertificateExtensionKey matches EndEntityCertificateExtension."""
+    configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKey)
     keys = get_args(configurable_keys) + get_args(added_keys)
 
     expected = sorted(

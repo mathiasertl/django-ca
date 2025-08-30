@@ -53,12 +53,12 @@ from django_ca.key_backends.hsm.models import (
 from django_ca.key_backends.hsm.typehints import SupportedKeyType
 from django_ca.key_backends.hsm.utils import decode_eddsa_private_key, decode_eddsa_public_key
 from django_ca.typehints import (
-    AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
-    EllipticCurves,
-    HashAlgorithms,
+    EllipticCurveName,
     ParsableKeyType,
+    SignatureHashAlgorithm,
+    SignatureHashAlgorithmName,
 )
 from django_ca.utils import get_cert_builder, int_to_hex
 
@@ -81,8 +81,13 @@ class HSMBackend(
     use_model = HSMUsePrivateKeyOptions
 
     supported_key_types: tuple[SupportedKeyType, ...] = ("RSA", "EC", "Ed25519", "Ed448")
-    supported_hash_algorithms: tuple[HashAlgorithms, ...] = ("SHA-224", "SHA-256", "SHA-384", "SHA-512")
-    supported_elliptic_curves: tuple[EllipticCurves, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
+    supported_hash_algorithms: tuple[SignatureHashAlgorithmName, ...] = (
+        "SHA-224",
+        "SHA-256",
+        "SHA-384",
+        "SHA-512",
+    )
+    supported_elliptic_curves: tuple[EllipticCurveName, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
 
     _required_key_backend_options: Final[tuple[str, str, str]] = ("key_label", "key_id", "key_type")
 
@@ -389,7 +394,7 @@ class HSMBackend(
         use_private_key_options: HSMUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -413,7 +418,7 @@ class HSMBackend(
         ca: "CertificateAuthority",
         use_private_key_options: HSMUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
     ) -> x509.CertificateRevocationList:
         with self.session(
             so_pin=use_private_key_options.so_pin, user_pin=use_private_key_options.user_pin

@@ -49,11 +49,11 @@ from django_ca.key_backends.storages.models import (
 from django_ca.management.actions import PasswordAction
 from django_ca.models import CertificateAuthority
 from django_ca.typehints import (
-    AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
-    EllipticCurves,
+    EllipticCurveName,
     ParsableKeyType,
+    SignatureHashAlgorithm,
 )
 from django_ca.utils import generate_private_key, get_cert_builder
 
@@ -72,7 +72,7 @@ class StoragesBackend(
     use_model = StoragesUsePrivateKeyOptions
 
     supported_key_types: tuple[ParsableKeyType, ...] = constants.PARSABLE_KEY_TYPES
-    supported_elliptic_curves: tuple[EllipticCurves, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
+    supported_elliptic_curves: tuple[EllipticCurveName, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
 
     # Backend options
     storage_alias: str
@@ -137,7 +137,7 @@ class StoragesBackend(
         self,
         key_type: ParsableKeyType,
         key_size: int | None,
-        elliptic_curve: EllipticCurves | None,  # type: ignore[override]
+        elliptic_curve: EllipticCurveName | None,  # type: ignore[override]
         options: dict[str, Any],
     ) -> StoragesCreatePrivateKeyOptions:
         return StoragesCreatePrivateKeyOptions(
@@ -347,7 +347,7 @@ class StoragesBackend(
         use_private_key_options: StoragesUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -366,6 +366,6 @@ class StoragesBackend(
         ca: "CertificateAuthority",
         use_private_key_options: StoragesUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
     ) -> x509.CertificateRevocationList:
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)

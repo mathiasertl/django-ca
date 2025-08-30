@@ -35,12 +35,7 @@ from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.profile import ProfileConfigurationModel
 from django_ca.pydantic.type_aliases import DayValidator, PositiveTimedelta
 from django_ca.signals import pre_sign_cert
-from django_ca.typehints import (
-    AllowedHashTypes,
-    ConfigurableExtension,
-    ConfigurableExtensionDict,
-    SerializedProfile,
-)
+from django_ca.typehints import ConfigurableExtension, ConfigurableExtensionDict, SignatureHashAlgorithm
 from django_ca.utils import merge_x509_names
 
 if TYPE_CHECKING:
@@ -89,7 +84,7 @@ class Profile(ProfileConfigurationModel):
         *,
         subject: x509.Name | None = None,
         not_after: datetime | timedelta | None = None,
-        algorithm: AllowedHashTypes | None = None,
+        algorithm: SignatureHashAlgorithm | None = None,
         extensions: Iterable[ConfigurableExtension] | None = None,
         allow_unrecognized_extensions: bool = False,
         allow_empty_subject: bool = False,
@@ -225,7 +220,7 @@ class Profile(ProfileConfigurationModel):
 
         if algorithm is None and ca.algorithm:
             if self.algorithm is not None:
-                algorithm = constants.HASH_ALGORITHM_TYPES[self.algorithm]()
+                algorithm = constants.SIGNATURE_HASH_ALGORITHM_TYPES[self.algorithm]()
             else:
                 algorithm = ca.algorithm
 
@@ -299,7 +294,7 @@ class Profile(ProfileConfigurationModel):
         return context
 
     @deprecate_function(RemovedInDjangoCA250Warning)
-    def serialize(self) -> SerializedProfile:
+    def serialize(self) -> dict[str, Any]:
         """Serialize the profile.
 
         .. deprecated:: 2.4.0
@@ -322,7 +317,7 @@ class Profile(ProfileConfigurationModel):
             "subject": subject,
             "algorithm": self.algorithm,
             "extensions": [ext.model_dump(mode="json") for ext in profile_extensions],
-            "clear_extensions": clear_extensions,  # type: ignore[typeddict-item] # TODO: get rid of function
+            "clear_extensions": clear_extensions,
         }
 
     def _update_authority_information_access(
