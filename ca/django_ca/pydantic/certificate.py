@@ -40,7 +40,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.ec import ECDSAModel
 from django_ca.pydantic.extensions import CertificateExtensionModel
 from django_ca.pydantic.padding import AsymmetricPaddingTypes
-from django_ca.pydantic.type_aliases import HashAlgorithmName, OIDType
+from django_ca.pydantic.type_aliases import OIDType, SignatureHashAlgorithmNameWithLegacy
 from django_ca.typehints import HashAlgorithms
 
 
@@ -75,7 +75,7 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
     not_valid_after: datetime
     issuer: NameModel
     subject: NameModel
-    signature_hash_algorithm: HashAlgorithmName | None
+    signature_hash_algorithm: SignatureHashAlgorithmNameWithLegacy | None
     signature_algorithm_oid: OIDType
     public_key_algorithm_oid: OIDType
     signature_algorithm_parameters: SignatureAlgorithmParameters

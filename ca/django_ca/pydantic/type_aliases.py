@@ -27,9 +27,9 @@ from django.utils.functional import Promise
 
 from django_ca.pydantic.schemas import get_promise_schema
 from django_ca.pydantic.validators import (
+    SignatureHashAlgorithmValidator,
     base64_encoded_str_validator,
     elliptic_curve_validator,
-    hash_algorithm_validator,
     int_to_hex_parser,
     is_power_two_validator,
     non_empty_validator,
@@ -41,7 +41,7 @@ from django_ca.pydantic.validators import (
     timedelta_as_number_parser,
     unique_validator,
 )
-from django_ca.typehints import EllipticCurves, HashAlgorithms
+from django_ca.typehints import EllipticCurves, HashAlgorithms, SignatureHashAlgorithmNameWithLegacy
 
 T = TypeVar("T", bound=type[Any])
 
@@ -105,11 +105,16 @@ EllipticCurveName = Annotated[EllipticCurves, BeforeValidator(elliptic_curve_val
 This type will also accept instances of |EllipticCurve| and convert them transparently.
 """
 
-HashAlgorithmName = Annotated[HashAlgorithms, BeforeValidator(hash_algorithm_validator)]
+HashAlgorithmName = Annotated[HashAlgorithms, BeforeValidator(SignatureHashAlgorithmValidator())]
 """Annotated version of :py:attr:`~django_ca.typehints.HashAlgorithms`.
 
 This type will also accept instances of |HashAlgorithm| and convert them transparently.
 """
+
+SignatureHashAlgorithmNameWithLegacy = Annotated[
+    SignatureHashAlgorithmNameWithLegacy, BeforeValidator(SignatureHashAlgorithmValidator(legacy=True))
+]
+"""Same as :attr:`~django_ca.pydantic.type_aliases.HashAlgorithmName`, but also accepts legacy algorithms."""
 
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
 PositiveTimedelta = Annotated[timedelta, Ge(timedelta(seconds=0))]

@@ -72,6 +72,9 @@ AllowedHashTypes = (
     | hashes.SHA3_512
 )
 
+SignatureHashAlgorithmTypeWithLegacy = hashes.MD5 | hashes.SHA1 | AllowedHashTypes
+""":attr:`~django_ca.typehints.AllowedHashTypes` plus insecure legacy algorithms (MD5 and SHA1)."""
+
 
 ############
 # Literals #
@@ -88,6 +91,8 @@ GeneralNames = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName
 HashAlgorithms = Literal[
     "SHA-224", "SHA-256", "SHA-384", "SHA-512", "SHA3/224", "SHA3/256", "SHA3/384", "SHA3/512"
 ]
+SignatureHashAlgorithmNameWithLegacy = Literal["MD5", "SHA1"] | HashAlgorithms
+""":attr:`~django_ca.typehints.HashAlgorithms` plus insecure legacy algorithms (MD5 and SHA1)."""
 
 #: Serialized values of :py:class:`~cg:cryptography.x509.certificate_transparency.LogEntryType` instances.
 LogEntryTypes = Literal["precertificate", "x509_certificate"]
