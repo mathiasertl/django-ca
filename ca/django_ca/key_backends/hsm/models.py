@@ -23,7 +23,7 @@ from pydantic_core.core_schema import ValidationInfo
 from django_ca.conf import model_settings
 from django_ca.key_backends.base import CreatePrivateKeyOptionsBaseModel
 from django_ca.key_backends.hsm.typehints import SupportedKeyType
-from django_ca.typehints import EllipticCurves
+from django_ca.typehints import EllipticCurveName
 
 if TYPE_CHECKING:
     from django_ca.key_backends.hsm import HSMBackend
@@ -67,7 +67,7 @@ class HSMCreatePrivateKeyOptions(PinModelMixin, CreatePrivateKeyOptionsBaseModel
 
     key_label: str
     key_type: SupportedKeyType  # overwrites field from the base model
-    elliptic_curve: EllipticCurves | None
+    elliptic_curve: EllipticCurveName | None
 
     @model_validator(mode="after")
     def validate_elliptic_curve(self) -> "HSMCreatePrivateKeyOptions":

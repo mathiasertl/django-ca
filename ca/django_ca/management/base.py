@@ -46,10 +46,10 @@ from django_ca.models import CertificateAuthority, X509CertMixin
 from django_ca.profiles import Profile
 from django_ca.typehints import (
     ActionsContainer,
-    AllowedHashTypes,
     ArgumentGroup,
     ConfigurableExtension,
     ConfigurableExtensionType,
+    SignatureHashAlgorithm,
 )
 from django_ca.utils import add_colons, name_for_display
 
@@ -751,9 +751,9 @@ class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a bas
     def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:
         """Output digest and PEM in footer."""
         self.stdout.write("\nDigest:")
-        hash_algorithms: tuple[AllowedHashTypes, ...] = (hashes.SHA256(), hashes.SHA512())
+        hash_algorithms: tuple[SignatureHashAlgorithm, ...] = (hashes.SHA256(), hashes.SHA512())
         for algorithm in hash_algorithms:
-            algorithm_name = constants.HASH_ALGORITHM_NAMES[type(algorithm)]
+            algorithm_name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(algorithm)]
             fingerprint = cert.get_fingerprint(algorithm)
             text = f"{algorithm_name}: {fingerprint}"
 

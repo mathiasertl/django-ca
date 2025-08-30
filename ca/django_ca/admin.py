@@ -83,9 +83,9 @@ from django_ca.querysets import CertificateQuerySet
 from django_ca.signals import post_issue_cert
 from django_ca.typehints import (
     ConfigurableExtensionDict,
-    ConfigurableExtensionKeys,
+    ConfigurableExtensionKey,
     CRLExtensionType,
-    HashAlgorithms,
+    SignatureHashAlgorithmName,
     X509CertMixinTypeVar,
 )
 from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for_display
@@ -97,7 +97,7 @@ FormfieldOverrides = dict[type["models.Field[Any, Any]"], dict[str, Any]]
 log = logging.getLogger(__name__)
 
 #: Tuple of extensions that can be set when creating a new certificate via the admin interface.
-CERTIFICATE_EXTENSIONS: tuple[ConfigurableExtensionKeys, ...] = tuple(
+CERTIFICATE_EXTENSIONS: tuple[ConfigurableExtensionKey, ...] = tuple(
     sorted(
         [
             "authority_information_access",
@@ -263,12 +263,14 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
         return render_to_string("django_ca/admin/x509_name.html", context={"name": name})
 
     @admin.display(description=_("Signature hash algorithm"))
-    def signature_hash_algorithm(self, obj: X509CertMixinTypeVar) -> HashAlgorithms | Literal["None"]:
+    def signature_hash_algorithm(
+        self, obj: X509CertMixinTypeVar
+    ) -> SignatureHashAlgorithmName | Literal["None"]:
         """Display the signature hash algorithm as string."""
         algorithm = obj.algorithm
         if algorithm is None:
             return "None"
-        return constants.HASH_ALGORITHM_NAMES.get(type(algorithm), "None")
+        return constants.SIGNATURE_HASH_ALGORITHM_NAMES.get(type(algorithm), "None")
 
     @admin.display(description=_("Serial"), ordering="serial")
     def serial_field(self, obj: X509CertMixinTypeVar) -> str:
@@ -703,7 +705,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
             hash_algorithm_name: str | None = None
             if ca.algorithm is not None:
-                hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(ca.algorithm)]
+                hash_algorithm_name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(ca.algorithm)]
 
             data[ca.pk] = {
                 "signature_hash_algorithm": hash_algorithm_name,
@@ -758,7 +760,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             resign_obj: Certificate = request._resign_obj  # pylint: disable=protected-access
 
             if resign_obj.algorithm is not None:
-                hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(resign_obj.algorithm)]
+                hash_algorithm_name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(resign_obj.algorithm)]
 
             if resign_obj.profile:
                 profile_name = resign_obj.profile
@@ -801,7 +803,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             data["subject"] = profile.subject
 
             if ca.algorithm is not None:
-                hash_algorithm_name = constants.HASH_ALGORITHM_NAMES[type(ca.algorithm)]
+                hash_algorithm_name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(ca.algorithm)]
 
             data.update(
                 {

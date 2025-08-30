@@ -30,7 +30,7 @@ from django_ca.key_backends.hsm.keys import (
     PKCS11RSAPrivateKey,
 )
 from django_ca.key_backends.hsm.session import SessionPool
-from django_ca.typehints import EllipticCurves, ParsableKeyType
+from django_ca.typehints import EllipticCurveName, ParsableKeyType
 
 
 class HSMKeyBackendMixin:
@@ -89,7 +89,7 @@ class HSMKeyBackendMixin:
         key_label: str,
         key_type: ParsableKeyType,
         key_size: int | None,
-        elliptic_curve: EllipticCurves | None,
+        elliptic_curve: EllipticCurveName | None,
     ) -> PKCS11PrivateKeyTypes:
         # Test that no private key with the given label exists. Some libraries (e.g. SoftHSM) don't treat the
         # label as unique and will silently create a second key with the same label.

@@ -2,6 +2,9 @@
 ``django_ca.constants`` - constants
 ###################################
 
+.. automodule:: django_ca.constants
+   :no-members:
+
 .. automapping:: django_ca.constants.ACCESS_METHOD_TYPES
    :annotation:
 
@@ -32,14 +35,6 @@
 .. automapping:: django_ca.constants.GENERAL_NAME_TYPES
    :no-value:
 
-.. automapping:: django_ca.constants.HASH_ALGORITHM_NAMES
-   :annotation:
-   :no-value:
-
-.. autodata:: django_ca.constants.HASH_ALGORITHM_TYPES
-   :no-value:
-   :annotation:
-
 .. automapping:: django_ca.constants.KEY_USAGE_NAMES
    :no-value:
 
@@ -57,9 +52,19 @@
 
 .. autoclass:: django_ca.constants.ReasonFlags
 
+
+.. automapping:: django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES
+   :annotation:
+   :no-value:
+
 .. automapping:: django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY
    :annotation:
    :no-value:
+
+
+.. autodata:: django_ca.constants.SIGNATURE_HASH_ALGORITHM_TYPES
+   :no-value:
+   :annotation:
 
 .. autodata:: django_ca.constants.SIGNATURE_HASH_ALGORITHM_TYPES_WITH_LEGACY
    :no-value:

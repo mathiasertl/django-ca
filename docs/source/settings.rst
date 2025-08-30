@@ -129,7 +129,7 @@ CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
    The default hash algorithm for signing public keys of certificate authorities that use a ``DSA`` private
    key. The setting is also used when signing CRLs of such certificate authorities.
 
-   Please see :py:attr:`~django_ca.typehints.HashAlgorithms` for valid values for this setting.
+   Please see :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName` for valid values for this setting.
 
    The default hash algorithm for ``RSA`` and ``EC`` certificates can be configured with
    :ref:`settings-ca-default-signature-hash-algorithm`.
@@ -266,7 +266,7 @@ CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
    The default hash algorithm for signing public keys of certificate authorities that use an ``RSA`` or ``EC``
    private key. The setting is also used when signing CRLs of such certificate authorities.
 
-   Please see :py:attr:`~django_ca.typehints.HashAlgorithms` for valid values for this setting.
+   Please see :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName` for valid values for this setting.
 
    Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
    be configured separately using :ref:`settings-ca-default-dsa-signature-hash-algorithm`.

@@ -28,7 +28,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from django_ca import constants
 from django_ca.constants import (
     ELLIPTIC_CURVE_NAMES,
-    HASH_ALGORITHM_NAMES,
+    SIGNATURE_HASH_ALGORITHM_NAMES,
     SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY,
 )
 
@@ -43,14 +43,11 @@ class SignatureHashAlgorithmValidator:
 
     def __call__(self, value: Any) -> Any:
         if isinstance(value, hashes.HashAlgorithm):
-            if self.legacy:
-                algorithm_mapping = SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY
-            else:
-                algorithm_mapping = HASH_ALGORITHM_NAMES
-
             try:
                 # TYPEHINT NOTE: unsupported/unknown hash algorithms are caught with KeyError below.
-                return algorithm_mapping[type(value)]  # type: ignore[index]
+                if self.legacy:
+                    return SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY[type(value)]  # type: ignore[index]
+                return SIGNATURE_HASH_ALGORITHM_NAMES[type(value)]  # type: ignore[index]
             except KeyError as ex:
                 raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
         return value

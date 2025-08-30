@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from django_ca import constants, typehints
 from django_ca.constants import CRYPTOGRAPHY_VERSION, ExtensionOID
-from django_ca.typehints import GeneralNames, HashAlgorithms
+from django_ca.typehints import GeneralName, SignatureHashAlgorithmName
 
 
 def oid_sorter(oid: x509.ObjectIdentifier) -> str:
@@ -56,7 +56,7 @@ def get_subclasses(cls: type[SuperclassTypeVar]) -> set[type[SuperclassTypeVar]]
 
 def test_certificate_extension_keys_typehints() -> None:
     """Test that END_ENTITY_CERTIFICATE_EXTENSION_KEYS has matching keys and values."""
-    configurable, end_entity, added = get_args(typehints.CertificateExtensionKeys)
+    configurable, end_entity, added = get_args(typehints.CertificateExtensionKey)
     expected = sorted([*get_args(configurable), *get_args(end_entity), *get_args(added)])
 
     # "unknown" does not exist in constants, as there is no OID to map to, obviously.
@@ -81,7 +81,7 @@ def test_certificate_extension_keys_typehints() -> None:
 
 def test_configurable_extension_keys_typehints() -> None:
     """Test that CONFIGURABLE_EXTENSION_KEYS has matching keys and values."""
-    expected = sorted(get_args(typehints.ConfigurableExtensionKeys))
+    expected = sorted(get_args(typehints.ConfigurableExtensionKey))
     if CRYPTOGRAPHY_VERSION < (45,):
         expected.append("private_key_usage_period")
     assert sorted(constants.CONFIGURABLE_EXTENSION_KEYS.values()) == sorted(expected)
@@ -108,7 +108,7 @@ def test_elliptic_curves() -> None:
 
 def test_end_entity_certificate_extension_keys_typehints() -> None:
     """Test that END_ENTITY_CERTIFICATE_EXTENSION_KEYS has matching keys and values."""
-    configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKeys)
+    configurable_keys, added_keys = get_args(typehints.EndEntityCertificateExtensionKey)
     expected = sorted(get_args(configurable_keys) + get_args(added_keys))
 
     if CRYPTOGRAPHY_VERSION < (45,):
@@ -174,7 +174,7 @@ def test_general_name_types() -> None:
     assert set(constants.GENERAL_NAME_TYPES.values()) == set(subclasses)
 
     # Make sure that keys match the typehint exactly
-    assert sorted(constants.GENERAL_NAME_TYPES) == sorted(get_args(GeneralNames))
+    assert sorted(constants.GENERAL_NAME_TYPES) == sorted(get_args(GeneralName))
 
 
 def test_hash_algorithm_names() -> None:
@@ -200,10 +200,12 @@ def test_hash_algorithm_names() -> None:
     if hasattr(hashes, "SHA1"):
         subclasses.remove(hashes.SHA1)
 
-    assert len(constants.HASH_ALGORITHM_NAMES) == len(subclasses)
+    assert len(constants.SIGNATURE_HASH_ALGORITHM_NAMES) == len(subclasses)
 
     # Make sure that keys match the typehint exactly
-    assert sorted(constants.HASH_ALGORITHM_NAMES.values()) == sorted(get_args(HashAlgorithms))
+    assert sorted(constants.SIGNATURE_HASH_ALGORITHM_NAMES.values()) == sorted(
+        get_args(SignatureHashAlgorithmName)
+    )
 
 
 def test_name_oid_names_completeness() -> None:

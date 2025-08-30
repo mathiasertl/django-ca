@@ -29,7 +29,7 @@ from django_ca.conf import model_settings
 from django_ca.management.base import BaseSignCertCommand
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtension
+from django_ca.typehints import ConfigurableExtension, SignatureHashAlgorithm
 
 
 class Command(BaseSignCertCommand):
@@ -76,7 +76,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         bundle: bool,
         profile: str | None,
         out: str | None,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         # Subject Alternative Name extension - used in the function directly
         subject_alternative_name: x509.SubjectAlternativeName | None,
         **options: Any,

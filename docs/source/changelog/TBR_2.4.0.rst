@@ -56,3 +56,31 @@ Python API
   and :py:func:`Profile.create_cert() <django_ca.profiles.Profile.create_cert>` now allow creating a
   certificate with neither a common name nor a Subject Alternative Name extension via the
   `allow_empty_subject` flag.
+* **BACKWARDS INCOMPATIBLE:** Attributes in :py:mod:`django_ca.typehints` have been renamed to ensure
+  naming consistency:
+
+  ===================================== =============================================================
+  old name                              new name
+  ===================================== =============================================================
+  ``AccessMethods``                     :attr:`~django_ca.typehints.AccessMethodName`
+  ``AllowedHashTypes``                  :attr:`~django_ca.typehints.SignatureHashAlgorithm`
+  ``CertificateExtensionKeys``          :attr:`~django_ca.typehints.CertificateExtensionKey`
+  ``ConfigurableExtensionKeys``         :attr:`~django_ca.typehints.ConfigurableExtensionKey`
+  ``EllipticCurves``                    :attr:`~django_ca.typehints.EllipticCurveName`
+  ``EndEntityCertificateExtensionKeys`` :attr:`~django_ca.typehints.EndEntityCertificateExtensionKey`
+  ``ExtensionKeys``                     :attr:`~django_ca.typehints.ExtensionKey`
+  ``GeneralNames``                      :attr:`~django_ca.typehints.GeneralName`
+  ``HashAlgorithms``                    :attr:`~django_ca.typehints.SignatureHashAlgorithmName`
+  ``KeyUsages``                         :attr:`~django_ca.typehints.KeyUsage`
+  ``LogEntryTypes``                     :attr:`~django_ca.typehints.LogEntryTypeName`
+  ===================================== =============================================================
+
+* **BACKWARDS INCOMPATIBLE:** Attributes in :py:mod:`django_ca.constants` have been renamed to ensure
+  naming consistency:
+
+  ======================== ===========================================================
+  old name                 new name
+  ======================== ===========================================================
+  ``HASH_ALGORITHM_NAMES`` :attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES`
+  ``HASH_ALGORITHM_TYPES`` :attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_TYPES`
+  ======================== ===========================================================

@@ -42,22 +42,22 @@ from django.utils.translation import gettext_lazy as _
 
 # IMPORTANT: Do **not** import any module from django_ca at runtime here, or you risk circular imports.
 from django_ca.typehints import (
-    AccessMethods,
-    AllowedHashTypes,
-    CertificateExtensionKeys,
+    AccessMethodName,
+    CertificateExtensionKey,
+    CertificateRevocationListEncoding,
     CertificateRevocationListEncodingNames,
-    CertificateRevocationListEncodings,
-    ConfigurableExtensionKeys,
-    EllipticCurves,
-    EndEntityCertificateExtensionKeys,
-    ExtensionKeys,
-    GeneralNames,
-    HashAlgorithms,
-    KeyUsages,
-    OtherNames,
+    ConfigurableExtensionKey,
+    EllipticCurveName,
+    EndEntityCertificateExtensionKey,
+    ExtensionKey,
+    GeneralName,
+    KeyUsage,
+    OtherName,
     ParsableKeyType,
+    SignatureHashAlgorithm,
+    SignatureHashAlgorithmName,
     SignatureHashAlgorithmNameWithLegacy,
-    SignatureHashAlgorithmTypeWithLegacy,
+    SignatureHashAlgorithmWithLegacy,
 )
 
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
@@ -71,7 +71,7 @@ class ExtensionOID(_ExtensionOID):
     """
 
 
-ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = MappingProxyType(
+ACCESS_METHOD_TYPES: MappingProxyType[AccessMethodName, x509.ObjectIdentifier] = MappingProxyType(
     {
         "ocsp": AuthorityInformationAccessOID.OCSP,
         "ca_issuers": AuthorityInformationAccessOID.CA_ISSUERS,
@@ -81,14 +81,14 @@ ACCESS_METHOD_TYPES: MappingProxyType[AccessMethods, x509.ObjectIdentifier] = Ma
 
 #: Types of encodings available for certificate revocation lists (CRLs).
 CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES: MappingProxyType[
-    CertificateRevocationListEncodingNames, CertificateRevocationListEncodings
+    CertificateRevocationListEncodingNames, CertificateRevocationListEncoding
 ] = MappingProxyType({"PEM": Encoding.PEM, "DER": Encoding.DER})
 
 DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
 DEFAULT_OCSP_KEY_BACKEND = "django_ca.key_backends.storages.StoragesOCSPBackend"
 
 #: Mapping of elliptic curve names to the implementing classes
-ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurves, type[ec.EllipticCurve]] = MappingProxyType(
+ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurveName, type[ec.EllipticCurve]] = MappingProxyType(
     {
         "sect571r1": ec.SECT571R1,
         "sect409r1": ec.SECT409R1,
@@ -112,7 +112,7 @@ ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurves, type[ec.EllipticCurve]] =
     }
 )
 
-ELLIPTIC_CURVE_NAMES: MappingProxyType[type[ec.EllipticCurve], EllipticCurves] = MappingProxyType(
+ELLIPTIC_CURVE_NAMES: MappingProxyType[type[ec.EllipticCurve], EllipticCurveName] = MappingProxyType(
     {v: k for k, v in ELLIPTIC_CURVE_TYPES.items()}
 )
 
@@ -259,7 +259,7 @@ EXTENSION_DEFAULT_CRITICAL = MappingProxyType(
     }
 )
 
-CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ConfigurableExtensionKeys] = (
+CONFIGURABLE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ConfigurableExtensionKey] = (
     MappingProxyType(
         {
             ExtensionOID.ADMISSIONS: "admissions",
@@ -283,7 +283,7 @@ CONFIGURABLE_EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in CONFIGURABL
 
 #: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in an end entity certificate.
 END_ENTITY_CERTIFICATE_EXTENSION_KEYS: MappingProxyType[
-    x509.ObjectIdentifier, EndEntityCertificateExtensionKeys
+    x509.ObjectIdentifier, EndEntityCertificateExtensionKey
 ] = MappingProxyType(
     {
         **CONFIGURABLE_EXTENSION_KEYS,
@@ -298,14 +298,14 @@ END_ENTITY_CERTIFICATE_EXTENSION_KEYS: MappingProxyType[
 
 #: Map of extension keys to ExtensionOIDs (the inverse of END_ENTITY_CERTIFICATE_EXTENSION_KEYS).
 END_ENTITY_CERTIFICATE_EXTENSION_KEY_OIDS: MappingProxyType[
-    EndEntityCertificateExtensionKeys, x509.ObjectIdentifier
+    EndEntityCertificateExtensionKey, x509.ObjectIdentifier
 ] = MappingProxyType({v: k for k, v in END_ENTITY_CERTIFICATE_EXTENSION_KEYS.items()})
 
 #: Map of :py:class:`~cryptography.x509.oid.ExtensionOID` to keys that may exist in any certificate.
 #:
 #: This value is based on :py:attr:`~django_ca.constants.END_ENTITY_CERTIFICATE_EXTENSION_KEYS` and adds
 #: extensions that occur only in certificate authorities.
-CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKeys] = (
+CERTIFICATE_EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, CertificateExtensionKey] = (
     MappingProxyType(
         {
             **END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
@@ -321,7 +321,7 @@ CERTIFICATE_EXTENSION_KEY_OIDS = MappingProxyType({v: k for k, v in CERTIFICATE_
 #:
 #: This value is based on :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS` and adds extensions for
 #: CRLs and object identifiers where no corresponding cryptography class exists.
-EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ExtensionKeys] = MappingProxyType(
+EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ExtensionKey] = MappingProxyType(
     {
         **CERTIFICATE_EXTENSION_KEYS,
         ExtensionOID.CRL_NUMBER: "crl_number",  # CRL extension
@@ -333,7 +333,7 @@ EXTENSION_KEYS: MappingProxyType[x509.ObjectIdentifier, ExtensionKeys] = Mapping
 )
 
 #: Map of extension keys to ExtensionOIDs (the inverse of EXTENSION_KEYS).
-EXTENSION_KEY_OIDS: MappingProxyType[ExtensionKeys, x509.ObjectIdentifier] = MappingProxyType(
+EXTENSION_KEY_OIDS: MappingProxyType[ExtensionKey, x509.ObjectIdentifier] = MappingProxyType(
     {v: k for k, v in EXTENSION_KEYS.items()}
 )
 
@@ -386,7 +386,7 @@ EXTENSION_RFC_DEFINITION = MappingProxyType(
 )
 
 #: Map for types of general names.
-GENERAL_NAME_TYPES: MappingProxyType[GeneralNames, type[x509.GeneralName]] = MappingProxyType(
+GENERAL_NAME_TYPES: MappingProxyType[GeneralName, type[x509.GeneralName]] = MappingProxyType(
     {
         "email": x509.RFC822Name,
         "URI": x509.UniformResourceIdentifier,
@@ -397,45 +397,56 @@ GENERAL_NAME_TYPES: MappingProxyType[GeneralNames, type[x509.GeneralName]] = Map
         "otherName": x509.OtherName,
     }
 )
-GENERAL_NAME_NAMES: MappingProxyType[type[x509.GeneralName], GeneralNames] = MappingProxyType(
+GENERAL_NAME_NAMES: MappingProxyType[type[x509.GeneralName], GeneralName] = MappingProxyType(
     {v: k for k, v in GENERAL_NAME_TYPES.items()}
 )
 
-#: Map of hash algorithm types in cryptography to standard hash algorithm names.
-#:
-#: Keys are the types from :py:attr:`~django_ca.typehints.AllowedHashTypes`, values are the matching names
-#: from :py:attr:`~django_ca.typehints.HashAlgorithms`.
-HASH_ALGORITHM_NAMES: MappingProxyType[type[AllowedHashTypes], HashAlgorithms] = MappingProxyType(
-    {
-        hashes.SHA224: "SHA-224",
-        hashes.SHA256: "SHA-256",
-        hashes.SHA384: "SHA-384",
-        hashes.SHA512: "SHA-512",
-        hashes.SHA3_224: "SHA3/224",
-        hashes.SHA3_256: "SHA3/256",
-        hashes.SHA3_384: "SHA3/384",
-        hashes.SHA3_512: "SHA3/512",
-    }
+SIGNATURE_HASH_ALGORITHM_NAMES: MappingProxyType[type[SignatureHashAlgorithm], SignatureHashAlgorithmName] = (
+    MappingProxyType(
+        {
+            hashes.SHA224: "SHA-224",
+            hashes.SHA256: "SHA-256",
+            hashes.SHA384: "SHA-384",
+            hashes.SHA512: "SHA-512",
+            hashes.SHA3_224: "SHA3/224",
+            hashes.SHA3_256: "SHA3/256",
+            hashes.SHA3_384: "SHA3/384",
+            hashes.SHA3_512: "SHA3/512",
+        }
+    )
 )
-SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY: MappingProxyType[
-    type[SignatureHashAlgorithmTypeWithLegacy], SignatureHashAlgorithmNameWithLegacy
-] = MappingProxyType({**HASH_ALGORITHM_NAMES, hashes.MD5: "MD5", hashes.SHA1: "SHA1"})
-""":attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` plus insecure legacy algorithms (MD5 and SHA1)."""
+"""Map of hash algorithm types in cryptography to standard hash algorithm names.
 
-#: Map of hash algorithm names to hash algorithm types (the inverse of
-#: :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES`).
-HASH_ALGORITHM_TYPES: MappingProxyType[HashAlgorithms, type[AllowedHashTypes]] = MappingProxyType(
-    {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
+Keys are the types from :py:attr:`~django_ca.typehints.SignatureHashAlgorithm`, values are the matching names
+from :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName`.
+"""
+
+SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY: MappingProxyType[
+    type[SignatureHashAlgorithmWithLegacy], SignatureHashAlgorithmNameWithLegacy
+] = MappingProxyType({**SIGNATURE_HASH_ALGORITHM_NAMES, hashes.MD5: "MD5", hashes.SHA1: "SHA1"})  # type: ignore[dict-item]
+""":attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES` plus insecure legacy algorithms (MD5 and SHA1).
+
+This value is used when displaying data which may include legacy signatures.
+"""
+
+
+SIGNATURE_HASH_ALGORITHM_TYPES: MappingProxyType[SignatureHashAlgorithmName, type[SignatureHashAlgorithm]] = (
+    MappingProxyType({v: k for k, v in SIGNATURE_HASH_ALGORITHM_NAMES.items()})
 )
+"""Map of hash algorithm names to hash algorithm types (the inverse of
+:attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY`)."""
 
 SIGNATURE_HASH_ALGORITHM_TYPES_WITH_LEGACY: MappingProxyType[
-    SignatureHashAlgorithmNameWithLegacy, type[SignatureHashAlgorithmTypeWithLegacy]
+    SignatureHashAlgorithmNameWithLegacy, type[SignatureHashAlgorithmWithLegacy]
 ] = MappingProxyType({v: k for k, v in SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY.items()})
 """Map of hash algorithm names to hash algorithm types (the inverse of
-:attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY`."""
+:attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY`.
+
+This value is used when displaying data which may include legacy signatures.
+"""
 
 #: Map of `kwargs` for :py:class:`~cg:cryptography.x509.KeyUsage` to names in RFC 5280.
-KEY_USAGE_NAMES: MappingProxyType[KeyUsages, str] = MappingProxyType(
+KEY_USAGE_NAMES: MappingProxyType[KeyUsage, str] = MappingProxyType(
     {
         "crl_sign": "cRLSign",
         "data_encipherment": "dataEncipherment",
@@ -450,7 +461,7 @@ KEY_USAGE_NAMES: MappingProxyType[KeyUsages, str] = MappingProxyType(
 )
 
 # Opposite of KEY_USAGE_NAMES
-KEY_USAGE_PARAMETERS: MappingProxyType[str, KeyUsages] = MappingProxyType(
+KEY_USAGE_PARAMETERS: MappingProxyType[str, KeyUsage] = MappingProxyType(
     {v: k for k, v in KEY_USAGE_NAMES.items()}
 )
 
@@ -568,7 +579,7 @@ NAME_OID_TYPES = MappingProxyType(
 )
 
 #: Names supported for parsing :py:class:`~cg:cryptography.x509.OtherName` values.
-OTHER_NAME_TYPES: MappingProxyType[OtherNames, asn1crypto.core.Primitive] = MappingProxyType(
+OTHER_NAME_TYPES: MappingProxyType[OtherName, asn1crypto.core.Primitive] = MappingProxyType(
     {
         "UTF8String": asn1crypto.core.UTF8String,
         "UNIVERSALSTRING": asn1crypto.core.UniversalString,
@@ -583,12 +594,12 @@ OTHER_NAME_TYPES: MappingProxyType[OtherNames, asn1crypto.core.Primitive] = Mapp
 )
 
 # Inverse of OTHER_NAME_TYPES
-OTHER_NAME_NAMES: MappingProxyType[asn1crypto.core.Primitive, OtherNames] = MappingProxyType(
+OTHER_NAME_NAMES: MappingProxyType[asn1crypto.core.Primitive, OtherName] = MappingProxyType(
     {v: k for k, v in OTHER_NAME_TYPES.items()}
 )
 
 #: Aliases for parsing :py:class:`~cg:cryptography.x509.OtherName` values.
-OTHER_NAME_ALIASES: MappingProxyType[str, OtherNames] = MappingProxyType(
+OTHER_NAME_ALIASES: MappingProxyType[str, OtherName] = MappingProxyType(
     {
         "UTF8": "UTF8String",
         "UNIV": "UNIVERSALSTRING",

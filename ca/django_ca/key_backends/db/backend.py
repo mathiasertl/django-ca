@@ -40,11 +40,11 @@ from django_ca.key_backends.db.models import (
 )
 from django_ca.models import CertificateAuthority
 from django_ca.typehints import (
-    AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
-    EllipticCurves,
+    EllipticCurveName,
     ParsableKeyType,
+    SignatureHashAlgorithm,
 )
 from django_ca.utils import generate_private_key, get_cert_builder
 
@@ -61,7 +61,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
     use_model = DBUsePrivateKeyOptions
 
     supported_key_types: tuple[ParsableKeyType, ...] = constants.PARSABLE_KEY_TYPES
-    supported_elliptic_curves: tuple[EllipticCurves, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
+    supported_elliptic_curves: tuple[EllipticCurveName, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, DBBackend)
@@ -82,7 +82,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         self,
         key_type: ParsableKeyType,
         key_size: int | None,
-        elliptic_curve: EllipticCurves | None,  # type: ignore[override]
+        elliptic_curve: EllipticCurveName | None,  # type: ignore[override]
         options: dict[str, Any],
     ) -> DBCreatePrivateKeyOptions:
         return DBCreatePrivateKeyOptions(key_type=key_type, key_size=key_size, elliptic_curve=elliptic_curve)
@@ -203,7 +203,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         use_private_key_options: DBUsePrivateKeyOptions,
         public_key: CertificateIssuerPublicKeyTypes,
         serial: int,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         issuer: x509.Name,
         subject: x509.Name,
         not_after: datetime,
@@ -222,6 +222,6 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         ca: "CertificateAuthority",
         use_private_key_options: DBUsePrivateKeyOptions,
         builder: x509.CertificateRevocationListBuilder,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
     ) -> x509.CertificateRevocationList:
         return builder.sign(private_key=self.get_key(ca, use_private_key_options), algorithm=algorithm)

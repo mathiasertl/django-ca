@@ -41,7 +41,7 @@ from django_ca.pydantic.validators import (
     is_power_two_validator,
     url_validator,
 )
-from django_ca.typehints import AllowedHashTypes, ParsableKeyType
+from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
@@ -413,8 +413,8 @@ def validate_private_key_parameters(
 
 
 def validate_public_key_parameters(
-    key_type: ParsableKeyType, algorithm: AllowedHashTypes | None
-) -> AllowedHashTypes | None:
+    key_type: ParsableKeyType, algorithm: SignatureHashAlgorithm | None
+) -> SignatureHashAlgorithm | None:
     """Validate parameters for signing a certificate.
 
     This function can be used to fail early if invalid parameters are passed.

@@ -59,9 +59,7 @@ class OCSPKeyBackendDict(TypedDict):
     certificate: dict[str, JSON]
 
 
-#: Hash algorithms that can be used for signing certificates.
-#: NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
-AllowedHashTypes = (
+SignatureHashAlgorithm = (
     hashes.SHA224
     | hashes.SHA256
     | hashes.SHA384
@@ -71,9 +69,13 @@ AllowedHashTypes = (
     | hashes.SHA3_384
     | hashes.SHA3_512
 )
+"""Hash algorithms that can be used for signing certificates.
 
-SignatureHashAlgorithmTypeWithLegacy = hashes.MD5 | hashes.SHA1 | AllowedHashTypes
-""":attr:`~django_ca.typehints.AllowedHashTypes` plus insecure legacy algorithms (MD5 and SHA1)."""
+NOTE: This is a duplicate of the protected ``cryptography.x509.base._AllowedHashTypes``.
+"""
+
+SignatureHashAlgorithmWithLegacy = hashes.MD5 | hashes.SHA1 | SignatureHashAlgorithm
+""":attr:`~django_ca.typehints.SignatureHashAlgorithm` plus insecure legacy algorithms (MD5 and SHA1)."""
 
 
 ############
@@ -82,26 +84,32 @@ SignatureHashAlgorithmTypeWithLegacy = hashes.MD5 | hashes.SHA1 | AllowedHashTyp
 
 ParsableKeyType = Literal["RSA", "DSA", "EC", "Ed25519", "Ed448"]
 
-#: Valid types of general names.
-GeneralNames = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName"]
 
-#: Valid hash algorithm names.
-#:
-#: These names are used in various settings, with the ``--algorithm`` command line parameter and in the API.
-HashAlgorithms = Literal[
+GeneralName = Literal["email", "URI", "IP", "DNS", "RID", "dirName", "otherName"]
+"""Valid types of general names."""
+
+SignatureHashAlgorithmName = Literal[
     "SHA-224", "SHA-256", "SHA-384", "SHA-512", "SHA3/224", "SHA3/256", "SHA3/384", "SHA3/512"
 ]
-SignatureHashAlgorithmNameWithLegacy = Literal["MD5", "SHA1"] | HashAlgorithms
-""":attr:`~django_ca.typehints.HashAlgorithms` plus insecure legacy algorithms (MD5 and SHA1)."""
+"""Names of hash algorithms that can be used for signing certificates.
+
+These names are used in various settings, with the ``--algorithm`` command line parameter and in the API.
+"""
+
+SignatureHashAlgorithmNameWithLegacy = Literal["MD5", "SHA1"] | SignatureHashAlgorithmName
+""":attr:`~django_ca.typehints.SignatureHashAlgorithmName` plus insecure legacy algorithms (MD5 and SHA1).
+
+This value is used when displaying data which may include legacy signatures.
+"""
 
 #: Serialized values of :py:class:`~cg:cryptography.x509.certificate_transparency.LogEntryType` instances.
-LogEntryTypes = Literal["precertificate", "x509_certificate"]
+LogEntryTypeName = Literal["precertificate", "x509_certificate"]
 
 #: Serialized access method for :py:class:`~cg:cryptography.x509.AccessDescription` instances.
-AccessMethods = Literal["ocsp", "ca_issuers", "ca_repository"]
+AccessMethodName = Literal["ocsp", "ca_issuers", "ca_repository"]
 
 #: Extension keys for extensions that may be configured by the user when issuing certificates.
-ConfigurableExtensionKeys = Literal[
+ConfigurableExtensionKey = Literal[
     "admissions",
     "authority_information_access",
     "certificate_policies",
@@ -120,11 +128,11 @@ ConfigurableExtensionKeys = Literal[
 
 #: Extension keys for extensions that may occur in an end entity certificate.
 #:
-#: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and adds the keys
+#: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKey` and adds the keys
 #: for extensions that are either derived from the issuer or the certificates public key or that must not
 #: be configured by a user.
-EndEntityCertificateExtensionKeys = (
-    ConfigurableExtensionKeys
+EndEntityCertificateExtensionKey = (
+    ConfigurableExtensionKey
     | Literal[
         "authority_key_identifier",  # derived from the issuer
         "basic_constraints",  # must not be configured by a user
@@ -137,10 +145,10 @@ EndEntityCertificateExtensionKeys = (
 
 #: Extension keys for extensions that may occur in any certificate.
 #:
-#: This literal includes keys from :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionKeys` and adds
+#: This literal includes keys from :py:attr:`~django_ca.typehints.EndEntityCertificateExtensionKey` and adds
 #: the keys for extensions only occur in certificate authorities.
-CertificateExtensionKeys = (
-    EndEntityCertificateExtensionKeys
+CertificateExtensionKey = (
+    EndEntityCertificateExtensionKey
     | Literal[
         "inhibit_any_policy",
         "name_constraints",
@@ -151,10 +159,10 @@ CertificateExtensionKeys = (
 
 #: Extension keys for all known x509 Extensions.
 #:
-#: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKeys` and includes
+#: This literal includes keys from :py:attr:`~django_ca.typehints.ConfigurableExtensionKey` and includes
 #: extensions that may occur in certificate authorities or CRLs.
-ExtensionKeys = (
-    CertificateExtensionKeys
+ExtensionKey = (
+    CertificateExtensionKey
     | Literal[
         "crl_number",
         "delta_crl_indicator",
@@ -164,8 +172,7 @@ ExtensionKeys = (
     ]
 )
 
-#: List of possible values for :py:class:`~cg:cryptography.x509.KeyUsage` instances.
-KeyUsages = Literal[
+KeyUsage = Literal[
     "crl_sign",
     "data_encipherment",
     "decipher_only",
@@ -176,8 +183,9 @@ KeyUsages = Literal[
     "key_encipherment",
     "content_commitment",
 ]
+"""List of possible values for :py:class:`~cg:cryptography.x509.KeyUsage` instances."""
 
-DistributionPointReasons = Literal[
+DistributionPointReason = Literal[
     "aa_compromise",
     "affiliation_changed",
     "ca_compromise",
@@ -188,8 +196,7 @@ DistributionPointReasons = Literal[
     "superseded",
 ]
 
-#: Valid OtherName types
-OtherNames = Literal[
+OtherName = Literal[
     "UTF8String",
     "UNIVERSALSTRING",
     "IA5STRING",
@@ -200,22 +207,9 @@ OtherNames = Literal[
     "INTEGER",
     "OctetString",
 ]
+"""Valid OtherName types"""
 
-# only py<3.8: python3.9 supports DistributionPointReasons | Literal["unspecified", "remove_from_crl"]
-Reasons = Literal[
-    "key_compromise",
-    "ca_compromise",
-    "affiliation_changed",
-    "superseded",
-    "cessation_of_operation",
-    "certificate_hold",
-    "privilege_withdrawn",
-    "aa_compromise",
-    "unspecified",
-    "remove_from_crl",
-]
-
-EllipticCurves = Literal[
+EllipticCurveName = Literal[
     "sect571r1",
     "sect409r1",
     "sect283r1",
@@ -238,7 +232,7 @@ EllipticCurves = Literal[
 ]
 """Valid elliptic curve names."""
 
-CertificateRevocationListEncodings = Literal[Encoding.PEM, Encoding.DER]
+CertificateRevocationListEncoding = Literal[Encoding.PEM, Encoding.DER]
 CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 
 
@@ -367,19 +361,6 @@ SignedCertificateTimestampTypeVar = TypeVar(
 #################################
 
 
-class ProfileExtensionValue(TypedDict, total=False):
-    """Typed dict as it occurs in profiles.
-
-    This TypedDict lacks a `type`, as the configuration uses a dictionary with the type as mapping key.
-
-    This TypedDict is more lenient than ``SerializedPydanticExtension``, as critical often has a default,
-    and `value` may not be set for extensions that don't have a value.
-    """
-
-    value: Any | None
-    critical: bool | None
-
-
 class SerializedPydanticNameAttribute(TypedDict):
     """Serialized version of a Pydantic name attribute."""
 
@@ -393,20 +374,9 @@ SerializedPydanticName = list[SerializedPydanticNameAttribute]
 class SerializedPydanticExtension(TypedDict):
     """Serialized pydantic extension."""
 
-    type: EndEntityCertificateExtensionKeys
+    type: EndEntityCertificateExtensionKey
     critical: bool
     value: Any
-
-
-class SerializedProfile(TypedDict):
-    """Serialized profile."""
-
-    name: str
-    description: str
-    subject: SerializedPydanticName | None
-    algorithm: HashAlgorithms | None
-    extensions: list[SerializedPydanticExtension]
-    clear_extensions: list[EndEntityCertificateExtensionKeys]
 
 
 #####################

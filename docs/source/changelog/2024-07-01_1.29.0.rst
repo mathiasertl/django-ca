@@ -72,7 +72,8 @@ Python API
 **********
 
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.parse_hash_algorithm()``, deprecated since
-  1.25.0. Use :py:attr:`standard hash algorithm names <django_ca.typehints.HashAlgorithms>` instead.
+  1.25.0. Use :py:attr:`standard hash algorithm names <django_ca.typehints.SignatureHashAlgorithmName>`
+  instead.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.format_name()``, deprecated since 1.27.0. Use RFC
   4514-formatted subjects instead.
 * **BACKWARDS INCOMPATIBLE:** Removed ``django_ca.utils.is_power2()``, use
@@ -92,8 +93,8 @@ Python API
   * The `extensions` parameter no longer accepts extensions that are not valid for end entity certificates.
 
 * All Pydantic models are now exported under ``django_ca.pydantic``.
-* Add literal typehints for extension keys under :py:attr:`~django_ca.typehints.ExtensionKeys` and
-  :py:attr:`~django_ca.typehints.CertificateExtensionKeys` to improve type hinting.
+* Add literal typehints for extension keys under :py:attr:`~django_ca.typehints.ExtensionKey` and
+  :py:attr:`~django_ca.typehints.CertificateExtensionKey` to improve type hinting.
 * Add :py:attr:`~django_ca.constants.CERTIFICATE_EXTENSION_KEYS`, a subset of
   :py:attr:`~django_ca.constants.EXTENSION_KEYS`, for extensions all extensions that may occur in
   end-entity certificates.

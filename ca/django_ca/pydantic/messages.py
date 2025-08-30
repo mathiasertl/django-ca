@@ -21,13 +21,13 @@ from pydantic import AfterValidator, BaseModel, Field, JsonValue
 from cryptography import x509
 
 from django_ca.conf import model_settings
-from django_ca.constants import HASH_ALGORITHM_TYPES
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
 from django_ca.pydantic.extensions import ConfigurableExtensionModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import Serial
 from django_ca.pydantic.validators import pem_csr_validator
-from django_ca.typehints import AllowedHashTypes, ConfigurableExtension, HashAlgorithms
+from django_ca.typehints import ConfigurableExtension, SignatureHashAlgorithm, SignatureHashAlgorithmName
 
 
 class GenerateOCSPKeyMessage(BaseModel):
@@ -58,7 +58,7 @@ class ResignCertificateMessage(BaseModel):
 class SignCertificateMessage(ResignCertificateMessage):
     """Schema for signing certificates."""
 
-    algorithm: HashAlgorithms | None = Field(
+    algorithm: SignatureHashAlgorithmName | None = Field(
         default=None,
         description="Hash algorithm used for signing (default: same as in the certificate authority).",
         # TODO: check if this is necessary since we now have a 'literal'
@@ -84,10 +84,10 @@ class SignCertificateMessage(ResignCertificateMessage):
     )
     subject: NameModel = Field(description="The subject as list of name attributes.")
 
-    def get_algorithm(self) -> AllowedHashTypes | None:
+    def get_algorithm(self) -> SignatureHashAlgorithm | None:
         """Get algorithm class if set."""
         if self.algorithm is not None:
-            return HASH_ALGORITHM_TYPES[self.algorithm]()
+            return SIGNATURE_HASH_ALGORITHM_TYPES[self.algorithm]()
         return None
 
     def get_csr(self) -> x509.CertificateSigningRequest:

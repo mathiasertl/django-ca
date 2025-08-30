@@ -30,7 +30,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet, OIDType
-from django_ca.typehints import DistributionPointReasons, LogEntryTypes, Self
+from django_ca.typehints import DistributionPointReason, LogEntryTypeName, Self
 
 if TYPE_CHECKING:
     PrivateKeyUsagePeriodValueModelBase = CryptographyModel[x509.PrivateKeyUsagePeriod]
@@ -338,7 +338,7 @@ class DistributionPointModel(CryptographyModel[x509.DistributionPoint]):
     full_name: list[GeneralNameModel] | None = None
     relative_name: NameModel | None = None
     crl_issuer: list[GeneralNameModel] | None = None
-    reasons: set[DistributionPointReasons] | None = None
+    reasons: set[DistributionPointReason] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -409,7 +409,7 @@ class IssuingDistributionPointValueModel(CryptographyModel[x509.IssuingDistribut
     only_contains_ca_certs: bool = False
     indirect_crl: bool = False
     only_contains_attribute_certs: bool = False
-    only_some_reasons: set[DistributionPointReasons] | None = None
+    only_some_reasons: set[DistributionPointReason] | None = None
     full_name: NonEmptyOrderedSet[list[GeneralNameModel]] | None = None
     relative_name: NameModel | None = None
 
@@ -522,7 +522,7 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
     version: Literal["v1"] = "v1"
     log_id: Base64Bytes
     timestamp: datetime
-    entry_type: LogEntryTypes
+    entry_type: LogEntryTypeName
 
     @model_validator(mode="before")
     @classmethod

@@ -27,7 +27,7 @@ from cryptography.hazmat.primitives.asymmetric.types import CertificatePublicKey
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django_ca.constants import HASH_ALGORITHM_NAMES, HASH_ALGORITHM_TYPES
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_NAMES, SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.pydantic import (
     AuthorityInformationAccessModel,
@@ -40,8 +40,8 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.ec import ECDSAModel
 from django_ca.pydantic.extensions import CertificateExtensionModel
 from django_ca.pydantic.padding import AsymmetricPaddingTypes
-from django_ca.pydantic.type_aliases import OIDType, SignatureHashAlgorithmNameWithLegacy
-from django_ca.typehints import HashAlgorithms
+from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmNameWithLegacy, OIDType
+from django_ca.typehints import SignatureHashAlgorithmName
 
 
 def version_validator(value: Any) -> Any:
@@ -75,7 +75,7 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
     not_valid_after: datetime
     issuer: NameModel
     subject: NameModel
-    signature_hash_algorithm: SignatureHashAlgorithmNameWithLegacy | None
+    signature_hash_algorithm: AnnotatedSignatureHashAlgorithmNameWithLegacy | None
     signature_algorithm_oid: OIDType
     public_key_algorithm_oid: OIDType
     signature_algorithm_parameters: SignatureAlgorithmParameters
@@ -109,10 +109,10 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
         """Convert this model instance to a matching cryptography object."""
         return x509.load_pem_x509_certificate(self.pem.encode("ascii"))
 
-    def fingerprint(self, algorithm: HashAlgorithms | HashAlgorithm) -> bytes:
+    def fingerprint(self, algorithm: SignatureHashAlgorithmName | HashAlgorithm) -> bytes:
         """See :class:`cg:~cryptography.x509.Certificate`."""
         if isinstance(algorithm, str):
-            algorithm = HASH_ALGORITHM_TYPES[algorithm]()
+            algorithm = SIGNATURE_HASH_ALGORITHM_TYPES[algorithm]()
         return self.cryptography.fingerprint(algorithm)
 
     def public_key(self) -> CertificatePublicKeyTypes:
@@ -148,7 +148,7 @@ class X509CertMixinModel(BaseModel):
     compromised: datetime | None
     certificate: CertificateModel
 
-    fingerprints: dict[HashAlgorithms, str]
+    fingerprints: dict[SignatureHashAlgorithmName, str]
 
     @classmethod
     def _from_model(cls, value: X509CertMixin, info: ValidationInfo) -> dict[str, Any]:
@@ -161,7 +161,7 @@ class X509CertMixinModel(BaseModel):
                 raise ValueError("hash_algorithms must be a tuple of hash algorithms.")
 
         fingerprints = {
-            HASH_ALGORITHM_NAMES[type(algorithm)]: value.get_fingerprint(algorithm)
+            SIGNATURE_HASH_ALGORITHM_NAMES[type(algorithm)]: value.get_fingerprint(algorithm)
             for algorithm in algorithms
         }
 

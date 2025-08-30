@@ -39,11 +39,11 @@ from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
 from django_ca.typehints import (
-    AllowedHashTypes,
     ArgumentGroup,
     CertificateExtension,
     CertificateExtensionType,
     ParsableKeyType,
+    SignatureHashAlgorithm,
 )
 from django_ca.utils import format_general_name, parse_general_name
 
@@ -287,7 +287,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         key_type: ParsableKeyType,
         key_size: int | None,
         elliptic_curve: str | None,
-        algorithm: AllowedHashTypes | None,
+        algorithm: SignatureHashAlgorithm | None,
         # Authority Information Access extension (MUST be non-critical)
         authority_information_access: x509.AuthorityInformationAccess | None,
         # Basic Constraints extension

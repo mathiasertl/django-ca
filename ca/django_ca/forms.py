@@ -44,7 +44,7 @@ else:
 
 HASH_ALGORITHM_CHOICES = (
     ("", "None"),
-    *sorted([(name, name) for name in constants.HASH_ALGORITHM_TYPES], key=lambda t: t[1]),
+    *sorted([(name, name) for name in constants.SIGNATURE_HASH_ALGORITHM_TYPES], key=lambda t: t[1]),
 )
 
 
@@ -189,7 +189,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
     def clean_algorithm(self) -> hashes.HashAlgorithm | None:  # pylint: disable=missing-function-docstring
         if algorithm_name := self.cleaned_data["algorithm"]:
-            return constants.HASH_ALGORITHM_TYPES[algorithm_name]()
+            return constants.SIGNATURE_HASH_ALGORITHM_TYPES[algorithm_name]()
         return None  # required by mypy
 
     def clean_not_after(self) -> datetime:  # pylint: disable=missing-function-docstring

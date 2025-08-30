@@ -114,10 +114,10 @@ from django_ca.pydantic.type_aliases import NonEmptyOrderedSet
 from django_ca.typehints import (
     AlternativeNameTypeVar,
     CRLExtensionTypeTypeVar,
-    ExtensionKeys,
+    ExtensionKey,
     ExtensionTypeTypeVar,
     InformationAccessTypeVar,
-    KeyUsages,
+    KeyUsage,
     NoValueExtensionTypeVar,
     Self,
     SerializedPydanticExtension,
@@ -132,7 +132,7 @@ from django_ca.typehints import (
 class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for all extension models."""
 
-    type: ExtensionKeys | Literal["unknown"] = Field(repr=False)
+    type: ExtensionKey | Literal["unknown"] = Field(repr=False)
     critical: bool
     value: Any
     requires_critical: ClassVar[bool | None] = None
@@ -656,7 +656,7 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
     type: Literal["key_usage"] = Field(default="key_usage", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE]
     value: NonEmptyOrderedSet[
-        list[Annotated[Literal[KeyUsages], BeforeValidator(validators.key_usage_validator)]]
+        list[Annotated[Literal[KeyUsage], BeforeValidator(validators.key_usage_validator)]]
     ]
 
     @model_validator(mode="before")
@@ -665,7 +665,7 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.KeyUsage):
             extension_type: x509.KeyUsage = data.value
-            values: list[Literal[KeyUsages]] = []
+            values: list[Literal[KeyUsage]] = []
             for value in KEY_USAGE_NAMES:
                 try:
                     if getattr(extension_type, value) is True:

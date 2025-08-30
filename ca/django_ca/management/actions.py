@@ -35,7 +35,7 @@ from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, Rea
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic.validators import is_power_two_validator
-from django_ca.typehints import AllowedHashTypes, AlternativeNameExtensionType, EllipticCurves
+from django_ca.typehints import AlternativeNameExtensionType, EllipticCurveName, SignatureHashAlgorithm
 from django_ca.utils import parse_encoding, parse_general_name, parse_name_rfc4514
 
 ActionType = typing.TypeVar("ActionType")  # pylint: disable=invalid-name
@@ -80,7 +80,7 @@ class SingleValueAction(argparse.Action, typing.Generic[ParseType, ActionType], 
         setattr(namespace, self.dest, self.parse_value(values))
 
 
-class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
+class AlgorithmAction(SingleValueAction[str, SignatureHashAlgorithm]):
     """Action for giving an algorithm.
 
     >>> parser = argparse.ArgumentParser()
@@ -100,10 +100,10 @@ class AlgorithmAction(SingleValueAction[str, AllowedHashTypes]):
         kwargs.setdefault("metavar", "{SHA-512,SHA-256,...}")
         super().__init__(**kwargs)
 
-    def parse_value(self, value: str) -> AllowedHashTypes:
+    def parse_value(self, value: str) -> SignatureHashAlgorithm:
         """Parse the value for this action."""
         # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
-        return constants.HASH_ALGORITHM_TYPES[value]()  # type: ignore[index]
+        return constants.SIGNATURE_HASH_ALGORITHM_TYPES[value]()  # type: ignore[index]
 
 
 class CertificateAction(SingleValueAction[str, Certificate]):
@@ -230,7 +230,7 @@ class FormatAction(SingleValueAction[str, Encoding]):
             raise argparse.ArgumentError(self, str(ex)) from ex
 
 
-class EllipticCurveAction(SingleValueAction[EllipticCurves, ec.EllipticCurve]):
+class EllipticCurveAction(SingleValueAction[EllipticCurveName, ec.EllipticCurve]):
     """Action to parse an elliptic curve value.
 
     >>> parser = argparse.ArgumentParser()
@@ -245,7 +245,7 @@ class EllipticCurveAction(SingleValueAction[EllipticCurves, ec.EllipticCurve]):
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         super().__init__(**kwargs)
 
-    def parse_value(self, value: EllipticCurves) -> ec.EllipticCurve:
+    def parse_value(self, value: EllipticCurveName) -> ec.EllipticCurve:
         """Parse the value for this action."""
         # NOTE: A KeyError is ruled out by the choices argument set in the constructor.
         return constants.ELLIPTIC_CURVE_TYPES[value]()
