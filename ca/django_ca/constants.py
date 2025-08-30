@@ -56,6 +56,8 @@ from django_ca.typehints import (
     KeyUsages,
     OtherNames,
     ParsableKeyType,
+    SignatureHashAlgorithmNameWithLegacy,
+    SignatureHashAlgorithmTypeWithLegacy,
 )
 
 CRYPTOGRAPHY_VERSION = packaging.version.parse(cryptography.__version__).release
@@ -415,12 +417,22 @@ HASH_ALGORITHM_NAMES: MappingProxyType[type[AllowedHashTypes], HashAlgorithms] =
         hashes.SHA3_512: "SHA3/512",
     }
 )
+SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY: MappingProxyType[
+    type[SignatureHashAlgorithmTypeWithLegacy], SignatureHashAlgorithmNameWithLegacy
+] = MappingProxyType({**HASH_ALGORITHM_NAMES, hashes.MD5: "MD5", hashes.SHA1: "SHA1"})
+""":attr:`~django_ca.constants.HASH_ALGORITHM_NAMES` plus insecure legacy algorithms (MD5 and SHA1)."""
 
 #: Map of hash algorithm names to hash algorithm types (the inverse of
 #: :py:attr:`~django_ca.constants.HASH_ALGORITHM_NAMES`).
 HASH_ALGORITHM_TYPES: MappingProxyType[HashAlgorithms, type[AllowedHashTypes]] = MappingProxyType(
     {v: k for k, v in HASH_ALGORITHM_NAMES.items()}
 )
+
+SIGNATURE_HASH_ALGORITHM_TYPES_WITH_LEGACY: MappingProxyType[
+    SignatureHashAlgorithmNameWithLegacy, type[SignatureHashAlgorithmTypeWithLegacy]
+] = MappingProxyType({v: k for k, v in SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY.items()})
+"""Map of hash algorithm names to hash algorithm types (the inverse of
+:attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY`."""
 
 #: Map of `kwargs` for :py:class:`~cg:cryptography.x509.KeyUsage` to names in RFC 5280.
 KEY_USAGE_NAMES: MappingProxyType[KeyUsages, str] = MappingProxyType(

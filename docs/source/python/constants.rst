@@ -57,6 +57,13 @@
 
 .. autoclass:: django_ca.constants.ReasonFlags
 
+.. automapping:: django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY
+   :annotation:
+   :no-value:
+
+.. autodata:: django_ca.constants.SIGNATURE_HASH_ALGORITHM_TYPES_WITH_LEGACY
+   :no-value:
+   :annotation:
 
 .. _constants-other-names:
 

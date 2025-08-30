@@ -72,8 +72,8 @@ def test_certificate_model(any_cert: str) -> None:
 @pytest.mark.django_db
 def test_django_certificate_authority_model(ca: CertificateAuthority) -> None:
     """Test DjangoCertificateAuthorityModel."""
-    if isinstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA1):
-        pytest.xfail("SHA1 signature hash algorithm is not supported here.")
+    # if isinstance(ca.pub.loaded.signature_hash_algorithm, hashes.SHA1):
+    #     pytest.xfail("SHA1 signature hash algorithm is not supported here.")
     if ca.name == "letsencrypt_x1":
         pytest.xfail(
             "letsencrypt_x1 defines NameConstraints as non-critical, but spec says it must be critical."

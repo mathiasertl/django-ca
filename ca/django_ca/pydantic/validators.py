@@ -26,9 +26,34 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from django_ca import constants
-from django_ca.constants import ELLIPTIC_CURVE_NAMES, HASH_ALGORITHM_NAMES
+from django_ca.constants import (
+    ELLIPTIC_CURVE_NAMES,
+    HASH_ALGORITHM_NAMES,
+    SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY,
+)
 
 T = TypeVar("T")
+
+
+class SignatureHashAlgorithmValidator:
+    """Convert a :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` into a canonical name."""
+
+    def __init__(self, legacy: bool = False) -> None:
+        self.legacy = legacy
+
+    def __call__(self, value: Any) -> Any:
+        if isinstance(value, hashes.HashAlgorithm):
+            if self.legacy:
+                algorithm_mapping = SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY
+            else:
+                algorithm_mapping = HASH_ALGORITHM_NAMES
+
+            try:
+                # TYPEHINT NOTE: unsupported/unknown hash algorithms are caught with KeyError below.
+                return algorithm_mapping[type(value)]  # type: ignore[index]
+            except KeyError as ex:
+                raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
+        return value
 
 
 def access_method_parser(value: Any) -> Any:
@@ -126,17 +151,6 @@ def extended_key_usage_validator(value: str) -> str:
     """Convert human-readable ExtendedKeyUsage values into dotted strings."""
     if value in constants.EXTENDED_KEY_USAGE_OIDS:
         return constants.EXTENDED_KEY_USAGE_OIDS[value].dotted_string
-    return value
-
-
-def hash_algorithm_validator(value: Any) -> Any:
-    """Convert a :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` into a canonical name."""
-    if isinstance(value, hashes.HashAlgorithm):
-        try:
-            # TYPEHINT NOTE: unsupported/unknown hash algorithms are caught with KeyError below.
-            return HASH_ALGORITHM_NAMES[type(value)]  # type: ignore[index]
-        except KeyError as ex:
-            raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
     return value
 
 
