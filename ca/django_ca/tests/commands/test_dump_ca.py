@@ -31,7 +31,7 @@ from django_ca.tests.base.utils import cmd
 def dump_ca(serial: str, *args: Any, **kwargs: Any) -> bytes:
     """Execute the dump_ca command."""
     stdout, stderr = cmd("dump_ca", serial, *args, stdout=BytesIO(), stderr=BytesIO(), **kwargs)
-    assert stderr == b""
+    assert stderr == b"This command is deprecated. Use `view_ca --output-format {PEM,DER} instead.\n"
     return stdout
 
 

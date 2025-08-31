@@ -9,9 +9,18 @@
 Command-line
 ************
 
+* :command:`manage.py init_ca`, :command:`manage.py view_ca`, :command:`manage.py sign_cert` and
+  :command:`manage.py view_cert` now output data in a unified way. They can now output the certificate data as
+  PEM, DER, text or JSON (identical to REST API output), or just the serial (to use in further commands).
+* :command:`manage.py dump_ca` and :command:`manage.py dump_cert` are deprecated and will be removed in
+  ``django-ca~=2.6.0``. Use ``view_{ca,cert} --output-format {pem,der}`` instead.
 * **BACKWARDS INCOMPATIBLE:**  :command:`manage.py regenerate_ocsp_keys`: Removed the ``--key-type``,
   ``--key-size``, ``--elliptic-curve``, ``--profile``, ``algorithm`` and ``--expires`` parameters (deprecated
   since ``django-ca~=2.3.0``).
+* :command:`manage.py sign_cert`:
+
+  * **BACKWARDS INCOMPATIBLE:** The ``--out`` option was removed. Simply pipe stdout instead.
+
 * :command:`manage.py resign_cert`:
 
   * **BACKWARDS INCOMPATIBLE:**  :command:`manage.py resign_cert`: Removed the ``--ca``, ``--subject``,

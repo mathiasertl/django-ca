@@ -22,9 +22,12 @@ import pytest
 from freezegun import freeze_time
 
 from django_ca.models import Certificate, Watcher
+from django_ca.pydantic.certificate import DjangoCertificateModel
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import cmd, get_cert_context
+
+pytestmark = [pytest.mark.django_db]
 
 expected = {
     "root-cert": """* Subject:
@@ -61,8 +64,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "child-cert": """* Subject:
   * countryName (C): AT
@@ -98,8 +107,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "ec-cert": """* Subject:
   * countryName (C): AT
@@ -135,8 +150,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "ed25519-cert": """* Subject:
   * countryName (C): AT
@@ -172,8 +193,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "ed448-cert": """* Subject:
   * countryName (C): AT
@@ -209,8 +236,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "pwd-cert": """* Subject:
   * countryName (C): AT
@@ -246,8 +279,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "dsa-cert": """* Subject:
   * countryName (C): AT
@@ -283,8 +322,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "profile-client": """* Subject:
   * countryName (C): AT
@@ -320,8 +365,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "profile-server": """* Subject:
   * countryName (C): AT
@@ -357,8 +408,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "profile-webserver": """* Subject:
   * countryName (C): AT
@@ -394,8 +451,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "profile-enduser": """* Subject:
   * countryName (C): AT
@@ -429,8 +492,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "profile-ocsp": """* Subject:
   * commonName (CN): {name}.example.com
@@ -461,8 +530,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "no-extensions": """* Subject:
   * commonName (CN): {name}.example.com
@@ -477,8 +552,14 @@ Digest:
 Certificate extensions:
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "empty-subject": """* Subject: (empty)
 * Serial: {serial_colons}
@@ -493,8 +574,14 @@ Certificate extensions:
 {subject_alternative_name_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "all-extensions": """* Subject:
   * countryName (C): AT
@@ -545,8 +632,14 @@ Certificate extensions:
 {tls_feature_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "alt-extensions": """* Subject:
   * countryName (C): AT
@@ -591,8 +684,14 @@ Certificate extensions:
 {tls_feature_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
 }
 
@@ -615,8 +714,14 @@ Valid until: {not_after_str}
 Status: {status}
 Watchers:
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""".format(status=status, **get_cert_context(name))
         )
@@ -660,8 +765,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""".format(status=status, **get_cert_context(name))
         )
@@ -687,8 +798,14 @@ Digest:
 * No watchers
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """.format(status=status, **get_cert_context(name))
     )
     assert stderr == ""
@@ -750,8 +867,14 @@ def test_revoked(child_cert: Certificate) -> None:
 * No watchers
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """.format(**CERT_DATA["child-cert"])
     )
 
@@ -779,8 +902,14 @@ def test_no_san_with_watchers(no_extensions: Certificate) -> None:
   * user@example.com
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """.format(**get_cert_context("no-extensions"))
     )
 
@@ -843,8 +972,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
         sct=sct,
     )
@@ -906,8 +1041,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
         sct=sct,
     )
@@ -958,8 +1099,14 @@ Certificate extensions:
 {subject_key_identifier_text}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """.format(**get_cert_context("cloudflare_1")),
     )
 
@@ -991,15 +1138,29 @@ def test_contrib_multiple_ous() -> None:
 Certificate extensions:
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     )
 
 
-@pytest.mark.django_db
 def test_unknown_cert() -> None:
     """Test viewing an unknown certificate."""
     name = "foobar"
     with assert_command_error(rf"^Error: argument cert: {name}: Certificate not found\.$"):
         cmd("view_cert", name)
+
+
+def test_with_json_output(root_cert: Certificate) -> None:
+    """Test creating a CA and outputting the object as JSON data."""
+    out, err = cmd("view_cert", root_cert.serial, output_format="json", serial_format="int")
+
+    model: DjangoCertificateModel = DjangoCertificateModel.model_validate_json(out)
+    assert model.certificate.serial == root_cert.serial
+    assert err == ""

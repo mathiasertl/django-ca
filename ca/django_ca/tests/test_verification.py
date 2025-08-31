@@ -124,7 +124,9 @@ def sign_cert(ca: CertificateAuthority, hostname: str = "example.com", **kwargs:
 
     with tempfile.TemporaryDirectory() as tempdir:
         out_path = os.path.join(tempdir, f"{hostname}.pem")
-        cmd("sign_cert", ca=ca, subject=subject, out=out_path, stdin=stdin, **kwargs)
+        pem, _err = cmd("sign_cert", ca=ca, subject=subject, stdin=stdin, **kwargs)
+        with open(out_path, "w", encoding="ascii") as stream:
+            stream.write(pem)
         yield out_path
 
 

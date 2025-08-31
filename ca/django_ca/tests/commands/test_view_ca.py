@@ -23,6 +23,7 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import CertificateAuthority
+from django_ca.pydantic.certificate import DjangoCertificateAuthorityModel
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.utils import (
     certificate_policies,
@@ -33,7 +34,7 @@ from django_ca.tests.base.utils import (
 )
 from django_ca.utils import format_general_name
 
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.django_db]
 
 expected = {
     "ec": """* Name: {name}
@@ -82,8 +83,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "ed25519": """* Name: {name}
@@ -142,8 +149,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "ed448": """* Name: {name}
@@ -195,8 +208,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "child": """* Name: {name}
@@ -249,8 +268,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root": """* Name: {name}
@@ -299,8 +324,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-no-key-backend-options": """* Name: {name}
@@ -349,8 +380,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-with-children": """* Name: {name}
@@ -400,8 +437,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-no-extensions": """* Name: {name}
@@ -440,8 +483,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-no-wrap": """* Name: {name}
@@ -480,8 +529,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+{sha224}
 {sha256}
+{sha384}
 {sha512}
+{sha3_224}
+{sha3_256}
+{sha3_384}
+{sha3_512}
 """,
     "root-properties": """* Name: {name}
 * Enabled: Yes
@@ -532,8 +587,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-acme-disabled": """* Name: {name}
@@ -578,8 +639,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-acme-disabled-by-ca": """* Name: {name}
@@ -627,8 +694,14 @@ Certificate extensions for signed certificates:
       * URI:{sign_crl_distribution_points[value][0][full_name][0][value]}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 """,
     "root-sign-options": """* Name: {name}
 * Enabled: Yes
@@ -684,8 +757,14 @@ Certificate extensions for signed certificates:
   * {sign_issuer_alternative_name}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-no-sign-options": """* Name: {name}
@@ -725,8 +804,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "root-sign-options-only-issuer-alternative-name": """* Name: {name}
@@ -768,8 +853,14 @@ Certificate extensions for signed certificates:
   * {sign_issuer_alternative_name}
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "globalsign": """* Name: {name}
@@ -813,8 +904,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "digicert_ev_root": """* Name: {name}
@@ -860,8 +957,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "comodo": """* Name: {name}
@@ -907,8 +1010,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "identrust_root_1": """* Name: {name}
@@ -950,8 +1059,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "globalsign_r2_root": """* Name: {name}
@@ -997,8 +1112,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "comodo_dv": """* Name: {name}
@@ -1054,8 +1175,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "rapidssl_g3": """* Name: {name}
@@ -1105,8 +1232,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "geotrust": """* Name: {name}
@@ -1148,8 +1281,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "comodo_ev": """* Name: {name}
@@ -1203,8 +1342,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "digicert_ha_intermediate": """* Name: {name}
@@ -1258,8 +1403,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "dst_root_x3": """* Name: {name}
@@ -1299,8 +1450,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "globalsign_dv": """* Name: {name}
@@ -1351,8 +1508,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "godaddy_g2_intermediate": """* Name: {name}
@@ -1407,8 +1570,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "google_g3": """* Name: {name}
@@ -1460,8 +1629,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "letsencrypt_x1": """* Name: {name}
@@ -1512,8 +1687,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "letsencrypt_x3": """* Name: {name}
@@ -1562,8 +1743,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "startssl_root": """* Name: {name}
@@ -1615,8 +1802,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "startssl_class2": """* Name: {name}
@@ -1668,8 +1861,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "startssl_class3": """* Name: {name}
@@ -1723,8 +1922,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "trustid_server_a52": """* Name: {name}
@@ -1777,8 +1982,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "digicert_global_root": """* Name: {name}
@@ -1824,8 +2035,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
     "digicert_sha2": """* Name: {name}
@@ -1876,8 +2093,14 @@ Certificate extensions:
 No certificate extensions for signed certificates.
 
 Digest:
+  SHA-224: {sha224}
   SHA-256: {sha256}
+  SHA-384: {sha384}
   SHA-512: {sha512}
+  SHA3/224: {sha3_224}
+  SHA3/256: {sha3_256}
+  SHA3/384: {sha3_384}
+  SHA3/512: {sha3_512}
 
 {pub[pem]}""",
 }
@@ -1887,8 +2110,8 @@ expected["dsa"] = expected["ec"]
 expected["pwd"] = expected["ec"]
 
 
-def _wrap_hash(text: str, columns: int) -> str:
-    return "\n".join(textwrap.wrap(text, columns, subsequent_indent=" " * 11))
+def _wrap_hash(text: str, columns: int, subsequent_indent: int = 11) -> str:
+    return "\n".join(textwrap.wrap(text, columns, subsequent_indent=" " * subsequent_indent))
 
 
 def test_all_cas(ca: CertificateAuthority) -> None:
@@ -2030,18 +2253,31 @@ def test_sign_options_only_issuer_alternative_name(usable_root: CertificateAutho
 def test_wrap_digest(usable_root: CertificateAuthority) -> None:
     """Test wrapping the digest."""
     data = get_cert_context("root")
+    sha224 = data["sha224"]
     sha256 = data["sha256"]
+    sha384 = data["sha384"]
     sha512 = data["sha512"]
+    sha3_224 = data["sha3_224"]
+    sha3_256 = data["sha3_256"]
+    sha3_384 = data["sha3_384"]
+    sha3_512 = data["sha3_512"]
 
     with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((64, 0))) as shutil_mock:
         stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
 
     # Django calls get_terminal_size as well, so the number of calls is unpredictable
-    shutil_mock.assert_called_with(fallback=(107, 100))
+    shutil_mock.assert_called_with(fallback=(111, 100))
     assert stderr == ""
 
-    data["sha256"] = _wrap_hash(f"  SHA-256: {sha256}", 62)
-    data["sha512"] = _wrap_hash(f"  SHA-512: {sha512}", 62)
+    data["sha224"] = _wrap_hash(f"  SHA-224: {sha224}", 59)
+    data["sha256"] = _wrap_hash(f"  SHA-256: {sha256}", 59)
+    data["sha384"] = _wrap_hash(f"  SHA-384: {sha384}", 59)
+    data["sha512"] = _wrap_hash(f"  SHA-512: {sha512}", 59)
+    data["sha3_224"] = _wrap_hash(f"  SHA3/224: {sha3_224}", 60, 12)
+    data["sha3_256"] = _wrap_hash(f"  SHA3/256: {sha3_256}", 60, 12)
+    data["sha3_384"] = _wrap_hash(f"  SHA3/384: {sha3_384}", 60, 12)
+    data["sha3_512"] = _wrap_hash(f"  SHA3/512: {sha3_512}", 60, 12)
+
     assert stdout == expected["root-no-wrap"].format(**data)
 
     # try with decreasing terminal size
@@ -2051,11 +2287,48 @@ def test_wrap_digest(usable_root: CertificateAuthority) -> None:
 
     with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((62, 0))) as shutil_mock:
         stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
+    data["sha3_224"] = _wrap_hash(f"  SHA3/224: {sha3_224}", 57, 12)
+    data["sha3_256"] = _wrap_hash(f"  SHA3/256: {sha3_256}", 57, 12)
+    data["sha3_384"] = _wrap_hash(f"  SHA3/384: {sha3_384}", 57, 12)
+    data["sha3_512"] = _wrap_hash(f"  SHA3/512: {sha3_512}", 57, 12)
     assert stdout == expected["root-no-wrap"].format(**data)
 
     # Get smaller, so we wrap another element in the colon'd hash
     with mock.patch("shutil.get_terminal_size", return_value=os.terminal_size((61, 0))) as shutil_mock:
         stdout, stderr = cmd("view_ca", usable_root.serial, pem=False, extensions=False)
-    data["sha256"] = _wrap_hash(f"  SHA-256: {sha256}", 59)
-    data["sha512"] = _wrap_hash(f"  SHA-512: {sha512}", 59)
+    data["sha224"] = _wrap_hash(f"  SHA-224: {sha224}", 56)
+    data["sha256"] = _wrap_hash(f"  SHA-256: {sha256}", 56)
+    data["sha384"] = _wrap_hash(f"  SHA-384: {sha384}", 56)
+    data["sha512"] = _wrap_hash(f"  SHA-512: {sha512}", 56)
     assert stdout == expected["root-no-wrap"].format(**data)
+
+
+def test_with_pem_output(root: CertificateAuthority) -> None:
+    """Output the CA as PEM."""
+    out, err = cmd("view_ca", root.serial, output_format="pem")
+    assert out == f"{root.pub.pem.strip()}\n"
+    assert err == ""
+
+
+def test_with_der_output(capsysbinary: pytest.CaptureFixture[bytes], root: CertificateAuthority) -> None:
+    """Output the CA as DER."""
+    cmd("view_ca", root.serial, output_format="der")
+    out, err = capsysbinary.readouterr()
+    assert out == root.pub.der
+    assert err == b""
+
+
+def test_with_json_output(root: CertificateAuthority) -> None:
+    """Output the CA as JSON data."""
+    out, err = cmd("view_ca", root.serial, output_format="json", serial_format="int")
+
+    model: DjangoCertificateAuthorityModel = DjangoCertificateAuthorityModel.model_validate_json(out)
+    assert model.name == root.name
+    assert model.certificate.serial == root.serial
+    assert err == ""
+
+
+def test_output_serial_as_hex(usable_root: CertificateAuthority) -> None:
+    """Output the serial in hex format."""
+    stdout, stderr = cmd("view_ca", usable_root.serial, output_format="serial", serial_format="hex")
+    assert stdout.strip() == usable_root.serial
