@@ -34,7 +34,11 @@ from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
 from django_ca.management.base import BaseSignCommand, add_key_size
-from django_ca.management.mixins import CertificateAuthorityDetailMixin, StorePrivateKeyMixin
+from django_ca.management.mixins import (
+    CertificateAuthorityDetailMixin,
+    OutputCertificateAuthorityMixin,
+    StorePrivateKeyMixin,
+)
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import cache_crl, generate_ocsp_key, run_task
@@ -48,7 +52,12 @@ from django_ca.typehints import (
 from django_ca.utils import format_general_name, parse_general_name
 
 
-class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCommand):
+class Command(
+    StorePrivateKeyMixin,
+    CertificateAuthorityDetailMixin,
+    OutputCertificateAuthorityMixin,
+    BaseSignCommand,
+):
     """Implement :command:`manage.py init_ca`."""
 
     help = "Create a certificate authority."
@@ -235,6 +244,7 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         self.add_acme_group(parser)
         self.add_ocsp_group(parser, default_ocsp_key_backend=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND)
         self.add_rest_api_group(parser)
+        self.add_output_certificate_arguments(parser)
 
         self.add_authority_information_access_group(parser)
         self.add_basic_constraints_group(parser)
@@ -583,3 +593,4 @@ class Command(StorePrivateKeyMixin, CertificateAuthorityDetailMixin, BaseSignCom
         )
 
         run_task(cache_crl, serial=ca.serial, key_backend_options=serialized_key_backend_options)
+        self.output_certificate(ca, **options)

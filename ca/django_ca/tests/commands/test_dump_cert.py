@@ -26,11 +26,13 @@ from django_ca.models import Certificate
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.utils import cmd
 
+pytestmark = pytest.mark.django_db
+
 
 def dump_cert(serial: str, *args: Any, **kwargs: Any) -> bytes:
     """Execute the dump_cert command."""
     stdout, stderr = cmd("dump_cert", serial, *args, stdout=BytesIO(), stderr=BytesIO(), **kwargs)
-    assert stderr == b""
+    assert stderr == b"This command is deprecated. Use `view_cert --output-format {PEM,DER} instead.\n"
     return stdout
 
 

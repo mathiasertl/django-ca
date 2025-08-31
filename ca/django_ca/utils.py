@@ -204,6 +204,18 @@ def hex_to_bytes(value: str) -> bytes:
     return binascii.unhexlify(value.replace(":", ""))
 
 
+def hex_to_int(value: str) -> int:
+    """Create a hex number to an integer.
+
+    his should be the inverse of :py:func:`~django_ca.utils.int_to_hex`.
+
+    >>> hex_to_int('BC614E')
+    12345678
+    """
+    # NOTE: only a separate function so we can test the conversion of the transformed hex-value better
+    return int(value, 16)
+
+
 def check_name(name: x509.Name) -> x509.Name:
     """Check if `name` is a valid x509 Name.
 

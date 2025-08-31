@@ -15,18 +15,14 @@
 
 import abc
 import io
-import shutil
 import sys
-import textwrap
 import typing
 from datetime import datetime, timedelta, timezone as tz
 from typing import Any
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from django.conf import settings
 from django.core.management.base import (
     BaseCommand as _BaseCommand,
     CommandError,
@@ -42,16 +38,14 @@ from django_ca.constants import ExtensionOID
 from django_ca.management import actions, mixins
 from django_ca.management.actions import DatetimeAction
 from django_ca.management.mixins import UsePrivateKeyMixin
-from django_ca.models import CertificateAuthority, X509CertMixin
+from django_ca.models import CertificateAuthority
 from django_ca.profiles import Profile
 from django_ca.typehints import (
     ActionsContainer,
     ArgumentGroup,
     ConfigurableExtension,
     ConfigurableExtensionType,
-    SignatureHashAlgorithm,
 )
-from django_ca.utils import add_colons, name_for_display
 
 if typing.TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
@@ -504,9 +498,6 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             default=[],
             help="Email EMAIL when this certificate expires (may be given multiple times)",
         )
-        general_group.add_argument(
-            "--out", metavar="FILE", help="Save signed certificate to FILE. If omitted, print to stdout."
-        )
         return general_group
 
     def add_ocsp_no_check_group(self, parser: CommandParser) -> None:
@@ -662,108 +653,3 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             self.add_extension(extensions, tls_feature, tls_feature_critical)
 
         return extensions
-
-
-class BaseViewCommand(BaseCommand):  # pylint: disable=abstract-method; is a base class
-    """Base class for view_* commands."""
-
-    def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument(
-            "-n",
-            "--no-pem",
-            default=True,
-            dest="pem",
-            action="store_false",
-            help="Do not output public certificate in PEM format.",
-        )
-        parser.add_argument(
-            "--no-extensions",
-            default=True,
-            dest="extensions",
-            action="store_false",
-            help="Show all extensions, not just subjectAltName.",
-        )
-        parser.add_argument(
-            "--no-wrap",
-            default=True,
-            dest="wrap",
-            action="store_false",
-            help="Do not wrap long lines to terminal width.",
-        )
-        super().add_arguments(parser)
-
-    def wrap_digest(self, algorithm: str, text: str) -> str:
-        """Wrap digest in a way that colons align nicely in multiple lines."""
-        # 107 is enough to (just) fit an SHA-256 hash
-        text_width = min(107, shutil.get_terminal_size(fallback=(107, 100)).columns)
-        text_width -= (text_width + 1) % 3
-
-        subsequent_indent = " " * (len(algorithm) + 4)
-        lines = textwrap.wrap(text, text_width, initial_indent="  ", subsequent_indent=subsequent_indent)
-        return "\n".join(lines)
-
-    def output_status(self, cert: X509CertMixin) -> None:
-        """Output certificate status."""
-        now = datetime.now(tz.utc)
-        if cert.revoked:
-            self.stdout.write("* Status: Revoked")
-        elif cert.pub.loaded.not_valid_after_utc < now:
-            self.stdout.write("* Status: Expired")
-        elif cert.pub.loaded.not_valid_before_utc > now:
-            self.stdout.write("* Status: Not yet valid")
-        else:
-            self.stdout.write("* Status: Valid")
-
-    def output_name(self, name: x509.Name, indent: str = "  ") -> None:
-        """Output a name as a list."""
-        for key, value in name_for_display(name):
-            self.stdout.write(f"{indent}* {key}: {value}")
-
-    def output_header(self, cert: X509CertMixin) -> None:
-        """Output basic certificate information."""
-        if cert.subject:
-            self.stdout.write("* Subject:")
-            self.output_name(cert.subject)
-        else:
-            self.stdout.write("* Subject: (empty)")
-
-        self.stdout.write(f"* Serial: {add_colons(cert.serial)}")
-        if cert.issuer:
-            self.stdout.write("* Issuer:")
-            self.output_name(cert.issuer)
-        else:
-            self.stdout.write("* Issuer: (empty)")
-
-        if settings.USE_TZ:
-            # If USE_TZ is True, database (and thus output) fields will use locally configured timezone
-            not_before = cert.not_before
-            not_after = cert.not_after
-        else:
-            # If USE_TZ is False, still display UTC timestamps.
-            not_before = cert.pub.loaded.not_valid_before_utc
-            not_after = cert.pub.loaded.not_valid_after_utc
-
-        self.stdout.write(f"* Not valid before: {not_before.isoformat(' ')}")
-        self.stdout.write(f"* Not valid after: {not_after.isoformat(' ')}")
-
-        self.output_status(cert)
-
-    def output_footer(self, cert: X509CertMixin, pem: bool, wrap: bool = True) -> None:
-        """Output digest and PEM in footer."""
-        self.stdout.write("\nDigest:")
-        hash_algorithms: tuple[SignatureHashAlgorithm, ...] = (hashes.SHA256(), hashes.SHA512())
-        for algorithm in hash_algorithms:
-            algorithm_name = constants.SIGNATURE_HASH_ALGORITHM_NAMES[type(algorithm)]
-            fingerprint = cert.get_fingerprint(algorithm)
-            text = f"{algorithm_name}: {fingerprint}"
-
-            if wrap is True:
-                text = self.wrap_digest(algorithm_name, text)
-            else:
-                text = f"  {text}"
-
-            self.stdout.write(text)
-
-        if pem is True:
-            self.stdout.write("")
-            self.stdout.write(cert.pub.pem)

@@ -28,7 +28,7 @@ import packaging.version
 
 import cryptography
 from cryptography import x509
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtendedKeyUsageOID
@@ -37,7 +37,7 @@ import django
 
 from django_ca.constants import EXTENSION_KEYS
 from django_ca.tests.base.typehints import CsrDict, KeyDict, PubDict
-from django_ca.utils import add_colons
+from django_ca.utils import add_colons, bytes_to_hex
 
 try:
     import tomllib
@@ -396,6 +396,14 @@ for _name, _cert_data in CERT_DATA.items():
     _cert_data["valid_until"] = _not_after
     _cert_data["not_before_str"] = _cert_data["not_before"].isoformat(" ")
     _cert_data["not_after_str"] = _cert_data["valid_until"].isoformat(" ")
+
+    # Add fingerprints not in json data
+    _cert_data["sha224"] = bytes_to_hex(_cert.fingerprint(hashes.SHA224()))
+    _cert_data["sha384"] = bytes_to_hex(_cert.fingerprint(hashes.SHA384()))
+    _cert_data["sha3_224"] = bytes_to_hex(_cert.fingerprint(hashes.SHA3_224()))
+    _cert_data["sha3_256"] = bytes_to_hex(_cert.fingerprint(hashes.SHA3_256()))
+    _cert_data["sha3_384"] = bytes_to_hex(_cert.fingerprint(hashes.SHA3_384()))
+    _cert_data["sha3_512"] = bytes_to_hex(_cert.fingerprint(hashes.SHA3_512()))
 
     for extension in _cert.extensions:
         try:

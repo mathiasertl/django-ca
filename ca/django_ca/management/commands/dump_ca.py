@@ -45,6 +45,8 @@ class Command(BinaryCommand):
     def handle(
         self, ca: CertificateAuthority, path: str, bundle: bool, encoding: Encoding, **options: Any
     ) -> None:
+        # pragma: only django-ca<2.6.0
+        self.stderr.write("This command is deprecated. Use `view_ca --output-format {PEM,DER} instead.")
         if bundle and encoding == Encoding.DER:
             raise CommandError("Cannot dump bundle when using DER format.")
 

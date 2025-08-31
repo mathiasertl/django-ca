@@ -18,31 +18,22 @@
 
 from typing import Any
 
-from django_ca.management.base import BaseViewCommand
-from django_ca.management.mixins import CertCommandMixin
+from django.core.management import CommandParser
+
+from django_ca.management.base import BaseCommand
+from django_ca.management.mixins import CertCommandMixin, OutputCertificateMixin
 from django_ca.models import Certificate
 
 
-class Command(CertCommandMixin, BaseViewCommand):
+class Command(OutputCertificateMixin, CertCommandMixin, BaseCommand):
     """Implement :command:`manage.py view_cert`."""
 
     allow_revoked = True
     help = 'View a certificate. The "list_certs" command lists all known certificates.'
 
-    def handle(self, cert: Certificate, pem: bool, extensions: bool, wrap: bool, **options: Any) -> None:
-        self.output_header(cert)
+    def add_arguments(self, parser: CommandParser) -> None:
+        self.add_output_certificate_arguments(parser, default_format="text")
+        super().add_arguments(parser)
 
-        watchers = cert.watchers.all()
-        if watchers:
-            self.stdout.write("* Watchers:")
-            for watcher in watchers:
-                self.stdout.write(f"  * {watcher}")
-        else:
-            self.stdout.write("* No watchers")
-
-        # self.stdout.write extensions
-        if extensions:
-            self.stdout.write("\nCertificate extensions:")
-            self.print_extensions(cert)
-
-        self.output_footer(cert, pem=pem, wrap=wrap)
+    def handle(self, cert: Certificate, **options: Any) -> None:
+        self.output_certificate(cert, **options)

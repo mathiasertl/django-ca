@@ -44,7 +44,7 @@ def test_certificate_model(any_cert: str) -> None:
     model = assert_cryptography_model(
         CertificateModel,
         {
-            "serial_number": cert.serial_number,
+            "serial": cert.serial_number,
             "version": cert.version,
             "not_valid_before": cert.not_valid_before_utc,
             "not_valid_after": cert.not_valid_after_utc,

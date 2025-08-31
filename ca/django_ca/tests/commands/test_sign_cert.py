@@ -17,7 +17,6 @@ import io
 import os
 import shutil
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 from cryptography import x509
@@ -67,7 +66,7 @@ from django_ca.typehints import CRYPTOGRAPHY_VERSION
 csr: bytes = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
 
 # All tests in this module require a valid time (so that the CA is valid)
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.django_db]
 
 
 def sign_cert(ca: CertificateAuthority, subject: x509.Name, **kwargs: Any) -> tuple[str, str]:
@@ -128,24 +127,6 @@ def test_from_file(usable_root: CertificateAuthority, subject: x509.Name) -> Non
     )
     assert actual[ExtensionOID.EXTENDED_KEY_USAGE] == extended_key_usage(ExtendedKeyUsageOID.SERVER_AUTH)
     assert ExtensionOID.SUBJECT_ALTERNATIVE_NAME not in actual
-
-
-def test_to_file(tmp_path: Path, usable_root: CertificateAuthority, subject: x509.Name) -> None:
-    """Test writing PEM to file."""
-    out_path = os.path.join(tmp_path, "test.pem")
-    with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = sign_cert(usable_root, subject, out=out_path, stdin=csr)
-    assert stdout == "Please paste the CSR:\n"
-    assert stderr == ""
-
-    cert = Certificate.objects.get()
-    assert_post_issue_cert(post, cert)
-    assert_signature([usable_root], cert)
-
-    with open(out_path, encoding="ascii") as out_stream:
-        from_file = out_stream.read()
-
-    assert cert.pub.pem == from_file
 
 
 def test_with_rsa_with_algorithm(usable_root: CertificateAuthority, subject: x509.Name) -> None:

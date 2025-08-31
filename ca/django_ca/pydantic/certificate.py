@@ -40,7 +40,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.ec import ECDSAModel
 from django_ca.pydantic.extensions import CertificateExtensionModel
 from django_ca.pydantic.padding import AsymmetricPaddingTypes
-from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmNameWithLegacy, OIDType
+from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmNameWithLegacy, OIDType, Serial
 from django_ca.typehints import SignatureHashAlgorithmName
 
 
@@ -66,7 +66,7 @@ SignatureAlgorithmParameters = Annotated[
 class CertificateModel(CryptographyModel[x509.Certificate]):
     """Model for :class:`cg:~cryptography.x509.Certificate`."""
 
-    serial_number: int
+    serial: Serial
     version: Annotated[  # type: ignore[name-defined]  # false positive
         Literal[x509.Version.v1.value, x509.Version.v3.value],
         BeforeValidator(version_validator),
@@ -89,7 +89,7 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
         if isinstance(obj, x509.Certificate):
             pem = obj.public_bytes(Encoding.PEM).decode("ascii")
             return {
-                "serial_number": obj.serial_number,
+                "serial": obj.serial_number,
                 "version": obj.version.value,
                 "not_valid_before": obj.not_valid_before_utc,
                 "not_valid_after": obj.not_valid_after_utc,

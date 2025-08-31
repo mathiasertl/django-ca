@@ -44,6 +44,7 @@ class Command(CertCommandMixin, BinaryCommand):
         )
 
     def handle(self, cert: Certificate, bundle: bool, encoding: Encoding, path: str, **options: Any) -> None:
+        self.stderr.write("This command is deprecated. Use `view_cert --output-format {PEM,DER} instead.")
         if bundle and encoding == Encoding.DER:
             raise CommandError("Cannot dump bundle when using DER format.")
 

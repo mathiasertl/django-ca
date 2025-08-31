@@ -88,6 +88,7 @@ from django_ca.typehints import (
     SignatureHashAlgorithm,
     SignatureHashAlgorithmName,
 )
+from django_ca.utils import add_colons
 
 use_options = StoragesUsePrivateKeyOptions(password=None)
 
@@ -153,9 +154,11 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
         stderr=stderr,
         **kwargs,
     )
-    assert out == ""
+    ca = CertificateAuthority.objects.get(name=name)
+
+    assert out == f"{add_colons(ca.serial)}\n"
     assert err == ""
-    return CertificateAuthority.objects.get(name=name)
+    return ca
 
 
 def init_ca_e2e(
@@ -167,7 +170,8 @@ def init_ca_e2e(
 
     with assert_create_ca_signals() as (_pre, post):
         out, err = cmd_e2e(["init_ca", name, subject, *args])
-        assert out == ""
+        ca = CertificateAuthority.objects.get(name=name)
+        assert out == f"{add_colons(ca.serial)}\n"
         assert err == ""
 
     ca = CertificateAuthority.objects.get(name=name)
@@ -742,9 +746,10 @@ def test_empty_subject_fields(hostname: str, ca_name: str) -> None:
     """Test creating a CA with empty subject fields."""
     with assert_create_ca_signals() as (pre, post):
         out, err = cmd("init_ca", ca_name, f"L=,CN={hostname}")
-    assert out == ""
-    assert err == ""
     ca = CertificateAuthority.objects.get(name=ca_name)
+    assert out == f"{add_colons(ca.serial)}\n"
+    assert err == ""
+
     assert_post_create_ca(post, ca)
     ca.full_clean()  # assert e.g. max_length in serials
     assert_signature([ca], ca)
@@ -752,6 +757,16 @@ def test_empty_subject_fields(hostname: str, ca_name: str) -> None:
         [x509.NameAttribute(NameOID.LOCALITY_NAME, ""), x509.NameAttribute(NameOID.COMMON_NAME, hostname)]
     )
     assert_authority_key_identifier(ca, ca)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("tmpcadir")
+def test_with_no_output(hostname: str, ca_name: str) -> None:
+    """Test creating a CA with no output."""
+    with assert_create_ca_signals() as (pre, post):
+        out, err = cmd("init_ca", ca_name, f"CN={hostname}", output_format="none")
+    assert out == ""
+    assert err == ""
 
 
 @pytest.mark.django_db

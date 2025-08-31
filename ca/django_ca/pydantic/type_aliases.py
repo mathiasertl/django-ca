@@ -120,7 +120,8 @@ This type will also accept instances of |HashAlgorithm| and convert them transpa
 AnnotatedSignatureHashAlgorithmNameWithLegacy = Annotated[
     SignatureHashAlgorithmNameWithLegacy, BeforeValidator(SignatureHashAlgorithmValidator(legacy=True))
 ]
-"""Same as :attr:`~django_ca.pydantic.type_aliases.HashAlgorithmName`, but also accepts legacy algorithms."""
+"""Same as :attr:`~django_ca.pydantic.type_aliases.AnnotatedSignatureHashAlgorithmName`, but also accepts
+legacy algorithms."""
 
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
 PositiveTimedelta = Annotated[timedelta, Ge(timedelta(seconds=0))]

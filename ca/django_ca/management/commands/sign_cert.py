@@ -27,12 +27,13 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca.conf import model_settings
 from django_ca.management.base import BaseSignCertCommand
+from django_ca.management.mixins import OutputCertificateMixin
 from django_ca.models import Certificate, CertificateAuthority, Watcher
 from django_ca.profiles import profiles
 from django_ca.typehints import ConfigurableExtension, SignatureHashAlgorithm
 
 
-class Command(BaseSignCertCommand):
+class Command(OutputCertificateMixin, BaseSignCertCommand):
     """Implement the :command:`manage.py sign_cert` command."""
 
     help = f"""Sign a CSR and output signed certificate. The defaults depend on the configured
@@ -56,9 +57,8 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
             metavar="FILE",
             help="The path to the certificate to sign, if omitted, you will be be prompted.",
         )
-        general_group.add_argument(
-            "-b", "--bundle", default=False, action="store_true", help="Output the whole certificate bundle."
-        )
+
+        self.add_output_certificate_arguments(parser, default_format="pem")
 
         self.add_profile(
             parser,
@@ -66,16 +66,14 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(  # pylint: disable=too-many-locals
+    def handle(
         self,
         ca: CertificateAuthority,
         subject: x509.Name | None,
         expires: timedelta | None,
         watch: list[str],
         csr_path: str,
-        bundle: bool,
         profile: str | None,
-        out: str | None,
         algorithm: SignatureHashAlgorithm | None,
         # Subject Alternative Name extension - used in the function directly
         subject_alternative_name: x509.SubjectAlternativeName | None,
@@ -139,13 +137,4 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         cert.watchers.add(*watchers)
 
-        if bundle is True:
-            output = cert.bundle_as_pem
-        else:
-            output = cert.pub.pem
-
-        if out:
-            with open(out, "w", encoding="ascii") as stream:
-                stream.write(output)
-        else:
-            self.stdout.write(output)
+        self.output_certificate(cert, **options)
