@@ -177,8 +177,14 @@ Verify attestations
 Start django-ca
 ===============
 
-django-ca (usually) consists of two containers (using the same image): A uWSGI server and a Celery task queue.
-You thus need to start two containers with slightly different configuration:
+django-ca (usually) consists of three containers (using the same image):
+
+#. A `Gunicorn <https://gunicorn.org/>`_-based WSGI server for HTTP endpoints
+#. A Celery worker to handle asynchronous tasks
+#. A `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon for periodic
+   tasks.
+
+You thus need to start three containers with slightly different configuration:
 
 .. console-include::
    :include: /include/quickstart_with_docker/start-django-ca.yaml

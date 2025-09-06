@@ -430,6 +430,7 @@ jinja_contexts = {
     },
     "quickstart-with-docker": {
         "backend_host": "backend",
+        "beat_host": "beat",
         "ca_default_hostname": _ca_default_hostname,
         "docker_tag": "mathiasertl/django-ca",
         "frontend_host": "frontend",

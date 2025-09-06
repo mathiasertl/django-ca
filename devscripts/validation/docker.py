@@ -142,6 +142,7 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
 
     context = {
         "backend_host": "backend",
+        "beat_host": "beat",
         "ca_default_hostname": "localhost",
         "docker_tag": docker_tag,
         "frontend_host": "frontend",
