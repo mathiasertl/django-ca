@@ -2,18 +2,15 @@
 Host a Certificate Revocation List (CRL)
 ########################################
 
-A Certificate Revocation List (CRL) contains all revoked certificates signed by
-a certificate authority. Having a CRL is completely optional (e.g. `Let's
-Encrypt <https://letsencrypt.org/>`_ certificates don't have one).
+A Certificate Revocation List (CRL) contains all revoked certificates signed by a certificate authority.
+Having a CRL is completely optional (many certificate authorities don't have one).
 
-A URL to the CRL is usually included in the certificates (in the
-``crlDistributionPoints`` x509 extension) so clients can fetch the CRL and
-verify that the certificate has not been revoked. Some services (e.g. OpenVPN)
+A URL to the CRL is usually included in the certificates (in the ``crlDistributionPoints`` x509 extension) so
+clients can fetch the CRL and verify that the certificate has not been revoked. Some services (e.g. OpenVPN)
 also just keep a local copy of a CRL.
 
-.. NOTE:: CRLs are usually hosted via HTTP, **not** HTTPS. CRLs are always
-   signed, so hosting them via HTTP is not a security vulnerability. Further,
-   you cannot verify the the certificate used when fetching the CRL
+.. NOTE:: CRLs are usually hosted via HTTP, **not** HTTPS. CRLs are always signed, so hosting them via HTTP is
+   not a security vulnerability. Further, you cannot verify the the certificate used when fetching the CRL
    anyway, since you would need the CRL for that.
 
 
@@ -22,11 +19,14 @@ Use default CRLs
 ****************
 
 If you have (correctly) configured a :ref:`CA_DEFAULT_HOSTNAME <settings-ca-default-hostname>` and setup the
-web server under that URL, you do not have to do anything to provide CRLs.
+web server under that URL, **django-ca** will automatically serve CRLs under the correct URL.
 
-**django-ca** provides the generic view :py:class:`~django_ca.views.CertificateRevocationListView`
-to provide CRLs via HTTP. Since CRLs are always signed directly by the CA, it is currently required that the
-private key of the CA is available to the web server.
+If you use django-ca :ref:`as Django app </quickstart/as_app>`, you have to make sure that you either have
+a `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon running or run
+:command:`manage.py cache_crls` as a regular, daily CRON job. If you have neither, django-ca will try to sign
+a CRL on the fly, implying that the CAs private key must be available on the webserver.
+
+All other supported setups (Docker Compose, etc) automatically cache CRLs using celerybeat.
 
 Override default hostname
 =========================
