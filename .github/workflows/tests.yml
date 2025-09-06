@@ -31,18 +31,18 @@ jobs:
         if: ${{ matrix.python-version == env.NEWEST_PYTHON && matrix.cryptography-version == env.NEWEST_CRYPTOGRAPHY && matrix.pydantic-version == env.NEWEST_PYDANTIC }}
 
       - name: Acquire sources
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5.5.0
+        uses: actions/setup-python@v6.0.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5.3.1
+        uses: astral-sh/setup-uv@v6.6.1
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true

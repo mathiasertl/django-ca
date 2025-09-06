@@ -13,18 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Acquire sources
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5.5.0
+        uses: actions/setup-python@v6.0.0
         with:
           python-version: "3.13"
           architecture: x64
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5.3.1
+        uses: astral-sh/setup-uv@v6.6.1
         with:
           enable-cache: true
 
@@ -48,7 +48,7 @@ jobs:
         extra: [ api, celery, hsm, mysql, postgres, redis, yaml ]
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
         with:
           sparse-checkout: |
             /uv.lock
@@ -57,13 +57,13 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Setup Python
-        uses: actions/setup-python@v5.5.0
+        uses: actions/setup-python@v6.0.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5.3.1
+        uses: astral-sh/setup-uv@v6.6.1
         with:
           enable-cache: true
 
@@ -156,7 +156,7 @@ jobs:
           name: python-packages
           path: dist/
       - name: Sign the dists with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        uses: sigstore/gh-action-sigstore-python@v3.0.1
         with:
           inputs: >-
             ./dist/*.tar.gz

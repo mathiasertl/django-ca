@@ -11,9 +11,9 @@ python = ["3.10", "3.11", "3.12", "3.13"]
 # https://www.djangoproject.com/download/
 django = ["5.2"]
 cryptography = ["45"]
-acme = [ "4.1" ]
+acme = [ "4.1", "4.2", "5.0" ]
 pydantic = ["2.11"]
-josepy = ["2.0"]
+josepy = ["2.0", "2.1"]
 
 # https://alpinelinux.org/releases/
 alpine = [
@@ -36,6 +36,7 @@ docker-image-blacklist = [
 debian-releases = [
     "bullseye",  # until June 2026
     "bookworm",  # until June 2028
+    "trixie",  # until June 2030
 ]
 
 # List of tested Ubuntu releases:
@@ -50,10 +51,10 @@ ubuntu-releases = [
 [django-ca.release.github]
 # Action versions can be retrieved directly from the GitHub "marketplace", e.g.:
 #   https://github.com/marketplace/actions/checkout
-actions."actions/checkout" = "v4.2.2"
-actions."actions/setup-python" = "v5.5.0"
-actions."actions/cache" = "v4.2.3"
-actions."actions/attest-build-provenance" = "v2.2.3"
+actions."actions/checkout" = "v5.0.0"
+actions."actions/setup-python" = "v6.0.0"
+actions."actions/cache" = "v4.2.4"
+actions."actions/attest-build-provenance" = "v3.0.0"
 actions."actions/download-artifact" = "v4.2.1"
 actions."actions/upload-artifact" = "v4.6.2"
 # CodeQL actions are actually all in the same repository:
@@ -61,17 +62,17 @@ actions."actions/upload-artifact" = "v4.6.2"
 actions."github/codeql-action/init" = "v3"
 actions."github/codeql-action/analyze" = "v3"
 # https://github.com/marketplace/actions/astral-sh-setup-uv
-actions."astral-sh/setup-uv" = "v5.3.1"
+actions."astral-sh/setup-uv" = "v6.6.1"
 # https://github.com/marketplace/actions/pypi-publish
-actions."pypa/gh-action-pypi-publish" = "v1.12.4"
+actions."pypa/gh-action-pypi-publish" = "v1.13.0"
 # https://github.com/marketplace/actions/gh-action-sigstore-python
-actions."sigstore/gh-action-sigstore-python" = "v3.0.0"
+actions."sigstore/gh-action-sigstore-python" = "v3.0.1"
 # https://github.com/marketplace/actions/docker-login
-actions."docker/login-action" = "v3.4.0"
+actions."docker/login-action" = "v3.5.0"
 # https://github.com/marketplace/actions/build-and-push-docker-images
-actions."docker/build-push-action" = "v6.15.0"
+actions."docker/build-push-action" = "v6.18.0"
 # https://github.com/marketplace/actions/docker-metadata-action
-actions."docker/metadata-action" = "v5.7.0"
+actions."docker/metadata-action" = "v5.8.0"
 
 [django-ca.validation]
 # list glob-style patterns to exclude from any check (currently only license headers)
@@ -520,9 +521,9 @@ local_scheme = "no-local-version"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "django5.1" }, { group = "django5.2" }, ],
-    #[ { group = "cryptography44" }, { group = "cryptography45" }, ],
-    #[ { group = "acme3.2" }, { group = "acme3.3" }, { group = "acme4.0" }, { group = "acme4.1" } ],
-    #[ { group = "pydantic2.10" }, { group = "pydantic2.11" } ],
+    #[ { group = "cryptography45" }, ],
+    [ { group = "acme4.1" }, { group = "acme4.2" },  { group = "acme5.0" } ],
+    #[ { group = "pydantic2.11" } ],
 ]
 
 [dependency-groups]
@@ -603,4 +604,6 @@ gunicorn = [ "gunicorn>=23" ]
 #"cryptography44" = ["cryptography~=44.0"]
 "cryptography45" = ["cryptography~=45.0"]
 "acme4.1" = ["acme~=4.1.0"]
+"acme4.2" = ["acme~=4.2.0"]
+"acme5.0" = ["acme~=5.0.0"]
 "pydantic2.11" = ["pydantic~=2.11.0"]
