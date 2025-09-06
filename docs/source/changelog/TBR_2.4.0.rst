@@ -4,6 +4,7 @@
 
 * OCSP responder certificates now have an empty subject.
 * Fix configuring CRL reasons for CRL distribution points for signing certificates.
+* Update the default Docker image to be based on Debian 13 (Trixie).
 
 ************
 Command-line
@@ -53,6 +54,7 @@ Admin interface
 Dependencies
 ************
 
+* Add support for ``acme~=4.2.0``, ``acme~=5.0.0`` and ``josepy~=2.1.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.10.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=3.2.0``, ``acme~=3.3.0`` and ``acme~=4.0.0``.
 
@@ -93,3 +95,9 @@ Python API
   ``HASH_ALGORITHM_NAMES`` :attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_NAMES`
   ``HASH_ALGORITHM_TYPES`` :attr:`~django_ca.constants.SIGNATURE_HASH_ALGORITHM_TYPES`
   ======================== ===========================================================
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support ``acme~=4.1.0``, ``acme~=4.2.0`` and ``josepy~=2.0.0``.

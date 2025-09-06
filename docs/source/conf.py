@@ -364,10 +364,7 @@ autodoc_mock_imports = [
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "cg": ("https://cryptography.io/en/stable/", None),
-    "django": (
-        f"https://docs.djangoproject.com/en/{config.DJANGO[-1]}/",
-        f"https://docs.djangoproject.com/en/{config.DJANGO[-1]}/_objects/",
-    ),
+    "django": (f"https://docs.djangoproject.com/en/{config.DJANGO[-1]}/", None),
     "acme": ("https://acme-python.readthedocs.io/en/stable/", None),
     "josepy": ("https://josepy.readthedocs.io/en/stable/", None),
     "pydantic": ("https://docs.pydantic.dev/latest/", None),
