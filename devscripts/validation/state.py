@@ -28,7 +28,7 @@ from termcolor import colored
 
 from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.out import err, info, ok
+from devscripts.out import err, info
 
 CheckFuncSpec = typing.ParamSpec("CheckFuncSpec")
 
@@ -79,7 +79,7 @@ def import_mod(name: str, path: Union[str, "os.PathLike[str]"]) -> types.ModuleT
 def simple_diff(what: str, actual: Any, expected: Any) -> int:
     """Simply compare two values and output any difference."""
     if expected == actual:
-        return ok(what)
+        return 0
     return err(f"{what}: Have {actual}, expected {expected}.")
 
 
