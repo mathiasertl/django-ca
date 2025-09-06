@@ -18,16 +18,14 @@ from functools import cached_property
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, model_validator
-from pydantic_core.core_schema import ValidationInfo
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.types import CertificatePublicKeyTypes
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
 from cryptography.hazmat.primitives.serialization import Encoding
 
-from django_ca.constants import SIGNATURE_HASH_ALGORITHM_NAMES, SIGNATURE_HASH_ALGORITHM_TYPES
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.pydantic import (
     AuthorityInformationAccessModel,
@@ -151,19 +149,8 @@ class X509CertMixinModel(BaseModel):
     fingerprints: dict[SignatureHashAlgorithmName, str]
 
     @classmethod
-    def _from_model(cls, value: X509CertMixin, info: ValidationInfo) -> dict[str, Any]:
-        algorithms = (hashes.SHA256(), hashes.SHA512())
-        if isinstance(info.context, dict):
-            algorithms = info.context.get("hash_algorithms", algorithms)
-            if not isinstance(algorithms, tuple):
-                raise ValueError("hash_algorithms must be a tuple of hash algorithms.")
-            if not all(isinstance(algorithm, hashes.HashAlgorithm) for algorithm in algorithms):
-                raise ValueError("hash_algorithms must be a tuple of hash algorithms.")
-
-        fingerprints = {
-            SIGNATURE_HASH_ALGORITHM_NAMES[type(algorithm)]: value.get_fingerprint(algorithm)
-            for algorithm in algorithms
-        }
+    def _from_model(cls, value: X509CertMixin) -> dict[str, Any]:
+        fingerprints = {k: value.get_fingerprint(v()) for k, v in SIGNATURE_HASH_ALGORITHM_TYPES.items()}
 
         return {
             "id": value.pk,
@@ -205,7 +192,7 @@ class DjangoCertificateAuthorityModel(X509CertMixinModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_django_model(cls, value: Any, info: ValidationInfo) -> Any:
+    def validate_django_model(cls, value: Any) -> Any:
         """Parse Django model values."""
         if isinstance(value, CertificateAuthority):
             if value.parent is None:
@@ -214,7 +201,7 @@ class DjangoCertificateAuthorityModel(X509CertMixinModel):
                 parent = value.parent.id
 
             return {
-                **cls._from_model(value, info=info),
+                **cls._from_model(value),
                 "name": value.name,
                 "enabled": value.enabled,
                 "parent": parent,
@@ -251,7 +238,7 @@ class DjangoCertificateModel(X509CertMixinModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_django_model(cls, value: Any, info: ValidationInfo) -> Any:
+    def validate_django_model(cls, value: Any) -> Any:
         """Parse Django model values."""
         if isinstance(value, Certificate):
             if value.csr is None:
@@ -263,7 +250,7 @@ class DjangoCertificateModel(X509CertMixinModel):
                 csr = value.csr.pem
 
             return {
-                **cls._from_model(value, info=info),
+                **cls._from_model(value),
                 "watchers": value.watchers.all(),
                 "ca": value.ca.id,
                 "csr": csr,

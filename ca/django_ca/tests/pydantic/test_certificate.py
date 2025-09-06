@@ -13,10 +13,6 @@
 
 """Test certificate model."""
 
-from typing import Any
-
-from pydantic import ValidationError
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -81,30 +77,7 @@ def test_django_certificate_authority_model(ca: CertificateAuthority) -> None:
 
     model = DjangoCertificateAuthorityModel.model_validate(ca)
     assert model.name == ca.name
-    assert model.fingerprints == {
-        "SHA-256": ca.get_fingerprint(hashes.SHA256()),
-        "SHA-512": ca.get_fingerprint(hashes.SHA512()),
-    }
     assert model.certificate.pem == ca.pub.pem
-
-
-@pytest.mark.django_db
-def test_django_certificate_authority_model_with_hash_algorithms(root: CertificateAuthority) -> None:
-    """Test DjangoCertificateAuthorityModel."""
-    model = DjangoCertificateAuthorityModel.model_validate(
-        root, context={"hash_algorithms": (hashes.SHA3_256(), hashes.SHA3_512())}
-    )
-    assert model.fingerprints == {
-        "SHA3/256": root.get_fingerprint(hashes.SHA3_256()),
-        "SHA3/512": root.get_fingerprint(hashes.SHA3_512()),
-    }
-
-
-@pytest.mark.parametrize("value", ([], None, (None,)))
-def test_invalid_hash_algorithms(root: CertificateAuthority, value: Any) -> None:
-    """Test passing invalid hash algorithms as validation context."""
-    with pytest.raises(ValidationError, match=r"hash_algorithms must be a tuple of hash algorithms\."):
-        DjangoCertificateAuthorityModel.model_validate(root, context={"hash_algorithms": value})
 
 
 @pytest.mark.django_db
@@ -125,8 +98,14 @@ def test_django_certificate_model(request: "SubRequest", usable_cert: Certificat
             "compromised": usable_cert.compromised,
             "certificate": usable_cert.pub.loaded,
             "fingerprints": {
+                "SHA-224": usable_cert.get_fingerprint(hashes.SHA224()),
                 "SHA-256": usable_cert.get_fingerprint(hashes.SHA256()),
+                "SHA-384": usable_cert.get_fingerprint(hashes.SHA384()),
                 "SHA-512": usable_cert.get_fingerprint(hashes.SHA512()),
+                "SHA3/224": usable_cert.get_fingerprint(hashes.SHA3_224()),
+                "SHA3/256": usable_cert.get_fingerprint(hashes.SHA3_256()),
+                "SHA3/384": usable_cert.get_fingerprint(hashes.SHA3_384()),
+                "SHA3/512": usable_cert.get_fingerprint(hashes.SHA3_512()),
             },
             "ca": usable_cert.ca_id,
             "csr": csr,
