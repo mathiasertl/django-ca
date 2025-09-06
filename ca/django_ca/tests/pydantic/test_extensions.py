@@ -653,14 +653,20 @@ def test_authority_information_access_errors(
     ("parameters", "extension"),
     (
         (
-            {"key_identifier": b"MTIz"},
+            {"key_identifier": "MTIz"},  # base64-encoded key identifier
+            x509.AuthorityKeyIdentifier(
+                key_identifier=b"123", authority_cert_issuer=None, authority_cert_serial_number=None
+            ),
+        ),
+        (
+            {"key_identifier": b"123"},  # same, but as bytes
             x509.AuthorityKeyIdentifier(
                 key_identifier=b"123", authority_cert_issuer=None, authority_cert_serial_number=None
             ),
         ),
         (
             {
-                "key_identifier": b"AHgwMA==",
+                "key_identifier": "AHgwMA==",
                 "authority_cert_issuer": [GENERAL_NAME],
                 "authority_cert_serial_number": 123,
             },
@@ -1640,7 +1646,7 @@ def test_subject_information_access_errors(
     ("digest", "extension"),
     (
         # (b"123", x509.SubjectKeyIdentifier(b"123")),
-        (b"kA==", x509.SubjectKeyIdentifier(b"\x90")),
+        (b"\x90", x509.SubjectKeyIdentifier(b"\x90")),
         ("kA==", x509.SubjectKeyIdentifier(b"\x90")),
         # (b"\x90", x509.SubjectKeyIdentifier(b"\x90")),  # non-utf8 character
     ),
@@ -1719,7 +1725,11 @@ def test_tls_feature_errors(parameters: dict[str, bool], expected_errors: Expect
     ("parameters", "extension_type"),
     (
         (
-            {"value": b"MTIz", "oid": "1.2.3"},
+            {"value": "MTIz", "oid": "1.2.3"},
+            x509.UnrecognizedExtension(value=b"123", oid=x509.ObjectIdentifier("1.2.3")),
+        ),
+        (
+            {"value": b"123", "oid": "1.2.3"},
             x509.UnrecognizedExtension(value=b"123", oid=x509.ObjectIdentifier("1.2.3")),
         ),
     ),
@@ -1730,8 +1740,17 @@ def test_unrecognized_extension(
     extension_type: x509.UnrecognizedExtension,
     critical: bool | None,
 ) -> None:
-    """Test the TLSFeatureModel."""
+    """Test the UnrecognizedExtensionModel."""
     assert_extension_model(UnrecognizedExtensionModel, parameters, extension_type, critical)
+
+
+def test_unrecognized_extension_with_invalid_base64_string() -> None:
+    """Test the UnrecognizedExtensionModel with an invalid base64 string."""
+    assert_validation_errors(
+        UnrecognizedExtensionModel,
+        {"value": {"value": "foobar", "oid": "1.2.3"}, "critical": True},
+        [("value_error", ("value", "value"), "Value error, foobar: Not a valid base64 string")],
+    )
 
 
 def test_certificate_extension_list_type_adapter() -> None:
@@ -1753,7 +1772,7 @@ def test_certificate_extension_list_type_adapter() -> None:
         basic_constraints_model,
         basic_constraints_model,
         UnrecognizedExtensionModel(
-            critical=True, value=UnrecognizedExtensionValueModel(oid="1.2.3", value=b"kA==")
+            critical=True, value=UnrecognizedExtensionValueModel(oid="1.2.3", value="kA==")
         ),
     ]
     assert CertificateExtensionModelList.validate_python(input_list) == expected_list

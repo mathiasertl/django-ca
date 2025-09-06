@@ -77,7 +77,6 @@ from typing import (  # noqa: UP035  # see typing.Type usage below
 
 from pydantic import (
     AfterValidator,
-    Base64Bytes,
     BeforeValidator,
     ConfigDict,
     Field,
@@ -110,7 +109,7 @@ from django_ca.pydantic.extension_attributes import (
     UnrecognizedExtensionValueModel,
 )
 from django_ca.pydantic.general_name import GeneralNameModel
-from django_ca.pydantic.type_aliases import NonEmptyOrderedSet
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet
 from django_ca.typehints import (
     AlternativeNameTypeVar,
     CRLExtensionTypeTypeVar,
@@ -807,17 +806,15 @@ class PrecertificateSignedCertificateTimestampsModel(
 
     >>> from datetime import datetime
     >>> sct = SignedCertificateTimestampModel(
-    ...     log_id=b"MTIz", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
+    ...     log_id="MTIz", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
     ... )
-    >>> PrecertificateSignedCertificateTimestampsModel(
-    ...     value=[sct]
-    ... )  # doctest: +STRIP_WHITESPACE
+    >>> PrecertificateSignedCertificateTimestampsModel(value=[sct])  # doctest: +STRIP_WHITESPACE
     PrecertificateSignedCertificateTimestampsModel(
         critical=False,
         value=[
             SignedCertificateTimestampModel(
                 version='v1',
-                log_id=b'123',
+                log_id='MTIz',
                 timestamp=datetime.datetime(2023, 12, 10, 0, 0),
                 entry_type='precertificate'
             )
@@ -912,7 +909,7 @@ class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
 
     type: Literal["subject_key_identifier"] = Field(default="subject_key_identifier", repr=False)
     critical: bool = EXTENSION_DEFAULT_CRITICAL[ExtensionOID.SUBJECT_KEY_IDENTIFIER]
-    value: Base64Bytes
+    value: Base64EncodedBytes
     requires_critical: ClassVar[bool] = False  # MUST mark this extension as non-critical
 
     @model_validator(mode="before")
@@ -920,13 +917,14 @@ class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
     def parse_cryptography(cls, data: Any) -> Any:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.SubjectKeyIdentifier):
-            return {"critical": data.critical, "value": base64.b64encode(data.value.digest)}
+            return {"critical": data.critical, "value": data.value.digest}
         return data
 
     @property
     def extension_type(self) -> x509.SubjectKeyIdentifier:
         """The :py:class:`~cg:cryptography.x509.SubjectKeyIdentifier` instance."""
-        return x509.SubjectKeyIdentifier(digest=self.value)
+        value = base64.b64decode(self.value)
+        return x509.SubjectKeyIdentifier(digest=value)
 
 
 class TLSFeatureModel(ExtensionModel[x509.TLSFeature]):

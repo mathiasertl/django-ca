@@ -18,7 +18,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn
 
 from annotated_types import MaxLen, MinLen
-from pydantic import AfterValidator, Base64Bytes, BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, model_validator
 
 from cryptography import x509
 from cryptography.x509 import certificate_transparency
@@ -199,11 +199,18 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     """Pydantic model wrapping :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier`.
 
     In its by far most common form, this model will just set the `key_identifier` attribute, with a value
-    based on the certificate authority. Since this is a ``bytes`` value, the input must be base64 encoded:
+    based on the certificate authority. This is a base64-encoded string:
 
-    >>> AuthorityKeyIdentifierValueModel(key_identifier=b"MTIz")  # doctest: +STRIP_WHITESPACE
+    >>> AuthorityKeyIdentifierValueModel(key_identifier="MTIz")  # doctest: +STRIP_WHITESPACE
     AuthorityKeyIdentifierValueModel(
-        key_identifier=b'123', authority_cert_issuer=None, authority_cert_serial_number=None
+        key_identifier='MTIz', authority_cert_issuer=None, authority_cert_serial_number=None
+    )
+
+    You may also pass bytes instead, in which case the value will be base64 encoded:
+
+    >>> AuthorityKeyIdentifierValueModel(key_identifier=b"123")  # doctest: +STRIP_WHITESPACE
+    AuthorityKeyIdentifierValueModel(
+        key_identifier='MTIz', authority_cert_issuer=None, authority_cert_serial_number=None
     )
 
     You can also give a `authority_cert_issuer` (a list of
@@ -225,7 +232,7 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     be given.
     """
 
-    key_identifier: Base64Bytes | None
+    key_identifier: Base64EncodedBytes | None
     authority_cert_issuer: list[GeneralNameModel] | None = None
     authority_cert_serial_number: int | None = None
 
@@ -234,12 +241,8 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     def parse_cryptography(cls, data: Any) -> Any:
         """Parse cryptography instance."""
         if isinstance(data, x509.AuthorityKeyIdentifier):
-            key_identifier = None
-            if data.key_identifier is not None:
-                key_identifier = base64.b64encode(data.key_identifier)
-
             return {
-                "key_identifier": key_identifier,
+                "key_identifier": data.key_identifier,
                 "authority_cert_issuer": data.authority_cert_issuer,
                 "authority_cert_serial_number": data.authority_cert_serial_number,
             }
@@ -262,12 +265,14 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
     @property
     def cryptography(self) -> x509.AuthorityKeyIdentifier:
         """Convert to a :py:class:`~cg:cryptography.x509.AuthorityKeyIdentifier` instance."""
-        authority_cert_issuer = None
+        authority_cert_issuer = key_identifier = None
         if self.authority_cert_issuer is not None:
             authority_cert_issuer = [general_name.cryptography for general_name in self.authority_cert_issuer]
+        if self.key_identifier is not None:
+            key_identifier = base64.b64decode(self.key_identifier)
 
         return x509.AuthorityKeyIdentifier(
-            key_identifier=self.key_identifier,
+            key_identifier=key_identifier,
             authority_cert_issuer=authority_cert_issuer,
             authority_cert_serial_number=self.authority_cert_serial_number,
         )
@@ -509,11 +514,11 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
        Due to library limitations, this model cannot be converted to a cryptography class.
 
     >>> SignedCertificateTimestampModel(
-    ...     log_id=b"MTIz", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
+    ...     log_id="MTIz", timestamp=datetime(2023, 12, 10), entry_type="precertificate"
     ... )  # doctest: +STRIP_WHITESPACE
     SignedCertificateTimestampModel(
         version='v1',
-        log_id=b'123',
+        log_id='MTIz',
         timestamp=datetime.datetime(2023, 12, 10, 0, 0),
         entry_type='precertificate'
     )
@@ -522,7 +527,7 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
     model_config = ConfigDict(from_attributes=True)
 
     version: Literal["v1"] = "v1"
-    log_id: Base64Bytes
+    log_id: Base64EncodedBytes
     timestamp: datetime
     entry_type: LogEntryTypeName
 
@@ -532,7 +537,7 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
         if isinstance(data, certificate_transparency.SignedCertificateTimestamp):
             return {
                 "version": data.version.name,
-                "log_id": base64.b64encode(data.log_id),
+                "log_id": data.log_id,
                 "timestamp": data.timestamp,
                 "entry_type": constants.LOG_ENTRY_TYPE_KEYS[data.entry_type],
             }
@@ -760,24 +765,30 @@ class PolicyInformationModel(CryptographyModel[x509.PolicyInformation]):
 class UnrecognizedExtensionValueModel(CryptographyModel[x509.UnrecognizedExtension]):
     """Pydantic model for a :py:class:`~cg:cryptography.x509.UnrecognizedExtension` extension.
 
-    The `value` a base64 encoded bytes value, and the `oid` is any dotted string:
+    The `value` a base64 encoded string, and the `oid` is any dotted string:
 
-    >>> UnrecognizedExtensionValueModel(value=b"MTIz", oid="1.2.3")
-    UnrecognizedExtensionValueModel(oid='1.2.3', value=b'123')
+    >>> UnrecognizedExtensionValueModel(value="MTIz", oid="1.2.3")
+    UnrecognizedExtensionValueModel(oid='1.2.3', value='MTIz')
+
+    You can also pass bytes to `value`, in which case it will base base64 encoded:
+
+    >>> UnrecognizedExtensionValueModel(value=b"123", oid="1.2.3")
+    UnrecognizedExtensionValueModel(oid='1.2.3', value='MTIz')
     """
 
     oid: OIDType
-    value: Base64Bytes
+    value: Base64EncodedBytes
 
     @model_validator(mode="before")
     @classmethod
     def parse_cryptography(cls, data: Any) -> Any:
         """Parse cryptography instances."""
         if isinstance(data, x509.UnrecognizedExtension):
-            return {"oid": data.oid, "value": base64.b64encode(data.value)}
+            return {"oid": data.oid, "value": data.value}
         return data
 
     @property
     def cryptography(self) -> x509.UnrecognizedExtension:
         """The :py:class:`~cg:cryptography.x509.UnrecognizedExtension` instance."""
-        return x509.UnrecognizedExtension(value=self.value, oid=x509.ObjectIdentifier(self.oid))
+        value = base64.b64decode(self.value)
+        return x509.UnrecognizedExtension(value=value, oid=x509.ObjectIdentifier(self.oid))

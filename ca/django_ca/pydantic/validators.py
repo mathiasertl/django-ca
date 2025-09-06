@@ -66,7 +66,7 @@ def base64_str_validator(value: str) -> str:
     try:
         base64.b64decode(value.encode("ascii"))
     except binascii.Error as ex:
-        raise ValueError(f"{value}: Not a valid base64 string.") from ex
+        raise ValueError(f"{value}: Not a valid base64 string") from ex
     return value
 
 
