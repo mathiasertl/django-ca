@@ -249,5 +249,5 @@ def test_model_validation_error(root: CertificateAuthority) -> None:
     NOTE: This example is contrived for the default backend, as the type of the password would already be
     checked by argparse. Other backends however might have other validation mechanisms.
     """
-    with assert_command_error(r"^password: Input should be a valid bytes$"):
+    with assert_command_error(r"^password: Input should be a valid string$"):
         dump_crl(ca=root, password=123)

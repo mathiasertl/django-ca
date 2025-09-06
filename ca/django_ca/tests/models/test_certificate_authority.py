@@ -67,6 +67,8 @@ from django_ca.tests.base.utils import (
 )
 from django_ca.tests.models.base import assert_bundle
 
+pytestmark = pytest.mark.django_db
+
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 CACHE_KEY_KWARGS = {

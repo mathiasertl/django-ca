@@ -14,6 +14,7 @@
 """Validators for Pydantic models."""
 
 import base64
+import binascii
 from collections.abc import Callable, Iterable, Sequence
 from datetime import timedelta
 from typing import Any, Literal, TypeVar
@@ -60,10 +61,19 @@ def access_method_parser(value: Any) -> Any:
     return value
 
 
-def base64_encoded_str_validator(value: Any) -> Any:
-    """Decode a base64-encoded string to bytes."""
-    if isinstance(value, str):
-        return base64.b64decode(value.encode(encoding="ascii"))
+def base64_str_validator(value: str) -> str:
+    """Validator that asserts that the passed string is a valid Base64 encoded string."""
+    try:
+        base64.b64decode(value.encode("ascii"))
+    except binascii.Error as ex:
+        raise ValueError(f"{value}: Not a valid base64 string.") from ex
+    return value
+
+
+def bytes_to_base64_str_validator(value: Any) -> Any:
+    """Encode bytes as base64-encoded string."""
+    if isinstance(value, bytes):
+        return base64.b64encode(value).decode(encoding="ascii")
     return value
 
 

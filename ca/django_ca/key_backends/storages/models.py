@@ -13,6 +13,7 @@
 
 """Models for the storages backend."""
 
+import base64
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -76,12 +77,12 @@ class StoragesUsePrivateKeyOptions(BaseModel):
 
     @field_validator("password", mode="after")
     @classmethod
-    def load_default_password(cls, password: bytes | None, info: ValidationInfo) -> bytes | None:
+    def load_default_password(cls, password: str | None, info: ValidationInfo) -> str | None:
         """Validator to load the password from CA_PASSWORDS if not given."""
         if info.context and password is None:
             ca: CertificateAuthority = info.context.get("ca")
             if ca is not None:  # pragma: no branch  # ca is always set, this is just a precaution.
                 if settings_password := model_settings.CA_PASSWORDS.get(ca.serial):
-                    return settings_password
+                    return base64.b64encode(settings_password).decode(encoding="ascii")
 
         return password

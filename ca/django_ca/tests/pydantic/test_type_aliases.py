@@ -54,17 +54,18 @@ class PromiseModel(BaseModel):
         (b"light wor", "bGlnaHQgd29y"),
         (b"light wo", "bGlnaHQgd28="),
         (b"light w", "bGlnaHQgdw=="),
+        ("bGlnaHQgd29yay4=", "bGlnaHQgd29yay4="),  # encoded value remains unchanged
     ),
 )
-def test_json_serializable_bytes(value: bytes, encoded: str) -> None:
+def test_json_serializable_bytes(value: str, encoded: str) -> None:
     """Test Base64EncodedBytes."""
     model = JSONSerializableBytesModel(value=value)
-    assert model.value == value
-    assert JSONSerializableBytesModel.model_validate({"value": value}).value == value
-    assert JSONSerializableBytesModel.model_validate({"value": value}).value == value
-    assert JSONSerializableBytesModel.model_validate({"value": encoded}).value == value
-    assert JSONSerializableBytesModel.model_validate({"value": encoded}, strict=True).value == value
-    assert model.model_dump() == {"value": value}
+    assert model.value == encoded
+    assert JSONSerializableBytesModel.model_validate({"value": value}).value == encoded
+    assert JSONSerializableBytesModel.model_validate({"value": value}).value == encoded
+    assert JSONSerializableBytesModel.model_validate({"value": encoded}).value == encoded
+    assert JSONSerializableBytesModel.model_validate({"value": encoded}, strict=True).value == encoded
+    assert model.model_dump() == {"value": encoded}
     assert model.model_dump(mode="json") == {"value": encoded}
 
 

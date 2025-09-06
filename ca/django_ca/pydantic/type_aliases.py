@@ -13,13 +13,12 @@
 
 """Reusable type aliases for Pydantic models."""
 
-import base64
 from collections.abc import Hashable
 from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
 from annotated_types import Ge
-from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
+from pydantic import AfterValidator, BeforeValidator, Field
 
 from cryptography import x509
 
@@ -28,7 +27,8 @@ from django.utils.functional import Promise
 from django_ca.pydantic.schemas import get_promise_schema
 from django_ca.pydantic.validators import (
     SignatureHashAlgorithmValidator,
-    base64_encoded_str_validator,
+    base64_str_validator,
+    bytes_to_base64_str_validator,
     elliptic_curve_validator,
     int_to_hex_parser,
     is_power_two_validator,
@@ -58,17 +58,15 @@ identifies itself as a normal string.
 """
 
 
-#: A bytes type that validates strings as base64-encoded strings and serializes as such when using JSON.
-#:
-#: This type differs from ``pydantic.Base64Bytes`` in that bytes are left untouched and strings are decoded
-#: `before` the inner validation logic, making this type suitable for strict type validation.
 Base64EncodedBytes = Annotated[
-    bytes,
-    BeforeValidator(base64_encoded_str_validator),
-    PlainSerializer(
-        lambda value: base64.b64encode(value).decode(encoding="ascii"), return_type=str, when_used="json"
-    ),
+    str, BeforeValidator(bytes_to_base64_str_validator), AfterValidator(base64_str_validator)
 ]
+"""A str type that converts bytes to base64-encoded strings.
+
+This type differs from ``pydantic.Base64Bytes`` in that bytes will be considered as *unencoded* input and
+converted to base64.
+"""
+
 
 #: A subset of :class:`~cg:cryptography.x509.ReasonFlags` that allows only reason codes valid in a certificate
 #: revocation list (CRL).

@@ -13,6 +13,7 @@
 
 """Key backend using the Django Storages system."""
 
+import base64
 import typing
 from collections.abc import Sequence
 from datetime import datetime
@@ -241,7 +242,9 @@ class StoragesBackend(
         finally:
             stream.close()
 
-        password = use_private_key_options.password
+        password = None
+        if use_private_key_options.password is not None:
+            password = base64.b64decode(use_private_key_options.password.encode("ascii"))
 
         try:
             key = typing.cast(  # type validated below

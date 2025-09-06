@@ -80,18 +80,20 @@ class ProfessionInfoModel(CryptographyModel[x509.ProfessionInfo]):
     @property
     def cryptography(self) -> x509.ProfessionInfo:
         """Convert to a :py:class:`~cg:cryptography.x509.ProfessionInfo` instance."""
-        naming_authority = profession_oids = None
+        naming_authority = profession_oids = add_profession_info = None
         if self.naming_authority is not None:
             naming_authority = self.naming_authority.cryptography
         if self.profession_oids is not None:
             profession_oids = [x509.ObjectIdentifier(oid) for oid in self.profession_oids]
+        if self.add_profession_info is not None:
+            add_profession_info = base64.b64decode(self.add_profession_info)
 
         return x509.ProfessionInfo(
             naming_authority=naming_authority,
             profession_items=self.profession_items,
             profession_oids=profession_oids,
             registration_number=self.registration_number,
-            add_profession_info=self.add_profession_info,
+            add_profession_info=add_profession_info,
         )
 
     @model_validator(mode="after")
