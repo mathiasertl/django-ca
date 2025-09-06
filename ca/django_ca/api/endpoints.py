@@ -36,7 +36,6 @@ from django_ca.api.schemas import (
     CertificateAuthorityUpdateSchema,
     CertificateFilterSchema,
     CertificateOrderSchema,
-    CertificateSchema,
     RevokeCertificateSchema,
 )
 from django_ca.api.utils import get_certificate_authority
@@ -44,6 +43,7 @@ from django_ca.constants import ExtensionOID
 from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.profiles import Profile, profiles
+from django_ca.pydantic.certificate import DjangoCertificateAuthorityModel, DjangoCertificateModel
 from django_ca.pydantic.messages import ResignCertificateMessage, SignCertificateMessage
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tasks import api_sign_certificate as sign_certificate_task, run_task
@@ -86,7 +86,7 @@ def view_profile(request: WSGIRequest, name: str) -> Profile:
 
 @api.get(
     "/ca/",
-    response=list[CertificateAuthoritySchema],
+    response=list[DjangoCertificateAuthorityModel],
     auth=BasicAuth("django_ca.view_certificateauthority"),
     summary="List available certificate authorities",
     tags=["Certificate authorities"],
@@ -104,7 +104,7 @@ def list_certificate_authorities(
 
 @api.get(
     "/ca/{django-ca-serial:serial}/",
-    response=CertificateAuthoritySchema,
+    response=DjangoCertificateAuthorityModel,
     auth=BasicAuth("django_ca.view_certificateauthority"),
     summary="View certificate authority",
     tags=["Certificate authorities"],
@@ -205,7 +205,7 @@ def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> Certi
 
 @api.get(
     "/ca/{django-ca-serial:serial}/certs/",
-    response=list[CertificateSchema],
+    response=list[DjangoCertificateModel],
     auth=BasicAuth("django_ca.view_certificate"),
     summary="List certificates",
     tags=["Certificates"],
@@ -233,7 +233,7 @@ def list_certificates(
 
 @api.get(
     "/ca/{django-ca-serial:serial}/certs/{django-ca-serial:certificate_serial}/",
-    response=CertificateSchema,
+    response=DjangoCertificateModel,
     auth=BasicAuth("django_ca.view_certificate"),
     summary="View certificate",
     tags=["Certificates"],
@@ -314,7 +314,7 @@ def resign_certificate(
 
 @api.post(
     "/ca/{django-ca-serial:serial}/certs/{django-ca-serial:certificate_serial}/revoke/",
-    response=CertificateSchema,
+    response=DjangoCertificateModel,
     auth=BasicAuth("django_ca.revoke_certificate"),
     summary="Revoke certificate",
     tags=["Certificates"],
@@ -342,7 +342,7 @@ def revoke_certificate(
 
 @api.post(
     "/ca/{django-ca-serial:serial}/revoke/{django-ca-serial:certificate_serial}/",
-    response=CertificateSchema,
+    response=DjangoCertificateModel,
     auth=BasicAuth("django_ca.revoke_certificate"),
     summary="Revoke certificate",
     tags=["Certificates"],

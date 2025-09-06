@@ -50,6 +50,8 @@ def api_permission() -> tuple[type[Model], str]:
 def expected_response(root_cert_response: dict[str, Any]) -> DetailResponse:
     """Fixture for the regular response expected from this API view."""
     root_cert_response["revoked"] = True
+    root_cert_response["revoked_date"] = iso_format(timezone.now())
+    root_cert_response["revoked_reason"] = "unspecified"
     return root_cert_response
 
 
@@ -71,6 +73,9 @@ def test_revoke_with_parameters(
     """Test an ordinary certificate revocation."""
     now = timezone.now()
     expected_response["updated"] = iso_format(now)
+    expected_response["compromised"] = iso_format(timezone.now())
+    expected_response["revoked_date"] = iso_format(timezone.now())
+    expected_response["revoked_reason"] = "affiliation_changed"
 
     response = api_client.post(
         path,

@@ -16,9 +16,12 @@
 """pytest configuration for API tests."""
 
 import base64
+import json
 import typing
 from http import HTTPStatus
 from typing import Any
+
+from cryptography.hazmat.primitives import hashes
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -27,8 +30,12 @@ from django.test.client import Client
 
 import pytest
 
-from django_ca.models import Certificate, CertificateAuthority
-from django_ca.pydantic.extensions import AuthorityInformationAccessModel, CRLDistributionPointsModel
+from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.pydantic.extensions import (
+    AuthorityInformationAccessModel,
+    CertificateExtensionModelList,
+    CRLDistributionPointsModel,
+)
 from django_ca.tests.base.typehints import HttpResponse, User
 from django_ca.tests.base.utils import iso_format
 
@@ -61,6 +68,47 @@ def root(root: CertificateAuthority) -> CertificateAuthority:
     return root
 
 
+def _shared_response(obj: X509CertMixin) -> dict[str, Any]:
+    extensions = [
+        json.loads(ext.model_dump_json())
+        for ext in CertificateExtensionModelList.validate_python(obj.pub.loaded.extensions)
+    ]
+    return {
+        "certificate": {
+            "extensions": extensions,
+            "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in obj.issuer],
+            "not_valid_after": iso_format(obj.not_after),
+            "not_valid_before": iso_format(obj.not_before),
+            "pem": obj.pub.pem,
+            "public_key_algorithm_oid": obj.pub.loaded.public_key_algorithm_oid.dotted_string,
+            "serial": obj.serial,
+            "signature_algorithm_oid": obj.pub.loaded.signature_algorithm_oid.dotted_string,
+            "signature_algorithm_parameters": {
+                "name": "EMSA-PKCS1-v1_5",
+            },
+            "signature_hash_algorithm": "SHA-256",
+            "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in obj.subject],
+            "version": 2,
+        },
+        "created": iso_format(obj.created),
+        "compromised": obj.compromised,
+        "fingerprints": {
+            "SHA-224": obj.get_fingerprint(hashes.SHA224()),
+            "SHA-256": obj.get_fingerprint(hashes.SHA256()),
+            "SHA-384": obj.get_fingerprint(hashes.SHA384()),
+            "SHA-512": obj.get_fingerprint(hashes.SHA512()),
+            "SHA3/224": obj.get_fingerprint(hashes.SHA3_224()),
+            "SHA3/256": obj.get_fingerprint(hashes.SHA3_256()),
+            "SHA3/384": obj.get_fingerprint(hashes.SHA3_384()),
+            "SHA3/512": obj.get_fingerprint(hashes.SHA3_512()),
+        },
+        "id": obj.pk,
+        "revoked_date": None,
+        "revoked_reason": "",
+        "updated": iso_format(obj.updated),
+    }
+
+
 @pytest.fixture
 def root_response(root: CertificateAuthority) -> DetailResponse:
     """Fixture for the expected response schema for the root CA."""
@@ -70,30 +118,35 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
     sign_crl_distribution_points = CRLDistributionPointsModel.model_validate(
         root.sign_crl_distribution_points
     ).model_dump(mode="json")
+
     return {
+        **_shared_response(root),
         "acme_enabled": True,
         "acme_profile": "webserver",
         "acme_registration": True,
         "acme_requires_contact": True,
+        "api_enabled": root.api_enabled,
         "caa_identity": "",
-        "can_sign_certificates": False,
-        "created": iso_format(root.created),
-        "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
-        "not_after": iso_format(root.not_after),
-        "not_before": iso_format(root.not_before),
+        "enabled": root.enabled,
+        "key_backend_alias": "default",
+        "key_backend_options": {
+            "path": "root.key",
+        },
+        "name": "root",
         "ocsp_responder_key_validity": 3,
         "ocsp_response_validity": 86400,
-        "name": "root",
-        "pem": root.pub.pem,
+        "ocsp_key_backend_alias": "default",
+        "ocsp_key_backend_options": {
+            "certificate": {},
+            "private_key": {},
+        },
+        "parent": None,
         "revoked": False,
-        "serial": root.serial,
         "sign_authority_information_access": sign_authority_information_access,
         "sign_certificate_policies": None,
         "sign_crl_distribution_points": sign_crl_distribution_points,
         "sign_issuer_alternative_name": None,
-        "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
         "terms_of_service": "",
-        "updated": iso_format(root.updated),
         "website": "",
     }
 
@@ -101,18 +154,15 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
 @pytest.fixture
 def root_cert_response(root_cert: Certificate) -> DetailResponse:
     """Fixture for the expected response schema for the certificate signed by the root CA."""
+    root_cert.refresh_from_db()  # make sure we have field values and not raw values
     return {
+        **_shared_response(root_cert),
         "autogenerated": False,
-        "created": iso_format(root_cert.created),
-        "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root_cert.issuer],
-        "not_after": iso_format(root_cert.not_after),
-        "not_before": iso_format(root_cert.not_before),
-        "pem": root_cert.pub.pem,
+        "ca": root_cert.ca.pk,
+        "csr": root_cert.csr.pem,
         "profile": root_cert.profile,
         "revoked": False,
-        "serial": root_cert.serial,
-        "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root_cert.subject],
-        "updated": iso_format(root_cert.updated),
+        "watchers": [],
     }
 
 

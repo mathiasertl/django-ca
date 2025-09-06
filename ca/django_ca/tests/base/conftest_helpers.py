@@ -192,7 +192,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Certi
 
         ca = load_ca(name, pub, parent, acme_enabled=True, **kwargs)
 
-        return ca  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
+        return ca
 
     return fixture
 
@@ -215,7 +215,10 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Certific
     """Function to generate cert fixtures (root_cert, all_extensions, no_extensions, ...)."""
 
     @pytest.fixture
-    def fixture(request: "SubRequest") -> Certificate:
+    def fixture(
+        request: "SubRequest",
+        db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
+    ) -> Certificate:
         sanitized_name = name.replace("-", "_")
         data = CERT_DATA[name]
 
@@ -233,7 +236,7 @@ def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Certific
             csr = data["csr"]["parsed"]
         cert = load_cert(ca, csr, pub, data.get("profile", ""))
 
-        return cert  # NOTE: Yield must be outside the freeze-time block, or durations are wrong
+        return cert
 
     return fixture
 
@@ -297,7 +300,7 @@ def load_ca(
         **kwargs,
     )
     ca.update_certificate(pub)  # calculates serial etc
-    ca.full_clean()
+    ca.full_clean()  # converts manually set model attributes (e.g. `pub`) into model fields.
     ca.save()
     return ca
 
@@ -344,6 +347,7 @@ def load_cert(
     # TYPEHINT NOTE: django-stubs 5.0.0 no longer detects csr as optional field
     cert = Certificate(ca=ca, csr=csr, profile=profile)  # type: ignore[misc]
     cert.update_certificate(pub)  # calculates serial etc
+    # TODO: cert.full_clean()  # converts manually set model attributes (e.g. `csr`) into model fields.
     cert.save()
     return cert
 

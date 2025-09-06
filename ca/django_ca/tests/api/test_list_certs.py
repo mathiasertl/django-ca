@@ -137,8 +137,12 @@ def test_expired_filter(api_client: Client, expected_response: ListResponse) -> 
 def test_revoked_filter(api_client: Client, root_cert: Certificate, expected_response: ListResponse) -> None:
     """Test the `revoked` filter."""
     root_cert.revoke()
+
+    # Update response to match
     expected_response[0]["updated"] = iso_format(timezone.now())
     expected_response[0]["revoked"] = True
+    expected_response[0]["revoked_date"] = iso_format(timezone.now())
+    expected_response[0]["revoked_reason"] = "unspecified"
 
     response = api_client.get(path, {"revoked": "1"})
     assert response.status_code == HTTPStatus.OK, response.content
