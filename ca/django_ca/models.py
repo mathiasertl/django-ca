@@ -253,7 +253,7 @@ class X509CertMixin(DjangoCAModel):
     not_after = models.DateTimeField(null=False, blank=False)
 
     pub = CertificateField(verbose_name=_("Public key"))
-    cn = models.CharField(max_length=128, verbose_name=_("CommonName"))
+    cn = models.CharField(max_length=128, blank=True, verbose_name=_("CommonName"))
     serial = models.CharField(max_length=64, unique=True, validators=[RegexValidator(r"^[1-9A-F][0-9A-F]*$")])
 
     # revocation information
