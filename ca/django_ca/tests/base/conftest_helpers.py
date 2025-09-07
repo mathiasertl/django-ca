@@ -347,7 +347,7 @@ def load_cert(
     # TYPEHINT NOTE: django-stubs 5.0.0 no longer detects csr as optional field
     cert = Certificate(ca=ca, csr=csr, profile=profile)  # type: ignore[misc]
     cert.update_certificate(pub)  # calculates serial etc
-    # TODO: cert.full_clean()  # converts manually set model attributes (e.g. `csr`) into model fields.
+    cert.full_clean()  # converts manually set model attributes (e.g. `csr`) into model fields.
     cert.save()
     return cert
 

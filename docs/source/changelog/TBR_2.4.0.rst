@@ -41,6 +41,8 @@ Command-line
 REST API
 ********
 
+* **BACKWARDS INCOMPATIBLE:** The data returned when fetching certificate authorities or certificates has
+  changed to match the JSON data returned by the various ``manage.py`` commands.
 * Implement endpoint to fetch profiles (fixes (`#168 <https://github.com/mathiasertl/django-ca/issues/168>`_).
 * Fix internal server error (HTTP 500) when authenticating with a user that does not exist.
 

@@ -244,7 +244,7 @@ class DjangoCertificateModel(X509CertMixinModel):
             if value.csr is None:
                 csr: str | None = None
             elif isinstance(value.csr, x509.CertificateSigningRequest):
-                # This happens with a model that was just created.
+                # This happens with a model that was just created and full_clean() was not (yet) run.
                 csr = value.csr.public_bytes(Encoding.PEM).decode("ascii")
             else:
                 csr = value.csr.pem

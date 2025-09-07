@@ -4,5 +4,7 @@ from django_ca.pydantic import (
 )
 
 AuthorityKeyIdentifierModel(
-    value=AuthorityKeyIdentifierValueModel(key_identifier=b"MTIz")
+    value=AuthorityKeyIdentifierValueModel(
+        key_identifier="MTIz"  # or b"123"
+    )
 )
