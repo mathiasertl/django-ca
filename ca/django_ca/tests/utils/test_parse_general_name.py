@@ -114,7 +114,7 @@ def test_wrong_email() -> None:
     with pytest.raises(ValueError, match=r"^Invalid domain: user@:"):
         parse_general_name("user@")
 
-    with pytest.raises(ValueError, match="^Invalid domain: : Empty domain$"):
+    with pytest.raises(ValueError, match=r"^Invalid domain: : Empty domain$"):
         parse_general_name("email:user@")
 
 

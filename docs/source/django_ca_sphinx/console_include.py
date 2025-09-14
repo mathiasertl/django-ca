@@ -182,7 +182,7 @@ class ConsoleIncludeDirective(CodeBlock):
         if not include:
             raise ValueError("No include specified.")
 
-        rel_filename, filename = self.env.relfn2path(include)
+        _rel_filename, filename = self.env.relfn2path(include)
         with open(filename, encoding="utf-8") as stream:
             commands = yaml.safe_load(stream)["commands"]
 

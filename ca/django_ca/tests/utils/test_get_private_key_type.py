@@ -36,5 +36,5 @@ def test_get_private_key_type(key_backend: StoragesBackend, usable_cas: list[Cer
 
 def test_get_private_key_type_with_invalid_type() -> None:
     """Test passing an invalid type."""
-    with pytest.raises(ValueError, match="^True: Unknown private key type.$"):
+    with pytest.raises(ValueError, match=r"^True: Unknown private key type.$"):
         get_private_key_type(True)  # type: ignore[arg-type]  # what we test

@@ -19,7 +19,7 @@ import base64
 import json
 import typing
 from http import HTTPStatus
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from cryptography.hazmat.primitives import hashes
 
@@ -41,6 +41,9 @@ from django_ca.tests.base.utils import iso_format
 
 DetailResponse = dict[str, Any]
 ListResponse = list[DetailResponse]
+
+if TYPE_CHECKING:
+    from django_stubs_ext import StrOrPromise
 
 
 @pytest.fixture
@@ -169,7 +172,7 @@ def root_cert_response(root_cert: Certificate) -> DetailResponse:
 class APIPermissionTestBase:
     """Base class for testing permission handling in API views."""
 
-    path: str
+    path: "StrOrPromise"
     expected_disabled_status_code = HTTPStatus.NOT_FOUND
     expected_disabled_response: typing.ClassVar[Any] = {"detail": "Not Found"}
 

@@ -685,7 +685,7 @@ def test_invalid_ocsp_responder_arguments() -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_ec(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating an ECC CA."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         ca = init_ca(name=ca_name, key_type="EC")
     assert_post_create_ca(post, ca)
     assert isinstance(key_backend.get_key(ca, use_options), ec.EllipticCurvePrivateKey)
@@ -695,7 +695,7 @@ def test_ec(ca_name: str, key_backend: StoragesBackend) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_dsa(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating a certificate authority with a DSA private key."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         ca = init_ca(name=ca_name, key_type="DSA")
     assert_post_create_ca(post, ca)
 
@@ -728,7 +728,7 @@ def test_excluded(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_no_path_length(ca_name: str) -> None:
     """Test creating a CA with no path length."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         ca = init_ca(name=ca_name, path_length=None)
     assert_post_create_ca(post, ca)
     ca.full_clean()  # assert e.g. max_length in serials
@@ -744,7 +744,7 @@ def test_no_path_length(ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_empty_subject_fields(hostname: str, ca_name: str) -> None:
     """Test creating a CA with empty subject fields."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         out, err = cmd("init_ca", ca_name, f"L=,CN={hostname}")
     ca = CertificateAuthority.objects.get(name=ca_name)
     assert out == f"{add_colons(ca.serial)}\n"
@@ -763,7 +763,7 @@ def test_empty_subject_fields(hostname: str, ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_with_no_output(hostname: str, ca_name: str) -> None:
     """Test creating a CA with no output."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals():
         out, err = cmd("init_ca", ca_name, f"CN={hostname}", output_format="none")
     assert out == ""
     assert err == ""
@@ -783,7 +783,7 @@ def test_no_cn(ca_name: str) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_intermediate_check(ca_name: str) -> None:
     """Test intermediate path length checks."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         path_length_1 = init_ca(name=f"{ca_name}-1", path_length=1)
     assert_post_create_ca(post, path_length_1)
     path_length_1.full_clean()  # assert e.g. max_length in serials
@@ -791,7 +791,7 @@ def test_intermediate_check(ca_name: str) -> None:
     assert path_length_1.max_path_length == 1
     assert path_length_1.allows_intermediate_ca is True
 
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         path_length_1_none = init_ca(name=f"{ca_name}-2", path_length=None, parent=path_length_1)
     assert_post_create_ca(post, path_length_1_none)
     path_length_1_none.full_clean()  # assert e.g. max_length in serials
@@ -806,7 +806,7 @@ def test_intermediate_check(ca_name: str) -> None:
     ):
         init_ca(name="wrong", parent=path_length_1_none)
 
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         path_length_1_three = init_ca(name="path-length-1-three", path_length=3, parent=path_length_1)
     assert_post_create_ca(post, path_length_1_three)
     path_length_1_three.full_clean()  # assert e.g. max_length in serials
@@ -821,7 +821,7 @@ def test_intermediate_check(ca_name: str) -> None:
     ):
         init_ca(name="wrong", parent=path_length_1_none)
 
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         path_length_none = init_ca(name="path-length-none", path_length=None)
     assert_post_create_ca(post, path_length_none)
     path_length_none.full_clean()  # assert e.g. max_length in serials
@@ -829,7 +829,7 @@ def test_intermediate_check(ca_name: str) -> None:
     assert path_length_none.max_path_length is None
     assert path_length_none.allows_intermediate_ca is True
 
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         path_length_none_none = init_ca(
             name="path-length-none-none", path_length=None, parent=path_length_none
         )
@@ -838,7 +838,7 @@ def test_intermediate_check(ca_name: str) -> None:
     assert path_length_none_none.path_length is None
     assert path_length_none_none.max_path_length is None
 
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         path_length_none_1 = init_ca(name="path-length-none-1", path_length=1, parent=path_length_none)
     assert_post_create_ca(post, path_length_none_1)
     path_length_none_1.full_clean()  # assert e.g. max_length in serials
@@ -850,7 +850,7 @@ def test_intermediate_check(ca_name: str) -> None:
 def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test that if we request an expiry after that of the parent, we override to that of the parent."""
     expires = usable_root.not_after - timezone.now() + timedelta(days=10)
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         child = init_ca(name=ca_name, parent=usable_root, expires=expires)
     assert_post_create_ca(post, child)
     child.full_clean()  # assert e.g. max_length in serials
@@ -882,7 +882,7 @@ def test_expires_override_with_use_tz_false(
 def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test creating a CA with a password."""
     password = b"testpassword"
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         parent = init_ca(name=f"{ca_name}-parent", password=password, path_length=1)
     assert_post_create_ca(post, parent)
     parent.full_clean()  # assert e.g. max_length in serials
@@ -917,7 +917,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     assert CertificateAuthority.objects.filter(name=f"{ca_name}-child").exists() is False
 
     # Create again with parent ca
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         init_ca(name=f"{ca_name}-child", parent=parent, password=child_password, parent_password=password)
 
     child = CertificateAuthority.objects.get(name=f"{ca_name}-child")
@@ -944,7 +944,7 @@ def test_default_hostname(hostname: str, ca_name: str, usable_root: CertificateA
 
     Note: freeze time b/c this test uses root CA as a parent.
     """
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         ca = init_ca(name=ca_name, parent=usable_root, default_hostname=hostname)
     assert_post_create_ca(post, ca)
 
@@ -972,7 +972,7 @@ def test_default_hostname(hostname: str, ca_name: str, usable_root: CertificateA
 @pytest.mark.usefixtures("tmpcadir")
 def test_no_default_hostname(ca_name: str) -> None:
     """Disable default hostname via the command line."""
-    with assert_create_ca_signals() as (pre, post):
+    with assert_create_ca_signals() as (_pre, post):
         ca = init_ca(name=ca_name, default_hostname=False)
     assert_post_create_ca(post, ca)
 

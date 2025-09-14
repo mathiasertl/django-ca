@@ -130,5 +130,5 @@ def test_parse_othername_errors(value: str, expected: str) -> None:
 def test_format_othername_with_unsupported_format() -> None:
     """Test formatting an unsupported type."""
     value = x509.OtherName(NameOID.COMMON_NAME, asn1crypto.core.TeletexString("").dump())
-    with pytest.raises(ValueError, match="^Unsupported ASN type in otherName: TeletexString$"):
+    with pytest.raises(ValueError, match=r"^Unsupported ASN type in otherName: TeletexString$"):
         format_other_name(value)

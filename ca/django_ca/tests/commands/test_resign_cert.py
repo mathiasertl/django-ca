@@ -235,7 +235,7 @@ def test_hsm_backend(request: "SubRequest", usable_hsm_ca: CertificateAuthority)
     cert.save()
 
     with assert_create_cert_signals():
-        stdout, stderr = cmd("resign_cert", cert.serial)
+        _stdout, stderr = cmd("resign_cert", cert.serial)
     assert stderr == ""
     new = Certificate.objects.exclude(pk=cert.pk).get()
     assert_resigned(cert, new)

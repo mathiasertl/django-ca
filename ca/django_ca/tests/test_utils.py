@@ -122,7 +122,7 @@ def test_parse_encoding(value: Any, expected: Encoding) -> None:
 
 def test_parse_encoding_with_invalid_value() -> None:
     """Test some error cases."""
-    with pytest.raises(ValueError, match="^Unknown encoding: foo$"):
+    with pytest.raises(ValueError, match=r"^Unknown encoding: foo$"):
         parse_encoding("foo")
 
 
@@ -440,16 +440,16 @@ class ValidatePrivateKeyParametersTest(TestCase):
         """Test validating various bogus values."""
         key_size = model_settings.CA_DEFAULT_KEY_SIZE
         elliptic_curve = model_settings.get_default_elliptic_curve()
-        with pytest.raises(ValueError, match="^FOOBAR: Unknown key type$"):
+        with pytest.raises(ValueError, match=r"^FOOBAR: Unknown key type$"):
             validate_private_key_parameters("FOOBAR", 4096, None)  # type: ignore[call-overload]
 
         with pytest.raises(ValueError, match=r"^foo: Key size must be an int\.$"):
             validate_private_key_parameters("RSA", "foo", None)  # type: ignore[call-overload]
 
-        with pytest.raises(ValueError, match="^4000: Key size must be a power of two$"):
+        with pytest.raises(ValueError, match=r"^4000: Key size must be a power of two$"):
             validate_private_key_parameters("RSA", 4000, None)
 
-        with pytest.raises(ValueError, match="^16: Key size must be least 1024 bits$"):
+        with pytest.raises(ValueError, match=r"^16: Key size must be least 1024 bits$"):
             validate_private_key_parameters("RSA", 16, None)
 
         with pytest.raises(ValueError, match=r"^Key size is not supported for EC keys\.$"):
@@ -480,7 +480,7 @@ class ValidatePublicKeyParametersTest(TestCase):
 
     def test_invalid_parameters(self) -> None:
         """Test invalid parameters."""
-        with pytest.raises(ValueError, match="^FOOBAR: Unknown key type$"):
+        with pytest.raises(ValueError, match=r"^FOOBAR: Unknown key type$"):
             validate_public_key_parameters("FOOBAR", None)  # type: ignore[arg-type]
         for key_type in ("RSA", "DSA", "EC"):
             msg = rf"^{key_type}: algorithm must be an instance of hashes.HashAlgorithm\.$"

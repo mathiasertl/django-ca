@@ -78,7 +78,7 @@ def test_usable_cas(usable_ca: CertificateAuthority, subject: x509.Name) -> None
     """Test signing with all usable CAs."""
     password = CERT_DATA[usable_ca.name].get("password")
 
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = sign_cert(usable_ca, subject, password=password, stdin=csr)
     assert stderr == ""
 
@@ -110,7 +110,7 @@ def test_with_bundle(usable_root: CertificateAuthority, subject: x509.Name) -> N
 def test_from_file(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test reading CSR from file."""
     csr_path = FIXTURES_DIR / CERT_DATA["root-cert"]["csr_filename"]
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = sign_cert(usable_root, subject, csr=csr_path)
     assert stderr == ""
 
@@ -150,8 +150,8 @@ def test_subject_sort_with_profile_subject(
     subject = f"CN={hostname},C=DE"  # not the default order
     cmdline = ["sign_cert", f"--subject={subject}", f"--ca={usable_root.serial}"]
 
-    with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = cmd_e2e(cmdline, stdin=csr)
+    with assert_create_cert_signals() as (_pre, post):
+        _stdout, stderr = cmd_e2e(cmdline, stdin=csr)
 
     assert stderr == ""
 
@@ -180,8 +180,8 @@ def test_subject_sort_with_no_common_name(
     subject = "emailAddress=user@example.com,C=AT"  # not the default order
     cmdline = ["sign_cert", f"--subject={subject}", f"--ca={usable_root.serial}", f"--alt={hostname}"]
 
-    with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = cmd_e2e(cmdline, stdin=csr)
+    with assert_create_cert_signals() as (_pre, post):
+        _stdout, stderr = cmd_e2e(cmdline, stdin=csr)
     assert stderr == ""
 
     cert = Certificate.objects.get()
@@ -198,7 +198,7 @@ def test_subject_sort_with_no_common_name(
 
 def test_no_san(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing without passing any SANs."""
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = sign_cert(usable_root, subject, stdin=csr)
     cert = Certificate.objects.get()
     assert cert.pub.loaded.subject == subject
@@ -225,7 +225,7 @@ def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuth
         {"oid": "emailAddress", "value": "user@example.com"},
     )
     san = subject_alternative_name(dns(hostname))
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = cmd("sign_cert", ca=usable_root, subject_alternative_name=san.value, stdin=csr)
     assert stderr == ""
 
@@ -250,7 +250,7 @@ def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuth
             x509.NameAttribute(NameOID.EMAIL_ADDRESS, "user@example.net"),
         ]
     )
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         sign_cert(usable_root, subject_alternative_name=san.value, stdin=csr, subject=subject)
 
     cert = Certificate.objects.get(cn="CommonName2")
@@ -306,8 +306,8 @@ def test_extensions(usable_root: CertificateAuthority, subject: x509.Name, rfc45
         "--tls-feature=status_request",
     ]
 
-    with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = cmd_e2e(cmdline, stdin=csr)
+    with assert_create_cert_signals() as (_pre, post):
+        _stdout, stderr = cmd_e2e(cmdline, stdin=csr)
     assert stderr == ""
 
     cert = Certificate.objects.get()
@@ -395,7 +395,7 @@ def test_extensions_with_non_default_critical(
         # "--tls-feature-critical",
     ]
 
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = cmd_e2e(cmdline, stdin=csr)
     assert stderr == ""
 
@@ -470,8 +470,8 @@ def test_private_key_usage_period_extension_with_support(
     """Test the PrivateKeyUsagePeriod with a cryptography version that has support for it."""
     cmdline = ["sign_cert", f"--subject={rfc4514_subject}", f"--ca={usable_root.serial}"]
 
-    with assert_create_cert_signals() as (pre, post):
-        stdout, stderr = cmd_e2e([*cmdline, *args], stdin=csr)
+    with assert_create_cert_signals():
+        _stdout, stderr = cmd_e2e([*cmdline, *args], stdin=csr)
     assert stderr == ""
 
     cert = Certificate.objects.get()
@@ -533,7 +533,7 @@ def test_extensions_with_formatting(
         "--crl-full-name=http://example.net/crl/{CRL_PATH}",
     ]
 
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = cmd_e2e(cmdline, stdin=csr)
     assert stderr == ""
 
@@ -571,7 +571,7 @@ def test_multiple_sans(usable_root: CertificateAuthority, subject: x509.Name, rf
         "--subject-alternative-name=URI:https://example.net",
         "--subject-alternative-name=DNS:example.org",
     ]
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = cmd_e2e(cmdline, stdin=csr)
     assert stderr == ""
 
@@ -608,7 +608,7 @@ def test_secondary_backend(pwd: CertificateAuthority, subject: x509.Name) -> Non
     pwd.key_backend_alias = "secondary"
     pwd.save()
 
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals():
         sign_cert(pwd, subject, secondary_password=CERT_DATA["pwd"]["password"], stdin=csr)
     cert = Certificate.objects.get()
     assert_signature([pwd], cert)
@@ -617,7 +617,7 @@ def test_secondary_backend(pwd: CertificateAuthority, subject: x509.Name) -> Non
 @pytest.mark.hsm
 def test_hsm_backend(usable_hsm_ca: CertificateAuthority, subject: x509.Name) -> None:
     """Test signing a certificate with a CA that is in a HSM."""
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals():
         sign_cert(usable_hsm_ca, subject, stdin=csr)
     cert = Certificate.objects.get()
     assert_signature([usable_hsm_ca], cert)
@@ -692,7 +692,7 @@ def test_unsortable_subject_with_no_profile_subject(
     """
     settings.CA_PROFILES = {model_settings.CA_DEFAULT_PROFILE: {"subject": False}}
     subject = x509.Name([x509.NameAttribute(NameOID.INN, "weird"), cn(hostname)])
-    with assert_create_cert_signals() as (pre, post):
+    with assert_create_cert_signals() as (_pre, post):
         stdout, stderr = sign_cert(usable_root, subject=subject, stdin=csr)
     assert stderr == ""
 

@@ -158,7 +158,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     assert ca.pub.loaded.version == x509.Version.v3
 
     # test the private key
-    with pytest.raises(TypeError, match="^Password was not given but private key is encrypted$"):
+    with pytest.raises(TypeError, match=r"^Password was not given but private key is encrypted$"):
         key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=None))
 
     ca_key = key_backend.get_key(ca, StoragesUsePrivateKeyOptions(password=password))

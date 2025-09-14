@@ -175,17 +175,17 @@ def test_root_ca(ca_name: str) -> None:
         verify("-CAfile {0} {0}", *paths)
 
     # Create a CRL too and include it
-    with dumped(ca) as paths, crl(ca, only_contains_ca_certs=True) as (crl_path, crl_parsed):
+    with dumped(ca) as paths, crl(ca, only_contains_ca_certs=True) as (crl_path, _crl_parsed):
         verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
 
     # Try again with no scope
-    with dumped(ca) as paths, crl(ca) as (crl_path, crl_parsed):
+    with dumped(ca) as paths, crl(ca) as (crl_path, _crl_parsed):
         verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
 
     # Try with cert scope (fails because of wrong scope
     with (
         dumped(ca) as paths,
-        crl(ca, only_contains_user_certs=True) as (crl_path, crl_parsed),
+        crl(ca, only_contains_user_certs=True) as (crl_path, _crl_parsed),
         pytest.raises(AssertionError),
     ):
         verify("-CAfile {0} -crl_check_all {0}", *paths, crl_path=[crl_path])
@@ -260,12 +260,12 @@ def test_intermediate_ca(ca_name: str) -> None:
 
         # Try validation with CRLs
         with (
-            crl(root, only_contains_ca_certs=True) as (crl1_path, crl1),
-            crl(child, only_contains_ca_certs=True) as (crl2_path, crl2),
+            crl(root, only_contains_ca_certs=True) as (crl1_path, _crl1),
+            crl(child, only_contains_ca_certs=True) as (crl2_path, _crl2),
         ):
             verify("-CAfile {0} -untrusted {1} -crl_check_all {2}", *paths, crl_path=[crl1_path, crl2_path])
 
-            with sign_cert(child) as cert, crl(child, only_contains_user_certs=True) as (crl3_path, crl3):
+            with sign_cert(child) as cert, crl(child, only_contains_user_certs=True) as (crl3_path, _crl3):
                 verify("-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert)
                 verify(
                     "-CAfile {0} -untrusted {1} {cert}", *paths, cert=cert, crl_path=[crl1_path, crl3_path]
@@ -273,8 +273,8 @@ def test_intermediate_ca(ca_name: str) -> None:
 
             with (
                 sign_cert(grandchild) as cert,
-                crl(child, only_contains_ca_certs=True) as (crl4_path, crl4),
-                crl(grandchild, only_contains_user_certs=True) as (crl6_path, crl6),
+                crl(child, only_contains_ca_certs=True) as (crl4_path, _crl4),
+                crl(grandchild, only_contains_user_certs=True) as (crl6_path, _crl6),
             ):
                 verify("-CAfile {0} {cert}", *paths, untrusted=untrusted, cert=cert)
                 verify(
@@ -308,7 +308,7 @@ def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrappe
 
     with (
         dumped(root, child, grandchild) as paths,
-        crl(root, only_contains_ca_certs=True) as (root_ca_crl_path, root_ca_crl_parsed),
+        crl(root, only_contains_ca_certs=True) as (root_ca_crl_path, _root_ca_crl_parsed),
     ):
         # Simple validation of the CAs
         verify("-trusted {0} {1}", *paths)
@@ -323,7 +323,7 @@ def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrappe
             )
 
         # Globally scoped CRLs validates as well (no full name)
-        with crl(child) as (child_crl_path, child_crl_parsed):
+        with crl(child) as (child_crl_path, _child_crl_parsed):
             verify(
                 "-trusted {0} -untrusted {1} -crl_check_all {2}",
                 *paths,
@@ -335,7 +335,7 @@ def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrappe
         settings.CA_DEFAULT_HOSTNAME = "example.net"
         with (
             crl(root, only_contains_ca_certs=True) as (crl_path, crl_parsed),
-            crl(child) as (crl2_path, crl_parsed_2),
+            crl(child) as (crl2_path, _crl_parsed_2),
         ):
             assert_full_name(crl_parsed, None)
             verify(

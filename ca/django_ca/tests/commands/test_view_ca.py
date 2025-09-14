@@ -2332,3 +2332,4 @@ def test_output_serial_as_hex(usable_root: CertificateAuthority) -> None:
     """Output the serial in hex format."""
     stdout, stderr = cmd("view_ca", usable_root.serial, output_format="serial", serial_format="hex")
     assert stdout.strip() == usable_root.serial
+    assert stderr == ""

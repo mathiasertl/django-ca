@@ -456,7 +456,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    subject_help: typing.ClassVar  # concrete classes should set this
+    subject_help: typing.ClassVar[str]  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> ArgumentGroup:
         """Add common arguments for signing certificates."""

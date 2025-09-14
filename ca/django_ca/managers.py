@@ -110,8 +110,6 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
 
         def exclude(self, *args: Any, **kwargs: Any) -> QuerySetTypeVar: ...
 
-        def order_by(self, *fields: str) -> QuerySetTypeVar: ...
-
         def for_certificate_revocation_list(
             self,
             reasons: Iterable[x509.ReasonFlags] | None = None,

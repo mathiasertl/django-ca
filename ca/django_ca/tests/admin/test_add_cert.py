@@ -265,7 +265,7 @@ class TestSubmitAddView:
 
     def test_add(self, admin_client: Client, hostname: str, usable_root: CertificateAuthority) -> None:
         """Test to actually add a certificate."""
-        with assert_create_cert_signals() as (pre, post):
+        with assert_create_cert_signals() as (_pre, post):
             response = admin_client.post(
                 Certificate.admin_add_url, data=form_data(CSR, usable_root, hostname)
             )
@@ -342,7 +342,7 @@ class TestSubmitAddView:
     ) -> None:
         """Test creating a certificate with multiple Org Units (which is allowed)."""
         settings.CA_DEFAULT_SUBJECT = tuple()
-        with assert_create_cert_signals() as (pre, post):
+        with assert_create_cert_signals() as (_pre, post):
             response = admin_client.post(
                 Certificate.admin_add_url,
                 data={
@@ -481,7 +481,7 @@ class TestSubmitAddView:
         }
 
         # post with correct password!
-        with assert_create_cert_signals() as (pre, post):
+        with assert_create_cert_signals() as (_pre, post):
             response = admin_client.post(
                 Certificate.admin_add_url,
                 data={
@@ -519,7 +519,7 @@ class TestSubmitAddView:
         settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA["pwd"]["password"]}
 
         # post with correct password!
-        with assert_create_cert_signals() as (pre, post):
+        with assert_create_cert_signals() as (_pre, post):
             response = admin_client.post(Certificate.admin_add_url, data=form_data(CSR, usable_pwd, hostname))
         assertRedirects(response, Certificate.admin_changelist_url)
 

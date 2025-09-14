@@ -182,7 +182,7 @@ def test_dsa_certificate_authority(
     client: Client, usable_dsa: CertificateAuthority, dsa_cert: Certificate
 ) -> None:
     """Test the OCSP responder with an DSA-based certificate authority."""
-    private_key, ocsp_cert = generate_ocsp_key(usable_dsa)
+    _private_key, ocsp_cert = generate_ocsp_key(usable_dsa)
     response = ocsp_get(client, dsa_cert)
     assert_ocsp_response(response, dsa_cert, responder_certificate=ocsp_cert)
 
@@ -191,7 +191,7 @@ def test_ec_certificate_authority(
     client: Client, usable_ec: CertificateAuthority, ec_cert: Certificate
 ) -> None:
     """Test the OCSP responder with an EC-based certificate authority."""
-    private_key, ocsp_cert = generate_ocsp_key(usable_ec)
+    _private_key, ocsp_cert = generate_ocsp_key(usable_ec)
     response = ocsp_get(client, ec_cert)
     assert_ocsp_response(response, ec_cert, responder_certificate=ocsp_cert)
 
@@ -200,7 +200,7 @@ def test_ed25519_certificate_authority(
     client: Client, usable_ed25519: CertificateAuthority, ed25519_cert: Certificate
 ) -> None:
     """Test the OCSP responder with an Ed25519-based certificate authority."""
-    private_key, ocsp_cert = generate_ocsp_key(usable_ed25519)
+    _private_key, ocsp_cert = generate_ocsp_key(usable_ed25519)
     response = ocsp_get(client, ed25519_cert)
     assert_ocsp_response(
         response, ed25519_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None
@@ -211,7 +211,7 @@ def test_ed448_certificate_authority(
     client: Client, usable_ed448: CertificateAuthority, ed448_cert: Certificate
 ) -> None:
     """Test the OCSP responder with an Ed448-based certificate authority."""
-    private_key, ocsp_cert = generate_ocsp_key(usable_ed448)
+    _private_key, ocsp_cert = generate_ocsp_key(usable_ed448)
     response = ocsp_get(client, ed448_cert)
     assert_ocsp_response(response, ed448_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None)
 

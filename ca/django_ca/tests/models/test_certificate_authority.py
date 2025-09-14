@@ -295,7 +295,7 @@ def test_allows_intermediate(root: CertificateAuthority, child: CertificateAutho
 def test_generate_ocsp_key(usable_ca: CertificateAuthority) -> None:
     """Test generate_ocsp_key()."""
     private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
-    with generate_ocsp_key(usable_ca, private_key_options) as (key, cert):
+    with generate_ocsp_key(usable_ca, private_key_options) as (key, _cert):
         ca_key = usable_ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
             usable_ca, private_key_options
         )
@@ -307,7 +307,7 @@ def test_generate_ocsp_responder_certificate(usable_root: CertificateAuthority) 
     # EC key for an EC based CA should inherit the key
     root_public_key = usable_root.pub.loaded.public_key()
     assert isinstance(root_public_key, rsa.RSAPublicKey)
-    with generate_ocsp_key(usable_root, key_backend_options) as (key, cert):
+    with generate_ocsp_key(usable_root, key_backend_options) as (key, _cert):
         # key = cast(rsa.RSAPrivateKey, key)
         assert isinstance(key, rsa.RSAPrivateKey)
         assert key.key_size == root_public_key.key_size
@@ -336,7 +336,7 @@ def test_generate_ocsp_responder_certificate_with_deprecated_parameters(
             not_after=timedelta(days=1),
         ) as (
             key,
-            cert,
+            _cert,
         ):
             # key = cast(ec.EllipticCurvePrivateKey, key)
             assert isinstance(key, ec.EllipticCurvePrivateKey)
@@ -373,7 +373,7 @@ def test_force_regenerate_ocsp_responder_certificate(usable_root: CertificateAut
         assert isinstance(key, rsa.RSAPrivateKey)
 
     # force regenerating the OCSP key:
-    with generate_ocsp_key(usable_root, key_backend_options, force=True) as (key_renewed, cert_renewed):
+    with generate_ocsp_key(usable_root, key_backend_options, force=True) as (_key_renewed, cert_renewed):
         assert cert_renewed.serial != cert.serial
 
 

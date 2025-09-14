@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.x509.oid import ExtensionOID, NameOID
 
+from django.db.models import QuerySet
 from django.urls import reverse
 
 import pytest
@@ -204,7 +205,7 @@ def test_openssh_ca_for_intermediate(
 ) -> None:
     """Test creating an intermediate CA for OpenSSH CAs, which is not supported."""
     ca_key_backend_options = StoragesCreatePrivateKeyOptions(key_type="RSA", password=None, path="ca")
-    with pytest.raises(ValueError, match="^OpenSSH does not support intermediate authorities$"):
+    with pytest.raises(ValueError, match=r"^OpenSSH does not support intermediate authorities$"):
         CertificateAuthority.objects.init(
             ca_name,
             key_backend,
@@ -652,7 +653,7 @@ class TypingExamples:
     def test_filter(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.filter()
 
-    def test_order_by(self) -> CertificateAuthorityQuerySet:
+    def test_order_by(self) -> QuerySet[CertificateAuthority, CertificateAuthority]:
         return CertificateAuthority.objects.order_by()
 
     def test_exclude(self) -> CertificateAuthorityQuerySet:
@@ -698,7 +699,7 @@ class TypingExamples:
     def test_cert_filter(self) -> CertificateQuerySet:
         return Certificate.objects.filter()
 
-    def test_cert_order_by(self) -> CertificateQuerySet:
+    def test_cert_order_by(self) -> QuerySet[Certificate, Certificate]:
         return Certificate.objects.order_by()
 
     def test_cert_revoked(self) -> CertificateQuerySet:
