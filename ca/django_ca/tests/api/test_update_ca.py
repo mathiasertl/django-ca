@@ -28,6 +28,7 @@ from django.urls import reverse_lazy
 import pytest
 
 from django_ca import constants
+from django_ca.constants import CONFIGURABLE_EXTENSION_KEYS, EXTENSION_DEFAULT_CRITICAL
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.extensions import EXTENSION_MODELS
 from django_ca.tests.api.conftest import APIPermissionTestBase
@@ -95,59 +96,47 @@ def payload() -> dict[str, Any]:
 
 
 @pytest.fixture
-def expected_response(root: CertificateAuthority, payload: dict[str, Any]) -> dict[str, Any]:
+def expected_response(payload: dict[str, Any], root_response: dict[str, Any]) -> dict[str, Any]:
     """Fixture for the expected response schema for the root CA."""
-    return dict(
-        payload,
-        **{
-            "can_sign_certificates": False,
-            "created": iso_format(root.created),
-            "issuer": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.issuer],
-            "not_after": iso_format(root.not_after),
-            "not_before": iso_format(root.not_before),
-            "pem": CERT_DATA["root"]["pub"]["pem"],
-            "revoked": False,
-            "serial": CERT_DATA["root"]["serial"],
-            "sign_authority_information_access": {
-                "critical": False,
-                "type": "authority_information_access",
-                "value": [
-                    {
-                        "access_method": AuthorityInformationAccessOID.OCSP.dotted_string,
-                        "access_location": {"type": "URI", "value": "http://ocsp.example.com"},
-                    },
-                    {
-                        "access_method": AuthorityInformationAccessOID.CA_ISSUERS.dotted_string,
-                        "access_location": {"type": "URI", "value": "http://ca-issuers.example.com"},
-                    },
-                ],
-            },
-            "sign_certificate_policies": {
-                "critical": constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.CERTIFICATE_POLICIES],
-                "type": "certificate_policies",
-                "value": [{"policy_identifier": "1.1.1", "policy_qualifiers": None}],
-            },
-            "sign_crl_distribution_points": {
-                "critical": False,
-                "type": "crl_distribution_points",
-                "value": [
-                    {
-                        "crl_issuer": None,
-                        "full_name": [{"type": "URI", "value": "http://crl.example.com"}],
-                        "reasons": None,
-                        "relative_name": None,
-                    }
-                ],
-            },
-            "sign_issuer_alternative_name": {
-                "critical": False,
-                "type": "issuer_alternative_name",
-                "value": [{"type": "DNS", "value": "example.com"}],
-            },
-            "subject": [{"oid": attr.oid.dotted_string, "value": attr.value} for attr in root.subject],
-            "updated": iso_format(TIMESTAMPS["everything_valid"]),
-        },
+    response = {**root_response, **payload}
+
+    # Update response with non-default values
+    response["sign_authority_information_access"]["critical"] = EXTENSION_DEFAULT_CRITICAL[
+        ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+    ]
+    response["sign_authority_information_access"]["type"] = CONFIGURABLE_EXTENSION_KEYS[
+        ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+    ]
+    response["sign_authority_information_access"]["value"][0]["access_method"] = (
+        AuthorityInformationAccessOID.OCSP.dotted_string
     )
+    response["sign_authority_information_access"]["value"][1]["access_method"] = (
+        AuthorityInformationAccessOID.CA_ISSUERS.dotted_string
+    )
+    response["sign_certificate_policies"]["critical"] = EXTENSION_DEFAULT_CRITICAL[
+        ExtensionOID.CERTIFICATE_POLICIES
+    ]
+    response["sign_certificate_policies"]["type"] = CONFIGURABLE_EXTENSION_KEYS[
+        ExtensionOID.CERTIFICATE_POLICIES
+    ]
+    response["sign_certificate_policies"]["value"][0]["policy_qualifiers"] = None
+    response["sign_crl_distribution_points"]["critical"] = EXTENSION_DEFAULT_CRITICAL[
+        ExtensionOID.CRL_DISTRIBUTION_POINTS
+    ]
+    response["sign_crl_distribution_points"]["type"] = CONFIGURABLE_EXTENSION_KEYS[
+        ExtensionOID.CRL_DISTRIBUTION_POINTS
+    ]
+    response["sign_crl_distribution_points"]["value"][0].update(
+        {"crl_issuer": None, "reasons": None, "relative_name": None}
+    )
+    response["sign_issuer_alternative_name"]["critical"] = EXTENSION_DEFAULT_CRITICAL[
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME
+    ]
+    response["sign_issuer_alternative_name"]["type"] = CONFIGURABLE_EXTENSION_KEYS[
+        ExtensionOID.ISSUER_ALTERNATIVE_NAME
+    ]
+
+    return response
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])

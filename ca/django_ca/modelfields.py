@@ -250,10 +250,7 @@ class LazyBinaryField(
             form_class = self.formfield_class
         return super().formfield(form_class, choices_form_class, **kwargs)
 
-    def to_python(
-        self,
-        value: WrapperTypeVar | DecodableTypeVar | None,
-    ) -> WrapperTypeVar | None:
+    def to_python(self, value: WrapperTypeVar | DecodableTypeVar | None) -> WrapperTypeVar | None:
         """Called during deserialization and during Certificate.full_clean().
 
         Note that this function is **not** called if the field value is ``None`` or ``b""``. It is however

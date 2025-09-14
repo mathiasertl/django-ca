@@ -14,6 +14,7 @@
 """Endpoint implementation for the API."""
 
 import warnings
+from collections.abc import Iterator
 from http import HTTPStatus
 
 from ninja import NinjaAPI, Query
@@ -32,7 +33,6 @@ from django_ca.api.auth import BasicAuth
 from django_ca.api.errors import Forbidden
 from django_ca.api.schemas import (
     CertificateAuthorityFilterSchema,
-    CertificateAuthoritySchema,
     CertificateAuthorityUpdateSchema,
     CertificateFilterSchema,
     CertificateOrderSchema,
@@ -45,7 +45,6 @@ from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.profiles import Profile, profiles
 from django_ca.pydantic.certificate import DjangoCertificateAuthorityModel, DjangoCertificateModel
 from django_ca.pydantic.messages import ResignCertificateMessage, SignCertificateMessage
-from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tasks import api_sign_certificate as sign_certificate_task, run_task
 
 api = NinjaAPI(title="django-ca API", version=__version__, urls_namespace="django_ca:api")
@@ -94,12 +93,12 @@ def view_profile(request: WSGIRequest, name: str) -> Profile:
 def list_certificate_authorities(
     request: WSGIRequest,
     filters: CertificateAuthorityFilterSchema = Query(...),  # type: ignore[type-arg]  # noqa: B008
-) -> CertificateAuthorityQuerySet:
+) -> Iterator[DjangoCertificateAuthorityModel]:
     """Retrieve a list of currently usable certificate authorities."""
     qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
     if filters.expired is False:
         qs = qs.valid()
-    return qs
+    return (DjangoCertificateAuthorityModel.model_validate(cert) for cert in qs)
 
 
 @api.get(
@@ -109,21 +108,22 @@ def list_certificate_authorities(
     summary="View certificate authority",
     tags=["Certificate authorities"],
 )
-def view_certificate_authority(request: WSGIRequest, serial: str) -> CertificateAuthority:
+def view_certificate_authority(request: WSGIRequest, serial: str) -> DjangoCertificateAuthorityModel:
     """Retrieve details of the certificate authority with the given serial."""
-    return get_certificate_authority(serial, expired=True)  # You can *view* expired CAs
+    ca = get_certificate_authority(serial, expired=True)  # You can *view* expired CAs
+    return DjangoCertificateAuthorityModel.model_validate(ca)
 
 
 @api.put(
     "/ca/{django-ca-serial:serial}/",
-    response=CertificateAuthoritySchema,
+    response=DjangoCertificateAuthorityModel,
     auth=BasicAuth("django_ca.change_certificateauthority"),
     summary="Update certificate authority",
     tags=["Certificate authorities"],
 )
 def update_certificate_authority(
     request: WSGIRequest, serial: str, data: CertificateAuthorityUpdateSchema
-) -> CertificateAuthority:
+) -> DjangoCertificateAuthorityModel:
     """Update a certificate authority.
 
     All request body fields are optional, so you can also update only individual fields.
@@ -149,7 +149,7 @@ def update_certificate_authority(
         raise HttpError(HTTPStatus.BAD_REQUEST, str(ex)) from ex
 
     ca.save()
-    return ca
+    return DjangoCertificateAuthorityModel.model_validate(ca)
 
 
 @api.post(
@@ -214,7 +214,7 @@ def list_certificates(
     request: WSGIRequest,
     serial: str,
     filters: CertificateFilterSchema = Query(...),  # type: ignore[type-arg]  # noqa: B008
-) -> CertificateQuerySet:
+) -> Iterator[DjangoCertificateModel]:
     """Retrieve certificates signed by the certificate authority named by `serial`."""
     ca = get_certificate_authority(serial, expired=True)  # You can list certificates of expired CAs
     qs = Certificate.objects.filter(ca=ca)
@@ -228,7 +228,7 @@ def list_certificates(
     if filters.profile is not None:
         qs = qs.filter(profile=filters.profile)
 
-    return qs
+    return (DjangoCertificateModel.model_validate(cert) for cert in qs)
 
 
 @api.get(
@@ -238,10 +238,11 @@ def list_certificates(
     summary="View certificate",
     tags=["Certificates"],
 )
-def view_certificate(request: WSGIRequest, serial: str, certificate_serial: str) -> Certificate:
+def view_certificate(request: WSGIRequest, serial: str, certificate_serial: str) -> DjangoCertificateModel:
     """Retrieve details of the certificate with the given certificate serial."""
     ca = get_certificate_authority(serial, expired=True)  # You can view certificates of expired CAs
-    return Certificate.objects.get(ca=ca, serial=certificate_serial)
+    cert = Certificate.objects.get(ca=ca, serial=certificate_serial)
+    return DjangoCertificateModel.model_validate(cert)
 
 
 @api.post(
@@ -321,7 +322,7 @@ def resign_certificate(
 )
 def revoke_certificate(
     request: WSGIRequest, serial: str, certificate_serial: str, revocation: RevokeCertificateSchema
-) -> Certificate:
+) -> DjangoCertificateModel:
     """Revoke a certificate with the given serial.
 
     Both `reason` and `compromised` fields are optional.
@@ -337,7 +338,7 @@ def revoke_certificate(
         raise HttpError(HTTPStatus.BAD_REQUEST, "The certificate is already revoked.")
 
     cert.revoke(revocation.reason, revocation.compromised)
-    return cert
+    return DjangoCertificateModel.model_validate(cert)
 
 
 @api.post(
@@ -349,7 +350,7 @@ def revoke_certificate(
 )
 def revoke_certificate_deprecated(
     request: WSGIRequest, serial: str, certificate_serial: str, revocation: RevokeCertificateSchema
-) -> Certificate:
+) -> DjangoCertificateModel:
     """Deprecated path to revoke a certificate."""
     path = reverse(
         "django_ca:api:revoke_certificate",

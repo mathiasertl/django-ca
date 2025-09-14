@@ -13,15 +13,13 @@
 
 """Pydantic Schemas for the API."""
 
-import abc
 from datetime import datetime
 
 from ninja import Field, ModelSchema, Schema
-from pydantic import field_serializer
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.models import CertificateAuthority, CertificateOrder, X509CertMixin
+from django_ca.models import CertificateAuthority, CertificateOrder
 from django_ca.pydantic.base import DATETIME_EXAMPLE
 from django_ca.pydantic.extensions import (
     AuthorityInformationAccessModel,
@@ -29,60 +27,22 @@ from django_ca.pydantic.extensions import (
     CRLDistributionPointsModel,
     IssuerAlternativeNameModel,
 )
-from django_ca.pydantic.name import NameModel
 
 
-class X509BaseSchema(ModelSchema, abc.ABC):
-    """Base schema for CAs and Certificates."""
+class CertificateAuthorityFilterSchema(Schema):
+    """Filter-schema for listing certificate authorities."""
 
-    created: datetime = Field(
-        description="When the certificate was created.", json_schema_extra={"example": DATETIME_EXAMPLE}
+    expired: bool = Field(default=False, description="Include expired CAs.")
+
+
+class CertificateAuthorityUpdateSchema(ModelSchema):
+    """Schema for updating certificate authorities."""
+
+    name: str | None = Field(
+        description="The human-readable name of the certificate authority.",
+        default=None,
+        json_schema_extra={"required": False},
     )
-    not_after: datetime = Field(
-        description="The certificate is not valid after this date.",
-        json_schema_extra={"example": DATETIME_EXAMPLE},
-    )
-    not_before: datetime = Field(
-        description="The certificate is not valid before this date.",
-        json_schema_extra={"example": DATETIME_EXAMPLE},
-    )
-    pem: str = Field(
-        description="The public key formatted as PEM.",
-        alias="pub.pem",
-        json_schema_extra={"example": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n"},
-    )
-    serial: str = Field(
-        description="Serial (in hex) of the certificate.", json_schema_extra={"example": "ABC...0123"}
-    )
-    subject: NameModel = Field(description="The subject as list of name attributes.")
-    issuer: NameModel = Field(description="The issuer as list of name attributes.")
-    revoked: bool = Field(description="If the certificate was revoked.", json_schema_extra={"example": False})
-    updated: datetime = Field(
-        description="When the certificate was last updated.", json_schema_extra={"example": DATETIME_EXAMPLE}
-    )
-
-    class Meta:  # pylint: disable=missing-class-docstring
-        model = X509CertMixin
-        fields = sorted(["revoked", "serial"])
-
-    @field_serializer("created")
-    def serialize_created(self, created: datetime) -> datetime:
-        """Strip microseconds from the attribute."""
-        return created.replace(microsecond=0)
-
-    @field_serializer("updated")
-    def serialize_updated(self, updated: datetime) -> datetime:
-        """Strip microseconds from the attribute."""
-        return updated.replace(microsecond=0)
-
-
-class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
-    """Base schema for certificate authorities.
-
-    Contains all fields that can be read or updated.
-    """
-
-    name: str = Field(description="The human-readable name of the certificate authority.")
     sign_authority_information_access: AuthorityInformationAccessModel | None = Field(
         default=None,
         json_schema_extra={
@@ -126,43 +86,6 @@ class CertificateAuthorityBaseSchema(ModelSchema, abc.ABC):
             "acme_profile",
             "acme_requires_contact",
         )
-
-
-class CertificateAuthoritySchema(CertificateAuthorityBaseSchema, X509BaseSchema):
-    """Schema for serializing a certificate authority."""
-
-    can_sign_certificates: bool = Field(
-        description="If the certificate authority can be used to sign certificates via the API."
-    )
-
-    class Meta(X509BaseSchema.Meta):  # pylint: disable=missing-class-docstring
-        model = CertificateAuthority
-        fields = sorted((*X509BaseSchema.Meta.fields, *CertificateAuthorityBaseSchema.Meta.fields))
-
-    @staticmethod
-    def resolve_can_sign_certificates(obj: CertificateAuthority) -> bool:
-        """Resolve the can_sign_certificates flag."""
-        return obj.is_usable()
-
-
-class CertificateAuthorityFilterSchema(Schema):
-    """Filter-schema for listing certificate authorities."""
-
-    expired: bool = Field(default=False, description="Include expired CAs.")
-
-
-class CertificateAuthorityUpdateSchema(CertificateAuthorityBaseSchema):
-    """Schema for updating certificate authorities."""
-
-    # TYPE NOTE: fields_optional does not capture explicitly named fields, so we repeat this
-    # with Optional[str], which is an incompatible override
-    name: str | None = Field(  # type: ignore[assignment]
-        description="The human-readable name of the certificate authority.",
-        default=None,
-        json_schema_extra={"required": False},
-    )
-
-    class Meta(CertificateAuthorityBaseSchema.Meta):  # pylint: disable=missing-class-docstring
         fields_optional = "__all__"
 
 
