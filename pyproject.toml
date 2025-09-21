@@ -14,6 +14,8 @@ cryptography = ["45", "46"]
 acme = ["4.1", "4.2", "5.0"]
 pydantic = ["2.11"]
 josepy = ["2.0", "2.1"]
+# Newest uv release: https://pypi.org/project/uv/
+uv = "0.8.19"
 
 # https://alpinelinux.org/releases/
 alpine = [
@@ -518,6 +520,7 @@ exclude = ["django_ca.tests*"]
 local_scheme = "no-local-version"
 
 [tool.uv]
+required-version = "0.8.19"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "django5.1" }, { group = "django5.2" }, ],

@@ -3,6 +3,14 @@
 # https://docs.docker.com/build/dockerfile/release-notes/
 ARG IMAGE=python:3.13-slim-trixie
 
+# These arguments are used to more easily assure a consistent version
+# with dev.py validate state
+ARG UV=0.8.19
+
+# Intermediate layer to be able to use a build argument in COPY --from below:
+#   https://stackoverflow.com/a/63472135
+FROM ghcr.io/astral-sh/uv:$UV as uv
+
 FROM $IMAGE AS base
 WORKDIR /usr/src/django-ca
 
@@ -23,7 +31,7 @@ ENV VIRTUAL_ENV=/usr/src/django-ca/.venv
 FROM base AS build
 
 # Install uv: https://docs.astral.sh/uv/guides/integration/docker/
-COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
+COPY --from=uv /uv /uvx /bin/
 
 COPY ca/django_ca/__init__.py ca/django_ca/
 COPY pyproject.toml uv.lock ./

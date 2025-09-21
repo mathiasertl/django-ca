@@ -19,7 +19,7 @@ import base64
 import json
 import typing
 from http import HTTPStatus
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from cryptography.hazmat.primitives import hashes
 

@@ -225,12 +225,17 @@ def check_tox() -> int:
     return errors
 
 
-def check_pyproject_toml() -> int:
+def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
     """Check pyproject.toml."""
     check_path("pyproject.toml")
     errors = 0
 
     # project_configuration = config.read_configuration(config.ROOT_DIR / "pyproject.toml")
+    data = config.PYPROJECT_TOML
+
+    newest_uv = data["django-ca"]["release"]["uv"]
+    if newest_uv != data["tool"]["uv"]["required-version"]:
+        errors += err(f"tool.uv: Outdated uv version ({data['tool']['uv']['required-version']}).")
 
     # Get data from pyproject.toml
     classifiers = config.PYPROJECT_TOML["project"]["classifiers"]
@@ -329,6 +334,42 @@ def check_readme() -> int:
     return errors
 
 
+def check_dockerfile(path: str, distro: str) -> int:
+    """Check the main Dockerfile for consistency."""
+    errors = 0
+    check_path(path)
+
+    with open(path, encoding="utf-8") as stream:
+        dockerfile = stream.read().splitlines()
+    newest_uv = config.PYPROJECT_TOML["django-ca"]["release"]["uv"]
+
+    arg_lines = [line for line in dockerfile if line.lower().startswith("arg ")]
+    for arg_line in arg_lines:
+        match = re.match("ARG ([A-Z_]+)(=(.*))?", arg_line, re.IGNORECASE)
+        if match is None:
+            continue
+        arg_key, _, arg_value = match.groups()
+
+        # Validate we use the newest python and distro
+        if arg_key == "IMAGE":
+            if distro == "debian":
+                expected_image = f"python:{config.PYTHON_RELEASES[-1]}-slim-{config.DEBIAN_RELEASES[-1]}"
+                if arg_value != expected_image:
+                    errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
+            elif distro == "alpine":
+                expected_image = f"python:{config.PYTHON_RELEASES[-1]}-alpine{config.ALPINE_RELEASES[-1]}"
+                if arg_value != expected_image:
+                    errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
+            else:
+                errors += err(f"{distro}: Unknown distro found.")
+
+        # Validate we use the newest UV
+        elif arg_key == "UV" and arg_value != newest_uv:
+            errors += err(f"UV build arg does not reference newest UV version ({arg_value} vs. {newest_uv}).")
+
+    return errors
+
+
 class Command(DevCommand):
     """Class implementing the ``dev.py validate state`` command."""
 
@@ -340,6 +381,8 @@ class Command(DevCommand):
         total_errors += check(check_pyproject_toml)
         total_errors += check(check_intro)
         total_errors += check(check_readme)
+        total_errors += check(check_dockerfile, "Dockerfile", "debian")
+        total_errors += check(check_dockerfile, "Dockerfile.alpine", "alpine")
 
         if total_errors != 0:
             raise CommandError(f"A total of {total_errors} error(s) found!")
