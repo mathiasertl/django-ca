@@ -24,15 +24,6 @@ alpine = [
     "3.22",  # until 2027-05-01
 ]
 
-# Blacklist images that we don't want to build for
-docker-image-blacklist = [
-    # uWSGI does not compile on bullseye
-    "python:3.13-slim-bullseye",
-    "python:3.12-slim-bullseye",
-    "python:3.11-slim-bullseye",
-    "python:3.10-slim-bullseye",
-]
-
 # List of tested Debian releases:
 #   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
 debian-releases = [
