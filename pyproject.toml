@@ -10,8 +10,8 @@ build-backend = "setuptools.build_meta"
 python = ["3.10", "3.11", "3.12", "3.13"]
 # https://www.djangoproject.com/download/
 django = ["5.2"]
-cryptography = ["45"]
-acme = [ "4.1", "4.2", "5.0" ]
+cryptography = ["45", "46"]
+acme = ["4.1", "4.2", "5.0"]
 pydantic = ["2.11"]
 josepy = ["2.0", "2.1"]
 
@@ -521,7 +521,7 @@ local_scheme = "no-local-version"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "django5.1" }, { group = "django5.2" }, ],
-    #[ { group = "cryptography45" }, ],
+    [ { group = "cryptography45" }, { group = "cryptography46" }, ],
     [ { group = "acme4.1" }, { group = "acme4.2" },  { group = "acme5.0" } ],
     #[ { group = "pydantic2.11" } ],
 ]
@@ -601,8 +601,8 @@ gunicorn = [ "gunicorn>=23" ]
 # NOTE: don't forget to add conflicts in [tool.uv] above.
 #"Django5.1" = ["Django~=5.1.0"]
 "Django5.2" = ["Django~=5.2.0"]
-#"cryptography44" = ["cryptography~=44.0"]
 "cryptography45" = ["cryptography~=45.0"]
+"cryptography46" = ["cryptography~=46.0"]
 "acme4.1" = ["acme~=4.1.0"]
 "acme4.2" = ["acme~=4.2.0"]
 "acme5.0" = ["acme~=5.0.0"]
