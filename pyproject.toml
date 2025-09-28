@@ -65,7 +65,6 @@ debian-releases = [
 ubuntu-releases = [
     "jammy",  # 22.04, until 2027-04-21
     "noble",  # 24.04, until 2029-05-31
-    "oracular",  # 24.10, until 2025-07
     "plucky",  # 25.04, until 2026-01
 ]
 
