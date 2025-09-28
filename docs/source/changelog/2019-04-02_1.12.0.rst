@@ -36,8 +36,7 @@ file system shared between different servers, e.g. to provide a redundant setup.
 
 * Use file storage API for reading/writing private keys of CAs.
 * Use file storage API for reading the responder key and certificate for OCSP.
-* New settings :ref:`CA_FILE_STORAGE <settings-ca-file-storage>` and :ref:`CA_FILE_STORAGE_KWARGS
-  <settings-ca-file-storage-kwargs>` to configure file storage.
+* New settings ``CA_FILE_STORAGE`` and ``CA_FILE_STORAGE_KWARGS`` to configure file storage.
 
 ****
 OCSP

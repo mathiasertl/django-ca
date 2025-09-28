@@ -771,10 +771,6 @@ def parse_general_name(name: str) -> x509.GeneralName:  # noqa: PLR0911
 def parse_encoding(value: str) -> Encoding:
     """Parse a value to a valid encoding.
 
-    .. deprecated:: 1.29.0
-
-       The ability to pass an Encoding directly has been deprecated and will be removed in django-ca 2.0.
-
     The passed `value` is a string describing the encoding, either ``"PEM"`` or ``"DER"``. ``"ASN1"`` is an
     alias for ``"DER"``.
 

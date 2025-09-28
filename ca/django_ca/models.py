@@ -727,10 +727,9 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         will add the AuthorityKeyIdentifier, BasicConstraints and SubjectKeyIdentifier extensions with values
         coming from the certificate authority.
 
-        .. deprecated:: 2.1.0
+        .. versionchanged:: 2.3.0
 
-           The ``expires`` parameter is deprecated and will be removed in django-ca 2.3.0. use ``not_after``
-           instead.
+           The `expires` parameter was renamed to `not_after`.
 
         Parameters
         ----------

@@ -77,11 +77,6 @@ CA_CRL_PROFILES
         `only_contains_ca_certs`, `only_contains_user_certs` and `only_some_reasons` parameters. The old
         parameter currently still takes precedence, but will be removed in django-ca 2.3.0.
 
-
-   .. versionchanged:: 1.25.0
-
-      Support for specifying custom signature hash algorithms in the configuration was removed.
-
    You may also specify an ``"OVERRIDES"`` key for a particular profile to specify custom behavior for select
    certificate authorities named by serial. It can set the same values as a general profile, plus the
    ``"skip"`` that disables the certificate authority for a particular profile. For example, to disable a
@@ -329,35 +324,6 @@ CA_ENABLE_REST_API
    Default: ``False``
 
    Set to ``True`` to enable the :doc:`experimental REST API </rest_api>`.
-
-.. _settings-ca-file-storage:
-
-CA_FILE_STORAGE
-   Default: ``'django.core.files.storage.FileSystemStorage'``
-
-   .. deprecated:: 1.28.0
-
-      Use :ref:`settings-ca-key-backends` instead. Support for this setting will be removed in
-      ``django-ca==2.0``.
-
-   Default storage backend for files created by django-ca. The default is the same as *the default* for
-   ``DEFAULT_FILE_STORAGE``, so django-ca will still use local file system storage even if you configure a
-   different storage backend in ``DEFAULT_FILE_STORAGE``. The default uses :ref:`CA_FILE_STORAGE_KWARGS
-   <settings-ca-file-storage-kwargs>` to store files in a different location, since the default
-   (``MEDIA_ROOT``) is commonly used to upload user-generated files that are exposed to the web by the
-   web server.
-
-.. _settings-ca-file-storage-kwargs:
-
-CA_FILE_STORAGE_KWARGS
-   Default: ``{'location': 'files/', 'file_permissions_mode': 0o600, 'directory_permissions_mode': 0o700}``
-
-   .. deprecated:: 1.28.0
-
-      Use :ref:`settings-ca-key-backends` instead. Support for this setting will be removed in
-      ``django-ca==2.0``.
-
-   Add any arguments to the storage backend configured in :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`.
 
 .. _settings-ca-key-backends:
 

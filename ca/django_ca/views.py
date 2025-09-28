@@ -209,15 +209,14 @@ class OCSPView(View):
     """The name or serial of your Certificate Authority."""
 
     responder_key: str = ""
-    """Private key used for signing OCSP responses. A relative path used by :ref:`CA_FILE_STORAGE
-    <settings-ca-file-storage>`."""
+    """Private key used for signing OCSP responses. A relative path used by the storage backend configured by
+    :ref:`CA_DEFAULT_STORAGE_ALIAS <settings-ca-default-storage-alias>`."""
 
     responder_cert: x509.Certificate | str = ""
     """Public key of the responder.
 
     This may either be:
 
-    * A relative path used by :ref:`CA_FILE_STORAGE <settings-ca-file-storage>`
     * A serial of a certificate as stored in the database
     * The PEM of the certificate as string
     * A loaded :py:class:`~cg:cryptography.x509.Certificate`
