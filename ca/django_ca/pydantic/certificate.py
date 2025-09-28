@@ -172,7 +172,8 @@ class DjangoCertificateAuthorityModel(X509CertMixinModel):
     enabled: bool
     parent: Any  # primary key can be any type when used as app
     key_backend_alias: str
-    key_backend_options: dict[str, Any]
+    # Excluded, as they might contain secrets.
+    # key_backend_options: dict[str, Any]
     sign_authority_information_access: AuthorityInformationAccessModel | None
     sign_certificate_policies: CertificatePoliciesModel | None
     sign_crl_distribution_points: CRLDistributionPointsModel | None
@@ -181,7 +182,8 @@ class DjangoCertificateAuthorityModel(X509CertMixinModel):
     website: str
     terms_of_service: str
     ocsp_key_backend_alias: str
-    ocsp_key_backend_options: dict[str, Any]
+    # Excluded, as they might contain secrets.
+    # ocsp_key_backend_options: dict[str, Any]
     ocsp_responder_key_validity: int
     ocsp_response_validity: int
     acme_enabled: bool

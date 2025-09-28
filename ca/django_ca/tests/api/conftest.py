@@ -132,17 +132,10 @@ def root_response(root: CertificateAuthority) -> DetailResponse:
         "caa_identity": "",
         "enabled": root.enabled,
         "key_backend_alias": "default",
-        "key_backend_options": {
-            "path": "root.key",
-        },
         "name": "root",
         "ocsp_responder_key_validity": 3,
         "ocsp_response_validity": 86400,
         "ocsp_key_backend_alias": "default",
-        "ocsp_key_backend_options": {
-            "certificate": {},
-            "private_key": {},
-        },
         "parent": None,
         "revoked": False,
         "sign_authority_information_access": sign_authority_information_access,
