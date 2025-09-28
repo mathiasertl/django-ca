@@ -49,16 +49,16 @@ def minor_to_major(version: str) -> str:
 
 with open(PYPROJECT_PATH, "rb") as _pyproject_stream:
     PYPROJECT_TOML = tomllib.load(_pyproject_stream)
-_release_config = PYPROJECT_TOML["django-ca"]["release"]
+RELEASE = PYPROJECT_TOML["django-ca"]["release"]
 
 EXTRAS = PYPROJECT_TOML["project"]["optional-dependencies"]
-PYTHON_RELEASES = tuple(typing.cast(list[str], _release_config["python"]))
-DJANGO = tuple(typing.cast(list[str], _release_config["django"]))
-CRYPTOGRAPHY = tuple(typing.cast(list[str], _release_config["cryptography"]))
-ACME = tuple(typing.cast(list[str], _release_config["acme"]))
-PYDANTIC = tuple(typing.cast(list[str], _release_config["pydantic"]))
+PYTHON_RELEASES = tuple(typing.cast(list[str], RELEASE["python"]))
+DJANGO = tuple(typing.cast(list[str], RELEASE["django"]))
+CRYPTOGRAPHY = tuple(typing.cast(list[str], RELEASE["cryptography"]))
+ACME = tuple(typing.cast(list[str], RELEASE["acme"]))
+PYDANTIC = tuple(typing.cast(list[str], RELEASE["pydantic"]))
 
-ALPINE_RELEASES = tuple(typing.cast(list[str], _release_config["alpine"]))
-DEBIAN_RELEASES = tuple(typing.cast(list[str], _release_config["debian-releases"]))
-UBUNTU_RELEASES = tuple(typing.cast(list[str], _release_config["ubuntu-releases"]))
-GITHUB_CONFIG = _release_config["github"]
+ALPINE_RELEASES = tuple(typing.cast(list[str], RELEASE["alpine"]))
+DEBIAN_RELEASES = tuple(typing.cast(list[str], RELEASE["debian-releases"]))
+UBUNTU_RELEASES = tuple(typing.cast(list[str], RELEASE["ubuntu-releases"]))
+GITHUB_CONFIG = RELEASE["github"]

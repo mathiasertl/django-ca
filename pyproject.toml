@@ -17,6 +17,27 @@ josepy = ["2.0", "2.1"]
 # Newest uv release: https://pypi.org/project/uv/
 uv = "0.8.19"
 
+# MariaDB releases:
+#   * https://mariadb.org/mariadb/all-releases/
+#   * https://mariadb.org/about/#maintenance-policy
+mariadb = [
+    "11.4",  # LTS, until 2029-05-29
+    "11.8",  # LTS, until 2028-06-04
+    "12",  # latest rolling release
+]
+
+# MySQL releases:
+#   * https://dev.mysql.com/doc/refman/9.4/en/mysql-releases.html
+#   * https://blogs.oracle.com/mysql/post/introducing-mysql-innovation-and-longterm-support-lts-versions
+#   * https://endoflife.date/mysql
+# Innovation releases last just 2-3 months, so there is no point
+# in testing for them explicitly. Versions here are used as Docker
+# image tags.
+mysql = [
+    "8.4",  # until 2029-04-30
+    "9",  # Currently in innovation cycle, 9.7 will be next LTS release
+]
+
 # https://alpinelinux.org/releases/
 alpine = [
     "3.20",  # until 2026-04-01

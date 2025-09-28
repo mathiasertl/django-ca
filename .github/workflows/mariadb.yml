@@ -16,7 +16,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         django-version: [ "5.2" ]
-        mariadb-image: [ "mariadb:11", "mysql:9" ]
+        mariadb-image: [
+          "mysql:8.4",
+          "mysql:9",
+          "mariadb:11.4",
+          "mariadb:11.8",
+          "mariadb:12",
+        ]
 
     services:
       mariadb:
