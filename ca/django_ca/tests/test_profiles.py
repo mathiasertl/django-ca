@@ -26,17 +26,13 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
-from django_ca.constants import (
-    CONFIGURABLE_EXTENSION_KEYS,
-    END_ENTITY_CERTIFICATE_EXTENSION_KEYS,
-    EXTENSION_DEFAULT_CRITICAL,
-)
+from django_ca.constants import CONFIGURABLE_EXTENSION_KEYS, END_ENTITY_CERTIFICATE_EXTENSION_KEYS
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.pydantic import NameModel
 from django_ca.signals import pre_sign_cert
-from django_ca.tests.base.assertions import assert_extensions, assert_removed_in_250
+from django_ca.tests.base.assertions import assert_extensions
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.mocks import mock_signal
@@ -144,14 +140,6 @@ def test_init_django_ca_values(subject: x509.Name) -> None:
     prof2 = Profile(name="test", subject=subject, extensions={"ocsp_no_check": ocsp_no_check()})
     assert prof1.extensions == prof2.extensions
     assert prof1 == prof2
-
-
-def test_init_none_extension() -> None:
-    """Test profiles that explicitly deactivate an extension."""
-    prof = Profile(name="test", extensions={"ocsp_no_check": None})
-    assert prof.extensions == {"ocsp_no_check": None}
-    with assert_removed_in_250(None):
-        assert prof.serialize()["clear_extensions"] == ["ocsp_no_check"]
 
 
 def test_init_no_subject(settings: SettingsWrapper) -> None:
@@ -706,34 +694,3 @@ def test_create_cert_with_unsupported_extension(root: CertificateAuthority) -> N
                 basic_constraints(ca=False)  # type: ignore[list-item]
             ],
         )
-
-
-def test_serialize() -> None:
-    """Test profile serialization."""
-    desc = "foo bar"
-    key_usage_items = ["digital_signature"]
-    prof = Profile(
-        name="test",
-        algorithm="SHA-512",
-        description=desc,
-        subject=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "example.com")]),
-        extensions={
-            CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.KEY_USAGE]: {"value": key_usage_items},
-            CONFIGURABLE_EXTENSION_KEYS[ExtensionOID.EXTENDED_KEY_USAGE]: None,
-        },
-    )
-    with assert_removed_in_250(None):
-        assert prof.serialize() == {
-            "name": "test",
-            "algorithm": "SHA-512",
-            "subject": [{"oid": NameOID.COMMON_NAME.dotted_string, "value": "example.com"}],
-            "description": desc,
-            "clear_extensions": ["extended_key_usage"],
-            "extensions": [
-                {
-                    "type": "key_usage",
-                    "value": key_usage_items,
-                    "critical": EXTENSION_DEFAULT_CRITICAL[ExtensionOID.KEY_USAGE],
-                },
-            ],
-        }

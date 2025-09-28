@@ -13,7 +13,6 @@
 
 """Endpoint implementation for the API."""
 
-import warnings
 from collections.abc import Iterator
 from http import HTTPStatus
 
@@ -26,7 +25,6 @@ from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 from django.db import transaction
 from django.http import Http404, HttpResponse
-from django.urls import reverse
 
 from django_ca import __version__, constants
 from django_ca.api.auth import BasicAuth
@@ -40,7 +38,6 @@ from django_ca.api.schemas import (
 )
 from django_ca.api.utils import get_certificate_authority
 from django_ca.constants import ExtensionOID
-from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.profiles import Profile, profiles
 from django_ca.pydantic.certificate import DjangoCertificateAuthorityModel, DjangoCertificateModel
@@ -339,24 +336,3 @@ def revoke_certificate(
 
     cert.revoke(revocation.reason, revocation.compromised)
     return DjangoCertificateModel.model_validate(cert)
-
-
-@api.post(
-    "/ca/{django-ca-serial:serial}/revoke/{django-ca-serial:certificate_serial}/",
-    response=DjangoCertificateModel,
-    auth=BasicAuth("django_ca.revoke_certificate"),
-    summary="Revoke certificate",
-    tags=["Certificates"],
-)
-def revoke_certificate_deprecated(
-    request: WSGIRequest, serial: str, certificate_serial: str, revocation: RevokeCertificateSchema
-) -> DjangoCertificateModel:
-    """Deprecated path to revoke a certificate."""
-    path = reverse(
-        "django_ca:api:revoke_certificate",
-        kwargs={"serial": serial, "certificate_serial": certificate_serial},
-    )
-    warnings.warn(
-        f"{request.path}: Path is deprecated, use {path} instead.", RemovedInDjangoCA250Warning, stacklevel=1
-    )
-    return revoke_certificate(request, serial, certificate_serial, revocation)

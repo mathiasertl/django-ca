@@ -47,12 +47,7 @@ from django_ca.key_backends.storages import StoragesOCSPBackend
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic import CertificatePoliciesModel
-from django_ca.tests.base.assertions import (
-    assert_certificate,
-    assert_crl,
-    assert_removed_in_250,
-    assert_sign_cert_signals,
-)
+from django_ca.tests.base.assertions import assert_certificate, assert_crl, assert_sign_cert_signals
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -311,38 +306,6 @@ def test_generate_ocsp_responder_certificate(usable_root: CertificateAuthority) 
         # key = cast(rsa.RSAPrivateKey, key)
         assert isinstance(key, rsa.RSAPrivateKey)
         assert key.key_size == root_public_key.key_size
-
-
-def test_generate_ocsp_responder_certificate_with_deprecated_parameters(
-    settings: SettingsWrapper, usable_ec: CertificateAuthority
-) -> None:
-    """Test generate_ocsp_key() with deprecated parameters."""
-    settings.CA_DEFAULT_ELLIPTIC_CURVE = "secp192r1"
-    # EC key for an EC based CA should inherit the key
-    with (
-        assert_removed_in_250(r"^Argument `key_type` is deprecated and will be removed in django-ca 2\.5\.$"),
-        assert_removed_in_250(
-            r"^Argument `not_after` is deprecated and will be removed in django-ca 2\.5\.$"
-        ),
-        assert_removed_in_250(
-            r"^Argument `algorithm` is deprecated and will be removed in django-ca 2\.5\.$"
-        ),
-    ):
-        with generate_ocsp_key(
-            usable_ec,
-            key_backend_options,
-            key_type="EC",
-            algorithm=hashes.SHA256(),
-            not_after=timedelta(days=1),
-        ) as (
-            key,
-            _cert,
-        ):
-            # key = cast(ec.EllipticCurvePrivateKey, key)
-            assert isinstance(key, ec.EllipticCurvePrivateKey)
-
-            # Since the CA is EC-based, they curve is inherited from the CA (not from the default setting).
-            assert isinstance(key.curve, ec.SECP256R1)
 
 
 def test_regenerate_ocsp_responder_certificate(usable_root: CertificateAuthority) -> None:

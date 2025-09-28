@@ -29,7 +29,6 @@ from django.urls import reverse
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_EXTENSION_KEY_OIDS
-from django_ca.deprecation import RemovedInDjangoCA250Warning, deprecate_function
 from django_ca.extensions.utils import format_extensions, get_formatting_context
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.profile import ProfileConfigurationModel
@@ -292,33 +291,6 @@ class Profile(ProfileConfigurationModel):
         context["OCSP_PATH"] = reverse("django_ca:ocsp-cert-post", kwargs=kwargs).lstrip("/")
         context["CRL_PATH"] = reverse("django_ca:crl", kwargs=kwargs).lstrip("/")
         return context
-
-    @deprecate_function(RemovedInDjangoCA250Warning)
-    def serialize(self) -> dict[str, Any]:
-        """Serialize the profile.
-
-        .. deprecated:: 2.4.0
-
-           This function will be removed in ``django-ca==2.5.0``. Use `model_dump()` instead.
-        """
-        subject = None
-        if self.subject is not None:  # pragma: no branch
-            # pylint: disable-next=no-member  # issue with pylint
-            subject = self.subject.model_dump(mode="json")
-
-        # pylint: disable-next=no-member  # issue with pylint
-        profile_extensions = [ext for ext in self.extensions.values() if ext is not None]
-        # pylint: disable-next=no-member  # issue with pylint
-        clear_extensions = [key for key, ext in self.extensions.items() if ext is None]
-
-        return {
-            "name": self.name,
-            "description": str(self.description),
-            "subject": subject,
-            "algorithm": self.algorithm,
-            "extensions": [ext.model_dump(mode="json") for ext in profile_extensions],
-            "clear_extensions": clear_extensions,
-        }
 
     def _update_authority_information_access(
         self,

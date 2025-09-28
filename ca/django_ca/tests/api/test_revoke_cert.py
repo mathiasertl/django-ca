@@ -25,7 +25,6 @@ from django.utils import timezone
 
 import pytest
 
-from django_ca.deprecation import RemovedInDjangoCA250Warning
 from django_ca.models import Certificate
 from django_ca.tests.api.conftest import APIPermissionTestBase, DetailResponse
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -128,28 +127,6 @@ def test_disabled_ca(root_cert: Certificate, api_client: Client) -> None:
     response = api_client.post(path, {}, content_type="application/json")
     assert response.status_code == HTTPStatus.NOT_FOUND, response.content
     assert response.json() == {"detail": "Not Found"}, response.json()
-
-
-def test_deprecated_path(
-    root_cert: Certificate, api_client: Client, expected_response: DetailResponse
-) -> None:
-    """Test an ordinary certificate revocation."""
-    path = reverse_lazy(
-        "django_ca:api:revoke_certificate_deprecated",
-        kwargs={
-            "serial": CERT_DATA["root"]["serial"],
-            "certificate_serial": CERT_DATA["root-cert"]["serial"],
-        },
-    )
-    with pytest.warns(RemovedInDjangoCA250Warning, match=r"Path is deprecated"):
-        response = api_client.post(path, {}, content_type="application/json")
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.json() == expected_response, response.json()
-
-    root_cert.refresh_from_db()
-    assert root_cert.revoked is True
-    assert root_cert.revoked_reason == "unspecified"
-    assert root_cert.compromised is None
 
 
 class TestPermissions(APIPermissionTestBase):
