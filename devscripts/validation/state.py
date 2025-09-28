@@ -153,11 +153,15 @@ def check_github_actions_tests() -> int:
                         errors += simple_diff("Alpine versions", tuple(values), config.ALPINE_RELEASES)
                     elif key == "extra":
                         errors += simple_diff("Extras", tuple(values), tuple(config.EXTRAS))
+                    elif key == "postgres-version":
+                        errors += simple_diff(
+                            "PostgreSQL versions", tuple(values), tuple(config.RELEASE["postgres"])
+                        )
                     elif key == "mariadb-image":
                         expected = tuple(f"mysql:{version}" for version in config.RELEASE["mysql"]) + tuple(
                             f"mariadb:{version}" for version in config.RELEASE["mariadb"]
                         )
-                        errors += simple_diff("Extras", tuple(values), expected)
+                        errors += simple_diff("MariaDB", tuple(values), expected)
                     elif key in ("os", "language"):  # keys are ignored
                         continue
                     else:

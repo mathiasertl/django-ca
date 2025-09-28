@@ -16,7 +16,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         django-version: [ "5.2" ]
-        postgres-version: [ "16", "17" ]
+        postgres-version: [ "16", "17", "18" ]
 
     services:
       postgres:

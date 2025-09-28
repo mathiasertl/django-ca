@@ -17,6 +17,13 @@ josepy = ["2.0", "2.1"]
 # Newest uv release: https://pypi.org/project/uv/
 uv = "0.8.22"
 
+# https://www.postgresql.org/support/versioning/
+postgres = [
+    "16",  # until 2028-11-09
+    "17",  # until 2029-11-08
+    "18",  # until 2030-11-14
+]
+
 # MariaDB releases:
 #   * https://mariadb.org/mariadb/all-releases/
 #   * https://mariadb.org/about/#maintenance-policy
