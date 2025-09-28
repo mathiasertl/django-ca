@@ -1,7 +1,10 @@
 import typing
+from typing import Callable
 
 from celery.local import Proxy
 
-F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
+from celery.typehints import TaskParamSpec, TaskReturnSpec
 
-def shared_task(func: F) -> Proxy[F]: ...
+F = Callable[TaskParamSpec, TaskReturnSpec]
+
+def shared_task(func: Callable[TaskParamSpec, TaskReturnSpec]) -> Proxy[TaskParamSpec, TaskReturnSpec]: ...

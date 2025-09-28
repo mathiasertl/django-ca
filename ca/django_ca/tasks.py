@@ -18,10 +18,10 @@
 
 import logging
 import typing
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime, timedelta, timezone as tz
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import requests
 
@@ -55,24 +55,35 @@ from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
 
-FuncTypeVar = typing.TypeVar("FuncTypeVar", bound=typing.Callable[..., Any])
+
+if TYPE_CHECKING:
+    # This module comes from our stubs
+    from celery.typehints import TaskParamSpec, TaskReturnSpec
 
 try:
     from celery import shared_task
     from celery.local import Proxy
 except ImportError:
+    if TYPE_CHECKING:
+        from celery.local import Proxy
 
-    def shared_task(func: FuncTypeVar) -> "Proxy[FuncTypeVar]":
+    def shared_task(
+        func: "Callable[TaskParamSpec, TaskReturnSpec]",
+    ) -> "Proxy[TaskParamSpec, TaskReturnSpec]":
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
         # We do not yet need this, but might come in handy in the future:
         # func.delay = lambda *a, **kw: func(*a, **kw)
         # func.apply_async = lambda *a, **kw: func(*a, **kw)
         func.delay = func  # type: ignore[attr-defined]
-        return typing.cast("Proxy[FuncTypeVar]", func)
+        return cast("Proxy[TaskParamSpec, TaskReturnSpec]", func)
 
 
 # pragma: only py<3.10: Use typing.ParamSpec for better type hinting
-def run_task(task: "Proxy[FuncTypeVar]", *args: Any, **kwargs: Any) -> Any:
+def run_task(
+    task: "Proxy[TaskParamSpec, TaskReturnSpec]",
+    *args: "TaskParamSpec.args",
+    **kwargs: "TaskParamSpec.kwargs",
+) -> Any:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 
