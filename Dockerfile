@@ -79,6 +79,7 @@ USER django-ca:django-ca
 ARG FAIL_UNDER=100
 ENV COVERAGE_FILE=/tmp/.coverage
 RUN pytest -v --cov-report=html:/tmp/coverage --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium -x
+RUN touch /tmp/.coverage-sentinel
 
 ###############
 # Build stage #
@@ -105,7 +106,7 @@ RUN python devscripts/standalone/check-clean-docker.py --ignore-devscripts
 RUN rm -rf devscripts/
 
 # With BuildKit, the test stage is never executed unless we depend on it
-COPY --from=test /tmp/.coverage /tmp
+COPY --from=test /tmp/.coverage-sentinel /tmp
 
 ###############
 # final stage #
