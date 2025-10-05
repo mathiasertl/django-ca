@@ -26,6 +26,8 @@ log = logging.getLogger(__name__)
 def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
     """Function to validate a DNS-01 challenge.
 
+    .. seealso:: `RFC 8555, section 8.4 <https://datatracker.ietf.org/doc/html/rfc8555#section-8.4>`_
+
     Parameters
     ----------
     challenge : :py:class:`~django_ca.models.AcmeChallenge`
@@ -38,9 +40,12 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
 
     domain = challenge.auth.value  # domain to validate
 
-    dns_name = f"_acme_challenge.{domain}"
-    expected = challenge.expected
-    log.info("DNS-01 validation of %s: Expect %s on %s", domain, expected.decode("utf-8"), dns_name)
+    # RFC 8555, section 8.4:
+    #
+    #   The client constructs the validation domain name by prepending the label "_acme-challenge"
+    dns_name = f"_acme-challenge.{domain}"
+    expected_token = challenge.expected  # the expected token in the DNS record
+    log.info("DNS-01 validation of %s: Expect %s on %s", domain, expected_token.decode("utf-8"), dns_name)
 
     try:
         answers = resolver.resolve(dns_name, "TXT", lifetime=timeout, search=False)
@@ -56,8 +61,8 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
         txt_data = answer.strings
 
         # A single TXT record can have multiple string values, even if rarely seen in practice
-        for value in txt_data:
-            if value == expected:
+        for response_value in txt_data:
+            if response_value == expected_token:
                 return True
 
     return False

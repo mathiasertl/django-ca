@@ -6,6 +6,7 @@
   with the ``--ocsp-key-backend`` option for :command:`manage.py init_ca` and :command:`manage.py edit_ca`.
 * :command:`manage.py regenerate_ocsp_keys` will not stop generating keys if Celery is *not* enabled and an
   error occurs when generating one key.
+* Fix validation for ACMEv2 DNS challenges.
 
 ********
 REST API

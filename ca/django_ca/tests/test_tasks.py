@@ -308,7 +308,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
         else:
             # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
             resolve_cm.assert_called_once()
-            expected = (f"_acme_challenge.{domain}", "TXT")
+            expected = (f"_acme-challenge.{domain}", "TXT")
             assert resolve_cm.call_args_list[0].args[:2] == expected
 
     def test_nxdomain(self) -> None:
@@ -318,12 +318,12 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
             self.assertLogs(level="DEBUG") as logcm,
         ):
             tasks.acme_validate_challenge(self.chall.pk)
-        rmcm.assert_called_once_with(f"_acme_challenge.{self.hostname}", "TXT", lifetime=1, search=False)
+        rmcm.assert_called_once_with(f"_acme-challenge.{self.hostname}", "TXT", lifetime=1, search=False)
         self.assertInvalid()
 
         domain = self.hostname
         exp = self.chall.expected.decode("ascii")
-        acme_domain = f"_acme_challenge.{domain}"
+        acme_domain = f"_acme-challenge.{domain}"
         logger = "django_ca.acme.validation"
         assert logcm.output == [
             f"INFO:{logger}:DNS-01 validation of {domain}: Expect {exp} on {acme_domain}",

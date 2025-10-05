@@ -106,7 +106,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         prefix = "INFO:django_ca.acme.validation"
         domain = chall.auth.value
         expected = chall.expected.decode("utf-8")
-        return f"{prefix}:DNS-01 validation of {domain}: Expect {expected} on _acme_challenge.{domain}"
+        return f"{prefix}:DNS-01 validation of {domain}: Expect {expected} on _acme-challenge.{domain}"
 
     @contextmanager
     def mock_response(self, domain: str, *responses: Iterable[bytes]) -> Iterator[mock.Mock]:
@@ -121,7 +121,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
 
         # Note: Only assert the first two parameters, as otherwise we'd test dnspython internals
         resolve_mock.assert_called_once()
-        expected = (f"_acme_challenge.{domain}", "TXT")
+        expected = (f"_acme-challenge.{domain}", "TXT")
         assert resolve_mock.call_args_list[0].args[:2] == expected
 
     @contextmanager
@@ -186,7 +186,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         """Mock resolver throwing a DNS exception."""
         with self.resolve(side_effect=dns.exception.DNSException) as resolve, self.assertLogs() as logcm:
             assert not validation.validate_dns_01(self.chall)
-        resolve.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)
+        resolve.assert_called_once_with(f"_acme-challenge.{self.domain}", "TXT", lifetime=1, search=False)
         assert len(logcm.output) == 2
         assert "dns.exception.DNSException" in logcm.output[1]
 
@@ -195,11 +195,11 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         with (
             self.resolve(side_effect=resolver.NXDOMAIN) as resolve,
             self.assertLogMessages(
-                f"DEBUG:django_ca.acme.validation:TXT _acme_challenge.{self.domain}: record does not exist."
+                f"DEBUG:django_ca.acme.validation:TXT _acme-challenge.{self.domain}: record does not exist."
             ),
         ):
             assert not validation.validate_dns_01(self.chall)
-        resolve.assert_called_once_with(f"_acme_challenge.{self.domain}", "TXT", lifetime=1, search=False)
+        resolve.assert_called_once_with(f"_acme-challenge.{self.domain}", "TXT", lifetime=1, search=False)
 
     def test_wrong_acme_challenge(self) -> None:
         """Test passing an ACME challenge of the wrong type."""
