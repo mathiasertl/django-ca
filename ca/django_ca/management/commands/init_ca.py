@@ -585,11 +585,11 @@ class Command(
         # Generate OCSP keys and cache CRLs
         serialized_key_backend_options = load_key_backend_options.model_dump(mode="json")
 
-        generate_csp_key_message = GenerateOCSPKeyMessage(serial=ca.serial)
+        generate_ocsp_key_message = GenerateOCSPKeyMessage(serial=ca.serial)
         run_task(
             generate_ocsp_key,
             key_backend_options=serialized_key_backend_options,
-            **generate_csp_key_message.model_dump(mode="json", exclude_unset=True),
+            **generate_ocsp_key_message.model_dump(mode="json", exclude_unset=True),
         )
 
         run_task(cache_crl, serial=ca.serial, key_backend_options=serialized_key_backend_options)
