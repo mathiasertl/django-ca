@@ -67,6 +67,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         if "ocsp" not in model_settings.CA_PROFILES:
             raise CommandError("ocsp: Undefined profile.")
 
+        errors = 0
         for serial in serials:
             serial = serial.replace(":", "").strip().upper()
             hr_serial = add_colons(serial)
@@ -93,5 +94,9 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                     key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
                     **parameters.model_dump(mode="json", exclude_unset=True),
                 )
-            except Exception as ex:
-                raise CommandError(ex) from ex
+            except Exception as ex:  # pylint: disable=broad-exception-caught
+                self.stderr.write(f"{serial}: {ex}")
+                errors += 1
+
+        if errors:
+            raise CommandError(f"Regeneration of {errors} OCSP key(s) failed.")

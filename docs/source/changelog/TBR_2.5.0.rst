@@ -4,6 +4,8 @@
 
 * The :ref:`key_backends_ocsp_db_backend` is now configured by default with the ``db`` alias. It can be used
   with the ``--ocsp-key-backend`` option for :command:`manage.py init_ca` and :command:`manage.py edit_ca`.
+* :command:`manage.py regenerate_ocsp_keys` will not stop generating keys if Celery is *not* enabled and an
+  error occurs when generating one key.
 
 ********
 REST API

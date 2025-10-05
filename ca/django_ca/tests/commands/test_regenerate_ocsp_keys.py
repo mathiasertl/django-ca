@@ -13,6 +13,7 @@
 
 """Test the regenerate_ocsp_keys management command."""
 
+import io
 import typing
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
@@ -173,8 +174,10 @@ def test_no_ocsp_profile(settings: SettingsWrapper, root: CertificateAuthority) 
 @pytest.mark.usefixtures("tmpcadir")
 def test_without_private_key(root: CertificateAuthority) -> None:
     """Try regenerating the OCSP key when no CA private key is available."""
-    with assert_command_error(r"No such file or directory"):
-        regenerate_ocsp_keys(root.serial)
+    stderr_buffer = io.StringIO()
+    with assert_command_error(r"Regeneration of 1 OCSP key\(s\) failed\."):
+        cmd("regenerate_ocsp_keys", root.serial, stderr=stderr_buffer)
+    assert "No such file or directory" in stderr_buffer.getvalue()
 
 
 def test_model_validation_error(root: CertificateAuthority) -> None:
