@@ -2,6 +2,9 @@
 2.5.0 (TBR)
 ###########
 
+* The :ref:`key_backends_ocsp_db_backend` is now configured by default with the ``db`` alias. It can be used
+  with the ``--ocsp-key-backend`` option for :command:`manage.py init_ca` and :command:`manage.py edit_ca`.
+
 ********
 REST API
 ********

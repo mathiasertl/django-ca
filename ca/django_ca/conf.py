@@ -343,6 +343,10 @@ class SettingsModel(BaseModel):
                 BACKEND=constants.DEFAULT_OCSP_KEY_BACKEND,
                 OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
             )
+            self.CA_OCSP_KEY_BACKENDS["db"] = KeyBackendConfigurationModel(
+                BACKEND="django_ca.key_backends.db.ocsp_backend.DBOCSPBackend",
+                OPTIONS={},
+            )
 
         elif self.CA_DEFAULT_OCSP_KEY_BACKEND not in self.CA_OCSP_KEY_BACKENDS:
             raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")

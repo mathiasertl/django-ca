@@ -639,7 +639,10 @@ def test_ca_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> Non
         "default": KeyBackendConfigurationModel(
             BACKEND="django_ca.key_backends.storages.StoragesOCSPBackend",
             OPTIONS={"storage_alias": "django-ca"},
-        )
+        ),
+        "db": KeyBackendConfigurationModel(
+            BACKEND="django_ca.key_backends.db.ocsp_backend.DBOCSPBackend", OPTIONS={}
+        ),
     }
 
 
