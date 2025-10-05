@@ -930,7 +930,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
                 responder_certificate = x509.load_pem_x509_certificate(responder_certificate_pem)
                 responder_certificate_expires = responder_certificate.not_valid_after_utc
                 if responder_certificate_expires > now + model_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL:
-                    log.info("%s: OCSP responder certificate is not yet scheduled for renewal.")
+                    log.info("%s: OCSP responder certificate is not yet scheduled for renewal.", self.serial)
                     return None
 
         # Create the private key using the OCSP key backend.
