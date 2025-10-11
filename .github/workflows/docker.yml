@@ -24,7 +24,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6.0.0
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           architecture: x64
 
       - name: Install uv
@@ -51,7 +51,12 @@ jobs:
       DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        debian-version: [ "bullseye", "bookworm", "trixie" ]
+        exclude:
+          # python:3.14-slim-bullseye is not built.
+          - python-version: "3.14"
+            debian-version: "bullseye"
 
     steps:
       - name: Acquire sources
@@ -64,7 +69,7 @@ jobs:
           tags: test.${{ matrix.python-version }}
           target: test
           build-args: |
-            IMAGE=python:${{ matrix.python-version }}-slim-bookworm
+            IMAGE=python:${{ matrix.python-version }}-slim-${{ matrix.debian-version }}
             DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
 
   test-alpine:
@@ -77,7 +82,12 @@ jobs:
     strategy:
       matrix:
         alpine-version: [ "3.20", "3.21", "3.22" ]
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        exclude:
+          # python:3.14-alpine3.20 is not built.
+          - python-version: "3.14"
+            alpine-version: "3.20"
+
 
     steps:
       - name: Acquire sources

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
-python = ["3.10", "3.11", "3.12", "3.13"]
+python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
 django = ["5.2"]
 cryptography = ["45", "46"]
@@ -132,6 +132,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Security :: Cryptography",
     "Topic :: Security",

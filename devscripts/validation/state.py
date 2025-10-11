@@ -204,7 +204,8 @@ def check_tox() -> int:
     # pylint: enable=consider-using-f-string
     # Check disabled as long as different Django versions support different Python versions
     if expected_env_list not in tox_config["tox"]["envlist"].splitlines():
-        errors += err(f"Expected envlist item not found: {expected_env_list}")
+        info("envlist check disabled.")
+        # errors += err(f"Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
     for component in ["django", "cryptography", "acme", "pydantic"]:

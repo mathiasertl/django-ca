@@ -16,7 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import argparse
 import typing
 from typing import Any
 
@@ -78,18 +77,14 @@ Note that the private key will be copied to the directory configured by the CA_D
         self.add_certificate_authority_sign_extension_groups(parser)
 
         parser.add_argument("name", help="Human-readable name of the CA")
-        parser.add_argument(
-            "key", help="Path to the private key (PEM or DER format).", type=argparse.FileType("rb")
-        )
-        parser.add_argument(
-            "pem", help="Path to the public key (PEM or DER format).", type=argparse.FileType("rb")
-        )
+        parser.add_argument("key", help="Path to the private key (PEM or DER format).")
+        parser.add_argument("pem", help="Path to the public key (PEM or DER format).")
 
     def handle(  # pylint: disable=too-many-locals  # noqa: PLR0913,PLR0912,PLR0915
         self,
         name: str,
-        key: typing.BinaryIO,
-        pem: typing.BinaryIO,
+        key: str,
+        pem: str,
         key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         parent: CertificateAuthority | None,
         import_password: bytes | None,
@@ -109,12 +104,10 @@ Note that the private key will be copied to the directory configured by the CA_D
         ocsp_response_validity: int | None,
         **options: Any,
     ) -> None:
-        key_data = key.read()
-        certificate_data = pem.read()
-
-        # close reader objects (otherwise we get a ResourceWarning)
-        key.close()
-        pem.close()
+        with open(key, "rb") as key_stream:
+            key_data = key_stream.read()
+        with open(pem, "rb") as pem_stream:
+            certificate_data = pem_stream.read()
 
         # load private key
         try:

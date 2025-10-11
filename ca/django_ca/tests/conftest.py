@@ -126,6 +126,18 @@ def pytest_collection_modifyitems(config: "PytestConfig", items: list[Any]) -> N
                 item.add_marker(skip_hsm)
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:  # pylint: disable=unused-argument
+    """Import Pydantic models *before* any tests start and freezegun mocks datetime classes.
+
+    Without this hack, tests would fail if they use freezegun and a Pydantic model using a datetime field is
+    imported for the first time in the test. Pydantic sees the mocked class and cannot generate a schema.
+
+    .. seealso:: https://github.com/pydantic/pydantic/discussions/9343
+    """
+    from django_ca.api import schemas  # noqa: F401, PLC0415
+    from django_ca.pydantic import certificate, extensions  # noqa: F401, PLC0415
+
+
 @pytest.fixture
 def user(
     # PYLINT NOTE: usefixtures() does not (yet?) work with fixtures as of pytest==7.4.3

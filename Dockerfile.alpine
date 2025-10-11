@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.10.0
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
-ARG IMAGE=python:3.13-alpine3.22
+ARG IMAGE=python:3.14-alpine3.22
 
 # These arguments are used to more easily assure a consistent version
 # with dev.py validate state
@@ -9,7 +9,7 @@ ARG UV=0.9.2
 
 # Intermediate layer to be able to use a build argument in COPY --from below:
 #   https://stackoverflow.com/a/63472135
-FROM ghcr.io/astral-sh/uv:$UV as uv
+FROM ghcr.io/astral-sh/uv:$UV AS uv
 
 FROM $IMAGE AS base
 WORKDIR /usr/src/django-ca
