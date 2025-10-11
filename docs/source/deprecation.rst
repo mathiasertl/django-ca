@@ -24,5 +24,3 @@ REST API
 
 Command-line
 ============
-
-
