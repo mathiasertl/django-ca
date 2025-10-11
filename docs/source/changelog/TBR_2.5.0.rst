@@ -23,6 +23,8 @@ Docker images
 *************
 
 * The Docker images have been updated to use Python 3.14.
+* Docker images are now uniquely tagged using a datestamp, not an increasing integer. This simplifies
+  automatic image updates.
 
 ************
 Dependencies

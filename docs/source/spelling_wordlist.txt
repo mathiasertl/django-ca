@@ -25,6 +25,7 @@ conf
 crl
 cron
 datastructure
+datestamp
 dicts
 django
 doctests

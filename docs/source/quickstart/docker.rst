@@ -150,7 +150,11 @@ choose:
 
 The above images are updated if packaging issues or security vulnerabilities in dependencies are discovered.
 If you want to be sure that you can download the exact same image later, the same tags are also published with
-a numerical suffix, e.g. mathiasertl/django-ca:|last-version|-1.
+a datestamp suffix, e.g. mathiasertl/django-ca:|last-version|-20071125.
+
+.. versionchanged:: 2.5.0
+
+   Docker images now use a datestamp (e.g. "20071125") as suffix, instead of an increasing integer.
 
 .. versionadded:: 2.3.0
 
@@ -159,9 +163,9 @@ a numerical suffix, e.g. mathiasertl/django-ca:|last-version|-1.
 Starting with 2.3.0, GitHubs container registry also stores the same django-ca images:
 
 * ghcr.io/mathiasertl/django-ca:|last-version|
-* ghcr.io/mathiasertl/django-ca:|last-version|-1
+* ghcr.io/mathiasertl/django-ca:|last-version|-20071125
 * ghcr.io/mathiasertl/django-ca:|last-version|-alpine
-* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-1
+* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-20071125
 
 Verify attestations
 -------------------

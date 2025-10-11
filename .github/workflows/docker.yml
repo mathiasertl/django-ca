@@ -240,17 +240,20 @@ jobs:
       - name: Pull ${{ env.REGISTRY }} image
         run: docker pull $DOCKER_TAG
 
+      - name: Calculate datestamp
+        run: echo "DATESTAMP=$(date +%Y%m%d)" >> $GITHUB_ENV
+
       - name: Tag image
         run: |
           docker tag $DOCKER_TAG mathiasertl/django-ca:latest
           docker tag $DOCKER_TAG $DOCKERHUB_TAG
-          docker tag $DOCKER_TAG $DOCKERHUB_TAG-1
+          docker tag $DOCKER_TAG $DOCKERHUB_TAG-$DATESTAMP
 
       - name: Push to dockerhub
         run: |
           docker push mathiasertl/django-ca:latest
           docker push $DOCKERHUB_TAG
-          docker push $DOCKERHUB_TAG-1
+          docker push $DOCKERHUB_TAG-$$DATESTAMP
 
       # https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub
       - name: Generate artifact attestation
@@ -284,18 +287,21 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Calculate datestamp
+        run: echo "DATESTAMP=$(date +%Y%m%d)" >> $GITHUB_ENV
+
       - name: Pull ${{ env.REGISTRY }} image
         run: docker pull $DOCKER_TAG
 
       - name: Tag image
         run: |
           docker tag $DOCKER_TAG $DOCKERHUB_TAG
-          docker tag $DOCKER_TAG $DOCKERHUB_TAG-1
+          docker tag $DOCKER_TAG $DOCKERHUB_TAG-$DATESTAMP
 
       - name: Push to dockerhub
         run: |
           docker push $DOCKERHUB_TAG
-          docker push $DOCKERHUB_TAG-1
+          docker push $DOCKERHUB_TAG-$DATESTAMP
 
       # https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub
       - name: Generate artifact attestation
