@@ -875,9 +875,6 @@ pydantic2-11 = [
 pydantic2-12 = [
     { name = "pydantic", version = "2.12.0", source = { registry = "https://pypi.org/simple" } },
 ]
-uwsgi = [
-    { name = "uwsgi" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -978,7 +975,6 @@ mypy = [
 ]
 pydantic2-11 = [{ name = "pydantic", specifier = "~=2.11.0" }]
 pydantic2-12 = [{ name = "pydantic", specifier = "~=2.12.0" }]
-uwsgi = [{ name = "uwsgi", specifier = ">=2.0.28" }]
 
 [[package]]
 name = "django-ninja"
@@ -3434,12 +3430,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/27/33/f1b73f9d019dcfe83fb545e5d0d080952300248d547433bb975ad7fd3331/uv-0.9.2-py3-none-win_amd64.whl", hash = "sha256:27815edaa0be4f6346b24f3b6a4389f7747ae98538f4e2e8946090bb959389cc", size = 21359072, upload-time = "2025-10-10T19:02:01.13Z" },
     { url = "https://files.pythonhosted.org/packages/39/aa/e23b96625a51266f2218cf0e0751ada65f138a57910fc0810cdd9d28d76f/uv-0.9.2-py3-none-win_arm64.whl", hash = "sha256:86e8fc3424266c9afca829d3936e91b677027658a253c7bb2a299fafd97aab0d", size = 19810880, upload-time = "2025-10-10T19:02:03.868Z" },
 ]
-
-[[package]]
-name = "uwsgi"
-version = "2.0.30"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6f/f0/d794e9c7359f488b158e88c9e718c5600efdb74a0daf77331e5ffb6c87c4/uwsgi-2.0.30.tar.gz", hash = "sha256:c12aa652124f062ac216077da59f6d247bd7ef938234445881552e58afb1eb5f", size = 822560, upload-time = "2025-06-03T08:13:53.772Z" }
 
 [[package]]
 name = "vine"

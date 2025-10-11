@@ -616,7 +616,6 @@ mypy = [
     "types-setuptools>=75.8.2.20250301",
     "types-tabulate>=0.9.0.20241207",
 ]
-uwsgi = [ "uwsgi>=2.0.28" ]
 gunicorn = [ "gunicorn>=23" ]
 
 # Dependency groups for use in test matrices (tox, GitHub actions, ...)
