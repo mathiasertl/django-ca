@@ -20,4 +20,12 @@ REST API
 Dependencies
 ************
 
-* Dropped support for ``acme~=4.1.0``, ``acme~=4.2.0`` and ``josepy~=2.0.0``.
+* Add support for ``pydantic~=2.12``.
+* Add support for ``acme~=5.1.0``.
+* **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=4.1.0``, ``acme~=4.2.0`` and ``josepy~=2.0.0``.
+
+*******************
+Deprecation notices
+*******************
+
+* This is the last release to support ``acme~=5.0.0``.
