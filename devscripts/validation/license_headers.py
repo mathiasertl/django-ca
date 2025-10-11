@@ -18,7 +18,6 @@ import difflib
 import os
 import textwrap
 from pathlib import Path
-from typing import Union
 
 from devscripts.commands import CommandError, DevCommand
 
@@ -48,7 +47,7 @@ PYTHON_LICENSE_HEADER = textwrap.indent(LICENSE_HEADER, "# ").replace("\n\n", "\
 PYTHON_READ_LENGTH = len(PYTHON_BIN_HEADER) + len(LICENSE_HEADER) + 64
 
 
-def handle_python_file(path: Union[str, "os.PathLike[str]"], script: bool) -> int:
+def handle_python_file(path: str | os.PathLike[str], script: bool) -> int:
     """Check the license header for a Python file."""
     expected_header = PYTHON_LICENSE_HEADER
     if script is True:

@@ -21,12 +21,11 @@ import shutil
 import subprocess
 import tempfile
 import time
-import typing
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Union
+from typing import Any, cast
 
 import requests
 import yaml
@@ -99,7 +98,7 @@ def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
 
 def _run_py(container: str, code: str, env: dict[str, str] | None = None) -> str:
     proc = _manage(container, "shell", "-v", "0", "-c", code, capture_output=True, text=True, env=env)
-    return typing.cast(str, proc.stdout)  # is a str because of text=True above
+    return cast(str, proc.stdout)  # is a str because of text=True above
 
 
 def _openssl_verify(ca_file: str, cert_file: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
@@ -186,7 +185,7 @@ def _validate_crl_ocsp(
         cert = x509.load_pem_x509_certificate(stream.read())
 
     # Get the OCSP url from the certificate
-    aia = typing.cast(
+    aia = cast(
         x509.AuthorityInformationAccess,
         cert.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value,
     )
@@ -626,7 +625,7 @@ def test_acme(release: str, image: str) -> int:
     return errors
 
 
-def _validate_default_version(path: Union[str, "os.PathLike[str]"], release: str) -> int:
+def _validate_default_version(path: str | os.PathLike[str], release: str) -> int:
     info(f"Validating {path}...")
     if not os.path.exists(path):
         return err(f"{path}: File not found.")

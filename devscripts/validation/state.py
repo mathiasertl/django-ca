@@ -19,9 +19,9 @@ import importlib.util
 import os
 import re
 import types
-import typing
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, ParamSpec
 
 import yaml
 from termcolor import colored
@@ -30,7 +30,7 @@ from devscripts import config
 from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info
 
-CheckFuncSpec = typing.ParamSpec("CheckFuncSpec")
+CheckFuncSpec = ParamSpec("CheckFuncSpec")
 
 # pylint: enable=no-name-in-module
 
@@ -58,12 +58,12 @@ def get_expected_version_line() -> str:
     )
 
 
-def check_path(path: Union[str, "os.PathLike[str]"]) -> None:
+def check_path(path: str | os.PathLike[str]) -> None:
     """Output the path to check."""
     print(f"* Checking {colored(str(path), attrs=['bold'])}")
 
 
-def import_mod(name: str, path: Union[str, "os.PathLike[str]"]) -> types.ModuleType:
+def import_mod(name: str, path: str | os.PathLike[str]) -> types.ModuleType:
     """Import the module from the given path."""
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None:
@@ -84,7 +84,7 @@ def simple_diff(what: str, actual: Any, expected: Any) -> int:
 
 
 def check(
-    func: typing.Callable[CheckFuncSpec, int], *args: CheckFuncSpec.args, **kwargs: CheckFuncSpec.kwargs
+    func: Callable[CheckFuncSpec, int], *args: CheckFuncSpec.args, **kwargs: CheckFuncSpec.kwargs
 ) -> int:
     """Run a given check."""
     errors = func(*args, **kwargs)

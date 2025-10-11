@@ -26,7 +26,7 @@ import typing
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, cast
 
 import yaml
 
@@ -44,7 +44,7 @@ from cryptography.x509.oid import NameOID
 
 from devscripts import config
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     import jinja2
 
 
@@ -57,7 +57,7 @@ def redirect_output() -> Iterator[io.StringIO]:
 
 
 @contextmanager
-def chdir(path: Union[str, "os.PathLike[str]"]) -> Iterator[str]:
+def chdir(path: str | os.PathLike[str]) -> Iterator[str]:
     """Context manager to temporarily change the working directory to `path`."""
     orig_cwd = os.getcwd()
     try:
@@ -190,7 +190,7 @@ def git_archive(ref: str, destination: str) -> Path:
     with subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE) as git_archive_cmd:
         with subprocess.Popen(["tar", "-x", "-C", destination], stdin=git_archive_cmd.stdout) as tar:
             # TYPEHINT NOTE: stdout is not None b/c of stdout=subprocess.PIPE
-            stdout = typing.cast(typing.IO[bytes], git_archive_cmd.stdout)
+            stdout = cast(typing.IO[bytes], git_archive_cmd.stdout)
             stdout.close()
             tar.communicate()
     return Path(destination)
@@ -198,10 +198,10 @@ def git_archive(ref: str, destination: str) -> Path:
 
 def create_signed_cert(
     hostname: str,
-    signer_private_key_path: Union[str, "os.PathLike[str]"],
-    signer_public_key_path: Union[str, "os.PathLike[str]"],
-    private_key_path: Union[str, "os.PathLike[str]"],
-    public_key_path: Union[str, "os.PathLike[str]"],
+    signer_private_key_path: str | os.PathLike[str],
+    signer_public_key_path: str | os.PathLike[str],
+    private_key_path: str | os.PathLike[str],
+    public_key_path: str | os.PathLike[str],
     password: bytes | None = None,
 ) -> None:
     """Create a self-signed cert for the given hostname.
@@ -209,7 +209,7 @@ def create_signed_cert(
     .. seealso:: https://letsencrypt.org/docs/certificates-for-localhost/
     """
     with open(signer_private_key_path, "rb") as stream:
-        signer_private_key = typing.cast(
+        signer_private_key = cast(
             CertificateIssuerPrivateKeyTypes, load_der_private_key(stream.read(), password)
         )
     with open(signer_public_key_path, "rb") as stream:

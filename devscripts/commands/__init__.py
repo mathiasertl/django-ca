@@ -168,7 +168,7 @@ class DevCommand:
         django.setup()
 
     def run(
-        self, *args: Union[str, "os.PathLike[str]"], check: bool = True, **kwargs: Any
+        self, *args: str | os.PathLike[str], check: bool = True, **kwargs: Any
     ) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run the given command."""
         str_args = tuple(str(arg) if isinstance(arg, os.PathLike) else arg for arg in args)
