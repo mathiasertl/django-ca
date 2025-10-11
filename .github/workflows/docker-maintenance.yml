@@ -1,27 +1,66 @@
 name: Docker image update
 on:
+  # push:
   schedule:
     - cron: '23 6 * * 1'
 
 env:
-  UV_PYTHON_PREFERENCE: only-system
+  # Do not set UV_PYTHON_PREFERENCE to 'only_system', as release branches
+  # limit python versions to the version at release time.
+  #UV_PYTHON_PREFERENCE: only-system
   UV_NO_SYNC: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  run:
+  build:
+    name: "Debian/${{ matrix.version }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         version: [ "2.4.0" ]
-
-    name: "${{ matrix.version }}"
     steps:
       - uses: actions/checkout@v5.0.0
         with:
           ref: release/${{ matrix.version }}
-      - name: test
-        run: git status
-      - name: test2
-        run: cat compose.yaml
+
+      # Setup Python/uv/venv
+      - name: Setup Python
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: "3.14"
+          architecture: x64
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6.6.1
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --all-extras --upgrade
+
+      # Prepare Docker image build
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.5.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5.8.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,enable=true,value=${{ matrix.version }}
+          flavor: |
+            latest=false
+
+      - name: Build new image
+        id: push
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          push: false  # false for now
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            DJANGO_CA_VERSION=${{ matrix.version }}
