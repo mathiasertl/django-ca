@@ -149,6 +149,8 @@ def check_github_actions_tests() -> int:
                         errors += simple_diff("cryptography versions", tuple(values), cg_versions)
                     elif key == "pydantic-version":
                         errors += simple_diff("Pydantic versions", tuple(values), pydantic_versions)
+                    elif key == "debian-version":
+                        errors += simple_diff("Debian versions", tuple(values), config.DEBIAN_RELEASES)
                     elif key == "alpine-version":
                         errors += simple_diff("Alpine versions", tuple(values), config.ALPINE_RELEASES)
                     elif key == "extra":
@@ -162,7 +164,7 @@ def check_github_actions_tests() -> int:
                             f"mariadb:{version}" for version in config.RELEASE["mariadb"]
                         )
                         errors += simple_diff("MariaDB", tuple(values), expected)
-                    elif key in ("os", "language"):  # keys are ignored
+                    elif key in ("os", "language", "exclude"):  # keys are ignored
                         continue
                     else:
                         info(f"{key}: Unknown matrix element with values {values}.")

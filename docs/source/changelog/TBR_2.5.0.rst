@@ -12,6 +12,8 @@
 REST API
 ********
 
+* No longer include the username when viewing a certificate order.
+* Ensure that a user can only view certificate orders that were created by themself.
 * The deprecated endpoint `/ca/{ca_serial}/revoke/{certificate_serial}/` for revoking certificates was
   removed (deprecated since ``django-ca==2.3.0``). Use `/ca/{ca_serial}/certs/{certificate_serial}/revoke/`
   instead.

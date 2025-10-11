@@ -92,7 +92,6 @@ class CertificateAuthorityUpdateSchema(ModelSchema):
 class CertificateOrderSchema(ModelSchema):
     """Schema for certificate orders."""
 
-    user: str = Field(alias="user.get_username", description="Username of the user.")
     serial: str | None = Field(alias="certificate.serial", default=None)
     created: datetime = Field(
         description="When the order was created.", json_schema_extra={"example": DATETIME_EXAMPLE}
@@ -103,7 +102,7 @@ class CertificateOrderSchema(ModelSchema):
 
     class Meta:  # pylint: disable=missing-class-docstring
         model = CertificateOrder
-        fields = sorted(["created", "updated", "slug", "status", "user"])
+        fields = sorted(["created", "updated", "slug", "status"])
 
 
 class CertificateFilterSchema(Schema):

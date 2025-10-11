@@ -59,7 +59,6 @@ def expected_response() -> dict[str, Any]:
         "created": iso_format(TIMESTAMPS["everything_valid"]),
         "updated": iso_format(TIMESTAMPS["everything_valid"]),
         "status": "pending",
-        "user": "user",
         "serial": None,
     }
 

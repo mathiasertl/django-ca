@@ -195,6 +195,8 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateMes
 def get_certificate_order(request: WSGIRequest, serial: str, slug: str) -> CertificateOrder:
     """Retrieve information about the certificate order identified by `slug`."""
     order_queryset = CertificateOrder.objects.select_related("user", "certificate")
+    # TYPEHINT NOTE: django-ninja sets the user as `request.auth` and mypy does not know about it
+    order_queryset = order_queryset.filter(user=request.auth)  # type: ignore[attr-defined]
     return order_queryset.get(
         certificate_authority__serial=serial, certificate_authority__api_enabled=True, slug=slug
     )
