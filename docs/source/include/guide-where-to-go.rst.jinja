@@ -20,25 +20,16 @@ certificates.{% if guide == "from-source" %} The :command:`manage.py` script is 
 {% elif guide == "with-docker-compose" %}
 The :command:`manage.py` script can be invoked via ``{{ manage }}``, for example:
 
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/list_cas.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
+.. structured-tutorial-part:: list-cas
 
 To sign a certificate from the command line, simply invoke the ``sign_cert`` command.
 
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/sign_cert.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
+.. structured-tutorial-part:: sign-cert
 
 To pass data from stdin, for example to sign a certificate non-interactively by passing the CSR from stdin,
 you need to pass the ``-T`` parameter to :command:`docker-compose exec`:
 
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/sign_cert_stdin.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
+.. structured-tutorial-part:: sign-cert-stdin
 
 {% endif %}
 
@@ -49,10 +40,14 @@ Add CA to your system
 
 To get the certificate for your Root CA, you can use the admin interface or the ``dump_ca`` command:
 
+{% if guide == "with-docker-compose" %}
+.. structured-tutorial-part:: add-ca-to-system
+{% else %}
 .. code-block:: console
 
    {{ user|default("user") }}@host:{{ path|default("~") }}{% if user == "root" %}#{% else %}${% endif %} {{ manage }} dump_ca Root > root.pem
-   
+{% endif %}
+
 You can add this file directly to the list of known CAs in your browser.
 
 Distributions usually provide instructions for how to add a CA to the whole system, see for example `these

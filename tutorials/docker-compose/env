@@ -4,22 +4,22 @@
 
 # The hostname for your CA.
 # WARNING: Changing this requires new CAs (because the hostname goes into the certificates).
-DJANGO_CA_CA_DEFAULT_HOSTNAME={{ ca_default_hostname }}
+DJANGO_CA_CA_DEFAULT_HOSTNAME={{ CA_HOSTNAME }}
 
 # The URL base path used for ACMEv2/OCSP/CRL URLs. If given, the path **must** end with a slash.
 #
 # If you're upgrading from a previous version and have existing CAs, uncomment or set to "django_ca/".
 #
 # WARNING: Changing this requires new CAs (because the path goes into the certificates).
-DJANGO_CA_CA_URL_PATH={{ ca_url_path }}
+DJANGO_CA_CA_URL_PATH={{ CA_URL_PATH }}
 
 # PostgreSQL superuser password (required by the Docker image), see also:
 #   https://hub.docker.com/_/postgres
 #
 # Generate a secure password e.g. with "openssl rand -base64 32"
-POSTGRES_PASSWORD={{ postgres_password }}
+POSTGRES_PASSWORD={{ POSTGRES_PASSWORD }}
 
 # NGINX TLS configuration
 NGINX_TEMPLATE=tls
-NGINX_PRIVATE_KEY={{ privkey_path }}
-NGINX_PUBLIC_KEY={{ pubkey_path }}
+NGINX_PRIVATE_KEY={{ TLS_LIVE_DIR }}/{{ CA_HOSTNAME }}/privkey.pem
+NGINX_PUBLIC_KEY={{ TLS_LIVE_DIR }}/{{ CA_HOSTNAME }}/fullchain.pem

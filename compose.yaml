@@ -63,7 +63,7 @@ services:
             DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
             DJANGO_CA_SECRET_KEY:
             DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
-            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose}
+            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose:conf/local}
             DJANGO_CA_STARTUP_CACHE_CRLS:
             DJANGO_CA_STARTUP_CHECK:
             DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-0}

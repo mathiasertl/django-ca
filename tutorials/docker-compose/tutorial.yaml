@@ -1,0 +1,376 @@
+configuration:
+  context:
+    CA_URL_PATH: ""
+    DHPARAM_FILENAME: dhparam.pem
+    EXEC_BACKEND: docker compose exec backend
+    EXEC_BEAT: docker compose exec beat
+    EXEC_FRONTEND: docker compose exec frontend
+    POSTGRES_PASSWORD: mysecretpassword
+    TLS_CERT_ROOT: /etc/certs
+    TLS_LIVE_DIR: /etc/certs/live
+  doc:
+    context:
+      COMPOSE_DIR: ~/ca/
+      CA_HOSTNAME: ca.example.com
+      DHPARAM_BITS: "4096"
+      LETSENCRYPT_ARCHIVE_DIR: /etc/letsencrypt/archive
+      LETSENCRYPT_LIVE_DIR: /etc/letsencrypt/live
+      LETSENCRYPT_DIR: /etc/letsencrypt/live/ca.example.com
+  run:
+    # Switch to an empty temporary directory
+    temporary_directory: true
+    context:
+      BUILD_IMAGE: "y"
+      COMPOSE_DIR: "ca/"
+      CA_HOSTNAME: localhost
+      DHPARAM_BITS: "2048"
+      LETSENCRYPT_ARCHIVE_DIR: ./letsencrypt/archive
+      LETSENCRYPT_LIVE_DIR: ./letsencrypt/live
+      LETSENCRYPT_DIR: ./letsencrypt/live/localhost/
+parts:
+  # [doc only] Install dependencies
+  - id: install-dependencies
+    name: Install dependencies
+    commands:
+      - command: sudo apt update
+      - command: sudo apt install docker.io docker-compose certbot openssl
+    run:
+      skip: true
+  - id: add-docker-group
+    name: Add user to Docker group
+    commands:
+      - command: sudo adduser `id -un` docker
+      - command: sudo su `id -un`
+    run:
+      skip: true
+
+  # [doc only] Get certificates using certbot
+  - id: get-certificates-with-certbot
+    name: Get certificates with certbot
+    commands:
+      - command: sudo certbot certonly --standalone -d {{ CA_HOSTNAME }}
+      - command: sudo ls {{ LETSENCRYPT_DIR }}/
+        doc:
+          output: "README  cert.pem  chain.pem  fullchain.pem  privkey.pem"
+    run:
+      skip: true
+
+  # [run only] Build docker image
+  - id: build-docker-image
+    name: Build docker image
+    commands:
+      # Get current release and docker tag from helper script
+      - command: |
+          {% if RELEASE -%}
+            echo {{ RELEASE }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-release
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<RELEASE>.*)$"
+      # Get the Docker image version (sanitized version of RELEASE)
+      - command: |
+          {% if DOCKER_VERSION -%}
+            echo {{ DOCKER_VERSION }}
+          {%- elif DOCKER_TAG -%}
+            echo {{ DOCKER_TAG.split(':')[1] }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-version
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<DOCKER_VERSION>.*)$"
+      # Get the full docker tag (mathiasertl/django-ca:$DOCKER_VERSION)
+      - command: |
+          {% if DOCKER_TAG -%}
+            echo {{ DOCKER_TAG }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-tag
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<DOCKER_TAG>.*)$"
+      - command: |
+          {% if BUILD_IMAGE == "y" -%}
+            docker build -t {{ DOCKER_TAG }} --build-arg DJANGO_CA_VERSION={{ RELEASE }} {{ orig_cwd }}
+          {%- else -%}
+            # Not building image (BUILD_IMAGE=n), using {{ DOCKER_TAG }}.
+          {%- endif %}
+        run:
+          show_output: false
+    doc:
+      skip: true
+
+  # [run only] Create fake ACME certificates
+  - id: get-certificates-self-signed
+    name: Get self-signed certificates
+    commands:
+      - command: mkdir -p {{ LETSENCRYPT_DIR }} {{ LETSENCRYPT_ARCHIVE_DIR }}
+      - command: |
+          openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
+            -keyout {{ LETSENCRYPT_DIR }}/privkey.pem -out {{ LETSENCRYPT_DIR }}/fullchain.pem \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:{{ CA_HOSTNAME }}"
+        run:
+          show_output: false
+    doc:
+      skip: true
+
+  # Create sub-directory for compose setup
+  - id: create-ca-directory
+    name: Create ~/ca/
+    commands:
+      - command: "mkdir {{ COMPOSE_DIR }}"
+      - command: cd {{ COMPOSE_DIR }}
+        doc:
+          update_context:
+            cwd: "~/ca/"
+    # Skip this part when running, we already are in a temporary directory:
+    run:
+      skip: true
+
+  # Create dhparam file
+  - id: generate-dh-params
+    name: Generate DH parameters
+    commands:
+      - command: openssl dhparam -dsaparam -out {{ DHPARAM_FILENAME }} {{ DHPARAM_BITS }}
+        run:
+          show_output: false
+        doc:
+          output: |
+            Generating DSA parameters, {{ DHPARAM_BITS }} bit long prime
+            ...
+
+  # Create and store configuration file
+  - id: mkdir-conf
+    name: Create configuration directory (conf/)
+    commands:
+      - command: mkdir conf
+  - id: create-config-rest
+    name: Create config to enable REST API
+    source: conf/00-rest-api.yaml
+    destination: conf/
+    doc:
+      ignore_spelling: true
+
+  # Create compose configuration
+  - id: copy-compose-yaml
+    name: Create Docker Compose configuration
+    source: ../../compose.yaml
+    destination: compose.yaml
+    doc:
+      # Skip in documentation, as test gives list of links on GitHub instead
+      skip: true
+  - id: copy-compose-override-yaml
+    name: Create Docker Compose override configuration
+    source: compose.override.yaml
+    destination: compose.override.yaml
+    doc:
+      language: yaml
+  - id: copy-env
+    source: env
+    destination: .env
+    doc:
+      language: bash
+
+  # Recap: run ls -A
+  - id: ls-recap
+    commands:
+      - command: ls -A
+        doc:
+          output: compose.override.yaml compose.yaml conf {{ DHPARAM_FILENAME }} .env
+        run:
+          show_output: false  # just a test command
+          test:
+            - regex: |
+                compose.override.yaml
+                compose.yaml
+                conf
+                dhparam.pem
+                .env
+
+  # Finally, start compose setup!
+  - id: start-compose
+    name: Start Docker Compose setup
+    commands:
+      - command: docker compose up -d{% if run %} --quiet-pull{% endif %}
+        doc:
+          output: |
+            ...
+        run:
+          show_output: false
+          environment:
+            DJANGO_CA_VERSION: "{{ DOCKER_VERSION }}"
+          cleanup:
+            - command: docker compose down -v
+              show_output: false
+          test:
+            - host: localhost
+              port: 80
+            - host: localhost
+              port: 443
+      - command: docker compose ps
+        doc:
+          output: |
+            Name                       Command               State         Ports
+            -----------------------------------------------------------------------------------
+            ca_backend_1     ./celery.sh -l info              Up
+            ca_cache_1       docker-entrypoint.sh redis ...   Up
+            ...
+
+  - id: check-setup
+    name: Check the current setup
+    commands:
+      - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-compose-status {{ DOCKER_TAG }}"
+      - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-container-versions {{ RELEASE }}"
+      - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-secret-keys"
+      - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-connectivity"
+    doc:
+      skip: true
+
+  - id: run-manage-check
+    commands:
+      - command: "{{ EXEC_BEAT }} manage check --deploy"
+        doc:
+          output: System check identified no issues (4 silenced).
+      - command: "{{ EXEC_BACKEND }} manage check --deploy"
+        doc:
+          output: System check identified no issues (4 silenced).
+      - command: "{{ EXEC_FRONTEND }} manage check --deploy"
+        doc:
+          output: System check identified no issues (4 silenced).
+
+  # Create user and initial CAs
+  - id: create-user-and-ca
+    name: Create admin user and CAs
+    commands:
+      - command: |
+          {% if doc %}{{ EXEC_BACKEND }} manage createsuperuser
+          {% else %}{{ EXEC_BACKEND }} manage shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
+          {% endif %}
+        doc:
+          output: ...
+      - command: "{{ EXEC_BACKEND }} manage init_ca --path-length=1 Root CN=Root"
+        doc:
+          output: "<root-serial>"
+      - command: |
+          {{ EXEC_BACKEND }} manage init_ca \
+            --path=ca/shared/ --parent=Root --acme-enable \
+            Intermediate CN=Intermediate
+        doc:
+          output: "<intermediate-serial>"
+
+  - id: list-cas
+    name: List available CAs
+    commands:
+      - command: "{{ EXEC_BACKEND }} manage list_cas"
+        doc:
+          output: |
+            <serial> - Intermediate
+            <serial> - Root
+  - id: sign-cert
+    name: Sign a certificate
+    commands:
+      - command: "docker compose exec{% if run %} -T{% endif %} backend manage sign_cert --ca=Intermediate --subject=\"CN=example.com\""
+        run:
+          show_output: false
+          stdin:
+            source: example.com.csr.pem
+        doc:
+          output: |
+            Please paste the CSR:
+            -----BEGIN CERTIFICATE REQUEST-----
+            ...
+  - id: sign-cert-stdin
+    name: Sign a certificate with a CSR from stdin
+    commands:
+      - command: openssl genrsa -out stdin.example.com.key 4096
+      - command: openssl req -new -key stdin.example.com.key -out stdin.example.com.csr -utf8 -batch -subj /CN=stdin.example.com
+      - command: cat stdin.example.com.csr | docker compose exec -T backend manage sign_cert --ca=Intermediate --subject="CN=stdin.example.com"
+        run:
+          show_output: false
+  - id: add-ca-to-system
+    commands:
+      - command: "{{ EXEC_BACKEND }} manage view_ca --output-format pem Root > root.pem"
+
+  - id: restart-compose
+    name: Restart Docker Compose setup
+    commands:
+      - command: docker compose down
+        run:
+          show_output: false
+      - command: docker compose up -d
+        run:
+          show_output: false
+          environment:
+            DJANGO_CA_VERSION: "{{ DOCKER_VERSION }}"
+          # note: `docker compose down -v` is already added to cleanup commands
+          test:
+            - host: localhost
+              port: 80
+            - host: localhost
+              port: 443
+            # Note: First check for the ports to open, then check the status
+            - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-compose-status {{ DOCKER_TAG }}"
+    doc:
+      skip: true
+
+  - id: check-setup-final
+    name: Run final checks on the current setup after restart
+    commands:
+      - command: |
+          docker compose exec backend \
+            manage view_ca --output-format pem --bundle Intermediate \
+            > intermediate.bundle.pem
+      - command: docker compose exec backend manage view_cert --output-format pem example.com > cert.pem
+      - command: openssl verify -CAfile intermediate.bundle.pem -crl_download -crl_check cert.pem
+        run:
+          show_output: false
+          test:
+            - regex: OK
+      # Get the OCSP URI of the certificate
+      - command: openssl x509 -in cert.pem -noout -ocsp_uri
+        run:
+          show_output: false
+          test:
+            - regex: "(?P<CERT_OCSP_URI>.*)"
+      - command: |
+          openssl ocsp \
+            -issuer intermediate.bundle.pem \
+            -cert cert.pem \
+            -url {{ CERT_OCSP_URI }} \
+            -CAfile intermediate.bundle.pem \
+            -resp_text
+        run:
+          show_output: false
+          test:
+            - regex: Response verify OK
+              stream: stderr
+            - regex: "cert.pem: good"
+
+      # Sign another certificate to make sure the private key is still present
+      - command: "docker compose exec{% if run %} -T{% endif %} backend manage sign_cert --ca=Intermediate --subject=\"CN=after-restart.example.com\""
+        run:
+          show_output: false
+          stdin:
+            source: example.com.csr.pem
+      # Finally, test custom endpoints (admin interface, REST API, ...)
+      - command: |
+          {{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose \
+              test-endpoints {{ LETSENCRYPT_DIR }}/fullchain.pem
+    doc:
+      skip: true
+
+  - prompt: |
+      Test admin interface at:
+
+      * URL: https://{{ CA_HOSTNAME }}/admin/
+      * Credentials: user/nopass
+
+      Working directory is {{ cwd }}
+      Is the state okay? (y/n)
+    response: confirm

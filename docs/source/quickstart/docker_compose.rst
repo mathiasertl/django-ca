@@ -4,6 +4,8 @@ Quickstart with Docker Compose
 
 .. _docker-compose:
 
+.. structured-tutorial:: docker-compose/tutorial.yaml
+
 This guide provides instructions for running your own certificate authority using **docker compose**. This is
 the quickest and easiest way to run django-ca, especially if you do not care to much about custom
 configuration or extending django-ca.
@@ -19,7 +21,7 @@ This tutorial will give you a CA with
 Requirements
 ************
 
-.. jinja:: requirements-in-docker-compose
+.. jinja::
    :file: /include/guide-requirements.rst.jinja
    :header_update_levels:
 
@@ -30,16 +32,16 @@ To run **django-ca**, you need Docker (at least version 19.03.0) and Docker Comp
 You also need certbot to acquire Let's Encrypt certificates for the admin interface. OpenSSL is used to
 generate the DH parameter file. On Debian/Ubuntu, simply do:
 
-.. code-block:: console
-
-   user@host:~$ sudo apt update
-   user@host:~$ sudo apt install docker.io docker-compose certbot openssl
+.. structured-tutorial-part:: install-dependencies
 
 For a different OS, please read `Install Docker <https://docs.docker.com/engine/install/>`_, `Install
 docker compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 <https://certbot.eff.org/docs/install.html>`_.
 
-.. include:: /include/docker-regular-user.rst
+If you want to run docker(-compose) as a regular user, you need to add your user to the ``docker`` group and
+log in again:
+
+.. structured-tutorial-part:: add-docker-group
 
 ************************
 Get initial certificates
@@ -48,12 +50,7 @@ Get initial certificates
 Use certbot to acquire initial certificates. This must be done `before` you run **docker compose**, as both
 bind to port 80 (HTTP).
 
-.. code-block:: console
-
-   user@host:~$ sudo certbot certonly --standalone -d ca.example.com
-   ...
-   user@host:~$ sudo ls /etc/letsencrypt/live/ca.example.com
-   README  cert.pem  chain.pem  fullchain.pem  privkey.pem
+.. structured-tutorial-part:: get-certificates-with-certbot
 
 *****************
 Get configuration
@@ -62,20 +59,23 @@ Get configuration
 .. NOTE::
 
    Because of how **Docker Compose** works, it is better to put the file in a sub-directory and `not` directly
-   into your home directory. We assume you put all files into ``~/ca/`` from now on.
+   into your home directory. We assume you put all files into ``~/ca/`` from now on:
+
+   .. structured-tutorial-part:: create-ca-directory
 
 To run **django-ca**, you'll need a couple of files:
 
-* `dhparam.pem <quickstart-docker-compose-dhparam.pem>`_, the DH parameters (required for TLS connections).
-* `localsettings.yaml <quickstart-docker-compose-localsettings.yaml>`_, the configuration for **django-ca**.
-* `compose.yaml <quickstart-docker-compose-compose.yaml>`_, the configuration for Docker Compose.
-* `compose.override.yaml <quickstart-docker-compose-compose.override.yaml>`_, system-local configuration
+* :ref:`dhparam.pem <quickstart-compose-dhparam.pem>`, the DH parameters (required for TLS
+  connections).
+* :ref:`conf/ <quickstart-compose-config-files>`, a directory with YAML configuration files.
+* :ref:`compose.yaml <quickstart-compose-compose.yaml>`, the configuration for Docker Compose.
+* :ref:`compose.override.yaml <quickstart-compose-compose.override.yaml>`, system-local configuration
   overrides for Docker Compose.
-* `.env <quickstart-docker-compose-.env>`_, the environment file for Docker Compose.
+* :ref:`.env <quickstart-compose-.env>`, the environment file for Docker Compose.
 
 Read the sections below how to retrieve or generate all these files.
 
-.. _quickstart-docker-compose-dhparam.pem:
+.. _quickstart-compose-dhparam.pem:
 
 Generate DH parameters
 ======================
@@ -83,17 +83,19 @@ Generate DH parameters
 The TLS configuration requires that you generate a DH parameter file, which used by some TLS ciphers. You can
 generate it with:
 
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/dhparam.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
+.. structured-tutorial-part:: generate-dh-params
 
-.. _quickstart-docker-compose-localsettings.yaml:
+.. _quickstart-compose-config-files:
 
-Add configuration file
-======================
+Add configuration files
+=======================
 
-**django-ca** is configured via a YAML configuration file. It is not strictly required, as the defaults are
+.. versionchanged:: 2.5.0
+
+    Previous versions documented a single file in ``~/ca/``, the new style allows you to split the
+    configuration into multiple files.
+
+**django-ca** is configured via a YAML configuration files. It is not strictly required, as the defaults are
 fine in most cases. Creating at least an empty file is recommended, as it will make any future changes easier.
 
 .. NOTE::
@@ -101,43 +103,20 @@ fine in most cases. Creating at least an empty file is recommended, as it will m
    Do not set ``CA_DEFAULT_HOSTNAME`` and ``CA_URL_PATH`` here! They are set in `.env
    <quickstart-docker-compose-.env>`_, as the NGINX container also uses them.
 
-Create a file called ``localsettings.yaml``. This example just enables the :doc:`/rest_api`:
+First, simply create a configuration directory:
 
-.. template-include:: yaml /include/quickstart_with_docker_compose/localsettings.yaml.jinja
-   :caption: localsettings.yaml
-   :context: quickstart-with-docker-compose
+.. structured-tutorial-part:: mkdir-conf
 
-Please see :doc:`custom settings </settings>` for available settings and :ref:`settings-yaml-configuration`
-for more examples. Almost all settings can be changed later, if that is not the case, the settings
-documentation mentions it.
+You can create any number of files in that directory, and they will be read in alphabetical order. Here we add
+an example that just enables the :doc:`/rest_api`:
 
-Multiple configuration files
-----------------------------
+.. structured-tutorial-part:: create-config-rest
 
-As with the normal Docker container, django-ca will read configuration files in
-``/usr/src/django-ca/ca/conf/`` in alphabetical order, but it will also read files in the subfolder
-``/usr/src/django-ca/conf/ca/compose/``, which provides configuration specific to our Docker Compose setup.
-You can use any number of files as long as you map them into the ``frontend`` and ``backend`` containers as
-shown in the examples below.
+You can configure any `Django setting <https://docs.djangoproject.com/en/dev/ref/settings/>`_ or any of the
+:doc:`custom settings </settings>` here. See :ref:`settings-yaml-configuration` for more examples. Almost
+all settings can be changed later, if that is not the case, the settings documentation mentions it.
 
-Environment variables
----------------------
-
-If you want to use environment variables for configuration, we recommend you first add them to your
-``compose.override.yaml``, for example to `configure a different SMTP server
-<https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
-
-.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-env-example.yml
-   :language: yaml
-   :caption: compose.override.yaml
-
-and in your `.env <quickstart-docker-compose-.env>`_ file, set the variable:
-
-.. code-block:: bash
-
-   DJANGO_CA_EMAIL_HOST=smtp.example.com
-
-.. _quickstart-docker-compose-compose.yaml:
+.. _quickstart-compose-compose.yaml:
 
 Add ``compose.yaml``
 ====================
@@ -157,6 +136,7 @@ bundled third-party Docker images.
 ==================================================================================== ===== ========== =======
 Version                                                                              Redis PostgreSQL NGINX
 ==================================================================================== ===== ========== =======
+`2.4.0 <https://github.com/mathiasertl/django-ca/blob/2.4.0/compose.yaml>`_          7     16         1.26
 `2.3.0 <https://github.com/mathiasertl/django-ca/blob/2.3.0/compose.yaml>`_          7     16         1.26
 `2.2.0 <https://github.com/mathiasertl/django-ca/blob/2.2.0/compose.yaml>`_          7     16         1.26
 `2.1.1 <https://github.com/mathiasertl/django-ca/blob/2.1.1/docker-compose.yml>`_    7     16         1.26
@@ -166,13 +146,11 @@ Version                                                                         
 `1.28.0 <https://github.com/mathiasertl/django-ca/blob/1.28.0/docker-compose.yml>`_  7     **16**     1.24
 `1.27.0 <https://github.com/mathiasertl/django-ca/blob/1.27.0/docker-compose.yml>`_  7     12         1.24
 `1.26.0 <https://github.com/mathiasertl/django-ca/blob/1.26.0/docker-compose.yml>`_  7     12         1.24
-`1.25.0 <https://github.com/mathiasertl/django-ca/blob/1.25.0/docker-compose.yml>`_  7     12         **1.24**
-`1.24.0 <https://github.com/mathiasertl/django-ca/blob/1.24.0/docker-compose.yml>`_  7     12         1.23
 ==================================================================================== ===== ========== =======
 
 Note that until ``django-ca==2.1.1``, this file was called ``docker-compose.yml``.
 
-.. _quickstart-docker-compose-compose.override.yaml:
+.. _quickstart-compose-compose.override.yaml:
 
 Add ``compose.override.yaml``
 =============================
@@ -183,15 +161,13 @@ are different from system to system. We need to add a `docker-compose override f
 directories with the certificates into the container.  Simply add a file called :file:`compose.override.yaml`
 next to your main configuration file:
 
-.. template-include:: yaml /include/quickstart_with_docker_compose/compose.override.yaml.jinja
-   :caption: compose.override.yaml
-   :context: quickstart-with-docker-compose
+.. structured-tutorial-part:: copy-compose-override-yaml
 
 This will work if you get your certificates using ``certbot`` or a similar client. If your private key in
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
 :file:`.env` file below.
 
-.. _quickstart-docker-compose-.env:
+.. _quickstart-compose-.env:
 
 Add ``.env`` file
 =================
@@ -201,19 +177,14 @@ structure is required). Simply create a file called :file:`.env` next to :file:`
 
 For a quick start, there are only a few variables you need to specify:
 
-.. template-include:: bash /include/quickstart_with_docker_compose/.env.jinja
-   :caption: .env
-   :context: quickstart-with-docker-compose
+.. structured-tutorial-part:: copy-env
 
 Recap
 =====
 
-By now, you should have **five** files in ``~/ca/``:
+By now, you should have *four* files and *one* directory in ``~/ca/``:
 
-.. code-block:: console
-
-   user@host:~/ca/$ ls -A
-   compose.yaml compose.override.yaml .env dhparam.pem localsettings.yaml
+.. structured-tutorial-part:: ls-recap
 
 *************
 Start your CA
@@ -222,10 +193,7 @@ Start your CA
 Now, you can start **django-ca** for the first time. Inside the folder with all your configuration, run
 **docker compose** (and verify that everything is running):
 
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/docker-compose-up.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
+.. structured-tutorial-part:: start-compose
 
 By now, you should be able to see the admin interface (but not log in yet - you haven't created a user yet).
 Simply go to https://ca.example.com/admin/.
@@ -235,11 +203,7 @@ Verify setup
 
 You can run the deployment checks for your setup, which should not return any issues:
 
-.. console-include::
-   :include: /include/quickstart_with_docker_compose/verify-setup.yaml
-   :context: quickstart-with-docker-compose
-   :path: ~/ca/
-
+.. structured-tutorial-part:: run-manage-check
 
 Create admin user and set up CAs
 ================================
@@ -313,7 +277,7 @@ Update
 Remember to :ref:`backup your data <docker-compose-backup>` before you perform any update.
 
 In general, updating django-ca is done by getting the :ref:`latest version of compose.yaml
-<quickstart-docker-compose-compose.yaml>` and then simply recreating the containers:
+<quickstart-compose-compose.yaml>` and then simply recreating the containers:
 
 .. code-block:: console
 
