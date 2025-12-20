@@ -39,7 +39,7 @@ Dependencies
 Deprecation notices
 *******************
 
-* This is the last release to support Python 3.10.
+* This is the last release to support Python 3.10 and Python 3.11.
 * This is the last release to support ``pydantic~=2.11.0``.
 * This is the last release to support ``acme~=5.0.0``.
 * This is the last release to support Alpine 3.20.
