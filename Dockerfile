@@ -5,7 +5,7 @@ ARG IMAGE=python:3.14-slim-trixie
 
 # These arguments are used to more easily assure a consistent version
 # with dev.py validate state
-ARG UV=0.9.2
+ARG UV=0.9.18
 
 # Intermediate layer to be able to use a build argument in COPY --from below:
 #   https://stackoverflow.com/a/63472135
