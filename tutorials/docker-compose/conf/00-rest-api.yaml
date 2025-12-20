@@ -1,0 +1,2 @@
+# Enable the REST API
+CA_ENABLE_REST_API: true

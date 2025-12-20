@@ -16,6 +16,7 @@
 """Various commands used in development."""
 
 import argparse
+import sys
 
 from devscripts.commands import add_subcommands
 
@@ -28,6 +29,8 @@ add_subcommands(parser, "devscripts.commands")
 args = parser.parse_args()
 
 if hasattr(args, "func"):
-    args.func(parser, args)
+    exit_code = args.func(parser, args)
+    if isinstance(exit_code, int):
+        sys.exit(exit_code)
 else:  # no subcommand given
     parser.print_help()

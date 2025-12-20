@@ -64,6 +64,7 @@ class Command(DevCommand):
             action="store_false",
             help="Do not upload release artifacts.",
         )
+
         parser.add_argument("release", help="The actual release you want to build.")
 
     def _validate_changelog(self, release: str) -> None:

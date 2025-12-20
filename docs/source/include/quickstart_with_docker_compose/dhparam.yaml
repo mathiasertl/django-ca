@@ -1,2 +1,0 @@
-commands:
-    - command: openssl dhparam -dsaparam -out {{ dhparam_name }} 4096

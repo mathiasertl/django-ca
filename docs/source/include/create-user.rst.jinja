@@ -1,7 +1,10 @@
 Custom management commands are documented in :doc:`/cli/intro`. You need to create a user (that can log into
 the admin interface) and create a root and intermediate CA:
 
-{% if console_include %}
+{% if structured_tutorial %}
+.. structured-tutorial-part:: create-user-and-ca
+
+{% elif console_include %}
 .. console-include::
    :include: {{ console_include }}
    :context: {{ context }}

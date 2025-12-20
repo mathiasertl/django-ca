@@ -577,6 +577,7 @@ dev = [
     "termcolor>=2.5.0",
     "tomli>=2.2.1 ; python_full_version < '3.11'",
     "sphinx-copybutton>=0.5.2",
+    "structured-tutorials>=0.1.0",
 ]
 dist = [
     "setuptools-scm>=8.2.0",

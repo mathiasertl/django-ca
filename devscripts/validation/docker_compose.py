@@ -31,13 +31,11 @@ import requests
 import yaml
 
 from cryptography import x509
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
 from devscripts.out import err, info, ok
-from devscripts.tutorial import start_tutorial
 from devscripts.validation.docker import docker_cp
 from devscripts.versions import get_last_version
 
@@ -107,16 +105,6 @@ def _openssl_verify(ca_file: str, cert_file: str, **kwargs: Any) -> "subprocess.
     )
 
 
-def der_certificate_to_pem(source: Path, destination: Path) -> None:
-    """Convert a DER certificate to a PEM."""
-    with open(source, "rb") as stream:
-        data = stream.read()
-    certificate = x509.load_der_x509_certificate(data)
-    pem = certificate.public_bytes(Encoding.PEM)
-    with open(destination, "wb") as stream:
-        stream.write(pem)
-
-
 def _openssl_ocsp(
     ca_file: str, cert_file: str, url: str, **kwargs: Any
 ) -> "subprocess.CompletedProcess[Any]":
@@ -156,22 +144,6 @@ def _validate_container_versions(release: str, env: dict[str, str] | None = None
         errors += err(f"frontend container identifies as {frontend_ver} instead of {release}.")
 
     return errors
-
-
-def _validate_secret_key() -> int:
-    code = "from django.conf import settings; print(settings.SECRET_KEY)"
-    beat_key = _run_py("beat", code).strip()
-    backend_key = _run_py("backend", code).strip()
-    frontend_key = _run_py("frontend", code).strip()
-
-    if beat_key != backend_key:
-        return err(f"Secret key in beat do not match backend: ({frontend_key} vs. {backend_key}")
-    if backend_key != frontend_key:
-        return err(f"Secret keys do not match ({frontend_key} vs. {backend_key}")
-    if len(backend_key) < 32 or len(backend_key) > 128:
-        return err(f"Secret key seems to have an unusual length: {backend_key}")
-    ok("Secret keys match.")
-    return 0
 
 
 def _validate_crl_ocsp(
@@ -275,146 +247,6 @@ def validate_endpoints(base_url: str, api_user: str, api_password: str, verify: 
     # Test (principal) ACME connection
     resp = requests.get(f"{base_url}/acme/directory/", verify=verify, timeout=10)
     resp.raise_for_status()
-
-
-def test_tutorial(release: str) -> int:  # pylint: disable=too-many-locals  # noqa: PLR0915
-    """Validate the docker compose quickstart tutorial."""
-    info("Validating tutorial...")
-    errors = 0
-    standalone_dir = config.ROOT_DIR / "devscripts" / "standalone"
-    docker_compose_yml = config.ROOT_DIR / "compose.yaml"
-    if not docker_compose_yml.exists():
-        return err(f"{docker_compose_yml}: File not found.")
-
-    # Calculate some static paths
-    ca_key = config.FIXTURES_DIR / "root.key"
-    ca_pub = config.FIXTURES_DIR / "root.pub"
-    csr_path = config.FIXTURES_DIR / "root-cert.csr"
-
-    # Read CSR so we can pass it in context
-    with open(csr_path, "rb") as stream:
-        csr = stream.read()
-
-    # Convert CSR to PEM (sign_cert only accepts PEM on stdin)
-    loaded_csr = x509.load_der_x509_csr(csr)
-    csr_pem = loaded_csr.public_bytes(Encoding.PEM).decode("ascii")
-
-    _ca_default_hostname = "localhost"
-    _tls_cert_root = "/etc/certs/"
-    context = {
-        "ca_default_hostname": _ca_default_hostname,
-        "ca_url_path": "",
-        "postgres_host": "db",  # name in compose file
-        "postgres_password": "random-password",
-        "privkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/privkey.pem",
-        "pubkey_path": f"{_tls_cert_root}live/{_ca_default_hostname}/fullchain.pem",
-        "dhparam_name": "dhparam.pem",
-        "certbot_root": "./",
-        "tls_cert_root": _tls_cert_root,
-        "csr": csr_pem,
-        "django_ca_version": release,
-    }
-
-    with start_tutorial("quickstart_with_docker_compose", context) as tut:
-        cwd = Path(os.getcwd())
-        info(f"# Running in {cwd}")
-        tut.write_template("localsettings.yaml.jinja")
-        shutil.copy(docker_compose_yml, cwd)
-        tut.write_template("compose.override.yaml.jinja")
-        tut.write_template(".env.jinja")
-        shutil.copy(docker_compose_yml, cwd)
-
-        # Convert DER certificates from fixtures to PEM (requests needs PEM certificates).
-        ca_pub_pem = cwd / "https-root.pem"
-        der_certificate_to_pem(ca_pub, ca_pub_pem)
-
-        # Set up fake ACME certificates
-        live_path = Path("live", _ca_default_hostname).resolve()
-        live_path.mkdir(parents=True)
-        archive_dir = Path("archive", _ca_default_hostname).resolve()
-        archive_dir.mkdir(parents=True)
-        archive_privkey = archive_dir / "privkey.pem"
-        archive_fullchain = archive_dir / "fullchain.pem"
-
-        utils.create_signed_cert(_ca_default_hostname, ca_key, ca_pub, archive_privkey, archive_fullchain)
-
-        (live_path / "privkey.pem").symlink_to(os.path.relpath(archive_privkey, live_path))
-        (live_path / "fullchain.pem").symlink_to(os.path.relpath(archive_fullchain, live_path))
-
-        with tut.run("dhparam.yaml"), tut.run("docker-compose-up.yaml"), tut.run("verify-setup.yaml"):
-            compose_status()
-
-            # Validate that the container versions match the expected version
-            errors += _validate_container_versions(release)
-
-            # Validate that the secret keys match
-            errors += _validate_secret_key()
-
-            # Test connectivity
-            errors += _test_connectivity(standalone_dir)
-
-            with tut.run("setup-cas.yaml"):  # Creates initial CAs
-                ok("Setup certificate authorities.")
-                with tut.run("list_cas.yaml"):
-                    pass  # nothing really to do here
-                with tut.run("sign_cert.yaml"), tut.run("sign_cert_stdin.yaml"):
-                    pass  # nothing really to do here
-
-                # test number of CAs
-                cas = _manage("frontend", "list_cas", capture_output=True, text=True).stdout.splitlines()
-                assert len(cas) == 2, f"Found {len(cas)} CAs."
-
-                # sign some certs
-                cert_subject = _sign_certificates(csr_pem)
-
-                certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
-                assert len(certs) == 5, f"Found {len(certs)} certs instead of 5."
-                ok("Signed certificates.")
-
-                # Restart everything to make sure that all data survives a restart.
-                utils.run(["docker", "compose", "down"])
-                utils.run(["docker", "compose", "up", "-d"], env={"DJANGO_CA_VERSION": release})
-                ok("Restarted docker containers.")
-
-                # Write root CA and cert to disk for OpenSSL validation
-                with open("root.pem", "w", encoding="utf-8") as stream:
-                    _manage("backend", "dump_ca", "Root", stdout=stream)
-                with open(f"{cert_subject}.pem", "w", encoding="utf-8") as stream:
-                    _manage("frontend", "dump_cert", cert_subject, stdout=stream)
-
-                # Test CRL and OCSP validation
-                _validate_crl_ocsp("root.pem", f"{cert_subject}.pem", cert_subject)
-
-                # Test all endpoints
-                validate_endpoints("https://localhost", "user", "nopass", verify=str(ca_pub_pem))
-
-                # Finally some manual testing
-                info(
-                    f"""Test admin interface at
-
-    * URL: https://{_ca_default_hostname}/admin/
-    * Credentials: user/nopass
-"""
-                )
-                info(f"Working directory is {os.getcwd()}")
-                info("Press enter to continue...")
-                input()
-
-                # test again that we find the correct number of CAs/certs, this way we can be sure that the
-                # restart didn't break the database
-                cas = _manage("frontend", "list_cas", capture_output=True, text=True).stdout.splitlines()
-                assert len(cas) == 2, f"Found {len(cas)} CAs instead of 2."
-                certs = _manage("frontend", "list_certs", capture_output=True, text=True).stdout.splitlines()
-                # only four now, as one was revoked:
-                assert len(certs) == 4, f"Found {len(certs)} certs instead of 4."
-
-                # sign certificates again to make sure that CAs are still present
-                _sign_certificates(csr_pem)
-
-    if errors == 0:
-        ok("Tutorial successfully validated.")
-
-    return errors
 
 
 def get_postgres_version(path: Path | str) -> str:
@@ -617,30 +449,6 @@ def test_acme(release: str, image: str) -> int:
     return errors
 
 
-def _validate_default_version(path: str | os.PathLike[str], release: str) -> int:
-    info(f"Validating {path}...")
-    if not os.path.exists(path):
-        return err(f"{path}: File not found.")
-    with open(path, encoding="utf-8") as stream:
-        services = yaml.safe_load(stream)["services"]
-
-    errors = 0
-    expected_image = f"${{DJANGO_CA_IMAGE:-{config.DOCKER_TAG}}}:${{DJANGO_CA_VERSION:-{release}}}"
-    if services["backend"]["image"] != expected_image:
-        errors += err(f"{path}: {services['backend']['image']} does not match {expected_image}")
-    if services["frontend"]["image"] != expected_image:
-        errors += err(f"{path}: {services['frontend']['image']} does not match {expected_image}")
-
-    return errors
-
-
-def validate_docker_compose_files(release: str) -> int:
-    """Validate the state of docker compose files when releasing."""
-    errors = 0
-    errors += _validate_default_version("compose.yaml", release)
-    return errors
-
-
 class Command(DevCommand):
     """Class implementing the ``dev.py validate docker-compose`` command."""
 
@@ -694,7 +502,24 @@ class Command(DevCommand):
         errors = 0
 
         if args.tutorial:
-            errors += test_tutorial(release)
+            proc = utils.run(
+                [
+                    "structured-tutorial",
+                    "--non-interactive",
+                    "-D",
+                    "BUILD_IMAGE",
+                    "no",
+                    "-D",
+                    "RELEASE",
+                    release,
+                    "-D",
+                    "DOCKER_TAG",
+                    docker_tag,
+                    "tutorials/docker-compose/tutorial.yaml",
+                ]
+            )
+            if proc.returncode != 0:
+                errors += err("Error running tutorial.")
 
         if args.update and errors == 0:
             errors += test_update(release)

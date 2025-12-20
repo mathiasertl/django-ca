@@ -1,5 +1,0 @@
-commands:
-    - command: docker compose exec backend manage list_cas
-      display_output: |
-          <serial> - Intermediate
-          <serial> - Root

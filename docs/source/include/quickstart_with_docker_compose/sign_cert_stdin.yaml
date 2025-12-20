@@ -1,6 +1,0 @@
-commands:
-    - command: openssl genrsa -out example.com.key 4096
-      display_output: Generating RSA private key, ...
-    - command: openssl req -new -key example.com.key -out example.com.csr -utf8 -batch -subj /CN=example.com
-    - command: '{% if sphinx %}cat example.com.csr | {% endif %}docker compose exec -T backend manage sign_cert --ca=Intermediate --subject="CN=example.com"'
-      input_file: example.com.csr
