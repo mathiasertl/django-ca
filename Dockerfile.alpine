@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.10.0
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
-ARG IMAGE=python:3.14-alpine3.22
+ARG IMAGE=python:3.14-alpine3.23
 
 # These arguments are used to more easily assure a consistent version
 # with dev.py validate state

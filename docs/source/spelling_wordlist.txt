@@ -68,6 +68,7 @@ programmatically
 pylint
 pytest
 pythonic
+Quokka
 reproducibility
 responder
 responders

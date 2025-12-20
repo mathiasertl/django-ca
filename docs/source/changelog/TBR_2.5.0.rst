@@ -35,6 +35,7 @@ Dependencies
 * Add support for ``pydantic~=2.12``.
 * Add support for ``acme~=5.1.0`` and ``acme~=5.2.0``.
 * Add support for ``josepy~=2.2.0``.
+* Add support Ubuntu 24.10 (Questing Quokka).
 
 *******************
 Deprecation notices
@@ -44,5 +45,6 @@ Deprecation notices
 * This is the last release to support ``pydantic~=2.11.0``.
 * This is the last release to support ``acme~=5.0.0`` and ``acme~=5.1.0``.
 * This is the last release to support ``josepy~=2.1.0``.
-* This is the last release to support Alpine 3.20.
-* This is the last release to support Debian 11 (Bullseye).
+* This is the last release to support Alpine 3.20 and Alpine 3.21.
+* This is the last release to support Debian 11 (Bullseye) and Debian 12 (Bookworm).
+* This is the last release to support Ubuntu 24.04 (Plucky Puffin).
