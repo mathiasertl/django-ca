@@ -33,7 +33,8 @@ Dependencies
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=4.1.0``, ``acme~=4.2.0`` and ``josepy~=2.0.0``.
 * Add support for Python 3.14.
 * Add support for ``pydantic~=2.12``.
-* Add support for ``acme~=5.1.0``.
+* Add support for ``acme~=5.1.0`` and ``acme~=5.2.0``.
+* Add support for ``josepy~=2.2.0``.
 
 *******************
 Deprecation notices
@@ -41,6 +42,7 @@ Deprecation notices
 
 * This is the last release to support Python 3.10 and Python 3.11.
 * This is the last release to support ``pydantic~=2.11.0``.
-* This is the last release to support ``acme~=5.0.0``.
+* This is the last release to support ``acme~=5.0.0`` and ``acme~=5.1.0``.
+* This is the last release to support ``josepy~=2.1.0``.
 * This is the last release to support Alpine 3.20.
 * This is the last release to support Debian 11 (Bullseye).

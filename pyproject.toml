@@ -11,9 +11,9 @@ python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
 django = ["5.2"]
 cryptography = ["45", "46"]
-acme = ["5.0", "5.1"]
+acme = ["5.0", "5.1", "5.2"]
 pydantic = ["2.11", "2.12"]
-josepy = ["2.1"]
+josepy = ["2.1", "2.2"]
 # Newest uv release: https://pypi.org/project/uv/
 uv = "0.9.18"
 
@@ -544,7 +544,7 @@ default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "django5.1" }, { group = "django5.2" }, ],
     [ { group = "cryptography45" }, { group = "cryptography46" }, ],
-    [ { group = "acme5.0" }, { group = "acme5.1" }, ],
+    [ { group = "acme5.0" }, { group = "acme5.1" }, { group = "acme5.2" }, ],
     [ { group = "pydantic2.11" }, { group = "pydantic2.12" }, ],
 ]
 
@@ -626,5 +626,6 @@ gunicorn = [ "gunicorn>=23" ]
 "cryptography46" = ["cryptography~=46.0"]
 "acme5.0" = ["acme~=5.0.0"]
 "acme5.1" = ["acme~=5.1.0"]
+"acme5.2" = ["acme~=5.2.0"]
 "pydantic2.11" = ["pydantic~=2.11.0"]
 "pydantic2.12" = ["pydantic~=2.12.0"]
