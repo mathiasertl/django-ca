@@ -18,6 +18,7 @@ import sys
 from datetime import date
 from typing import Any
 
+from pydantic import BaseModel
 from sphinx.addnodes import document, pending_xref
 from sphinx.application import Sphinx
 
@@ -539,6 +540,8 @@ nitpick_ignore = [
     ("py:class", "RootModelRootType"),
     ("py:class", "pathlib._local.Path"),
     ("py:class", "JSON"),
+    # annotated_types does not have intersphinx mapping
+    ("py:class", "annotated_types.Ge"),
 ]
 
 
@@ -575,6 +578,29 @@ def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
             node["reftarget"] = qualname_overrides[alias]
 
 
+def strip_signature_for_pydantic_models(
+    app: Any,
+    obj_type: str,
+    name: str,
+    obj: Any,
+    options: dict[str, Any],
+    signature: str,
+    return_annotation: str,
+) -> tuple[str | None, str | None] | None:
+    """Strip signature of Pydantic models.
+
+    Typehints for pydantic models work extremely poorly in newer versions of Sphinx (>=7.4).
+    With nitpicky mode and turning warnings into errors, it makes it impossible to build Sphinx documentation
+    without this hook.
+
+    .. seealso:: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+    """
+    if isinstance(obj, type) and issubclass(obj, BaseModel):
+        return None, return_annotation
+    return None
+
+
 def setup(app: Sphinx) -> None:
     """Add hook functions to Sphinx hooks."""
     app.connect("doctree-read", resolve_canonical_names)
+    app.connect("autodoc-process-signature", strip_signature_for_pydantic_models)

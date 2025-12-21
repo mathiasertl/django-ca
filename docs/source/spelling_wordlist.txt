@@ -103,3 +103,9 @@ virtualenv
 whitespace
 yaml
 yml
+func
+json
+PydanticUndefined
+MinLen
+pydantic
+PydanticGeneralMetadata
