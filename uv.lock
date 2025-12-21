@@ -981,7 +981,7 @@ dev = [
     { name = "requests-mock", specifier = ">=1.12.1" },
     { name = "selenium", specifier = ">=4.29.0" },
     { name = "semantic-version", specifier = ">=2.10.0" },
-    { name = "sphinx", specifier = "~=8.0.0" },
+    { name = "sphinx", specifier = "~=8.1.0" },
     { name = "sphinxcontrib-spelling", specifier = ">=8.0.1" },
     { name = "tabulate", specifier = ">=0.9.0" },
     { name = "termcolor", specifier = ">=2.5.0" },
@@ -2974,7 +2974,7 @@ wheels = [
 
 [[package]]
 name = "sphinx"
-version = "8.0.2"
+version = "8.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alabaster" },
@@ -2995,9 +2995,9 @@ dependencies = [
     { name = "sphinxcontrib-serializinghtml" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-cryptography45' and extra == 'group-9-django-ca-cryptography46') or (extra == 'group-9-django-ca-django5-1' and extra == 'group-9-django-ca-django5-2') or (extra == 'group-9-django-ca-pydantic2-11' and extra == 'group-9-django-ca-pydantic2-12')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/25/a7/3cc3d6dcad70aba2e32a3ae8de5a90026a0a2fdaaa0756925e3a120249b6/sphinx-8.0.2.tar.gz", hash = "sha256:0cce1ddcc4fd3532cf1dd283bc7d886758362c5c1de6598696579ce96d8ffa5b", size = 8189041, upload-time = "2024-07-30T01:39:14.711Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6f/6d/be0b61178fe2cdcb67e2a92fc9ebb488e3c51c4f74a36a7824c0adf23425/sphinx-8.1.3.tar.gz", hash = "sha256:43c1911eecb0d3e161ad78611bc905d1ad0e523e4ddc202a58a821773dc4c927", size = 8184611, upload-time = "2024-10-13T20:27:13.93Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/61/2ad169c6ff1226b46e50da0e44671592dbc6d840a52034a0193a99b28579/sphinx-8.0.2-py3-none-any.whl", hash = "sha256:56173572ae6c1b9a38911786e206a110c9749116745873feae4f9ce88e59391d", size = 3498950, upload-time = "2024-07-30T01:39:11.116Z" },
+    { url = "https://files.pythonhosted.org/packages/26/60/1ddff83a56d33aaf6f10ec8ce84b4c007d9368b21008876fceda7e7381ef/sphinx-8.1.3-py3-none-any.whl", hash = "sha256:09719015511837b76bf6e03e42eb7595ac8c2e41eeb9c29c5b755c6b677992a2", size = 3487125, upload-time = "2024-10-13T20:27:10.448Z" },
 ]
 
 [[package]]
