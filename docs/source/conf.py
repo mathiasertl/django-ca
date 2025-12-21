@@ -91,6 +91,7 @@ extensions = [
     # Enable Celery task docs: https://docs.celeryproject.org/en/latest/userguide/sphinx.html
     "celery.contrib.sphinx",
     "numpydoc",
+    "sphinx_copybutton",
     "sphinx_inline_tabs",
     "sphinx_jinja",
     "sphinxcontrib.openapi",
@@ -113,6 +114,10 @@ manpages_url = "https://manpages.debian.org/{page}.{section}"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+
+copybutton_exclude = ".linenos, .gp"
+# copybutton_prompt_text = r">|[a-z]+@[a-z0-9]*:[^$]+[$#]\s*"
+# copybutton_prompt_is_regexp = True
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
