@@ -26,7 +26,6 @@ from django.utils.functional import Promise
 
 from django_ca.pydantic.schemas import get_promise_schema
 from django_ca.pydantic.validators import (
-    SignatureHashAlgorithmValidator,
     base64_str_validator,
     bytes_to_base64_str_validator,
     elliptic_curve_validator,
@@ -38,6 +37,8 @@ from django_ca.pydantic.validators import (
     reason_flag_crl_scope_validator,
     reason_flag_validator,
     serial_validator,
+    signature_hash_algorithm_validator,
+    signature_hash_algorithm_validator_with_legacy_names,
     timedelta_as_number_parser,
     unique_validator,
 )
@@ -54,7 +55,7 @@ PromiseTypeAlias = Annotated[Promise, get_promise_schema(), Field(validate_defau
 """Type alias for Djangos lazily translated strings.
 
 Translated strings will be evaluated (= translated) upon JSON serialization. For JSON schemas, this type alias
-identifies itself as a normal string. 
+identifies itself as a normal string.
 """
 
 
@@ -108,7 +109,7 @@ This type will also accept instances of |EllipticCurve| and convert them transpa
 """
 
 AnnotatedSignatureHashAlgorithmName = Annotated[
-    SignatureHashAlgorithmName, BeforeValidator(SignatureHashAlgorithmValidator())
+    SignatureHashAlgorithmName, BeforeValidator(signature_hash_algorithm_validator)
 ]
 """Annotated version of :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName`.
 
@@ -116,7 +117,8 @@ This type will also accept instances of |HashAlgorithm| and convert them transpa
 """
 
 AnnotatedSignatureHashAlgorithmNameWithLegacy = Annotated[
-    SignatureHashAlgorithmNameWithLegacy, BeforeValidator(SignatureHashAlgorithmValidator(legacy=True))
+    SignatureHashAlgorithmNameWithLegacy,
+    BeforeValidator(signature_hash_algorithm_validator_with_legacy_names),
 ]
 """Same as :attr:`~django_ca.pydantic.type_aliases.AnnotatedSignatureHashAlgorithmName`, but also accepts
 legacy algorithms."""

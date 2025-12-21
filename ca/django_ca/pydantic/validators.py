@@ -36,22 +36,24 @@ from django_ca.constants import (
 T = TypeVar("T")
 
 
-class SignatureHashAlgorithmValidator:
+def signature_hash_algorithm_validator(value: Any) -> Any:
     """Convert a :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` into a canonical name."""
+    if isinstance(value, hashes.HashAlgorithm):
+        try:
+            return SIGNATURE_HASH_ALGORITHM_NAMES[type(value)]  # type: ignore[index]
+        except KeyError as ex:
+            raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
+    return value
 
-    def __init__(self, legacy: bool = False) -> None:
-        self.legacy = legacy
 
-    def __call__(self, value: Any) -> Any:
-        if isinstance(value, hashes.HashAlgorithm):
-            try:
-                # TYPEHINT NOTE: unsupported/unknown hash algorithms are caught with KeyError below.
-                if self.legacy:
-                    return SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY[type(value)]  # type: ignore[index]
-                return SIGNATURE_HASH_ALGORITHM_NAMES[type(value)]  # type: ignore[index]
-            except KeyError as ex:
-                raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
-        return value
+def signature_hash_algorithm_validator_with_legacy_names(value: Any) -> Any:
+    """Same, but allows legacy names."""
+    if isinstance(value, hashes.HashAlgorithm):
+        try:
+            return SIGNATURE_HASH_ALGORITHM_NAMES_WITH_LEGACY[type(value)]  # type: ignore[index]
+        except KeyError as ex:  # pragma: no cover
+            raise ValueError(f"{value.name}: Hash algorithm is not supported.") from ex
+    return value
 
 
 def access_method_parser(value: Any) -> Any:
