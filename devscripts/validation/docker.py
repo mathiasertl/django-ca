@@ -23,12 +23,13 @@ from django.core.management.utils import get_random_secret_key
 
 from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
+from devscripts.docker import docker_cp, docker_exec, docker_run
 from devscripts.out import err, info, ok
 from devscripts.tutorial import start_tutorial
 
 
 def _test_version(docker_tag: str, release: str) -> int:
-    proc = utils.docker_run(
+    proc = docker_run(
         docker_tag,
         "manage",
         "shell",
@@ -46,13 +47,7 @@ def _test_version(docker_tag: str, release: str) -> int:
 
 
 def _test_alpine_version(docker_tag: str, alpine_version: str) -> int:
-    proc = utils.docker_run(
-        docker_tag,
-        "cat",
-        "/etc/alpine-release",
-        capture_output=True,
-        text=True,
-    )
+    proc = docker_run(docker_tag, "cat", "/etc/alpine-release", capture_output=True, text=True)
     actual_release = proc.stdout.strip()
     actual_major = config.minor_to_major(actual_release)
 
@@ -62,7 +57,7 @@ def _test_alpine_version(docker_tag: str, alpine_version: str) -> int:
 
 
 def _test_debian_version(docker_tag: str, debian_version: str) -> int:
-    proc = utils.docker_run(docker_tag, "lsb_release", "-cs", capture_output=True, text=True)
+    proc = docker_run(docker_tag, "lsb_release", "-cs", capture_output=True, text=True)
     actual_release = proc.stdout.strip()
 
     if actual_release != debian_version:
@@ -72,7 +67,7 @@ def _test_debian_version(docker_tag: str, debian_version: str) -> int:
 
 def _test_extras(docker_tag: str) -> int:
     cwd = os.getcwd()
-    utils.docker_run(
+    docker_run(
         "-v",
         f"{cwd}/pyproject.toml:/usr/src/django-ca/pyproject.toml",
         "-v",
@@ -90,9 +85,7 @@ def _test_clean(docker_tag: str) -> int:
     """Make sure that the Docker image does not contain any unwanted files."""
     cwd = os.getcwd()
     script = "check-clean-docker.py"
-    utils.docker_run(
-        "-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}"
-    )
+    docker_run("-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}")
     return ok("Docker image is clean.")
 
 
@@ -103,14 +96,9 @@ def _test_connectivity(src: pathlib.Path) -> int:
 
     for container in ["frontend", "backend"]:
         docker_cp(str(src / script_name), container, standalone_dest)
-        utils.docker_exec("frontend", script_path)
+        docker_exec("frontend", script_path)
 
     return ok("Tested connectivity.")
-
-
-def docker_cp(src: str, container: str, dest: str) -> None:
-    """Copy file into the container."""
-    utils.run(["docker", "cp", src, f"{container}:{dest}"])
 
 
 def build_docker_image(release: str, prune: bool = True, build: bool = True) -> str:

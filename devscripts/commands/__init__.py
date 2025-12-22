@@ -30,9 +30,10 @@ from devscripts import config, utils
 from devscripts.out import err, info
 
 if TYPE_CHECKING:
-    import docker
     from docker.client import DockerClient
     from docker.models.images import Image
+
+    import docker
 
 
 class CommandError(Exception):
@@ -81,7 +82,7 @@ class DevCommand:
         safe_tag = re.sub(r"[^\w.-]", ".", release)
         return f"{config.DOCKER_TAG}:{safe_tag}"
 
-    def handle(self, args: argparse.Namespace) -> None:
+    def handle(self, args: argparse.Namespace) -> None | int:
         """Method that is supposed to be implemented by sub-commands."""
         raise NotImplementedError
 

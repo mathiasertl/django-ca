@@ -28,6 +28,7 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+import requests
 import yaml
 
 from cryptography import x509
@@ -43,6 +44,7 @@ from cryptography.hazmat.primitives.serialization import (
 from cryptography.x509.oid import NameOID
 
 from devscripts import config
+from devscripts.out import ok
 
 if TYPE_CHECKING:
     import jinja2
@@ -146,16 +148,6 @@ def console_include(path: str, context: dict[str, Any]) -> Iterator[None]:
             run(args, check=False)
 
 
-def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
-    """Shortcut for running a docker command."""
-    return run(["docker", "run", "--rm", *args], **kwargs)
-
-
-def docker_exec(container: str, *args: str) -> "subprocess.CompletedProcess[Any]":
-    """Run a command in the given Docker container."""
-    return run(["docker", "exec", container, *args])
-
-
 @contextmanager
 def tmpdir() -> Iterator[str]:
     """Context manager to temporarily change the working directory to a temporary directory."""
@@ -252,3 +244,23 @@ def create_signed_cert(
 
     with open(public_key_path, "wb") as stream:
         stream.write(certificate.public_bytes(Encoding.PEM))
+
+
+def test_endpoints(base_url: str, api_user: str, api_password: str, verify: str | None = None) -> int:
+    """Test endpoints of a given installation."""
+    # Test that HTTPS connection and admin interface is working:
+    resp = requests.get(f"{base_url}/admin/", verify=verify, timeout=10)
+    resp.raise_for_status()
+
+    # Test static files
+    resp = requests.get(f"{base_url}/static/admin/css/base.css", verify=verify, timeout=10)
+    resp.raise_for_status()
+
+    # Test the REST API
+    resp = requests.get(f"{base_url}/api/ca/", auth=(api_user, api_password), verify=verify, timeout=10)
+    resp.raise_for_status()
+
+    # Test (principal) ACME connection
+    resp = requests.get(f"{base_url}/acme/directory/", verify=verify, timeout=10)
+    resp.raise_for_status()
+    return ok("Endpoints verified.")

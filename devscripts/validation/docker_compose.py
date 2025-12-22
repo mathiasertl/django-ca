@@ -14,9 +14,7 @@
 """Functions for validating docker compose and the respective tutorial."""
 
 import argparse
-import json
 import os
-import re
 import shutil
 import subprocess
 import tempfile
@@ -27,7 +25,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
-import requests
 import yaml
 
 from cryptography import x509
@@ -35,8 +32,15 @@ from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
 
 from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
+from devscripts.docker import (
+    compose_cp,
+    compose_exec,
+    compose_manage,
+    compose_status,
+    test_connectivity,
+    validate_container_versions,
+)
 from devscripts.out import err, info, ok
-from devscripts.validation.docker import docker_cp
 from devscripts.versions import get_last_version
 
 
@@ -54,49 +58,6 @@ def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
             down_kwargs["env"] = kwargs["env"]
 
         utils.run(down, **down_kwargs)
-
-
-def compose_status() -> None:
-    """Assert that all containers have started successfully."""
-    proc = utils.run(["docker", "compose", "ps", "-a", "--format=json"], capture_output=True, text=True)
-    errors = 0
-    for line in proc.stdout.splitlines():
-        container_data = json.loads(line)
-        if (exit_code := container_data["ExitCode"]) != 0:
-            errors += err(f"{container_data['Service']}: Exit code {exit_code}")
-
-    if errors != 0:
-        raise RuntimeError(f"{errors} container(s) have not started successfully.")
-    ok("All containers have started successfully.")
-
-
-def _compose_exec(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
-    cmd = ["docker", "compose", "exec", *kwargs.pop("compose_args", []), *args]
-    return utils.run(cmd, **kwargs)
-
-
-def _manage(container: str, *args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
-    return _compose_exec(container, "manage", *args, **kwargs)
-
-
-def _sign_cert(container: str, ca: str, csr: str, **kwargs: Any) -> str:
-    subject = f"signed-in-{container}.{ca.lower()}.example.com"
-
-    _manage(
-        container,
-        "sign_cert",
-        f"--ca={ca}",
-        f"--subject=CN={subject}",
-        input=csr.encode("ascii"),
-        compose_args=["-T"],
-        **kwargs,
-    )
-    return subject
-
-
-def _run_py(container: str, code: str, env: dict[str, str] | None = None) -> str:
-    proc = _manage(container, "shell", "-v", "0", "-c", code, capture_output=True, text=True, env=env)
-    return cast(str, proc.stdout)  # is a str because of text=True above
 
 
 def _openssl_verify(ca_file: str, cert_file: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
@@ -126,26 +87,6 @@ def _openssl_ocsp(
     )
 
 
-def _validate_container_versions(release: str, env: dict[str, str] | None = None) -> int:
-    errors = 0
-    beat_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", env=env).strip()
-    backend_ver = _run_py("backend", "import django_ca; print(django_ca.__version__)", env=env).strip()
-    frontend_ver = _run_py("frontend", "import django_ca; print(django_ca.__version__)", env=env).strip()
-
-    if beat_ver != backend_ver:
-        errors += err(f"beat and backend versions differ: {frontend_ver} vs. {backend_ver}")
-    if backend_ver != frontend_ver:
-        errors += err(f"frontend and backend versions differ: {frontend_ver} vs. {backend_ver}")
-    if beat_ver != release:
-        errors += err(f"backend container identifies as {backend_ver} instead of {release}.")
-    if backend_ver != release:
-        errors += err(f"backend container identifies as {backend_ver} instead of {release}.")
-    if frontend_ver != release:
-        errors += err(f"frontend container identifies as {frontend_ver} instead of {release}.")
-
-    return errors
-
-
 def _validate_crl_ocsp(
     ca_file: str, cert_file: str, cert_subject: str, already_revoked: bool = False
 ) -> None:
@@ -168,13 +109,13 @@ def _validate_crl_ocsp(
         _openssl_verify(ca_file, cert_file)
         _openssl_ocsp(ca_file, cert_file, ocsp_url)
 
-        _manage("frontend", "revoke_cert", cert_subject)
+        compose_manage("frontend", "revoke_cert", cert_subject)
 
         # Still okay, because CRL is cached
         _openssl_verify(ca_file, cert_file)
 
     # Re-cache CRLs
-    _manage("backend", "cache_crls")
+    compose_manage("backend", "cache_crls")
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
@@ -193,62 +134,6 @@ def _validate_crl_ocsp(
     ok("CRL and OCSP validation works.")
 
 
-def _test_connectivity(standalone_dir: Path) -> int:
-    standalone_dest = "/usr/src/django-ca/ca/"
-    cwd_basename = os.path.basename(os.getcwd())
-    errors = 0
-
-    for typ in ["backend", "frontend"]:
-        container = f"{cwd_basename}-{typ}-1"
-        docker_cp(str(standalone_dir / "test-connectivity.py"), container, standalone_dest)
-
-        proc = _compose_exec(typ, "./test-connectivity.py")
-        if proc.returncode != 0:
-            errors += 1
-    if errors == 0:
-        return ok("Tested connectivity.")
-
-    err("Error testing network connectivity")
-    return errors
-
-
-def _sign_certificates(csr: str) -> str:
-    # Sign some certs in the backend
-    cert_subject = _sign_cert("backend", "Root", csr)
-    _sign_cert("backend", "Intermediate", csr)
-
-    # Sign certs in the frontend (only intermediate works, root was created in backend)
-    _sign_cert("frontend", "Intermediate", csr)
-
-    try:
-        _sign_cert("frontend", "Root", csr, capture_output=True)
-    except subprocess.CalledProcessError as ex:
-        assert re.search(rb"Private key file not found\.", ex.stderr), (ex.stdout, ex.stderr)
-    else:
-        raise RuntimeError("Was able to sign root cert in frontend.")
-
-    return cert_subject
-
-
-def validate_endpoints(base_url: str, api_user: str, api_password: str, verify: str | None = None) -> None:
-    """Validate all endpoints of the setup."""
-    # Test that HTTPS connection and admin interface is working:
-    resp = requests.get(f"{base_url}/admin/", verify=verify, timeout=10)
-    resp.raise_for_status()
-
-    # Test static files
-    resp = requests.get(f"{base_url}/static/admin/css/base.css", verify=verify, timeout=10)
-    resp.raise_for_status()
-
-    # Test the REST API
-    resp = requests.get(f"{base_url}/api/ca/", auth=(api_user, api_password), verify=verify, timeout=10)
-    resp.raise_for_status()
-
-    # Test (principal) ACME connection
-    resp = requests.get(f"{base_url}/acme/directory/", verify=verify, timeout=10)
-    resp.raise_for_status()
-
-
 def get_postgres_version(path: Path | str) -> str:
     """Get the PostgreSQL version in the current compose.yaml."""
     with open(path, encoding="utf-8") as stream:
@@ -256,7 +141,7 @@ def get_postgres_version(path: Path | str) -> str:
     return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
 
 
-def test_update(release: str) -> int:  # noqa: PLR0915
+def test_update(docker_tag: str, release: str) -> int:  # noqa: PLR0915
     """Validate updating with docker compose."""
     info("Validating docker compose update...")
     errors = 0
@@ -267,8 +152,6 @@ def test_update(release: str) -> int:  # noqa: PLR0915
         last_release_dest = utils.git_archive(last_release, tmpdir)
         shutil.copy(last_release_dest / "compose.yaml", tmpdir)
         standalone_dir = last_release_dest / "devscripts" / "standalone"
-        backend = f"{os.path.basename(tmpdir)}-backend-1"
-        frontend = f"{os.path.basename(tmpdir)}-frontend-1"
         standalone_dest = "/usr/src/django-ca/ca/"
 
         with utils.chdir(tmpdir):
@@ -285,26 +168,26 @@ POSTGRES_PASSWORD=mysecretpassword
             info(f"Start previous version ({last_release}).")
             with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
                 # Make sure old containers started properly
-                compose_status()
+                errors += compose_status(f"{docker_tag.split(':')[0]}:{last_release}")
 
                 # Make sure we have started the right version
-                _validate_container_versions(last_release)
+                validate_container_versions(last_release)
 
                 info("Create test data...")
-                docker_cp(str(standalone_dir / "create-testdata.py"), backend, standalone_dest)
-                docker_cp(str(standalone_dir / "create-testdata.py"), frontend, standalone_dest)
-                _compose_exec("backend", "./create-testdata.py", "--env", "backend")
-                _compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
+                compose_cp(str(standalone_dir / "create-testdata.py"), f"backend:{standalone_dest}")
+                compose_cp(str(standalone_dir / "create-testdata.py"), f"frontend:{standalone_dest}")
+                compose_exec("backend", "./create-testdata.py", "--env", "backend")
+                compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
 
-                _compose_exec("backend", "manage", "cache_crls")
-                _compose_exec("backend", "manage", "regenerate_ocsp_keys")
+                compose_manage("backend", "cache_crls")
+                compose_manage("backend", "regenerate_ocsp_keys")
 
                 # Write root CA and cert to disk for OpenSSL validation
                 ca_subject = "rsa.example.com"  # created by create-testdata.py
                 with open("ca.pem", "w", encoding="utf-8") as stream:
-                    _manage("backend", "dump_ca", ca_subject, stdout=stream)
+                    compose_manage("backend", "dump_ca", ca_subject, stdout=stream)
                 with open("cert.pem", "w", encoding="utf-8") as stream:
-                    _manage("frontend", "dump_cert", f"cert.{ca_subject}", stdout=stream)
+                    compose_manage("frontend", "dump_cert", f"cert.{ca_subject}", stdout=stream)
 
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
@@ -359,16 +242,19 @@ POSTGRES_PASSWORD=mysecretpassword
             info(f"Start current version ({release}).")
             with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
                 # Make sure containers started properly
-                compose_status()
+                errors += compose_status(docker_tag)
 
                 # Make sure we have the new version
-                _validate_container_versions(release)
+                validate_container_versions(release)
+
+                # Makse sure we can reach everything
+                test_connectivity()
 
                 info("Validate test data...")
-                docker_cp(str(validation_script), backend, standalone_dest)
-                docker_cp(str(validation_script), frontend, standalone_dest)
-                _compose_exec("backend", "./validate-testdata.py", "--env", "backend")
-                _compose_exec("frontend", "./validate-testdata.py", "--env", "frontend")
+                compose_cp(str(validation_script), f"backend:{standalone_dest}")
+                compose_cp(str(validation_script), f"frontend:{standalone_dest}")
+                compose_exec("backend", "./validate-testdata.py", "--env", "backend")
+                compose_exec("frontend", "./validate-testdata.py", "--env", "frontend")
 
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}", already_revoked=True)
@@ -403,8 +289,8 @@ def test_acme(release: str, image: str) -> int:
 
             # Start containers
             with _compose_up(env=environ):
-                _validate_container_versions(release, env=environ)
-                _manage(
+                validate_container_versions(release, env=environ)
+                compose_manage(
                     "backend",
                     "init_ca",
                     "--path-length=1",
@@ -412,7 +298,7 @@ def test_acme(release: str, image: str) -> int:
                     "CN=Root",
                     env=environ,
                 )
-                _manage(
+                compose_manage(
                     "backend",
                     "init_ca",
                     "--acme-enable",
@@ -423,8 +309,8 @@ def test_acme(release: str, image: str) -> int:
                     env=environ,
                 )
                 try:
-                    _compose_exec("certbot", "certbot", "register", stdout=subprocess.DEVNULL, env=environ)
-                    _compose_exec(
+                    compose_exec("certbot", "certbot", "register", stdout=subprocess.DEVNULL, env=environ)
+                    compose_exec(
                         "certbot",
                         "django-ca-test-validation.sh",
                         "http",
@@ -433,7 +319,7 @@ def test_acme(release: str, image: str) -> int:
                         env=environ,
                     )
                     ok("Created certificate via a http-01 challenge.")
-                    _compose_exec(
+                    compose_exec(
                         "certbot",
                         "django-ca-test-validation.sh",
                         "dns",
@@ -502,19 +388,12 @@ class Command(DevCommand):
         errors = 0
 
         if args.tutorial:
+            defines = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
             proc = utils.run(
                 [
                     "structured-tutorial",
                     "--non-interactive",
-                    "-D",
-                    "BUILD_IMAGE",
-                    "no",
-                    "-D",
-                    "RELEASE",
-                    release,
-                    "-D",
-                    "DOCKER_TAG",
-                    docker_tag,
+                    *defines,
                     "tutorials/docker-compose/tutorial.yaml",
                 ]
             )
@@ -522,7 +401,7 @@ class Command(DevCommand):
                 errors += err("Error running tutorial.")
 
         if args.update and errors == 0:
-            errors += test_update(release)
+            errors += test_update(docker_tag, release)
 
         if args.acme and errors == 0:
             if args.acme_dist is not None:
