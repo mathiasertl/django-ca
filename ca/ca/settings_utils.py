@@ -16,6 +16,7 @@
 import importlib
 import logging
 import os
+import warnings
 from collections.abc import Callable, Iterator
 from inspect import isclass
 from pathlib import Path
@@ -113,7 +114,8 @@ def get_settings_files(base_dir: Path, paths: str) -> Iterator[Path]:
     """Get relevant settings files."""
     for settings_path in [base_dir / p for p in paths.split(":")]:
         if not settings_path.exists():
-            raise ImproperlyConfigured(f"{settings_path}: No such file or directory.")
+            warnings.warn(f"{settings_path}: No such file or directory.", stacklevel=1)
+            continue
 
         if settings_path.is_dir():
             # exclude files that don't end with '.yaml' and any directories

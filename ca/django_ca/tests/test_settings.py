@@ -167,7 +167,7 @@ def test_load_settings_from_files_file_does_not_exist() -> None:
     """Test loading settings if the file does not exist."""
     file_path = "/does-not-exist.yaml"
     with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": file_path}):
-        with pytest.raises(ImproperlyConfigured, match=rf"^{file_path}: No such file or directory\.$"):
+        with pytest.warns(UserWarning, match=rf"{file_path}: No such file or directory\.$"):
             dict(load_settings_from_files(FIXTURES_DIR))
 
 
