@@ -14,17 +14,14 @@
 """Command for various helper scripts for tutorials."""
 
 import argparse
-import json
 import re
-import subprocess
 import types
-from typing import Any
 
-import requests
-
-from devscripts import config, utils
+from devscripts import config
 from devscripts.commands import DevCommand
+from devscripts.docker import compose_python, compose_status, test_connectivity, validate_container_versions
 from devscripts.out import err, ok
+from devscripts.utils import test_endpoints
 
 
 class Command(DevCommand):
@@ -34,7 +31,6 @@ class Command(DevCommand):
 
     modules = (("django_ca", "django-ca"),)
     django_ca: types.ModuleType
-    _compose_services = ("beat", "backend", "frontend")
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         subparsers = parser.add_subparsers(dest="subcommand")
@@ -61,58 +57,13 @@ class Command(DevCommand):
         endpoints_parser = docker_compose_action_parser.add_parser("test-endpoints")
         endpoints_parser.add_argument("verify", help="Path to SSL certificate for SSL verification.")
 
-    def _compose(self, *args: str, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
-        kwargs.setdefault("text", True)
-        return utils.run(["docker", "compose", *args], **kwargs)
-
-    def _compose_exec(self, container: str, *args: str, **kwargs: Any) -> subprocess.CompletedProcess[Any]:
-        return self._compose("exec", *kwargs.pop("compose_args", []), container, *args, **kwargs)
-
-    def _compose_manage(self, container: str, *args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        return self._compose_exec(container, "manage", *args, **kwargs)
-
-    def _compose_python(self, container: str, code: str, **kwargs) -> subprocess.CompletedProcess[str]:
-        return self._compose_manage(container, "shell", "-v", "0", "-c", code, capture_output=True)
-
-    def test_compose_status(self, tag: str) -> int:
-        proc = self._compose("ps", "-a", "--format=json", capture_output=True)
-        json_lines = proc.stdout.splitlines()
-        if not json_lines:
-            return err("No containers found.")
-
-        errors = 0
-        services = {}
-        for line in json_lines:
-            container_data = json.loads(line)
-            if (exit_code := container_data["ExitCode"]) != 0:
-                errors += err(f"{container_data['Service']}: Exit code {exit_code}")
-
-            if container_data["Service"] in self._compose_services:
-                if container_data["Image"] != tag:
-                    errors += err(f"{container_data['Service']}: Image {container_data['Image']} != {tag}")
-
-        if not errors:
-            ok("All containers have started successfully.")
-        return errors
-
-    def test_container_versions(self, release: str) -> int:
-        code = "import django_ca; print(django_ca.__version__)"
-        errors = 0
-        for service in self._compose_services:
-            ver = self._compose_python(service, code).stdout.strip()
-            if ver != release:
-                errors += err(f"backend container identifies as {ver} instead of {release}.")
-
-        if not errors:
-            ok(f"All containers identify as {release}.")
-        return errors
-
     def test_secret_keys(self) -> int:
+        """Test that secret keys match and have reasonable values."""
         code = "from django.conf import settings; print(settings.SECRET_KEY)"
         errors = 0
-        beat_key = self._compose_python("beat", code).stdout.strip()
-        backend_key = self._compose_python("backend", code).stdout.strip()
-        frontend_key = self._compose_python("frontend", code).stdout.strip()
+        beat_key = compose_python("beat", code).stdout.strip()
+        backend_key = compose_python("backend", code).stdout.strip()
+        frontend_key = compose_python("frontend", code).stdout.strip()
 
         if beat_key != backend_key:
             errors += err(f"Secret key in beat do not match backend: ({frontend_key} vs. {backend_key}")
@@ -124,61 +75,25 @@ class Command(DevCommand):
             ok("All containers have the same valid secret key.")
         return errors
 
-    def test_connectivity(self) -> int:
-        standalone_dir = config.ROOT_DIR / "devscripts" / "standalone"
-        standalone_dest = "/usr/src/django-ca/ca/"
-
-        errors = 0
-        for service in self._compose_services:
-            self._compose("cp", str(standalone_dir / "test-connectivity.py"), f"{service}:{standalone_dest}")
-            proc = self._compose_exec(service, "./test-connectivity.py", check=False)
-            if proc.returncode != 0:
-                errors += 1
-
-        if errors == 0:
-            return ok("Tested connectivity.")
-        return errors
-
-    def test_endpoints(
-        self, base_url: str, api_user: str, api_password: str, verify: str | None = None
-    ) -> int:
-        # Test that HTTPS connection and admin interface is working:
-        resp = requests.get(f"{base_url}/admin/", verify=verify, timeout=10)
-        resp.raise_for_status()
-
-        # Test static files
-        resp = requests.get(f"{base_url}/static/admin/css/base.css", verify=verify, timeout=10)
-        resp.raise_for_status()
-
-        # Test the REST API
-        resp = requests.get(f"{base_url}/api/ca/", auth=(api_user, api_password), verify=verify, timeout=10)
-        resp.raise_for_status()
-
-        # Test (principal) ACME connection
-        resp = requests.get(f"{base_url}/acme/directory/", verify=verify, timeout=10)
-        resp.raise_for_status()
-        return ok("Endpoints verified.")
-
     def handle(self, args: argparse.Namespace) -> int:
         if args.subcommand == "get-release":
             print(self.django_ca.__version__)
-            return 0
         elif args.subcommand == "get-docker-tag":
             safe_tag = re.sub(r"[^\w.-]", ".", self.django_ca.__version__)
             print(f"{config.DOCKER_TAG}:{safe_tag}")
-            return 0
         elif args.subcommand == "get-docker-version":
             print(re.sub(r"[^\w.-]", ".", self.django_ca.__version__))
-            return 0
         elif args.subcommand == "compose":
             if args.action == "test-compose-status":
-                return self.test_compose_status(args.tag)
-            elif args.action == "test-container-versions":
-                return self.test_container_versions(args.release)
-            elif args.action == "test-secret-keys":
+                return compose_status(args.tag)
+            if args.action == "test-container-versions":
+                return validate_container_versions(args.release)
+            if args.action == "test-secret-keys":
                 return self.test_secret_keys()
-            elif args.action == "test-connectivity":
-                return self.test_connectivity()
-            elif args.action == "test-endpoints":
-                return self.test_endpoints("https://localhost", "user", "nopass", verify=args.verify)
-        return 1
+            if args.action == "test-connectivity":
+                return test_connectivity()
+            if args.action == "test-endpoints":
+                return test_endpoints("https://localhost", "user", "nopass", verify=args.verify)
+        else:
+            return err("Unknown subcommand.")
+        return 0

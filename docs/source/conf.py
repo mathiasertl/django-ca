@@ -19,8 +19,9 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from docutils.nodes import document
 from pydantic import BaseModel
-from sphinx.addnodes import document, pending_xref
+from sphinx.addnodes import pending_xref
 from sphinx.application import Sphinx
 
 try:
@@ -252,7 +253,7 @@ _tls_cert_root = "/etc/certs/"
 
 # Configuration for structured tutorials
 structured_tutorials_root = Path(_ROOT_DIR) / "tutorials"
-structured_tutorials_context = {"docker-compose/tutorial.yaml": {}}
+structured_tutorials_context: dict[str, dict[str, Any]] = {"docker-compose/tutorial.yaml": {}}
 
 # Jinja template contexts
 jinja_contexts = {
