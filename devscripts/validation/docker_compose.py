@@ -497,14 +497,6 @@ POSTGRES_PASSWORD=mysecretpassword
             shutil.copy(config.ROOT_DIR / "compose.yaml", tmpdir)
             ok("Updated compose.yaml")
 
-            # Remove legacy Docker Compose configuration file
-            docker_compose_yml = Path(tmpdir) / "docker-compose.yml"
-            if docker_compose_yml.exists():
-                os.remove(docker_compose_yml)
-            else:
-                # Remind us in the next version that the old config file does not exist anymore.
-                info(f"{docker_compose_yml}: File does not exist, you can remove this part of the code.")
-
             # Apply backup if there was a PostreSQL update
             if old_postgres_version != new_postgres_version:
                 info("Applying PostgreSQL backup due to version change...")
