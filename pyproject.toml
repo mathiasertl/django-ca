@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
-django = ["5.2"]
+django = ["5.2", "6.0" ]
 cryptography = ["45", "46"]
 acme = ["5.0", "5.1", "5.2"]
 pydantic = ["2.11", "2.12"]
@@ -126,6 +126,7 @@ description = "A Django app providing a TLS certificate authority."
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Framework :: Django",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
@@ -147,7 +148,8 @@ dynamic = ["version", "readme"]
 # Dependency information
 requires-python = ">=3.10"
 dependencies = [
-    "Django>=5.2",
+    "Django~=5.2.0;python_version<'3.12'",
+    "Django>=5.2;python_version>='3.12'",
     "acme>=5.0",
     "asn1crypto>=1.5",
     "cryptography>=45",
@@ -541,7 +543,7 @@ local_scheme = "no-local-version"
 required-version = "0.9.18"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
-    [ { group = "django5.1" }, { group = "django5.2" }, ],
+    [ { group = "django5.2" }, { group = "django6.0" }, ],
     [ { group = "cryptography45" }, { group = "cryptography46" }, ],
     [ { group = "acme5.0" }, { group = "acme5.1" }, { group = "acme5.2" }, ],
     [ { group = "pydantic2.11" }, { group = "pydantic2.12" }, ],
@@ -624,6 +626,7 @@ gunicorn = [ "gunicorn>=23" ]
 # NOTE: don't forget to add conflicts in [tool.uv] above.
 #"Django5.1" = ["Django~=5.1.0"]
 "Django5.2" = ["Django~=5.2.0"]
+"Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography45" = ["cryptography~=45.0"]
 "cryptography46" = ["cryptography~=46.0"]
 "acme5.0" = ["acme~=5.0.0"]

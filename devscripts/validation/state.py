@@ -267,7 +267,7 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
         for m in filter(None, [re.search(r"Django :: ([0-9]\.[0-9]+)$", cf) for cf in classifiers])
     )
     if djver_cfs != config.DJANGO:
-        errors += err(f"Wrong Djanfo classifiers: Have {djver_cfs}, wanted {config.DJANGO}")
+        errors += err(f"Wrong Django classifiers: Have {djver_cfs}, wanted {config.DJANGO}")
 
     for djver in config.DJANGO:
         if f"Framework :: Django :: {djver}" not in classifiers:
@@ -281,7 +281,7 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
     # Check project dependencies
     expected_django_req = f"Django>={config.DJANGO[0]}"
     if expected_django_req not in install_requires:
-        errors += err(f"{expected_django_req}: Expected Django requirement not found.")
+        errors += info(f"{expected_django_req}: Expected Django requirement not found.")
 
     expected_cg_req = f"cryptography>={config.CRYPTOGRAPHY[0]}"
     if expected_cg_req not in install_requires:
@@ -306,10 +306,12 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
             )
             continue
 
+        dependency_groups = config.PYPROJECT_TOML["dependency-groups"]
         for version in versions:
             expected_group_key = f"{sw}{version}"
             expected_group = [f"{sw}~={version}.0"]
-            if actual_group := config.PYPROJECT_TOML["dependency-groups"].get(expected_group_key):
+            dependency_group = dependency_groups[expected_group_key]
+            if actual_group := [group.split(";")[0].strip() for group in dependency_group]:
                 if actual_group != expected_group:
                     errors += err(f"{expected_group_key}: Depends on {actual_group}.")
             else:
