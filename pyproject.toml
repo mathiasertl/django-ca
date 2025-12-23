@@ -151,24 +151,24 @@ dependencies = [
     "acme>=5.0",
     "asn1crypto>=1.5",
     "cryptography>=45",
-    "django-object-actions>=4.2.0",
-    "dnspython>=2.6",
-    "idna>=3.8",
+    "django-object-actions>=5.0",
+    "dnspython>=2.7",
+    "idna>=3.10",
     "josepy>=2.1.0",
     "packaging",
     "pydantic>=2.11",
-    "requests>=2.30",
+    "requests>=2.32.3",
     # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
     "typing_extensions>=4.6.0;python_version<'3.12'",
 ]
 
 [project.optional-dependencies]
-api = ["django-ninja==1.5.1"]
+api = ["django-ninja>=1.5.1"]
 celery = ["celery>=5.5"]
-hsm = ["python-pkcs11>=0.7"]
+hsm = ["python-pkcs11>=0.9"]
 mysql = ["mysqlclient"]
 postgres = ["psycopg[c,pool]>=3.1"]
-redis = ["hiredis>=2.1.0", "redis>=4.6"]
+redis = ["hiredis>=3.1.0", "redis>=6.0"]
 yaml = ["PyYAML>=6.0.0"]
 
 [project.urls]
