@@ -1,9 +1,0 @@
-services:
-  backend:
-    environment:
-      DJANGO_CA_EMAIL_HOST:
-  frontend:
-    environment:
-      DJANGO_CA_EMAIL_HOST:
-  webserver:
-  # same as before..

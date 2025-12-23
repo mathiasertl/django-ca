@@ -65,16 +65,17 @@ Get configuration
 
 To run **django-ca**, you'll need a couple of files:
 
-* `dhparam.pem <quickstart-docker-compose-dhparam.pem>`_, the DH parameters (required for TLS connections).
-* `localsettings.yaml <quickstart-docker-compose-localsettings.yaml>`_, the configuration for **django-ca**.
-* `compose.yaml <quickstart-docker-compose-compose.yaml>`_, the configuration for Docker Compose.
-* `compose.override.yaml <quickstart-docker-compose-compose.override.yaml>`_, system-local configuration
+* :ref:`dhparam.pem <quickstart-compose-dhparam.pem>`, the DH parameters (required for TLS
+  connections).
+* :ref:`conf/ <quickstart-compose-config-files>`, a directory with YAML configuration files.
+* :ref:`compose.yaml <quickstart-compose-compose.yaml>`, the configuration for Docker Compose.
+* :ref:`compose.override.yaml <quickstart-compose-compose.override.yaml>`, system-local configuration
   overrides for Docker Compose.
-* `.env <quickstart-docker-compose-.env>`_, the environment file for Docker Compose.
+* :ref:`.env <quickstart-compose-.env>`, the environment file for Docker Compose.
 
 Read the sections below how to retrieve or generate all these files.
 
-.. _quickstart-docker-compose-dhparam.pem:
+.. _quickstart-compose-dhparam.pem:
 
 Generate DH parameters
 ======================
@@ -84,7 +85,7 @@ generate it with:
 
 .. structured-tutorial-part:: generate-dh-params
 
-.. _quickstart-docker-compose-localsettings.yaml:
+.. _quickstart-compose-config-files:
 
 Add configuration files
 =======================
@@ -115,24 +116,7 @@ You can configure any `Django setting <https://docs.djangoproject.com/en/dev/ref
 :doc:`custom settings </settings>` here. See :ref:`settings-yaml-configuration` for more examples. Almost
 all settings can be changed later, if that is not the case, the settings documentation mentions it.
 
-Environment variables
----------------------
-
-If you want to use environment variables for configuration, we recommend you first add them to your
-``compose.override.yaml``, for example to `configure a different SMTP server
-<https://docs.djangoproject.com/en/4.0/ref/settings/#email-host>`_ for sending out emails:
-
-.. literalinclude:: /include/quickstart_with_docker_compose/docker-compose.override-env-example.yaml
-   :language: yaml
-   :caption: compose.override.yaml
-
-and in your `.env <quickstart-docker-compose-.env>`_ file, set the variable:
-
-.. code-block:: bash
-
-   DJANGO_CA_EMAIL_HOST=smtp.example.com
-
-.. _quickstart-docker-compose-compose.yaml:
+.. _quickstart-compose-compose.yaml:
 
 Add ``compose.yaml``
 ====================
@@ -166,7 +150,7 @@ Version                                                                         
 
 Note that until ``django-ca==2.1.1``, this file was called ``docker-compose.yml``.
 
-.. _quickstart-docker-compose-compose.override.yaml:
+.. _quickstart-compose-compose.override.yaml:
 
 Add ``compose.override.yaml``
 =============================
@@ -183,7 +167,7 @@ This will work if you get your certificates using ``certbot`` or a similar clien
 public key chain is named different, you can set ``NGINX_PRIVATE_KEY`` and ``NGINX_PUBLIC_KEY`` in your
 :file:`.env` file below.
 
-.. _quickstart-docker-compose-.env:
+.. _quickstart-compose-.env:
 
 Add ``.env`` file
 =================
@@ -225,10 +209,6 @@ Create admin user and set up CAs
 ================================
 
 Inside the backend container, ``manage`` is an alias for ``manage.py``.
-
-Custom management commands are documented in :doc:`/cli/intro`. You need to create a user (that can log into
-the admin interface) and create a root and intermediate CA.
-
 
 .. jinja:: manage-in-docker-compose
    :file: /include/create-user.rst.jinja
@@ -297,7 +277,7 @@ Update
 Remember to :ref:`backup your data <docker-compose-backup>` before you perform any update.
 
 In general, updating django-ca is done by getting the :ref:`latest version of compose.yaml
-<quickstart-docker-compose-compose.yaml>` and then simply recreating the containers:
+<quickstart-compose-compose.yaml>` and then simply recreating the containers:
 
 .. code-block:: console
 
