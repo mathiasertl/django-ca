@@ -22,7 +22,6 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.utils import IntegrityError
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
@@ -448,7 +447,7 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             msg = "Duplicate entry"
         else:
             raise ValueError(f"{settings.DATABASE_BACKEND}: Unknown database backend.")
-        with transaction.atomic(), pytest.raises(IntegrityError, match=msg):
+        with pytest.raises(IntegrityError, match=msg):
             self.order1.add_authorizations([identifier])
 
     def test_serial(self) -> None:
