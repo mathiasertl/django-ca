@@ -18,13 +18,12 @@ from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
 from annotated_types import Ge
-from pydantic import AfterValidator, BeforeValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
 
 from cryptography import x509
 
 from django.utils.functional import Promise
 
-from django_ca.pydantic.schemas import get_promise_schema
 from django_ca.pydantic.validators import (
     base64_str_validator,
     bytes_to_base64_str_validator,
@@ -51,7 +50,7 @@ from django_ca.typehints import (
 T = TypeVar("T", bound=type[Any])
 
 
-PromiseTypeAlias = Annotated[Promise, get_promise_schema(), Field(validate_default=True)]
+PromiseTypeAlias = Annotated[Promise, PlainSerializer(lambda v: str(v), return_type=str)]  # pylint: disable=unnecessary-lambda
 """Type alias for Djangos lazily translated strings.
 
 Translated strings will be evaluated (= translated) upon JSON serialization. For JSON schemas, this type alias

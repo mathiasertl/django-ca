@@ -15,7 +15,7 @@
 
 import json
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy
@@ -40,7 +40,8 @@ class SerialModel(BaseModel):
 class PromiseModel(BaseModel):
     """Test class for PromiseTypeAlias."""
 
-    value: PromiseTypeAlias
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    value: PromiseTypeAlias | str
 
 
 @pytest.mark.parametrize(

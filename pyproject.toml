@@ -163,7 +163,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-api = ["django-ninja==1.4.3"]
+api = ["django-ninja==1.5.1"]
 celery = ["celery>=5.5"]
 hsm = ["python-pkcs11>=0.7"]
 mysql = ["mysqlclient"]
@@ -436,12 +436,9 @@ filterwarnings = [
     "error:::josepy",
     "error:::pydantic",
 
-    # django-ninja==1.3.0; https://github.com/vitalik/django-ninja/issues/1093
-    #   A left-over from the migration to Pydantic 2.0.
-    "ignore:^Support for class-based `config` is deprecated, use ConfigDict instead.",
-
-    # django-ninja==1.3.0; https://github.com/vitalik/django-ninja/issues/1266:
-    "ignore:Converter 'uuid' is already registered.::ninja.signature.utils",
+    # django-ninja==1.5.1
+    #   Found in 1.5.1, only shows up in Python 3.14.
+    "ignore:'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16::ninja.signature.utils",
 ]
 
 [tool.ruff]

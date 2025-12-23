@@ -15,7 +15,7 @@
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.extensions import ConfigurableExtensionModel
@@ -45,7 +45,9 @@ ExtensionDict = Annotated[
 class ProfileConfigurationModel(BaseModel):
     """Configuration model for profiles."""
 
-    description: PromiseTypeAlias = ""  # type: ignore[assignment]  # TypeAlias will update default to promise
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    description: PromiseTypeAlias | str = ""
     subject: NameModel | Literal[False] | None = None
     algorithm: SignatureHashAlgorithmName | None = None
     extensions: ExtensionDict = Field(default_factory=dict)
