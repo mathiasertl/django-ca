@@ -41,7 +41,7 @@ services:
                 condition: service_healthy
             db:
                 condition: service_healthy
-        healthcheck:
+        healthcheck: &celery-healthcheck
             test: [ "CMD-SHELL", "[ -d /proc/`cat /tmp/celerybeat.pid` ]" ]
             timeout: 1s
             start_interval: 1s
@@ -86,6 +86,7 @@ services:
         depends_on:
             beat:
               condition: service_healthy
+        healthcheck: *celery-healthcheck
         networks:
             - cache
             - database

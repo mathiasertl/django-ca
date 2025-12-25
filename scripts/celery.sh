@@ -7,4 +7,4 @@ wait_for_connections
 run_manage_commands
 
 set -x
-exec celery -A ca worker "$@"
+exec celery -A ca worker --pidfile /run/django-ca/celery.pid "$@"

@@ -7,4 +7,4 @@ wait_for_connections
 run_manage_commands
 
 set -x
-exec celery -A ca beat -s /var/lib/django-ca/celerybeat-schedule --pidfile /tmp/celerybeat.pid "$@"
+exec celery -A ca beat -s /var/lib/django-ca/celerybeat-schedule --pidfile /run/django-ca/celery.pid "$@"

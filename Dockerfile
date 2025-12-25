@@ -115,8 +115,10 @@ FROM base
 
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \
-             /var/lib/django-ca/shared /var/lib/django-ca/nginx/templates/ && \
-    chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/
+             /var/lib/django-ca/shared /var/lib/django-ca/nginx/templates/ \
+             /run/django-ca && \
+    chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/ /run/django-ca/ && \
+    chmod 0700 /run/django-ca/
 
 COPY --from=prepare /usr/src/django-ca/ ./
 RUN ln -s /usr/src/django-ca/ca/manage.py /usr/local/bin/manage
