@@ -4,7 +4,7 @@ Quickstart with Docker Compose
 
 .. _docker-compose:
 
-.. structured-tutorial:: docker-compose/tutorial.yaml
+.. structured-tutorial:: compose/tutorial.yaml
 
 This guide provides instructions for running your own certificate authority using **docker compose**. This is
 the quickest and easiest way to run django-ca, especially if you do not care to much about custom
@@ -16,6 +16,13 @@ This tutorial will give you a CA with
 * A browsable admin interface, protected by TLS (using Let's Encrypt certificates).
 * Certificate revocation using CRLs and OCSP.
 * (Optional) ACMEv2 support (= get certificates using certbot).
+
+.. NOTE::
+
+    This tutorial uses `structured-tutorials <https://structured-tutorials.readthedocs.io/en/latest/>`_.
+
+    This means that the documentation you see here is rendered from a configuration file and can also be run
+    locally to verify correctness and completeness.
 
 ************
 Requirements
@@ -133,9 +140,12 @@ bundled third-party Docker images.
    When updating, check if the PostgreSQL version has been updated. If yes, see :ref:`postgresql_update`
    for upgrade instructions.
 
-==================================================================================== ===== ========== =======
+.. Keep no more then 10 releases in this table.
+
+==================================================================================== ===== ========== ========
 Version                                                                              Redis PostgreSQL NGINX
-==================================================================================== ===== ========== =======
+==================================================================================== ===== ========== ========
+`2.5.0 <https://github.com/mathiasertl/django-ca/blob/2.4.0/compose.yaml>`_          **8** 16         **1.28**
 `2.4.0 <https://github.com/mathiasertl/django-ca/blob/2.4.0/compose.yaml>`_          7     16         1.26
 `2.3.0 <https://github.com/mathiasertl/django-ca/blob/2.3.0/compose.yaml>`_          7     16         1.26
 `2.2.0 <https://github.com/mathiasertl/django-ca/blob/2.2.0/compose.yaml>`_          7     16         1.26
@@ -145,8 +155,7 @@ Version                                                                         
 `1.29.0 <https://github.com/mathiasertl/django-ca/blob/1.29.0/docker-compose.yml>`_  7     16         1.24
 `1.28.0 <https://github.com/mathiasertl/django-ca/blob/1.28.0/docker-compose.yml>`_  7     **16**     1.24
 `1.27.0 <https://github.com/mathiasertl/django-ca/blob/1.27.0/docker-compose.yml>`_  7     12         1.24
-`1.26.0 <https://github.com/mathiasertl/django-ca/blob/1.26.0/docker-compose.yml>`_  7     12         1.24
-==================================================================================== ===== ========== =======
+==================================================================================== ===== ========== ========
 
 Note that until ``django-ca==2.1.1``, this file was called ``docker-compose.yml``.
 
@@ -156,7 +165,7 @@ Add ``compose.override.yaml``
 =============================
 
 The default :file:`compose.yaml` does not offer HTTPS, because too many details (cert location, etc.)
-are different from system to system. We need to add a `docker-compose override file
+are different from system to system. We need to add a `compose override file
 <https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/>`_ to open the port and map the
 directories with the certificates into the container.  Simply add a file called :file:`compose.override.yaml`
 next to your main configuration file:
@@ -296,7 +305,7 @@ extra steps to migrate the PostgreSQL database.
 
 .. code-block:: console
 
-   user@host:~/ca/$ docker-compose down
+   user@host:~/ca/$ docker compose down
    user@host:~/ca/$ docker compose up -d db
    user@host:~/ca/$ docker compose exec db pg_dump -U postgres -d postgres > backup.sql
 

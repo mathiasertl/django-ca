@@ -26,6 +26,22 @@ Docker images
 * Docker images are now uniquely tagged using a datestamp, not an increasing integer. This simplifies
   automatic image updates.
 
+*************
+Compose setup
+*************
+
+* Configuration files are now also loaded from ``conf/local``.
+* The Redis container is upgraded to version 8.
+* The nginx container is upgraded to version 1.28.
+* Tutorial changes:
+
+  * The :doc:`Compose tutorial </quickstart/docker_compose>` is now rendered using `structured-tutorials
+    <https://structured-tutorials.readthedocs.io/en/latest/>`_. The tutorial can thus be run locally for
+    verification.
+  * The directory is mapped in the tutorial instead of ``./localsettings.yaml``. This allows the user to
+    split configuration variables as well.
+  * Configuration and web server volumes are now mounted read-only.
+
 ************
 Dependencies
 ************
