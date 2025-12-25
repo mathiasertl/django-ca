@@ -2,7 +2,7 @@ include /etc/nginx/templates/include.d/upstream.conf;
 
 server {
     listen       ${NGINX_PORT};
-    server_name  ${NGINX_HOST};
+    server_name  ${NGINX_HOST} ${NGINX_ADDITIONAL_HOSTS};
 
     include /etc/nginx/templates/include.d/proxy.conf;
     include /etc/nginx/conf.d/include.d/ca.conf;
@@ -28,7 +28,7 @@ server {
 
 server {
     listen       ${NGINX_HTTPS_PORT} ssl http2;
-    server_name  ${NGINX_HOST};
+    server_name  ${NGINX_HOST} ${NGINX_ADDITIONAL_HOSTS};
 
     ssl_certificate_key ${NGINX_PRIVATE_KEY};
     ssl_certificate     ${NGINX_PUBLIC_KEY};
