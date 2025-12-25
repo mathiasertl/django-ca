@@ -28,7 +28,7 @@ from termcolor import colored
 
 from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.out import err, info
+from devscripts.out import disabled, err, info
 
 CheckFuncSpec = ParamSpec("CheckFuncSpec")
 
@@ -98,7 +98,7 @@ def check(
     return errors
 
 
-def check_github_action_versions(job: dict[str, Any], name: str) -> int:
+def check_github_action_versions(job: dict[str, Any]) -> int:
     """Check versions of/in GitHub actions."""
     errors = 0
     expected_action_versions = config.GITHUB_CONFIG["actions"]
@@ -113,13 +113,9 @@ def check_github_action_versions(job: dict[str, Any], name: str) -> int:
                 info(f"{action}: action version not configured")
 
             if action == "actions/setup-python":
-                if name == "Documentation":
-                    info("Known outdated version for Sphinx.")
-                else:
-                    py_version = str(step_config["with"]["python-version"])
-                    newest_python = config.PYTHON_RELEASES[-1]
-                    if py_version not in ("${{ matrix.python-version }}", newest_python):
-                        errors += err(f"Outdated Python version: {py_version} (newest: {newest_python})")
+                py_version = str(step_config["with"]["python-version"])
+                if py_version not in ("${{ matrix.python-version }}", config.NEWEST_PYTHON):
+                    errors += err(f"Outdated Python version: {py_version} (newest: {config.NEWEST_PYTHON})")
     return errors
 
 
@@ -137,7 +133,7 @@ def check_github_actions_tests() -> int:
             action_config = yaml.safe_load(stream)
 
         for _job_name, job in action_config["jobs"].items():
-            errors += check_github_action_versions(job, action_config["name"])
+            errors += check_github_action_versions(job)
 
             if matrix := job.get("strategy", {}).get("matrix"):
                 for key, values in matrix.items():
@@ -206,8 +202,7 @@ def check_tox() -> int:
     # pylint: enable=consider-using-f-string
     # Check disabled as long as different Django versions support different Python versions
     if expected_env_list not in tox_config["tox"]["envlist"].splitlines():
-        info("envlist check disabled.")
-        # errors += err(f"Expected envlist item not found: {expected_env_list}")
+        errors += disabled(f"Expected envlist item not found: {expected_env_list}")
 
     # Check that conditional dependencies are up-to-date
     for component in ["django", "cryptography", "acme", "pydantic"]:
@@ -281,7 +276,8 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
     # Check project dependencies
     expected_django_req = f"Django>={config.DJANGO[0]}"
     if expected_django_req not in install_requires:
-        errors += info(f"{expected_django_req}: Expected Django requirement not found.")
+        # Check currently disabled due to python version specific qualifiers
+        errors += disabled(f"{expected_django_req}: Expected Django requirement not found.")
 
     expected_cg_req = f"cryptography>={config.CRYPTOGRAPHY[0]}"
     if expected_cg_req not in install_requires:

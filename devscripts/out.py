@@ -43,3 +43,9 @@ def ok(msg: str) -> int:
     """Print success message."""
     print(colored("[OKAY]", "green"), msg)
     return 0
+
+
+def disabled(msg: str, indent: str = "") -> int:
+    """Print a message that is temporarily disabled."""
+    print(colored(f"{indent}[DISABLED]", "magenta"), msg)
+    return 0

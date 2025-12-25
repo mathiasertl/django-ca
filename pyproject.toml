@@ -602,7 +602,7 @@ lint = [
     "pre-commit>=4.1.0",
     "pylint>=3.3.4",
     "pylint-django>=2.6.1",
-    "ruff>=0.9.9",
+    "ruff>=0.14.10",
 ]
 mypy = [
     "django-stubs>=5.1.3",

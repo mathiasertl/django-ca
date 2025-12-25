@@ -22,8 +22,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6.0.0
         with:
-          # Python 3.13 currently fails
-          python-version: "3.12"
+          python-version: "3.14"
           architecture: x64
 
       - name: Install uv
