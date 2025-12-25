@@ -40,6 +40,7 @@ Compose setup
     verification.
   * The directory is mapped in the tutorial instead of ``./localsettings.yaml``. This allows the user to
     split configuration variables as well.
+  * Provide and use a proper certbot deployment hook script to setup automatic certificate renewal.
   * Configuration and web server volumes are now mounted read-only.
 
 ************

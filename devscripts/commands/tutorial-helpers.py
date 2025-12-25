@@ -93,7 +93,7 @@ class Command(DevCommand):
             if args.action == "test-connectivity":
                 return test_connectivity()
             if args.action == "test-endpoints":
-                return test_endpoints("https://localhost", "user", "nopass", verify=args.verify)
+                return test_endpoints("https://webserver", "user", "nopass", verify=args.verify)
         else:
             return err("Unknown subcommand.")
         return 0

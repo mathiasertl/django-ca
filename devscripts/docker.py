@@ -75,6 +75,10 @@ def compose_status(tag: str) -> int:
     errors = 0
     for line in json_lines:
         container_data = json.loads(line)
+        # certbot container is expected to fail (it's a run-once container)
+        if container_data["Service"] == "certbot":
+            continue
+
         if (exit_code := container_data["ExitCode"]) != 0:
             errors += err(f"{container_data['Service']}: Exit code {exit_code}")
 

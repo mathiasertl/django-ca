@@ -13,9 +13,10 @@ configuration or extending django-ca.
 This tutorial will give you a CA with
 
 * A root and intermediate CA.
-* A browsable admin interface, protected by TLS (using Let's Encrypt certificates).
+* ACMEv2 support (= get certificates using certbot).
+* A browsable admin interface and a REST API.
 * Certificate revocation using CRLs and OCSP.
-* (Optional) ACMEv2 support (= get certificates using certbot).
+* ACMEv2, admin interface and REST API are served with HTTPS using Let's Encrypt certificates.
 
 .. NOTE::
 
@@ -50,15 +51,6 @@ log in again:
 
 .. structured-tutorial-part:: add-docker-group
 
-************************
-Get initial certificates
-************************
-
-Use certbot to acquire initial certificates. This must be done `before` you run **docker compose**, as both
-bind to port 80 (HTTP).
-
-.. structured-tutorial-part:: get-certificates-with-certbot
-
 *****************
 Get configuration
 *****************
@@ -79,6 +71,8 @@ To run **django-ca**, you'll need a couple of files:
 * :ref:`compose.override.yaml <quickstart-compose-compose.override.yaml>`, system-local configuration
   overrides for Docker Compose.
 * :ref:`.env <quickstart-compose-.env>`, the environment file for Docker Compose.
+* :ref:`nginx-reload.sh <quickstart-compose-nginx-reload.sh>`, a certbot *deploy hook* to reload NGINX after
+  certificate renewal.
 
 Read the sections below how to retrieve or generate all these files.
 
@@ -188,12 +182,49 @@ For a quick start, there are only a few variables you need to specify:
 
 .. structured-tutorial-part:: copy-env
 
+.. _quickstart-compose-nginx-reload.sh:
+
+Add ``nginx-reload.sh`` file
+============================
+
+:file:`nginx-reload.sh` is a certbot deployment hook that will reload the web server when the certbot
+certificate is renewed:
+
+.. structured-tutorial-part:: copy-nginx-reload
+
+Certbot requires the script to be executable:
+
+.. structured-tutorial-part:: chmod-nginx-reload
+
 Recap
 =====
 
-By now, you should have *four* files and *one* directory in ``~/ca/``:
+By now, you should have *five* files and *one* directory in ``~/ca/``:
 
 .. structured-tutorial-part:: ls-recap
+
+.. _quickstart-compose-get-initial-certificates:
+
+************************
+Get initial certificates
+************************
+
+Some endpoints of the CA (ACMEv2, REST API and the admin interface) are available via HTTPS. In our
+tutorial, we will use Let's Encrypt certificates for maximum compatibility for clients.
+
+You could also use certificates from a CA managed by **django-ca** itself, but such a setup could lead to a
+situation where endpoints are no longer working due to faulty (e.g. expired) certificates, but you need
+working endpoints to renew them.
+
+Retrieving initial certificates must be done `before` you run **docker compose**, as both bind to port 80
+(HTTP):
+
+.. structured-tutorial-part:: get-certificates-with-certbot
+
+The above example uses the ``standalone`` plugin to fulfill a `HTTP-01 challenge type <https://letsencrypt
+.org/docs/challenge-types/>`_. This challenge requires your server to export port 80 to the internet. If
+that does not work for you but you still want to use Let's Encrypt, you can use any of the `many plugins
+<https://eff-certbot.readthedocs.io/en/stable/using.html#third-party-plugins>`_.
 
 *************
 Start your CA
@@ -232,18 +263,15 @@ Inside the backend container, ``manage`` is an alias for ``manage.py``.
 Automatic certificate renewal
 *****************************
 
-In the above example, you retrieved TLS certificates for the HTTPS interfaces of your certificate authority.
-To set up automatic renewal, add a deployment hook script for certbot:
+If you used the ``certbot certonly --standalone`` to retrieve Let's Encrypt certificates (:ref:`see above
+<quickstart-compose-get-initial-certificates>`), you still need to configure automatic certificate renewal.
+The current setup will not work, as port 80 is now occupied by nginx. Tell certbot to renew certificates
+using the :spelling:ignore:`"webroot"` plugin instead:
 
-.. structured-tutorial-part:: setup-certbot-add-deploy-hook
+.. structured-tutorial-part:: setup-certbot-automatic-renewal
 
-Mark the script as executable and configure certbot to use the http-01 challenge and the deployment hook for
-the domain:
-
-.. structured-tutorial-part:: setup-certbot-http-01
-
-Next, add a hook script to reload the webserver when a certificate is renewed:
-
+If you used any other ACMEv2 authentication method (e.g. a DNS-based setup), you probably don't need to do
+anything here.
 
 .. _docker-compose-backup:
 
@@ -280,7 +308,7 @@ Here is an example that should work for the ``backend`` container.:
 .. code-block:: console
 
    user@host:~/ca/$ docker run -it --rm --volumes-from `basename $PWD`_backend_1 \
-   >     -v `pwd`:/backup ubuntu tar czf /backup/backend.tar.gz /var/lib/django-ca/certs/
+   >     -v $(pwd):/backup ubuntu tar czf /backup/backend.tar.gz /var/lib/django-ca/certs/
    user@host:~/ca/$ tar tf backend.tar.gz
    var/lib/django-ca/certs/
    var/lib/django-ca/certs/ca/

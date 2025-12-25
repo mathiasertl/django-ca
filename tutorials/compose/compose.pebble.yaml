@@ -1,0 +1,31 @@
+services:
+  pebble:
+    image: ghcr.io/letsencrypt/pebble:latest
+    environment:
+      - PEBBLE_VA_NOSLEEP=1
+      - PEBBLE_WFE_NONCEREJECT=1
+    volumes:
+      - ./pebble/:/test/config/local/
+    command: "-config /test/config/local/pebble-config.json"
+    networks:
+      - public
+    ports:
+      - "14000:14000"   # ACME directory endpoint
+      - "15000:15000"   # Management interface
+
+  # Get certbot shell with:
+  #   docker compose run --rm --entrypoint='' certbot /bin/sh
+  certbot:
+    image: certbot/certbot:latest
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - ./letsencrypt/:/etc/letsencrypt/
+      - ./acme/:/tmp/challenges
+      - ./nginx-reload.sh:/usr/local/bin/nginx-reload.sh
+    networks:
+      - public
+    working_dir: /etc/letsencrypt
+    profiles: ["manual"]
+
+networks:
+  public:

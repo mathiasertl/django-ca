@@ -10,6 +10,8 @@ configuration:
     TLS_LIVE_DIR: /etc/certs/live
   doc:
     context:
+      CERTBOT_CHALLENGES_PATH: "$(pwd)/acme"
+      CERTBOT_HOOK_PATH: $(pwd)/nginx-reload.sh
       COMPOSE_DIR: ~/ca/
       CA_HOSTNAME: ca.example.com
       DHPARAM_BITS: "4096"
@@ -21,12 +23,18 @@ configuration:
     temporary_directory: true
     context:
       BUILD_IMAGE: "y"
+      # certbot paths are inside the Docker container
+      CERTBOT_CHALLENGES_PATH: /tmp/challenges
+      CERTBOT_HOOK_PATH: /usr/local/bin/nginx-reload.sh
       COMPOSE_DIR: "ca/"
-      CA_HOSTNAME: localhost
+      CA_HOSTNAME: webserver
       DHPARAM_BITS: "2048"
       LETSENCRYPT_ARCHIVE_DIR: ./letsencrypt/archive
       LETSENCRYPT_LIVE_DIR: ./letsencrypt/live
-      LETSENCRYPT_DIR: ./letsencrypt/live/localhost/
+      LETSENCRYPT_DIR: ./letsencrypt/live/webserver/
+    environment:
+      COMPOSE_FILE: "compose.yaml:compose.override.yaml:compose.pebble.yaml"
+      NGINX_ADDITIONAL_HOSTS: localhost
 parts:
   # [doc only] Install dependencies
   - id: install-dependencies
@@ -41,17 +49,6 @@ parts:
     commands:
       - command: sudo adduser `id -un` docker
       - command: sudo su `id -un`
-    run:
-      skip: true
-
-  # [doc only] Get certificates using certbot
-  - id: get-certificates-with-certbot
-    name: Get certificates with certbot
-    commands:
-      - command: sudo certbot certonly --standalone -d {{ CA_HOSTNAME }}
-      - command: sudo ls {{ LETSENCRYPT_DIR }}/
-        doc:
-          output: "README  cert.pem  chain.pem  fullchain.pem  privkey.pem"
     run:
       skip: true
 
@@ -83,6 +80,8 @@ parts:
           show_output: false
           test:
             - regex: "^(?P<DOCKER_VERSION>.*)$"
+          update_environment:
+            DJANGO_CA_VERSION: "{{ DOCKER_VERSION }}"
       # Get the full docker tag (mathiasertl/django-ca:$DOCKER_VERSION)
       - command: |
           {% if DOCKER_TAG -%}
@@ -100,21 +99,6 @@ parts:
           {%- else -%}
             # Not building image (BUILD_IMAGE=n), using {{ DOCKER_TAG }}.
           {%- endif %}
-        run:
-          show_output: false
-    doc:
-      skip: true
-
-  # [run only] Create fake ACME certificates
-  - id: get-certificates-self-signed
-    name: Get self-signed certificates
-    commands:
-      - command: mkdir -p {{ LETSENCRYPT_DIR }} {{ LETSENCRYPT_ARCHIVE_DIR }}
-      - command: |
-          openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
-            -keyout {{ LETSENCRYPT_DIR }}/privkey.pem -out {{ LETSENCRYPT_DIR }}/fullchain.pem \
-            -subj "/CN=localhost" \
-            -addext "subjectAltName=DNS:{{ CA_HOSTNAME }}"
         run:
           show_output: false
     doc:
@@ -171,40 +155,112 @@ parts:
     destination: compose.override.yaml
     doc:
       language: yaml
+  - id: copy-compose-pebble-override.yaml
+    name: Create Docker Compose override configuration for Pebble
+    source: compose.pebble.yaml
+    destination: compose.pebble.yaml
+    doc:
+      skip: true
   - id: copy-env
     source: env
     destination: .env
     doc:
       language: bash
+  - id: copy-nginx-reload
+    source: nginx-reload.sh
+    destination: nginx-reload.sh
+    doc:
+      language: bash
+  - id: chmod-nginx-reload
+    commands:
+      - command: chmod a+rx nginx-reload.sh
 
   # Recap: run ls -A
   - id: ls-recap
     commands:
       - command: ls -A
         doc:
-          output: compose.override.yaml compose.yaml conf {{ DHPARAM_FILENAME }} .env
+          output: compose.override.yaml compose.yaml conf {{ DHPARAM_FILENAME }} nginx-reload.sh .env
         run:
-          show_output: false  # just a test command
+          show_output: false
           test:
-            - regex: |
-                compose.override.yaml
-                compose.yaml
-                conf
-                dhparam.pem
-                .env
+            - regex: compose.override.yaml
+            - regex: compose.yaml
+            - regex: conf
+            - regex: dhparam.pem
+            - regex: .env
+            - regex: nginx-reload.sh
+
+
+  # [run only] Configure pebble
+  - id: docker-compose-configure-pebble
+    name: Create pebble configuration file
+    commands:
+      - command: mkdir -p pebble/
+      - command: id -u
+        run:
+          test:
+            - regex: "(?P<HOST_UID>.*)"
+          update_environment:
+            HOST_UID: "{{ HOST_UID }}"
+      - command: id -g
+        run:
+          test:
+            - regex: "(?P<HOST_GID>.*)"
+          update_environment:
+            HOST_GID: "{{ HOST_GID }}"
+      - command: docker compose create pebble
+      - command: |
+          docker compose cp \
+            pebble:/test/config/pebble-config.json pebble/pebble-config.json
+      - command: sed -i s/5002/80/ pebble/pebble-config.json
+    doc:
+      skip: True
+
+  # Get certificates with certbot
+  - id: get-certificates-with-certbot
+    commands:
+      - command: mkdir -p {{ LETSENCRYPT_DIR }} {{ LETSENCRYPT_ARCHIVE_DIR }} ./acme/
+        doc:
+          skip: true
+      - command: docker compose -f compose.pebble.yaml up -d
+        doc:
+          skip: true
+        run:
+          show_output: false
+          cleanup:
+            - command: docker compose down -v
+              show_output: false
+          test:
+            - host: localhost
+              port: 14000
+      - command: |
+          {% if run -%}
+            docker compose -f compose.pebble.yaml run \
+              --rm --name {{ CA_HOSTNAME }} certbot \
+            {% else -%}
+              sudo certbot {% endif -%}
+            certonly --standalone -d {{ CA_HOSTNAME }} \
+              --deploy-hook {{ CERTBOT_HOOK_PATH }}{% if run %} \
+              --logs-dir /tmp/logs/ \
+              --work-dir /tmp/work/ \
+              --server https://pebble:14000/dir \
+              --no-verify-ssl \
+              --register-unsafely-without-email \
+              --agree-tos{% endif %}
+        run:
+          show_output: false
 
   # Finally, start compose setup!
   - id: start-compose
     name: Start Docker Compose setup
     commands:
-      - command: docker compose up -d{% if run %} --quiet-pull{% endif %}
+      - command: docker compose up -d
         doc:
           output: |
             ...
         run:
           show_output: false
-          environment:
-            DJANGO_CA_VERSION: "{{ DOCKER_VERSION }}"
           cleanup:
             - command: docker compose down -v
               show_output: false
@@ -222,6 +278,7 @@ parts:
             ca_cache_1       docker-entrypoint.sh redis ...   Up
             ...
 
+  # Run various helper scripts to test the current setup
   - id: check-setup
     name: Check the current setup
     commands:
@@ -275,7 +332,7 @@ parts:
   - id: sign-cert
     name: Sign a certificate
     commands:
-      - command: "docker compose exec{% if run %} -T{% endif %} backend manage sign_cert --ca=Intermediate --subject=\"CN=example.com\""
+      - command: "docker compose  exec{% if run %} -T{% endif %} backend manage sign_cert --ca=Intermediate --subject=\"CN=example.com\""
         run:
           show_output: false
           stdin:
@@ -306,8 +363,6 @@ parts:
       - command: docker compose up -d
         run:
           show_output: false
-          environment:
-            DJANGO_CA_VERSION: "{{ DOCKER_VERSION }}"
           # note: `docker compose down -v` is already added to cleanup commands
           test:
             - host: localhost
@@ -365,20 +420,23 @@ parts:
     doc:
       skip: true
 
-  - id: setup-certbot-add-deploy-hook
-    source: nginx-reload.sh
-    destination: nginx-reload.sh
-    doc:
-      language: bash
-  - id: setup-certbot-http-01
+  - id: setup-certbot-automatic-renewal
     commands:
-      - command: chmod a+rx nginx-reload.sh
+      - command: rm -rf letsencrypt/accounts
+        doc:
+          skip: true
       - command: |
-          sudo certbot certonly --webroot -w `pwd`/acme/ \
-            --deploy-hook `pwd`/nginx-reload.sh \
-            -d {{ CA_HOSTNAME }}
-    run:
-      skip: true
+          {% if run %}docker compose run --rm certbot \
+          {% else   %}sudo certbot {% endif -%}
+            certonly --force-renew --webroot -w {{ CERTBOT_CHALLENGES_PATH }} -d {{ CA_HOSTNAME }} --deploy-hook {{ CERTBOT_HOOK_PATH }}{% if run %} \
+              --logs-dir /tmp/logs/ \
+              --work-dir /tmp/work/ \
+              --server https://pebble:14000/dir \
+              --no-verify-ssl \
+              --register-unsafely-without-email \
+              --agree-tos{% endif %}
+        run:
+          show_output: false
 
   - prompt: |
       Test admin interface at:

@@ -1,6 +1,7 @@
 AllowedHashTypes
 DER
 PEM
+DNS
 DSA
 RSA
 GitHub

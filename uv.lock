@@ -3318,7 +3318,7 @@ wheels = [
 
 [[package]]
 name = "structured-tutorials"
-version = "0.2.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
@@ -3332,9 +3332,9 @@ dependencies = [
     { name = "termcolor" },
     { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-cryptography45' and extra == 'group-9-django-ca-cryptography46') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-pydantic2-11' and extra == 'group-9-django-ca-pydantic2-12')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/0d/f3f497a5f690d31dff3496ac0253e0db31bdd41308cf6eb69b33c920f382/structured_tutorials-0.2.0.tar.gz", hash = "sha256:34dd244252cc844a6f02750dd955fff0890f3715ccf63e6917cf580d7625ec3f", size = 214820, upload-time = "2025-12-23T19:29:00.255Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/63/ea/3c51fdd3da4760dfc33462884c23395d0d9af62830d1ad2db34ca412a6fc/structured_tutorials-0.3.0.tar.gz", hash = "sha256:733f81b477c01432c4992f4acbfd5cc08152e6ff3453f77bd4354fc2bb835bb1", size = 218662, upload-time = "2025-12-26T12:10:30.545Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/e5/f4a326334347249d07c3045e437cec6976778bfc7b94d6b7c015047933fa/structured_tutorials-0.2.0-py3-none-any.whl", hash = "sha256:b6a064528898a057e118b75954d4ee8b13fc0f07bc593b9425786cfa1b89f8cf", size = 30107, upload-time = "2025-12-23T19:28:58.754Z" },
+    { url = "https://files.pythonhosted.org/packages/71/a0/99c3cb56650da80cdf35738042fc1ad0abdf51ac58bbf37ec6b0ea8b8d29/structured_tutorials-0.3.0-py3-none-any.whl", hash = "sha256:d473b981cf9247ba16929eef693d979282ac374adf70966048c1114b5e75d5ad", size = 30622, upload-time = "2025-12-26T12:10:32.016Z" },
 ]
 
 [[package]]
