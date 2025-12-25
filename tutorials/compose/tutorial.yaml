@@ -365,6 +365,21 @@ parts:
     doc:
       skip: true
 
+  - id: setup-certbot-add-deploy-hook
+    source: nginx-reload.sh
+    destination: nginx-reload.sh
+    doc:
+      language: bash
+  - id: setup-certbot-http-01
+    commands:
+      - command: chmod a+rx nginx-reload.sh
+      - command: |
+          sudo certbot certonly --webroot -w `pwd`/acme/ \
+            --deploy-hook `pwd`/nginx-reload.sh \
+            -d {{ CA_HOSTNAME }}
+    run:
+      skip: true
+
   - prompt: |
       Test admin interface at:
 

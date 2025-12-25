@@ -228,6 +228,23 @@ Inside the backend container, ``manage`` is an alias for ``manage.py``.
    :file: /include/guide-where-to-go.rst.jinja
    :header_update_levels:
 
+*****************************
+Automatic certificate renewal
+*****************************
+
+In the above example, you retrieved TLS certificates for the HTTPS interfaces of your certificate authority.
+To set up automatic renewal, add a deployment hook script for certbot:
+
+.. structured-tutorial-part:: setup-certbot-add-deploy-hook
+
+Mark the script as executable and configure certbot to use the http-01 challenge and the deployment hook for
+the domain:
+
+.. structured-tutorial-part:: setup-certbot-http-01
+
+Next, add a hook script to reload the webserver when a certificate is renewed:
+
+
 .. _docker-compose-backup:
 
 ******
