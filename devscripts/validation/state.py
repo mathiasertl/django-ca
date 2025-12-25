@@ -355,7 +355,6 @@ def check_dockerfile(path: str, distro: str) -> int:
 
     with open(path, encoding="utf-8") as stream:
         dockerfile = stream.read().splitlines()
-    newest_uv = config.PYPROJECT_TOML["django-ca"]["release"]["uv"]
 
     arg_lines = [line for line in dockerfile if line.lower().startswith("arg ")]
     for arg_line in arg_lines:
@@ -367,20 +366,41 @@ def check_dockerfile(path: str, distro: str) -> int:
         # Validate we use the newest python and distro
         if arg_key == "IMAGE":
             if distro == "debian":
-                expected_image = f"python:{config.PYTHON_RELEASES[-1]}-slim-{config.DEBIAN_RELEASES[-1]}"
+                expected_image = f"python:{config.NEWEST_PYTHON}-slim-{config.DEBIAN_RELEASES[-1]}"
                 if arg_value != expected_image:
                     errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
             elif distro == "alpine":
-                expected_image = f"python:{config.PYTHON_RELEASES[-1]}-alpine{config.ALPINE_RELEASES[-1]}"
+                expected_image = f"python:{config.NEWEST_PYTHON}-alpine{config.ALPINE_RELEASES[-1]}"
                 if arg_value != expected_image:
                     errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
             else:
                 errors += err(f"{distro}: Unknown distro found.")
 
         # Validate we use the newest UV
-        elif arg_key == "UV" and arg_value != newest_uv:
-            errors += err(f"UV build arg does not reference newest UV version ({arg_value} vs. {newest_uv}).")
+        elif arg_key == "UV" and arg_value != config.UV:
+            errors += err(f"UV build arg does not reference newest UV version ({arg_value} vs. {config.UV}).")
 
+    return errors
+
+
+def check_readthedocs() -> int:
+    """Check .readthedocs.yaml."""
+    errors = 0
+    check_path(".readthedocs.yaml")
+    with open(config.ROOT_DIR / ".readthedocs.yaml", encoding="utf-8") as stream:
+        rtd_config = yaml.safe_load(stream)
+
+    # Check Python version
+    pyver = rtd_config["build"]["tools"]["python"]
+    if pyver != config.NEWEST_PYTHON:
+        errors += err(f"{pyver}: Old python version.")
+
+    # check UV version
+    for command in rtd_config["build"]["jobs"]["create_environment"]:
+        if match := re.search(" uv (.*)", command):
+            uv_version = match.groups(1)[0]
+            if uv_version != config.UV:
+                errors += err(f"{uv_version}: Unexpected UV version.")
     return errors
 
 
@@ -397,6 +417,7 @@ class Command(DevCommand):
         total_errors += check(check_readme)
         total_errors += check(check_dockerfile, "Dockerfile", "debian")
         total_errors += check(check_dockerfile, "Dockerfile.alpine", "alpine")
+        total_errors += check(check_readthedocs)
 
         if total_errors != 0:
             raise CommandError(f"A total of {total_errors} error(s) found!")

@@ -52,11 +52,14 @@ with open(PYPROJECT_PATH, "rb") as _pyproject_stream:
 RELEASE = PYPROJECT_TOML["django-ca"]["release"]
 
 EXTRAS = PYPROJECT_TOML["project"]["optional-dependencies"]
-PYTHON_RELEASES = tuple(typing.cast(list[str], RELEASE["python"]))
+PYTHON_RELEASES = tuple(typing.cast(list[str], sorted(RELEASE["python"])))
 DJANGO = tuple(typing.cast(list[str], RELEASE["django"]))
 CRYPTOGRAPHY = tuple(typing.cast(list[str], RELEASE["cryptography"]))
 ACME = tuple(typing.cast(list[str], RELEASE["acme"]))
 PYDANTIC = tuple(typing.cast(list[str], RELEASE["pydantic"]))
+
+UV: str = RELEASE["uv"]
+NEWEST_PYTHON = PYTHON_RELEASES[-1]
 
 ALPINE_RELEASES = tuple(typing.cast(list[str], RELEASE["alpine"]))
 DEBIAN_RELEASES = tuple(typing.cast(list[str], RELEASE["debian-releases"]))
