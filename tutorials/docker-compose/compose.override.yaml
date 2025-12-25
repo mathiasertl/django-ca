@@ -4,16 +4,16 @@ services:
         # If you upgrade from 2.4.0 or earlier, either move localsettings.yaml
         # to conf/, or add this line:
         #- ./localsettings.yaml:/usr/src/django-ca/ca/conf/compose/99-localsettings.yaml
-        - ./conf:/usr/src/django-ca/ca/conf/local/
+        - ./conf:/usr/src/django-ca/ca/conf/local/:ro
     backend:
       volumes: *volumes
     frontend:
       volumes: *volumes
     webserver:
       volumes:
-        - "{{ LETSENCRYPT_LIVE_DIR }}/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:{{ TLS_LIVE_DIR }}/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/"
-        - "{{ LETSENCRYPT_ARCHIVE_DIR }}/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:{{ TLS_CERT_ROOT }}/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/"
-        - ./{{ DHPARAM_FILENAME }}:/etc/nginx/dhparams/dhparam.pem
-        - ./acme/:/usr/share/django-ca/acme/
+        - "{{ LETSENCRYPT_LIVE_DIR }}/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:{{ TLS_LIVE_DIR }}/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/:ro"
+        - "{{ LETSENCRYPT_ARCHIVE_DIR }}/${DJANGO_CA_CA_DEFAULT_HOSTNAME}:{{ TLS_CERT_ROOT }}/archive/${DJANGO_CA_CA_DEFAULT_HOSTNAME}/:ro"
+        - ./{{ DHPARAM_FILENAME }}:/etc/nginx/dhparams/dhparam.pem:ro
+        - ./acme/:/usr/share/django-ca/acme/:ro
       ports:
         - 443:443
