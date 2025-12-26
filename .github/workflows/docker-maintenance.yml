@@ -1,6 +1,6 @@
 name: Docker image update
 on:
-  # push:
+  push:
   schedule:
     - cron: '23 6 * * 1'
 
@@ -14,48 +14,70 @@ env:
 
 jobs:
   build:
-    name: "Debian/${{ matrix.version }}"
+    name: "debian/${{ matrix.version }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         version: [ "2.4.0" ]
+    environment:
+      name: Docker Hub
+      url: https://hub.docker.com/r/mathiasertl/django-ca
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
     steps:
       - uses: actions/checkout@v5.0.0
         with:
           ref: release/${{ matrix.version }}
 
-      # Setup Python/uv/venv
       - name: Setup Python
         uses: actions/setup-python@v6.0.0
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python-version }}
           architecture: x64
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6.6.1
         with:
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
-      - name: Install dependencies
-        run: uv sync --all-extras --upgrade
 
-      # Prepare Docker image build
+      - name: Update project
+        run: uv sync --upgrade --all-extras
+
+      # Log in to registries
       - name: Log in to the Container registry
         uses: docker/login-action@v3.5.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3.5.0
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # Prepare Docker image build
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5.8.0
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,enable=true,value=${{ matrix.version }}
+            type=raw,enable=true,value=${{ matrix.version }}-{{date 'YYYYMMDD'}}
           flavor: |
             latest=false
 
+      # Now build the new image
       - name: Build new image
-        id: push
+        id: build
         uses: docker/build-push-action@v6.18.0
         with:
           context: .
@@ -64,3 +86,27 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             DJANGO_CA_VERSION=${{ matrix.version }}
+
+      - name: Output digest
+        run: |
+          echo "Digest: ${{ steps.build.outputs.digest }}"
+
+      - name: Beauty sleep
+        run: |
+          sleep 5
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v3.0.0
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      # https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v3.0.0
+        with:
+          subject-name: index.docker.io/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+

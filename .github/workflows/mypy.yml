@@ -1,6 +1,6 @@
 name: type checking
 on:
-  push:
+  #push:
   pull_request:
 
 env:

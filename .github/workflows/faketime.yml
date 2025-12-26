@@ -1,6 +1,6 @@
 name: Tests with faked time
 on:
-  push:
+  #push:
   pull_request:
 
 env:

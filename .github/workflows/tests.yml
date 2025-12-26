@@ -1,6 +1,6 @@
 name: Tests
 on:
-  push:
+  #push:
   pull_request:
 
 env:

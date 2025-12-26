@@ -1,6 +1,6 @@
 name: Documentation
 on:
-  push:
+  #push:
   pull_request:
 
 env:
