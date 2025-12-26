@@ -67,7 +67,6 @@ jobs:
         uses: docker/metadata-action@v5.8.0
         with:
           images: |
-            ${{ env.IMAGE_NAME }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,enable=true,value=${{ matrix.version }}
@@ -87,14 +86,6 @@ jobs:
           build-args: |
             DJANGO_CA_VERSION=${{ matrix.version }}
 
-      - name: Output digest
-        run: |
-          echo "Digest: ${{ steps.build.outputs.digest }}"
-
-      - name: Beauty sleep
-        run: |
-          sleep 5
-
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v3.0.0
         with:
@@ -102,11 +93,40 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
+      ####################################################################################
+      # Rebuild the whole image for Docker Hub - if this is not done, attestation fails. #
+      ####################################################################################
+
+      # Extract tags
+      - name: "Docker Hub: Extract metadata (tags, labels) for Docker"
+        id: meta-gh
+        uses: docker/metadata-action@v5.8.0
+        with:
+          images: |
+            ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,enable=true,value=${{ matrix.version }}
+            type=raw,enable=true,value=${{ matrix.version }}-{{date 'YYYYMMDD'}}
+          flavor: |
+            latest=false
+
+      # Now build the new image for GitHub
+      - name: "Docker Hub: Build new image"
+        id: build-gh
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta-gh.outputs.tags }}
+          labels: ${{ steps.meta-gh.outputs.labels }}
+          build-args: |
+            DJANGO_CA_VERSION=${{ matrix.version }}
+
       # https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub
-      - name: Generate artifact attestation
+      - name: "Docker Hub: Generate artifact attestation"
         uses: actions/attest-build-provenance@v3.0.0
         with:
           subject-name: index.docker.io/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-digest: ${{ steps.build-gh.outputs.digest }}
           push-to-registry: true
 
