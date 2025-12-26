@@ -36,4 +36,4 @@ jobs:
         run: uv sync --extra api --extra celery --extra hsm --no-default-groups --group dev
 
       - name: Run tests
-        run: faketime -f +100y uv run pytest -v --no-selenium --cov-report term-missing --durations=20
+        run: faketime -f +100y uv run pytest -vx --no-selenium --cov-report term-missing --durations=20

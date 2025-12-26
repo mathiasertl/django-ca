@@ -62,4 +62,4 @@ jobs:
         run: uv run python dev.py init-demo
 
       - name: Run tests
-        run: uv run pytest -v --cov-report term-missing --durations=20
+        run: uv run pytest -vx --cov-report term-missing --durations=20

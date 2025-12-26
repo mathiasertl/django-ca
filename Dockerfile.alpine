@@ -80,7 +80,7 @@ COPY docs/source/python/ docs/source/python/
 ARG FAIL_UNDER=100
 ENV COVERAGE_FILE=/tmp/.coverage
 # Alpine Linux has issues with the SoftHSM library, so tests are disabled here.
-RUN pytest -v --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium --no-hsm
+RUN pytest -vx --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium --no-hsm
 
 ###############
 # Build stage #
