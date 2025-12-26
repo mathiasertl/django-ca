@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:1.10.0
+# syntax = docker/dockerfile:1.19.0
 # check=error=true
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
