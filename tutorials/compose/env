@@ -1,6 +1,6 @@
 # Optionally use a different Docker tag for django-ca. For available tags, see:
 #   https://hub.docker.com/r/mathiasertl/django-ca
-#DJANGO_CA_VERSION=alpine
+{% if doc %}#DJANGO_CA_VERSION=alpine{% else %}DJANGO_CA_VERSION={{ DOCKER_TAG.split(":")[1] }}{% endif %}
 
 # The hostname for your CA.
 # WARNING: Changing this requires new CAs (because the hostname goes into the certificates).

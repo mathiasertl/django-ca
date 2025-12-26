@@ -29,6 +29,7 @@ configuration:
       COMPOSE_DIR: "ca/"
       CA_HOSTNAME: webserver
       DHPARAM_BITS: "2048"
+      DOCKER_IMAGE_VARIANT: debian
       LETSENCRYPT_ARCHIVE_DIR: ./letsencrypt/archive
       LETSENCRYPT_LIVE_DIR: ./letsencrypt/live
       LETSENCRYPT_DIR: ./letsencrypt/live/webserver/
@@ -87,7 +88,7 @@ parts:
           {% if DOCKER_TAG -%}
             echo {{ DOCKER_TAG }}
           {%- else -%}
-            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-tag
+            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-tag --variant {{ DOCKER_IMAGE_VARIANT }}
           {%- endif %}
         run:
           show_output: false
@@ -95,7 +96,11 @@ parts:
             - regex: "^(?P<DOCKER_TAG>.*)$"
       - command: |
           {% if BUILD_IMAGE == "y" -%}
-            docker build -t {{ DOCKER_TAG }} --build-arg DJANGO_CA_VERSION={{ RELEASE }} {{ orig_cwd }}
+            docker build \
+              -f {{ orig_cwd }}/Dockerfile{% if DOCKER_IMAGE_VARIANT == "alpine" %}.alpine{% endif %} \
+              -t {{ DOCKER_TAG }} \
+              --build-arg DJANGO_CA_VERSION={{ RELEASE }} \
+              {{ orig_cwd }}
           {%- else -%}
             # Not building image (BUILD_IMAGE=n), using {{ DOCKER_TAG }}.
           {%- endif %}
@@ -260,7 +265,10 @@ parts:
           output: |
             ...
         run:
-          show_output: false
+          #show_output: false
+          environment:
+            # Override DJANGO_CA_VERSION, as it is used for the Docker image tag.
+            DJANGO_CA_VERSION: "{{ DOCKER_TAG.split(':')[1] }}"
           cleanup:
             - command: docker compose down -v
               show_output: false
@@ -363,6 +371,9 @@ parts:
       - command: docker compose up -d
         run:
           show_output: false
+          environment:
+            # Override DJANGO_CA_VERSION, as it is used for the Docker image tag.
+            DJANGO_CA_VERSION: "{{ DOCKER_TAG.split(':')[1] }}"
           # note: `docker compose down -v` is already added to cleanup commands
           test:
             - host: localhost

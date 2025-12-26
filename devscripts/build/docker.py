@@ -60,36 +60,16 @@ class Command(DevCommand):
         cwd = config.ROOT_DIR
         env = {"DOCKER_BUILDKIT": "1"}
 
+        docker_args = ("docker", "build", "--build-arg", f"DJANGO_CA_VERSION={release}")
+
         # NOTE: docker-py does not yet support BuildKit, so we call the CLI directly. See also:
         #   https://github.com/docker/docker-py/issues/2230
         if args.debian:
             info(f"Building Debian based image as {tag}...")
-            self.run(
-                "docker",
-                "build",
-                "-t",
-                tag,
-                "--build-arg",
-                f"DJANGO_CA_VERSION={release}",
-                ".",
-                env=env,
-                cwd=cwd,
-            )
+            self.run(*docker_args, "-t", tag, ".", env=env, cwd=cwd)
         if args.alpine:
             alpine_tag = f"{tag}-alpine"
             info(f"Building Alpine based image as {alpine_tag}...")
-            self.run(
-                "docker",
-                "build",
-                "-t",
-                alpine_tag,
-                "-f",
-                "Dockerfile.alpine",
-                "--build-arg",
-                f"DJANGO_CA_VERSION={release}",
-                ".",
-                env=env,
-                cwd=cwd,
-            )
+            self.run(*docker_args, "-t", alpine_tag, "-f", "Dockerfile.alpine", ".", env=env, cwd=cwd)
 
         return release, tag

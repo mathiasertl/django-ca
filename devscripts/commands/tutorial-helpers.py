@@ -35,10 +35,11 @@ class Command(DevCommand):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         subparsers = parser.add_subparsers(dest="subcommand")
         subparsers.add_parser("get-release", help="Just print the current version and exit.")
-        subparsers.add_parser(  # full image name
+        docker_tag_parser = subparsers.add_parser(  # full image name
             "get-docker-tag",
             help="Just print the Docker tag based on the current version and exit.",
         )
+        docker_tag_parser.add_argument("--variant", choices=("debian", "alpine"), default="debian")
         subparsers.add_parser(  # just the version of the image
             "get-docker-version",
             help="Just print the Docker version based on the current version and exit.",
@@ -80,6 +81,8 @@ class Command(DevCommand):
             print(self.django_ca.__version__)
         elif args.subcommand == "get-docker-tag":
             safe_tag = re.sub(r"[^\w.-]", ".", self.django_ca.__version__)
+            if args.variant == "alpine":
+                safe_tag += "-alpine"
             print(f"{config.DOCKER_TAG}:{safe_tag}")
         elif args.subcommand == "get-docker-version":
             print(re.sub(r"[^\w.-]", ".", self.django_ca.__version__))

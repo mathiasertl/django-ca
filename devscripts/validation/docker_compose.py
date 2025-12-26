@@ -369,6 +369,23 @@ class Command(DevCommand):
             "--acme-dist", metavar="DIST", help="Test ACMEv2 only with DIST (example: ubuntu:jammy)."
         )
 
+    def run_tutorial(self, release: str, docker_tag: str, alpine: bool = False) -> int:
+        """Run the Compose tutorial."""
+        errors = 0
+        if alpine:
+            docker_tag += "-alpine"
+
+        defines = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
+        if alpine:
+            defines += ["-D", "DOCKER_IMAGE_VARIANT", "alpine"]
+
+        proc = utils.run(
+            ["structured-tutorial", "--non-interactive", *defines, "tutorials/compose/tutorial.yaml"]
+        )
+        if proc.returncode != 0:
+            errors += err("Error running tutorial.")
+        return errors
+
     def handle(self, args: argparse.Namespace) -> None:
         if args.docker_prune:
             self.run("docker", "system", "prune", "-af")
@@ -378,7 +395,7 @@ class Command(DevCommand):
             release = args.release
             docker_tag = self.get_docker_tag(args.release)
         elif args.build:
-            release, docker_tag = self.command("build", "docker", "--no-alpine")
+            release, docker_tag = self.command("build", "docker")
         else:
             release = self.django_ca.__version__
             docker_tag = self.get_docker_tag(release)
@@ -388,17 +405,11 @@ class Command(DevCommand):
         errors = 0
 
         if args.tutorial:
-            defines = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
-            proc = utils.run(
-                [
-                    "structured-tutorial",
-                    "--non-interactive",
-                    *defines,
-                    "tutorials/docker-compose/tutorial.yaml",
-                ]
-            )
-            if proc.returncode != 0:
-                errors += err("Error running tutorial.")
+            info("Running tutorial...")
+            errors += self.run_tutorial(release, docker_tag, alpine=False)
+
+            info("Running tutorial with Alpine image...")
+            errors += self.run_tutorial(release, docker_tag, alpine=True)
 
         if args.update and errors == 0:
             errors += test_update(docker_tag, release)
