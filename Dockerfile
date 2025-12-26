@@ -70,7 +70,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Copy sources (doctests are run by test suite, CA files are used in tests)
 COPY ca/ ca/
-COPY docs/source/ docs/source/
+COPY docs/source/django_ca_sphinx/ docs/source/django_ca_sphinx/
+COPY docs/source/_files/ docs/source/_files/
+COPY docs/source/python/ docs/source/python/
 
 # Run tests as normal user to assert that no write-access is required.
 USER django-ca:django-ca

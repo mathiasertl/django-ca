@@ -72,7 +72,9 @@ RUN chown django-ca:django-ca /var/lib/django-ca/ /usr/src/django-ca/ca
 USER django-ca:django-ca
 
 # doctests are run by test suite, CA files are also loaded
-COPY docs/source/ docs/source/
+COPY docs/source/django_ca_sphinx/ docs/source/django_ca_sphinx/
+COPY docs/source/_files/ docs/source/_files/
+COPY docs/source/python/ docs/source/python/
 
 # Finally run tests
 ARG FAIL_UNDER=100
