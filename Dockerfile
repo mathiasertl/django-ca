@@ -1,4 +1,5 @@
 # syntax = docker/dockerfile:1.10.0
+# check=error=true
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
 ARG IMAGE=python:3.14-slim-trixie
@@ -134,6 +135,5 @@ VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
 WORKDIR /usr/src/django-ca/ca/
 
 ENV DJANGO_CA_SETTINGS=conf/
-ENV DJANGO_CA_SECRET_KEY_FILE=/var/lib/django-ca/certs/ca/shared/secret_key
 
 CMD [ "gunicorn.sh" ]
