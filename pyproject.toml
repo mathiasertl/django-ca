@@ -91,6 +91,8 @@ actions."pypa/gh-action-pypi-publish" = "v1.13.0"
 actions."sigstore/gh-action-sigstore-python" = "v3.0.1"
 # https://github.com/marketplace/actions/docker-login
 actions."docker/login-action" = "v3.5.0"
+# https://github.com/docker/setup-buildx-action
+actions."setup-buildx-action" = "v3.12.0"
 # https://github.com/marketplace/actions/build-and-push-docker-images
 actions."docker/build-push-action" = "v6.18.0"
 # https://github.com/marketplace/actions/docker-metadata-action

@@ -1,0 +1,85 @@
+name: 'Build/Push Docker image'
+description: 'Builds and pushes the Docker image to GHCR and Docker Hub'
+inputs:
+  github-token:
+    description: 'GitHub Container Registry token'
+    required: true
+  dockerfile:
+    description: "Dockerfile to build"
+    required: true
+    default: Dockerfile
+  suffix:
+    description: "Docker image suffix"
+    required: true
+    default: ""
+  add-date-suffix:
+    description: Set to true to also ad a tag with a datestamp
+    required: true
+    default: "false"
+  version:
+    description: "Version of the Docker image to build"
+    required: true
+  latest:
+    description: "True to build the `latest` flavor"
+    required: true
+    default: "false"
+  push:
+    description: "True to push the image to GitHub Container Registry."
+    required: true
+    default: "true"
+outputs:
+  digest:
+    value: ${{ steps.build.outputs.digest }}
+    description: Docker image digest
+  tags:
+    value: ${{ steps.meta.outputs.tags }}
+    description: Docker image tags
+  labels:
+    value: ${{ steps.meta.outputs.labels }}
+    description: Docker image labels
+runs:
+  using: "composite"
+
+  steps:
+    - name: Log in to the GitHub Container Registry
+      uses: docker/login-action@v3.5.0
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5.8.0
+      with:
+        images: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,enable=true,value=${{ inputs.version }}${{ inputs.suffix }}
+          type=raw,enable=${{ inputs.add-date-suffix }},value=${{ inputs.version }}${{ inputs.suffix }}-{{date 'YYYYMMDD'}}
+        flavor: |
+          latest=${{ inputs.latest }}
+
+    - name: Build Docker image
+      id: build
+      uses: docker/build-push-action@v6.18.0
+      with:
+        # TODO: add SBOMs?
+        # https://docs.docker.com/build/ci/github-actions/attestations/
+        file: ${{ inputs.dockerfile }}
+        context: .
+        push: ${{ inputs.push }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          DJANGO_CA_VERSION=${{ inputs.version }}
+
+    - name: Generate artifact attestation
+      uses: actions/attest-build-provenance@v3.0.0
+      if: ${{ inputs.push == 'true' }}
+      with:
+        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+        subject-digest: ${{ steps.build.outputs.digest }}
+        push-to-registry: true

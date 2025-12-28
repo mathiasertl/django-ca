@@ -104,6 +104,11 @@ def check_github_action_versions(job: dict[str, Any]) -> int:
     expected_action_versions = config.GITHUB_CONFIG["actions"]
     for step_config in job["steps"]:
         if step_uses := step_config.get("uses"):
+            if step_uses.startswith("./.github/actions/"):
+                continue  # local step
+            if "@" not in step_uses:
+                errors += err(f"{step_uses} does not have a version.")
+                continue
             action, action_version = step_uses.split("@", 1)
 
             if expected_action_version := expected_action_versions.get(action):
