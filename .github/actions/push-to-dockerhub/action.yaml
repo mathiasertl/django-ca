@@ -1,0 +1,52 @@
+name: Push Docker image to Docker Hub
+description: Pull a set of tags from GHCR and push to Docker Hub
+inputs:
+  docker-hub-username:
+    description: 'Docker Hub username'
+    required: true
+  docker-hub-token:
+    description: 'Docker Hub password'
+    required: true
+  tags:
+    description: "GHCR-based tags to retag and upload"
+    required: true
+outputs:
+  digest:
+    value: ${{ steps.retag-and-push.outputs.digest }}
+    description: Docker image digest
+runs:
+  using: "composite"
+  steps:
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3.5.0
+      with:
+        username: ${{ inputs.docker-hub-username }}
+        password: ${{ inputs.docker-hub-token }}
+
+    - name: Retag and push to Docker Hub
+      id: retag-and-push
+      shell: bash
+      run: |
+        set -x
+
+        GHCR_IMAGE="ghcr.io/mathiasertl/django-ca"
+        DOCKER_HUB_IMAGE="mathiasertl/django-ca"
+
+        while IFS= read -r tag; do
+          # Pull image first, b/c with buildx, it's not available in the local daemon
+          docker pull $tag
+
+          new_tag="${tag/$GHCR_IMAGE/$DOCKER_HUB_IMAGE}"
+          docker tag "$tag" "$new_tag"
+          docker push "$new_tag"
+        done <<< "${{ inputs.tags }}"
+
+        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$new_tag" | cut -d@ -f2)
+        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+    - name: Generate artifact attestation for Docker Hub
+      uses: actions/attest-build-provenance@v3.0.0
+      with:
+        subject-name: index.docker.io/${{ env.IMAGE_NAME}}
+        subject-digest: ${{ steps.retag-and-push.outputs.digest }}
+        push-to-registry: true
