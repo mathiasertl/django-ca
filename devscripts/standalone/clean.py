@@ -21,51 +21,53 @@ import shutil
 from pathlib import Path
 
 
-def remove(path: Path, dry: bool) -> None:
+def remove(path: Path, dry: bool, verbose: bool) -> None:
     """Remove a file/dir if it exists."""
     if not path.exists():
         return
 
     if path.is_dir():
-        print("rm -r", path)
+        if dry or verbose:
+            print("rm -r", path)
         if not dry:
             shutil.rmtree(path)
     else:
-        print("rm", path)
+        if dry or verbose:
+            print("rm", path)
         if not dry:
             path.unlink()
 
 
-def cleanup(root: Path, dry: bool = False) -> None:
+def cleanup(root: Path, dry: bool = False, verbose: bool = False) -> None:
     """Main cleanup function."""
-    remove(root / "pip-selfcheck.json", dry=dry)
-    remove(root / "geckodriver.log", dry=dry)
-    remove(root / "docs/build", dry=dry)
-    remove(root / ".tox", dry=dry)
-    remove(root / "ca/files", dry=dry)
-    remove(root / "ca/geckodriver.log", dry=dry)
-    remove(root / "dist", dry=dry)
-    remove(root / "build", dry=dry)
-    remove(root / ".coverage", dry=dry)
-    remove(root / ".docker", dry=dry)
-    remove(root / ".idea", dry=dry)
-    remove(root / ".mypy_cache", dry=dry)
-    remove(root / ".pytest_cache", dry=dry)
-    remove(root / ".ruff_cache", dry=dry)
-    remove(root / "contrib/selenium/geckodriver", dry=dry)
-    remove(root / "docs/source/_files/compose.yaml", dry=dry)
+    remove(root / "pip-selfcheck.json", dry=dry, verbose=verbose)
+    remove(root / "geckodriver.log", dry=dry, verbose=verbose)
+    remove(root / "docs/build", dry=dry, verbose=verbose)
+    remove(root / ".tox", dry=dry, verbose=verbose)
+    remove(root / "ca/files", dry=dry, verbose=verbose)
+    remove(root / "ca/geckodriver.log", dry=dry, verbose=verbose)
+    remove(root / "dist", dry=dry, verbose=verbose)
+    remove(root / "build", dry=dry, verbose=verbose)
+    remove(root / ".coverage", dry=dry, verbose=verbose)
+    remove(root / ".docker", dry=dry, verbose=verbose)
+    remove(root / ".idea", dry=dry, verbose=verbose)
+    remove(root / ".mypy_cache", dry=dry, verbose=verbose)
+    remove(root / ".pytest_cache", dry=dry, verbose=verbose)
+    remove(root / ".ruff_cache", dry=dry, verbose=verbose)
+    remove(root / "contrib/selenium/geckodriver", dry=dry, verbose=verbose)
+    remove(root / "docs/source/_files/compose.yaml", dry=dry, verbose=verbose)
     for path in root.glob("*.crl"):
-        remove(path, dry=dry)
+        remove(path, dry=dry, verbose=verbose)
     for path in root.glob("*.pem"):
-        remove(path, dry=dry)
+        remove(path, dry=dry, verbose=verbose)
     for path in root.rglob("__pycache__/"):
-        remove(path, dry=dry)
+        remove(path, dry=dry, verbose=verbose)
     for path in root.rglob("*.pyc"):
-        remove(path, dry=dry)
+        remove(path, dry=dry, verbose=verbose)
     for path in root.rglob("*.sqlite3"):
-        remove(path, dry=dry)
+        remove(path, dry=dry, verbose=verbose)
     for path in root.rglob("*.egg-info/"):
-        remove(path, dry=dry)
+        remove(path, dry=dry, verbose=verbose)
 
 
 if __name__ == "__main__":
@@ -77,6 +79,9 @@ if __name__ == "__main__":
         default=False,
         help="Output files that would be removed, don't actually remove them.",
     )
+    parser.add_argument(
+        "--verbose", action="store_true", default=False, help="Print about every file that is removed."
+    )
     parser.add_argument("-p", "--path", default=default_root, help="Path to clean (default: %(default)s.")
     args = parser.parse_args()
-    cleanup(Path(args.path), dry=args.dry)
+    cleanup(Path(args.path), dry=args.dry, verbose=args.verbose)
