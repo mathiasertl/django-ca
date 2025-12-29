@@ -22,7 +22,9 @@ REST API
 Docker images
 *************
 
-* The Docker images have been updated to use Python 3.14.
+* Docker images have been updated to use Python 3.14.
+* Docker images will now always use the current LTS release of Django (see `supported versions
+  <https://www.djangoproject.com/download/>`_).
 * Docker images are now uniquely tagged using a datestamp, not an increasing integer. This simplifies
   automatic image updates.
 

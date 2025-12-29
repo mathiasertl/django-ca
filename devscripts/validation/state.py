@@ -296,7 +296,10 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
     }.items():
         actual_groups = [g for g in config.PYPROJECT_TOML["dependency-groups"] if g.startswith(sw)]
         expected_groups = [f"{sw}{version}" for version in versions]
-        if actual_groups != expected_groups:
+        if sw == "Django":
+            expected_groups.append("DjangoLTS")
+
+        if sorted(actual_groups) != sorted(expected_groups):
             errors += err(
                 f"{sw}: Unexpected dependency groups. Got: {actual_groups}, expected: {expected_groups}"
             )

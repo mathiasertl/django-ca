@@ -543,7 +543,7 @@ local_scheme = "no-local-version"
 required-version = "0.9.18"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
-    [ { group = "django5.2" }, { group = "django6.0" }, ],
+    [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
     [ { group = "cryptography45" }, { group = "cryptography46" }, ],
     [ { group = "acme5.0" }, { group = "acme5.1" }, { group = "acme5.2" }, ],
     [ { group = "pydantic2.11" }, { group = "pydantic2.12" }, ],
@@ -624,7 +624,7 @@ gunicorn = [ "gunicorn>=23" ]
 
 # Dependency groups for use in test matrices (tox, GitHub actions, ...)
 # NOTE: don't forget to add conflicts in [tool.uv] above.
-#"Django5.1" = ["Django~=5.1.0"]
+"DjangoLTS" = ["Django~=5.2.0"]
 "Django5.2" = ["Django~=5.2.0"]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography45" = ["cryptography~=45.0"]
