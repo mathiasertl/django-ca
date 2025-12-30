@@ -8,6 +8,13 @@
   error occurs when generating one key.
 * Fix validation for ACMEv2 DNS challenges.
 
+**************
+ACMEv2 support
+**************
+
+* Check for the correct domain while performing ``dns-01`` challenge validations (fixes
+  `#175 <https://github.com/mathiasertl/django-ca/issues/175>`_).
+
 ********
 REST API
 ********
@@ -35,6 +42,7 @@ Compose setup
 * Configuration files are now also loaded from ``conf/local``.
 * The Redis container is upgraded to version 8.
 * The nginx container is upgraded to version 1.28.
+* Added a health check for the `beat` container.
 * Tutorial changes:
 
   * The :doc:`Compose tutorial </quickstart/docker_compose>` is now rendered using `structured-tutorials
@@ -56,6 +64,15 @@ Dependencies
 * Add support for ``acme~=5.1.0`` and ``acme~=5.2.0``.
 * Add support for ``josepy~=2.2.0``.
 * Add support Ubuntu 24.10 (Questing Quokka).
+
+**********
+Python API
+**********
+
+* Removed the `key_type`, `key_size`, `elliptic_curve`, `profile`, `algorithm` and `not_after` arguments for
+  :py:func:`django_ca.models.CertificateAuthority.generate_ocsp_key`. They where deprecated since
+  ``django-ca==2.3.0``. The arguments where deprecated since 2.4.0 and no longer accessible via the command
+  line or normal configuration.
 
 *******************
 Deprecation notices
