@@ -1,6 +1,6 @@
-###########
-2.5.0 (TBR)
-###########
+##################
+2.5.0 (2025-12-31)
+##################
 
 * The :ref:`key_backends_ocsp_db_backend` is now configured by default with the ``db`` alias. It can be used
   with the ``--ocsp-key-backend`` option for :command:`manage.py init_ca` and :command:`manage.py edit_ca`.
@@ -43,9 +43,9 @@ Compose setup
 * The Redis container is upgraded to version 8.
 * The nginx container is upgraded to version 1.28.
 * Added a health check for the `beat` container.
-* Tutorial changes:
+* :doc:`Tutorial </quickstart/docker_compose>` changes:
 
-  * The :doc:`Compose tutorial </quickstart/docker_compose>` is now rendered using `structured-tutorials
+  * The tutorial is now rendered using `structured-tutorials
     <https://structured-tutorials.readthedocs.io/en/latest/>`_. The tutorial can thus be run locally for
     verification.
   * The directory is mapped in the tutorial instead of ``./localsettings.yaml``. This allows the user to
@@ -79,6 +79,7 @@ Deprecation notices
 *******************
 
 * This is the last release to support Python 3.10.
+* This is the last release to support ``cryptography~=45.0``.
 * This is the last release to support ``pydantic~=2.11.0``.
 * This is the last release to support ``acme~=5.0.0`` and ``acme~=5.1.0``.
 * This is the last release to support ``josepy~=2.1.0``.
