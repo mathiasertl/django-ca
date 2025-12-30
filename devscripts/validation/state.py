@@ -132,6 +132,12 @@ def check_github_actions_tests() -> int:
     cg_versions = tuple(f"{version}" for version in config.CRYPTOGRAPHY)
     pydantic_versions = tuple(f"{version}" for version in config.PYDANTIC)
 
+    for action_path in Path(".github", "actions").glob("*/action.yaml"):
+        check_path(action_path)
+        with open(config.ROOT_DIR / action_path, encoding="utf-8") as stream:
+            action = yaml.safe_load(stream)
+        check_github_action_versions(action["runs"])
+
     for workflow in Path(".github", "workflows").glob("*.yml"):
         check_path(workflow)
         with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
