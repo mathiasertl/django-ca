@@ -76,6 +76,7 @@ jobs:
           build-args: |
             IMAGE=python:${{ matrix.python-version }}-slim-${{ matrix.debian-version }}
             DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
+            COVERAGE_ARGS=--no-cov
 
   test-alpine:
     name: Test Alpine image
@@ -111,6 +112,7 @@ jobs:
           build-args: |
             IMAGE=python:${{ matrix.python-version }}-alpine${{ matrix.alpine-version }}
             DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
+            COVERAGE_ARGS=--no-cov
 
   build:
     name: Build image

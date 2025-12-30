@@ -61,4 +61,4 @@ jobs:
           DJANGO_SETTINGS_MODULE: ca.test_settings
 
       - name: Run tests
-        run: uv run pytest -vx --cov-report term-missing --no-selenium
+        run: uv run pytest -vx --no-cov --no-selenium

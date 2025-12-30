@@ -79,9 +79,10 @@ COPY docs/source/python/ docs/source/python/
 
 # Finally run tests
 ARG FAIL_UNDER=100
+ARG COVERAGE_ARGS="--cov-report=html:/tmp/coverage --cov-report term-missing --cov-fail-under=$FAIL_UNDER"
 ENV COVERAGE_FILE=/tmp/.coverage
 # Alpine Linux has issues with the SoftHSM library, so tests are disabled here.
-RUN pytest -vx --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium --no-hsm
+RUN pytest -vx $COVERAGE_ARGS --no-selenium --no-hsm
 RUN touch /tmp/.coverage-sentinel
 
 ###############
