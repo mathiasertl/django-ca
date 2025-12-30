@@ -80,8 +80,9 @@ USER django-ca:django-ca
 
 # Finally run tests
 ARG FAIL_UNDER=100
+ARG COVERAGE_ARGS="--cov-report=html:/tmp/coverage --cov-report term-missing --cov-fail-under=$FAIL_UNDER"
 ENV COVERAGE_FILE=/tmp/.coverage
-RUN pytest -vx --cov-report=html:/tmp/coverage --cov-report term-missing --cov-fail-under=$FAIL_UNDER --no-selenium -x
+RUN pytest -vx $COVERAGE_ARGS --no-selenium
 RUN touch /tmp/.coverage-sentinel
 
 ###############
