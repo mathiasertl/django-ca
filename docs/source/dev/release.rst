@@ -18,7 +18,6 @@ Run these steps when you begin to create a new release:
   * Add a deprecation notice for versions no longer supported upstream.
 
 * Update table in ``docs/source/quickstart/as_app.rst``
-* Update table in ``docs/source/quickstart/docker_compose.rst``
 * Run :command:`./dev.py validate state` and fix any errors.
 
 Upgrade ``uv.lock``
@@ -131,3 +130,12 @@ After a release
       $ grep -r '# pragma:' ca/ docs/source/ devscripts/ *.py
 
 * Update :file:`compose.yaml` to use the ``latest`` version of **django-ca**.
+* Update ``.github/workflows/docker-maintenance.yml`` to include the new release.
+
+  * Make sure that ``NEWEST_DJANGO_CA`` is also updated!
+
+Create release branch
+=====================
+
+Note that the release branch solely exists to update Docker images on a regular basis. As of now, no extra
+steps are done besides creating the branch.

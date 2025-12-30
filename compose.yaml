@@ -34,7 +34,7 @@ services:
             start_period: 10s
 
     beat:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
+        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-2.5.0}
         command: celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             cache:
@@ -81,7 +81,7 @@ services:
         stop_grace_period: 30s
 
     backend:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
+        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-2.5.0}
         command: celery.sh -l ${CELERY_LOG_LEVEL:-warning}
         depends_on:
             beat:
@@ -105,7 +105,7 @@ services:
         stop_grace_period: 30s
 
     frontend:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
+        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-2.5.0}
         depends_on:
             - cache
             - db
