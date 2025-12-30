@@ -18,6 +18,7 @@ Run these steps when you begin to create a new release:
   * Add a deprecation notice for versions no longer supported upstream.
 
 * Update table in ``docs/source/quickstart/as_app.rst``
+* Update table in ``docs/source/quickstart/docker_compose.rst``
 * Run :command:`./dev.py validate state` and fix any errors.
 
 Upgrade ``uv.lock``
