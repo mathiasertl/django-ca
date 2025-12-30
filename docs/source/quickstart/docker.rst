@@ -73,7 +73,7 @@ Initial configuration
 django-ca requires some initial configuration (like where to find the PostgreSQL server) to run and the domain
 name you have set up above.
 
-Django requires a ``SECRET_KEY`` to run, and it should be shared between the Celery worker and the uWSGI
+Django requires a ``SECRET_KEY`` to run, and it should be shared between the Celery worker and the Gunicorn
 instance. Generate a sufficiently long secret key and set it as ``SECRET_KEY`` below:
 
 .. code-block:: console
@@ -150,11 +150,11 @@ choose:
 
 The above images are updated if packaging issues or security vulnerabilities in dependencies are discovered.
 If you want to be sure that you can download the exact same image later, the same tags are also published with
-a datestamp suffix, e.g. mathiasertl/django-ca:|last-version|-20071125.
+a datestamp suffix, e.g. mathiasertl/django-ca:|last-version|-20251231.
 
 .. versionchanged:: 2.5.0
 
-   Docker images now use a datestamp (e.g. "20071125") as suffix, instead of an increasing integer.
+   Docker images now use a datestamp (e.g. "20251231") as suffix, instead of an increasing integer.
 
 .. versionadded:: 2.3.0
 
@@ -163,9 +163,9 @@ a datestamp suffix, e.g. mathiasertl/django-ca:|last-version|-20071125.
 Starting with 2.3.0, GitHubs container registry also stores the same django-ca images:
 
 * ghcr.io/mathiasertl/django-ca:|last-version|
-* ghcr.io/mathiasertl/django-ca:|last-version|-20071125
+* ghcr.io/mathiasertl/django-ca:|last-version|-20251231
 * ghcr.io/mathiasertl/django-ca:|last-version|-alpine
-* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-20071125
+* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-20251231
 
 Verify attestations
 -------------------

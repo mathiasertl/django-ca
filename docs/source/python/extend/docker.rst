@@ -95,7 +95,7 @@ Add NGINX configuration
 
 If your setup (potentially) uses Compose and adds additional URL endpoints, you will have to add to the NGINX
 site configuration provided by the django-ca Docker image. To increase security, the NGINX configuration only
-routes known URL endpoints to the application server (uWSGI).
+routes known URL endpoints to the application server (Gunicorn).
 
 The NGINX setup usually consists of HTTP and HTTPS configuration. To automatically route HTTP requests to the
 application server for HTTP only, add them to ``/usr/src/django-ca/nginx/include.d/http/``. For HTTPS, add
@@ -106,8 +106,7 @@ file suffix:
    :caption: :file:`/usr/src/django-ca/nginx/include.d/https/app.conf`
 
    location /cmc/ {
-       uwsgi_pass django_ca_frontend;
-       include /etc/nginx/uwsgi_params;
+       try_files "" @django_ca;
    }
 
 You can include any configuration valid in a ``server`` context.

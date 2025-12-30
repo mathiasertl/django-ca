@@ -72,8 +72,8 @@ Installation
 ************
 
 With this guide, you will install **django-ca** to ``/opt/django-ca/``, with your local configuration residing
-in ``/etc/django-ca/``. You also need to create a system user to run the uWSGI application server and Celery
-task worker:
+in ``/etc/django-ca/``. You also need to create a system user to run the Gunicorn application server and
+Celery task worker:
 
 .. code-block:: console
 
@@ -154,7 +154,7 @@ configuration:
 Add SystemD services
 ====================
 
-SystemD services are included with **django-ca**. You need to add three services, one for the uWSGI
+SystemD services are included with **django-ca**. You need to add three services, one for the Gunicorn
 application server (``django-ca``), one for the Celery task worker (``django-ca-celery``) and one for the
 Celery task scheduler (``django-ca-celerybeat``):
 
@@ -240,7 +240,7 @@ The ``collectstatic`` command needs to run as root.
 Start
 *****
 
-You can now finally start the uWSGI application server and the Celery worker (omit ``django-ca`` service if
+You can now finally start the Gunicorn application server and the Celery worker (omit ``django-ca`` service if
 you do not intend to run a web server):
 
 .. code-block:: console

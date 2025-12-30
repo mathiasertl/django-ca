@@ -23,7 +23,7 @@ STORAGES = {
 }
 
 # If you use ACMEv2 or Celery, you must configure a cache which shares data
-# between different processes (e.g. between different uWSGI worker processes).
+# between different processes (e.g. between different Gunicorn worker processes).
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",

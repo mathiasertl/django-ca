@@ -36,6 +36,7 @@ filestorage
 formatters
 frontend
 getters
+Gunicorn
 hashable
 healthcheck
 hostname
