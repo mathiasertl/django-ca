@@ -14,11 +14,14 @@
 """Module collecting some shared docker functionality."""
 
 import json
+import os
 import subprocess
 from typing import Any
 
+import yaml
+
 from devscripts import config, utils
-from devscripts.out import err, ok
+from devscripts.out import err, info, ok
 from devscripts.utils import run
 
 COMPOSE_SERVICES = ("beat", "backend", "frontend")
@@ -103,6 +106,24 @@ def validate_container_versions(release: str, **kwargs: Any) -> int:
 
     if not errors:
         ok(f"All containers identify as {release}.")
+    return errors
+
+
+def validate_docker_compose_files(release: str) -> int:
+    """Validate the state of docker compose files when releasing."""
+    errors = 0
+    path = "compose.yaml"
+    info(f"Validating {path}...")
+    if not os.path.exists(path):
+        return err(f"{path}: File not found.")
+    with open(path, encoding="utf-8") as stream:
+        services = yaml.safe_load(stream)["services"]
+
+    expected_image = f"${{DJANGO_CA_IMAGE:-{config.DOCKER_TAG}}}:${{DJANGO_CA_VERSION:-{release}}}"
+    for service in COMPOSE_SERVICES:
+        if services[service]["image"] != expected_image:
+            errors += err(f"{path}: {services[service]['image']} does not match {expected_image}")
+
     return errors
 
 

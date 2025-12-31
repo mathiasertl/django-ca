@@ -16,14 +16,14 @@
 import argparse
 import difflib
 import importlib
-import sys
 import types
 import typing
 from datetime import date
+from pathlib import Path
 
 from devscripts import config
 from devscripts.commands import CommandError, DevCommand
-from devscripts.out import err, info, ok
+from devscripts.out import info, ok
 
 if typing.TYPE_CHECKING:
     from git import Repo
@@ -38,10 +38,12 @@ class Command(DevCommand):
         ("django_ca", "django-ca"),
         ("git", "GitPython"),
         ("semantic_version", "semantic-version"),
+        ("yaml", "PyYAML"),
     )
     django_ca: types.ModuleType
     git: types.ModuleType
     semantic_version: types.ModuleType
+    yaml: types.ModuleType
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -80,18 +82,29 @@ class Command(DevCommand):
             diff = difflib.unified_diff(changelog_header, expected, fromfile=str(path), tofile="expected")
             raise CommandError(f"ChangeLog has improper header:\n\n{''.join(diff)}")
 
+    def test_docker_maintenance_action(self, release: str) -> None:
+        """Test that the docker-maintenance action was updated."""
+        path = Path(".github", "workflows", "docker-maintenance.yml")
+        with open(config.ROOT_DIR / path, encoding="utf-8") as stream:
+            workflow = self.yaml.safe_load(stream)
+        if workflow["env"]["NEWEST_DJANGO_CA"] != release:
+            raise CommandError(f"{path}: NEWEST_DJANGO_CA was not updated.")
+        if release not in workflow["jobs"]["build"]["strategy"]["matrix"]["version"]:
+            raise CommandError(f"{path}: matrix does not contain {release}.")
+
     def pre_tag_checks(self, release: str) -> "Repo":
         """Perform checks that can be done before we even tag the repository."""
-        docker_compose = importlib.import_module("devscripts.validation.docker_compose")
+        docker_compose = importlib.import_module("devscripts.docker")
 
         repo = typing.cast("Repo", self.git.Repo(str(config.ROOT_DIR)))
         if repo.is_dirty(untracked_files=True):
-            err("Repository has untracked changes.")
-            sys.exit(1)
+            raise CommandError("Repository has untracked changes.")
 
         # Make sure that the docker compose files are present and default to the about-to-be-released version
         if docker_compose.validate_docker_compose_files(release) != 0:
             raise CommandError("docker compose files in inconsistent state.")
+
+        self.test_docker_maintenance_action(release)
 
         # Validate that docs/source/changelog.rst has a proper header
         self._validate_changelog(release)

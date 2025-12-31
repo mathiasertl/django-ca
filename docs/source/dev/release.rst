@@ -137,5 +137,8 @@ After a release
 Create release branch
 =====================
 
-Note that the release branch solely exists to update Docker images on a regular basis. As of now, no extra
-steps are done besides creating the branch.
+Note that the release branch solely exists to update Docker images on a regular basis:
+
+* Create the branch.
+* Run ``./dev.py validate state --release-branch`` and fix errors.
+* Push that branch.

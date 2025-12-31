@@ -124,7 +124,7 @@ def check_github_action_versions(job: dict[str, Any]) -> int:
     return errors
 
 
-def check_github_actions_tests() -> int:
+def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
     """Check GitHub actions."""
     errors = 0
 
@@ -138,6 +138,11 @@ def check_github_actions_tests() -> int:
             action = yaml.safe_load(stream)
         check_github_action_versions(action["runs"])
 
+    if release_branch:
+        expected_python = (config.PYTHON_RELEASES[-1],)
+    else:
+        expected_python = config.PYTHON_RELEASES
+
     for workflow in Path(".github", "workflows").glob("*.yml"):
         check_path(workflow)
         with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
@@ -149,7 +154,7 @@ def check_github_actions_tests() -> int:
             if matrix := job.get("strategy", {}).get("matrix"):
                 for key, values in matrix.items():
                     if key == "python-version":
-                        errors += simple_diff("Python versions", tuple(values), config.PYTHON_RELEASES)
+                        errors += simple_diff("Python versions", tuple(values), expected_python)
                     elif key == "django-version":
                         errors += simple_diff("Django versions", tuple(values), django_versions)
                     elif key == "cryptography-version":
@@ -243,7 +248,7 @@ def check_tox() -> int:
     return errors
 
 
-def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
+def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-many-locals
     """Check pyproject.toml."""
     check_path("pyproject.toml")
     errors = 0
@@ -265,7 +270,7 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
     pyver_cfs = tuple(
         m.groups(0)[0] for m in filter(None, [re.search(r"Python :: (3\.[0-9]+)$", cf) for cf in classifiers])
     )
-    if pyver_cfs != config.PYTHON_RELEASES:
+    if pyver_cfs != config.PYTHON_RELEASES and not release_branch:
         errors += err(f"Wrong python classifiers: Have {pyver_cfs}, wanted {config.PYTHON_RELEASES}")
 
     djver_cfs = tuple(
@@ -280,6 +285,9 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
             errors += err(f"Django {djver} classifier not found.")
 
     expected_py_req = f">={config.PYTHON_RELEASES[0]}"
+    if release_branch:
+        expected_py_req += f",<={config.PYTHON_RELEASES[-1]}"
+
     actual_py_req = config.PYPROJECT_TOML["project"]["requires-python"]
     if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
@@ -330,11 +338,14 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
     return errors
 
 
-def check_intro() -> int:
+def check_intro(release_branch: bool) -> int:
     """Check intro.rst (reused in a couple of places)."""
     errors = 0
     intro_path = Path("docs", "source", "intro.rst")
     check_path(intro_path)
+    if release_branch:
+        return errors
+
     with open(config.ROOT_DIR / intro_path, encoding="utf-8") as stream:
         intro = stream.read()
 
@@ -344,10 +355,13 @@ def check_intro() -> int:
     return errors
 
 
-def check_readme() -> int:
+def check_readme(release_branch: bool) -> int:
     """Check contents of README.md."""
     errors = 0
     check_path("README.md")
+    if release_branch:
+        return errors
+
     with open(config.ROOT_DIR / "README.md", encoding="utf-8") as stream:
         readme = stream.read()
 
@@ -419,12 +433,17 @@ class Command(DevCommand):
 
     help_text = "Validate state of various configuration and documentation files."
 
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--release-branch", action="store_true", default=False)
+
     def handle(self, args: argparse.Namespace) -> None:
-        total_errors = check(check_github_actions_tests)
+        release_branch = args.release_branch or os.environ.get("GITHUB_REF_NAME", "").startswith("release/")
+
+        total_errors = check(check_github_actions_tests, release_branch)
         total_errors += check(check_tox)
-        total_errors += check(check_pyproject_toml)
-        total_errors += check(check_intro)
-        total_errors += check(check_readme)
+        total_errors += check(check_pyproject_toml, release_branch)
+        total_errors += check(check_intro, release_branch)
+        total_errors += check(check_readme, release_branch)
         total_errors += check(check_dockerfile, "Dockerfile", "debian")
         total_errors += check(check_dockerfile, "Dockerfile.alpine", "alpine")
         total_errors += check(check_readthedocs)
