@@ -286,10 +286,10 @@ def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-ma
 
     expected_py_req = f">={config.PYTHON_RELEASES[0]}"
     if release_branch:
-        expected_py_req += f",<={config.PYTHON_RELEASES[-1]}"
+        expected_py_req = f"~={config.PYTHON_RELEASES[-1]}.0"
 
     actual_py_req = config.PYPROJECT_TOML["project"]["requires-python"]
-    if actual_py_req != expected_py_req:
+    if actual_py_req != expected_py_req and not release_branch:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
     # Check project dependencies
