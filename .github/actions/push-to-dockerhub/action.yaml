@@ -44,9 +44,9 @@ runs:
         DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$new_tag" | cut -d@ -f2)
         echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
-#    - name: Generate artifact attestation for Docker Hub
-#      uses: actions/attest-build-provenance@v3.0.0
-#      with:
-#        subject-name: index.docker.io/${{ env.IMAGE_NAME}}
-#        subject-digest: ${{ steps.retag-and-push.outputs.digest }}
-#        push-to-registry: true
+    - name: Generate artifact attestation for Docker Hub
+      uses: actions/attest-build-provenance@v3.0.0
+      with:
+        subject-name: index.docker.io/${{ env.IMAGE_NAME}}
+        subject-digest: ${{ steps.retag-and-push.outputs.digest }}
+        push-to-registry: true
