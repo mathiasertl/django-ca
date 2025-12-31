@@ -57,8 +57,6 @@ jobs:
         with:
           push: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          docker-hub-username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          docker-hub-token: ${{ secrets.DOCKER_HUB_TOKEN }}
           version: ${{ matrix.version }}
           add-date-suffix: true
           latest: ${{ matrix.version == env.NEWEST_DJANGO_CA }}

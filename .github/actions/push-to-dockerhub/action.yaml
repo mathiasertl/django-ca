@@ -38,7 +38,7 @@ runs:
 
           new_tag="${tag/$GHCR_IMAGE/$DOCKER_HUB_IMAGE}"
           docker tag "$tag" "$new_tag"
-          #docker push "$new_tag"
+          docker push "$new_tag"
         done <<< "${{ inputs.tags }}"
 
         DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$new_tag" | cut -d@ -f2)
