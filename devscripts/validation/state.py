@@ -139,7 +139,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
         check_github_action_versions(action["runs"])
 
     if release_branch:
-        expected_python = (config.PYTHON_RELEASES[-1],)
+        expected_python: tuple[str, ...] = (config.PYTHON_RELEASES[-1],)
     else:
         expected_python = config.PYTHON_RELEASES
 

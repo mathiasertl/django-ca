@@ -17,7 +17,7 @@ env:
   UV_NO_SYNC: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  NEWEST_DJANGO_CA: "2.4.0"
+  NEWEST_DJANGO_CA: "2.5.0"
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [ "2.4.0" ]
+        version: [ "2.4.0", "2.5.0" ]
     environment:
       name: Docker Hub
       url: https://hub.docker.com/r/mathiasertl/django-ca
