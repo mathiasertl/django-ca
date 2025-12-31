@@ -1,6 +1,6 @@
 name: MariaDB tests
 on:
-  push:
+  #push:
   pull_request:
 
 env:

@@ -50,6 +50,7 @@ def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
         utils.run(["docker", "compose", "up", "-d"], **kwargs)
         yield
     finally:
+        input(os.getcwd())
         down = ["docker", "compose", "down"]
         if remove_volumes is True:
             down.append("-v")

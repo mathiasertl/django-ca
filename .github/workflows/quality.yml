@@ -1,6 +1,6 @@
 name: Code quality
 on:
-  push:
+  #push:
   pull_request:
 
 env:

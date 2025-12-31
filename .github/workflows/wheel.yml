@@ -1,6 +1,6 @@
 name: Wheel
 on:
-  push:
+  #push:
   pull_request:
 
 env:

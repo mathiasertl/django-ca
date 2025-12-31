@@ -1,6 +1,6 @@
 name: Docker image update
 on:
-  #push:
+  push:
   schedule:
     #        ┌───────────── minute (0 - 59)
     #        │  ┌───────────── hour (0 - 23)
@@ -17,7 +17,7 @@ env:
   UV_NO_SYNC: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  NEWEST_DJANGO_CA: "2.5.0"
+  NEWEST_DJANGO_CA: "2.4.0"
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [ "2.4.0", "2.5.0" ]
+        version: [ "2.4.0", ]
     environment:
       name: Docker Hub
       url: https://hub.docker.com/r/mathiasertl/django-ca
@@ -57,8 +57,6 @@ jobs:
         with:
           push: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          docker-hub-username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          docker-hub-token: ${{ secrets.DOCKER_HUB_TOKEN }}
           version: ${{ matrix.version }}
           add-date-suffix: true
           latest: ${{ matrix.version == env.NEWEST_DJANGO_CA }}
