@@ -18,55 +18,8 @@ conflicts = [[
 
 [[package]]
 name = "acme"
-version = "5.0.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13'",
-    "python_full_version == '3.12.*'",
-    "python_full_version < '3.12'",
-]
-dependencies = [
-    { name = "cryptography", marker = "extra == 'group-9-django-ca-acme5-0' or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "josepy", marker = "extra == 'group-9-django-ca-acme5-0' or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "pyopenssl", marker = "extra == 'group-9-django-ca-acme5-0' or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "pyrfc3339", marker = "extra == 'group-9-django-ca-acme5-0' or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "requests", marker = "extra == 'group-9-django-ca-acme5-0' or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/11/2a8767ea1bac25ca73d952ca1d8bd701a65c84057e4ead8bda82fb086d9c/acme-5.0.0.tar.gz", hash = "sha256:b701b23e66d3c58352896a72caa13523d9f72b183a0ba1cde93e6713a450a391", size = 89872, upload-time = "2025-09-02T17:03:39.093Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/60/f9786f18cfa61fd77ce1f374bb508708468c56b25d6c1dde2d2e5907347b/acme-5.0.0-py3-none-any.whl", hash = "sha256:b7923d1105f3df7f0c94bab90fc3006e9a0de0597baf82dedfc8ed24889f56dc", size = 94061, upload-time = "2025-09-02T17:03:16.236Z" },
-]
-
-[[package]]
-name = "acme"
-version = "5.1.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13'",
-    "python_full_version == '3.12.*'",
-    "python_full_version < '3.12'",
-]
-dependencies = [
-    { name = "cryptography", marker = "extra == 'group-9-django-ca-acme5-1' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "josepy", marker = "extra == 'group-9-django-ca-acme5-1' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "pyopenssl", marker = "extra == 'group-9-django-ca-acme5-1' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "pyrfc3339", marker = "extra == 'group-9-django-ca-acme5-1' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "requests", marker = "extra == 'group-9-django-ca-acme5-1' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/07/f6/897be0abeb0e64f0e6136a8a6369a54d2a603a44cb7a411f6d77dbafb4ac/acme-5.1.0.tar.gz", hash = "sha256:7b97820857d9baffed98bca50ab82bb6a636e447865d7a013a7bdd7972f03cda", size = 89982, upload-time = "2025-10-07T17:30:38.579Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/0b/4d0421412bb063f4393ae7ebf3a9a6fde621aed187a1140ccf7f9e22b823/acme-5.1.0-py3-none-any.whl", hash = "sha256:80e9c315d82302bb97279f4516ff31230d29195ab9d4a6c9411ceec20481b61e", size = 94151, upload-time = "2025-10-07T17:30:15.994Z" },
-]
-
-[[package]]
-name = "acme"
 version = "5.2.2"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13'",
-    "python_full_version == '3.12.*'",
-    "python_full_version < '3.12'",
-]
 dependencies = [
     { name = "cryptography" },
     { name = "josepy" },
@@ -694,9 +647,7 @@ wheels = [
 name = "django-ca"
 source = { editable = "." }
 dependencies = [
-    { name = "acme", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-django-ca-acme5-0' or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "acme", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-django-ca-acme5-1' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "acme", version = "5.2.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1')" },
+    { name = "acme" },
     { name = "asn1crypto" },
     { name = "cryptography" },
     { name = "django", version = "5.2.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
@@ -736,14 +687,8 @@ yaml = [
 ]
 
 [package.dev-dependencies]
-acme5-0 = [
-    { name = "acme", version = "5.0.0", source = { registry = "https://pypi.org/simple" } },
-]
-acme5-1 = [
-    { name = "acme", version = "5.1.0", source = { registry = "https://pypi.org/simple" } },
-]
 acme5-2 = [
-    { name = "acme", version = "5.2.2", source = { registry = "https://pypi.org/simple" } },
+    { name = "acme" },
 ]
 cryptography46 = [
     { name = "cryptography" },
@@ -834,7 +779,7 @@ pydantic2-12 = [
 
 [package.metadata]
 requires-dist = [
-    { name = "acme", specifier = ">=5.0" },
+    { name = "acme", specifier = ">=5.2" },
     { name = "asn1crypto", specifier = ">=1.5" },
     { name = "celery", marker = "extra == 'celery'", specifier = ">=5.5" },
     { name = "cryptography", specifier = ">=46" },
@@ -859,8 +804,6 @@ requires-dist = [
 provides-extras = ["api", "celery", "hsm", "mysql", "postgres", "redis", "yaml"]
 
 [package.metadata.requires-dev]
-acme5-0 = [{ name = "acme", specifier = "~=5.0.0" }]
-acme5-1 = [{ name = "acme", specifier = "~=5.1.0" }]
 acme5-2 = [{ name = "acme", specifier = "~=5.2.0" }]
 cryptography46 = [{ name = "cryptography", specifier = "~=46.0" }]
 dev = [
