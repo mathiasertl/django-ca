@@ -285,8 +285,8 @@ def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-ma
             errors += err(f"Django {djver} classifier not found.")
 
     expected_py_req = f">={config.PYTHON_RELEASES[0]}"
-    if release_branch:
-        expected_py_req += f",<={config.PYTHON_RELEASES[-1]}"
+    if bound := config.UPPER_BOUNDS.get("python"):
+        expected_py_req += f",<{bound}"
 
     actual_py_req = config.PYPROJECT_TOML["project"]["requires-python"]
     if actual_py_req != expected_py_req:
@@ -294,15 +294,22 @@ def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-ma
 
     # Check project dependencies
     expected_django_req = f"Django>={config.DJANGO[0]}"
+    if bound := config.UPPER_BOUNDS.get("django"):
+        expected_django_req += f",<{bound}"
+
     if expected_django_req not in install_requires:
         # Check currently disabled due to python version specific qualifiers
         errors += disabled(f"{expected_django_req}: Expected Django requirement not found.")
 
     expected_cg_req = f"cryptography>={config.CRYPTOGRAPHY[0]}"
+    if bound := config.UPPER_BOUNDS.get("cryptography"):
+        expected_cg_req += f",<{bound}"
     if expected_cg_req not in install_requires:
         errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
     expected_acme_req = f"acme>={config.ACME[0]}"
+    if bound := config.UPPER_BOUNDS.get("acme"):
+        expected_acme_req += f",<{bound}"
     if expected_acme_req not in install_requires:
         errors += err(f"{expected_acme_req}: Expected acme requirement not found.")
 

@@ -98,6 +98,11 @@ actions."docker/build-push-action" = "v6.18.0"
 # https://github.com/marketplace/actions/docker-metadata-action
 actions."docker/metadata-action" = "v5.8.0"
 
+[django-ca.release.upper-bounds]
+# Upper bounds for software, commonly used in release branches.
+# Syntax is WITHOUT relation, e.g. "3.15" will be used as "<3.15".
+#python = "3.15"
+
 [django-ca.validation]
 # list glob-style patterns to exclude from any check (currently only license headers)
 excludes = [

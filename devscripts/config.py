@@ -57,6 +57,7 @@ DJANGO = tuple(typing.cast(list[str], RELEASE["django"]))
 CRYPTOGRAPHY = tuple(typing.cast(list[str], RELEASE["cryptography"]))
 ACME = tuple(typing.cast(list[str], RELEASE["acme"]))
 PYDANTIC = tuple(typing.cast(list[str], RELEASE["pydantic"]))
+UPPER_BOUNDS = typing.cast(dict[str, str], RELEASE.get("upper-bounds", {}))
 
 UV: str = RELEASE["uv"]
 NEWEST_PYTHON = PYTHON_RELEASES[-1]
