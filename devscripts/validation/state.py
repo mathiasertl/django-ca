@@ -128,20 +128,21 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
     """Check GitHub actions."""
     errors = 0
 
-    django_versions = tuple(f"{version}" for version in config.DJANGO)
+    expected_python = config.PYTHON_RELEASES
+    expected_django = config.DJANGO
     cg_versions = tuple(f"{version}" for version in config.CRYPTOGRAPHY)
     pydantic_versions = tuple(f"{version}" for version in config.PYDANTIC)
+
+    # Some versions are treated differently if on a release branch
+    if release_branch:
+        expected_python = (config.PYTHON_RELEASES[-1],)
+        expected_django = (config.RELEASE["django-lts"],)
 
     for action_path in Path(".github", "actions").glob("*/action.yaml"):
         check_path(action_path)
         with open(config.ROOT_DIR / action_path, encoding="utf-8") as stream:
             action = yaml.safe_load(stream)
         check_github_action_versions(action["runs"])
-
-    if release_branch:
-        expected_python: tuple[str, ...] = (config.PYTHON_RELEASES[-1],)
-    else:
-        expected_python = config.PYTHON_RELEASES
 
     for workflow in Path(".github", "workflows").glob("*.yml"):
         check_path(workflow)
@@ -156,7 +157,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
                     if key == "python-version":
                         errors += simple_diff("Python versions", tuple(values), expected_python)
                     elif key == "django-version":
-                        errors += simple_diff("Django versions", tuple(values), django_versions)
+                        errors += simple_diff("Django versions", tuple(values), expected_django)
                     elif key == "cryptography-version":
                         errors += simple_diff("cryptography versions", tuple(values), cg_versions)
                     elif key == "pydantic-version":
@@ -248,29 +249,16 @@ def check_tox() -> int:
     return errors
 
 
-def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-many-locals
-    """Check pyproject.toml."""
-    check_path("pyproject.toml")
+def _check_classifiers() -> int:
+    """Check Python package classifiers."""
     errors = 0
-
-    # project_configuration = config.read_configuration(config.ROOT_DIR / "pyproject.toml")
-    data = config.PYPROJECT_TOML
-
-    newest_uv = data["django-ca"]["release"]["uv"]
-    if newest_uv != data["tool"]["uv"]["required-version"]:
-        errors += err(f"tool.uv: Outdated uv version ({data['tool']['uv']['required-version']}).")
-
-    # Get data from pyproject.toml
     classifiers = config.PYPROJECT_TOML["project"]["classifiers"]
-
-    # Get requirements - split everything after the first comma, to allow excluding single versions
-    install_requires = [s.split(",")[0] for s in config.PYPROJECT_TOML["project"]["dependencies"]]
 
     # validate that we have the proper language/django classifiers
     pyver_cfs = tuple(
         m.groups(0)[0] for m in filter(None, [re.search(r"Python :: (3\.[0-9]+)$", cf) for cf in classifiers])
     )
-    if pyver_cfs != config.PYTHON_RELEASES and not release_branch:
+    if pyver_cfs != config.PYTHON_RELEASES:
         errors += err(f"Wrong python classifiers: Have {pyver_cfs}, wanted {config.PYTHON_RELEASES}")
 
     djver_cfs = tuple(
@@ -283,19 +271,38 @@ def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-ma
     for djver in config.DJANGO:
         if f"Framework :: Django :: {djver}" not in classifiers:
             errors += err(f"Django {djver} classifier not found.")
+    return errors
+
+
+def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
+    """Check pyproject.toml."""
+    check_path("pyproject.toml")
+    errors = 0
+
+    # project_configuration = config.read_configuration(config.ROOT_DIR / "pyproject.toml")
+    data = config.PYPROJECT_TOML
+
+    errors += _check_classifiers()
+
+    newest_uv = data["django-ca"]["release"]["uv"]
+    if newest_uv != data["tool"]["uv"]["required-version"]:
+        errors += err(f"tool.uv: Outdated uv version ({data['tool']['uv']['required-version']}).")
+
+    # Get requirements - split everything after the first comma, to allow excluding single versions
+    install_requires = config.PYPROJECT_TOML["project"]["dependencies"]
 
     expected_py_req = f">={config.PYTHON_RELEASES[0]}"
     if bound := config.UPPER_BOUNDS.get("python"):
         expected_py_req += f",<{bound}"
 
     actual_py_req = config.PYPROJECT_TOML["project"]["requires-python"]
-    if actual_py_req != expected_py_req and not release_branch:
+    if actual_py_req != expected_py_req:
         errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
 
     # Check project dependencies
     expected_django_req = f"Django>={config.DJANGO[0]}"
     if bound := config.UPPER_BOUNDS.get("django"):
-        expected_py_req += f",<{bound}"
+        expected_django_req += f",<{bound}"
 
     if expected_django_req not in install_requires:
         # Check currently disabled due to python version specific qualifiers
@@ -303,24 +310,25 @@ def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-ma
 
     expected_cg_req = f"cryptography>={config.CRYPTOGRAPHY[0]}"
     if bound := config.UPPER_BOUNDS.get("cryptography"):
-        expected_py_req += f",<{bound}"
+        expected_cg_req += f",<{bound}"
     if expected_cg_req not in install_requires:
         errors += err(f"{expected_cg_req}: Expected cryptography requirement not found.")
 
     expected_acme_req = f"acme>={config.ACME[0]}"
+    if bound := config.UPPER_BOUNDS.get("acme"):
+        expected_acme_req += f",<{bound}"
     if expected_acme_req not in install_requires:
         errors += err(f"{expected_acme_req}: Expected acme requirement not found.")
-    if bound := config.UPPER_BOUNDS.get("acme"):
-        expected_py_req += f",<{bound}"
 
     # Check dependency groups used in  tox and GitHub Actions.
+    dependency_groups = config.PYPROJECT_TOML["dependency-groups"]
     for sw, versions in {
         "Django": config.DJANGO,
         "cryptography": config.CRYPTOGRAPHY,
         "acme": config.ACME,
         "pydantic": config.PYDANTIC,
     }.items():
-        actual_groups = [g for g in config.PYPROJECT_TOML["dependency-groups"] if g.startswith(sw)]
+        actual_groups = [g for g in dependency_groups if g.startswith(sw)]
         expected_groups = [f"{sw}{version}" for version in versions]
         if sw == "Django":
             expected_groups.append("DjangoLTS")
@@ -341,6 +349,11 @@ def check_pyproject_toml(release_branch: bool) -> int:  # pylint: disable=too-ma
                     errors += err(f"{expected_group_key}: Depends on {actual_group}.")
             else:
                 errors += err(f"{expected_group_key}: Dependency group not found.")
+
+    actual = dependency_groups["DjangoLTS"][0]
+    expected = f"Django~={config.RELEASE['django-lts']}.0"
+    if actual != expected:
+        errors += err(f"DjangoLTs dependency group: Found {actual}, expected {expected}.")
 
     return errors
 
@@ -448,7 +461,7 @@ class Command(DevCommand):
 
         total_errors = check(check_github_actions_tests, release_branch)
         total_errors += check(check_tox)
-        total_errors += check(check_pyproject_toml, release_branch)
+        total_errors += check(check_pyproject_toml)
         total_errors += check(check_intro, release_branch)
         total_errors += check(check_readme, release_branch)
         total_errors += check(check_dockerfile, "Dockerfile", "debian")

@@ -9,7 +9,8 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
-django = ["5.2"]
+django = ["5.2", "6.0"]
+django-lts = "5.2"  # the current LTS version
 cryptography = ["45", "46"]
 acme = ["5.0", "5.1", "5.2"]
 pydantic = ["2.11", "2.12"]
@@ -102,6 +103,7 @@ actions."docker/metadata-action" = "v5.8.0"
 # Upper bounds for software, commonly used in release branches.
 # Syntax is WITHOUT relation, e.g. "3.15" will be used as "<3.15".
 python = "3.15"
+cryptography = "47"
 
 [django-ca.validation]
 # list glob-style patterns to exclude from any check (currently only license headers)
@@ -133,6 +135,7 @@ description = "A Django app providing a TLS certificate authority."
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Framework :: Django",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
@@ -154,10 +157,11 @@ dynamic = ["version", "readme"]
 # Dependency information
 requires-python = ">=3.10,<3.15"
 dependencies = [
-    "Django~=5.2.0",
+    "Django~=5.2.0;python_version<'3.12'",
+    "Django>=5.2;python_version>='3.12'",
     "acme>=5.0",
     "asn1crypto>=1.5",
-    "cryptography>=45",
+    "cryptography>=45,<47",
     "django-object-actions>=5.0",
     "dnspython>=2.7",
     "idna>=3.10",
@@ -631,6 +635,7 @@ gunicorn = [ "gunicorn>=23" ]
 # NOTE: don't forget to add conflicts in [tool.uv] above.
 "DjangoLTS" = ["Django~=5.2.0"]
 "Django5.2" = ["Django~=5.2.0"]
+"Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography45" = ["cryptography~=45.0"]
 "cryptography46" = ["cryptography~=46.0"]
 "acme5.0" = ["acme~=5.0.0"]
