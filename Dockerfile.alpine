@@ -94,6 +94,7 @@ COPY ca/ ca/
 COPY conf/ ca/conf/
 COPY gunicorn/ gunicorn/
 COPY nginx/ nginx/
+RUN mkdir ca/conf/local/
 
 COPY devscripts/ devscripts/
 
@@ -135,6 +136,6 @@ EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
 WORKDIR /usr/src/django-ca/ca/
 
-ENV DJANGO_CA_SETTINGS=conf/
+ENV DJANGO_CA_SETTINGS=conf/:conf/local
 
 CMD [ "gunicorn.sh" ]

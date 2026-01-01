@@ -4,28 +4,28 @@
 # Secret key used for session handling etc, must be a long, random string.
 # Generate with:
 #
-#   cat /dev/urandom | tr -dc '[:alnum:][:punct:]' | tr -d '"' | fold -w ${1:-50} | head -n 1
+#   {{ RANDOM_COMMAND }}
 #
-SECRET_KEY: "{{ secret_key }}"
+SECRET_KEY: "{{ SECRET_KEY }}"
 
 # Where to find your database
 DATABASES:
     default:
         ENGINE: django.db.backends.postgresql
-        HOST: {{ postgres_host }}
+        HOST: "{{ POSTGRES_HOST }}"
         PORT: 5432
-        PASSWORD: {{ postgres_password }}
+        PASSWORD: "{{ POSTGRES_PASSWORD }}"
 
 # Shared, persistent cache
 CACHES:
     default:
         BACKEND: django.core.cache.backends.redis.RedisCache
-        LOCATION: redis://{{ redis_host }}:6379
+        LOCATION: redis://{{ REDIS_HOST }}:6379
         OPTIONS:
             db: "1"
 
 # django-ca will use Celery as an asynchronous task worker
-CELERY_BROKER_URL: redis://{{ redis_host }}:6379/0
+CELERY_BROKER_URL: redis://{{ REDIS_HOST }}:6379/0
 
 # Default hostname to use when generating CRLs and OCSP responses
-CA_DEFAULT_HOSTNAME: {{ ca_default_hostname }}
+CA_DEFAULT_HOSTNAME: "{{ CA_DEFAULT_HOSTNAME }}"

@@ -42,6 +42,26 @@ def docker_cp(src: str, container: str, dest: str) -> None:
     utils.run(["docker", "cp", src, f"{container}:{dest}"])
 
 
+####################
+# Docker functions #
+####################
+def test_connectivity() -> int:
+    """Function to test connectivity in Docker containers."""
+    standalone_dest = "/usr/src/django-ca/ca/"
+    script_name = "test-connectivity.py"
+    src = config.ROOT_DIR / "devscripts" / "standalone" / script_name
+    script_path = os.path.join(standalone_dest, script_name)
+
+    for container in COMPOSE_SERVICES:
+        docker_cp(str(src), container, standalone_dest)
+        docker_exec(container, script_path)
+
+    return ok("Tested connectivity.")
+
+
+#####################
+# Compose functions #
+#####################
 def compose(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """Run docker compose."""
     kwargs["text"] = True
@@ -95,7 +115,7 @@ def compose_status(tag: str) -> int:
     return errors
 
 
-def validate_container_versions(release: str, **kwargs: Any) -> int:
+def compose_validate_container_versions(release: str, **kwargs: Any) -> int:
     """Validate that django-ca in all containers identifies correctly."""
     code = "import django_ca; print(django_ca.__version__)"
     errors = 0
@@ -127,7 +147,7 @@ def validate_docker_compose_files(release: str) -> int:
     return errors
 
 
-def test_connectivity() -> int:
+def compose_test_connectivity() -> int:
     """Test internal container connectivity."""
     standalone_dir = config.ROOT_DIR / "devscripts" / "standalone"
     standalone_dest = "/usr/src/django-ca/ca/"

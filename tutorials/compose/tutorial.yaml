@@ -50,6 +50,10 @@ parts:
     commands:
       - command: sudo adduser `id -un` docker
       - command: sudo su `id -un`
+    doc:
+      text_before: |
+        If you want to run :command:`docker` as a regular user, you need to add your user to the ``docker``
+        group and log in again:
     run:
       skip: true
 
@@ -315,7 +319,7 @@ parts:
     commands:
       - command: |
           {% if doc %}{{ EXEC_BACKEND }} manage createsuperuser
-          {% else %}{{ EXEC_BACKEND }} manage shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
+          {% else %}{{ EXEC_BACKEND }} manage shell -v 0 -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
           {% endif %}
         doc:
           output: ...
@@ -340,7 +344,7 @@ parts:
   - id: sign-cert
     name: Sign a certificate
     commands:
-      - command: "docker compose  exec{% if run %} -T{% endif %} backend manage sign_cert --ca=Intermediate --subject=\"CN=example.com\""
+      - command: "docker compose exec{% if run %} -T{% endif %} backend manage sign_cert --ca=Intermediate --subject=\"CN=example.com\""
         run:
           show_output: false
           stdin:
@@ -456,5 +460,5 @@ parts:
       * Credentials: user/nopass
 
       Working directory is {{ cwd }}
-      Is the state okay? (y/n)
+      Is the state okay? (Y/n)
     response: confirm

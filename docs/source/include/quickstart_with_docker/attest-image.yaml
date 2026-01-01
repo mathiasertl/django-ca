@@ -1,3 +1,0 @@
-commands:
-    - command: >
-        gh attestation verify oci://index.docker.io/{{ docker_tag }}:{{ last_version }} -R {{ docker_tag }}

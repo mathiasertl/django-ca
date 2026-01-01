@@ -15,17 +15,13 @@
 
 import argparse
 import os
-import pathlib
 from collections.abc import Sequence
 from types import ModuleType
 
-from django.core.management.utils import get_random_secret_key
-
 from devscripts import config, utils
 from devscripts.commands import CommandError, DevCommand
-from devscripts.docker import docker_cp, docker_exec, docker_run
+from devscripts.docker import docker_run
 from devscripts.out import err, info, ok
-from devscripts.tutorial import start_tutorial
 
 
 def _test_version(docker_tag: str, release: str) -> int:
@@ -47,6 +43,7 @@ def _test_version(docker_tag: str, release: str) -> int:
 
 
 def _test_alpine_version(docker_tag: str, alpine_version: str) -> int:
+    docker_tag += "-alpine"
     proc = docker_run(docker_tag, "cat", "/etc/alpine-release", capture_output=True, text=True)
     actual_release = proc.stdout.strip()
     actual_major = config.minor_to_major(actual_release)
@@ -85,20 +82,25 @@ def _test_clean(docker_tag: str) -> int:
     """Make sure that the Docker image does not contain any unwanted files."""
     cwd = os.getcwd()
     script = "check-clean-docker.py"
-    docker_run("-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}")
+    proc = docker_run(
+        "-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}", check=False
+    )
+    if proc.returncode != 0:
+        return err("Docker image is not clean.")
     return ok("Docker image is clean.")
 
 
-def _test_connectivity(src: pathlib.Path) -> int:
-    standalone_dest = "/usr/src/django-ca/ca/"
-    script_name = "test-connectivity.py"
-    script_path = os.path.join(standalone_dest, script_name)
+def validate_docker_image(release: str, docker_tag: str) -> int:
+    """Validate the Docker image."""
+    print("Validating Docker image...")
 
-    for container in ["frontend", "backend"]:
-        docker_cp(str(src / script_name), container, standalone_dest)
-        docker_exec("frontend", script_path)
-
-    return ok("Tested connectivity.")
+    errors = 0
+    errors += _test_clean(docker_tag)
+    errors += _test_version(docker_tag, release)
+    errors += _test_alpine_version(docker_tag, config.ALPINE_RELEASES[-1])
+    errors += _test_debian_version(docker_tag, config.DEBIAN_RELEASES[-1])
+    errors += _test_extras(docker_tag)
+    return errors
 
 
 def build_docker_image(release: str, prune: bool = True, build: bool = True) -> str:
@@ -114,53 +116,6 @@ def build_docker_image(release: str, prune: bool = True, build: bool = True) -> 
     return tag
 
 
-def validate_docker_image(release: str, docker_tag: str) -> int:
-    """Validate the Docker image."""
-    print("Validating Docker image...")
-
-    errors = 0
-    standalone_src = pathlib.Path().absolute() / "devscripts" / "standalone"
-
-    _test_clean(docker_tag)
-    if release is not None:
-        errors += _test_version(docker_tag, release)
-    # errors += _test_alpine_version(docker_tag, config.ALPINE_RELEASES[-1])
-    errors += _test_debian_version(docker_tag, config.DEBIAN_RELEASES[-1])
-    errors += _test_extras(docker_tag)
-
-    context = {
-        "backend_host": "backend",
-        "beat_host": "beat",
-        "ca_default_hostname": "localhost",
-        "docker_tag": docker_tag,
-        "frontend_host": "frontend",
-        "network": "django-ca",
-        "nginx_host": "nginx",
-        "postgres_host": "postgres",
-        "postgres_password": "random-password",
-        "redis_host": "redis",
-        "secret_key": get_random_secret_key(),
-    }
-
-    info("Testing tutorial...")
-    with start_tutorial("quickstart_with_docker", context) as tut:
-        tut.write_template("localsettings.yaml.jinja")
-        tut.write_template("nginx.conf.jinja")
-
-        with (
-            tut.run("start-dependencies.yaml"),
-            tut.run("start-django-ca.yaml"),
-            tut.run("start-nginx.yaml"),
-            tut.run("setup-cas.yaml"),
-        ):
-            errors += _test_connectivity(standalone_src)
-
-            print("Now running running django-ca, please visit:\n\n\thttp://localhost/admin\n")
-            input("Press enter to continue:")
-
-    return errors
-
-
 class Command(DevCommand):
     """Class implementing the ``dev.py validate docker`` command."""
 
@@ -173,7 +128,24 @@ class Command(DevCommand):
         # TYPEHINT NOTE: It's a subcommand, so we know parent is not None
         return [self.parent.docker_options]  # type: ignore[union-attr]
 
-    def handle(self, args: argparse.Namespace) -> None:
+    def run_tutorial(self, release: str, docker_tag: str, alpine: bool = False) -> int:
+        """Run the Compose tutorial."""
+        errors = 0
+        if alpine:
+            docker_tag += "-alpine"
+
+        defines = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
+        if alpine:
+            defines += ["-D", "DOCKER_IMAGE_VARIANT", "alpine"]
+
+        proc = utils.run(
+            ["structured-tutorial", "--non-interactive", *defines, "tutorials/docker/tutorial.yaml"]
+        )
+        if proc.returncode != 0:
+            errors += err("Error running tutorial.")
+        return errors
+
+    def handle(self, args: argparse.Namespace) -> int:
         if args.docker_prune:
             self.run("docker", "system", "prune", "-af")
 
@@ -187,8 +159,12 @@ class Command(DevCommand):
             docker_tag = self.get_docker_tag(release)
 
         errors = validate_docker_image(release, docker_tag)
+        info("Running tutorial...")
+        errors = self.run_tutorial(release, docker_tag)
+        info("Running tutorial with Alpine image...")
+        errors = self.run_tutorial(release, docker_tag, alpine=True)
 
         if errors != 0:
             raise CommandError(f"A total of {errors} error(s) found!")
 
-        ok("Validated Docker image.")
+        return ok("Validated Docker image.")

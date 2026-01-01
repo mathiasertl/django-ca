@@ -22,9 +22,7 @@ This tutorial will give you a CA with
 Requirements
 ************
 
-.. jinja:: requirements-from-source
-   :file: /include/guide-requirements.rst.jinja
-   :header_update_levels:
+.. include:: /include/guide-requirements.rst
 
 Required software
 =================

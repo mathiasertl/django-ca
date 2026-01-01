@@ -16,12 +16,24 @@
 import argparse
 import re
 import types
+from typing import TYPE_CHECKING
 
 from devscripts import config
 from devscripts.commands import DevCommand
-from devscripts.docker import compose_python, compose_status, test_connectivity, validate_container_versions
+from devscripts.docker import (
+    compose_python,
+    compose_status,
+    compose_test_connectivity,
+    compose_validate_container_versions,
+    test_connectivity,
+)
 from devscripts.out import err, ok
 from devscripts.utils import test_endpoints
+
+if TYPE_CHECKING:
+    SubParser = argparse._SubParsersAction[argparse.ArgumentParser]  # pylint: disable=protected-access
+else:
+    SubParser = argparse._SubParsersAction  # pylint: disable=protected-access
 
 
 class Command(DevCommand):
@@ -44,18 +56,26 @@ class Command(DevCommand):
             "get-docker-version",
             help="Just print the Docker version based on the current version and exit.",
         )
-        docker_compose_parser = subparsers.add_parser(  # just the version of the image
-            "compose",
-            help="Helpers for the compose tutorial.",
-        )
-        docker_compose_action_parser = docker_compose_parser.add_subparsers(dest="action", required=True)
-        compose_status_parser = docker_compose_action_parser.add_parser("test-compose-status")
+        self.add_docker_arguments(subparsers)
+        self.add_compose_arguments(subparsers)
+
+    def add_docker_arguments(self, subparsers: SubParser) -> None:
+        """Add arguments for the Docker action."""
+        parser = subparsers.add_parser("docker", help="Helpers for the Docker tutorial.")
+        action_parser = parser.add_subparsers(dest="action", required=True)
+        action_parser.add_parser("test-connectivity")
+
+    def add_compose_arguments(self, subparsers: SubParser) -> None:
+        """Add arguments for the Compose action."""
+        parser = subparsers.add_parser("compose", help="Helpers for the Compose tutorial.")
+        action_parser = parser.add_subparsers(dest="action", required=True)
+        compose_status_parser = action_parser.add_parser("test-compose-status")
         compose_status_parser.add_argument("tag")
-        container_versions_parser = docker_compose_action_parser.add_parser("test-container-versions")
+        container_versions_parser = action_parser.add_parser("test-container-versions")
         container_versions_parser.add_argument("release")
-        docker_compose_action_parser.add_parser("test-secret-keys")
-        docker_compose_action_parser.add_parser("test-connectivity")
-        endpoints_parser = docker_compose_action_parser.add_parser("test-endpoints")
+        action_parser.add_parser("test-secret-keys")
+        action_parser.add_parser("test-connectivity")
+        endpoints_parser = action_parser.add_parser("test-endpoints")
         endpoints_parser.add_argument("verify", help="Path to SSL certificate for SSL verification.")
 
     def test_secret_keys(self) -> int:
@@ -86,15 +106,18 @@ class Command(DevCommand):
             print(f"{config.DOCKER_TAG}:{safe_tag}")
         elif args.subcommand == "get-docker-version":
             print(re.sub(r"[^\w.-]", ".", self.django_ca.__version__))
+        elif args.subcommand == "docker":
+            if args.subcommand == "test-connectivity":
+                return test_connectivity()
         elif args.subcommand == "compose":
             if args.action == "test-compose-status":
                 return compose_status(args.tag)
             if args.action == "test-container-versions":
-                return validate_container_versions(args.release)
+                return compose_validate_container_versions(args.release)
             if args.action == "test-secret-keys":
                 return self.test_secret_keys()
             if args.action == "test-connectivity":
-                return test_connectivity()
+                return compose_test_connectivity()
             if args.action == "test-endpoints":
                 return test_endpoints("https://webserver", "user", "nopass", verify=args.verify)
         else:

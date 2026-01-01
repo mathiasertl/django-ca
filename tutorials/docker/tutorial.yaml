@@ -1,0 +1,384 @@
+configuration:
+  context:
+    RANDOM_COMMAND: "cat /dev/urandom | tr -dc '[:alnum:][:print:]' | tr -d '\"\\\\ ' | fold -w ${1:-50} | head -n 1"
+    SLUG_COMMAND: "cat /dev/urandom | tr -dc '[:lower:][:digit:]' | tr -d '\"' | fold -w ${1:-8} | head -n 1"
+    POSTGRES_HOST: postgres
+    POSTGRES_PASSWORD: changeme
+    REDIS_HOST: redis
+    BEAT_HOST: beat
+    BACKEND_HOST: backend
+    FRONTEND_HOST: frontend
+    DOCKER_NETWORK: django-ca  # slug is appended at runtime
+    NGINX_HOST: nginx
+  doc:
+    context:
+      SECRET_KEY: changeme
+      CA_DEFAULT_HOSTNAME: ca.example.com
+  run:
+    temporary_directory: true
+    context:
+      BUILD_IMAGE: "y"
+      CA_DEFAULT_HOSTNAME: localhost
+      DOCKER_IMAGE_VARIANT: debian
+parts:
+  # [doc only] Install dependencies
+  - id: install-dependencies
+    name: Install dependencies
+    commands:
+      - command: sudo apt update
+      - command: sudo apt install docker.io
+    run:
+      skip: true
+  - id: add-docker-group
+    name: Add user to Docker group
+    commands:
+      - command: sudo adduser `id -un` docker
+      - command: sudo su `id -un`
+    doc:
+      text_before: |
+        If you want to run :command:`docker` as a regular user, you need to add your user to the ``docker``
+        group and log in again:
+    run:
+      skip: true
+  - id: generate-secret-key
+    name: Generate secret key
+    commands:
+      - command: "{{ RANDOM_COMMAND }}"
+        run:
+          test:
+            - regex: (?P<SECRET_KEY>.*)
+  - id: create-localsettings.yaml
+    name: Create localsettings.yaml
+    source: localsettings.yaml
+    destination: localsettings.yaml
+    doc:
+      language: yaml
+  - id: create-nginx.conf
+    name: Create nginx.conf
+    source: nginx.conf
+    destination: nginx.conf
+    doc:
+      language: nginx
+  - id: recap-test-files
+    name: Check number of files
+    commands:
+      - command: ls
+        doc:
+          output: "nginx.conf localsettings.yaml"
+        run:
+          test:
+            - line_count: 2
+            - regex: "nginx\\.conf"
+            - regex: "localsettings\\.yaml"
+
+  # [run only] Compute runtime variables
+  - name: Compute runtime-variables
+    commands:
+      - command: "{{ SLUG_COMMAND }}"
+        run:
+          test:
+            - regex: (?P<DOCKER_SLUG>.*)
+          show_output: false
+      - command: 'echo "{{ DOCKER_NETWORK }}-{{ DOCKER_SLUG }}"'
+        run:
+          test:
+            - regex: (?P<DOCKER_NETWORK>.*)
+          show_output: false
+    doc:
+      skip: true
+
+  # [run only] Build docker image
+  - id: build-docker-image
+    name: Build docker image
+    commands:
+      # Get current release and docker tag from helper script
+      - command: |
+          {% if RELEASE -%}
+            echo {{ RELEASE }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-release
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<RELEASE>.*)$"
+      # Get the Docker image version (sanitized version of RELEASE)
+      - command: |
+          {% if DOCKER_VERSION -%}
+            echo {{ DOCKER_VERSION }}
+          {%- elif DOCKER_TAG -%}
+            echo {{ DOCKER_TAG.split(':')[1] }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-version
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<DOCKER_VERSION>.*)$"
+          update_environment:
+            DJANGO_CA_VERSION: "{{ DOCKER_VERSION }}"
+      # Get the full docker tag (mathiasertl/django-ca:$DOCKER_VERSION)
+      - command: |
+          {% if DOCKER_TAG -%}
+            echo {{ DOCKER_TAG }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-tag --variant {{ DOCKER_IMAGE_VARIANT }}
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<DOCKER_TAG>.*)$"
+      - command: |
+          echo "RELEASE={{ RELEASE }}
+          DOCKER_VERSION={{ DOCKER_VERSION }}
+          DOCKER_TAG={{ DOCKER_TAG }}"
+      - command: |
+          {% if BUILD_IMAGE == "y" -%}
+            docker build \
+              -f {{ orig_cwd }}/Dockerfile{% if DOCKER_IMAGE_VARIANT == "alpine" %}.alpine{% endif %} \
+              -t {{ DOCKER_TAG }} \
+              --build-arg DJANGO_CA_VERSION={{ RELEASE }} \
+              {{ orig_cwd }}
+          {%- else -%}
+            # Not building image (BUILD_IMAGE=n), using {{ DOCKER_TAG }}.
+          {%- endif %}
+        run:
+          show_output: false
+    doc:
+      skip: true
+
+  # Start PostgreSQL and Redis
+  - id: start-dependencies
+    name: Start dependencies
+    commands:
+      - command: docker network create {{ DOCKER_NETWORK }}
+        run:
+          cleanup:
+            - command: docker network rm {{ DOCKER_NETWORK }}
+      - command: >
+          docker run --name {{ POSTGRES_HOST }} --network={{ DOCKER_NETWORK }} -e POSTGRES_PASSWORD={{ POSTGRES_PASSWORD }}
+          -v pgdata:/var/lib/postgresql -d postgres
+        run:
+          cleanup:
+            - command: docker kill {{ POSTGRES_HOST }}
+            - command: docker rm -fv {{ POSTGRES_HOST }}
+            - command: docker volume rm pgdata
+      - command: docker run --name {{ REDIS_HOST }} --network={{ DOCKER_NETWORK }} -d redis
+        run:
+          cleanup:
+            - command: docker kill {{ REDIS_HOST }}
+            - command: docker rm -fv {{ REDIS_HOST }}
+    doc:
+      text_before: "Create a Docker network and start PostgreSQL and Redis:"
+  - id: verify-attestations
+    commands:
+      - command: |
+          gh attestation verify \
+            oci://index.docker.io/mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
+            -R mathiasertl/django-ca
+        doc:
+          output: |
+            ...
+            ✓ Verification succeeded
+            ...
+
+    run:
+      skip: true
+  - id: start-django-ca
+    name: Start django-ca
+    commands:
+      # Start celery beat worker for periodic tasks
+      - command: |
+          docker run -d \
+              -e DJANGO_CA_STARTUP_COLLECTSTATIC=0 \
+              -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ POSTGRES_HOST }}:5432 \
+              -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
+              -v backend_ca_dir:/var/lib/django-ca/certs/ \
+              -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+              -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+              --name={{ BEAT_HOST }} --network={{ DOCKER_NETWORK }} \
+              {{ DOCKER_TAG }} \
+              celerybeat.sh -l warning
+        run:
+          cleanup:
+            - command: docker kill {{ BEAT_HOST }}
+            - command: docker rm -fv {{ BEAT_HOST }}
+            - command: docker volume rm backend_ca_dir
+            - command: docker volume rm shared_ca_dir
+            - command: docker volume rm ocsp_key_dir
+      # Start celery worker
+      - command: |
+          docker run -d \
+              -e DJANGO_CA_STARTUP_CACHE_CRLS=0 \
+              -e DJANGO_CA_STARTUP_COLLECTSTATIC=0 \
+              -e DJANGO_CA_STARTUP_MIGRATE=0 \
+              -e DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS=0 \
+              -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ POSTGRES_HOST }}:5432 \
+              -e DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE=1 \
+              -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
+              -v backend_ca_dir:/var/lib/django-ca/certs/ \
+              -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+              -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+              --name={{ BACKEND_HOST }} --network={{ DOCKER_NETWORK }} \
+              {{ DOCKER_TAG }} \
+              celery.sh -l warning
+        run:
+          cleanup:
+            - command: docker kill {{ BACKEND_HOST }}
+            - command: docker rm -fv {{ BACKEND_HOST }}
+      # Start frontend
+      - command: |
+          docker run -d \
+              -e DJANGO_CA_STARTUP_CACHE_CRLS=0 \
+              -e DJANGO_CA_STARTUP_MIGRATE=0 \
+              -e DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS=0 \
+              -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ POSTGRES_HOST }}:5432 \
+              -e DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE=1 \
+              -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
+              -v static:/usr/share/django-ca/static/ \
+              -v frontend_ca_dir:/var/lib/django-ca/certs/ \
+              -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+              -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+              -v nginx_config:/usr/src/django-ca/nginx/ \
+              --name={{ FRONTEND_HOST }} --network={{ DOCKER_NETWORK }} \
+              {{ DOCKER_TAG }}
+        run:
+          cleanup:
+            - command: docker kill {{ FRONTEND_HOST }}
+            - command: docker rm -fv {{ FRONTEND_HOST }}
+            - command: docker volume rm frontend_ca_dir
+            - command: docker volume rm static
+            - command: docker volume rm nginx_config
+
+  - id: start-nginx
+    name: Start nginx
+    commands:
+      - command: |
+          docker run --name nginx --network={{ DOCKER_NETWORK }} -p 80:80 \
+            -v static:/usr/share/nginx/html/static/ \
+            -v `pwd`/nginx.conf:/etc/nginx/conf.d/default.conf -d {{ NGINX_HOST }}
+        run:
+          cleanup:
+            - command: docker kill {{ NGINX_HOST }}
+            - command: docker rm -fv {{ NGINX_HOST }}
+
+  - id: verify-containers
+    name: Verify containers have started
+    commands:
+      - command: docker ps
+        doc:
+          output: |
+            CONTAINER ID   IMAGE  COMMAND                  CREATED         STATUS         PORTS                                 NAMES
+            ...            nginx  "/docker-entrypoint.…"   5 minutes ago   Up ...         0.0.0.0:80->80/tcp, [::]:80->80/tcp   nginx
+            ...
+    doc:
+      text_before: |
+        To verify that everything worked correctly, check if all containers started successfully. You
+        should see that all containers you just started (`{{ POSTGRES_HOST }}`, `{{ REDIS_HOST }}`,
+        `{{ BEAT_HOST }}`, `{{ BACKEND_HOST }}` and `{{ FRONTEND_HOST }}`) are up and running:
+  - id: deployment-checks
+    name: Run deployment checks
+    commands:
+      - command: docker exec {{ BEAT_HOST }} manage check --deploy
+        doc:
+          output: System check identified no issues (2 silenced)
+      - command: docker exec {{ BACKEND_HOST }} manage check --deploy
+        doc:
+          output: System check identified no issues (2 silenced)
+      - command: docker exec {{ FRONTEND_HOST }} manage check --deploy
+        doc:
+          output: System check identified no issues (2 silenced)
+
+  # Create user and initial CAs
+  - id: create-user-and-ca
+    name: Create admin user and CAs
+    commands:
+      - command: |
+          {% if doc %}docker exec -it {{ BACKEND_HOST }} manage createsuperuser
+          {% else %}docker exec -it {{ BACKEND_HOST }} manage shell -v 0 -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('user', 'user@example.com', 'nopass')"
+          {% endif %}
+        doc:
+          output: ...
+      - command: "docker exec {{ BACKEND_HOST }} manage init_ca --path-length=1 Root CN=Root"
+        doc:
+          output: "<root-serial>"
+      - command: |
+          docker exec {{ BACKEND_HOST }} manage init_ca \
+            --path=ca/shared/ --parent=Root \
+            Intermediate CN=Intermediate
+        doc:
+          output: "<intermediate-serial>"
+
+  # [run only]
+  - name: Restart containers
+    commands:
+      - command: docker stop {{ POSTGRES_HOST }}
+      - command: docker stop {{ BEAT_HOST }}
+      - command: docker stop {{ BACKEND_HOST }}
+      - command: docker stop {{ FRONTEND_HOST }}
+      - command: docker stop {{ NGINX_HOST }}
+      - command: docker start {{ POSTGRES_HOST }}
+      - command: docker start {{ BEAT_HOST }}
+      - command: docker start {{ BACKEND_HOST }}
+      - command: docker start {{ FRONTEND_HOST }}
+      - command: docker start {{ NGINX_HOST }}
+    doc:
+      skip: true
+
+  - id: sign-cert
+    name: Sign a certificate with a CSR from stdin
+    commands:
+      - command: docker exec -i backend manage sign_cert --ca=Intermediate --subject="CN=example.com"
+        doc:
+          output: |
+            Please paste the CSR:
+            -----BEGIN CERTIFICATE REQUEST-----
+            ...
+        run:
+          stdin:
+            source: ../compose/example.com.csr.pem
+          show_output: false
+
+  - id: check-setup-final
+    name: Run final checks
+    commands:
+      - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers docker test-connectivity"
+      - command: |
+          docker exec backend \
+            manage view_ca --output-format pem --bundle Intermediate \
+            > intermediate.bundle.pem
+      - command: docker exec backend manage view_cert --output-format pem example.com > cert.pem
+      - command: openssl verify -CAfile intermediate.bundle.pem -crl_download -crl_check cert.pem
+        run:
+          show_output: false
+          test:
+            - regex: OK
+      # Get the OCSP URI of the certificate
+      - command: openssl x509 -in cert.pem -noout -ocsp_uri
+        run:
+          show_output: false
+          test:
+            - regex: "(?P<CERT_OCSP_URI>.*)"
+      - command: |
+          openssl ocsp \
+            -issuer intermediate.bundle.pem \
+            -cert cert.pem \
+            -url {{ CERT_OCSP_URI }} \
+            -CAfile intermediate.bundle.pem \
+            -resp_text
+        run:
+          show_output: false
+          test:
+            - regex: Response verify OK
+              stream: stderr
+            - regex: "cert.pem: good"
+
+  - prompt: |
+      Test admin interface at:
+
+      * URL: http://{{ CA_DEFAULT_HOSTNAME }}/admin/
+      * Credentials: user/nopass
+
+      Working directory is {{ cwd }}
+      Is the state okay? (Y/n)
+    response: confirm

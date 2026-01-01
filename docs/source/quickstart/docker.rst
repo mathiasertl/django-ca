@@ -2,11 +2,13 @@
 Quickstart with Docker
 ######################
 
-.. spelling::
+.. spelling:word-list::
 
    mathiasertl
    ghcr
    io
+
+.. structured-tutorial:: docker/tutorial.yaml
 
 This guide provides instructions for running your own certificate authority using a plain Docker container.
 Using this setup allows you to run django-ca in an isolated environment that can be easily updated, but use
@@ -33,9 +35,7 @@ exercise to the reader.
 Requirements
 ************
 
-.. jinja:: requirements-in-docker
-   :file: include/guide-requirements.rst.jinja
-   :header_update_levels:
+.. include:: /include/guide-requirements.rst
 
 Required software
 =================
@@ -57,12 +57,9 @@ for how to install the software on your own.
 
 On Debian/Ubuntu, simply do:
 
-.. code-block:: console
+.. structured-tutorial-part:: install-dependencies
 
-   user@host:~$ sudo apt update
-   user@host:~$ sudo apt install docker.io
-
-.. include:: /include/docker-regular-user.rst
+.. structured-tutorial-part:: add-docker-group
 
 .. _docker-configuration:
 
@@ -76,16 +73,12 @@ name you have set up above.
 Django requires a ``SECRET_KEY`` to run, and it should be shared between the Celery worker and the Gunicorn
 instance. Generate a sufficiently long secret key and set it as ``SECRET_KEY`` below:
 
-.. code-block:: console
-
-   user@host:~$ cat /dev/urandom | tr -dc '[:alnum:][:punct:]' | tr -d '"' | fold -w ${1:-50} | head -n 1
+.. structured-tutorial-part:: generate-secret-key
 
 To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
 and add at least these settings (and adjust to your configuration):
 
-.. template-include:: yaml /include/quickstart_with_docker/localsettings.yaml.jinja
-   :caption: localsettings.yaml
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: create-localsettings.yaml
 
 Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
 for more YAML configuration examples.
@@ -103,9 +96,7 @@ NGINX configuration
 
 NGINX requires a configuration file, so you first need to create it. A minimal example would be:
 
-.. template-include:: nginx /include/quickstart_with_docker/nginx.conf.jinja
-   :caption: nginx.conf
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: create-nginx.conf
 
 Recap
 =====
@@ -113,10 +104,7 @@ Recap
 By now, there should be two configuration files in your local directory: ``localsettings.yaml`` configures
 django-ca, and ``nginx.conf`` configures NGINX itself:
 
-.. code-block:: console
-
-   user@host:~$ ls
-   nginx.conf localsettings.yaml
+.. structured-tutorial-part:: recap-test-files
 
 ***************
 Start django-ca
@@ -132,11 +120,7 @@ As mentioned before, we will start services that django-ca depends upon (like Po
 in this guide. In practice, you do not need the custom network setup below, unless you intend to run some of
 the services this way.
 
-Create a Docker network and start PostgreSQL and Redis:
-
-.. console-include::
-   :include: /include/quickstart_with_docker/start-dependencies.yaml
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: start-dependencies
 
 Choose Docker image
 ===================
@@ -174,25 +158,22 @@ Verify attestations
 
    Docker image attestations where added. Earlier images do *not* have attestations.
 
-.. console-include::
-   :include: /include/quickstart_with_docker/attest-image.yaml
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: verify-attestations
 
 Start django-ca
 ===============
 
 django-ca (usually) consists of three containers (using the same image):
 
-#. A `Gunicorn <https://gunicorn.org/>`_-based WSGI server for HTTP endpoints
-#. A Celery worker to handle asynchronous tasks
 #. A `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon for periodic
    tasks.
+#. A Celery worker to handle asynchronous tasks
+#. A `Gunicorn <https://gunicorn.org/>`_-based WSGI server for HTTP endpoints
 
 You thus need to start three containers with slightly different configuration:
 
-.. console-include::
-   :include: /include/quickstart_with_docker/start-django-ca.yaml
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: start-django-ca
+
 
 You can also use different versions of the Docker image, including images based on Alpine Linux. Please see
 the `Docker Hub page <https://hub.docker.com/r/mathiasertl/django-ca>`_ for more information about available
@@ -204,27 +185,35 @@ Start NGINX
 NGINX unfortunately will crash if you haven't started django-ca first (due to the name of the frontend
 container not resolving yet). So you have to start NGINX *after* the frontend container:
 
-.. console-include::
-   :include: /include/quickstart_with_docker/start-nginx.yaml
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: start-nginx
 
-You are now able to view the admin interface at http://ca.example.com. You cannot log in yet, as you haven't
-created a user yet.
+You are now able to view the admin interface at http://ca.example.com/admin/. You cannot log in yet, as you
+haven't created a user yet.
+
+Verify setup
+============
+
+.. structured-tutorial-part:: verify-containers
+
+You can also run the deployment checks for your setup:
+
+.. structured-tutorial-part:: deployment-checks
 
 Create admin user and set up CAs
 ================================
 
 It's finally time to create a user for the admin interface and some certificate authorities.
 
-.. console-include::
-   :include: /include/quickstart_with_docker/setup-cas.yaml
-   :context: quickstart-with-docker
+.. structured-tutorial-part:: create-user-and-ca
 
 ***********
 Use your CA
 ***********
 
-Please see :ref:`docker-compose-use-ca` for further usage information.
+Usage is very similar to the :ref:`usage in Docker Compose <docker-compose-use-ca>`, for example to sign a
+certificate:
+
+.. structured-tutorial-part:: sign-cert
 
 ************************
 Build your own container

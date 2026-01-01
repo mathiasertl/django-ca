@@ -12,9 +12,7 @@ Django development.
 Requirements
 ************
 
-.. jinja:: requirements-as-py
-   :file: include/guide-requirements.rst.jinja
-   :header_update_levels:
+.. include:: /include/guide-requirements.rst
 
 Required software
 =================

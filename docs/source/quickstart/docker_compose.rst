@@ -29,9 +29,7 @@ This tutorial will give you a CA with
 Requirements
 ************
 
-.. jinja::
-   :file: /include/guide-requirements.rst.jinja
-   :header_update_levels:
+.. include:: /include/guide-requirements.rst
 
 Required software
 =================
@@ -45,9 +43,6 @@ generate the DH parameter file. On Debian/Ubuntu, simply do:
 For a different OS, please read `Install Docker <https://docs.docker.com/engine/install/>`_, `Install
 docker compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 <https://certbot.eff.org/docs/install.html>`_.
-
-If you want to run docker(-compose) as a regular user, you need to add your user to the ``docker`` group and
-log in again:
 
 .. structured-tutorial-part:: add-docker-group
 

@@ -138,21 +138,21 @@ class PydanticModelDirective(PydanticModelDirectiveBase):
 
         return f"""
 .. tab:: Pydantic
-   
+
    .. code-block:: python
 
 {textwrap.indent(model_code, TAB_INDENT)}
-   
+
 .. tab:: cryptography
 
    .. code-block:: python
-      
+
 {textwrap.indent(cryptography_code, TAB_INDENT)}
 
 .. tab:: JSON
 
    .. code-block:: JSON
-   
+
 {textwrap.indent(model.model_dump_json(indent=4), TAB_INDENT)}
 """
 
@@ -197,9 +197,9 @@ class PydanticProfileExtensionDirective(PydanticModelDirectiveBase):
 
         return f"""
 .. tab:: Python
-    
+
    .. code-block:: python
-   
+
 {textwrap.indent(profile_code, TAB_INDENT)}
 
 .. tab:: YAML

@@ -37,8 +37,8 @@ from devscripts.docker import (
     compose_exec,
     compose_manage,
     compose_status,
-    test_connectivity,
-    validate_container_versions,
+    compose_test_connectivity,
+    compose_validate_container_versions,
 )
 from devscripts.out import err, info, ok
 from devscripts.versions import get_last_version
@@ -171,7 +171,7 @@ POSTGRES_PASSWORD=mysecretpassword
                 errors += compose_status(f"{docker_tag.split(':')[0]}:{last_release}")
 
                 # Make sure we have started the right version
-                validate_container_versions(last_release)
+                compose_validate_container_versions(last_release)
 
                 info("Create test data...")
                 compose_cp(str(standalone_dir / "create-testdata.py"), f"backend:{standalone_dest}")
@@ -245,10 +245,10 @@ POSTGRES_PASSWORD=mysecretpassword
                 errors += compose_status(docker_tag)
 
                 # Make sure we have the new version
-                validate_container_versions(release)
+                compose_validate_container_versions(release)
 
                 # Makse sure we can reach everything
-                test_connectivity()
+                compose_test_connectivity()
 
                 info("Validate test data...")
                 compose_cp(str(validation_script), f"backend:{standalone_dest}")
@@ -289,7 +289,7 @@ def test_acme(release: str, image: str) -> int:
 
             # Start containers
             with _compose_up(env=environ):
-                validate_container_versions(release, env=environ)
+                compose_validate_container_versions(release, env=environ)
                 compose_manage(
                     "backend",
                     "init_ca",

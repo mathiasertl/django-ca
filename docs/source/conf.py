@@ -253,17 +253,19 @@ _tls_cert_root = "/etc/certs/"
 
 # Configuration for structured tutorials
 structured_tutorials_root = Path(_ROOT_DIR) / "tutorials"
-structured_tutorials_context: dict[str, dict[str, Any]] = {"docker-compose/tutorial.yaml": {}}
+structured_tutorials_context: dict[str, dict[str, Any]] = {
+    "compose/tutorial.yaml": {},
+    "docker/tutorial.yaml": {
+        "DJANGO_CA_VERSION": last_version,
+        "DOCKER_TAG": f"mathiasertl/django-ca:{last_version}",
+    },
+}
 
 # Jinja template contexts
 jinja_contexts = {
     "full-requirements-from-source": {
         "base": "Python",
         "how:": "installed via APT",
-    },
-    "full-requirements-in-docker": {
-        "base": "Docker",
-        "how:": "each in a separate Docker container",
     },
     "manage-as-py": {"manage": "python manage.py"},
     "manage-in-docker-compose": {
@@ -274,9 +276,6 @@ jinja_contexts = {
         "path": "~/ca/",
     },
     "manage-from-source": {"manage": "django-ca"},
-    "requirements-as-py": {},
-    "requirements-in-docker": {},
-    "requirements-from-source": {},
     "guide-source-where-to-go": {
         "ca_default_hostname": _ca_default_hostname,
         "ca_url_path": "",
@@ -284,19 +283,6 @@ jinja_contexts = {
         "guide": "from-source",
         "manage": "django-ca",
         "user": "root",
-    },
-    "quickstart-with-docker": {
-        "backend_host": "backend",
-        "beat_host": "beat",
-        "ca_default_hostname": _ca_default_hostname,
-        "docker_tag": "mathiasertl/django-ca",
-        "frontend_host": "frontend",
-        "network": "django-ca",
-        "nginx_host": "nginx",
-        "postgres_host": "postgres",
-        "postgres_password": "password",
-        "redis_host": "redis",
-        "secret_key": "changeme",
     },
     "quickstart-from-source": {
         "ca_default_hostname": _ca_default_hostname,

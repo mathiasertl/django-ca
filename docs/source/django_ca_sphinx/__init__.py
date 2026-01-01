@@ -15,7 +15,6 @@
 
 import typing
 
-from django_ca_sphinx.console_include import ConsoleIncludeDirective
 from django_ca_sphinx.mapping_table import MappingDocumentor
 from django_ca_sphinx.pydantic_model import PydanticModelDirective, PydanticProfileExtensionDirective
 from django_ca_sphinx.template_include import TemplateDirective
@@ -28,7 +27,6 @@ def setup(app: "Sphinx") -> dict[str, bool]:
     """Sphinx setup function."""
     app.add_autodocumenter(MappingDocumentor)
     app.add_directive("template-include", TemplateDirective)
-    app.add_directive("console-include", ConsoleIncludeDirective)
     app.add_directive("pydantic-model", PydanticModelDirective)
     app.add_directive("pydantic-profile-extension", PydanticProfileExtensionDirective)
     return {"parallel_read_safe": True, "parallel_write_safe": True}

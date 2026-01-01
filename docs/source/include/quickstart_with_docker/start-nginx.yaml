@@ -1,9 +1,0 @@
-commands:
-    - command: docker run --name {{ nginx_host }} --network={{ network }} -p 80:80 -v static:/usr/share/nginx/html/static/ -v {{ pwd }}/nginx.conf:/etc/nginx/conf.d/default.conf -d nginx
-      capture_output: true
-      before_command:
-          # Make sure that all dependent containers are properly up
-          - sleep 3
-      clean:
-          - docker kill {{ nginx_host }}
-          - docker rm -f {{ nginx_host }}
