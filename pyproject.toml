@@ -48,8 +48,6 @@ mysql = [
 
 # https://alpinelinux.org/releases/
 alpine = [
-    "3.20",  # until 2026-04-01
-    "3.21",  # until 2026-11-01
     "3.22",  # until 2027-05-01
     "3.23",  # until 2027-11-01
 ]
@@ -57,8 +55,6 @@ alpine = [
 # List of tested Debian releases:
 #   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
 debian-releases = [
-    "bullseye",  # until June 2026
-    "bookworm",  # until June 2028
     "trixie",  # until June 2030
 ]
 
@@ -67,7 +63,6 @@ debian-releases = [
 ubuntu-releases = [
     "jammy",  # 22.04, until 2027-04-21
     "noble",  # 24.04, until 2029-05-31
-    "plucky",  # 25.04, until 2026-01
     "questing",  # 25.10, until 2026-07-09
 ]
 

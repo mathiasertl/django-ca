@@ -89,4 +89,4 @@ Deprecation notices
 * This is the last release to support ``josepy~=2.1.0``.
 * This is the last release to support Alpine 3.20 and Alpine 3.21.
 * This is the last release to support Debian 11 (Bullseye) and Debian 12 (Bookworm).
-* This is the last release to support Ubuntu 24.04 (Plucky Puffin).
+* This is the last release to support Ubuntu 25.04 (Plucky Puffin).
