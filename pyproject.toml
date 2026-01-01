@@ -9,7 +9,8 @@ build-backend = "setuptools.build_meta"
 # https://devguide.python.org/versions/#versions
 python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
-django = ["5.2", "6.0" ]
+django = ["5.2", "6.0"]
+django-lts = "5.2"  # the current LTS version
 cryptography = ["45", "46"]
 acme = ["5.0", "5.1", "5.2"]
 pydantic = ["2.11", "2.12"]
