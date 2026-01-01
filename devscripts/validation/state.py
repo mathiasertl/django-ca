@@ -131,13 +131,14 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
     expected_python = config.PYTHON_RELEASES
     expected_django = config.DJANGO
     expected_cryptography = config.CRYPTOGRAPHY
-    pydantic_versions = config.PYDANTIC
+    expected_pydantic = config.PYDANTIC
 
     # Some versions are treated differently if on a release branch
     if release_branch:
         expected_python = (config.PYTHON_RELEASES[-1],)
         expected_django = (config.RELEASE["django-lts"],)
         expected_cryptography = (config.CRYPTOGRAPHY[-1],)
+        expected_pydantic = (config.PYDANTIC[-1],)
 
     for action_path in Path(".github", "actions").glob("*/action.yaml"):
         check_path(action_path)
@@ -162,7 +163,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
                     elif key == "cryptography-version":
                         errors += simple_diff("cryptography versions", tuple(values), expected_cryptography)
                     elif key == "pydantic-version":
-                        errors += simple_diff("Pydantic versions", tuple(values), pydantic_versions)
+                        errors += simple_diff("Pydantic versions", tuple(values), expected_pydantic)
                     elif key == "debian-version":
                         errors += simple_diff("Debian versions", tuple(values), config.DEBIAN_RELEASES)
                     elif key == "alpine-version":
@@ -189,7 +190,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
                     errors += err(f"    env.NEWEST_PYTHON is {value}.")
                 if key == "NEWEST_CRYPTOGRAPHY" and value != expected_cryptography[-1]:
                     errors += err(f"    env.NEWEST_CRYPTOGRAPHY is {value}.")
-                if key == "NEWEST_PYDANTIC" and value != pydantic_versions[-1]:
+                if key == "NEWEST_PYDANTIC" and value != expected_pydantic[-1]:
                     errors += err(f"    env.NEWEST_PYDANTIC is {value}.")
 
     return errors
