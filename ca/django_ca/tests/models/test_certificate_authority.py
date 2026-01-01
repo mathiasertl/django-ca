@@ -19,7 +19,7 @@ import hashlib
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, NoReturn, cast
 from unittest import mock
 
@@ -585,7 +585,7 @@ def test_sign_certificate_policies_with_invalid_serialized_data(root: Certificat
 @freeze_time(TIMESTAMPS["everything_valid"])
 def test_sign(subject: x509.Name, usable_root: CertificateAuthority) -> None:
     """Test the simplest invocation of the function."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     with assert_sign_cert_signals():
         cert = usable_root.sign(key_backend_options, csr, subject=subject)
@@ -599,7 +599,7 @@ def test_sign_with_non_default_values(subject: x509.Name, usable_root: Certifica
     """Pass non-default parameters."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     algorithm = hashes.SHA256()
-    not_after = datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
+    not_after = datetime.now(tz=UTC) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
     with assert_sign_cert_signals():
         cert = usable_root.sign(
             key_backend_options, csr, subject=subject, algorithm=algorithm, not_after=not_after

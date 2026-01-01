@@ -13,7 +13,7 @@
 
 """Pydantic models representing messages exchanged between various parts of the system."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, Field, JsonValue
@@ -50,7 +50,7 @@ class ResignCertificateMessage(BaseModel):
     )
     not_after: datetime | None = Field(
         description="When the certificate is due to expire, defaults to the CA_DEFAULT_EXPIRES setting.",
-        default_factory=lambda: datetime.now(tz=timezone.utc) + model_settings.CA_DEFAULT_EXPIRES,
+        default_factory=lambda: datetime.now(tz=UTC) + model_settings.CA_DEFAULT_EXPIRES,
         json_schema_extra={"example": DATETIME_EXAMPLE},
     )
 

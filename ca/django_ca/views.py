@@ -23,7 +23,7 @@ import base64
 import binascii
 import logging
 import typing
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any, cast
 
@@ -386,7 +386,7 @@ class OCSPView(View):
         else:
             status = ocsp.OCSPCertStatus.GOOD
 
-        now = datetime.now(tz=tz.utc)
+        now = datetime.now(tz=UTC)
         builder = ocsp.OCSPResponseBuilder()
         expires = self.get_expires(ca, now)
         builder = builder.add_response(
@@ -477,7 +477,7 @@ class GenericOCSPView(OCSPView):
 
         responder_certificate = x509.load_pem_x509_certificate(responder_pem.encode("ascii"))
 
-        now = datetime.now(tz=tz.utc)
+        now = datetime.now(tz=UTC)
         if not (
             responder_certificate.not_valid_before_utc <= now <= responder_certificate.not_valid_after_utc
         ):

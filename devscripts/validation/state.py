@@ -299,7 +299,7 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
 
     actual_py_req = config.PYPROJECT_TOML["project"]["requires-python"]
     if actual_py_req != expected_py_req:
-        errors += err(f"python_requires: Have {actual_py_req}, expected {expected_py_req}")
+        errors += err(f"requires-python: Have {actual_py_req}, expected {expected_py_req}")
 
     # Check project dependencies
     expected_django_req = f"Django>={config.DJANGO[0]}"

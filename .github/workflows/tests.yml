@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         django-version: [ "5.2", "6.0" ]
         cryptography-version: [ "45", "46" ]
         pydantic-version: [ "2.11", "2.12" ]

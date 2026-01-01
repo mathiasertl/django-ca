@@ -13,14 +13,14 @@
 
 """Profile configuration model."""
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.extensions import ConfigurableExtensionModel
 from django_ca.pydantic.type_aliases import DayValidator, PositiveTimedelta, PromiseTypeAlias
-from django_ca.typehints import ConfigurableExtensionKey, Self, SignatureHashAlgorithmName
+from django_ca.typehints import ConfigurableExtensionKey, SignatureHashAlgorithmName
 
 ExtensionKey = ConfigurableExtensionKey
 ExtensionValue = ConfigurableExtensionModel

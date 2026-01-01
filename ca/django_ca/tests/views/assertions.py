@@ -13,7 +13,7 @@
 
 """Assertions related to views."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import cast
 
 from cryptography.hazmat.primitives import hashes
@@ -104,7 +104,7 @@ def assert_ocsp_response(
     # TODO: validate issuer_key_hash, issuer_name_hash
 
     # Check TIMESTAMPS
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     assert response.this_update_utc == now
     assert response.next_update_utc == now + timedelta(seconds=expires)
 

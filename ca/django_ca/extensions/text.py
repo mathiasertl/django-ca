@@ -14,7 +14,7 @@
 """Functions to render extensions as text."""
 
 import textwrap
-from datetime import timezone
+from datetime import UTC
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -207,12 +207,12 @@ def _private_key_usage_period_as_text(
     if value.not_before:
         not_before = value.not_before
         if not_before.tzinfo is None:  # pragma: no branch (value currently is w/o timezone)
-            not_before = not_before.replace(tzinfo=timezone.utc)
+            not_before = not_before.replace(tzinfo=UTC)
         lines.append(f"* Not before: {not_before.isoformat()}")
     if value.not_after:
         not_after = value.not_after
         if not_after.tzinfo is None:  # pragma: no branch (value currently is w/o timezone)
-            not_after = not_after.replace(tzinfo=timezone.utc)
+            not_after = not_after.replace(tzinfo=UTC)
         lines.append(f"* Not after: {not_after.isoformat()}")
     return "\n".join(lines)
 

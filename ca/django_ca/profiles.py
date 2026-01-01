@@ -14,7 +14,7 @@
 """Module for handling certificate profiles."""
 
 from collections.abc import Iterable, Iterator
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from threading import local
 from typing import TYPE_CHECKING, Annotated, Any, cast
 
@@ -224,7 +224,7 @@ class Profile(ProfileConfigurationModel):
                 algorithm = ca.algorithm
 
         # Make sure that expires is a fixed timestamp
-        now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
+        now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
         if isinstance(not_after, timedelta):
             not_after = now + not_after
         elif not_after is None:

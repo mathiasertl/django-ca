@@ -14,7 +14,7 @@
 """Private key implementations that use an HSM in the background."""
 
 import hashlib
-from typing import ClassVar, Generic, NoReturn, TypeVar, cast
+from typing import ClassVar, Generic, NoReturn, Self, TypeVar, cast
 
 import pkcs11
 from pkcs11 import MGF, Mechanism, Session
@@ -35,8 +35,6 @@ from cryptography.hazmat.primitives.asymmetric.padding import (
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import load_der_public_key
-
-from django_ca.typehints import Self
 
 EdwardsPublicKeyTypeVar = TypeVar("EdwardsPublicKeyTypeVar", ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)
 

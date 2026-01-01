@@ -13,14 +13,9 @@
 
 """Collection of directories and constants."""
 
+import tomllib
 import typing
 from pathlib import Path
-
-try:
-    import tomllib
-except ImportError:  # pragma: py<3.11  # tomllib was added in Python 3.11
-    import tomli as tomllib  # type: ignore[no-redef]
-
 
 BASE_DIR = Path(__file__).resolve()
 ROOT_DIR = Path(BASE_DIR).parent.parent

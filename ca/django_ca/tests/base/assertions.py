@@ -19,7 +19,7 @@ import re
 import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import Any, AnyStr, Union
 from unittest.mock import Mock
 
@@ -222,7 +222,7 @@ def assert_crl(  # noqa: PLR0913
     expected = expected or []
     signer = signer or CertificateAuthority.objects.get(name="child")
     extensions = extensions or []
-    now = datetime.now(tz=tz.utc)
+    now = datetime.now(tz=UTC)
     expires_timestamp = (now + timedelta(seconds=expires)).replace(microsecond=0)
 
     if idp is not None:  # pragma: no branch
@@ -481,7 +481,7 @@ def assert_signature(chain: Iterable[CertificateAuthority], cert: Certificate | 
     store = X509Store()
 
     # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
-    now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+    now = datetime.now(tz=UTC).replace(tzinfo=None)
     store.set_time(now)
 
     for elem in chain:

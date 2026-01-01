@@ -21,7 +21,7 @@ import functools
 import json
 import logging
 from collections.abc import Iterator
-from datetime import date, datetime, timezone as tz
+from datetime import UTC, date, datetime
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, Union, cast
 
@@ -1051,7 +1051,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             # NOTE: Use replace() and not astimzeone(), as we want to expire at midnight in UTC time.
             #   astimezone() will assume that the naive datetime object is in the system local time and
             #   convert it to what the system would consider midnight in its local time.
-            not_after = datetime.combine(data["not_after"], datetime.min.time()).replace(tzinfo=tz.utc)
+            not_after = datetime.combine(data["not_after"], datetime.min.time()).replace(tzinfo=UTC)
 
             # Set Subject Alternative Name from form
             extensions: ConfigurableExtensionDict = {}

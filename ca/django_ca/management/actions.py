@@ -17,7 +17,7 @@ import abc
 import argparse
 import getpass
 import typing
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -165,13 +165,13 @@ class DatetimeAction(SingleValueAction[str, datetime]):
         try:
             parsed = datetime.fromisoformat(value)
         except ValueError as ex:
-            example = datetime.now(tz=timezone.utc).isoformat()
+            example = datetime.now(tz=UTC).isoformat()
             raise argparse.ArgumentError(
                 self, f"{value}: Must be a valid ISO 8601 datetime format (example: {example})."
             ) from ex
 
         if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
+            parsed = parsed.replace(tzinfo=UTC)
 
         if self.precision in ("s", "m", "h"):
             parsed = parsed.replace(microsecond=0)

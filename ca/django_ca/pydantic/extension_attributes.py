@@ -15,7 +15,7 @@
 
 import base64
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn, Self
 
 from annotated_types import MaxLen, MinLen
 from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, model_validator
@@ -30,7 +30,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.general_name import GeneralNameModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import Base64EncodedBytes, NonEmptyOrderedSet, OIDType
-from django_ca.typehints import DistributionPointReason, LogEntryTypeName, Self
+from django_ca.typehints import DistributionPointReason, LogEntryTypeName
 
 if TYPE_CHECKING:
     PrivateKeyUsagePeriodValueModelBase = CryptographyModel[x509.PrivateKeyUsagePeriod]

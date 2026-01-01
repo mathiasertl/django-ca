@@ -22,7 +22,7 @@ import json
 import os
 import sys
 import tempfile
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -108,7 +108,7 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
     # below. If you use freezegun in a test and log in the setUp method (before freezegun freezes time),
     # the session starts with the current, real time. Django ignores sessions that start in the future, so
     # tests that use the test client would fail if "everything_valid" is in the future.
-    now = datetime.now(tz.utc).replace(second=0, minute=0, microsecond=0) - timedelta(days=25)
+    now = datetime.now(UTC).replace(second=0, minute=0, microsecond=0) - timedelta(days=25)
 
     # Reverse a path, any path, to make sure that the URL config is loaded early on. This is necessary because
     # CertificateAuthority.objects.init() reverses URLs at a time when freezegun is active. reverse() loads

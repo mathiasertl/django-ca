@@ -14,7 +14,7 @@
 """Template tags used by the admin interface."""
 
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from cryptography import x509
@@ -47,7 +47,7 @@ register.filter("signed_certificate_timestamp_values", signed_certificate_timest
 def utc(value: datetime) -> datetime:
     """Attach a utc timezone to the given datetime if no tzinfo is set."""
     if value.tzinfo is None:  # pragma: no cover # we always pass a TZ currently.
-        value = value.replace(tzinfo=timezone.utc)
+        value = value.replace(tzinfo=UTC)
     return value
 
 

@@ -14,7 +14,7 @@
 """Test the import_ca management command."""
 
 import typing
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 from unittest import mock
@@ -373,7 +373,7 @@ def test_with_leading_zero_serial(tmpcadir: Path, subject: x509.Name, serial: in
     with open(key_path, "rb") as stream:
         key = load_der_private_key(stream.read(), password=None)
 
-    not_after = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    not_after = datetime.now(tz=UTC) + timedelta(days=30)
     builder = get_cert_builder(not_after, serial=serial)
     builder = builder.public_key(key.public_key())  # type: ignore[arg-type]
     builder = builder.issuer_name(subject)

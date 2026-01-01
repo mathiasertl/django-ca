@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
 from pydantic import BaseModel
@@ -833,17 +833,17 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
         )
 
         # Compute last_update/next_update timestamps
-        last_update = datetime.now(tz=tz.utc).replace(microsecond=0)
+        last_update = datetime.now(tz=UTC).replace(microsecond=0)
         if next_update is None:
             next_update = last_update + timedelta(days=1)
         else:
             next_update = next_update.replace(microsecond=0)
 
         if settings.USE_TZ is False:
-            last_update = timezone.make_naive(last_update, timezone=tz.utc)
+            last_update = timezone.make_naive(last_update, timezone=UTC)
 
             if timezone.is_aware(next_update):
-                next_update = timezone.make_naive(next_update, timezone=tz.utc)
+                next_update = timezone.make_naive(next_update, timezone=UTC)
 
         # Initialize builder
         builder = x509.CertificateRevocationListBuilder()

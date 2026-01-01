@@ -17,7 +17,7 @@ import abc
 import io
 import sys
 import typing
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from cryptography import x509
@@ -559,7 +559,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
 
         if expires is None:
             expires = profile.expires
-        parsed_expires = datetime.now(tz=tz.utc).replace(second=0, microsecond=0) + expires
+        parsed_expires = datetime.now(tz=UTC).replace(second=0, microsecond=0) + expires
 
         if ca.not_after < parsed_expires:
             max_days = (ca.not_after - timezone.now()).days

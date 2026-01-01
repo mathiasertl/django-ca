@@ -17,7 +17,7 @@
 
 import argparse
 from argparse import ArgumentParser
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 import freezegun
@@ -38,12 +38,12 @@ def parser() -> argparse.ArgumentParser:
 @pytest.mark.parametrize(
     ("value", "expected"),
     (
-        ("2011-11-04", datetime(2011, 11, 4, 0, 0, tzinfo=timezone.utc)),
-        ("2011-11-04T00:05:23", datetime(2011, 11, 4, 0, 5, 23, tzinfo=timezone.utc)),
-        ("2011-11-04T00:05:23+00:00", datetime(2011, 11, 4, 0, 5, 23, tzinfo=timezone.utc)),
+        ("2011-11-04", datetime(2011, 11, 4, 0, 0, tzinfo=UTC)),
+        ("2011-11-04T00:05:23", datetime(2011, 11, 4, 0, 5, 23, tzinfo=UTC)),
+        ("2011-11-04T00:05:23+00:00", datetime(2011, 11, 4, 0, 5, 23, tzinfo=UTC)),
         # pragma: only py<3.11: Z is only supported with python 3.11
         # ("2011-11-04T00:05:23Z", datetime(2011, 11, 4, 0, 5, 23, tzinfo=timezone.utc)),
-        ("2011-11-04 00:05:23.283+00:00", datetime(2011, 11, 4, 0, 5, 23, 283000, tzinfo=timezone.utc)),
+        ("2011-11-04 00:05:23.283+00:00", datetime(2011, 11, 4, 0, 5, 23, 283000, tzinfo=UTC)),
     ),
 )
 def test_action(parser: ArgumentParser, value: str, expected: datetime) -> None:
@@ -54,10 +54,10 @@ def test_action(parser: ArgumentParser, value: str, expected: datetime) -> None:
 @pytest.mark.parametrize(
     ("precision", "value", "expected"),
     (
-        (None, "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, 5, 23, 283000, tzinfo=timezone.utc)),
-        ("s", "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, 5, 23, tzinfo=timezone.utc)),
-        ("m", "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, 5, tzinfo=timezone.utc)),
-        ("h", "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, tzinfo=timezone.utc)),
+        (None, "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, 5, 23, 283000, tzinfo=UTC)),
+        ("s", "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, 5, 23, tzinfo=UTC)),
+        ("m", "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, 5, tzinfo=UTC)),
+        ("h", "2011-11-04T01:05:23.283+00:00", datetime(2011, 11, 4, 1, tzinfo=UTC)),
     ),
 )
 def test_precision(precision: Literal["s", "m", "h"] | None, value: str, expected: datetime) -> None:

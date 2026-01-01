@@ -18,7 +18,7 @@ import itertools
 import os
 import typing
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -363,7 +363,7 @@ class GetCertBuilderTestCase(TestCase):
     def test_basic(self) -> None:
         """Basic tests."""
         # pylint: disable=protected-access; only way to test builder attributes
-        after = datetime(2020, 10, 23, 11, 21, tzinfo=tz.utc)
+        after = datetime(2020, 10, 23, 11, 21, tzinfo=UTC)
         builder = get_cert_builder(after)
         assert builder._not_valid_before == datetime(2018, 11, 3, 11, 21)
         assert builder._not_valid_after == datetime(2020, 10, 23, 11, 21)
@@ -372,7 +372,7 @@ class GetCertBuilderTestCase(TestCase):
     @freeze_time("2021-01-23 14:42:11.1234")
     def test_datetime(self) -> None:
         """Basic tests."""
-        expires = datetime.now(tz.utc) + timedelta(days=10)
+        expires = datetime.now(UTC) + timedelta(days=10)
         assert expires.second != 0
         assert expires.microsecond != 0
         expires_expected = datetime(2021, 2, 2, 14, 42)
@@ -383,7 +383,7 @@ class GetCertBuilderTestCase(TestCase):
     @freeze_time("2021-01-23 14:42:11.1234")
     def test_serial(self) -> None:
         """Test manually setting a serial."""
-        after = datetime(2022, 10, 23, 11, 21, tzinfo=tz.utc)
+        after = datetime(2022, 10, 23, 11, 21, tzinfo=UTC)
         builder = get_cert_builder(after, serial=123)
         assert builder._serial_number == 123  # pylint: disable=protected-access
         assert builder._not_valid_after == datetime(2022, 10, 23, 11, 21)  # pylint: disable=protected-access
@@ -392,7 +392,7 @@ class GetCertBuilderTestCase(TestCase):
     def test_negative_datetime(self) -> None:
         """Test passing a datetime in the past."""
         with pytest.raises(ValueError, match=r"^not_after must be in the future$"):
-            get_cert_builder(datetime.now(tz.utc) - timedelta(seconds=60))
+            get_cert_builder(datetime.now(UTC) - timedelta(seconds=60))
 
     def test_invalid_type(self) -> None:
         """Test passing an invalid type."""

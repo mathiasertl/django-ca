@@ -14,7 +14,7 @@
 """Test Pydantic models for extensions."""
 
 import re
-from datetime import datetime, timezone as tz
+from datetime import UTC, datetime
 from typing import Any, get_args
 
 from pydantic import ValidationError
@@ -1511,9 +1511,9 @@ def test_precert_poison_errors() -> None:
 @pytest.mark.parametrize(
     ("not_before", "not_after"),
     (
-        (datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc), datetime(2025, 7, 5, 11, 51, tzinfo=tz.utc)),
-        (None, datetime(2025, 7, 5, 11, 51, tzinfo=tz.utc)),
-        (datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc), None),
+        (datetime(2025, 7, 5, 11, 50, tzinfo=UTC), datetime(2025, 7, 5, 11, 51, tzinfo=UTC)),
+        (None, datetime(2025, 7, 5, 11, 51, tzinfo=UTC)),
+        (datetime(2025, 7, 5, 11, 50, tzinfo=UTC), None),
     ),
 )
 @pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (45,), reason="cryptography check was added in version 45")
@@ -1542,8 +1542,8 @@ def test_private_key_usage_period(
         (
             {
                 "value": {
-                    "not_after": datetime(2025, 7, 5, 11, 50, tzinfo=tz.utc),
-                    "not_before": datetime(2025, 7, 5, 11, 51, tzinfo=tz.utc),
+                    "not_after": datetime(2025, 7, 5, 11, 50, tzinfo=UTC),
+                    "not_before": datetime(2025, 7, 5, 11, 51, tzinfo=UTC),
                 }
             },
             [

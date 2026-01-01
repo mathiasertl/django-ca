@@ -24,7 +24,7 @@ import logging
 import secrets
 import typing
 from collections.abc import Iterable
-from datetime import datetime, timezone as tz
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Generic, TypeVar, cast
 
@@ -720,7 +720,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
 
     def acme_request(self, message: NewOrder, slug: str | None = None) -> AcmeResponseOrderCreated:
         """Process ACME request."""
-        now = datetime.now(tz.utc)
+        now = datetime.now(UTC)
 
         # josepy message classes define field names as class variables, but instance attributes are of the
         # same type (similar to Django). So we cast josepy fields to the actual type.
@@ -749,7 +749,7 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
 
         expires = order.expires
         if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
-            expires = expires.replace(tzinfo=tz.utc)
+            expires = expires.replace(tzinfo=UTC)
 
         response = AcmeResponseOrderCreated(
             authorizations=authorizations,
@@ -788,7 +788,7 @@ class AcmeOrderView(AcmePostAsGetView):
 
         expires = order.expires
         if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
-            expires = expires.replace(tzinfo=tz.utc)
+            expires = expires.replace(tzinfo=UTC)
 
         authorizations = order.authorizations.url()  # type: ignore[attr-defined]
         if order.status in [AcmeOrder.STATUS_VALID, AcmeOrder.STATUS_INVALID]:
@@ -929,10 +929,10 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
 
         expires = order.expires
         if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
-            expires = expires.replace(tzinfo=tz.utc)
+            expires = expires.replace(tzinfo=UTC)
 
         authorizations = order.authorizations.url().all()  # type: ignore[attr-defined]
-        for auth in authorizations:  # pragma: no branch  # py3.9 does not recognize this.
+        for auth in authorizations:
             if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
@@ -1019,7 +1019,7 @@ class AcmeAuthorizationView(AcmePostAsGetView):
 
         expires = auth.expires
         if expires.tzinfo is None:  # acme.Order requires a timezone-aware object
-            expires = expires.replace(tzinfo=tz.utc)
+            expires = expires.replace(tzinfo=UTC)
 
         # RFC8555, section 7.5.1:
         #

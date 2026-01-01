@@ -16,7 +16,7 @@
 """Test the revoking certificates via the API."""
 
 import base64
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -222,7 +222,7 @@ def test_with_not_after(
     usable_root.api_enabled = True
     usable_root.save()
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     not_after = now + timedelta(days=12)
     data = {"not_after": not_after.isoformat()}
 

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
-python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+python = ["3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
@@ -139,7 +139,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -154,7 +153,7 @@ classifiers = [
 dynamic = ["version", "readme"]
 
 # Dependency information
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "Django~=5.2.0;python_version<'3.12'",
     "Django>=5.2;python_version>='3.12'",

@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from datetime import datetime, timezone as tz
+from datetime import UTC, datetime
 from typing import Any
 
 from django.conf import settings
@@ -40,7 +40,7 @@ class Command(CertCommandMixin, BaseCommand):
         super().add_arguments(parser)
 
         # Get a good example timestamp in for the help text
-        example = datetime.now(tz=tz.utc).replace(microsecond=0, second=0).isoformat()
+        example = datetime.now(tz=UTC).replace(microsecond=0, second=0).isoformat()
 
         group = parser.add_argument_group("Revocation information")
         group.add_argument("--reason", action=ReasonAction, help="An optional reason for revocation.")
@@ -62,7 +62,7 @@ class Command(CertCommandMixin, BaseCommand):
             raise CommandError(f"{compromised.isoformat()}: Timestamp requires a timezone.")
 
         # Make sure that the certificate was compromised in the past
-        if compromised is not None and compromised > datetime.now(tz=tz.utc):
+        if compromised is not None and compromised > datetime.now(tz=UTC):
             raise CommandError(f"{compromised.isoformat()}: Timestamp must be in the past.")
 
         # If compromised is passed and USE_TZ=False, convert the timestamp to a tz-naive timestamp

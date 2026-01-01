@@ -18,7 +18,7 @@ from collections.abc import Iterable
 from copy import deepcopy
 from datetime import timedelta
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, Annotated, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Generic, Self, TypeVar
 
 from annotated_types import Ge, Le
 from pydantic import (
@@ -50,7 +50,7 @@ from django_ca.pydantic.type_aliases import (
     UniqueElementsTuple,
 )
 from django_ca.pydantic.validators import crl_scope_validator, name_oid_parser, timedelta_as_number_parser
-from django_ca.typehints import ParsableKeyType, Self, SignatureHashAlgorithm
+from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 
 # BeforeValidator currently does not work together with Le(), see:
 #   https://github.com/pydantic/pydantic/issues/10459

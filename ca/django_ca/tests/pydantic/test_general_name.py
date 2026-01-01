@@ -15,7 +15,7 @@
 
 import ipaddress
 import re
-from datetime import datetime, timezone as tz
+from datetime import UTC, datetime
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Any
 
@@ -52,10 +52,10 @@ def test_doctests() -> None:
         ("BOOLEAN", True, b"\x01\x01\xff"),
         ("BOOL", True, b"\x01\x01\xff"),
         ("BOOLEAN", False, b"\x01\x01\x00"),
-        ("UTCTIME", datetime(2021, 10, 5, 22, 1, 4, tzinfo=tz.utc), b"\x17\r211005220104Z"),
-        ("UTC", datetime(2021, 10, 5, 22, 1, 4, tzinfo=tz.utc), b"\x17\r211005220104Z"),
-        ("GENERALIZEDTIME", datetime(2021, 10, 5, 22, 1, 4, tzinfo=tz.utc), b"\x18\x0f20211005220104Z"),
-        ("GENTIME", datetime(2021, 10, 5, 22, 1, 4, tzinfo=tz.utc), b"\x18\x0f20211005220104Z"),
+        ("UTCTIME", datetime(2021, 10, 5, 22, 1, 4, tzinfo=UTC), b"\x17\r211005220104Z"),
+        ("UTC", datetime(2021, 10, 5, 22, 1, 4, tzinfo=UTC), b"\x17\r211005220104Z"),
+        ("GENERALIZEDTIME", datetime(2021, 10, 5, 22, 1, 4, tzinfo=UTC), b"\x18\x0f20211005220104Z"),
+        ("GENTIME", datetime(2021, 10, 5, 22, 1, 4, tzinfo=UTC), b"\x18\x0f20211005220104Z"),
         ("NULL", None, b"\x05\x00"),
         ("INTEGER", 0, b"\x02\x01\x00"),
         ("INTEGER", 1, b"\x02\x01\x01"),

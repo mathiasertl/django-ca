@@ -16,7 +16,7 @@
 import io
 import typing
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
 from cryptography import x509
@@ -107,7 +107,7 @@ def test_with_serial(usable_root: CertificateAuthority) -> None:
     certificate = assert_key(usable_root)
 
     # test expiry of the certificate
-    now = datetime.now(tz=timezone.utc).replace(microsecond=0, second=0)
+    now = datetime.now(tz=UTC).replace(microsecond=0, second=0)
     expected_expires = now + timedelta(days=usable_root.ocsp_responder_key_validity)
     assert certificate.not_valid_after_utc == expected_expires
 

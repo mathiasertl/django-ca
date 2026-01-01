@@ -19,7 +19,7 @@
 import logging
 import typing
 from collections.abc import Callable, Iterable
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, cast
 
@@ -78,7 +78,6 @@ except ImportError:
         return cast("Proxy[TaskParamSpec, TaskReturnSpec]", func)
 
 
-# pragma: only py<3.10: Use typing.ParamSpec for better type hinting
 def run_task(
     task: "Proxy[TaskParamSpec, TaskReturnSpec]",
     *args: "TaskParamSpec.args",
@@ -404,7 +403,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         if timezone.is_naive(not_after):
             not_after = timezone.make_aware(not_after)
     else:
-        not_after = datetime.now(tz=tz.utc) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        not_after = datetime.now(tz=UTC) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
 
     csr = acme_cert.parse_csr()
 

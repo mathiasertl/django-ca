@@ -14,7 +14,7 @@
 """Test the revoke_cert management command."""
 
 import re
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 
 from django.test import TestCase
 from django.utils import timezone
@@ -76,14 +76,14 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
     def test_with_compromised(self) -> None:
         """Test revoking the certificate with a compromised date."""
-        now = datetime.now(tz=tz.utc)
+        now = datetime.now(tz=UTC)
         self.revoke(self.cert, arguments=["--compromised", now.isoformat()])
         assert self.cert.compromised == now
 
     def test_with_compromised_with_use_tz_is_false(self) -> None:
         """Test revoking the certificate with a compromised date with USE_TZ=False."""
         with self.settings(USE_TZ=False):
-            now = datetime.now(tz=tz.utc)
+            now = datetime.now(tz=UTC)
             self.revoke(self.cert, arguments=["--compromised", now.isoformat()])
             assert self.cert.compromised == timezone.make_naive(now)
 
@@ -122,7 +122,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
     def test_compromised_with_future_datetime(self) -> None:
         """Test passing a datetime in the future (which is an error)."""
-        now = datetime.now(tz=tz.utc).replace(microsecond=0) + timedelta(days=1)
+        now = datetime.now(tz=UTC).replace(microsecond=0) + timedelta(days=1)
         iso_format = re.escape(now.isoformat())  # tz-aware iso 8601 timestamp has regex special characters
         with assert_command_error(rf"{iso_format}: Timestamp must be in the past\."):
             cmd("revoke_cert", self.cert.serial, compromised=now)

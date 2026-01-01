@@ -18,8 +18,9 @@ import os
 import re
 import shutil
 import sys
+import tomllib
 import typing
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any, cast
@@ -38,11 +39,6 @@ import django
 from django_ca.constants import EXTENSION_KEYS
 from django_ca.tests.base.typehints import CsrDict, KeyDict, PubDict
 from django_ca.utils import add_colons, bytes_to_hex
-
-try:
-    import tomllib
-except ImportError:  # pragma: only py<3.11
-    import tomli as tomllib  # type: ignore[no-redef]
 
 
 def _load_versions(versions: list[str]) -> tuple[tuple[int, int], ...]:
@@ -415,7 +411,7 @@ for _name, _cert_data in CERT_DATA.items():
 # Calculate some fixed timestamps that we reuse throughout the tests
 TIMESTAMPS = {
     "base": datetime.fromisoformat(FIXTURES_DATA["timestamp"]),
-    "before_everything": datetime(1990, 1, 1, tzinfo=tz.utc),
+    "before_everything": datetime(1990, 1, 1, tzinfo=UTC),
 }
 TIMESTAMPS["before_cas"] = TIMESTAMPS["base"] - timedelta(days=1)
 TIMESTAMPS["before_child"] = TIMESTAMPS["base"] + timedelta(days=1)
@@ -428,7 +424,7 @@ _root_cert: x509.Certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
 _time_base = _root_cert.not_valid_before_utc
 
 TIMESTAMPS["everything_valid"] = TIMESTAMPS["base"] + timedelta(days=23)
-TIMESTAMPS["everything_valid_naive"] = TIMESTAMPS["everything_valid"].astimezone(tz.utc).replace(tzinfo=None)
+TIMESTAMPS["everything_valid_naive"] = TIMESTAMPS["everything_valid"].astimezone(UTC).replace(tzinfo=None)
 TIMESTAMPS["cas_expired"] = TIMESTAMPS["base"] + timedelta(days=731, seconds=3600)
 TIMESTAMPS["ca_certs_expiring"] = CERT_DATA["root-cert"]["valid_until"] - timedelta(days=3)
 TIMESTAMPS["ca_certs_expired"] = CERT_DATA["root-cert"]["valid_until"] + timedelta(seconds=3600)

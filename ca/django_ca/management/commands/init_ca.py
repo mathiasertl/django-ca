@@ -17,7 +17,7 @@
 """
 
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -397,7 +397,7 @@ class Command(
             if timezone.is_naive(not_after_datetime):
                 not_after_datetime = timezone.make_aware(not_after_datetime)
         else:
-            not_after_datetime = datetime.now(tz=tz.utc) + expires
+            not_after_datetime = datetime.now(tz=UTC) + expires
 
         if parent and not parent.allows_intermediate_ca:
             raise CommandError("Parent CA cannot create intermediate CA due to path length restrictions.")

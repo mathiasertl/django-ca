@@ -17,7 +17,7 @@ import binascii
 import re
 import typing
 from collections.abc import Iterable
-from datetime import datetime, timezone as tz
+from datetime import UTC, datetime
 from ipaddress import ip_address, ip_network
 
 import idna
@@ -585,10 +585,10 @@ def parse_other_name(name: str) -> x509.OtherName:
                 f"Unsupported {asn_typ} specification for otherName: {asn1_value}: Must be TRUE or FALSE"
             )
     elif asn_typ in ("UTC", "UTCTIME"):
-        parsed_datetime = datetime.strptime(asn1_value, "%y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
+        parsed_datetime = datetime.strptime(asn1_value, "%y%m%d%H%M%SZ").replace(tzinfo=UTC)
         der_value = asn1crypto.core.UTCTime(parsed_datetime).dump()
     elif asn_typ in ("GENTIME", "GENERALIZEDTIME"):
-        parsed_datetime = datetime.strptime(asn1_value, "%Y%m%d%H%M%SZ").replace(tzinfo=tz.utc)
+        parsed_datetime = datetime.strptime(asn1_value, "%Y%m%d%H%M%SZ").replace(tzinfo=UTC)
         der_value = asn1crypto.core.GeneralizedTime(parsed_datetime).dump()
     elif asn_typ == "NULL":
         if asn1_value:
@@ -803,7 +803,7 @@ def get_cert_builder(not_after: datetime, serial: int | None = None) -> x509.Cer
         Serial for the certificate. If not passed, a serial will be randomly generated using
         :py:func:`~cg:cryptography.x509.random_serial_number`.
     """
-    now = datetime.now(tz.utc).replace(second=0, microsecond=0)
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
 
     # NOTE: Explicitly passing a serial is used when creating a CA, where we want to add extensions where the
     # value references the serial.
@@ -819,8 +819,8 @@ def get_cert_builder(not_after: datetime, serial: int | None = None) -> x509.Cer
     not_after = not_after.replace(second=0, microsecond=0)
 
     # cryptography expects timezone-naive objects in UTC, so we convert them.
-    now = timezone.make_naive(now, timezone=tz.utc)
-    not_after = timezone.make_naive(not_after, timezone=tz.utc)
+    now = timezone.make_naive(now, timezone=UTC)
+    not_after = timezone.make_naive(not_after, timezone=UTC)
 
     builder = x509.CertificateBuilder()
     builder = builder.not_valid_before(now)

@@ -15,11 +15,10 @@
 
 import abc
 import logging
-import typing
 from collections.abc import Iterator, Sequence
 from datetime import datetime
 from threading import local
-from typing import Annotated, Any, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Generic, Self, TypeVar, cast
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -50,14 +49,12 @@ from django_ca.typehints import (
     SignatureHashAlgorithmName,
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django_ca.models import CertificateAuthority
 
 
 log = logging.getLogger(__name__)
 
-# NOTE: Self only needed before Python3.11, replace with typing.Self then
-Self = TypeVar("Self", bound="KeyBackend[BaseModel,BaseModel,BaseModel]")  # pragma: only py<3.11
 CreatePrivateKeyOptionsTypeVar = TypeVar("CreatePrivateKeyOptionsTypeVar", bound=BaseModel)
 UsePrivateKeyOptionsTypeVar = TypeVar("UsePrivateKeyOptionsTypeVar", bound=BaseModel)
 StorePrivateKeyOptionsTypeVar = TypeVar("StorePrivateKeyOptionsTypeVar", bound=BaseModel)
@@ -70,7 +67,7 @@ class CreatePrivateKeyOptionsBaseModel(BaseModel):
     key_size: Annotated[PowerOfTwoInt, Field(ge=model_settings.CA_MIN_KEY_SIZE)] | None = None
 
     @model_validator(mode="after")
-    def validate_key_size(self) -> "typing.Self":
+    def validate_key_size(self) -> Self:
         """Validate that the key size is not set for invalid key types."""
         if self.key_type in ("RSA", "DSA") and self.key_size is None:
             self.key_size = model_settings.CA_DEFAULT_KEY_SIZE
@@ -113,9 +110,7 @@ class KeyBackendBase:
 
 class KeyBackend(
     KeyBackendBase,
-    typing.Generic[
-        CreatePrivateKeyOptionsTypeVar, StorePrivateKeyOptionsTypeVar, UsePrivateKeyOptionsTypeVar
-    ],
+    Generic[CreatePrivateKeyOptionsTypeVar, StorePrivateKeyOptionsTypeVar, UsePrivateKeyOptionsTypeVar],
     metaclass=abc.ABCMeta,
 ):
     """Base class for all key storage backends.
@@ -124,10 +119,10 @@ class KeyBackend(
     """
 
     #: Title used for the ArgumentGroup in :command:`manage.py init_ca`.
-    title: typing.ClassVar[str]
+    title: ClassVar[str]
 
     #: Description used for the ArgumentGroup in :command:`manage.py init_ca`.
-    description: typing.ClassVar[str]
+    description: ClassVar[str]
 
     #: The Pydantic model representing the options used for loading a private key.
     use_model: type[UsePrivateKeyOptionsTypeVar]
@@ -538,7 +533,7 @@ class KeyBackendsProxy(Generic[BackendTypeVar]):
 
     def __getitem__(self, name: str) -> BackendTypeVar:
         try:
-            return typing.cast(BackendTypeVar, self._backends.backends[name])
+            return cast(BackendTypeVar, self._backends.backends[name])
         except AttributeError:
             self._backends.backends = {}  # first backend is loaded
         except KeyError:

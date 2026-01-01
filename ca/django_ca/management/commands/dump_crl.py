@@ -16,7 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from cryptography import x509
@@ -101,7 +101,7 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
     ) -> None:
         key_backend_options, _algorithm = self.get_signing_options(ca, ca.algorithm, options)
 
-        next_update = datetime.now(tz=tz.utc) + expires
+        next_update = datetime.now(tz=UTC) + expires
         only_some_reasons = None
         if reasons is not None:
             only_some_reasons = frozenset([x509.ReasonFlags[reason] for reason in reasons])

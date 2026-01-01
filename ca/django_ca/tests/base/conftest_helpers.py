@@ -17,7 +17,7 @@ import os
 import shutil
 import sys
 import typing
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -329,7 +329,7 @@ def generate_hsm_ca_fixture(
             key_backend_options=key_backend_options,
             key_type=key_type,
             subject=subject,
-            not_after=datetime.now(tz=timezone.utc) + timedelta(days=720),
+            not_after=datetime.now(tz=UTC) + timedelta(days=720),
         )
         assert isinstance(ca.key_backend, HSMBackend)
         return ca

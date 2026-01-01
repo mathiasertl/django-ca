@@ -70,6 +70,7 @@ from typing import (  # noqa: UP035  # see typing.Type usage below
     ClassVar,
     Literal,
     NoReturn,
+    Self,
     Type,
     TypeVar,
     cast,
@@ -118,7 +119,6 @@ from django_ca.typehints import (
     InformationAccessTypeVar,
     KeyUsage,
     NoValueExtensionTypeVar,
-    Self,
     SerializedPydanticExtension,
     SignedCertificateTimestampTypeVar,
 )

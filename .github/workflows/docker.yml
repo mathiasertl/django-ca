@@ -51,7 +51,7 @@ jobs:
       DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         debian-version: [ "bullseye", "bookworm", "trixie" ]
         exclude:
           # python:3.14-slim-bullseye is not built.
@@ -88,7 +88,7 @@ jobs:
     strategy:
       matrix:
         alpine-version: [ "3.20", "3.21", "3.22", "3.23" ]
-        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         exclude:
           # python:3.14-alpine3.20 is not built.
           - python-version: "3.14"

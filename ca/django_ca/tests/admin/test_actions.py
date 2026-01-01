@@ -17,7 +17,7 @@ import json
 import typing
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any, Union
 from unittest import mock
@@ -335,7 +335,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
     def test_with_compromised(self) -> None:
         """Test revoking a certificate with a revocation date."""
-        value = datetime.now(tz=tz.utc) - timedelta(days=1)
+        value = datetime.now(tz=UTC) - timedelta(days=1)
         data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
 
         with self.mockSignals():

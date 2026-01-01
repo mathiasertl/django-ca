@@ -13,7 +13,7 @@
 
 """Test the resign_cert management command."""
 
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -139,7 +139,7 @@ def test_all_extensions_certificate(all_extensions: Certificate) -> None:
 @pytest.mark.usefixtures("usable_root")
 def test_with_expires(root_cert: Certificate) -> None:
     """Test resigning a cert with custom expiry."""
-    now = datetime.now(tz=tz.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     new = resign_cert(root_cert.serial, expires=timedelta(days=21), stderr="")
     assert_resigned(root_cert, new)
     assert_equal_ext(root_cert, new)

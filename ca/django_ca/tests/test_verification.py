@@ -20,7 +20,7 @@ import subprocess
 import tempfile
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from cryptography import x509
@@ -78,7 +78,7 @@ def assert_scope(
 def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
     """Create a CA."""
     subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
-    kwargs.setdefault("not_after", datetime.now(tz=tz.utc) + timedelta(days=365 * 2))
+    kwargs.setdefault("not_after", datetime.now(tz=UTC) + timedelta(days=365 * 2))
     key_backend = key_backends["default"]
     key_backend_options = StoragesCreatePrivateKeyOptions(
         key_type="RSA", password=None, path="ca", key_size=1024

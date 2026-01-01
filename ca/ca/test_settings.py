@@ -15,7 +15,7 @@
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from django.utils.crypto import get_random_string
@@ -219,7 +219,7 @@ with open(BASE_DIR / "django_ca" / "tests" / "fixtures" / "cert-data.json", enco
 
 
 # PKCS11 settings
-_timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S")
+_timestamp = datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
 PKCS11_PATH = os.environ.get("PKCS11_LIBRARY", "/usr/lib/softhsm/libsofthsm2.so")
 PKCS11_TOKEN_LABEL = f"pytest.{_timestamp}.{get_random_string(8)}"
 PKCS11_SO_PIN = "so-pin-1234"

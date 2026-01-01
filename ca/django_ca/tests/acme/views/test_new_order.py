@@ -15,7 +15,7 @@
 
 # pylint: disable=redefined-outer-name  # because of fixtures
 
-from datetime import timedelta, timezone as tz
+from datetime import UTC, timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -118,9 +118,9 @@ def test_not_before_not_after(
     not_after = timezone.now() + timedelta(days=3)
 
     if timezone.is_naive(not_before):
-        not_before = timezone.make_aware(not_before, timezone=tz.utc)
+        not_before = timezone.make_aware(not_before, timezone=UTC)
     if timezone.is_naive(not_after):
-        not_after = timezone.make_aware(not_after, timezone=tz.utc)
+        not_after = timezone.make_aware(not_after, timezone=UTC)
 
     msg = NewOrder(
         identifiers=[{"type": "dns", "value": SERVER_NAME}], not_before=not_before, not_after=not_after

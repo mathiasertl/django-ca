@@ -24,7 +24,7 @@
 import argparse
 import os
 import sys
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -134,7 +134,7 @@ if args.env != "frontend":
     print("* User for admin interface: user / nopass")
     User.objects.create_superuser(username="user", password="nopass")
     key_backend = key_backends["default"]
-    not_after = datetime.now(tz=tz.utc) + timedelta(days=365)
+    not_after = datetime.now(tz=UTC) + timedelta(days=365)
 
     rsa_root = CertificateAuthority.objects.init(
         "rsa.example.com",

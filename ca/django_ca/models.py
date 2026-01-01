@@ -23,7 +23,7 @@ import random
 import re
 import typing
 from collections.abc import Iterable, Iterator
-from datetime import datetime, timedelta, timezone as tz
+from datetime import UTC, datetime, timedelta
 from typing import Optional, cast
 
 import josepy as jose
@@ -360,7 +360,7 @@ class X509CertMixin(DjangoCAModel):
 
         if timezone.is_naive(self.compromised):
             # convert datetime object to UTC and make it naive
-            return timezone.make_aware(self.compromised, timezone=tz.utc)
+            return timezone.make_aware(self.compromised, timezone=UTC)
 
         return self.compromised
 
@@ -376,7 +376,7 @@ class X509CertMixin(DjangoCAModel):
 
         if timezone.is_naive(revoked_date):
             # convert datetime object to UTC and make it naive
-            revoked_date = timezone.make_aware(revoked_date, timezone=tz.utc)
+            revoked_date = timezone.make_aware(revoked_date, timezone=UTC)
 
         return revoked_date.replace(microsecond=0)
 
@@ -391,8 +391,8 @@ class X509CertMixin(DjangoCAModel):
         self.not_before = value.not_valid_before_utc
 
         if settings.USE_TZ is False:
-            self.not_after = timezone.make_naive(self.not_after, timezone=tz.utc)
-            self.not_before = timezone.make_naive(self.not_before, timezone=tz.utc)
+            self.not_after = timezone.make_naive(self.not_after, timezone=UTC)
+            self.not_before = timezone.make_naive(self.not_before, timezone=UTC)
 
         self.serial = int_to_hex(value.serial_number)  # upper-cased by int_to_hex()
 
@@ -653,7 +653,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
            Support for passing a custom hash algorithm to this function was removed.
         """
         for crl_profile in model_settings.CA_CRL_PROFILES.values():
-            now = datetime.now(tz=tz.utc)
+            now = datetime.now(tz=UTC)
 
             # If there is an override for the current CA, create a new profile model with values updated from
             # the override.
@@ -904,7 +904,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             expire within :ref:`CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
             <settings-ca-ocsp-responder-certificate-renewal>`.
         """
-        now = datetime.now(tz=tz.utc)
+        now = datetime.now(tz=UTC)
         key_type = self.key_type
         algorithm = self.algorithm
         not_after = now + timedelta(days=self.ocsp_responder_key_validity)
@@ -1171,7 +1171,7 @@ class CertificateRevocationList(DjangoCAModel):
         if self.data is None:
             raise ValueError("CRL is not yet generated for this object.")
 
-        now = datetime.now(tz=tz.utc)
+        now = datetime.now(tz=UTC)
         if self.loaded.next_update_utc is not None:
             expires_seconds = int((self.loaded.next_update_utc - now).total_seconds())
         else:  # pragma: no cover  # we never generate CRLs without a next_update flag.
@@ -1663,7 +1663,7 @@ class AcmeChallenge(DjangoCAModel):
             return None
 
         if timezone.is_naive(self.validated):
-            return timezone.make_aware(self.validated, timezone=tz.utc)
+            return timezone.make_aware(self.validated, timezone=UTC)
         return self.validated
 
     @property

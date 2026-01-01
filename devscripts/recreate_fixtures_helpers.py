@@ -20,7 +20,7 @@ import json
 import os
 import shutil
 from collections.abc import Sequence
-from datetime import datetime, timezone as tz
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -297,7 +297,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
                 key_backend,
                 key_backend_options,
                 subject=NameModel.model_validate(data[name]["subject"]).cryptography,
-                not_after=datetime.now(tz=tz.utc) + data[name]["not_after"],
+                not_after=datetime.now(tz=UTC) + data[name]["not_after"],
                 key_type=data[name]["key_type"],
                 algorithm=data[name].get("algorithm"),
                 path_length=data[name]["path_length"],
@@ -401,7 +401,7 @@ def create_special_certs(  # noqa: PLR0915
     if delay:
         freeze_now += data[name]["delta"]
     with freeze_time(freeze_now):
-        no_ext_now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        no_ext_now = datetime.now(tz=UTC).replace(tzinfo=None)
         pwd = data[ca.name].get("password")
         subject = NameModel.model_validate(data[name]["subject"]).cryptography
 
@@ -486,7 +486,7 @@ def create_special_certs(  # noqa: PLR0915
     if delay:
         freeze_now += data[name]["delta"]
     with freeze_time(freeze_now):
-        no_ext_now = datetime.now(tz=tz.utc).replace(tzinfo=None)
+        no_ext_now = datetime.now(tz=UTC).replace(tzinfo=None)
         pwd = data[ca.name].get("password")
 
         builder = x509.CertificateBuilder()

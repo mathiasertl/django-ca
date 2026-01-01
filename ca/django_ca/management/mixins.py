@@ -19,7 +19,7 @@ import shutil
 import sys
 import textwrap
 import typing
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Generic, NoReturn
 
 from pydantic import BaseModel, ValidationError
@@ -368,7 +368,7 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
 
     def output_status(self, cert: X509CertMixin) -> None:
         """Output certificate status."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if cert.revoked:
             self.stdout.write("* Status: Revoked")
         elif cert.pub.loaded.not_valid_after_utc < now:
