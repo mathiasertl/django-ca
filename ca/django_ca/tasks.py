@@ -21,7 +21,7 @@ import typing
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, cast, overload
 
 import requests
 
@@ -67,15 +67,51 @@ except ImportError:
     if TYPE_CHECKING:
         from celery.local import Proxy
 
+    @overload  # type: ignore[no-redef]
     def shared_task(
         func: "Callable[TaskParamSpec, TaskReturnSpec]",
-    ) -> "Proxy[TaskParamSpec, TaskReturnSpec]":
+    ) -> "Proxy[TaskParamSpec, TaskReturnSpec]": ...
+
+    @overload
+    def shared_task(
+        *args: Any,
+        **kwargs: Any,
+    ) -> "Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]": ...
+
+    def shared_task(
+        *args: Any,
+        **kwargs: Any,
+    ) -> (
+        "Proxy[TaskParamSpec, TaskReturnSpec]"
+        | "Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]"
+    ):
         """Dummy decorator so that we can use the decorator whether celery is installed or not."""
-        # We do not yet need this, but might come in handy in the future:
-        # func.delay = lambda *a, **kw: func(*a, **kw)
-        # func.apply_async = lambda *a, **kw: func(*a, **kw)
-        func.delay = func  # type: ignore[attr-defined]
-        return cast("Proxy[TaskParamSpec, TaskReturnSpec]", func)
+
+        def create_shared_task(
+            **options: Any,
+        ) -> "Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]":
+            def __inner(
+                func: "Callable[TaskParamSpec, TaskReturnSpec]",
+            ) -> "Proxy[TaskParamSpec, TaskReturnSpec]":
+                # We do not yet need this, but might come in handy in the future:
+                # func.delay = lambda *a, **kw: func(*a, **kw)
+                # func.apply_async = lambda *a, **kw: func(*a, **kw)
+
+                func.delay = func  # type: ignore[attr-defined]
+                return cast("Proxy[TaskParamSpec, TaskReturnSpec]", func)
+
+            return __inner
+
+        if len(args) == 1 and callable(args[0]):
+            # called without braces, e.g.
+            #   @shared_task
+            #   def ...
+            return create_shared_task(**kwargs)(args[0])
+
+        # called WITH braches, e.g.
+        #   @shared_task()
+        #   def ...
+        return create_shared_task(*args, **kwargs)
 
 
 def run_task(
@@ -92,7 +128,7 @@ def run_task(
     return task(*args, **kwargs)
 
 
-@shared_task
+@shared_task()
 def cache_crl(serial: str, key_backend_options: dict[str, JSON] | None = None) -> None:
     """Task to cache the CRL for a given CA."""
     if key_backend_options is None:
