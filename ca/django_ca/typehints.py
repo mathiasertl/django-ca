@@ -16,7 +16,7 @@
 import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeAliasType, TypedDict, TypeVar
 
 import packaging.version
 
@@ -44,7 +44,7 @@ else:  # pragma: only py>=3.12
 
 
 #: JSON serializable data.
-JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+JSON = TypeAliasType("JSON", "dict[str, JSON] | list[JSON] | str | int | float | bool | None")
 
 
 class OCSPKeyBackendDict(TypedDict):
