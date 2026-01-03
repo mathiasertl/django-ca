@@ -18,10 +18,9 @@
 
 import logging
 import typing
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, cast, overload
 
 import requests
 
@@ -32,6 +31,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from django_ca.acme.validation import validate_dns_01
+from django_ca.celery import DjangoCaTask, run_task, shared_task
+from django_ca.celery.messages import CacheCrlCeleryMessage
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
 from django_ca.models import (
@@ -56,87 +57,12 @@ from django_ca.utils import parse_general_name
 log = logging.getLogger(__name__)
 
 
-if TYPE_CHECKING:
-    # This module comes from our stubs
-    from celery.typehints import TaskParamSpec, TaskReturnSpec
-
-try:
-    from celery import shared_task
-    from celery.local import Proxy
-except ImportError:
-    if TYPE_CHECKING:
-        from celery.local import Proxy
-
-    @overload  # type: ignore[no-redef]
-    def shared_task(
-        func: "Callable[TaskParamSpec, TaskReturnSpec]",
-    ) -> "Proxy[TaskParamSpec, TaskReturnSpec]": ...
-
-    @overload
-    def shared_task(
-        *args: Any,
-        **kwargs: Any,
-    ) -> "Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]": ...
-
-    def shared_task(
-        *args: Any,
-        **kwargs: Any,
-    ) -> (
-        "Proxy[TaskParamSpec, TaskReturnSpec]"
-        | "Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]"
-    ):
-        """Dummy decorator so that we can use the decorator whether celery is installed or not."""
-
-        def create_shared_task(
-            **options: Any,
-        ) -> "Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]":
-            def __inner(
-                func: "Callable[TaskParamSpec, TaskReturnSpec]",
-            ) -> "Proxy[TaskParamSpec, TaskReturnSpec]":
-                # We do not yet need this, but might come in handy in the future:
-                # func.delay = lambda *a, **kw: func(*a, **kw)
-                # func.apply_async = lambda *a, **kw: func(*a, **kw)
-
-                func.delay = func  # type: ignore[attr-defined]
-                return cast("Proxy[TaskParamSpec, TaskReturnSpec]", func)
-
-            return __inner
-
-        if len(args) == 1 and callable(args[0]):
-            # called without braces, e.g.
-            #   @shared_task
-            #   def ...
-            return create_shared_task(**kwargs)(args[0])
-
-        # called WITH braches, e.g.
-        #   @shared_task()
-        #   def ...
-        return create_shared_task(*args, **kwargs)
-
-
-def run_task(
-    task: "Proxy[TaskParamSpec, TaskReturnSpec]",
-    *args: "TaskParamSpec.args",
-    **kwargs: "TaskParamSpec.kwargs",
-) -> Any:
-    """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
-    eager = kwargs.pop("eager", False)
-
-    if model_settings.CA_USE_CELERY is True and eager is False:
-        return task.delay(*args, **kwargs)
-
-    return task(*args, **kwargs)
-
-
-@shared_task()
-def cache_crl(serial: str, key_backend_options: dict[str, JSON] | None = None) -> None:
+@shared_task(base=DjangoCaTask)
+def cache_crl(data: CacheCrlCeleryMessage) -> None:
     """Task to cache the CRL for a given CA."""
-    if key_backend_options is None:
-        key_backend_options = {}
-
-    ca = CertificateAuthority.objects.get(serial=serial)
+    ca = CertificateAuthority.objects.get(serial=data.serial)
     key_backend_options_model = ca.key_backend.use_model.model_validate(
-        key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
+        data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
     )
     ca.cache_crls(key_backend_options_model)
 
@@ -158,7 +84,10 @@ def cache_crls(
 
     for serial in serials:
         try:
-            run_task(cache_crl, serial, key_backend_options=key_backend_options.get(serial, {}))
+            cache_crl_args = CacheCrlCeleryMessage(
+                serial=serial, key_backend_options=key_backend_options.get(serial, {})
+            )
+            run_task(cache_crl, data=cache_crl_args)
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in cache_crl()

@@ -37,12 +37,13 @@ from django_ca.api.schemas import (
     RevokeCertificateSchema,
 )
 from django_ca.api.utils import get_certificate_authority
+from django_ca.celery import run_task
 from django_ca.constants import ExtensionOID
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.profiles import Profile, profiles
 from django_ca.pydantic.certificate import DjangoCertificateAuthorityModel, DjangoCertificateModel
 from django_ca.pydantic.messages import ResignCertificateMessage, SignCertificateMessage
-from django_ca.tasks import api_sign_certificate as sign_certificate_task, run_task
+from django_ca.tasks import api_sign_certificate as sign_certificate_task
 
 api = NinjaAPI(title="django-ca API", version=__version__, urls_namespace="django_ca:api")
 

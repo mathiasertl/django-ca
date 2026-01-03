@@ -1,4 +1,5 @@
 import typing
+from typing import Any
 
 from celery.app import shared_task
 
@@ -15,7 +16,20 @@ class Celery:
         force: bool = False,
     ) -> None: ...
 
+class Task:
+    name: str
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+    def run(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+    def delay(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
 __all__ = (
     "Celery",
+    'Task',
     "shared_task",
 )

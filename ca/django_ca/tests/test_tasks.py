@@ -13,9 +13,7 @@
 
 """Basic tests for various celery tasks."""
 
-import importlib
 import io
-import types
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import timedelta
@@ -46,35 +44,6 @@ from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
 
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
-
-
-class TestBasic(TestCaseMixin, TestCase):
-    """Test the basic handling of celery tasks."""
-
-    def test_missing_celery(self) -> None:
-        """Test that we work even if celery is not installed."""
-        # negative assertion to make sure that the IsInstance assertion below is actually meaningful
-        assert not isinstance(tasks.cache_crl, types.FunctionType)
-
-        try:
-            with mock.patch.dict("sys.modules", celery=None):
-                importlib.reload(tasks)
-                assert isinstance(tasks.cache_crl, types.FunctionType)
-        finally:
-            # Make sure that module is reloaded, or any failed test in the try block will cause *all other
-            # tests* to fail, because the celery import would be cached to *not* work
-            importlib.reload(tasks)
-
-    def test_run_task(self) -> None:
-        """Test our run_task wrapper."""
-        # run_task() without celery
-        with self.settings(CA_USE_CELERY=False), self.patch("django_ca.tasks.cache_crls") as task_mock:
-            tasks.run_task(tasks.cache_crls)
-            assert task_mock.call_count == 1
-
-        # finally, run_task() with celery
-        with self.settings(CA_USE_CELERY=True), self.mute_celery((((), {}), {})):
-            tasks.run_task(tasks.cache_crls)
 
 
 class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):

@@ -23,12 +23,13 @@ from pydantic import ValidationError
 
 from django.core.management.base import CommandError, CommandParser
 
+from django_ca.celery import run_task
 from django_ca.conf import model_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.messages import GenerateOCSPKeyMessage
-from django_ca.tasks import generate_ocsp_key, run_task
+from django_ca.tasks import generate_ocsp_key
 from django_ca.utils import add_colons
 
 

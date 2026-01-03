@@ -21,7 +21,7 @@ import pytest
 from django_ca.utils import get_type_hint
 
 
-def _func(a: int, b: str | None) -> None:
+def _func(a: int, b: str | None, c: str | int) -> None:  # pylint: disable=unused-argument
     pass
 
 
@@ -35,10 +35,10 @@ class _Test:
     (
         (_func, "a", int, False),
         (_func, "b", str, True),
-        (_Test._func, "a", bool, False),
-        (_Test._func, "b", float, True),
-        (_Test()._func, "a", bool, False),
-        (_Test()._func, "b", float, True),
+        (_Test._func, "a", bool, False),  # pylint: disable=protected-access
+        (_Test._func, "b", float, True),  # pylint: disable=protected-access
+        (_Test()._func, "a", bool, False),  # pylint: disable=protected-access
+        (_Test()._func, "b", float, True),  # pylint: disable=protected-access
     ),
 )
 def test_get_type_hint(
@@ -49,3 +49,11 @@ def test_get_type_hint(
     type_hint, optional = get_type_hint(type_hints[arg])
     assert type_hint is expected
     assert optional is expected_optional
+
+
+def test_alternatives() -> None:
+    """Test alternatives (is check fails in this case)."""
+    type_hints = get_type_hints(_func)
+    type_hint, optional = get_type_hint(type_hints["c"])
+    assert type_hint == str | int
+    assert optional is False

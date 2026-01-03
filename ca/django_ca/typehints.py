@@ -16,7 +16,7 @@
 import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Any, Literal, TypeAliasType, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, TypeVar
 
 import packaging.version
 

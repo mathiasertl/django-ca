@@ -16,9 +16,3 @@ def shared_task(
     *args: Any,
     **kwargs: Any,
 ) -> Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]: ...
-
-# def shared_task(
-#     #func: "Callable[TaskParamSpec, TaskReturnSpec]",
-#     *args: Any,
-#     **kwargs: Any,
-# ) -> Callable[TaskParamSpec, TaskReturnSpec]: ...

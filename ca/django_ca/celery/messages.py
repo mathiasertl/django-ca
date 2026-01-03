@@ -11,19 +11,17 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Test the cache_crl task."""
+"""Messages for Celery tasks."""
 
-import pytest
+from pydantic import Field
 
-from django_ca.celery.messages import CacheCrlCeleryMessage
-from django_ca.models import CertificateAuthority
-from django_ca.tasks import cache_crl
-from django_ca.tests.tasks.conftest import assert_crls
-
-pytestmark = [pytest.mark.usefixtures("clear_cache")]
+from django_ca.celery import CeleryMessageModel
+from django_ca.pydantic.type_aliases import Serial
+from django_ca.typehints import JSON
 
 
-def test_basic(usable_root: CertificateAuthority) -> None:
-    """Test the most basic invocation."""
-    cache_crl(CacheCrlCeleryMessage(serial=usable_root.serial))
-    assert_crls(usable_root)
+class CacheCrlCeleryMessage(CeleryMessageModel):
+    """Parameters for ``django_ca.tasks.cache_crl``."""
+
+    serial: Serial
+    key_backend_options: dict[str, JSON] = Field(default_factory=dict)

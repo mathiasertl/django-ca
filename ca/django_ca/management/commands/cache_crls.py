@@ -19,8 +19,9 @@
 import argparse
 from typing import Any
 
+from django_ca.celery import run_task
 from django_ca.management.base import BaseCommand
-from django_ca.tasks import cache_crls, run_task
+from django_ca.tasks import cache_crls
 
 
 class Command(BaseCommand):

@@ -51,7 +51,9 @@ def test_with_expired_certificate_authorities(usable_cas: list[CertificateAuthor
 
 def test_with_key_options(usable_pwd: CertificateAuthority) -> None:
     """Test passing the password explicitly."""
-    cache_crls([usable_pwd.serial], {usable_pwd.serial: {"password": CERT_DATA["pwd"]["password"]}})
+    password: bytes = CERT_DATA["pwd"]["password"]
+    encoded_password = base64.b64encode(password).decode("ascii")
+    cache_crls([usable_pwd.serial], {usable_pwd.serial: {"password": encoded_password}})
     assert_crls(usable_pwd)
 
 

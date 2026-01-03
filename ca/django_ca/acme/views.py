@@ -67,6 +67,7 @@ from django_ca.acme.responses import (
     AcmeResponseUnsupportedMediaType,
 )
 from django_ca.acme.utils import parse_acme_csr
+from django_ca.celery import run_task
 from django_ca.conf import model_settings
 from django_ca.constants import REASON_CODES
 from django_ca.models import (
@@ -80,7 +81,7 @@ from django_ca.models import (
 )
 from django_ca.pydantic.validators import email_validator
 from django_ca.querysets import AcmeAccountQuerySet
-from django_ca.tasks import acme_issue_certificate, acme_validate_challenge, run_task
+from django_ca.tasks import acme_issue_certificate, acme_validate_challenge
 from django_ca.utils import check_name, int_to_hex
 
 log = logging.getLogger(__name__)
