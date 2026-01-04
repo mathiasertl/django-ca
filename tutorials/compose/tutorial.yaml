@@ -104,6 +104,7 @@ parts:
               -f {{ orig_cwd }}/Dockerfile{% if DOCKER_IMAGE_VARIANT == "alpine" %}.alpine{% endif %} \
               -t {{ DOCKER_TAG }} \
               --build-arg DJANGO_CA_VERSION={{ RELEASE }} \
+              --build-arg COVERAGE_ARGS="--no-cov" \
               {{ orig_cwd }}
           {%- else -%}
             # Not building image (BUILD_IMAGE=n), using {{ DOCKER_TAG }}.
