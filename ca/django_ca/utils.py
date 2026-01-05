@@ -15,10 +15,12 @@
 
 import binascii
 import re
+import types
 import typing
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from ipaddress import ip_address, ip_network
+from typing import Any, Union, get_args, get_origin
 
 import idna
 
@@ -870,3 +872,14 @@ def get_crl_cache_key(
         f"crl_{serial}_{encoding.name}_{only_contains_ca_certs}_{only_contains_user_certs}_"
         f"{only_contains_attribute_certs}_{reasons}"
     )
+
+
+def get_type_hint(type_hint: Any) -> tuple[type[Any], bool]:
+    """Get (nested) type hint for the given model."""
+    origin = get_origin(type_hint)
+    if origin is Union or origin is types.UnionType:  # pragma: only py<3.14: origin is UnionType in Py<3.14
+        args = get_args(type_hint)
+        non_none = [a for a in args if a is not types.NoneType]
+        if len(non_none) == 1:
+            return non_none[0], True
+    return type_hint, False
