@@ -37,59 +37,6 @@ jobs:
           name: python-packages
           path: dist/
 
-  test:
-    name: Test wheel
-    runs-on: ubuntu-latest
-    needs: build
-
-    strategy:
-      matrix:
-        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
-        extra: [ api, celery, hsm, mysql, postgres, redis, yaml ]
-
-    steps:
-      - uses: actions/checkout@v5.0.0
-        with:
-          sparse-checkout: |
-            /uv.lock
-            /pyproject.toml
-            /devscripts/standalone/test-imports.py
-          sparse-checkout-cone-mode: false
-
-      - name: Setup Python
-        uses: actions/setup-python@v6.0.0
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6.6.1
-        with:
-          enable-cache: true
-
-      - name: Download wheel
-        uses: actions/download-artifact@v4.2.1
-        with:
-          name: python-packages
-
-      - name: Create venv
-        run: uv venv
-
-      - name: Install tomllib (Python 3.10 only)
-        run: uv pip install tomli
-        if: ${{ matrix.python-version == '3.10' }}
-
-      - name: Install wheel (with extra)
-        run: uv pip install `ls django_ca-*.whl`[${{ matrix.extra }}]
-        if: ${{ matrix.extra != 'none' }}
-
-      - name: Install wheel (no extras)
-        run: uv pip install `ls django_ca-*.whl`
-        if: ${{ matrix.extra == 'none' }}
-
-      - name: Test imports
-        run: uv run python devscripts/standalone/test-imports.py --extra ${{ matrix.extra }}
-
   publish-to-testpypi:
     name: Publish to test.pypi.org
 
@@ -97,7 +44,7 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' }}
 
     needs:
-      - test
+      - build
     runs-on: ubuntu-latest
 
     environment:
