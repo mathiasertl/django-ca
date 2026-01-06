@@ -20,7 +20,7 @@ from django_ca.conf import model_settings
 from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.extensions import ConfigurableExtensionModel
-from django_ca.pydantic.type_aliases import Serial
+from django_ca.pydantic.type_aliases import CSRType, Serial
 from django_ca.typehints import JSON, SignatureHashAlgorithm, SignatureHashAlgorithmName
 
 
@@ -42,7 +42,7 @@ class ApiSignCertificateMessage(CeleryMessageModel):
     """Parameters for ``django_ca.tasks.api_sign_certificate``."""
 
     order_pk: int
-    csr: bytes
+    csr: CSRType
     subject: NameModel
     algorithm: SignatureHashAlgorithmName | None = None
     not_after: AwareDatetime | None = None

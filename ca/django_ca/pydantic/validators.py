@@ -16,7 +16,7 @@
 import base64
 import binascii
 from collections.abc import Callable, Iterable, Sequence
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, TypeVar
 from urllib.parse import urlsplit
 
@@ -254,6 +254,13 @@ def serial_validator(value: str) -> str:
     value = value.replace(":", "").upper()
     if value != "0":
         value = value.lstrip("0")
+    return value
+
+
+def future_validator(value: datetime) -> datetime:
+    """Validate that the given datetime is in the future."""
+    if value <= datetime.now(UTC):
+        raise ValueError(f"{value} must be in the future")
     return value
 
 

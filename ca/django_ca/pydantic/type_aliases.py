@@ -18,7 +18,7 @@ from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
 from annotated_types import Ge
-from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer
+from pydantic import AfterValidator, AwareDatetime, BeforeValidator, Field, PlainSerializer
 
 from cryptography import x509
 
@@ -28,11 +28,13 @@ from django_ca.pydantic.validators import (
     base64_str_validator,
     bytes_to_base64_str_validator,
     elliptic_curve_validator,
+    future_validator,
     int_to_hex_parser,
     is_power_two_validator,
     non_empty_validator,
     oid_parser,
     oid_validator,
+    pem_csr_validator,
     reason_flag_crl_scope_validator,
     reason_flag_validator,
     serial_validator,
@@ -96,10 +98,14 @@ Serial = Annotated[
 
 NonEmptyOrderedSetTypeVar = TypeVar("NonEmptyOrderedSetTypeVar", bound=list[Any])
 
-#: A string that will convert :py:class:`~cg:cryptography.x509.ObjectIdentifier` objects.
-#:
-#: This type alias will also validate the x509 dotted string format.
+
 OIDType = Annotated[str, BeforeValidator(oid_parser), AfterValidator(oid_validator)]
+"""A string that will convert :py:class:`~cg:cryptography.x509.ObjectIdentifier` objects.
+
+This type alias will also validate the x509 dotted string format."""
+
+CSRType = Annotated[bytes, AfterValidator(pem_csr_validator)]
+"""Bytes value that verifies that the value at least looks like a CSR from the PEM headers."""
 
 AnnotatedEllipticCurveName = Annotated[EllipticCurveName, BeforeValidator(elliptic_curve_validator)]
 """Annotated version of :py:attr:`~django_ca.typehints.EllipticCurveName`.
@@ -121,6 +127,11 @@ AnnotatedSignatureHashAlgorithmNameWithLegacy = Annotated[
 ]
 """Same as :attr:`~django_ca.pydantic.type_aliases.AnnotatedSignatureHashAlgorithmName`, but also accepts
 legacy algorithms."""
+
+# NOTE: pydantics FutureDatetime does not work with freezegun:
+#   https://github.com/pydantic/pydantic/issues/11209
+FutureAwareDatetime = Annotated[AwareDatetime, AfterValidator(future_validator)]
+"""A datetime that is timezone-aware and in the future."""
 
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
 PositiveTimedelta = Annotated[timedelta, Ge(timedelta(seconds=0))]

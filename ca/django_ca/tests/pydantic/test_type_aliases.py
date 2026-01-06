@@ -14,6 +14,7 @@
 """Test type aliases for Pydantic from django_ca.pydantic.type_aliases."""
 
 import json
+from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel, ConfigDict
 
@@ -22,7 +23,7 @@ from django.utils.translation import gettext_lazy
 
 import pytest
 
-from django_ca.pydantic.type_aliases import Base64EncodedBytes, PromiseTypeAlias, Serial
+from django_ca.pydantic.type_aliases import Base64EncodedBytes, FutureAwareDatetime, PromiseTypeAlias, Serial
 
 
 class JSONSerializableBytesModel(BaseModel):
@@ -35,6 +36,12 @@ class SerialModel(BaseModel):
     """Test class to test the Serial type alias."""
 
     value: Serial
+
+
+class FutureAwareDatetimeModel(BaseModel):
+    """TEst model to test FutureAwareDatetime."""
+
+    value: FutureAwareDatetime
 
 
 class PromiseModel(BaseModel):
@@ -125,3 +132,24 @@ def test_promise_type_alias(value: str, validated: Promise) -> None:
     json_data = json.dumps({"value": value})
     assert PromiseModel.model_validate_json(json_data).value == validated
     assert PromiseModel.model_validate_json(json_data, strict=True).value == validated
+
+
+def test_future_aware_datetime() -> None:
+    """Test FutureAwareDatetime."""
+    future = datetime.now(UTC) + timedelta(days=1)
+    model = FutureAwareDatetimeModel(value=future)
+    assert model.value == future
+
+
+def test_future_aware_datetime_with_past_date() -> None:
+    """Test FutureAwareDatetime with a datetime in the past."""
+    future = datetime.now(UTC) - timedelta(days=1)
+    with pytest.raises(ValueError, match="must be in the future"):
+        FutureAwareDatetimeModel(value=future)
+
+
+def test_future_aware_datetime_with_unaware_datetime() -> None:
+    """Test FutureAwareDatetime with an unaware datetime."""
+    future = datetime.now() + timedelta(days=1)
+    with pytest.raises(ValueError, match="Input should have timezone info"):
+        FutureAwareDatetimeModel(value=future)
