@@ -31,26 +31,33 @@ ENV VIRTUAL_ENV=/usr/src/django-ca/.venv
 
 FROM base AS build
 
-# Install uv: https://docs.astral.sh/uv/guides/integration/docker/
-COPY --from=uv /uv /uvx /bin/
-
-COPY ca/django_ca/__init__.py ca/django_ca/
-COPY pyproject.toml uv.lock ./
-COPY docs/source/intro.rst docs/source/intro.rst
-
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean &&  \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-         build-essential libpq-dev libmariadb-dev pkg-config
+         build-essential libpq-dev libmariadb-dev pkg-config softhsm2
 
+# Install uv: https://docs.astral.sh/uv/guides/integration/docker/
+COPY --from=uv /uv /uvx /bin/
 ENV UV_PYTHON_PREFERENCE=only-system
 ENV UV_LINK_MODE=copy
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LOCKED=1
+
+RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --all-extras --no-default-groups --group gunicorn --group DjangoLTS --no-install-project
+
+COPY ca/django_ca/__init__.py ca/django_ca/
+COPY pyproject.toml uv.lock ./
+COPY docs/source/intro.rst docs/source/intro.rst
+
 ARG DJANGO_CA_VERSION
 ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION
 RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
-    uv sync --frozen --all-extras --no-default-groups --group gunicorn --group DjangoLTS --compile-bytecode
+    uv sync --all-extras --no-default-groups --group gunicorn --group DjangoLTS
 
 ##############
 # Test stage #
@@ -60,14 +67,8 @@ ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
 
 # Install additional requirements for testing:
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
-    --mount=target=/var/cache/apt,type=cache,sharing=locked \
-    rm -f /etc/apt/apt.conf.d/docker-clean &&  \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        softhsm2
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --all-extras --group dev
+    uv sync --all-extras --no-default-groups  --group dev
 
 # Copy sources (doctests are run by test suite, CA files are used in tests)
 COPY ca/ ca/
@@ -102,7 +103,7 @@ RUN rm -rf ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.exam
 
 # Test that imports are working
 RUN python devscripts/standalone/clean.py
-RUN DJANGO_CA_SECRET_KEY=dummy python devscripts/standalone/test-imports.py --all-extras
+RUN DJANGO_CA_SECRET_KEY=dummy devscripts/standalone/test-imports.py --all-extras
 
 # Finally, clean up to minimize the image
 RUN python devscripts/standalone/clean.py

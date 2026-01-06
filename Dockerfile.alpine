@@ -26,29 +26,34 @@ RUN addgroup -g 9000 -S django-ca && \
 
 # Activate the virtual environment (even if it's not created yet).
 ENV PATH="/usr/src/django-ca/.venv/bin:$PATH"
+ENV VIRTUAL_ENV=/usr/src/django-ca/.venv
 
 FROM base AS build
-
-# Install uv: https://docs.astral.sh/uv/guides/integration/docker/
-COPY --from=uv /uv /uvx /bin/
 
 RUN --mount=type=cache,target=/etc/apk/cache apk add \
         build-base linux-headers libffi libffi-dev openssl-dev \
         pcre-dev mailcap mariadb-connector-c-dev postgresql-dev cargo
 
-COPY ca/django_ca/__init__.py ca/django_ca/
-COPY pyproject.toml uv.lock ./
-COPY --chown=django-ca:django-ca docs/source/intro.rst docs/source/intro.rst
-
+# Install uv: https://docs.astral.sh/uv/guides/integration/docker/
+COPY --from=uv /uv /uvx /bin/
 ENV UV_PYTHON_PREFERENCE=only-system
 ENV UV_LINK_MODE=copy
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LOCKED=1
+
+RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-alpine \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --all-extras --no-default-groups --group gunicorn --group DjangoLTS --no-install-project
+
+COPY ca/django_ca/__init__.py ca/django_ca/
+COPY pyproject.toml uv.lock ./
+COPY docs/source/intro.rst docs/source/intro.rst
+
 ARG DJANGO_CA_VERSION
 ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION
 RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-alpine \
-    uv sync --frozen --all-extras --no-default-groups --group gunicorn --group=DjangoLTS --compile-bytecode
-
-# Finally, copy sources
-COPY ca/ ca/
+    uv sync --all-extras --no-default-groups --group gunicorn --group DjangoLTS
 
 ##############
 # Test stage #
@@ -59,23 +64,16 @@ ENV SQLITE_NAME=:memory:
 
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --all-extras --group dev
+    uv sync --all-extras --no-default-groups  --group dev
 
-# copy this late so that changes do not trigger a cache miss during build
-COPY pyproject.toml ./
-COPY --chown=django-ca:django-ca ca/ ca/
-
-# Create some files/directories that we need later on
-RUN mkdir -p /var/lib/django-ca/
-RUN chown django-ca:django-ca /var/lib/django-ca/ /usr/src/django-ca/ca
-
-# From here on, we run as normal user
-USER django-ca:django-ca
-
-# doctests are run by test suite, CA files are also loaded
+# Copy sources (doctests are run by test suite, CA files are used in tests)
+COPY ca/ ca/
 COPY docs/source/django_ca_sphinx/ docs/source/django_ca_sphinx/
 COPY docs/source/_files/ docs/source/_files/
 COPY docs/source/python/ docs/source/python/
+
+# Run tests as normal user to assert that no write-access is required.
+USER django-ca:django-ca
 
 # Finally run tests
 ARG FAIL_UNDER=100
@@ -96,7 +94,7 @@ COPY gunicorn/ gunicorn/
 COPY nginx/ nginx/
 RUN mkdir ca/conf/local/
 
-COPY devscripts/ devscripts/
+COPY devscripts/standalone/ devscripts/standalone/
 
 RUN rm -rf ca/django_ca/tests ca/ca/test_settings.py ca/ca/localsettings.py.example
 
@@ -110,7 +108,7 @@ RUN rm -rf pyproject.toml ca/django_ca/migrations/pyproject.toml devscripts/pypr
 RUN python devscripts/standalone/check-clean-docker.py --ignore-devscripts
 RUN rm -rf devscripts/
 
-# Seems like with BuildKit, the test stage is never executed unless we somehow depend on it
+# With BuildKit, the test stage is never executed unless we depend on it
 COPY --from=test /tmp/.coverage-sentinel /tmp
 
 ###############
@@ -121,7 +119,7 @@ FROM base
 RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/django-ca/ \
              /var/lib/django-ca/certs/ca/shared /var/lib/django-ca/certs/ocsp \
              /var/lib/django-ca/shared /var/lib/django-ca/nginx/templates/ \
-            /run/django-ca && \
+             /run/django-ca && \
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/ /run/django-ca/ && \
     chmod 0700 /run/django-ca/
 

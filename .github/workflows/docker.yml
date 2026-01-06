@@ -53,11 +53,17 @@ jobs:
       matrix:
         python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         debian-version: [ "trixie" ]
+    permissions:
+      contents: read
+      actions: write
 
     steps:
       # buildx is required for docker build cache reuse
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.12.0
+        with:
+          driver: docker-container
+      - run: docker buildx ls
       - name: Acquire sources
         uses: actions/checkout@v5.0.0
       - name: Build test stage
@@ -67,11 +73,12 @@ jobs:
           push: false
           tags: test.${{ matrix.python-version }}
           target: test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=test-${{ matrix.python-version }}-${{ matrix.debian-version }}
+          cache-to: type=gha,mode=max,scope=test-${{ matrix.python-version }}-${{ matrix.debian-version }}
+          # NOTE: Use 0.0.0 as version to improve cache-reuse
           build-args: |
             IMAGE=python:${{ matrix.python-version }}-slim-${{ matrix.debian-version }}
-            DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
+            DJANGO_CA_VERSION=0.0.0+py${{ matrix.python-version }}
             COVERAGE_ARGS=--no-cov
 
   test-alpine:
@@ -85,11 +92,17 @@ jobs:
       matrix:
         alpine-version: [ "3.22", "3.23" ]
         python-version: [ "3.11", "3.12", "3.13", "3.14" ]
+    permissions:
+      contents: read
+      actions: write
 
     steps:
       # buildx is required for docker build cache reuse
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.12.0
+        with:
+          driver: docker-container
+      - run: docker buildx ls
       - name: Acquire sources
         uses: actions/checkout@v5.0.0
       - name: Build test stage
@@ -100,11 +113,12 @@ jobs:
           tags: test.${{ matrix.python-version }}
           target: test
           file: Dockerfile.alpine
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=test-alpine-${{ matrix.python-version }}-${{ matrix.alpine-version }}
+          cache-to: type=gha,mode=max,scope=test-alpine-${{ matrix.python-version }}-${{ matrix.alpine-version }}
+          # NOTE: Use 0.0.0 as version to improve cache-reuse
           build-args: |
             IMAGE=python:${{ matrix.python-version }}-alpine${{ matrix.alpine-version }}
-            DJANGO_CA_VERSION=${{ env.DJANGO_CA_VERSION }}+py${{ matrix.python-version }}
+            DJANGO_CA_VERSION=0.0.0+py${{ matrix.python-version }}
             COVERAGE_ARGS=--no-cov
 
   build:
