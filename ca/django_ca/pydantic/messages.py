@@ -18,16 +18,13 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, Field, JsonValue
 
-from cryptography import x509
-
 from django_ca.conf import model_settings
-from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.pydantic.base import DATETIME_EXAMPLE
 from django_ca.pydantic.extensions import ConfigurableExtensionModel
 from django_ca.pydantic.name import NameModel
 from django_ca.pydantic.type_aliases import Serial
 from django_ca.pydantic.validators import pem_csr_validator
-from django_ca.typehints import ConfigurableExtension, SignatureHashAlgorithm, SignatureHashAlgorithmName
+from django_ca.typehints import SignatureHashAlgorithmName
 
 
 class GenerateOCSPKeyMessage(BaseModel):
@@ -83,20 +80,3 @@ class SignCertificateMessage(ResignCertificateMessage):
         json_schema_extra={"enum": list(sorted(model_settings.CA_PROFILES))},
     )
     subject: NameModel = Field(description="The subject as list of name attributes.")
-
-    def get_algorithm(self) -> SignatureHashAlgorithm | None:
-        """Get algorithm class if set."""
-        if self.algorithm is not None:
-            return SIGNATURE_HASH_ALGORITHM_TYPES[self.algorithm]()
-        return None
-
-    def get_csr(self) -> x509.CertificateSigningRequest:
-        """Get CSR encoded in this message."""
-        return x509.load_pem_x509_csr(self.csr)
-
-    def get_extensions(self) -> list[ConfigurableExtension]:
-        """Get extensions encoded in this message."""
-        if self.extensions is None:
-            return []
-        extensions = [ext.cryptography for ext in self.extensions]
-        return extensions
