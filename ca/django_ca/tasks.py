@@ -32,7 +32,7 @@ from django.utils import timezone
 
 from django_ca.acme.validation import validate_dns_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
-from django_ca.celery.messages import CacheCrlCeleryMessage
+from django_ca.celery.messages import CacheCrlCeleryMessage, CacheCrlsCeleryMessage
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
 from django_ca.models import (
@@ -60,6 +60,7 @@ log = logging.getLogger(__name__)
 @shared_task(base=DjangoCaTask)
 def cache_crl(data: CacheCrlCeleryMessage) -> None:
     """Task to cache the CRL for a given CA."""
+    assert isinstance(data, CacheCrlCeleryMessage)
     ca = CertificateAuthority.objects.get(serial=data.serial)
     key_backend_options_model = ca.key_backend.use_model.model_validate(
         data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
@@ -67,27 +68,23 @@ def cache_crl(data: CacheCrlCeleryMessage) -> None:
     ca.cache_crls(key_backend_options_model)
 
 
-@shared_task
-def cache_crls(
-    serials: Iterable[str] | None = None, key_backend_options: dict[str, dict[str, JSON]] | None = None
-) -> None:
+@shared_task(base=DjangoCaTask)
+def cache_crls(data: CacheCrlsCeleryMessage | None = None) -> None:
     """Task to cache the CRLs for all CAs."""
-    if serials is None:
-        serials = []
-    if key_backend_options is None:
-        key_backend_options = {}
+    if data is None:
+        data = CacheCrlsCeleryMessage()
+    assert isinstance(data, CacheCrlsCeleryMessage)
+
+    serials = data.serials
+    key_backend_options = data.key_backend_options
 
     if not serials:
-        serials = typing.cast(
-            Iterable[str], CertificateAuthority.objects.usable().values_list("serial", flat=True)
-        )
+        serials = tuple(CertificateAuthority.objects.usable().values_list("serial", flat=True))
 
     for serial in serials:
         try:
-            cache_crl_args = CacheCrlCeleryMessage(
-                serial=serial, key_backend_options=key_backend_options.get(serial, {})
-            )
-            run_task(cache_crl, data=cache_crl_args)
+            options = key_backend_options.get(serial, {})
+            run_task(cache_crl, CacheCrlCeleryMessage(serial=serial, key_backend_options=options))
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in cache_crl()

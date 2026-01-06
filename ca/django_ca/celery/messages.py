@@ -25,3 +25,10 @@ class CacheCrlCeleryMessage(CeleryMessageModel):
 
     serial: Serial
     key_backend_options: dict[str, JSON] = Field(default_factory=dict)
+
+
+class CacheCrlsCeleryMessage(CeleryMessageModel):
+    """Parameters for ``django_ca.tasks.cache_crls``."""
+
+    serials: tuple[Serial, ...] = Field(default_factory=tuple)
+    key_backend_options: dict[str, dict[str, JSON]] = Field(default_factory=dict)
