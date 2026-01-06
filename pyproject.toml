@@ -220,6 +220,7 @@ strict = true
 show_error_codes = true
 mypy_path = "ca/:stubs/:docs/source/"
 exclude = [
+    "build/",
     "dist/",  # mypy complains about an extracted wheel
     "migrations/.*\\.py$",
     "docs/source/include/key_backend_tutorial/create_key_example.py",
@@ -327,6 +328,8 @@ disable = [
     "duplicate-code",
     # pylint is just buggy with TypedDict inheritance.
     "inherit-non-class",
+    "invalid-name",
+    "inconsistent-mro",  # pylint keeps making mistakes here
 
     # These are just annoying
     "too-few-public-methods",
@@ -380,6 +383,9 @@ disable = [
     "abstract-class-instantiated",  # mypy: abstract
     "not-an-iterable",
     "no-name-in-module",  # mypy: attr-defined
+    "too-many-function-args",  # mypy: call-arg
+    "unsupported-membership-test",
+    "unsupported-assignment-operation",
 
     # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
     # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually

@@ -141,7 +141,8 @@ class KeyValueField(forms.CharField):
         if isinstance(value, list):
             return value
 
-        value = super().to_python(value)
+        # PYLINT NOTE: False positive since pylint 4.0
+        value = super().to_python(value)  # pylint: disable=no-member
         if not value:
             return []
         return json.loads(value)  # type: ignore[no-any-return]

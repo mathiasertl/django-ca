@@ -727,9 +727,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         return obj.csr.pem
 
     # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
-    # PYLINT NOTE: pylint does not recognize that function is overwritten due to generics.
-    #              https://github.com/PyCQA/pylint/issues/3605
-    def get_form(  # type: ignore[override] # pylint: disable=unused-argument
+    def get_form(  # type: ignore[override]
         self,
         request: HttpRequest,
         obj: Certificate | None = None,
