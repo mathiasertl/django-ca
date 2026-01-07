@@ -20,7 +20,7 @@ import argparse
 from typing import Any
 
 from django_ca.celery import run_task
-from django_ca.celery.messages import CacheCrlsCeleryMessage
+from django_ca.celery.messages import UseMultipleCertificateAuthoritiesCeleryMessage
 from django_ca.management.base import BaseCommand
 from django_ca.tasks import cache_crls
 
@@ -38,5 +38,5 @@ class Command(BaseCommand):
         )
 
     def handle(self, serial: list[str], **options: Any) -> None:
-        data = CacheCrlsCeleryMessage(serials=serial)
+        data = UseMultipleCertificateAuthoritiesCeleryMessage(serials=serial)
         run_task(cache_crls, data)

@@ -31,7 +31,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
 from django_ca.celery import run_task
-from django_ca.celery.messages import CacheCrlCeleryMessage
+from django_ca.celery.messages import UseCertificateAuthorityCeleryMessage
 from django_ca.conf import model_settings
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
@@ -594,7 +594,7 @@ class Command(
             **generate_ocsp_key_message.model_dump(mode="json", exclude_unset=True),
         )
 
-        cache_crl_args = CacheCrlCeleryMessage(
+        cache_crl_args = UseCertificateAuthorityCeleryMessage(
             serial=ca.serial, key_backend_options=serialized_key_backend_options
         )
         run_task(cache_crl, cache_crl_args)

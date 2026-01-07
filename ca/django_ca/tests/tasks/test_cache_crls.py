@@ -22,7 +22,7 @@ from django.core.cache import cache
 import pytest
 from _pytest.logging import LogCaptureFixture
 
-from django_ca.celery.messages import CacheCrlsCeleryMessage
+from django_ca.celery.messages import UseMultipleCertificateAuthoritiesCeleryMessage
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crls
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -54,7 +54,7 @@ def test_with_key_options(usable_pwd: CertificateAuthority) -> None:
     """Test passing the password explicitly."""
     password: bytes = CERT_DATA["pwd"]["password"]
     encoded_password = base64.b64encode(password).decode("ascii")
-    data = CacheCrlsCeleryMessage(
+    data = UseMultipleCertificateAuthoritiesCeleryMessage(
         serials=[usable_pwd.serial], key_backend_options={usable_pwd.serial: {"password": encoded_password}}
     )
     cache_crls(data)
@@ -64,7 +64,7 @@ def test_with_key_options(usable_pwd: CertificateAuthority) -> None:
 def test_with_invalid_password(usable_pwd: CertificateAuthority) -> None:
     """Test passing an invalid password."""
     password = base64.b64encode(b"wrong").decode()
-    data = CacheCrlsCeleryMessage(
+    data = UseMultipleCertificateAuthoritiesCeleryMessage(
         serials=[usable_pwd.serial], key_backend_options={usable_pwd.serial: {"password": password}}
     )
     cache_crls(data)

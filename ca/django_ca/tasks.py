@@ -32,7 +32,11 @@ from django.utils import timezone
 
 from django_ca.acme.validation import validate_dns_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
-from django_ca.celery.messages import ApiSignCertificateMessage, CacheCrlCeleryMessage, CacheCrlsCeleryMessage
+from django_ca.celery.messages import (
+    ApiSignCertificateMessage,
+    UseCertificateAuthorityCeleryMessage,
+    UseMultipleCertificateAuthoritiesCeleryMessage,
+)
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
 from django_ca.models import (
@@ -53,22 +57,22 @@ log = logging.getLogger(__name__)
 
 
 @shared_task(base=DjangoCaTask)
-def cache_crl(data: CacheCrlCeleryMessage) -> None:
+def cache_crl(data: UseCertificateAuthorityCeleryMessage) -> None:
     """Task to cache the CRL for a given CA."""
-    assert isinstance(data, CacheCrlCeleryMessage)
+    assert isinstance(data, UseCertificateAuthorityCeleryMessage)
     ca = CertificateAuthority.objects.get(serial=data.serial)
-    key_backend_options_model = ca.key_backend.use_model.model_validate(
+    key_backend_options = ca.key_backend.use_model.model_validate(
         data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
     )
-    ca.cache_crls(key_backend_options_model)
+    ca.cache_crls(key_backend_options)
 
 
 @shared_task(base=DjangoCaTask)
-def cache_crls(data: CacheCrlsCeleryMessage | None = None) -> None:
+def cache_crls(data: UseMultipleCertificateAuthoritiesCeleryMessage | None = None) -> None:
     """Task to cache the CRLs for all CAs."""
     if data is None:
-        data = CacheCrlsCeleryMessage()
-    assert isinstance(data, CacheCrlsCeleryMessage)
+        data = UseMultipleCertificateAuthoritiesCeleryMessage()
+    assert isinstance(data, UseMultipleCertificateAuthoritiesCeleryMessage)
 
     serials = data.serials
     key_backend_options = data.key_backend_options
@@ -79,7 +83,9 @@ def cache_crls(data: CacheCrlsCeleryMessage | None = None) -> None:
     for serial in serials:
         try:
             options = key_backend_options.get(serial, {})
-            run_task(cache_crl, CacheCrlCeleryMessage(serial=serial, key_backend_options=options))
+            run_task(
+                cache_crl, UseCertificateAuthorityCeleryMessage(serial=serial, key_backend_options=options)
+            )
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in cache_crl()
@@ -142,6 +148,7 @@ def generate_ocsp_keys(
 @transaction.atomic
 def api_sign_certificate(data: ApiSignCertificateMessage) -> int | None:
     """Sign a certificate from the given order with the given parameters."""
+    assert isinstance(data, ApiSignCertificateMessage)
     order = CertificateOrder.objects.select_related("certificate_authority").get(pk=data.order_pk)
     ca: CertificateAuthority = order.certificate_authority
     key_backend_options = ca.key_backend.get_use_private_key_options(ca, data.key_backend_options)
