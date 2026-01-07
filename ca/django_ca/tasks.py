@@ -17,8 +17,6 @@
 """
 
 import logging
-import typing
-from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
@@ -34,6 +32,7 @@ from django_ca.acme.validation import validate_dns_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
     ApiSignCertificateMessage,
+    GenerateOCSPKeyCeleryMessage,
     UseCertificateAuthorityCeleryMessage,
     UseMultipleCertificateAuthoritiesCeleryMessage,
 )
@@ -49,8 +48,6 @@ from django_ca.models import (
     CertificateOrder,
 )
 from django_ca.profiles import profiles
-from django_ca.pydantic.messages import GenerateOCSPKeyMessage
-from django_ca.typehints import JSON
 from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
@@ -75,17 +72,14 @@ def cache_crls(data: UseMultipleCertificateAuthoritiesCeleryMessage | None = Non
     assert isinstance(data, UseMultipleCertificateAuthoritiesCeleryMessage)
 
     serials = data.serials
-    key_backend_options = data.key_backend_options
-
     if not serials:
         serials = tuple(CertificateAuthority.objects.usable().values_list("serial", flat=True))
 
     for serial in serials:
         try:
-            options = key_backend_options.get(serial, {})
-            run_task(
-                cache_crl, UseCertificateAuthorityCeleryMessage(serial=serial, key_backend_options=options)
-            )
+            options = data.key_backend_options.get(serial, {})
+            message = UseCertificateAuthorityCeleryMessage(serial=serial, key_backend_options=options)
+            run_task(cache_crl, message)
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in cache_crl()
@@ -93,10 +87,8 @@ def cache_crls(data: UseMultipleCertificateAuthoritiesCeleryMessage | None = Non
             log.exception("Error caching CRL for %s", serial)
 
 
-@shared_task
-def generate_ocsp_key(
-    serial: str, key_backend_options: dict[str, JSON] | None = None, force: bool = False
-) -> int | None:
+@shared_task(base=DjangoCaTask)
+def generate_ocsp_key(data: GenerateOCSPKeyCeleryMessage) -> int | None:
     """Task to generate an OCSP key for the CA named by `serial`.
 
     The `serial` names the certificate authority for which to regenerate the OCSP responder certificate. All
@@ -104,39 +96,35 @@ def generate_ocsp_key(
 
     The task returns the primary key of the generated certificate if it was generated, or ``None`` otherwise.
     """
-    if key_backend_options is None:
-        key_backend_options = {}
+    assert isinstance(data, GenerateOCSPKeyCeleryMessage)
 
-    parameters = GenerateOCSPKeyMessage(serial=serial, force=force)
-    ca: CertificateAuthority = CertificateAuthority.objects.get(serial=parameters.serial)
-    key_backend_options_model = ca.key_backend.use_model.model_validate(
-        key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
+    ca: CertificateAuthority = CertificateAuthority.objects.get(serial=data.serial)
+    key_backend_options = ca.key_backend.use_model.model_validate(
+        data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
     )
 
-    cert = ca.generate_ocsp_key(key_backend_options=key_backend_options_model, force=parameters.force)
+    cert = ca.generate_ocsp_key(key_backend_options=key_backend_options, force=data.force)
     if cert is not None:
         return cert.pk
     return None
 
 
-@shared_task
-def generate_ocsp_keys(
-    serials: Iterable[str] | None = None, key_backend_options: dict[str, dict[str, JSON]] | None = None
-) -> None:
+@shared_task(base=DjangoCaTask)
+def generate_ocsp_keys(data: UseMultipleCertificateAuthoritiesCeleryMessage | None = None) -> None:
     """Task to generate an OCSP keys for all usable CAs."""
-    if serials is None:
-        serials = []
-    if key_backend_options is None:
-        key_backend_options = {}
+    if data is None:
+        data = UseMultipleCertificateAuthoritiesCeleryMessage()
+    assert isinstance(data, UseMultipleCertificateAuthoritiesCeleryMessage)
 
+    serials = data.serials
     if not serials:
-        serials = typing.cast(
-            Iterable[str], CertificateAuthority.objects.usable().values_list("serial", flat=True)
-        )
+        serials = tuple(CertificateAuthority.objects.usable().values_list("serial", flat=True))
 
     for serial in serials:
         try:
-            run_task(generate_ocsp_key, serial, key_backend_options=key_backend_options.get(serial, {}))
+            options = data.key_backend_options.get(serial, {})
+            message = GenerateOCSPKeyCeleryMessage(serial=serial, key_backend_options=options)
+            run_task(generate_ocsp_key, message)
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in
@@ -144,7 +132,7 @@ def generate_ocsp_keys(
             log.exception("Error creating OCSP responder key for %s", serial)
 
 
-@shared_task
+@shared_task(base=DjangoCaTask)
 @transaction.atomic
 def api_sign_certificate(data: ApiSignCertificateMessage) -> int | None:
     """Sign a certificate from the given order with the given parameters."""

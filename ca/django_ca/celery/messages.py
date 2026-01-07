@@ -40,6 +40,12 @@ class UseMultipleCertificateAuthoritiesCeleryMessage(CeleryMessageModel):
     key_backend_options: dict[str, KeyBackendOptions] = Field(default_factory=dict)
 
 
+class GenerateOCSPKeyCeleryMessage(UseCertificateAuthorityCeleryMessage):
+    """Parameters for generating a single OCSP keys (adds the `force` flag)."""
+
+    force: bool = False
+
+
 class ApiSignCertificateMessage(CeleryMessageModel):
     """Parameters for ``django_ca.tasks.api_sign_certificate``."""
 

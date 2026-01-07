@@ -18,6 +18,7 @@ import typing
 from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
+from unittest import mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
@@ -127,16 +128,15 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
     settings.CA_USE_CELERY = True
     with mock_celery_task(
         "django_ca.tasks.generate_ocsp_key",
-        (
-            (
-                tuple(),
-                {
+        mock.call(
+            tuple(),
+            {
+                "data": {
                     "serial": usable_root.serial,
                     "key_backend_options": {"password": None},
                     "force": False,
-                },
-            ),
-            {},
+                }
+            },
         ),
     ):
         regenerate_ocsp_keys(usable_root.serial)
@@ -151,8 +151,8 @@ def test_without_serial(
     kwargs = {"key_backend_options": {"password": None}, "force": False}
     with mock_celery_task(
         "django_ca.tasks.generate_ocsp_key",
-        ((tuple(), {"serial": root.serial, **kwargs}), {}),
-        ((tuple(), {"serial": ec.serial, **kwargs}), {}),
+        (mock.call(tuple(), {"data": {"serial": root.serial, **kwargs}})),
+        (mock.call(tuple(), {"data": {"serial": ec.serial, **kwargs}})),
     ):
         cmd("regenerate_ocsp_keys")
 

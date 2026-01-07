@@ -24,11 +24,11 @@ from pydantic import ValidationError
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca.celery import run_task
+from django_ca.celery.messages import GenerateOCSPKeyCeleryMessage
 from django_ca.conf import model_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority
-from django_ca.pydantic.messages import GenerateOCSPKeyMessage
 from django_ca.tasks import generate_ocsp_key
 from django_ca.utils import add_colons
 
@@ -87,14 +87,13 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                     self.stderr.write(self.style.WARNING(f"{hr_serial}: {ex}"))
                 continue
 
-            parameters = GenerateOCSPKeyMessage.model_validate({"serial": ca.serial, "force": force})
-
             try:
-                run_task(
-                    generate_ocsp_key,
+                message = GenerateOCSPKeyCeleryMessage(
+                    serial=serial,
                     key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
-                    **parameters.model_dump(mode="json", exclude_unset=True),
+                    force=force,
                 )
+                run_task(generate_ocsp_key, message)
             except Exception as ex:  # pylint: disable=broad-exception-caught
                 self.stderr.write(f"{serial}: {ex}")
                 errors += 1
