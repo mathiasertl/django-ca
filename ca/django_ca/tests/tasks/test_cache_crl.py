@@ -15,7 +15,7 @@
 
 import pytest
 
-from django_ca.celery.messages import UseCertificateAuthorityCeleryMessage
+from django_ca.celery.messages import UseCertificateAuthorityTaskArgs
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crl
 from django_ca.tests.tasks.conftest import assert_crls
@@ -25,5 +25,5 @@ pytestmark = [pytest.mark.usefixtures("clear_cache")]
 
 def test_basic(usable_root: CertificateAuthority) -> None:
     """Test the most basic invocation."""
-    cache_crl(UseCertificateAuthorityCeleryMessage(serial=usable_root.serial))
+    cache_crl(UseCertificateAuthorityTaskArgs(serial=usable_root.serial))
     assert_crls(usable_root)

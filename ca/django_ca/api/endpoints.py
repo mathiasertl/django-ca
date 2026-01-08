@@ -38,7 +38,7 @@ from django_ca.api.schemas import (
 )
 from django_ca.api.utils import get_certificate_authority
 from django_ca.celery import run_task
-from django_ca.celery.messages import ApiSignCertificateMessage
+from django_ca.celery.messages import ApiSignCertificateTaskArgs
 from django_ca.constants import ExtensionOID
 from django_ca.models import Certificate, CertificateAuthority, CertificateOrder
 from django_ca.profiles import Profile, profiles
@@ -184,7 +184,7 @@ def sign_certificate(request: WSGIRequest, serial: str, data: SignCertificateMes
         lambda: run_task(
             sign_certificate_task,
             # NOTE: Create model only in callback, as order.pk is not set before
-            ApiSignCertificateMessage(
+            ApiSignCertificateTaskArgs(
                 order_pk=order.pk,
                 csr=data.csr,
                 subject=data.subject,
@@ -316,7 +316,7 @@ def resign_certificate(
         lambda: run_task(
             sign_certificate_task,
             # NOTE: Create model only in callback, as order.pk is not set before
-            ApiSignCertificateMessage(
+            ApiSignCertificateTaskArgs(
                 order_pk=order.pk,
                 csr=cert.csr.pem,
                 subject=cert.subject,

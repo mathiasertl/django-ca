@@ -22,7 +22,7 @@ from django.core.files.storage import storages
 import pytest
 from _pytest.logging import LogCaptureFixture
 
-from django_ca.celery.messages import UseMultipleCertificateAuthoritiesCeleryMessage
+from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
 from django_ca.conf import model_settings
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import generate_ocsp_keys
@@ -59,7 +59,7 @@ def test_with_invalid_password(usable_pwd: CertificateAuthority) -> None:
     """Test passing an invalid password."""
     password = base64.b64encode(b"wrong").decode()
     storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
-    message = UseMultipleCertificateAuthoritiesCeleryMessage(
+    message = UseCertificateAuthoritiesTaskArgs(
         serials=[usable_pwd.serial], key_backend_options={usable_pwd.serial: {"password": password}}
     )
     generate_ocsp_keys(message)

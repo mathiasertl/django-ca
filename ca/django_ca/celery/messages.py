@@ -26,27 +26,27 @@ from django_ca.typehints import JSON, SignatureHashAlgorithm, SignatureHashAlgor
 KeyBackendOptions = dict[str, JSON]
 
 
-class UseCertificateAuthorityCeleryMessage(CeleryMessageModel):
+class UseCertificateAuthorityTaskArgs(CeleryMessageModel):
     """Parameters for using a single certificate authority."""
 
     serial: Serial
     key_backend_options: KeyBackendOptions = Field(default_factory=dict)
 
 
-class UseMultipleCertificateAuthoritiesCeleryMessage(CeleryMessageModel):
+class UseCertificateAuthoritiesTaskArgs(CeleryMessageModel):
     """Parameters for using multiple certificate authorities."""
 
     serials: tuple[Serial, ...] = Field(default_factory=tuple)
     key_backend_options: dict[str, KeyBackendOptions] = Field(default_factory=dict)
 
 
-class GenerateOCSPKeyCeleryMessage(UseCertificateAuthorityCeleryMessage):
+class GenerateOCSPKeyTaskArgs(UseCertificateAuthorityTaskArgs):
     """Parameters for generating a single OCSP keys (adds the `force` flag)."""
 
     force: bool = False
 
 
-class ApiSignCertificateMessage(CeleryMessageModel):
+class ApiSignCertificateTaskArgs(CeleryMessageModel):
     """Parameters for ``django_ca.tasks.api_sign_certificate``."""
 
     order_pk: int

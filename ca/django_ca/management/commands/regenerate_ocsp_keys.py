@@ -24,7 +24,7 @@ from pydantic import ValidationError
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca.celery import run_task
-from django_ca.celery.messages import GenerateOCSPKeyCeleryMessage
+from django_ca.celery.messages import GenerateOCSPKeyTaskArgs
 from django_ca.conf import model_settings
 from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import UsePrivateKeyMixin
@@ -88,7 +88,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
                 continue
 
             try:
-                message = GenerateOCSPKeyCeleryMessage(
+                message = GenerateOCSPKeyTaskArgs(
                     serial=serial,
                     key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
                     force=force,
