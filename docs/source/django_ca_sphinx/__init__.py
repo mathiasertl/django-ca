@@ -17,6 +17,7 @@ import typing
 
 from django_ca_sphinx.mapping_table import MappingDocumentor
 from django_ca_sphinx.pydantic_model import PydanticModelDirective, PydanticProfileExtensionDirective
+from django_ca_sphinx.pydantic_setting import PydanticSettingDirective
 from django_ca_sphinx.template_include import TemplateDirective
 
 if typing.TYPE_CHECKING:
@@ -29,4 +30,5 @@ def setup(app: "Sphinx") -> dict[str, bool]:
     app.add_directive("template-include", TemplateDirective)
     app.add_directive("pydantic-model", PydanticModelDirective)
     app.add_directive("pydantic-profile-extension", PydanticProfileExtensionDirective)
+    app.add_directive("pydantic-setting", PydanticSettingDirective)
     return {"parallel_read_safe": True, "parallel_write_safe": True}
