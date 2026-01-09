@@ -222,6 +222,8 @@ interface or with the `--ocsp-key-backend` option to :command:`manage.py init_ca
 :command:`manage.py edit_ca` and :command:`manage.py import_ca`. Note that when you change the backend,
 you must manually regenerate OCSP keys (e.g. using :command:`manage.py regenerate_ocsp_keys`).
 
+.. _storages_ocsp-key-backend:
+
 :spelling:word:`Storages` OCSP key backend
 ==========================================
 

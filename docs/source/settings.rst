@@ -2,6 +2,13 @@
 Custom settings
 ###############
 
+.. |bool| replace:: :ref:`bool <settings-types-bool>`
+.. |dict| replace:: :ref:`dict <settings-types-collections>`
+.. |int| replace:: :ref:`int <settings-types-int>`
+.. |list| replace:: :ref:`list <settings-types-collections>`
+.. |str| replace:: :ref:`str <settings-types-str>`
+.. |timedelta| replace:: :ref:`timedelta <settings-types-timedelta>`
+
 You can use any of the settings understood by `Django <https://docs.djangoproject.com/en/dev/ref/settings/>`_
 and **django-ca** provides some of its own settings.
 
@@ -54,33 +61,31 @@ All settings used by **django-ca** start with the ``CA_`` prefix.
 .. _settings-ca-crl-profiles:
 
 CA_CRL_PROFILES
-   Default::
+    .. pydantic-setting:: CA_CRL_PROFILES
 
-      {
-          'user': {
-              'expires': 86400,
-              'scope': 'user',
-          },
-          'ca': {
-              'expires': 86400,
-              'scope': 'ca',
-          },
-      }
+    Each entry supports the following fields:
 
-   A set of CRLs to create using automated tasks. The default value is usually fine.
+    ============================= =========== =========== ==============================================
+    field                         type        default     comment
+    ============================= =========== =========== ==============================================
+    only_contains_ca_certs        |bool|      ``False``   True if CRL should contain only certificate
+                                                          authorities.
+    only_contains_user_certs      |bool|      ``False``   True if CRL should contain only end-entity
+                                                          certificates.
+    only_contains_attribute_certs |bool|      ``False``   No effect (attribute certs are not supported).
+    only_some_reasons             |list|      ``None``    Optional set of
+                                                          :class:`~cg:cryptography.x509.ReasonFlags`.
+    expires                       |timedelta| 1 day       How long the CRL remains valid.
+    OVERRIDES                     dict        ``{}``      See below.
+    ============================= =========== =========== ==============================================
 
-   .. versionchanged:: 2.1.0
+    Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` is
+    may be set to ``True``. If none are, all certificates (CAs and end-entity) are included.
 
-      * The `only_some_reasons` parameter was added.
-      * The `encodings` parameter was removed. Both supported encodings are now always available.
-      * The `scope` parameter to :ref:`settings-ca-crl-profiles` is now deprecated in favor of the
-        `only_contains_ca_certs`, `only_contains_user_certs` and `only_some_reasons` parameters. The old
-        parameter currently still takes precedence, but will be removed in django-ca 2.3.0.
-
-   You may also specify an ``"OVERRIDES"`` key for a particular profile to specify custom behavior for select
-   certificate authorities named by serial. It can set the same values as a general profile, plus the
-   ``"skip"`` that disables the certificate authority for a particular profile. For example, to disable a
-   profile for one certificate authority and use a non-standard expiry time for the other::
+    You may also specify an ``"OVERRIDES"`` key for a particular profile to specify custom behavior for select
+    certificate authorities named by serial. It can set the same values as a general profile, plus the
+    ``"skip"`` that disables the certificate authority for a particular profile. For example, to disable a
+    profile for one certificate authority and use a non-standard expiry time for the other::
 
       {
           "user": {
@@ -92,97 +97,90 @@ CA_CRL_PROFILES
           }
       }
 
-   The hash algorithm used for signing the CRL will be the one used for signing the certificate authority
-   itself.
+    .. versionchanged:: 2.1.0
+
+      * The `only_some_reasons` parameter was added.
+      * The `encodings` parameter was removed. Both supported encodings are now always available.
+
+    .. versionchanged:: 2.3.0
+
+      * The `scope` parameter to :ref:`settings-ca-crl-profiles` was removed in favor of the
+        `only_contains_ca_certs`, `only_contains_user_certs` and `only_some_reasons` parameters.
 
 .. _settings-ca-default-ca:
 
 CA_DEFAULT_CA
-   Default: ``""``
+    .. pydantic-setting:: CA_DEFAULT_CA
 
-   The serial of the CA to use when no CA is explicitly given.
+    For example, if you sign a certificate using the :ref:`manage.py sign_cert <cli_sign_certs>` command and do
+    not pass the ``--ca`` parameter, the CA given here will be used. You can get a list of serials from the
+    admin interface or via the ``manage.py list_cas`` command.
 
-   For example, if you sign a certificate using the :ref:`manage.py sign_cert <cli_sign_certs>` command and do
-   not pass the ``--ca`` parameter, the CA given here will be used. You can get a list of serials from the
-   admin interface or via the ``manage.py list_cas`` command.
+    .. WARNING::
 
-   .. WARNING::
+        Some parts of **django-ca** will start throwing errors when attempting to use a default CA that is
+        expired or disabled. So please make sure you keep this setting up to date.
 
-      Some parts of **django-ca** will start throwing errors when attempting to use a default CA that is
-      expired or disabled. So please make sure you keep this setting up to date.
-
-   If this setting is *not* set, **django-ca** will select the CA that is currently usable (enabled, currently
-   valid, not revoked) and and has an expiry furthest in the future.
+    If this setting is *not* set, **django-ca** will select the CA that is currently usable (enabled, currently
+    valid, not revoked) and and has an expiry furthest in the future.
 
 .. _settings-ca-default-dsa-signature-hash-algorithm:
 
 CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
-   Default: ``"SHA-256"``
+    .. pydantic-setting:: CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM
 
-   .. versionadded:: 1.23.0
+    Please see :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName` for valid values for this setting.
+    The default hash algorithm for ``RSA`` and ``EC`` certificates can be configured with
+    :ref:`settings-ca-default-signature-hash-algorithm`.
 
-   The default hash algorithm for signing public keys of certificate authorities that use a ``DSA`` private
-   key. The setting is also used when signing CRLs of such certificate authorities.
-
-   Please see :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName` for valid values for this setting.
-
-   The default hash algorithm for ``RSA`` and ``EC`` certificates can be configured with
-   :ref:`settings-ca-default-signature-hash-algorithm`.
+    .. versionadded:: 1.23.0
 
 .. _settings-ca-default-elliptic-curve:
 
 CA_DEFAULT_ELLIPTIC_CURVE
-   Default: ``"SECP256R1"``
+    .. pydantic-setting:: CA_DEFAULT_ELLIPTIC_CURVE
 
-   The default elliptic curve used for generating private keys for certificate authorities or OCSP keys.
+    Please see :py:attr:`~django_ca.constants.ELLIPTIC_CURVE_TYPES` for a list of valid values.
 
-   .. versionchanged:: 1.23.0
+    .. versionchanged:: 1.26.0
 
-      This setting used to be called ``CA_DEFAULT_ECC_CURVE``. The old name for the setting can still be used
-      until ``django-ca==1.26.0``.
+        This setting used to be called ``CA_DEFAULT_ECC_CURVE``.
 
 .. _settings-ca-default-expires:
 
 CA_DEFAULT_EXPIRES
-   Default: ``730``
+    .. pydantic-setting:: CA_DEFAULT_EXPIRES
 
-   The default time, in days, that any signed certificate expires.
+    Certificates issued via ACMEv2 are not affected by this setting, as :ref:`CA_ACME_DEFAULT_CERT_VALIDITY
+    <CA_ACME_DEFAULT_CERT_VALIDITY>` is used there.
+
+    An integer value will be parsed as a number of *days*.
 
 .. _settings-ca-default-hostname:
 
 CA_DEFAULT_HOSTNAME
-   Default: ``None``
+    .. pydantic-setting:: CA_DEFAULT_HOSTNAME
 
-   If set, the default hostname will be used to automatically generate URLs for CRLs and OCSP services.  This
-   setting *must not* include the protocol, as OCSP always uses HTTP (not HTTPS) and this setting might be
-   used for other values in the future.
+    If set, the default hostname will be used to automatically generate URLs for CRLs and OCSP services.  This
+    setting *must not* include the protocol, as OCSP always uses HTTP (not HTTPS) and this setting might be
+    used for other values in the future. For example:
 
-   .. include:: include/change_settings_warning.rst
+    .. pydantic-setting:: CA_DEFAULT_HOSTNAME
+        :example: 0
 
-   .. WARNING::
-
-      If you change this setting, CRLs configured to contain only CA revocation information (that is, to check
-      if an intermediate CA *itself* was revoked) are no longer strictly valid. However, few if any
-      implementations actually implement validation for this.
-
-      If you change this setting, you should configure django-ca to continue serving the old URLs.
-
-   Example value: ``"ca.example.com"``.
+    .. include:: include/change_settings_warning.rst
 
 .. _settings-ca-default-key-backend:
 
 CA_DEFAULT_KEY_BACKEND
-   Default: ``"default"``
-
-   The key backend to use by default. You do not usually have to update this setting.
-
+    .. pydantic-setting:: CA_DEFAULT_KEY_BACKEND
 
 .. _settings-ca-default-key-size:
 
 CA_DEFAULT_KEY_SIZE
-   Default: ``4096``
+    .. pydantic-setting:: CA_DEFAULT_KEY_SIZE
 
-   The default key size for newly created CAs (not used for CAs based on EC, Ed448 or Ed25519).
+    The value must be a power of two (e.g. ``2048``, ``4096``, ...) and no lower then ``1024``.
 
 .. _settings-ca-default-name-order:
 
@@ -233,95 +231,81 @@ CA_DEFAULT_NAME_ORDER
 .. _settings-ca-default-private-key-type:
 
 CA_DEFAULT_PRIVATE_KEY_TYPE
-   Default: ``"RSA"``
+    .. pydantic-setting:: CA_DEFAULT_PRIVATE_KEY_TYPE
 
-   The default key type to use when generating new certificate authorities.
-
-   Note that this setting is _not_ used when generating OCSP responder certificates, where the default private
-   key type is the same as the certificate authority.
+    Note that this setting is *not* used when generating OCSP responder certificates, where the default
+private
+    key type is the same as the certificate authority.
 
 .. _settings-ca-default-profile:
 
 CA_DEFAULT_PROFILE
-   Default: ``webserver``
-
-   The default profile to use.
+    .. pydantic-setting:: CA_DEFAULT_PROFILE
 
 .. _settings-ca-default-signature-hash-algorithm:
 
 CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
-   Default: ``"SHA-512"``
+    .. pydantic-setting:: CA_DEFAULT_SIGNATURE_HASH_ALGORITHM
 
-   .. versionchanged:: 1.23.0
+    Please see :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName` for valid values for this setting.
 
-      The setting was called "CA_DIGEST_ALGORITHM" before 1.23.0 and non-standard algorithm names where
-      allowed.  Support for the old setting name and non-standard algorithms was removed in
-      ``django-ca==1.25.0``.
-
-   The default hash algorithm for signing public keys of certificate authorities that use an ``RSA`` or ``EC``
-   private key. The setting is also used when signing CRLs of such certificate authorities.
-
-   Please see :py:attr:`~django_ca.typehints.SignatureHashAlgorithmName` for valid values for this setting.
-
-   Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
-   be configured separately using :ref:`settings-ca-default-dsa-signature-hash-algorithm`.
+    Since certificate authorities that use a DSA key pair don't work well with a SHA-512 hash, the default can
+    be configured separately using :ref:`settings-ca-default-dsa-signature-hash-algorithm`.
 
 .. _settings-ca-default-storage-alias:
 
 CA_DEFAULT_STORAGE_ALIAS
-   Default: ``"django-ca"``
+    .. pydantic-setting:: CA_DEFAULT_STORAGE_ALIAS
 
-   The default storage alias to use with the default key storage backend. The value defined here has to be an
-   alias in `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_.
-
-   The value is used as the default storage alias in the default key backend (see
-   :ref:`settings-ca-key-backends`) and to store OCSP responder certificates.
+    The storage alias used by the :ref:`Storages key backend <storages_backend>` and the
+    :ref:`Storages OCSP key backend <storages_ocsp-key-backend>` (the default key backends) to store
+    private keys. The value defined here has to be an alias in `STORAGES
+    <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_.
 
 .. _settings-ca-default-subject:
 
 CA_DEFAULT_SUBJECT
-   Default: ``None``
+    .. pydantic-setting:: CA_DEFAULT_SUBJECT
 
-   .. versionchanged:: 1.29.0
+    .. versionchanged:: 2.2.0
 
-      Before 1.29.0, this value (and subjects in profiles) was a tuple ``tuple`` consisting of two-tuples
-      naming the attribute type and value. Starting with 1.29.0, the new format as described below is
-      supported, the old format will be removed in 2.2.0.
+        Before 2.2.0, this value (and subjects in profiles) were a tuple ``tuple`` consisting of two-tuples
+        naming the attribute type and value. The old format was deprecated since 1.29.0.
 
-   .. Describe here the syntax of this value. Profiles describe how the value is used.
+    .. Describe here the syntax of this value. Profiles describe how the value is used.
 
-   The default subject for :doc:`/profiles` that don't define their own subject. You can use this setting to
-   define a default subject for all profiles without having to define the subject in every profile.
+    The default subject for :doc:`/profiles` that don't define their own subject. You can use this setting to
+    define a default subject for all profiles without having to define the subject in every profile.
 
-   Please see :ref:`profiles-subject` for how this value used when signing certificates.
+    Please see :ref:`profiles-subject` for how this value is used when signing certificates.
 
-   Note that signing via the command-line or ACMEv2, the subject attributes of a certificate will be sorted
-   according to :ref:`settings-ca-default-name-order`, regardless of the order given here.
+    Note that when signing via the command-line or ACMEv2, the subject attributes of a certificate will be
+    sorted according to :ref:`settings-ca-default-name-order`, regardless of the order given here.
 
-   The value is a list or tuple of key/value mappings defining a name attribute:
+    The value is a list or tuple of key/value mappings defining a name attribute:
 
-   .. tab:: Python
+    .. pydantic-setting:: CA_DEFAULT_SUBJECT
+        :example: 0
 
-      .. literalinclude:: /include/config/setting_default_subject_example.py
-         :language: python
+    OID values can be any key from :py:attr:`~django_ca.constants.NAME_OID_TYPES` or a dotted string as
+    documented in :py:class:`~cg:cryptography.x509.oid.NameOID`. The following example is equivalent to the
+    above:
 
-   .. tab:: YAML
+    .. pydantic-setting:: CA_DEFAULT_SUBJECT
+        :example: 1
 
-      .. literalinclude:: /include/config/setting_default_subject_example.yaml
-         :language: yaml
+    If you use Python as a configuration format, the value can also be a :py:class:`x509.Name
+    <cg:cryptography.x509.Name>` instance.  For convenience, you can also give :py:class:`x509.NameAttribute
+    <cg:cryptography.x509.NameAttribute>` instances in the tuple defined above, or use an
+    :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as ``"oid"`` key:
 
-   If you use Python as a configuration format, the value can also be a :py:class:`x509.Name
-   <cg:cryptography.x509.Name>` instance.  For convenience, you can also give :py:class:`x509.NameAttribute
-   <cg:cryptography.x509.NameAttribute>` instances in the tuple defined above, or use an
-   :py:class:`x509.ObjectIdentifier <cg:cryptography.x509.ObjectIdentifier>` as ``"oid"`` key:
-
-   .. literalinclude:: /include/config/setting_default_subject_cryptography.py
-      :language: python
+    .. literalinclude:: /include/config/setting_default_subject_cryptography.py
+        :language: python
 
 .. _settings-ca-enable-rest-api:
 
 CA_ENABLE_REST_API
-   Default: ``False``
+   .. pydantic-setting:: CA_ENABLE_REST_API
 
    Set to ``True`` to enable the :doc:`experimental REST API </rest_api>`.
 
@@ -354,15 +338,12 @@ CA_KEY_BACKENDS
 .. _settings-ca-min-key-size:
 
 CA_MIN_KEY_SIZE
-   Default: ``2048``
+   .. pydantic-setting:: CA_MIN_KEY_SIZE
 
-   The minimum key size for newly created CAs (not used for CAs based on EC, Ed448 or Ed25519).
+   The value must be a power of two (e.g. ``2048``, ``4096``, ...) and no lower then ``1024``.
 
 CA_NOTIFICATION_DAYS
-   Default: ``[14, 7, 3, 1, ]``
-
-   Days before expiry that certificate watchers will receive notifications. By default, watchers
-   will receive notifications 14, seven, three and one days before expiry.
+    .. pydantic-setting:: CA_NOTIFICATION_DAYS
 
 .. _settings-ca-ocsp-urls:
 
@@ -391,53 +372,51 @@ CA_OCSP_KEY_BACKENDS
 .. _settings-ca-ocsp-responder-certificate-renewal:
 
 CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
-   Default: ``timedelta(days=1)``
+    .. pydantic-setting:: CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
 
-   Regenerate OCSP keys if they expire within the given ``timedelta``. This setting can also be an integer, in
-   which case it is read as seconds until a certificate expires.
+    This setting is used by the :ref:`regular task to regenerate OCSP responder certificates
+    <regular-tasks-explanation>` to determine if an OCSP responder certificate should be renewed or not.
 
-   Note that the OCSP responder certificate validity (that you can configure for each certificate authority
-   via the ``--ocsp-responder-key-validity`` option) should be higher then the value configured here, or you
-   will end up with expired OCSP responder certificates.
+    .. WARNING::
+
+        The value must be *lower* then the frequency of the regular task *and* lower then the OCSP responder
+        certificate validity that you configure with the ``--ocsp-responder-key-validity`` option to
+        :command:`manage .py init_ca`/:command:`manage .py edit_ca`.
 
 .. _settings-ca-passwords:
 
 CA_PASSWORDS
-   Default: ``{}``
+    .. pydantic-setting:: CA_PASSWORDS
 
-   A dictionary configuring passwords for the private keys of CAs. It is a mapping of certificate authority
-   serials and their respective password.
+    This setting is used by the :ref:`Storages backend <storages_backend>` when using a CA private key that
+    was encrypted (using :command:`manage init_ca --password ...`). The setting is required for automatically
+    generating CRLs and OCSP keys for certificate authorities with encrypted private keys.
 
-   This setting is required for automatically generating CRLs and OCSP keys for certificate authorities that
-   where encrypted with a password and that use the default file system storage to store private keys.
+    .. NOTE::
 
-   Example:
+        If you use Celery, the setting is only required for the Celery workers (which can run on a different
+        host), the web application server (e.g. Gunicorn) does not need to use private keys in this case.
 
-   .. tab:: in Python
+    Example:
 
-      .. literalinclude:: include/config/setting_ca_passwords.py
-         :language: python
-
-   .. tab:: with YAML
-
-      .. literalinclude:: include/config/setting_ca_passwords.yaml
-         :language: yaml
-
+    .. pydantic-setting:: CA_PASSWORDS
+        :example: 0
 
 .. _settings-ca-profiles:
 
 CA_PROFILES
-   Default: ``{}``
+    .. pydantic-setting:: CA_PROFILES
 
-   Add new profiles or change existing ones.  Please see :doc:`/profiles` for more information on profiles.
+    Add new profiles or change existing ones.  Please see :doc:`/profiles` for more information on profiles.
 
 .. _settings-ca-use-celery:
 
 CA_USE_CELERY
-   Default: ``None``
+    .. pydantic-setting:: CA_USE_CELERY
 
-   Set to ``True`` to force django-ca to use `Celery <https://docs.celeryproject.org>`_ or to ``False`` to
-   force not using it. The default is to use Celery if it is installed.
+    Using Celery is highly recommended for performance and security reasons. You may set this to ``False`` to
+    disable the use of Celery despite it being installed. If disabled, long-running tasks (e.g. signing a
+    certificate or accessing a HSM) will happen directly in the web application server (e.g. Gunicorn).
 
 .. _settings-acme:
 
@@ -447,9 +426,7 @@ ACMEv2 settings
 .. _settings-acme-enable-acme:
 
 CA_ENABLE_ACME
-   Default: ``True``
-
-   Set to ``False`` to disable all ACME functionality.
+   .. pydantic-setting:: CA_ENABLE_ACME
 
    Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
    either via the admin interface or via :doc:`the command-line interface </cli/cas>`.
@@ -457,26 +434,26 @@ CA_ENABLE_ACME
 .. _CA_ACME_DEFAULT_CERT_VALIDITY:
 
 CA_ACME_DEFAULT_CERT_VALIDITY
-   Default: ``timedelta(days=90)``
+    .. pydantic-setting:: CA_ACME_DEFAULT_CERT_VALIDITY
 
-   A ``timedelta`` representing the default validity time any certificate issued via ACME is valid.
+    An integer value will be parsed as a number of *days*.
 
 .. _CA_ACME_MAX_CERT_VALIDITY:
 
 CA_ACME_MAX_CERT_VALIDITY
-   Default: ``timedelta(days=90)``
+    .. pydantic-setting:: CA_ACME_MAX_CERT_VALIDITY
 
-   A ``timedelta`` representing the maximum validity time any certificate issued via ACME is valid. The ACMEv2
-   protocol allows for clients to request a non-default validity time, but certbot currently does not expose
-   this feature.
+    The ACMEv2 protocol allows for clients to request a non-default validity time, but certbot currently
+    does not expose this feature.
+
+    An integer value will be parsed as a number of *days*.
 
 .. _CA_ACME_ORDER_VALIDITY:
 
 CA_ACME_ORDER_VALIDITY
-   Default: ``1``
+    .. pydantic-setting:: CA_ACME_ORDER_VALIDITY
 
-   Default time (in hours) a request for a new certificate ("order") remains valid. You may also set
-   a ``timedelta`` object.
+    An integer value will be parsed as a number of *days*. The maximum value is one day.
 
 ****************
 Project settings
@@ -839,7 +816,6 @@ Basic settings are straight forward:
 .. literalinclude:: include/yaml-example-basic.yaml
    :language: yaml
 
-
 Nested mappings such as the ``DATABASES`` are of course also possible:
 
 .. literalinclude:: include/yaml-example-databases.yaml
@@ -883,3 +859,33 @@ and:
       - second_app
 
 ... then both ``first_app`` and ``second_app`` will be added to ``INSTALLED_APPS``.
+
+
+*****
+Types
+*****
+
+.. _settings-types-str:
+
+Strings
+=======
+
+.. _settings-types-int:
+
+Integers
+========
+
+.. _settings-types-bool:
+
+:spelling:word:`Booleans`
+=========================
+
+.. _settings-types-timedelta:
+
+Intervals (:spelling:word:`Timedeltas`)
+=======================================
+
+.. _settings-types-collections:
+
+Lists and dictionaries
+======================

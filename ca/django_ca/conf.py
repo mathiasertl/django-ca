@@ -32,6 +32,7 @@ from pydantic import (
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 from django.conf import settings as _settings
 from django.core.exceptions import ImproperlyConfigured
@@ -49,7 +50,12 @@ from django_ca.pydantic.type_aliases import (
     Serial,
     UniqueElementsTuple,
 )
-from django_ca.pydantic.validators import crl_scope_validator, name_oid_parser, timedelta_as_number_parser
+from django_ca.pydantic.validators import (
+    crl_scope_validator,
+    dict_env_validator,
+    name_oid_parser,
+    timedelta_as_number_parser,
+)
 from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 
 # BeforeValidator currently does not work together with Le(), see:
@@ -58,6 +64,10 @@ from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
 PositiveTimedelta = Annotated[timedelta, Ge(timedelta(days=1))]
 AcmeCertValidity = Annotated[PositiveTimedelta, Le(timedelta(days=365)), DayValidator]
+
+_KT = TypeVar("_KT")
+_KV = TypeVar("_KV")
+DictSetting = Annotated[dict[_KT, _KV], BeforeValidator(dict_env_validator)]
 
 _DEFAULT_CA_PROFILES: dict[str, dict[str, Any]] = {
     "client": {
@@ -234,61 +244,132 @@ class SettingsModel(BaseModel):
 
     CA_ACME_ORDER_VALIDITY: Annotated[
         timedelta, Ge(timedelta(seconds=60)), Le(timedelta(days=1)), DayValidator
-    ] = timedelta(hours=1)
-    CA_ACME_DEFAULT_CERT_VALIDITY: AcmeCertValidity = timedelta(days=90)
-    CA_ACME_MAX_CERT_VALIDITY: AcmeCertValidity = timedelta(days=90)
+    ] = Field(
+        default=timedelta(hours=1),
+        description='The time a request for a new certificate ("order") remains valid.',
+    )
+    CA_ACME_DEFAULT_CERT_VALIDITY: AcmeCertValidity = Field(
+        default=timedelta(days=90),
+        description="The default validity time any certificate issued via ACME is valid.",
+    )
+    CA_ACME_MAX_CERT_VALIDITY: AcmeCertValidity = Field(
+        default=timedelta(days=90),
+        description="The maximum validity time any certificate issued via ACME is valid.",
+    )
 
-    CA_CRL_PROFILES: dict[str, CertificateRevocationListProfile] = {
-        "user": CertificateRevocationListProfile(only_contains_user_certs=True),
-        "ca": CertificateRevocationListProfile(only_contains_ca_certs=True),
-    }
-    CA_DEFAULT_CA: Serial | None = None
-    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: AnnotatedSignatureHashAlgorithmName = "SHA-256"
-    CA_DEFAULT_ELLIPTIC_CURVE: AnnotatedEllipticCurveName = "secp256r1"
-    CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, DayValidator] = timedelta(days=365)
-    CA_DEFAULT_HOSTNAME: str | None = None
-    CA_DEFAULT_KEY_BACKEND: str = "default"
-    CA_DEFAULT_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = 4096
+    CA_CRL_PROFILES: dict[str, CertificateRevocationListProfile] = Field(
+        description="A set of CRLs to create using automated tasks. The default value is usually fine.",
+        default_factory=lambda: {
+            "user": CertificateRevocationListProfile(only_contains_user_certs=True),
+            "ca": CertificateRevocationListProfile(only_contains_ca_certs=True),
+        },
+    )
+    CA_DEFAULT_CA: Serial | None = Field(
+        default=None, description="The serial of the CA to use when no CA is explicitly given."
+    )
+    CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM: AnnotatedSignatureHashAlgorithmName = Field(
+        default="SHA-256", description="The default signature hash algorithm for new DSA based CAs."
+    )
+    CA_DEFAULT_ELLIPTIC_CURVE: AnnotatedEllipticCurveName = Field(
+        default="secp256r1", description="The default elliptic curve for EC based CAs."
+    )
+    CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, DayValidator] = Field(
+        default=timedelta(days=365),
+        description="The default validity time for a new certificate.",
+    )
+    CA_DEFAULT_HOSTNAME: str | None = Field(default=None, examples=["ca.example.com"])
+    CA_DEFAULT_KEY_BACKEND: str = Field(
+        default="default",
+        description="The key backend to use by default. You do not usually have to update this setting.",
+    )
+    CA_DEFAULT_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = Field(
+        default=4096,
+        description="The default key size for new RSA and DSA based CAs. "
+        "Value must be at least ``1024`` and a power of two (e.g. ``2048`` or ``4096``).",
+    )
     CA_DEFAULT_NAME_ORDER: UniqueElementsTuple[
         tuple[Annotated[x509.ObjectIdentifier, BeforeValidator(name_oid_parser)], ...]
     ] = (
-        x509.NameOID.DN_QUALIFIER,
-        x509.NameOID.COUNTRY_NAME,
-        x509.NameOID.POSTAL_CODE,
-        x509.NameOID.STATE_OR_PROVINCE_NAME,
-        x509.NameOID.LOCALITY_NAME,
-        x509.NameOID.DOMAIN_COMPONENT,
-        x509.NameOID.ORGANIZATION_NAME,
-        x509.NameOID.ORGANIZATIONAL_UNIT_NAME,
-        x509.NameOID.TITLE,
-        x509.NameOID.COMMON_NAME,
-        x509.NameOID.USER_ID,
-        x509.NameOID.EMAIL_ADDRESS,
-        x509.NameOID.SERIAL_NUMBER,
+        NameOID.DN_QUALIFIER,
+        NameOID.COUNTRY_NAME,
+        NameOID.POSTAL_CODE,
+        NameOID.STATE_OR_PROVINCE_NAME,
+        NameOID.LOCALITY_NAME,
+        NameOID.DOMAIN_COMPONENT,
+        NameOID.ORGANIZATION_NAME,
+        NameOID.ORGANIZATIONAL_UNIT_NAME,
+        NameOID.TITLE,
+        NameOID.COMMON_NAME,
+        NameOID.USER_ID,
+        NameOID.EMAIL_ADDRESS,
+        NameOID.SERIAL_NUMBER,
     )
     CA_DEFAULT_OCSP_KEY_BACKEND: str = "default"
-    CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = "RSA"
-    CA_DEFAULT_PROFILE: str = "webserver"
-    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: AnnotatedSignatureHashAlgorithmName = "SHA-512"
-    CA_DEFAULT_STORAGE_ALIAS: str = "django-ca"
-    CA_DEFAULT_SUBJECT: NameModel | None = None
-    CA_ENABLE_ACME: bool = True
+    CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = Field(
+        default="RSA", description="The default key type for new CAs."
+    )
+    CA_DEFAULT_PROFILE: str = Field(
+        default="webserver", description="The default :doc:`profile </profiles>` to use."
+    )
+    CA_DEFAULT_SIGNATURE_HASH_ALGORITHM: AnnotatedSignatureHashAlgorithmName = Field(
+        default="SHA-512", description="The default signature hash algorithm for new RSA and EC based CAs."
+    )
+    CA_DEFAULT_STORAGE_ALIAS: str = Field(
+        default="django-ca",
+        description="",
+    )
+    CA_DEFAULT_SUBJECT: NameModel | None = Field(
+        default=None,
+        examples=[
+            [
+                {"oid": "countryName", "value": "AT"},
+                {"oid": "localityName", "value": "Vienna"},
+                {"oid": "organizationName", "value": "django-ca"},
+            ],
+            [
+                {"oid": "C", "value": "AT"},
+                {"oid": "localityName", "value": "Vienna"},
+                {"oid": NameOID.ORGANIZATION_NAME.dotted_string, "value": "django-ca"},
+            ],
+        ],
+    )
+    CA_ENABLE_ACME: bool = Field(
+        default=True, description="Set to ``False`` to disable all ACME functionality."
+    )
     CA_ENABLE_REST_API: bool = False
     CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
-    CA_MIN_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = 2048
-    CA_NOTIFICATION_DAYS: tuple[int, ...] = (14, 7, 3, 1)
+    CA_MIN_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = Field(
+        default=2048,
+        description="The minimum key size for new CAs (not used for CAs based on EC, Ed448 or Ed25519).",
+    )
+    CA_NOTIFICATION_DAYS: tuple[int, ...] = Field(
+        default=(14, 7, 3, 1),
+        description="Days before expiry that certificate watchers will receive notifications.",
+    )
     CA_OCSP_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
 
     # The minimum value comes from the fact that the renewal task only runs every hour by default.
-    CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = timedelta(days=1)
+    CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = Field(
+        default=timedelta(days=1),
+        description="Renew OCSP certificates if they expire within the given interval.",
+    )
 
-    CA_PASSWORDS: dict[Serial, bytes] = Field(default_factory=dict)
-    CA_PROFILES: dict[str, ProfileConfigurationModel] = Field(
+    CA_PASSWORDS: dict[Serial, bytes] = Field(
+        default_factory=dict,
+        description="Passwords for encrypted private keys of certificate authorities.",
+        examples=[{"example-serial": "example-secret-password"}],
+    )
+    CA_PROFILES: DictSetting[str, ProfileConfigurationModel] = Field(
         default_factory=lambda: {
             k: ProfileConfigurationModel(**v) for k, v in deepcopy(_DEFAULT_CA_PROFILES).items()
-        }
+        },
+        json_schema_extra={"default_explanation": "See :doc:`/profiles`."},
     )
-    CA_USE_CELERY: Annotated[bool, Field(default_factory=lambda: find_spec("celery") is not None)]
+    CA_USE_CELERY: bool = Field(
+        default_factory=lambda: find_spec("celery") is not None,
+        description="If `Celery <https://docs.celeryproject.org>`_ is used for asynchronous tasks or not.",
+        json_schema_extra={"default_explanation": "``True`` if Celery is installed, ``False`` if not."},
+    )
 
     @field_validator("CA_PROFILES", mode="before")
     @classmethod

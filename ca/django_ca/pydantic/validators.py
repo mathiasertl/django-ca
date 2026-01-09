@@ -15,6 +15,7 @@
 
 import base64
 import binascii
+import json
 from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, TypeVar
@@ -34,6 +35,16 @@ from django_ca.constants import (
 )
 
 T = TypeVar("T")
+
+
+def dict_env_validator(value: Any) -> Any:
+    """Parse a JSON environment variable as dict."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError as ex:
+            raise ValueError("Input should be a valid JSON-encoded string") from ex
+    return value
 
 
 def signature_hash_algorithm_validator(value: Any) -> Any:
