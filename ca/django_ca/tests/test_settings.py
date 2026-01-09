@@ -202,17 +202,13 @@ def test_load_settings_from_environment() -> None:
         {
             "DJANGO_CA_SETTINGS": "ignored",
             "DJANGO_CA_ALLOWED_HOSTS": "example.com example.net",
-            "DJANGO_CA_CA_ENABLE_ACME": "TRUE",
-            "DJANGO_CA_CA_ENABLE_REST_API": "1",
-            "DJANGO_CA_ENABLE_ADMIN": "yEs",
+            "DJANGO_CA_ENABLE_ADMIN": "yes",
             "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR",
         },
         clear=True,
     ):
         assert dict(load_settings_from_environment()) == {
             "ALLOWED_HOSTS": ["example.com", "example.net"],
-            "CA_ENABLE_ACME": True,
-            "CA_ENABLE_REST_API": True,
             "ENABLE_ADMIN": True,
             "SOME_OTHER_VALUE": "FOOBAR",
         }
@@ -729,7 +725,8 @@ def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsW
 @pytest.mark.parametrize(
     ("value", "msg"),
     (
-        ("foo", "Input should be a valid dictionary"),  # whole setting is invalid
+        ("foo", "Input should be a valid JSON-encoded string"),  # whole setting is invalid
+        (True, "Input should be a valid dictionary"),
     ),
 )
 def test_ca_profiles_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:

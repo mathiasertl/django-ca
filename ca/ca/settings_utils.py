@@ -22,7 +22,7 @@ from inspect import isclass
 from pathlib import Path
 from typing import Annotated, Any
 
-from pydantic import BaseModel, BeforeValidator, Field, RootModel
+from pydantic import BaseModel, BeforeValidator, Field, RootModel, TypeAdapter
 
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import URLPattern, URLResolver, include, path, re_path
@@ -184,7 +184,7 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
 
         if key == "ALLOWED_HOSTS":
             yield key, value.split()
-        elif key in ("CA_USE_CELERY", "CA_ENABLE_ACME", "CA_ENABLE_REST_API", "ENABLE_ADMIN"):
+        elif key == "ENABLE_ADMIN":
             yield key, parse_bool(value)
         else:
             yield key, value
@@ -192,7 +192,7 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
 
 def parse_bool(value: str) -> bool:
     """Parse a variable that is supposed to represent a boolean value."""
-    return value.strip().lower() in ("true", "yes", "1")
+    return TypeAdapter(bool).validate_python(value)
 
 
 def _set_db_setting(
