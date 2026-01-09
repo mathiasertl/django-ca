@@ -6,7 +6,9 @@
 Settings
 ********
 
-No changes yet.
+* ``CA_CUSTOM_APPS`` was removed, it is replaced with :ref:`EXTEND_INSTALLED_APPS
+  <settings-extend-installed-apps>` (the setting was deprecated since ``django-ca==2.2.0`` and was even marked
+  for removal for ``django-ca==2.5.0`` already).
 
 *******************
 Setup and packaging

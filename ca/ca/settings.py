@@ -15,7 +15,6 @@
 
 import json
 import os
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -148,7 +147,6 @@ INSTALLED_APPS = [
     "django_object_actions",
     "django_ca",
 ]
-CA_CUSTOM_APPS: list[str] = []
 CA_DEFAULT_HOSTNAME = None
 CA_URL_PATH = "django_ca/"
 CA_ENABLE_REST_API = False
@@ -261,15 +259,6 @@ if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:
 # Remove django.contrib.admin if the admin interface is not enabled.
 if ENABLE_ADMIN is not True and "django.contrib.admin" in INSTALLED_APPS:
     INSTALLED_APPS.remove("django.contrib.admin")
-
-if CA_CUSTOM_APPS:
-    warnings.warn(
-        "CA_CUSTOM_APPS is deprecated and will be removed in django-ca==2.5.0, "
-        "use EXTEND_INSTALLED_APPS instead.",
-        DeprecationWarning,
-        stacklevel=1,
-    )
-    INSTALLED_APPS = INSTALLED_APPS + CA_CUSTOM_APPS
 
 if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
     INSTALLED_APPS.append("ninja")

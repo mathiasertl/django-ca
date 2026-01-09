@@ -489,20 +489,6 @@ Django itself works.
 As any other setting, they can be set by using environment variables prefixed with ``DJANGO_CA_`` (Example: To
 set ``LOG_LEVEL``, set the ``DJANGO_CA_LOG_LEVEL`` environment variable).
 
-.. _settings-ca-custom-apps:
-
-CA_CUSTOM_APPS
-   Default: ``[]``
-
-   .. WARNING::
-
-      This setting is deprecated and will be removed in ``django-ca==2.5.0``. Use
-      settings-extend-installed-apps_ instead.
-
-
-   The list gets appended to the standard ``INSTALLED_APPS`` setting. If you need more control, you can always
-   override that setting instead.
-
 .. _settings-ca-dir:
 
 CA_DIR

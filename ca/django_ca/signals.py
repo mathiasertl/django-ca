@@ -17,9 +17,11 @@
 these events happen. Please see `Django's documentation on signals
 <https://docs.djangoproject.com/en/dev/ref/signals/>`_ for further information on how to use signals.
 
-If you installed **django-ca** :doc:`from source </quickstart/from_source>`, use the :ref:`CA_CUSTOM_APPS
-<settings-ca-custom-apps>` setting to add a custom django app. Please see the `Django documentation on apps
-<https://docs.djangoproject.com/en/dev/ref/applications/>`_ if you need help on writing Django apps.
+If you installed the full **django-ca** project (e.g. :doc:`from source </quickstart/from_source>`,
+:doc:`via Docker </quickstart/docker>` or :doc:`via Docker Compose </quickstart/docker_compose>`), use the
+:ref:`EXTEND_INSTALLED_APPS <settings-extend-installed-apps>` setting to add a custom Django app. Please see
+the `Django documentation on apps <https://docs.djangoproject.com/en/dev/ref/applications/>`_ if you need help
+on writing Django apps and :doc:`extend django-ca </python/extend/index>` for even more help.
 """
 
 import django.dispatch
