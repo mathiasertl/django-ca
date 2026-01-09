@@ -118,6 +118,8 @@ commands <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_.
    :file: include/guide-where-to-go.rst.jinja
    :header_update_levels:
 
+.. _quickstart-as-app-setup-regular-tasks:
+
 *******************
 Setup regular tasks
 *******************
