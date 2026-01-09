@@ -1,6 +1,6 @@
 .. WARNING::
 
-   If you change this settings, OCSP and CRL URLs encoded in existing certificates and intermediate CAs become
+   If you change this setting, OCSP and CRL URLs encoded in existing certificates and intermediate CAs become
    invalid, so certificate validation using these URLs will fail. Also, ACMEv2 URLs will change, so every
    ACMEv2 client has to be updated.
 
