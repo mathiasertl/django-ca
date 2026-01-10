@@ -10,7 +10,8 @@ indent_size = 4
 [*.rst]
 insert_final_newline = true
 max_line_length = 110
-ij_wrap_on_typing = true
+indent_style = space
+indent_size = 4
 
 [*.{yaml,yml}]
 indent_style = space

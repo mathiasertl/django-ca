@@ -234,8 +234,7 @@ CA_DEFAULT_PRIVATE_KEY_TYPE
     .. pydantic-setting:: CA_DEFAULT_PRIVATE_KEY_TYPE
 
     Note that this setting is *not* used when generating OCSP responder certificates, where the default
-private
-    key type is the same as the certificate authority.
+    private key type is the same as the certificate authority.
 
 .. _settings-ca-default-profile:
 
