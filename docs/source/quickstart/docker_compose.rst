@@ -109,8 +109,8 @@ an example that just enables the :doc:`/rest_api`:
 .. structured-tutorial-part:: create-config-rest
 
 You can configure any `Django setting <https://docs.djangoproject.com/en/dev/ref/settings/>`_ or any of the
-:doc:`custom settings </settings>` here. See :ref:`settings-yaml-configuration` for more examples. Almost
-all settings can be changed later, if that is not the case, the settings documentation mentions it.
+:doc:`custom settings </settings>` here. Almost all settings can be changed later, if that is not the case,
+the settings documentation mentions it.
 
 .. _quickstart-compose-compose.yaml:
 

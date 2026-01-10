@@ -1,5 +1,0 @@
-DATABASES:
-  default:
-    ENGINE: django.db.backends.postgresql
-    HOST: database.int.example.com
-    PORT: 5444

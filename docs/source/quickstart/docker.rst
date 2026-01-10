@@ -80,8 +80,7 @@ and add at least these settings (and adjust to your configuration):
 
 .. structured-tutorial-part:: create-localsettings.yaml
 
-Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
-for more YAML configuration examples.
+Please see :doc:`/settings` for a list of available settings.
 
 Note that you can pass simple configuration variables also via environment variables prefixed with
 ``DJANGO_CA_``. For example, you could also configure the broker URL with:

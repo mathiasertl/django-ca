@@ -288,6 +288,7 @@ class SettingsModel(BaseModel):
     CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, DayValidator] = Field(
         default=timedelta(days=100),
         description="The default validity time for a new certificate.",
+        examples=[timedelta(days=45), 45],
     )
     CA_DEFAULT_HOSTNAME: str | None = Field(default=None, examples=["ca.example.com"])
     CA_DEFAULT_KEY_BACKEND: str = Field(
@@ -298,6 +299,7 @@ class SettingsModel(BaseModel):
         default=4096,
         description="The default key size for new RSA and DSA based CAs. "
         "Value must be at least ``1024`` and a power of two (e.g. ``2048`` or ``4096``).",
+        examples=[8192],
     )
     CA_DEFAULT_NAME_ORDER: UniqueElementsTuple[
         tuple[Annotated[x509.ObjectIdentifier, BeforeValidator(name_oid_parser)], ...]
@@ -346,7 +348,7 @@ class SettingsModel(BaseModel):
         ],
     )
     CA_ENABLE_ACME: bool = Field(
-        default=True, description="Set to ``False`` to disable all ACME functionality."
+        default=True, description="Set to ``False`` to disable all ACME functionality.", examples=[True]
     )
     CA_ENABLE_REST_API: bool = False
     CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
@@ -357,6 +359,7 @@ class SettingsModel(BaseModel):
     CA_NOTIFICATION_DAYS: tuple[int, ...] = Field(
         default=(14, 7, 3, 1),
         description="Days before expiry that certificate watchers will receive notifications.",
+        examples=[(14, 7, 3, 1)],
     )
     CA_OCSP_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
 

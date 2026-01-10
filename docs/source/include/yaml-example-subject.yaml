@@ -1,4 +1,0 @@
-CA_DEFAULT_SUBJECT:
-  - ["O", "DefaultOrg"]
-  - ["OU", "Default OrgUnit"]
-  - ["OU", "Default OrgUnit 2"]

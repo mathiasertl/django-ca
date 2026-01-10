@@ -16,20 +16,18 @@ and **django-ca** provides some of its own settings.
 How to configure
 ****************
 
-If you use django-ca :doc:`as a Django app </quickstart/as_app>`, set settings normally using your
-:file:`settings.py` file (or whatever custom mechanism you have devised).
+If you use django-ca :doc:`as a Django app </quickstart/as_app>`, use :file:`settings.py` file, as you
+normally would.
 
 If you use the full django-ca project (e.g. if you :doc:`install from source </quickstart/from_source>`, or
-use :doc:`Docker </quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`), do *not* update
-the :file:`settings.py` file included with django-ca. Instead, use
+use :doc:`Docker </quickstart/docker>` or :doc:`Docker Compose </quickstart/docker_compose>`), use
 `YAML <https://en.wikipedia.org/wiki/YAML>`_ files that django-ca loads (in alphabetical order) from a
-preconfigured directory. Please see the respective installation instructions for how to override settings, and
-see :ref:`settings-yaml-configuration` for format instructions.
+preconfigured directory. Please see the respective installation instructions for how to configure settings.
 
-The django-ca project also lets you override simple string-like settings via environment variables. The
-environment variable name is the same as the setting but prefixed with ``DJANGO_CA_``. For example to set the
-``CA_DIR`` setting, pass a ``DJANGO_CA_CA_DIR`` environment variable. Environment variables take precedence
-over the YAML configuration files above.
+In the django-ca project, you can also use environment variables. The variable name is the same as the setting
+but prefixed with ``DJANGO_CA_``. For example to set the ``CA_ENABLE_ACME`` setting, pass a
+``DJANGO_CA_CA_ENABLE_ACME`` environment variable. Environment variables take precedence over the YAML
+configuration files above.
 
 The django-ca project also recognizes some environment variables to better integrate with other systems. See
 :ref:`settings-global-environment-variables` for more information.
@@ -47,10 +45,9 @@ If you :doc:`install from source </quickstart/from_source>`, you only have to se
 otherwise. Please see the `section on configuration <from-source-configuration>`_ for more information.
 
 If you use :doc:`Docker </quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`, there
-isn't really any standard Django setting you need to configure, as safe defaults are used. A safe value for
-``SECRETS_KEY`` is generated automatically, ``ALLOWED_HOSTS`` is set via ``CA_DEFAULT_HOSTNAME`` and the
-``DATABASES`` setting is automatically populated with environment variables also used by the PostgreSQL/MySQL
-containers.
+isn't really any standard Django setting you *have to* configure, as safe defaults are used. ``SECRETS_KEY``
+is generated automatically, ``ALLOWED_HOSTS`` is set via ``CA_DEFAULT_HOSTNAME`` and the ``DATABASES`` setting
+is automatically populated with environment variables also used by the PostgreSQL/MySQL containers.
 
 ******************
 django-ca settings
@@ -529,9 +526,9 @@ EXTEND_INSTALLED_APPS
 
    If this setting is an environment variable, it must be a JSON-encoded list:
 
-   .. code-block:: json
+   .. code-block:: bash
 
-      ["myapp", "otherapp.apps.OtherAppConfig"]
+      DJANGO_CA_EXTEND_INSTALLED_APPS='["myapp", "otherapp.apps.OtherAppConfig"]'
 
 .. _settings-extend-url-patterns:
 
@@ -556,7 +553,7 @@ EXTEND_URL_PATTERNS
       .. literalinclude:: include/config/setting_extend_url_patterns.yaml
          :language: yaml
 
-   If this setting is an environment variable, it must be a JSON-encoded.
+   If this setting is an environment variable, it must be a JSON-encoded list.
 
 .. _settings-log-format:
 
@@ -772,75 +769,6 @@ CONFIGURATION_DIRECTORY
    `ConfigurationDirectory=
    <https://www.freedesktop.org/software/systemd/man/systemd.exec.html#RuntimeDirectory=>`_ directive.
 
-.. _settings-yaml-configuration:
-
-******************
-YAML configuration
-******************
-
-The Django project you use if you :doc:`install from source </quickstart/from_source>`, use :doc:`Docker
-</quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>` loads YAML files from a directory.
-This enables you to configure django-ca with a normal configuration file format without having to know Python.
-
-.. seealso:: https://en.wikipedia.org/wiki/YAML - Wikipedia has an overview of the YAML syntax.
-
-The individual tutorials give detailed instructions on where you can place these configurations files, this
-section documents how to translate Python settings described above into YAML.
-
-* The file must be a key/value mapping at the top level (as all examples are).
-* Boolean, string and integer values can be used in standard YAML syntax.
-* List or tuple values both map to YAML lists.
-* Dictionaries map to YAML dictionaries.
-
-Warning: unquoted strings
-=========================
-
-A file will fail to load if an unquoted string starts with a character that is also used in the YAML syntax,
-for example with a ``*`` or a ``[``. This is invalid YAML:
-
-.. code-block:: yaml
-
-   # THIS WILL NOT WORK:
-   SECRET_KEY: [random-string-that-happens-to-start-with-a-bracket
-
-Strings must also be quoted if they contain only digits (or resemble a different YAML data type), as they
-would otherwise be loaded as the respective data type:
-
-.. code-block:: yaml
-
-   # WRONG: serial that happens to have only digits would be loaded as integer
-   CA_DEFAULT_CA: 12345
-
-In both cases, the solution is to quote the string:
-
-.. code-block:: yaml
-
-   SECRET_KEY: "[random-string-that-happens-to-start-with-a-bracket"
-   CA_DEFAULT_CA: "12345"
-
-Examples
-========
-
-Basic settings are straight forward:
-
-.. literalinclude:: include/yaml-example-basic.yaml
-   :language: yaml
-
-Nested mappings such as the ``DATABASES`` are of course also possible:
-
-.. literalinclude:: include/yaml-example-databases.yaml
-   :language: yaml
-
-Settings that are tuples like `CA_DEFAULT_SUBJECT <settings-ca-default-subject>`_ have to be defined as lists:
-
-.. literalinclude:: include/yaml-example-subject.yaml
-   :language: yaml
-
-The `CA_PROFILES <settings-ca-profiles>`_ setting can also be set using YAML. Here is a verbose example:
-
-.. literalinclude:: include/yaml-example-ca-profiles.yaml
-   :language: yaml
-
 .. _settings-extend-settings:
 
 *********************
@@ -870,32 +798,105 @@ and:
 
 ... then both ``first_app`` and ``second_app`` will be added to ``INSTALLED_APPS``.
 
+*************
+Setting types
+*************
 
-*****
-Types
-*****
+All **django-ca** settings have a specific type. While they directly map to Python types (if you're familiar
+with them), there are a few subtleties in YAML and even more so if you use environment variables.
+
+Note that if you use **django-ca** as app and use normal settings in :file:`settings.py`, you can also always
+use the YAML/environment-variable equivalents as well. For example, you can also use ``"P45D"`` to configure
+an interval.
 
 .. _settings-types-str:
 
 Strings
 =======
 
+Strings are straight forward in all configuration formats. For example:
+
+.. pydantic-setting:: CA_DEFAULT_HOSTNAME
+    :example: 0
+
+Warning: unquoted strings in YAML
+---------------------------------
+
+A file will fail to load if an unquoted string starts with a character that is also used in the YAML syntax,
+for example with a ``*`` or a ``[``:
+
+.. code-block:: yaml
+
+    # THIS WILL NOT WORK:
+    #SECRET_KEY: [random-string-that-happens-to-start-with-a-bracket
+    # But this will (note the added quotes):
+    SECRET_KEY: "[random-string-that-happens-to-start-with-a-bracket"
+
+The same applies to strings that happen to be an integer:
+
+.. code-block:: yaml
+
+    # THIS WILL NOT WORK: A CA serial that happens to have only digits in its hex representation:
+    #CA_DEFAULT_CA = 1234
+    # But this will (note the added quotes):
+    CA_DEFAULT_CA = "1234"
+
 .. _settings-types-int:
 
 Integers
 ========
+
+Integers are straight forward in all configuration formats. For example:
+
+.. pydantic-setting:: CA_DEFAULT_KEY_SIZE
+    :example: 0
 
 .. _settings-types-bool:
 
 :spelling:word:`Booleans`
 =========================
 
+Boolean settings are straight forward in Python and YAML syntax. For environment variables, Pydantic model
+validation is used:
+
+.. pydantic-setting:: CA_ENABLE_ACME
+    :example: 0
+
+String values like ``"true"`` and ``"yes"`` are parsed as true, while ``"false"`` and ``"no"`` are parsed as
+false. The official `Conversion Table <https://docs.pydantic.dev/latest/concepts/conversion_table/>`_ has a
+list of allowed values for ``str`` inputs for ``bool`` values.
+
 .. _settings-types-timedelta:
 
 Intervals (:spelling:word:`Timedeltas`)
 =======================================
 
+Intervals (time deltas) are represented as :py:class:`~datetime.timedelta` objects in Python. In YAML and for
+environment variables, you have to use the `ISO 8601 <https://en.wikipedia.org/wiki/ISO_8601#Durations>`_
+string representation. For example, to set :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>` to 45 days:
+
+.. pydantic-setting:: CA_DEFAULT_EXPIRES
+    :example: 0
+
+Integer values also work, but the meaning depends on the setting. An integer value might be considered as
+days or seconds, please refer to the respective setting documentation for the exact meaning. This is
+equivalent to the above:
+
+.. pydantic-setting:: CA_DEFAULT_EXPIRES
+    :example: 1
+
 .. _settings-types-collections:
 
 Lists and dictionaries
 ======================
+
+For lists and dictionaries, you can use the standard Python and YAML mechanisms for representation. If you,
+use an environment variable, it has to be a JSON-encoded string. For a list:
+
+.. pydantic-setting:: CA_NOTIFICATION_DAYS
+    :example: 0
+
+And for a dictionary:
+
+.. pydantic-setting:: CA_PASSWORDS
+    :example: 0

@@ -195,8 +195,7 @@ setting here as well:
    :caption: /etc/django-ca/10-localsettings.yaml
    :context: quickstart-from-source
 
-Please see :doc:`/settings` for a list of available settings and especially :ref:`settings-yaml-configuration`
-for more YAML configuration examples.
+Please see :doc:`/settings` for a list of available settings.
 
 .. _systemd-configuration:
 
