@@ -38,6 +38,7 @@ import pytest
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
+from django_ca.deprecation import RemovedInDjangoCA270Warning, RemovedInDjangoCA280Warning
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
@@ -51,11 +52,23 @@ from django_ca.tests.base.utils import (
     uri,
 )
 
-# @contextmanager
-# def assert_removed_in_260(match: Union[str, "re.Pattern[str]"] | None = None) -> Iterator[None]:
-#     """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
-#     with pytest.warns(RemovedInDjangoCA260Warning, match=match):
-#         yield
+
+@contextmanager
+def assert_removed_in_270(  # pragma: no cover
+    match: Union[str, "re.Pattern[str]"] | None = None,
+) -> Iterator[None]:
+    """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
+    with pytest.warns(RemovedInDjangoCA270Warning, match=match):
+        yield
+
+
+@contextmanager
+def assert_removed_in_280(  # pragma: no cover
+    match: Union[str, "re.Pattern[str]"] | None = None,
+) -> Iterator[None]:
+    """Assert that a ``RemovedInDjangoCA200Warning`` is emitted."""
+    with pytest.warns(RemovedInDjangoCA280Warning, match=match):
+        yield
 
 
 def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509CertMixin) -> None:
