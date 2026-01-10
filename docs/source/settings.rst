@@ -348,9 +348,12 @@ CA_NOTIFICATION_DAYS
 .. _settings-ca-ocsp-urls:
 
 CA_OCSP_URLS
-   Default: ``{}``
+    .. pydantic-setting:: CA_OCSP_URLS
 
-   Configuration for OCSP responders. See :doc:`/ocsp` for more information.
+    A full example might look like this:
+
+    .. pydantic-setting:: CA_OCSP_URLS
+        :example: 0
 
 .. _settings-ca-ocsp-key-backends:
 

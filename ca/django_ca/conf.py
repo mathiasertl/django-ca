@@ -176,6 +176,18 @@ _DEFAULT_CA_PROFILES: dict[str, dict[str, Any]] = {
 }
 
 
+class OcspUrlModel(BaseModel):
+    """Model for the CA_OCSP_URLS setting."""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True, arbitrary_types_allowed=True)
+
+    ca: str | None = None
+    responder_key: str
+    responder_cert: x509.Certificate | str
+    expires: Annotated[timedelta, Ge(timedelta(seconds=0))] | None = None
+    ca_ocsp: bool | None = None
+
+
 class CertificateRevocationListBaseModel(BaseModel):
     """Base model for CRL profiles and overrides."""
 
@@ -352,6 +364,21 @@ class SettingsModel(BaseModel):
     CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = Field(
         default=timedelta(days=1),
         description="Renew OCSP certificates if they expire within the given interval.",
+    )
+    CA_OCSP_URLS: dict[str, OcspUrlModel] = Field(
+        default_factory=dict,
+        description="Configuration for OCSP responders. See :doc:`/ocsp` for more information.",
+        examples=[
+            {
+                "path-name": OcspUrlModel(
+                    ca="ca-name-or-serial",
+                    responder_key="-----BEGIN PRIVATE KEY-----\n...",
+                    responder_cert="-----BEGIN CERTIFICATE-----\n...",
+                    expires=timedelta(days=1),
+                    ca_ocsp=False,
+                )
+            }
+        ],
     )
 
     CA_PASSWORDS: dict[Serial, bytes] = Field(

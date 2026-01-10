@@ -84,7 +84,7 @@ def assert_ocsp_response(
     responder_certificate: Certificate,
     response_status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.SUCCESSFUL,
     nonce: bytes | None = None,
-    expires: int = 86400,
+    expires: int | timedelta = 86400,
     signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
     single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
 ) -> None:
@@ -98,6 +98,8 @@ def assert_ocsp_response(
         assert response.signature_hash_algorithm is None
     else:
         assert isinstance(response.signature_hash_algorithm, signature_hash_algorithm)
+    if isinstance(expires, int):
+        expires = timedelta(seconds=expires)
     assert response.certificates == [responder_certificate.pub.loaded]  # responder certificate!
     assert response.responder_name is None
     assert isinstance(response.responder_key_hash, bytes)  # TODO: Validate responder id
@@ -106,7 +108,7 @@ def assert_ocsp_response(
     # Check TIMESTAMPS
     now = datetime.now(tz=UTC)
     assert response.this_update_utc == now
-    assert response.next_update_utc == now + timedelta(seconds=expires)
+    assert response.next_update_utc == now + expires
 
     # Check nonce if passed
     if nonce is None:

@@ -288,30 +288,16 @@ CA_DIR = "/non/existent"
 CA_DEFAULT_HOSTNAME = "localhost:8000"
 
 CA_OCSP_URLS = {
-    "root": {
-        "ca": _fixture_data["certs"]["root"]["serial"],
-        "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
-        "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
-    },
     "child": {
         "ca": _fixture_data["certs"]["child"]["serial"],
         "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
         "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
     },
-    "ec": {
-        "ca": _fixture_data["certs"]["ec"]["serial"],
+    "child-with-expires": {
+        "ca": _fixture_data["certs"]["child"]["serial"],
         "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
         "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
-    },
-    "dsa": {
-        "ca": _fixture_data["certs"]["dsa"]["serial"],
-        "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
-        "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
-    },
-    "pwd": {
-        "ca": _fixture_data["certs"]["pwd"]["serial"],
-        "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
-        "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
+        "expires": "P1D",
     },
 }
 CA_ENABLE_ACME = True

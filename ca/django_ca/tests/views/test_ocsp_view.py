@@ -18,6 +18,7 @@
 import base64
 import logging
 import shutil
+from datetime import timedelta
 from http import HTTPStatus
 from pathlib import Path
 from unittest import mock
@@ -321,6 +322,40 @@ def test_ca_ocsp(
         requested_certificate=child,
         nonce=req1_nonce,
         expires=600,
+        single_response_hash_algorithm=hashes.SHA1,
+        responder_certificate=profile_ocsp,
+    )
+
+
+@pytest.mark.urls("ca.urls")
+def test_default_child_view(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+    """Test the default view for the child ca."""
+    data = base64.b64encode(req1).decode("utf-8")
+    response = client.get(reverse("django_ca:ocsp-get-child", kwargs={"data": data}))
+    assert response.status_code == HTTPStatus.OK
+    assert_ocsp_response(
+        response,
+        requested_certificate=child_cert,
+        nonce=req1_nonce,
+        expires=600,
+        single_response_hash_algorithm=hashes.SHA1,
+        responder_certificate=profile_ocsp,
+    )
+
+
+@pytest.mark.urls("ca.urls")
+def test_default_child_view_with_expires(
+    client: Client, child_cert: Certificate, profile_ocsp: Certificate
+) -> None:
+    """Test the default view for the child ca."""
+    data = base64.b64encode(req1).decode("utf-8")
+    response = client.get(reverse("django_ca:ocsp-get-child-with-expires", kwargs={"data": data}))
+    assert response.status_code == HTTPStatus.OK
+    assert_ocsp_response(
+        response,
+        requested_certificate=child_cert,
+        nonce=req1_nonce,
+        expires=timedelta(days=1),
         single_response_hash_algorithm=hashes.SHA1,
         responder_certificate=profile_ocsp,
     )

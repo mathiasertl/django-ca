@@ -98,7 +98,7 @@ arguments of the view. For example::
            #'ca': '34:D6:02:B5:B8:27:4F:51:9A:16:0C:B8:56:B7:79:3F',
 
            # optional: How long OCSP responses are valid
-           #'expires': 3600,
+           #'expires': timedelta(expires=3600),
        },
 
        # This URL can be added to any intermediate CA using the --ca-ocsp-url parameter

@@ -13,7 +13,6 @@
 
 """URL configuration for this project."""
 
-from django.conf import settings
 from django.urls import URLPattern, URLResolver, path, register_converter
 
 from django_ca import converters, views
@@ -127,7 +126,8 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
     ]
 
 
-for name, kwargs in getattr(settings, "CA_OCSP_URLS", {}).items():
+for name, config in model_settings.CA_OCSP_URLS.items():
+    kwargs = config.model_dump(exclude_none=True)
     kwargs.setdefault("ca", name)
     urlpatterns += [
         path(f"ocsp/{name}/", views.OCSPView.as_view(**kwargs), name=f"ocsp-post-{name}"),
