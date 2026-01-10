@@ -64,6 +64,14 @@ Python API
 
 No changes yet.
 
+*****
+Views
+*****
+
+* The `expires` parameter for :py:class:`~django_ca.views.OCSPView` should now be a
+  :py:class:`~datetime.timedelta`. Support for passing an ``int`` is deprecated and will be removed in
+  ``django-ca~=2.7.0``.
+
 ************
 Dependencies
 ************
