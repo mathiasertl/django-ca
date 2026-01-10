@@ -382,8 +382,17 @@ def test_ca_acme_order_validity_as_int(settings: SettingsWrapper) -> None:
 @pytest.mark.parametrize("setting", ("CA_ACME_DEFAULT_CERT_VALIDITY", "CA_ACME_MAX_CERT_VALIDITY"))
 def test_ca_acme_cert_validity_timedelta_settings_as_int(settings: SettingsWrapper, setting: str) -> None:
     """Test that CA_DEFAULT_CERT_VALIDITY can be set to an int."""
-    setattr(settings, setting, 1)
-    assert getattr(model_settings, setting) == timedelta(days=1)
+    settings.CA_ACME_DEFAULT_CERT_VALIDITY = 1  # set to one to make sure it's always lower the max
+    setattr(settings, setting, 2)
+    assert getattr(model_settings, setting) == timedelta(days=2)
+
+
+def test_ca_acme_cert_validity_validation(settings: SettingsWrapper) -> None:
+    """Check error if default is higher than max validity (= makes no sense)."""
+    settings.CA_ACME_DEFAULT_CERT_VALIDITY = 45
+    msg = r"CA_ACME_DEFAULT_CERT_VALIDITY is greater then CA_ACME_MAX_CERT_VALIDITY\."
+    with assert_improperly_configured(msg):
+        settings.CA_ACME_MAX_CERT_VALIDITY = 30
 
 
 @pytest.mark.parametrize("setting", ("CA_ACME_DEFAULT_CERT_VALIDITY", "CA_ACME_MAX_CERT_VALIDITY"))

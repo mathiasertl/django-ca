@@ -261,7 +261,7 @@ class SettingsModel(BaseModel):
         description='The time a request for a new certificate ("order") remains valid.',
     )
     CA_ACME_DEFAULT_CERT_VALIDITY: AcmeCertValidity = Field(
-        default=timedelta(days=90),
+        default=timedelta(days=45),
         description="The default validity time any certificate issued via ACME is valid.",
     )
     CA_ACME_MAX_CERT_VALIDITY: AcmeCertValidity = Field(
@@ -286,7 +286,7 @@ class SettingsModel(BaseModel):
         default="secp256r1", description="The default elliptic curve for EC based CAs."
     )
     CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, DayValidator] = Field(
-        default=timedelta(days=365),
+        default=timedelta(days=100),
         description="The default validity time for a new certificate.",
     )
     CA_DEFAULT_HOSTNAME: str | None = Field(default=None, examples=["ca.example.com"])
@@ -472,6 +472,13 @@ class SettingsModel(BaseModel):
         """Validate that the minimum key size is not larger than the default key size."""
         if self.CA_MIN_KEY_SIZE > self.CA_DEFAULT_KEY_SIZE:
             raise ValueError(f"CA_DEFAULT_KEY_SIZE cannot be lower then {self.CA_MIN_KEY_SIZE}")
+        return self
+
+    @model_validator(mode="after")
+    def validate_acme_cert_validity(self) -> Self:
+        """Validate that ``CA_ACME_MAX_CERT_VALIDITY`` is >= ``CA_ACME_DEFAULT_CERT_VALIDITY``."""
+        if self.CA_ACME_MAX_CERT_VALIDITY < self.CA_ACME_DEFAULT_CERT_VALIDITY:
+            raise ValueError("CA_ACME_DEFAULT_CERT_VALIDITY is greater then CA_ACME_MAX_CERT_VALIDITY.")
         return self
 
     def get_default_signature_hash_algorithm(self) -> SignatureHashAlgorithm:

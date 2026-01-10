@@ -156,6 +156,10 @@ CA_DEFAULT_EXPIRES
 
     An integer value will be parsed as a number of *days*.
 
+    .. versionchanged:: 2.6.0
+
+        The default value was changed to 100 days (from 365 days).
+
 .. _settings-ca-default-hostname:
 
 CA_DEFAULT_HOSTNAME
@@ -439,6 +443,10 @@ CA_ACME_DEFAULT_CERT_VALIDITY
     .. pydantic-setting:: CA_ACME_DEFAULT_CERT_VALIDITY
 
     An integer value will be parsed as a number of *days*.
+
+    .. versionchanged:: 2.6.0
+
+        The default value was changed to 45 days (from 90 days).
 
 .. _CA_ACME_MAX_CERT_VALIDITY:
 

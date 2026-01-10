@@ -6,6 +6,15 @@
 Settings
 ********
 
+* Mirroring upcoming changes to the maximum lifespan of public certificates, the *default* for validity for
+  certificates was changed:
+
+  * :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>` now defaults to 100 days.
+  * :ref:`CA_ACME_DEFAULT_CERT_VALIDITY <CA_ACME_DEFAULT_CERT_VALIDITY>` now defaults to 45 days.
+  * Note that this only affects the default, you can still change the settings to whatever you want.
+  * :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>` and :ref:`CA_ACME_MAX_CERT_VALIDITY
+    <CA_ACME_MAX_CERT_VALIDITY>` will be reduced to 47 days in ``django-ca~=4.0.0``.
+
 * Boolean settings (e.g. :ref:`CA_ENABLE_ACME <settings-acme-enable-acme>` or :ref:`CA_ENABLE_REST_API
   <settings-ca-enable-rest-api>`) are now parsed using Pydantic model validation. This makes parsing of
   environment variables more strict, as the value is no longer lower-cased and stripped of whitespace. As a
@@ -13,6 +22,12 @@ Settings
 * ``CA_CUSTOM_APPS`` was removed, it is replaced with :ref:`EXTEND_INSTALLED_APPS
   <settings-extend-installed-apps>` (the setting was deprecated since ``django-ca==2.2.0`` and was even marked
   for removal for ``django-ca==2.5.0`` already).
+
+Minor changes
+=============
+
+* Raise an error if :ref:`CA_ACME_MAX_CERT_VALIDITY <CA_ACME_MAX_CERT_VALIDITY>` is *lower* then
+  :ref:`CA_ACME_DEFAULT_CERT_VALIDITY <CA_ACME_DEFAULT_CERT_VALIDITY>`,
 
 *******************
 Setup and packaging
