@@ -13,7 +13,6 @@
 
 """Default settings for the django-ca Django project."""
 
-import json
 import os
 from pathlib import Path
 from typing import Any
@@ -232,12 +231,8 @@ for _setting, _value in load_settings_from_files(BASE_DIR):
 
 # Load settings from environment variables
 for _setting, _value in load_settings_from_environment():
-    if _setting == "EXTEND_URL_PATTERNS":
-        _EXTEND_URL_PATTERNS += json.loads(_value)
-    elif _setting == "EXTEND_INSTALLED_APPS":
-        EXTEND_INSTALLED_APPS += json.loads(_value)
-    else:
-        globals()[_setting] = _value
+    # NOTE: load_settings_from_environment is responsible for parsing values.
+    globals()[_setting] = _value
 
 # Try to use POSTGRES_* and MYSQL_* environment variables to determine database access credentials.
 # These are the variables set by the standard PostgreSQL/MySQL Docker containers.

@@ -14,6 +14,7 @@
 """Utility functions for loading settings."""
 
 import importlib
+import json
 import logging
 import os
 import warnings
@@ -185,14 +186,27 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
         if key == "ALLOWED_HOSTS":
             yield key, value.split()
         elif key == "ENABLE_ADMIN":
-            yield key, parse_bool(value)
+            yield key, parse_bool(key, value)
+        elif key in ("EXTEND_URL_PATTERNS", "EXTEND_INSTALLED_APPS"):
+            yield key, parse_json(key, value)
         else:
             yield key, value
 
 
-def parse_bool(value: str) -> bool:
+def parse_bool(key: str, value: str) -> bool:
     """Parse a variable that is supposed to represent a boolean value."""
-    return TypeAdapter(bool).validate_python(value)
+    try:
+        return TypeAdapter(bool).validate_python(value)
+    except ValueError as ex:
+        raise ImproperlyConfigured(f"{key}: Not a valid boolean.") from ex
+
+
+def parse_json(key: str, value: str) -> Any:
+    """Parse a JSON string."""
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError as ex:
+        raise ImproperlyConfigured(f"{key}: Value is not valid JSON.") from ex
 
 
 def _set_db_setting(
