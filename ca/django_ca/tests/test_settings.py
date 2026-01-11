@@ -14,6 +14,7 @@
 
 """Test cases for ``conf.model_settings``."""
 
+import json
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -195,21 +196,66 @@ def test_load_settings_from_files_with_pyyaml_not_installed() -> None:
         assert not dict(load_settings_from_files(FIXTURES_DIR))
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    (("true", True), ("yes", True), ("1", True), ("false", False), ("no", False), ("0", False)),
+)
+@pytest.mark.parametrize("setting", ("ENABLE_ADMIN", "CA_ENABLE_CLICKJACKING_PROTECTION", "USE_TZ"))
+def test_boolean_setting_from_environment(setting: str, value: str, expected: bool) -> None:
+    """Test loading boolean settings from the environment."""
+    with mock.patch.dict(os.environ, {f"DJANGO_CA_{setting}": value}, clear=True):
+        assert dict(load_settings_from_environment()) == {setting: expected}
+
+
+@pytest.mark.parametrize(
+    ("setting", "expected"),
+    (
+        ("EXTEND_URL_PATTERNS", ["foo", "bar"]),
+        ("EXTEND_INSTALLED_APPS", ["foo", "bar"]),
+        ("ALLOWED_HOSTS", ["foo", "bar"]),
+        ("ALLOWED_HOSTS", []),
+        ("CACHES", {}),
+        ("CACHES", {"default": {"BACKEND": "module.path"}}),
+        (
+            "CACHES",
+            {
+                "default": {
+                    "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+                    "LOCATION": "/var/tmp/django_cache",
+                }
+            },
+        ),
+        ("DATABASES", {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "mydatabase"}}),
+        (
+            "STORAGES",
+            {
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                },
+                "staticfiles": {
+                    "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+                },
+            },
+        ),
+    ),
+)
+def test_complex_setting_from_environment(setting: str, expected: bool) -> None:
+    """Test loading complex settings from the environment."""
+    with mock.patch.dict(os.environ, {f"DJANGO_CA_{setting}": json.dumps(expected)}, clear=True):
+        assert dict(load_settings_from_environment()) == {setting: expected}
+
+
 def test_load_settings_from_environment() -> None:
     """Test loading settings from the environment."""
     with mock.patch.dict(
         os.environ,
         {
             "DJANGO_CA_SETTINGS": "ignored",
-            "DJANGO_CA_ALLOWED_HOSTS": "example.com example.net",
-            "DJANGO_CA_ENABLE_ADMIN": "yes",
             "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR",
         },
         clear=True,
     ):
         assert dict(load_settings_from_environment()) == {
-            "ALLOWED_HOSTS": ["example.com", "example.net"],
-            "ENABLE_ADMIN": True,
             "SOME_OTHER_VALUE": "FOOBAR",
         }
 
@@ -365,6 +411,20 @@ def test_load_secret_key_with_secret_key_file(tmp_path: Path) -> None:
         stream.write("123")
 
     assert load_secret_key(None, str(secret_key_file)) == "123"
+
+
+def test_boolean_setting_from_environment_with_invalid_value() -> None:
+    """Test error loading a boolean setting from the environment."""
+    with mock.patch.dict(os.environ, {"DJANGO_CA_USE_TZ": "foo"}, clear=True):
+        with assert_improperly_configured(r"Input should be a valid boolean"):
+            dict(load_settings_from_environment())
+
+
+def test_complex_setting_from_environment_with_invalid_value() -> None:
+    """Test error loading a complex (JSON) setting from the environment."""
+    with mock.patch.dict(os.environ, {"DJANGO_CA_DATABASES": "foo"}, clear=True):
+        with assert_improperly_configured(r"Invalid JSON"):
+            dict(load_settings_from_environment())
 
 
 def test_load_secret_key_with_no_secret_key_file() -> None:

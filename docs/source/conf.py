@@ -216,6 +216,8 @@ autodoc_mock_imports = [
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
+# find what is exposed:
+# python -m sphinx.ext.intersphinx https://docs.djangoproject.com/en/stable/objects.inv
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "cg": ("https://cryptography.io/en/stable/", None),

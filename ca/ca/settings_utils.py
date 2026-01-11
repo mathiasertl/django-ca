@@ -14,7 +14,6 @@
 """Utility functions for loading settings."""
 
 import importlib
-import json
 import logging
 import os
 import warnings
@@ -179,16 +178,25 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
 
 def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
     """Load settings from the environment."""
+    types = {
+        "ENABLE_ADMIN": bool,
+        "CA_ENABLE_CLICKJACKING_PROTECTION": bool,
+        "USE_TZ": bool,
+        "EXTEND_URL_PATTERNS": list[str],
+        "EXTEND_INSTALLED_APPS": list[str],
+        "ALLOWED_HOSTS": list[str],
+        "CACHES": dict[str, dict[str, Any]],
+        "DATABASES": dict[str, dict[str, Any]],
+        "STORAGES": dict[str, dict[str, Any]],
+    }
     for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files
             continue
 
-        if key == "ALLOWED_HOSTS":
-            yield key, value.split()
-        elif key == "ENABLE_ADMIN":
+        if key in ("ENABLE_ADMIN", "CA_ENABLE_CLICKJACKING_PROTECTION", "USE_TZ"):
             yield key, parse_bool(key, value)
-        elif key in ("EXTEND_URL_PATTERNS", "EXTEND_INSTALLED_APPS"):
-            yield key, parse_json(key, value)
+        elif typ := types.get(key, None):
+            yield key, parse_json(key, value, typ)
         else:
             yield key, value
 
@@ -198,15 +206,15 @@ def parse_bool(key: str, value: str) -> bool:
     try:
         return TypeAdapter(bool).validate_python(value)
     except ValueError as ex:
-        raise ImproperlyConfigured(f"{key}: Not a valid boolean.") from ex
+        raise ImproperlyConfigured(f"{key}: {ex}") from ex
 
 
-def parse_json(key: str, value: str) -> Any:
-    """Parse a JSON string."""
+def parse_json(key: str, value: str, typ: type[Any]) -> Any:
+    """Parse a variable that is supposed to represent a JSON string."""
     try:
-        return json.loads(value)
-    except json.JSONDecodeError as ex:
-        raise ImproperlyConfigured(f"{key}: Value is not valid JSON.") from ex
+        return TypeAdapter(typ).validate_json(value)
+    except ValueError as ex:
+        raise ImproperlyConfigured(f"{key}: {ex}") from ex
 
 
 def _set_db_setting(

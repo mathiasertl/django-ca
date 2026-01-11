@@ -15,6 +15,9 @@ Settings
   * :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>` and :ref:`CA_ACME_MAX_CERT_VALIDITY
     <CA_ACME_MAX_CERT_VALIDITY>` will be reduced to 47 days in ``django-ca~=4.0.0``.
 
+* Some standard non-string Django settings (like ``ALLOWED_HOSTS``, ``CACHES`` and ``DATABASES``) can now also
+  be set with environment variables, see :ref:`Django settings as environment variables
+  <settings-env-django-settings>` for more information.
 * Boolean settings (e.g. :ref:`CA_ENABLE_ACME <settings-acme-enable-acme>` or :ref:`CA_ENABLE_REST_API
   <settings-ca-enable-rest-api>`) are now parsed using Pydantic model validation. This makes parsing of
   environment variables more strict, as the value is no longer lower-cased and stripped of whitespace. As a

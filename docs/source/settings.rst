@@ -9,8 +9,8 @@ Custom settings
 .. |str| replace:: :ref:`str <settings-types-str>`
 .. |timedelta| replace:: :ref:`timedelta <settings-types-timedelta>`
 
-You can use any of the settings understood by `Django <https://docs.djangoproject.com/en/dev/ref/settings/>`_
-and **django-ca** provides some of its own settings.
+You can use any of the settings :doc:`understood by Django <django:ref/settings>` and **django-ca** provides
+some of its own settings.
 
 ****************
 How to configure
@@ -489,8 +489,7 @@ CA_DIR
 CA_ENABLE_CLICKJACKING_PROTECTION
    Default: ``True``
 
-   Set to ``False`` to disable `Clickjacking protection
-   <https://docs.djangoproject.com/en/dev/ref/clickjacking/>`_. The setting influences if the
+   Set to ``False`` to disable :doc:`django:ref/clickjacking`. The setting influences if the
    ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
    already set by the web server.
 
@@ -535,8 +534,8 @@ EXTEND_INSTALLED_APPS
 EXTEND_URL_PATTERNS
    Default: ``[]``
 
-   Append URL patterns to the default `URL configuration <https://docs.djangoproject.com/en/dev/ref/urls/>`_.
-   This allows you to add custom endpoints to your project.
+   Append URL patterns to the default :doc:`URL configuration <django:ref/urls>`. This allows you to add
+   custom endpoints to your project.
 
    This setting is extended if given in multiple configuration sources, see
    `EXTEND_* settings <settings-extend-settings>`_ for more information.
@@ -624,6 +623,19 @@ DJANGO_CA_SETTINGS
    If not set, the value of the ``CONFIGURATION_DIRECTORY`` environment variable (see
    :ref:`settings-global-environment-variables-systemd`) is used as a fallback.
 
+.. _settings-env-django-settings:
+
+Django settings
+===============
+
+Some standard Django settings (see the :doc:`settings reference <django:ref/settings>`) can also be set via
+environment variables. Variables have to be prefixed with ``DJANGO_CA_``, so e.g. the  q``SECRET_KEY`` setting
+has to use the ``DJANGO_CA_SECRET_KEY`` environment variable.
+
+The ``USE_TZ`` setting is parsed as an |int|, while ``ALLOWED_HOSTS``, ``CACHES``, ``DATABASES``
+and ``STORAGES`` are parsed as |dict|. Any standard string setting (such as ``EMAIL_BACKEND`` or
+``EMAIL_HOST``) will just work.
+
 .. _settings-django-ca-startup:
 
 Startup (Docker only)
@@ -636,35 +648,34 @@ By default, all ``manage.py`` commands are run on startup, but the :doc:`Compose
 are only run once.
 
 DJANGO_CA_STARTUP_CACHE_CRLS
-   Set to ``0`` if you don't want to run :command:`manage.py cache_crls` on startup.
+    Set to ``0`` if you don't want to run :command:`manage.py cache_crls` on startup.
 
 DJANGO_CA_STARTUP_CHECK
-   Set to ``0`` if you don't want to run :command:`manage.py check` (see Djangos `system check framework
-   <https://docs.djangoproject.com/en/dev/ref/checks/>`_ on startup. This will save a second or two in
-   container startup time.
+    Set to ``0`` if you don't want to run :command:`manage.py check` (see Djangos :doc:`django:ref/checks`)
+    on startup. This will save a second or two in container startup time.
 
 DJANGO_CA_STARTUP_COLLECTSTATIC
-   Set to ``0`` if you don't want to run :command:`manage.py collectstatic` on startup.
+    Set to ``0`` if you don't want to run :command:`manage.py collectstatic` on startup.
 
 DJANGO_CA_STARTUP_MIGRATE
-   Set to ``0`` if you don't want to run :command:`manage.py migrate` on startup.
+    Set to ``0`` if you don't want to run :command:`manage.py migrate` on startup.
 
 DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS
-   Set to ``0`` if you don't want to run :command:`manage.py regenerate_ocsp_keys` on startup.
+    Set to ``0`` if you don't want to run :command:`manage.py regenerate_ocsp_keys` on startup.
 
 DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS
-   A space-separated string in the form of ``hostname:port``, for example ``db.example.com:5432``. If set, the
-   startup script will make a TCP connection attempt until the connection succeeds. This can be useful to
-   ensure that the main application does not start unless other systems are running.
+    A space-separated string in the form of ``hostname:port``, for example ``db.example.com:5432``. If set,
+    the startup script will make a TCP connection attempt until the connection succeeds. This can be useful to
+    ensure that the main application does not start unless other systems are running.
 
-   This is useful if the startup script is configured to run other ``manage.py`` commands that require access
-   to the database. Note that the :doc:`Compose setup </quickstart/docker_compose>` already asserts that via
-   healthcheck commands.
+    This is useful if the startup script is configured to run other ``manage.py`` commands that require access
+    to the database. Note that the :doc:`Compose setup </quickstart/docker_compose>` already asserts that via
+    healthcheck commands.
 
 DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE
-   Set to ``1`` to wait for the secret key file to be created elsewhere. This is used in the Compose setup to
-   ensure that one container generates and writes a secret key to a file and the other containers then read
-   that file.
+    Set to ``1`` to wait for the secret key file to be created elsewhere. This is used in the Compose setup to
+    ensure that one container generates and writes a secret key to a file and the other containers then read
+    that file.
 
 .. _settings-django-ca-databases:
 
