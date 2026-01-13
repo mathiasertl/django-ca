@@ -25,12 +25,15 @@ Settings
 * ``CA_CUSTOM_APPS`` was removed, it is replaced with :ref:`EXTEND_INSTALLED_APPS
   <settings-extend-installed-apps>` (the setting was deprecated since ``django-ca==2.2.0`` and was even marked
   for removal for ``django-ca==2.5.0`` already).
+* The ``CA_DEFAULT_KEY_BACKEND`` setting was removed, as changing the setting can lead to an unexpected
+  configurations.
 
 Minor changes
 =============
 
 * Raise an error if :ref:`CA_ACME_MAX_CERT_VALIDITY <CA_ACME_MAX_CERT_VALIDITY>` is *lower* then
-  :ref:`CA_ACME_DEFAULT_CERT_VALIDITY <CA_ACME_DEFAULT_CERT_VALIDITY>`,
+  :ref:`CA_ACME_DEFAULT_CERT_VALIDITY <CA_ACME_DEFAULT_CERT_VALIDITY>`.
+* The (previously undocumented) ``CA_DEFAULT_OCSP_KEY_BACKEND`` setting was removed.
 
 *******************
 Setup and packaging

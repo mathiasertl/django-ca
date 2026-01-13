@@ -33,6 +33,7 @@ from django.core.files.storage import Storage, storages
 from devscripts import config
 from devscripts.commands import DevCommand
 from devscripts.out import bold
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 
 if typing.TYPE_CHECKING:
     from django_ca.conf import SettingsProxy
@@ -150,7 +151,7 @@ class Command(DevCommand):
                 name = cert_data["name"]
                 cert = CertificateAuthority(
                     name=name,
-                    key_backend_alias=model_settings.CA_DEFAULT_KEY_BACKEND,
+                    key_backend_alias=DEFAULT_KEY_BACKEND_KEY,
                     key_backend_options={"path": f"{name}.key"},
                     ocsp_key_backend_alias="default",
                 )

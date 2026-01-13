@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.conf import model_settings
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.key_backends.storages.models import (
@@ -51,16 +51,15 @@ def test_private_key_options_with_invalid_key_size(key_size: int) -> None:
 def test_invalid_storages_alias(settings: SettingsWrapper) -> None:
     """Test configuring an invalid storage alias."""
     settings.CA_KEY_BACKENDS = {
-        model_settings.CA_DEFAULT_KEY_BACKEND: {
+        DEFAULT_KEY_BACKEND_KEY: {
             "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "invalid"},
         },
     }
     with pytest.raises(
-        ValueError,
-        match=rf"^{model_settings.CA_DEFAULT_KEY_BACKEND}: invalid: Storage alias is not configured\.$",
+        ValueError, match=rf"^{DEFAULT_KEY_BACKEND_KEY}: invalid: Storage alias is not configured\.$"
     ):
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
+        key_backends[DEFAULT_KEY_BACKEND_KEY]
 
 
 def test_eq(settings: SettingsWrapper) -> None:

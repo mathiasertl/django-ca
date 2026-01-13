@@ -39,7 +39,7 @@ from django.utils.module_loading import import_string
 
 from django_ca import constants
 from django_ca.conf import KeyBackendConfigurationModel, model_settings
-from django_ca.constants import SIGNATURE_HASH_ALGORITHM_NAMES
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY, SIGNATURE_HASH_ALGORITHM_NAMES
 from django_ca.pydantic.type_aliases import PowerOfTwoInt
 from django_ca.typehints import (
     ArgumentGroup,
@@ -136,7 +136,7 @@ class KeyBackend(
     def __init__(self, alias: str, **kwargs: Any) -> None:
         super().__init__(alias, **kwargs)
 
-        if self.alias != model_settings.CA_DEFAULT_KEY_BACKEND:
+        if self.alias != DEFAULT_KEY_BACKEND_KEY:
             self.argparse_prefix = f"{alias.lower().replace('_', '-')}-"
             self.options_prefix = f"{alias.lower().replace('-', '_')}_"
 

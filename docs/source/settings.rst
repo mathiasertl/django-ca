@@ -171,11 +171,6 @@ CA_DEFAULT_HOSTNAME
 
     .. include:: include/change_settings_warning.rst
 
-.. _settings-ca-default-key-backend:
-
-CA_DEFAULT_KEY_BACKEND
-    .. pydantic-setting:: CA_DEFAULT_KEY_BACKEND
-
 .. _settings-ca-default-key-size:
 
 CA_DEFAULT_KEY_SIZE

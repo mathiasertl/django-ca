@@ -38,6 +38,7 @@ from _pytest.fixtures import SubRequest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import key_backends, ocsp_key_backends
 from django_ca.key_backends.db.backend import DBBackend
 from django_ca.key_backends.hsm import HSMBackend, HSMOCSPBackend
@@ -215,7 +216,7 @@ def interesting_cert(request: "SubRequest") -> Certificate:
 def key_backend(request: "SubRequest") -> StoragesBackend:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for creating a new CA."""
     request.getfixturevalue("tmpcadir")
-    return key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]  # type: ignore[return-value]
+    return key_backends[DEFAULT_KEY_BACKEND_KEY]  # type: ignore[return-value]
 
 
 @pytest.fixture(params=precertificate_signed_certificate_timestamps_cert_names)

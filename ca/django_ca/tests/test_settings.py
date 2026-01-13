@@ -248,16 +248,9 @@ def test_complex_setting_from_environment(setting: str, expected: bool) -> None:
 def test_load_settings_from_environment() -> None:
     """Test loading settings from the environment."""
     with mock.patch.dict(
-        os.environ,
-        {
-            "DJANGO_CA_SETTINGS": "ignored",
-            "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR",
-        },
-        clear=True,
+        os.environ, {"DJANGO_CA_SETTINGS": "ignored", "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR"}, clear=True
     ):
-        assert dict(load_settings_from_environment()) == {
-            "SOME_OTHER_VALUE": "FOOBAR",
-        }
+        assert dict(load_settings_from_environment()) == {"SOME_OTHER_VALUE": "FOOBAR"}
 
 
 def test_update_database_setting_from_environment_with_postgres_with_defaults() -> None:
@@ -554,17 +547,15 @@ def test_ca_default_expires_with_invalid_value(settings: SettingsWrapper) -> Non
 
 
 def test_ca_default_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
-    """Test error when CA_DEFAULT_KEY_BACKEND refers to a backend that is *not* configured."""
-    assert "other-backend" not in model_settings.CA_KEY_BACKENDS
+    """Test error when no default key backend is configured."""
     with assert_improperly_configured(r"The default key backend is not configured\."):
-        settings.CA_DEFAULT_KEY_BACKEND = "other-backend"
+        settings.CA_KEY_BACKENDS = {"foo": {"BACKEND": "foo.bar"}}
 
 
 def test_ca_default_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
-    """Test error when CA_DEFAULT_OCSP_KEY_BACKEND refers to a backend that is *not* configured."""
-    settings.CA_OCSP_KEY_BACKENDS = {"default": {"BACKEND": "foo.bar"}}
-    with assert_improperly_configured(r"The default key backend is not configured\."):
-        settings.CA_DEFAULT_OCSP_KEY_BACKEND = "other-backend"
+    """Test error when default OCSP key backend is not configured."""
+    with assert_improperly_configured(r"The default OCSP key backend is not configured\."):
+        settings.CA_OCSP_KEY_BACKENDS = {"foo": {"BACKEND": "foo.bar"}}
 
 
 def test_ca_default_key_size_with_larger_ca_min_key_size(settings: SettingsWrapper) -> None:

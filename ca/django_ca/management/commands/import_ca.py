@@ -30,7 +30,7 @@ from django.core.management.base import CommandError, CommandParser
 
 from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.constants import PRIVATE_KEY_TYPES, PUBLIC_KEY_TYPES
+from django_ca.constants import DEFAULT_OCSP_KEY_BACKEND_KEY, PRIVATE_KEY_TYPES, PUBLIC_KEY_TYPES
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import PasswordAction
 from django_ca.management.base import BaseCommand
@@ -72,7 +72,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         )
 
         self.add_acme_group(parser)
-        self.add_ocsp_group(parser, default_ocsp_key_backend=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND)
+        self.add_ocsp_group(parser, default_ocsp_key_backend=DEFAULT_OCSP_KEY_BACKEND_KEY)
         self.add_rest_api_group(parser)
         self.add_certificate_authority_sign_extension_groups(parser)
 

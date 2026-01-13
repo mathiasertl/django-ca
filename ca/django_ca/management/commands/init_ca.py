@@ -33,6 +33,7 @@ from django_ca import constants
 from django_ca.celery import run_task
 from django_ca.celery.messages import GenerateOCSPKeyTaskArgs, UseCertificateAuthorityTaskArgs
 from django_ca.conf import model_settings
+from django_ca.constants import DEFAULT_OCSP_KEY_BACKEND_KEY
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.management.actions import ExpiresAction, IntegerRangeAction, NameAction
 from django_ca.management.base import BaseSignCommand, add_key_size
@@ -243,7 +244,7 @@ class Command(
         )
 
         self.add_acme_group(parser)
-        self.add_ocsp_group(parser, default_ocsp_key_backend=model_settings.CA_DEFAULT_OCSP_KEY_BACKEND)
+        self.add_ocsp_group(parser, default_ocsp_key_backend=DEFAULT_OCSP_KEY_BACKEND_KEY)
         self.add_rest_api_group(parser)
         self.add_output_certificate_arguments(parser)
 

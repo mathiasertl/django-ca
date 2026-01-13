@@ -291,10 +291,6 @@ class SettingsModel(BaseModel):
         examples=[timedelta(days=45), 45],
     )
     CA_DEFAULT_HOSTNAME: str | None = Field(default=None, examples=["ca.example.com"])
-    CA_DEFAULT_KEY_BACKEND: str = Field(
-        default="default",
-        description="The key backend to use by default. You do not usually have to update this setting.",
-    )
     CA_DEFAULT_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = Field(
         default=4096,
         description="The default key size for new RSA and DSA based CAs. "
@@ -318,7 +314,6 @@ class SettingsModel(BaseModel):
         NameOID.EMAIL_ADDRESS,
         NameOID.SERIAL_NUMBER,
     )
-    CA_DEFAULT_OCSP_KEY_BACKEND: str = "default"
     CA_DEFAULT_PRIVATE_KEY_TYPE: ParsableKeyType = Field(
         default="RSA", description="The default key type for new CAs."
     )
@@ -436,21 +431,23 @@ class SettingsModel(BaseModel):
     @model_validator(mode="after")
     def check_ca_key_backends(self) -> "SettingsModel":
         """Set the default key backend if not set, and validate that the default key backend is configured."""
+        default_key = constants.DEFAULT_KEY_BACKEND_KEY
         if not self.CA_KEY_BACKENDS:
-            self.CA_KEY_BACKENDS[self.CA_DEFAULT_KEY_BACKEND] = KeyBackendConfigurationModel(
+            self.CA_KEY_BACKENDS[default_key] = KeyBackendConfigurationModel(
                 BACKEND=constants.DEFAULT_STORAGE_BACKEND,
                 OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
             )
 
-        elif self.CA_DEFAULT_KEY_BACKEND not in self.CA_KEY_BACKENDS:
-            raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
+        if default_key not in self.CA_KEY_BACKENDS:
+            raise ValueError(f"{default_key}: The default key backend is not configured.")
         return self
 
     @model_validator(mode="after")
     def check_ca_ocsp_key_backends(self) -> "SettingsModel":
         """Set the default OCSP key backend if not set, and validate that the default is configured."""
+        default_key = constants.DEFAULT_OCSP_KEY_BACKEND_KEY
         if not self.CA_OCSP_KEY_BACKENDS:
-            self.CA_OCSP_KEY_BACKENDS[self.CA_DEFAULT_OCSP_KEY_BACKEND] = KeyBackendConfigurationModel(
+            self.CA_OCSP_KEY_BACKENDS[default_key] = KeyBackendConfigurationModel(
                 BACKEND=constants.DEFAULT_OCSP_KEY_BACKEND,
                 OPTIONS={"storage_alias": self.CA_DEFAULT_STORAGE_ALIAS},
             )
@@ -459,8 +456,8 @@ class SettingsModel(BaseModel):
                 OPTIONS={},
             )
 
-        elif self.CA_DEFAULT_OCSP_KEY_BACKEND not in self.CA_OCSP_KEY_BACKENDS:
-            raise ValueError(f"{self.CA_DEFAULT_KEY_BACKEND}: The default key backend is not configured.")
+        if default_key not in self.CA_OCSP_KEY_BACKENDS:
+            raise ValueError(f"{default_key}: The default OCSP key backend is not configured.")
         return self
 
     @model_validator(mode="after")

@@ -32,7 +32,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from django_ca.conf import model_settings
-from django_ca.constants import SIGNATURE_HASH_ALGORITHM_NAMES
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY, SIGNATURE_HASH_ALGORITHM_NAMES
 from django_ca.extensions import extension_as_text, get_extension_name
 from django_ca.key_backends import key_backends
 from django_ca.management import actions
@@ -636,8 +636,7 @@ class StorePrivateKeyMixin:
             "--key-backend",
             action=KeyBackendAction,
             help="The key can be stored using different backends. Depending on the backend, you have to "
-            "choose different options below for private keys. (default: "
-            f"{model_settings.CA_DEFAULT_KEY_BACKEND}).",
+            f"choose different options below for private keys. (default: {DEFAULT_KEY_BACKEND_KEY}).",
         )
         return group
 

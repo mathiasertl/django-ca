@@ -31,10 +31,9 @@ from django.conf import settings
 from django.urls import reverse
 
 import pytest
-from _pytest.fixtures import SubRequest
 
 from django_ca import constants
-from django_ca.conf import model_settings
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends.hsm import HSMBackend
 from django_ca.key_backends.hsm.models import HSMCreatePrivateKeyOptions
 from django_ca.key_backends.hsm.typehints import SupportedKeyType
@@ -166,12 +165,12 @@ def generate_pub_fixture(name: str) -> typing.Callable[[], x509.Certificate]:
     return fixture
 
 
-def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], CertificateAuthority]:
+def generate_ca_fixture(name: str) -> typing.Callable[[pytest.FixtureRequest, Any], CertificateAuthority]:
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture
     def fixture(
-        request: "SubRequest",
+        request: pytest.FixtureRequest,
         db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
     ) -> CertificateAuthority:
         data = CERT_DATA[name]
@@ -197,11 +196,13 @@ def generate_ca_fixture(name: str) -> typing.Callable[["SubRequest", Any], Certi
     return fixture
 
 
-def generate_usable_ca_fixture(name: str) -> typing.Callable[["SubRequest", Path], CertificateAuthority]:
+def generate_usable_ca_fixture(
+    name: str,
+) -> typing.Callable[[pytest.FixtureRequest, Path], CertificateAuthority]:
     """Function to generate CA fixtures (root, child, ...)."""
 
     @pytest.fixture
-    def fixture(request: "SubRequest", tmpcadir: Path) -> CertificateAuthority:
+    def fixture(request: pytest.FixtureRequest, tmpcadir: Path) -> CertificateAuthority:
         ca = request.getfixturevalue(name)  # load the CA into the database
         data = CERT_DATA[name]
         shutil.copy(os.path.join(FIXTURES_DIR, data["key_filename"]), tmpcadir)
@@ -211,12 +212,12 @@ def generate_usable_ca_fixture(name: str) -> typing.Callable[["SubRequest", Path
     return fixture
 
 
-def generate_cert_fixture(name: str) -> typing.Callable[["SubRequest"], Certificate]:
+def generate_cert_fixture(name: str) -> typing.Callable[[pytest.FixtureRequest], Certificate]:
     """Function to generate cert fixtures (root_cert, all_extensions, no_extensions, ...)."""
 
     @pytest.fixture
     def fixture(
-        request: "SubRequest",
+        request: pytest.FixtureRequest,
         db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
     ) -> Certificate:
         sanitized_name = name.replace("-", "_")
@@ -293,7 +294,7 @@ def load_ca(
 
     ca = CertificateAuthority(
         name=name,
-        key_backend_alias=model_settings.CA_DEFAULT_KEY_BACKEND,
+        key_backend_alias=DEFAULT_KEY_BACKEND_KEY,
         key_backend_options={"path": f"{name}.key"},
         ocsp_key_backend_alias="default",
         parent=parent,

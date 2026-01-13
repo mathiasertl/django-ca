@@ -44,6 +44,7 @@ from freezegun import freeze_time
 
 from devscripts import config
 from django_ca.conf import model_settings
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages.models import (
     StoragesCreatePrivateKeyOptions,
@@ -284,7 +285,7 @@ def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) ->
         if delay:
             freeze_now += data[name]["delta"]
 
-        key_backend = key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
+        key_backend = key_backends[DEFAULT_KEY_BACKEND_KEY]
         key_backend_options = StoragesCreatePrivateKeyOptions(
             key_type=data[name]["key_type"],
             password=data[name].get("password"),

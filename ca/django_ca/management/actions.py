@@ -31,7 +31,12 @@ from django.core.validators import URLValidator
 
 from django_ca import constants
 from django_ca.conf import model_settings
-from django_ca.constants import EXTENSION_DEFAULT_CRITICAL, KEY_USAGE_NAMES, ReasonFlags
+from django_ca.constants import (
+    EXTENSION_DEFAULT_CRITICAL,
+    KEY_USAGE_NAMES,
+    ReasonFlags,
+    DEFAULT_KEY_BACKEND_KEY,
+)
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic.validators import is_power_two_validator
@@ -288,7 +293,7 @@ class KeyBackendAction(SingleValueAction[str, KeyBackend[BaseModel, BaseModel, B
 
     def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("choices", list(model_settings.CA_KEY_BACKENDS))
-        kwargs.setdefault("default", key_backends[model_settings.CA_DEFAULT_KEY_BACKEND])
+        kwargs.setdefault("default", key_backends[DEFAULT_KEY_BACKEND_KEY])
         super().__init__(**kwargs)
 
     def parse_value(self, value: str) -> KeyBackend[BaseModel, BaseModel, BaseModel]:

@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.conf import model_settings
+from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_improperly_configured
@@ -30,7 +30,7 @@ pytestmark = pytest.mark.usefixtures("clean_key_backends")  # every test gets cl
 
 def test_key_backends_getitem_with_default() -> None:
     """Test dict-style lookup ."""
-    assert isinstance(key_backends[model_settings.CA_DEFAULT_KEY_BACKEND], KeyBackend)
+    assert isinstance(key_backends[DEFAULT_KEY_BACKEND_KEY], KeyBackend)
 
 
 def test_key_backends_getitem_caching() -> None:
@@ -38,11 +38,11 @@ def test_key_backends_getitem_caching() -> None:
     patch_target = "django_ca.key_backends.key_backends._get_key_backend"
     value = "xxx"
     with patch(patch_target, autospec=True, return_value=value) as load_mock:
-        assert key_backends[model_settings.CA_DEFAULT_KEY_BACKEND] == value  # type: ignore[comparison-overlap]
-    load_mock.assert_called_once_with(model_settings.CA_DEFAULT_KEY_BACKEND)
+        assert key_backends[DEFAULT_KEY_BACKEND_KEY] == value  # type: ignore[comparison-overlap]
+    load_mock.assert_called_once_with(DEFAULT_KEY_BACKEND_KEY)
 
     with patch(patch_target, autospec=True, return_value=value) as load_mock:
-        assert key_backends[model_settings.CA_DEFAULT_KEY_BACKEND] == value  # type: ignore[comparison-overlap]
+        assert key_backends[DEFAULT_KEY_BACKEND_KEY] == value  # type: ignore[comparison-overlap]
     load_mock.assert_not_called()
 
 
@@ -55,14 +55,14 @@ def test_key_backends_getitem_with_invalid_backend() -> None:
 def test_key_backends_iter(settings: SettingsWrapper) -> None:
     """Test dict-style lookup ."""
     assert list(key_backends) == [
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND],
+        key_backends[DEFAULT_KEY_BACKEND_KEY],
         key_backends["secondary"],
         key_backends["hsm"],
         key_backends["db"],
     ]
 
     settings.CA_KEY_BACKENDS = {
-        model_settings.CA_DEFAULT_KEY_BACKEND: {
+        DEFAULT_KEY_BACKEND_KEY: {
             "BACKEND": "django_ca.key_backends.storages.StoragesBackend",
             "OPTIONS": {"storage_alias": "django-ca"},
         },
@@ -73,7 +73,7 @@ def test_key_backends_iter(settings: SettingsWrapper) -> None:
     }
 
     assert list(key_backends) == [
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND],
+        key_backends[DEFAULT_KEY_BACKEND_KEY],
         DummyBackend(alias="test"),
     ]
 
@@ -81,7 +81,7 @@ def test_key_backends_iter(settings: SettingsWrapper) -> None:
 def test_key_backends_class_not_found(settings: SettingsWrapper) -> None:
     """Test configuring a class that cannot be found."""
     settings.CA_KEY_BACKENDS = {
-        model_settings.CA_DEFAULT_KEY_BACKEND: {
+        DEFAULT_KEY_BACKEND_KEY: {
             "BACKEND": "not_found.NotFoundBackend",
             "OPTIONS": {},
         },
@@ -90,27 +90,27 @@ def test_key_backends_class_not_found(settings: SettingsWrapper) -> None:
     with assert_improperly_configured(
         r"^Could not find backend 'not_found.NotFoundBackend': No module named 'not_found'$"
     ):
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
+        key_backends[DEFAULT_KEY_BACKEND_KEY]
 
 
 def test_key_backends_class_is_not_key_backend(settings: SettingsWrapper) -> None:
     """Test configuring a class that is not a KeyBackend subclass."""
     backend_path = f"{DummyModel.__module__}.DummyModel"
     settings.CA_KEY_BACKENDS = {
-        model_settings.CA_DEFAULT_KEY_BACKEND: {
+        DEFAULT_KEY_BACKEND_KEY: {
             "BACKEND": backend_path,
             "OPTIONS": {},
         },
     }
 
     with assert_improperly_configured(rf"^{backend_path}: Class does not refer to a key backend\.$"):
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
+        key_backends[DEFAULT_KEY_BACKEND_KEY]
 
 
 def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
     """Test methods usually overwritten by StoragesBackend."""
     settings.CA_KEY_BACKENDS = {
-        model_settings.CA_DEFAULT_KEY_BACKEND: {
+        DEFAULT_KEY_BACKEND_KEY: {
             "BACKEND": f"{DummyModel.__module__}.DummyBackend",
             "OPTIONS": {},
         },
@@ -119,7 +119,7 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
     parser = argparse.ArgumentParser()
     group = parser.add_argument_group("group")
 
-    backend = key_backends[model_settings.CA_DEFAULT_KEY_BACKEND]
+    backend = key_backends[DEFAULT_KEY_BACKEND_KEY]
     assert backend.add_use_private_key_arguments(group) is None  # type: ignore[func-returns-value]
     assert backend.add_create_private_key_arguments(group) is None  # type: ignore[func-returns-value]
     assert backend.add_store_private_key_arguments(group) is None  # type: ignore[func-returns-value]
@@ -128,11 +128,11 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
 def test_sign_data_not_implemented(settings: SettingsWrapper, root: CertificateAuthority) -> None:
     """Test that the default sign_data() method raises NotImplementedError."""
     settings.CA_KEY_BACKENDS = {
-        model_settings.CA_DEFAULT_KEY_BACKEND: {
+        DEFAULT_KEY_BACKEND_KEY: {
             "BACKEND": f"{DummyModel.__module__}.DummyBackend",
             "OPTIONS": {},
         },
     }
 
     with pytest.raises(NotImplementedError, match=r"^This backend does not support signing data\.$"):
-        key_backends[model_settings.CA_DEFAULT_KEY_BACKEND].sign_data(root, DummyModel(), b"")
+        key_backends[DEFAULT_KEY_BACKEND_KEY].sign_data(root, DummyModel(), b"")
