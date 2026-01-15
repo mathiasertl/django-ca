@@ -34,10 +34,8 @@ from django.core.files.storage import storages
 from django.utils.crypto import get_random_string
 
 import pytest
-from _pytest.fixtures import SubRequest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.conf import model_settings
 from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import key_backends, ocsp_key_backends
 from django_ca.key_backends.db.backend import DBBackend
@@ -61,13 +59,13 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 
 
 @pytest.fixture(params=all_cert_names)
-def any_cert(request: "SubRequest") -> str:
+def any_cert(request: pytest.FixtureRequest) -> str:
     """Parametrized fixture for absolutely *any* certificate name."""
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture
-def ca_name(request: "SubRequest") -> str:
+def ca_name(request: pytest.FixtureRequest) -> str:
     """Fixture for a name suitable for a CA."""
     return request.node.name  # type: ignore[no-any-return]
 
@@ -166,14 +164,14 @@ def ca_name(request: "SubRequest") -> str:
         ],
     )
 )
-def certificate_policies_value(request: "SubRequest") -> x509.CertificatePolicies:
+def certificate_policies_value(request: pytest.FixtureRequest) -> x509.CertificatePolicies:
     """Parametrized fixture with different :py:class:`~cg:cryptography.x509.CertificatePolicies` objects."""
     return x509.CertificatePolicies(policies=request.param)
 
 
 @pytest.fixture(params=(True, False))
 def certificate_policies(
-    request: "SubRequest", certificate_policies_value: x509.CertificatePolicies
+    request: pytest.FixtureRequest, certificate_policies_value: x509.CertificatePolicies
 ) -> x509.Extension[x509.CertificatePolicies]:
     """Parametrized fixture yielding different ``x509.Extension[x509.CertificatePolicies]`` objects."""
     return x509.Extension(
@@ -189,7 +187,7 @@ def clear_cache() -> Iterator[None]:
 
 
 @pytest.fixture(params=("ed448", "ed25519"))
-def ed_ca(request: "SubRequest") -> CertificateAuthority:
+def ed_ca(request: pytest.FixtureRequest) -> CertificateAuthority:
     """Parametrized fixture for CAs with an Edwards-curve algorithm (ed448, ed25519)."""
     return request.getfixturevalue(f"{request.param}")  # type: ignore[no-any-return]
 
@@ -204,7 +202,7 @@ def hostname(ca_name: str) -> str:
 
 
 @pytest.fixture(params=interesting_certificate_names)
-def interesting_cert(request: "SubRequest") -> Certificate:
+def interesting_cert(request: pytest.FixtureRequest) -> Certificate:
     """Parametrized fixture for "interesting" certificates.
 
     A function using this fixture will be called once for each certificate with unusual extensions.
@@ -213,14 +211,14 @@ def interesting_cert(request: "SubRequest") -> Certificate:
 
 
 @pytest.fixture
-def key_backend(request: "SubRequest") -> StoragesBackend:
+def key_backend(request: pytest.FixtureRequest) -> StoragesBackend:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for creating a new CA."""
     request.getfixturevalue("tmpcadir")
     return key_backends[DEFAULT_KEY_BACKEND_KEY]  # type: ignore[return-value]
 
 
 @pytest.fixture(params=precertificate_signed_certificate_timestamps_cert_names)
-def precertificate_signed_certificate_timestamps_pub(request: "SubRequest") -> x509.Certificate:
+def precertificate_signed_certificate_timestamps_pub(request: pytest.FixtureRequest) -> x509.Certificate:
     """Parametrized fixture for certificates that have a PrecertSignedCertificateTimestamps extension."""
     name = request.param.replace("-", "_")
     return request.getfixturevalue(f"contrib_{name}_pub")  # type: ignore[no-any-return]
@@ -289,21 +287,21 @@ def root_user_crl(root: CertificateAuthority) -> CertificateRevocationList:
 
 
 @pytest.fixture
-def secondary_backend(request: "SubRequest") -> StoragesBackend:
+def secondary_backend(request: pytest.FixtureRequest) -> StoragesBackend:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for the secondary key backend."""
     request.getfixturevalue("tmpcadir")
     return key_backends["secondary"]  # type: ignore[return-value]
 
 
 @pytest.fixture(params=signed_certificate_timestamp_cert_names)
-def signed_certificate_timestamp_pub(request: "SubRequest") -> x509.Certificate:
+def signed_certificate_timestamp_pub(request: pytest.FixtureRequest) -> x509.Certificate:
     """Parametrized fixture for certificates that have any SCT extension."""
     name = request.param.replace("-", "_")
     return request.getfixturevalue(f"contrib_{name}_pub")  # type: ignore[no-any-return]
 
 
 @pytest.fixture(params=signed_certificate_timestamps_cert_names)
-def signed_certificate_timestamps_pub(request: "SubRequest") -> x509.Certificate:  # pragma: no cover
+def signed_certificate_timestamps_pub(request: pytest.FixtureRequest) -> x509.Certificate:  # pragma: no cover
     """Parametrized fixture for certificates that have a SignedCertificateTimestamps extension.
 
     .. NOTE:: There are no certificates with this extension right now, so this fixture is in fact never run.
@@ -350,7 +348,7 @@ def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
 
 @pytest.fixture
 def softhsm_token(  # pragma: hsm
-    request: "SubRequest",
+    request: pytest.FixtureRequest,
     settings: SettingsWrapper,
 ) -> str:
     """Get a unique token for the current test."""
@@ -382,7 +380,7 @@ def softhsm_token(  # pragma: hsm
 
 
 @pytest.fixture
-def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:  # pragma: hsm
+def hsm_backend(request: pytest.FixtureRequest) -> Iterator[HSMBackend]:  # pragma: hsm
     """Fixture providing a HSMBackend with the current token and (randomized) passwords."""
     request.getfixturevalue("softhsm_token")
     yield cast(HSMBackend, key_backends["hsm"])
@@ -390,7 +388,7 @@ def hsm_backend(request: "SubRequest") -> Iterator[HSMBackend]:  # pragma: hsm
 
 
 @pytest.fixture
-def hsm_ocsp_backend(request: "SubRequest") -> Iterator[HSMOCSPBackend]:  # pragma: hsm
+def hsm_ocsp_backend(request: pytest.FixtureRequest) -> Iterator[HSMOCSPBackend]:  # pragma: hsm
     """Fixture providing a HSMBackend with the current token and (randomized) passwords."""
     request.getfixturevalue("softhsm_token")
     yield cast(HSMOCSPBackend, ocsp_key_backends["hsm"])
@@ -405,7 +403,7 @@ def db_backend() -> DBBackend:
 
 @pytest.fixture(params=HSMBackend.supported_key_types)
 def usable_hsm_ca(  # pragma: hsm
-    request: "SubRequest",
+    request: pytest.FixtureRequest,
     db: Literal[None],  # pylint: disable=unused-argument
 ) -> CertificateAuthority:
     """Parametrized fixture yielding a certificate authority for every key type."""
@@ -463,7 +461,7 @@ def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[Path]:
 
 
 @pytest.fixture(params=all_ca_names)
-def ca(request: "SubRequest") -> CertificateAuthority:
+def ca(request: pytest.FixtureRequest) -> CertificateAuthority:
     """Parametrized fixture for all certificate authorities known to the test suite."""
     fixture_name = request.param
     if CERT_DATA[fixture_name]["cat"] in ("contrib", "sphinx-contrib"):
@@ -472,25 +470,25 @@ def ca(request: "SubRequest") -> CertificateAuthority:
 
 
 @pytest.fixture(params=usable_ca_names)
-def usable_ca_name(request: "SubRequest") -> CertificateAuthority:
+def usable_ca_name(request: pytest.FixtureRequest) -> CertificateAuthority:
     """Parametrized fixture for the name of every usable CA."""
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture(params=usable_ca_names_by_type)
-def usable_ca_name_by_type(request: "SubRequest") -> CertificateAuthority:
+def usable_ca_name_by_type(request: pytest.FixtureRequest) -> CertificateAuthority:
     """Parametrized fixture for the name of a CA of every type (``"dsa"``, ``"root"``, ...)."""
     return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture(params=usable_ca_names)
-def usable_ca(request: "SubRequest") -> CertificateAuthority:
+def usable_ca(request: pytest.FixtureRequest) -> CertificateAuthority:
     """Parametrized fixture for every usable CA (with usable private key)."""
     return request.getfixturevalue(f"usable_{request.param}")  # type: ignore[no-any-return]
 
 
 @pytest.fixture
-def usable_cas(request: "SubRequest") -> list[CertificateAuthority]:
+def usable_cas(request: pytest.FixtureRequest) -> list[CertificateAuthority]:
     """Fixture for all usable CAs as a list."""
     cas = []
     for name in usable_ca_names:
@@ -499,7 +497,7 @@ def usable_cas(request: "SubRequest") -> list[CertificateAuthority]:
 
 
 @pytest.fixture(params=usable_cert_names)
-def usable_cert(request: "SubRequest") -> Certificate:
+def usable_cert(request: pytest.FixtureRequest) -> Certificate:
     """Parametrized fixture for every ``{ca}-cert`` certificate.
 
     The name of the certificate can be retrieved from the non-standard `test_name` property of the

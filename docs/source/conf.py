@@ -375,6 +375,8 @@ nitpick_ignore = [
     ("py:class", "JSON"),
     # annotated_types does not have intersphinx mapping
     ("py:class", "annotated_types.Ge"),
+    # we don't add intersphinx mapping for pytest.
+    ("py:class", "_pytest.fixtures.FixtureRequest"),
 ]
 
 

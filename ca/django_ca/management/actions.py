@@ -32,10 +32,10 @@ from django.core.validators import URLValidator
 from django_ca import constants
 from django_ca.conf import model_settings
 from django_ca.constants import (
+    DEFAULT_KEY_BACKEND_KEY,
     EXTENSION_DEFAULT_CRITICAL,
     KEY_USAGE_NAMES,
     ReasonFlags,
-    DEFAULT_KEY_BACKEND_KEY,
 )
 from django_ca.key_backends import KeyBackend, key_backends
 from django_ca.models import Certificate, CertificateAuthority
