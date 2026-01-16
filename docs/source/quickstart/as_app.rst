@@ -118,13 +118,13 @@ commands <https://docs.djangoproject.com/en/dev/ref/django-admin/>`_.
    :file: include/guide-where-to-go.rst.jinja
    :header_update_levels:
 
-.. _quickstart-as-app-setup-regular-tasks:
+.. _quickstart-as-app-setup-periodic-tasks:
 
-*******************
-Setup regular tasks
-*******************
+********************
+Setup periodic tasks
+********************
 
-To function properly, django-ca requires a few tasks to run regularly. Note that regular tasks often need
+To function properly, django-ca requires a few tasks to run periodically. Note that most periodic tasks need
 access to the private keys of certificate authorities, so you should make sure that they are available.
 
 If you use a `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon, please
@@ -132,7 +132,7 @@ refer to the ``CELERY_BEAT_SCHEDULE`` setting in the current `settings.py
 <https://github.com/mathiasertl/django-ca/blob/main/ca/ca/settings.py>`_ used in project-based setups.
 
 If you do not use Celery, you need to run :command:`manage.py regenerate_ocsp_keys` and
-:command:`manage.py cache_crls` regularly, usually once per hour.
+:command:`manage.py cache_crls` periodically, usually once per hour.
 
 ******
 Update

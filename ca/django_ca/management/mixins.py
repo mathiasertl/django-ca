@@ -289,14 +289,14 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
             default=default_format,
             choices=("pem", "der", "serial", "text", "json", "none"),
         )
-        parser.add_argument(
+        group.add_argument(
             "-b",
             "--bundle",
             default=False,
             action="store_true",
             help="With --output-format=pem, output the whole certificate bundle.",
         )
-        parser.add_argument(
+        group.add_argument(
             "-n",
             "--no-pem",
             default=True,
@@ -304,21 +304,23 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
             action="store_false",
             help="With --output-format=text, do not output public certificate in PEM format.",
         )
-        parser.add_argument(
+        group.add_argument(
             "--no-extensions",
             default=True,
             dest="extensions",
             action="store_false",
             help="With --output-format=text, show all extensions, not just subjectAltName.",
         )
-        parser.add_argument(
+        group.add_argument(
             "--no-wrap",
             default=True,
             dest="wrap",
             action="store_false",
             help="With --output-format=text, do not wrap long lines to terminal width.",
         )
-        group.add_argument("--json-indent", type=int, help="Indent JSON (default: %(default)s).")
+        group.add_argument(
+            "--json-indent", metavar="INDENT", type=int, help="Indent JSON (default: %(default)s)."
+        )
 
     def convert_serial(self, serial: str, serial_format: str) -> int | str:
         """Shared function to convert a serial."""

@@ -160,14 +160,15 @@ class Command(
             key_types |= set(backend.supported_key_types)
             elliptic_curves |= set(backend.supported_elliptic_curves)
 
-        parser.add_argument(
+        group = self.add_key_backend_option(parser)
+        group.add_argument(
             "--key-type",
             choices=key_types,
             default=model_settings.CA_DEFAULT_PRIVATE_KEY_TYPE,
             help="Key type for the private key (default: %(default)s).",
         )
-        add_key_size(parser)
-        parser.add_argument(
+        add_key_size(group)
+        group.add_argument(
             "--elliptic-curve",
             choices=sorted(elliptic_curves),
             help=f"Elliptic Curve used for EC keys (default: {model_settings.CA_DEFAULT_ELLIPTIC_CURVE}).",
@@ -175,9 +176,9 @@ class Command(
 
         # Add argument groups for backend-specific options.
         for backend in key_backends:
-            group = backend.add_create_private_key_group(parser)
-            if group is not None:  # pragma: no branch  # all current backends add a group.
-                backend.add_create_private_key_arguments(group)
+            backend_group = backend.add_create_private_key_group(parser)
+            if backend_group is not None:  # pragma: no branch  # all current backends add a group.
+                backend.add_create_private_key_arguments(backend_group)
 
     def add_parent_private_key_storage_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for loading a parent CA via its key backend."""
@@ -201,7 +202,6 @@ class Command(
             general_group, default_text=f"{default} for RSA/EC keys, {dsa_default} for DSA keys"
         )
 
-        self.add_key_backend_option(parser)
         self.add_create_private_key_arguments(parser)
 
         intermediate_group = parser.add_argument_group(

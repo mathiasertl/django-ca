@@ -12,20 +12,20 @@ guide:
 * :doc:`quickstart/docker`: If you already have web server, database etc. set up or as a template for
   orchestration platforms such as Docker Swarm.
 
-.. _regular-tasks-explanation:
+.. _periodic-tasks-explanation:
 
-**********************
-Required regular tasks
-**********************
+***********************
+Required periodic tasks
+***********************
 
-**django-ca** requires a few tasks to be run regularly in a cron-style manner.
+**django-ca** requires a few tasks to be run periodically.
 
 If you chose an installation method that includes the full Django project (e.g. using Compose, Docker or
 from source), everything is already set up for you and you can skip this section entirely, unless you want to
 mess with some very specific settings.
 
-If chose to use **django-ca** as a Django app, you have to :ref:`setup regular tasks manually
-<quickstart-as-app-setup-regular-tasks>`.
+If chose to use **django-ca** as a Django app, you have to :ref:`setup periodic tasks manually
+<quickstart-as-app-setup-periodic-tasks>`.
 
 Regenerate Certificate Revocation Lists (CRLs)
 ==============================================

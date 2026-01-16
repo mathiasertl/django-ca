@@ -372,8 +372,8 @@ CA_OCSP_KEY_BACKENDS
 CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
     .. pydantic-setting:: CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
 
-    This setting is used by the :ref:`regular task to regenerate OCSP responder certificates
-    <regular-tasks-explanation>` to determine if an OCSP responder certificate should be renewed or not.
+    This setting is used by the :ref:`periodic task to regenerate OCSP responder certificates
+    <periodic-tasks-explanation>` to determine if an OCSP responder certificate should be renewed or not.
 
     .. WARNING::
 
