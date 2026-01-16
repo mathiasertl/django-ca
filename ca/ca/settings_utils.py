@@ -179,15 +179,16 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
 def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
     """Load settings from the environment."""
     types = {
-        "ENABLE_ADMIN": bool,
-        "CA_ENABLE_CLICKJACKING_PROTECTION": bool,
-        "USE_TZ": bool,
-        "EXTEND_URL_PATTERNS": list[str],
-        "EXTEND_INSTALLED_APPS": list[str],
         "ALLOWED_HOSTS": list[str],
         "CACHES": dict[str, dict[str, Any]],
+        "CA_ENABLE_CLICKJACKING_PROTECTION": bool,
+        "CELERY_BEAT_SCHEDULE": dict[str, dict[str, Any]],
         "DATABASES": dict[str, dict[str, Any]],
+        "ENABLE_ADMIN": bool,
+        "EXTEND_INSTALLED_APPS": list[str],
+        "EXTEND_URL_PATTERNS": list[str],
         "STORAGES": dict[str, dict[str, Any]],
+        "USE_TZ": bool,
     }
     for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files

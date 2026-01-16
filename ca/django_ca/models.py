@@ -24,7 +24,7 @@ import re
 import typing
 from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime, timedelta
-from typing import Optional, cast
+from typing import Optional, Self, cast
 
 import josepy as jose
 from acme import challenges, messages
@@ -101,8 +101,6 @@ from django_ca.typehints import (
 from django_ca.utils import bytes_to_hex, get_crl_cache_key, int_to_hex, validate_public_key_parameters
 
 if typing.TYPE_CHECKING:
-    from typing import Self  # added in Python 3.11
-
     from django_stubs_ext.db.models import manager
 
 log = logging.getLogger(__name__)

@@ -25,6 +25,7 @@ changelog
 conf
 crl
 cron
+crontab
 datastructure
 datestamp
 dicts

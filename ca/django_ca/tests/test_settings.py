@@ -237,6 +237,7 @@ def test_boolean_setting_from_environment(setting: str, value: str, expected: bo
                 },
             },
         ),
+        ("CELERY_BEAT_SCHEDULE", {"cache-crls": {"task": "django_ca.tasks.cache_crls", "schedule": 86100}}),
     ),
 )
 def test_complex_setting_from_environment(setting: str, expected: bool) -> None:
@@ -247,10 +248,8 @@ def test_complex_setting_from_environment(setting: str, expected: bool) -> None:
 
 def test_load_settings_from_environment() -> None:
     """Test loading settings from the environment."""
-    with mock.patch.dict(
-        os.environ, {"DJANGO_CA_SETTINGS": "ignored", "DJANGO_CA_SOME_OTHER_VALUE": "FOOBAR"}, clear=True
-    ):
-        assert dict(load_settings_from_environment()) == {"SOME_OTHER_VALUE": "FOOBAR"}
+    with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": "foo", "DJANGO_CA_VALUE": "bar"}, clear=True):
+        assert dict(load_settings_from_environment()) == {"VALUE": "bar"}
 
 
 def test_update_database_setting_from_environment_with_postgres_with_defaults() -> None:

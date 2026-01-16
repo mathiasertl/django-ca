@@ -17,7 +17,7 @@ import abc
 import typing
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, Self, TypeVar
 
 from cryptography import x509
 
@@ -42,8 +42,6 @@ if not TYPE_CHECKING:
 
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet)
 else:  # pragma: no cover  # only used for type checking
-    from typing import Self
-
     from django_ca.models import (
         AcmeAccount,
         AcmeAuthorization,

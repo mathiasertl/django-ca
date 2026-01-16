@@ -537,12 +537,12 @@ EXTEND_URL_PATTERNS
 
    The syntax is very similar to normal URL configuration. For example:
 
-   .. tab:: in Python
+   .. tab:: Python
 
       .. literalinclude:: include/config/setting_extend_url_patterns.py
          :language: python
 
-   .. tab:: with YAML
+   .. tab:: YAML
 
       .. literalinclude:: include/config/setting_extend_url_patterns.yaml
          :language: yaml
@@ -624,12 +624,18 @@ Django settings
 ===============
 
 Some standard Django settings (see the :doc:`settings reference <django:ref/settings>`) can also be set via
-environment variables. Variables have to be prefixed with ``DJANGO_CA_``, so e.g. the  q``SECRET_KEY`` setting
+environment variables. Variables have to be prefixed with ``DJANGO_CA_``, so e.g. the ``SECRET_KEY`` setting
 has to use the ``DJANGO_CA_SECRET_KEY`` environment variable.
 
 The ``USE_TZ`` setting is parsed as an |int|, while ``ALLOWED_HOSTS``, ``CACHES``, ``DATABASES``
 and ``STORAGES`` are parsed as |dict|. Any standard string setting (such as ``EMAIL_BACKEND`` or
 ``EMAIL_HOST``) will just work.
+
+Celery settings
+===============
+
+If ``CELERY_BEAT_SCHEDULE`` is set as environment variable, it will be parsed as |dict|. Note that it is not
+possible to parse a crontab entry that way.
 
 .. _settings-django-ca-startup:
 
