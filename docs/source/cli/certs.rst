@@ -16,7 +16,6 @@ To manage certificate, use the following :command:`manage.py` commands:
 Command               Description
 ===================== ===============================================================
 cert_watchers         Add/remove addresses to be notified of an expiring certificate.
-dump_cert             Dump a certificate to a file.
 import_cert           Import an existing certificate.
 list_certs            List all certificates.
 notify_expiring_certs Send notifications about expiring certificates to watchers.

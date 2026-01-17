@@ -27,7 +27,6 @@ To manage certificate authorities, use the following :command:`manage.py` comman
 ============== ======================================================
 Command        Description
 ============== ======================================================
-``dump_ca``    Write the CA certificate to a file.
 ``edit_ca``    Edit a certificate authority.
 ``import_ca``  Import an existing certificate authority.
 ``init_ca``    Create a new certificate authority.

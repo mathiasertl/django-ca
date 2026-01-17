@@ -67,6 +67,7 @@ No changes yet.
 Command-line
 ************
 
+* **BACKWARDS INCOMPATIBLE:** The `dump_ca` and `dump_cert` commands where removed (deprecated since 2.4.0).
 * The `cache_crls` command was renamed to :command:`manage.py generate_crls` for consistency. The old name
   will be removed in ``django-ca~=3.2.0``.
 * The `regenerate_ocsp_keys` command was renamed to :command:`manage.py generate_ocsp_keys` for consistency.

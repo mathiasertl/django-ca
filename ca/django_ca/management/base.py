@@ -14,8 +14,6 @@
 """Command subclasses and argparse helpers for django-ca."""
 
 import abc
-import io
-import sys
 import typing
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -23,12 +21,7 @@ from typing import Any
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
-from django.core.management.base import (
-    BaseCommand as _BaseCommand,
-    CommandError,
-    CommandParser,
-    OutputWrapper,
-)
+from django.core.management.base import BaseCommand as _BaseCommand, CommandError, CommandParser
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -58,78 +51,6 @@ def add_key_size(parser: ActionsContainer) -> None:
         action=actions.KeySizeAction,
         help=f"Key size for a RSA/DSA private key (default: {model_settings.CA_DEFAULT_KEY_SIZE}).",
     )
-
-
-class BinaryOutputWrapper(OutputWrapper):
-    """An output wrapper that allows you to write binary data."""
-
-    ending: bytes  # type: ignore[assignment]
-    _out: typing.BinaryIO
-
-    def __init__(self, out: typing.BinaryIO, ending: bytes = b"\n") -> None:
-        super().__init__(out, ending=ending)  # type: ignore[arg-type]
-
-    def write(  # type: ignore[override]
-        self,
-        msg: str | bytes = b"",
-        style_func: typing.Callable[..., Any] | None = None,
-        ending: bytes | None = None,
-    ) -> None:
-        if ending is None:
-            ending = self.ending
-
-        if isinstance(msg, str):
-            msg = msg.encode("utf-8")
-        if ending and not msg.endswith(ending):
-            msg += ending
-
-        self._out.write(msg)
-
-
-class BinaryCommand(
-    mixins.ArgumentsMixin, mixins.PydanticModelValidationMixin, _BaseCommand, metaclass=abc.ABCMeta
-):
-    """A :py:class:`~django:django.core.management.BaseCommand` that supports binary output."""
-
-    stdout: BinaryOutputWrapper
-    stderr: BinaryOutputWrapper
-
-    def __init__(
-        self,
-        stdout: io.BytesIO | None = None,
-        stderr: io.BytesIO | None = None,
-        no_color: bool = True,
-        force_color: bool = False,
-    ) -> None:
-        # BaseCommand error handling is not suitable and sets stdout/stderr redundantly:
-        # pylint: disable=super-init-not-called
-
-        self.stdout = BinaryOutputWrapper(stdout or sys.stdout.buffer)
-        # TODO: we set stdout below?!
-        self.stderr = BinaryOutputWrapper(stdout or sys.stdout.buffer)
-
-    def execute(self, *args: Any, **options: Any) -> None:
-        if options.get("force_color"):
-            raise CommandError("This command does not support color output.")
-
-        if options.get("stdout"):  # pragma: no branch
-            self.stdout = BinaryOutputWrapper(options.pop("stdout"))
-        if options.get("stderr"):  # pragma: no branch
-            self.stderr = BinaryOutputWrapper(options.pop("stderr"))
-        options["no_color"] = True
-
-        super().execute(*args, **options)
-
-    def dump(self, path: str, data: bytes) -> None:
-        """Dump `data` to `path` (``-`` means stdout)."""
-        if path == "-":
-            self.stdout.write(data, ending=b"")
-        else:
-            try:
-                with open(path, "wb") as stream:
-                    stream.write(data)
-            except OSError as ex:
-                raise CommandError(ex) from ex
 
 
 class BaseCommand(

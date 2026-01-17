@@ -94,7 +94,8 @@ class Command(DevCommand):
         print(f"  * User/Password: {bold('user')} / {bold('nopass')}")
 
         self.ok("* Create child bundle:")
-        print(f"  * {bold(f'python ca/manage.py dump_ca --bundle {child_serial}')} > {child_bundle}")
+        bundle_cmd = f"python ca/manage.py view_ca --output-format=PEM --bundle {child_serial}"
+        print(f"  * {bold(bundle_cmd)} > {child_bundle}")
 
         self.ok("* Create CRLs with:")
         for ca, _ca_path, _cert_path in cas:

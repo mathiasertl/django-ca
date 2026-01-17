@@ -185,9 +185,11 @@ POSTGRES_PASSWORD=mysecretpassword
                 # Write root CA and cert to disk for OpenSSL validation
                 ca_subject = "rsa.example.com"  # created by create-testdata.py
                 with open("ca.pem", "w", encoding="utf-8") as stream:
-                    compose_manage("backend", "dump_ca", ca_subject, stdout=stream)
+                    compose_manage("backend", "view_ca", "--output-format=PEM", ca_subject, stdout=stream)
                 with open("cert.pem", "w", encoding="utf-8") as stream:
-                    compose_manage("frontend", "dump_cert", f"cert.{ca_subject}", stdout=stream)
+                    compose_manage(
+                        "frontend", "view_cert", "--output-format=PEM", f"cert.{ca_subject}", stdout=stream
+                    )
 
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")

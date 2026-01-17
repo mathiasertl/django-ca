@@ -14,7 +14,7 @@
 """Shared code for Pydantic-related tests."""
 
 import re
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -25,7 +25,7 @@ from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 CryptographyModelTypeVar = TypeVar("CryptographyModelTypeVar", bound=CryptographyModel[Any])
 CryptographyRootModelTypeVar = TypeVar("CryptographyRootModelTypeVar", bound=CryptographyRootModel[Any, Any])
-ExpectedErrors = list[tuple[str, tuple[str, ...], Union[str, "re.Pattern[str]"]]]
+ExpectedErrors = list[tuple[str, tuple[str, ...], str | re.Pattern[str]]]
 
 
 def assert_cryptography_model(

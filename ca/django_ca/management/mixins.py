@@ -287,6 +287,7 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
         group.add_argument(
             "--output-format",
             default=default_format,
+            type=lambda v: v.lower(),
             choices=("pem", "der", "serial", "text", "json", "none"),
         )
         group.add_argument(

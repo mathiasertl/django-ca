@@ -31,17 +31,12 @@ import pytest
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import (
-    assert_command_error,
-    assert_crl,
-    assert_e2e_command_error,
-    assert_revoked,
-)
+from django_ca.tests.base.assertions import assert_command_error, assert_crl, assert_revoked
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import cmd, cmd_e2e, get_idp
 
 # freeze time as otherwise CRLs might have rounding errors
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.django_db]
 
 
 def dump_crl(*args: Any, **kwargs: Any) -> bytes:
@@ -58,18 +53,31 @@ def dump_crl_e2e(serial: str, *args: str) -> bytes:
     return out
 
 
-@pytest.mark.parametrize("encoding", (Encoding.DER, Encoding.PEM))
-def test_full_crl(usable_ca: CertificateAuthority, encoding: Encoding) -> None:
+def test_full_crl(capsysbinary: pytest.CaptureFixture[bytes], usable_ca: CertificateAuthority) -> None:
     """Test the command for every usable CA."""
-    stdout = dump_crl(ca=usable_ca, encoding=encoding)
-    assert_crl(stdout, signer=usable_ca, algorithm=usable_ca.algorithm, encoding=encoding)
+    dump_crl(ca=usable_ca, encoding=Encoding.PEM)
+    stdout, stderr = capsysbinary.readouterr()
+    assert_crl(stdout, signer=usable_ca, algorithm=usable_ca.algorithm, encoding=Encoding.PEM)
+    assert stderr == b""
 
 
-def test_file(tmp_path: Path, usable_root: CertificateAuthority) -> None:
+def test_full_crl_as_der(capsysbinary: pytest.CaptureFixture[bytes], usable_ca: CertificateAuthority) -> None:
+    """Output raw DER CRL for every usable CA."""
+    dump_crl(ca=usable_ca, encoding=Encoding.DER)
+    stdout, stderr = capsysbinary.readouterr()
+    assert_crl(stdout, signer=usable_ca, algorithm=usable_ca.algorithm, encoding=Encoding.DER)
+    assert stderr == b""
+
+
+def test_file(
+    capsysbinary: pytest.CaptureFixture[bytes], tmp_path: Path, usable_root: CertificateAuthority
+) -> None:
     """Test dumping to a file."""
     path = os.path.join(tmp_path, "crl-test.crl")
-    stdout = dump_crl(path, ca=usable_root)
+    dump_crl(path, ca=usable_root)
+    stdout, stderr = capsysbinary.readouterr()
     assert stdout == b""
+    assert stderr == b""
 
     with open(path, "rb") as stream:
         crl = stream.read()
@@ -95,62 +103,80 @@ def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: Cer
 def test_pwd_ca_with_wrong_password() -> None:
     """Test creating a CRL for a CA with a password with the wrong password."""
     # NOTE: we use e2e here as this also covers some code in management.base.BinaryOutputWrapper
-    assert_e2e_command_error(
-        ["dump_crl", "--password=wrong"], b"Could not decrypt private key - bad password?", b""
-    )
+    with assert_command_error(r"^Could not decrypt private key - bad password\?$"):
+        dump_crl(password=b"wrong")
 
 
-def test_pwd_ca(usable_pwd: CertificateAuthority) -> None:
+def test_pwd_ca(capsysbinary: pytest.CaptureFixture[bytes], usable_pwd: CertificateAuthority) -> None:
     """Test creating a CRL for a CA with a password with the wrong password."""
-    stdout = dump_crl(ca=usable_pwd, password=CERT_DATA["pwd"]["password"])
+    dump_crl(ca=usable_pwd, password=CERT_DATA["pwd"]["password"])
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm)
 
 
 def test_pwd_ca_with_password_in_settings(
-    settings: SettingsWrapper, usable_pwd: CertificateAuthority
+    capsysbinary: pytest.CaptureFixture[bytes], settings: SettingsWrapper, usable_pwd: CertificateAuthority
 ) -> None:
     """Test creating a CRL with a CA with a password."""
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA["pwd"]["password"]}
 
     # This works because CA_PASSWORDS is set
-    stdout = dump_crl(ca=usable_pwd)
+    dump_crl(ca=usable_pwd)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(stdout, signer=usable_pwd, algorithm=usable_pwd.algorithm)
 
 
-def test_no_scope_with_root_ca(usable_root: CertificateAuthority) -> None:
+def test_no_scope_with_root_ca(
+    capsysbinary: pytest.CaptureFixture[bytes], usable_root: CertificateAuthority
+) -> None:
     """Test no-scope CRL for root CA."""
     # For Root CAs, there should not be an IssuingDistributionPoint extension in this case.
-    stdout = dump_crl(ca=usable_root)
+    dump_crl(ca=usable_root)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(
         stdout, encoding=Encoding.PEM, expires=86400, signer=usable_root, algorithm=usable_root.algorithm
     )
 
 
-def test_no_scope_with_child_ca(usable_child: CertificateAuthority) -> None:
+def test_no_scope_with_child_ca(
+    capsysbinary: pytest.CaptureFixture[bytes], usable_child: CertificateAuthority
+) -> None:
     """Test full CRL for child CA."""
-    stdout = dump_crl(ca=usable_child)
+    dump_crl(ca=usable_child)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(
         stdout, encoding=Encoding.PEM, expires=86400, signer=usable_child, algorithm=usable_child.algorithm
     )
 
 
-def test_disabled(usable_root: CertificateAuthority) -> None:
+def test_disabled(capsysbinary: pytest.CaptureFixture[bytes], usable_root: CertificateAuthority) -> None:
     """Test creating a CRL with a disabled CA."""
     usable_root.enabled = False
     usable_root.save()
 
-    stdout = dump_crl(ca=usable_root)
+    dump_crl(ca=usable_root)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm)
 
 
 @pytest.mark.parametrize("reason", (x509.ReasonFlags.unspecified, x509.ReasonFlags.key_compromise))
 def test_revoked_with_reason(
-    usable_root: CertificateAuthority, root_cert: Certificate, reason: x509.ReasonFlags
+    capsysbinary: pytest.CaptureFixture[bytes],
+    usable_root: CertificateAuthority,
+    root_cert: Certificate,
+    reason: x509.ReasonFlags,
 ) -> None:
     """Test revoked certificates."""
     root_cert.revoke(reason=reason)  # type: ignore[arg-type]
 
-    stdout = dump_crl(ca=usable_root)
+    dump_crl(ca=usable_root)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
 
     # unspecified is not included (see RFC 5280, 5.3.1)
     if reason == x509.ReasonFlags.unspecified:
@@ -170,7 +196,9 @@ def test_revoked_with_reason(
     )
 
 
-def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
+def test_compromised_timestamp(
+    capsysbinary: pytest.CaptureFixture[bytes], usable_root: CertificateAuthority, root_cert: Certificate
+) -> None:
     """Test creating a CRL with a compromised cert with a compromised timestamp."""
     idp = get_idp(only_contains_user_certs=True)
     stamp = timezone.now().replace(microsecond=0) - timedelta(10)
@@ -181,7 +209,9 @@ def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Cer
         critical=False,
         value=x509.InvalidityDate(stamp.replace(tzinfo=None)),
     )
-    stdout = dump_crl(ca=usable_root, only_contains_user_certs=True)
+    dump_crl(ca=usable_root, only_contains_user_certs=True)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(
         stdout,
         [root_cert],
@@ -192,35 +222,49 @@ def test_compromised_timestamp(usable_root: CertificateAuthority, root_cert: Cer
     )
 
 
-def test_ca_crl(usable_root: CertificateAuthority, child: CertificateAuthority) -> None:
+def test_ca_crl(
+    capsysbinary: pytest.CaptureFixture[bytes], usable_root: CertificateAuthority, child: CertificateAuthority
+) -> None:
     """Test creating a CA CRL."""
-    stdout = dump_crl(ca=usable_root, only_contains_ca_certs=True)
+    dump_crl(ca=usable_root, only_contains_ca_certs=True)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     idp = get_idp(only_contains_ca_certs=True)
     assert_crl(stdout, signer=usable_root, algorithm=usable_root.algorithm, idp=idp)
 
     # revoke the CA and see if it's there
     child.revoke()
     assert_revoked(child)
-    stdout = dump_crl(ca=usable_root, only_contains_ca_certs=True)
+    dump_crl(ca=usable_root, only_contains_ca_certs=True)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(stdout, [child], signer=usable_root, algorithm=usable_root.algorithm, idp=idp, crl_number=1)
 
 
-def test_user_crl(usable_root: CertificateAuthority, root_cert: Certificate) -> None:
+def test_user_crl(
+    capsysbinary: pytest.CaptureFixture[bytes], usable_root: CertificateAuthority, root_cert: Certificate
+) -> None:
     """Test creating a user CRL."""
-    stdout = dump_crl(ca=usable_root, only_contains_user_certs=True)
+    dump_crl(ca=usable_root, only_contains_user_certs=True)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     idp = get_idp(only_contains_user_certs=True)
     assert_crl(stdout, signer=usable_root, idp=idp)
 
     # revoke the CA and see if it's there
     root_cert.revoke()
     assert_revoked(root_cert)
-    stdout = dump_crl(ca=usable_root, only_contains_user_certs=True)
+    dump_crl(ca=usable_root, only_contains_user_certs=True)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     assert_crl(stdout, [root_cert], signer=usable_root, idp=idp, crl_number=1)
 
 
-def test_attribute_crl(usable_root: CertificateAuthority) -> None:
+def test_attribute_crl(capsysbinary: pytest.CaptureFixture[bytes], usable_root: CertificateAuthority) -> None:
     """Test creating an attribute CRL."""
-    stdout = dump_crl(ca=usable_root, only_contains_attribute_certs=True)
+    dump_crl(ca=usable_root, only_contains_attribute_certs=True)
+    stdout, stderr = capsysbinary.readouterr()
+    assert stderr == b""
     idp = get_idp(only_contains_attribute_certs=True)
     assert_crl(stdout, signer=usable_root, idp=idp)
 

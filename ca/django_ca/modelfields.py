@@ -126,18 +126,6 @@ class LazyField(Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta)
     def loaded(self) -> LoadedTypeVar:
         """The stored value parsed into a cryptography object."""
 
-    def encode(self, encoding: Encoding) -> bytes:
-        """Encode the handled object with the given encoding.
-
-        Parameters
-        ----------
-        encoding : attr of :py:class:`~cg:cryptography.hazmat.primitives.serialization.Encoding`, optional
-            The format to return, defaults to ``Encoding.PEM``.
-        """
-        if encoding == Encoding.DER:
-            return self._bytes
-        return self.loaded.public_bytes(encoding)
-
     @property
     def der(self) -> bytes:
         """The handled object in its raw DER representation."""

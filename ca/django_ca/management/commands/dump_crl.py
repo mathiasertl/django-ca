@@ -16,6 +16,7 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
+import sys
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -25,12 +26,12 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django.core.management.base import CommandError, CommandParser
 
 from django_ca.management.actions import ExpiresAction
-from django_ca.management.base import BinaryCommand
+from django_ca.management.base import BaseCommand
 from django_ca.management.mixins import UsePrivateKeyMixin
 from django_ca.models import CertificateAuthority, CertificateRevocationList
 
 
-class Command(UsePrivateKeyMixin, BinaryCommand):
+class Command(UsePrivateKeyMixin, BaseCommand):
     """Implement :command:`manage.py dump_crl`."""
 
     help = "Write the certificate revocation list (CRL)."
@@ -128,7 +129,8 @@ class Command(UsePrivateKeyMixin, BinaryCommand):
             raise CommandError(ex) from ex
 
         if path == "-":
-            self.stdout.write(data, ending=b"")
+            # NOTE: we circumvent self.stdout, as it is impossible to write bytes to it.
+            sys.stdout.buffer.write(data)
         else:
             try:
                 with open(path, "wb") as stream:

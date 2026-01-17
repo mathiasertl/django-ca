@@ -20,8 +20,8 @@ In general, run :command:`manage.py` without any parameters for available subcom
    ...
    [django_ca]
        cert_watchers
-       dump_cert
-       dump_crl
+       edit_ca
+       generate_crls
        ...
 
 Creating Certificate Authorities and managing Certificates is documented on individual pages:
@@ -41,7 +41,6 @@ Index of existing commands
 ========================= ===============================================================
 Command                   Description
 ========================= ===============================================================
-``dump_ca``               Write the CA certificate to a file.
 ``edit_ca``               Edit an existing certificate authority.
 ``import_ca``             Import an existing certificate authority.
 ``init_ca``               Create a new certificate authority.
@@ -55,7 +54,6 @@ Command                   Description
 Command                   Description
 ========================= ===============================================================
 ``cert_watchers``         Add/remove addresses to be notified of an expiring certificate.
-``dump_cert``             Dump a certificate to a file.
 ``import_cert``           Import an existing certificate.
 ``list_certs``            List all certificates.
 ``notify_expiring_certs`` Send notifications about expiring certificates to watchers.

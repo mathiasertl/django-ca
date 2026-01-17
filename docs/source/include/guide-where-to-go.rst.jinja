@@ -45,7 +45,9 @@ To get the certificate for your Root CA, you can use the admin interface or the 
 {% else %}
 .. code-block:: console
 
-   {{ user|default("user") }}@host:{{ path|default("~") }}{% if user == "root" %}#{% else %}${% endif %} {{ manage }} dump_ca Root > root.pem
+   {{ user|default("user") }}@host:{{ path|default("~") }}
+   {%- if user == "root" %}#{% else %}${% endif -%}
+   {{ manage }} view_ca --output-format=PEM Root > root.pem
 {% endif %}
 
 You can add this file directly to the list of known CAs in your browser.

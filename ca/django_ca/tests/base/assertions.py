@@ -20,7 +20,7 @@ import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
-from typing import Any, AnyStr, Union
+from typing import Any
 from unittest.mock import Mock
 
 from cryptography import x509
@@ -54,18 +54,14 @@ from django_ca.tests.base.utils import (
 
 
 @contextmanager
-def assert_removed_in_310(  # pragma: no cover
-    match: Union[str, "re.Pattern[str]"] | None = None,
-) -> Iterator[None]:
+def assert_removed_in_310(match: str | re.Pattern[str] | None = None) -> Iterator[None]:  # pragma: no cover
     """Assert that a ``RemovedInDjangoCA310Warning`` is emitted."""
     with pytest.warns(RemovedInDjangoCA310Warning, match=match):
         yield
 
 
 @contextmanager
-def assert_removed_in_320(  # pragma: no cover
-    match: Union[str, "re.Pattern[str]"] | None = None,
-) -> Iterator[None]:
+def assert_removed_in_320(match: str | re.Pattern[str] | None = None) -> Iterator[None]:  # pragma: no cover
     """Assert that a ``RemovedInDjangoCA320Warning`` is emitted."""
     with pytest.warns(RemovedInDjangoCA320Warning, match=match):
         yield
@@ -282,52 +278,28 @@ def assert_crl(  # noqa: PLR0913
             assert not list(entry.extensions)
 
 
-def assert_e2e_command_error(
-    cmd: typing.Sequence[str],
-    stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-    stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-) -> None:
-    """Assert that the passed command raises a CommandError with the given message."""
-    if isinstance(stdout, str):  # pragma: no cover
-        stdout = "CommandError: " + stdout + "\n"
-    elif isinstance(stdout, bytes):  # pragma: no cover
-        stdout = b"CommandError: " + stdout + b"\n"
-    assert_e2e_error(cmd, stdout=stdout, stderr=stderr, code=1)
-
-
 def assert_e2e_error(
     cmd: typing.Sequence[str],
-    stdout: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
-    stderr: Union[str, bytes, "re.Pattern[AnyStr]"] = "",
+    stdout: str | re.Pattern[str] = "",
+    stderr: str | re.Pattern[str] = "",
     code: int = 2,
 ) -> None:
     """Assert an error was through in an e2e command."""
-    if isinstance(stdout, str) or (isinstance(stdout, re.Pattern) and isinstance(stdout.pattern, str)):
-        actual_stdout = io.StringIO()
-    else:
-        actual_stdout = io.BytesIO()  # type: ignore[assignment]
-
-    if isinstance(stderr, str) or (isinstance(stderr, re.Pattern) and isinstance(stderr.pattern, str)):
-        actual_stderr = io.StringIO()
-    else:
-        actual_stderr = io.BytesIO()  # type: ignore[assignment]
+    actual_stdout = io.StringIO()
+    actual_stderr = io.StringIO()
 
     with assert_system_exit(code):
         cmd_e2e(cmd, stdout=actual_stdout, stderr=actual_stderr)
 
     if isinstance(stdout, str | bytes):
         assert stdout == actual_stdout.getvalue()
-    elif isinstance(stdout.pattern, str):  # pragma: no cover
+    else:  # pragma: no cover
         assert stdout.search(actual_stdout.getvalue())
-    else:  # pragma: no cover
-        raise NotImplementedError
 
-    if isinstance(stderr, str | bytes):
+    if isinstance(stderr, str):  # pragma: no cover
         assert stderr == actual_stderr.getvalue()
-    elif isinstance(stderr.pattern, str):
+    else:
         assert stderr.search(actual_stderr.getvalue())
-    else:  # pragma: no cover
-        raise NotImplementedError
 
 
 def assert_extension_equal(
