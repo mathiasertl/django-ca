@@ -45,8 +45,9 @@ from ca.settings_utils import (
     update_database_setting_from_environment,
 )
 from django_ca import conf
-from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
+from django_ca.conf import model_settings
 from django_ca.pydantic import KeyUsageModel, NameModel
+from django_ca.pydantic.config import CertificateRevocationListProfile, KeyBackendConfigurationModel
 from django_ca.pydantic.profile import ProfileConfigurationModel
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
