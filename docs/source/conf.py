@@ -48,32 +48,14 @@ sys.path.insert(0, _ROOT_DIR)
 # use test_settings.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
 
+# Make sure that no local configuration is loaded.
+os.environ.setdefault("DJANGO_CA_SKIP_LOCAL_CONFIGURATION", "1")
+
 import django  # NOQA: E402
-from django.conf import settings  # NOQA: E402
 
 from devscripts import config  # NOQA: E402
 from devscripts.versions import get_last_version  # NOQA: E402
 
-settings.configure(
-    SECRET_KEY="dummy",
-    BASE_DIR=_SRC_DIR,
-    INSTALLED_APPS=[
-        "django.contrib.auth",
-        "django.contrib.contenttypes",
-        "django_ca",
-    ],
-    FIXTURES_DIR=_FIXTURES,
-    STORAGES={
-        "django-ca": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "OPTIONS": {
-                "location": "/does/not/exist/",
-                "file_permissions_mode": 0o600,
-                "directory_permissions_mode": 0o700,
-            },
-        },
-    },
-)
 django.setup()
 
 

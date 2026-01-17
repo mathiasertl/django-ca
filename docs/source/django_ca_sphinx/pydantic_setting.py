@@ -23,7 +23,7 @@ from docutils import nodes
 from docutils.parsers.rst import DirectiveError, directives
 from docutils.statemachine import StringList
 from jinja2 import Environment
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from rich.pretty import pretty_repr
@@ -33,9 +33,8 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 from django.conf import settings
 
-from django_ca.pydantic.config import ProjectSettingsModel
-
-model_settings = ProjectSettingsModel.model_validate(settings)
+from django_ca.conf import SettingsModel
+from django_ca.pydantic.config import ProjectSettingsModelMixin
 
 # Logger with the Sphinx logging API:
 #   https://www.sphinx-doc.org/en/master/extdev/logging.html
@@ -79,6 +78,15 @@ template = env.from_string("""{% if default -%}
 {%- if default and description %}
 
 {{ description }}{% endif %}""")
+
+
+class ProjectSettingsModel(ProjectSettingsModelMixin, SettingsModel):
+    """Model representing settings plus project settings."""
+
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+
+model_settings = ProjectSettingsModel.model_validate(settings)
 
 
 class PydanticSettingDirective(SphinxDirective):
@@ -226,6 +234,8 @@ class PydanticSettingDirective(SphinxDirective):
                 value = {}
             elif field_info.default_factory is not None:
                 value = getattr(model_settings, setting)
+            elif model_value := getattr(model_settings, setting):
+                value = model_value
             elif optional and value is None:
                 text = template.render(
                     explanation="Not set.", description=description, field_type=field_type_key, default=True

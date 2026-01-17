@@ -212,18 +212,19 @@ CELERY_BEAT_SCHEDULE = {
 }
 EXTEND_CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = {}
 
-# Load settings from files and environment variables
-for _setting, _value in load_settings(BASE_DIR):
-    globals()[_setting] = _value
+if os.environ.get("DJANGO_CA_SKIP_LOCAL_CONFIGURATION") != "1":  # pragma: no branch
+    # Load settings from files and environment variables
+    for _setting, _value in load_settings(BASE_DIR):
+        globals()[_setting] = _value
 
-# Try to use POSTGRES_*/MYSQL_*/MARIADB_* environment variables to determine database access credentials.
-# These are the variables set by the standard PostgreSQL/MySQL/MariaDB Docker containers.
-update_database_setting_from_environment(DATABASES)
+    # Try to use POSTGRES_*/MYSQL_*/MARIADB_* environment variables to determine database access credentials.
+    # These are the variables set by the standard PostgreSQL/MySQL/MariaDB Docker containers.
+    update_database_setting_from_environment(DATABASES)
 
-# Load SECRET_KEY from a file if not already defined.
-# NOTE: This must be called AFTER load_settings_from_environment(), as this might set SECRET_KEY_FILE in the
-#       first place.
-SECRET_KEY = load_secret_key(SECRET_KEY, SECRET_KEY_FILE)
+    # Load SECRET_KEY from a file if not already defined.
+    # NOTE: This must be called AFTER load_settings_from_environment(), as this might set SECRET_KEY_FILE in
+    #       the first place.
+    SECRET_KEY = load_secret_key(SECRET_KEY, SECRET_KEY_FILE)
 
 if CA_ENABLE_CLICKJACKING_PROTECTION is True:
     if "django.middleware.clickjacking.XFrameOptionsMiddleware" not in MIDDLEWARE:

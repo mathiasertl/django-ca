@@ -568,9 +568,7 @@ EXTEND_URL_PATTERNS
 .. _settings-log-format:
 
 LOG_FORMAT
-   Default: ``"[%(levelname)-8s %(asctime).19s] %(message)s""``
-
-   The default log format of log messages.  This setting has no effect if you define the ``LOGGING`` setting.
+    .. pydantic-setting:: LOG_FORMAT
 
 .. _settings-log-level:
 

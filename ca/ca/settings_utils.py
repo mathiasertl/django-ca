@@ -28,7 +28,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views import View
 
-from django_ca.pydantic.config import OnlyProjectSettingsModel
+from django_ca.pydantic.config import ProjectSettingsModelMixin
 
 try:
     import yaml
@@ -99,6 +99,10 @@ class UrlPatternsModel(RootModel[list[UrlPatternModel]]):
 
     def __iter__(self) -> Iterator[UrlPatternModel]:  # type: ignore[override]
         return iter(self.root)
+
+
+class OnlyProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
+    """Model representing only project settings (used to load settings)."""
 
 
 def get_empty_extend_settings() -> dict[str, Any]:

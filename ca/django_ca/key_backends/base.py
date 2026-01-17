@@ -38,9 +38,8 @@ from django.core.management import CommandParser
 from django.utils.module_loading import import_string
 
 from django_ca import constants
-from django_ca.conf import model_settings
+from django_ca.conf import KeyBackendConfigurationModel, model_settings
 from django_ca.constants import DEFAULT_KEY_BACKEND_KEY, SIGNATURE_HASH_ALGORITHM_NAMES
-from django_ca.pydantic.config import KeyBackendConfigurationModel
 from django_ca.pydantic.type_aliases import PowerOfTwoInt
 from django_ca.typehints import (
     ArgumentGroup,

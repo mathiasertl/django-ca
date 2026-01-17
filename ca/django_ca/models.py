@@ -53,7 +53,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
-from django_ca.conf import model_settings
+from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA310Warning, deprecate_function
 from django_ca.extensions import get_extension_name
@@ -79,7 +79,6 @@ from django_ca.modelfields import (
 )
 from django_ca.openssh.extensions import SSH_HOST_CA, SSH_USER_CA
 from django_ca.profiles import profiles
-from django_ca.pydantic.config import CertificateRevocationListProfile
 from django_ca.querysets import (
     AcmeAccountQuerySet,
     AcmeAuthorizationQuerySet,
