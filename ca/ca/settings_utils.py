@@ -267,7 +267,7 @@ def update_database_setting_from_environment(databases: dict[str, dict[str, Any]
     """Update the DATABASES dict with Docker-style environment variables."""
     # use POSTGRES_* environment variables from the postgres Docker image
     if databases["default"]["ENGINE"] in (
-        "django.db.backends.postgresql_psycopg2",
+        "django.db.backends.postgresql_psycopg2",  # still present but unsupported as of Django 6.0
         "django.db.backends.postgresql",
     ):
         _set_db_setting(databases, "PASSWORD", "POSTGRES_PASSWORD", default="postgres")
