@@ -3,7 +3,7 @@ SETTINGS_DIR_TWO: True
 EXTEND_URL_PATTERNS:
   - route: /path2
     view:
-      - view: yourapp2.views.YourView
+      view: yourapp2.views.YourView
 
 
 EXTEND_INSTALLED_APPS:

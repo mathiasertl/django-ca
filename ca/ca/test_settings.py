@@ -311,4 +311,4 @@ CA_PASSWORDS = {
 }
 
 EXTEND_URL_PATTERNS = UrlPatternsModel([])
-EXTEND_INCLUDED_APPS: list[str] = []
+EXTEND_INSTALLED_APPS: list[str] = []

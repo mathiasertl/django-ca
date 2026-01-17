@@ -99,6 +99,11 @@ class UrlPatternsModel(RootModel[list[UrlPatternModel]]):
         return iter(self.root)
 
 
+def get_empty_extend_settings() -> dict[str, Any]:
+    """Get list of empty extend settings."""
+    return {"EXTEND_INSTALLED_APPS": [], "EXTEND_URL_PATTERNS": []}
+
+
 def load_secret_key(secret_key: str | None, secret_key_file: str | None) -> str:
     """Load SECRET_KEY from file if not set elsewhere."""
     if secret_key:
@@ -144,8 +149,7 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
     settings_paths = os.environ.get("DJANGO_CA_SETTINGS", os.environ.get("CONFIGURATION_DIRECTORY", ""))
 
     settings_files = []
-    extend_installed_apps = []
-    extend_url_patterns = []
+    extend_settings = get_empty_extend_settings()
 
     for full_path in get_settings_files(base_dir, settings_paths):
         with open(full_path, encoding="utf-8") as stream:
@@ -162,15 +166,13 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
         else:
             settings_files.append(full_path)
             for setting_name, setting_value in data.items():
-                if setting_name == "EXTEND_URL_PATTERNS":
-                    extend_url_patterns += setting_value
-                elif setting_name == "EXTEND_INSTALLED_APPS":
-                    extend_installed_apps += setting_value
+                if setting_name in extend_settings:
+                    extend_settings[setting_name] += setting_value
                 else:
                     yield setting_name, setting_value
 
-    yield "EXTEND_INSTALLED_APPS", extend_installed_apps
-    yield "EXTEND_URL_PATTERNS", extend_url_patterns
+    # yield EXTEND_* settings
+    yield from extend_settings.items()
 
     # ALSO yield the SETTINGS_FILES setting with the loaded files.
     yield "SETTINGS_FILES", tuple(settings_files)
@@ -186,7 +188,7 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
         "DATABASES": dict[str, dict[str, Any]],
         "ENABLE_ADMIN": bool,
         "EXTEND_INSTALLED_APPS": list[str],
-        "EXTEND_URL_PATTERNS": list[str],
+        "EXTEND_URL_PATTERNS": list[dict[str, Any]],
         "STORAGES": dict[str, dict[str, Any]],
         "USE_TZ": bool,
     }
@@ -200,6 +202,34 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
             yield key, parse_json(key, value, typ)
         else:
             yield key, value
+
+
+def load_settings(base_dir: Path) -> Iterator[tuple[str, Any]]:
+    """Combined method to load settings from files and then environment."""
+    extends = get_empty_extend_settings()
+
+    # Load settings from files
+    for _setting, _value in load_settings_from_files(base_dir):
+        if _setting in extends:
+            extends[_setting] = _value
+        else:
+            yield _setting, _value
+
+    # Load settings from environment variables
+    for _setting, _value in load_settings_from_environment():
+        # NOTE: load_settings_from_environment is responsible for parsing values.
+        if _setting in extends:
+            extends[_setting] += _value
+        else:
+            yield _setting, _value
+
+    # Convert some complex settings as expected by the project.
+    try:
+        extends["EXTEND_URL_PATTERNS"] = UrlPatternsModel.model_validate(extends["EXTEND_URL_PATTERNS"])
+    except ValueError as ex:
+        raise ImproperlyConfigured(ex) from ex
+
+    yield from extends.items()
 
 
 def parse_bool(key: str, value: str) -> bool:

@@ -22,6 +22,7 @@ Settings
   <settings-ca-enable-rest-api>`) are now parsed using Pydantic model validation. This makes parsing of
   environment variables more strict, as the value is no longer lower-cased and stripped of whitespace. As a
   result, values like ``" true "`` or ``"yEs"`` are no longer recognized.
+* `EXTEND_*` settings from environment variables no longer override settings from files.
 * ``CA_CUSTOM_APPS`` was removed, it is replaced with :ref:`EXTEND_INSTALLED_APPS
   <settings-extend-installed-apps>` (the setting was deprecated since ``django-ca==2.2.0`` and was even marked
   for removal for ``django-ca==2.5.0`` already).

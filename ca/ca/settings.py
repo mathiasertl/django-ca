@@ -17,15 +17,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from django.core.exceptions import ImproperlyConfigured
-
-from ca.settings_utils import (
-    UrlPatternsModel,
-    load_secret_key,
-    load_settings_from_environment,
-    load_settings_from_files,
-    update_database_setting_from_environment,
-)
+from ca.settings_utils import load_secret_key, load_settings, update_database_setting_from_environment
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent  # ca/
@@ -220,22 +212,12 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Load settings from files
-for _setting, _value in load_settings_from_files(BASE_DIR):
-    if _setting == "EXTEND_URL_PATTERNS":
-        _EXTEND_URL_PATTERNS += _value
-    if _setting == "EXTEND_INSTALLED_APPS":
-        EXTEND_INSTALLED_APPS += _value
-
+# Load settings from files and environment variables
+for _setting, _value in load_settings(BASE_DIR):
     globals()[_setting] = _value
 
-# Load settings from environment variables
-for _setting, _value in load_settings_from_environment():
-    # NOTE: load_settings_from_environment is responsible for parsing values.
-    globals()[_setting] = _value
-
-# Try to use POSTGRES_* and MYSQL_* environment variables to determine database access credentials.
-# These are the variables set by the standard PostgreSQL/MySQL Docker containers.
+# Try to use POSTGRES_*/MYSQL_*/MARIADB_* environment variables to determine database access credentials.
+# These are the variables set by the standard PostgreSQL/MySQL/MariaDB Docker containers.
 update_database_setting_from_environment(DATABASES)
 
 # Load SECRET_KEY from a file if not already defined.
@@ -260,12 +242,6 @@ if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
 
 # Add additional applications to INSTALLED_APPS
 INSTALLED_APPS += EXTEND_INSTALLED_APPS
-
-# Add additional URL configurations
-try:
-    EXTEND_URL_PATTERNS = UrlPatternsModel.model_validate(_EXTEND_URL_PATTERNS)
-except ValueError as ex:
-    raise ImproperlyConfigured(ex) from ex
 
 if STORAGES is None:
     # Set the default storages argument

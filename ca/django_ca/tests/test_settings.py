@@ -39,16 +39,13 @@ from ca.settings_utils import (
     UrlPatternsModel,
     get_settings_files,
     load_secret_key,
+    load_settings,
     load_settings_from_environment,
     load_settings_from_files,
     update_database_setting_from_environment,
 )
 from django_ca import conf
-from django_ca.conf import (
-    CertificateRevocationListProfile,
-    KeyBackendConfigurationModel,
-    model_settings,
-)
+from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
 from django_ca.pydantic import KeyUsageModel, NameModel
 from django_ca.pydantic.profile import ProfileConfigurationModel
 from django_ca.tests.base.assertions import assert_improperly_configured
@@ -59,6 +56,7 @@ SCOPE_ERROR = (
     r"Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` "
     r"can be set\."
 )
+RAW_URL_PATTERNS = [{"route": "/env", "view": {"view": "envapp.views.YourView"}}]
 
 
 def view() -> HttpResponse:
@@ -150,8 +148,8 @@ def test_load_settings_from_files() -> None:
         assert dict(load_settings_from_files(FIXTURES_DIR)) == {
             "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2"],
             "EXTEND_URL_PATTERNS": [
-                {"route": "/path1", "view": [{"view": "yourapp1.views.YourView"}]},
-                {"route": "/path2", "view": [{"view": "yourapp2.views.YourView"}]},
+                {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
+                {"route": "/path2", "view": {"view": "yourapp2.views.YourView"}},
             ],
             "SETTINGS_DIR_ONE": True,
             "SETTINGS_DIR_TWO": True,
@@ -196,6 +194,34 @@ def test_load_settings_from_files_with_pyyaml_not_installed() -> None:
         assert not dict(load_settings_from_files(FIXTURES_DIR))
 
 
+def test_load_settings_from_files_and_environment() -> None:
+    """Load the full settings module with loading settings from files and env."""
+    settings_dir = FIXTURES_DIR / "settings" / "dirs" / "settings_dir"
+    url_patters = json.dumps(RAW_URL_PATTERNS)
+    with mock.patch.dict(
+        os.environ,
+        {
+            "DJANGO_CA_EXTEND_INSTALLED_APPS": '["envapp"]',
+            "DJANGO_CA_EXTEND_URL_PATTERNS": url_patters,
+            "DJANGO_CA_SETTINGS_DIR_ONE": "foo",
+        },
+        clear=True,
+    ):
+        assert dict(load_settings(settings_dir)) == {
+            "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2", "envapp"],
+            "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate(
+                [
+                    {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
+                    {"route": "/path2", "view": {"view": "yourapp2.views.YourView"}},
+                    *RAW_URL_PATTERNS,
+                ]
+            ),
+            "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
+            "SETTINGS_DIR_TWO": True,
+            "SETTINGS_FILES": (settings_dir / "01-settings.yaml", settings_dir / "02-settings.yaml"),
+        }
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     (("true", True), ("yes", True), ("1", True), ("false", False), ("no", False), ("0", False)),
@@ -210,7 +236,7 @@ def test_boolean_setting_from_environment(setting: str, value: str, expected: bo
 @pytest.mark.parametrize(
     ("setting", "expected"),
     (
-        ("EXTEND_URL_PATTERNS", ["foo", "bar"]),
+        ("EXTEND_URL_PATTERNS", RAW_URL_PATTERNS),
         ("EXTEND_INSTALLED_APPS", ["foo", "bar"]),
         ("ALLOWED_HOSTS", ["foo", "bar"]),
         ("ALLOWED_HOSTS", []),
@@ -909,3 +935,12 @@ def test_extend_url_patterns(value: list[dict[str, Any]], expected: list[URLPatt
     patterns_model = UrlPatternsModel.model_validate(value)
     actual = [model.pattern for model in patterns_model]
     assert_url_config(actual, expected)  # type: ignore[arg-type]
+
+
+def test_extend_url_patterns_with_invalid_value() -> None:
+    """Test loading an invalid EXTEND_URL_PATTERNS into settings."""
+    with mock.patch.dict(
+        os.environ, {"DJANGO_CA_EXTEND_URL_PATTERNS": '[{"foo": {"foo": "bar"}}]'}, clear=True
+    ):
+        with assert_improperly_configured(r"Field required"):
+            dict(load_settings(FIXTURES_DIR))
