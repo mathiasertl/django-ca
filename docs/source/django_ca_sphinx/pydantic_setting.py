@@ -31,7 +31,11 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import nested_parse_with_titles
 
-from django_ca.conf import SettingsModel, model_settings
+from django.conf import settings
+
+from django_ca.pydantic.config import ProjectSettingsModel
+
+model_settings = ProjectSettingsModel.model_validate(settings)
 
 # Logger with the Sphinx logging API:
 #   https://www.sphinx-doc.org/en/master/extdev/logging.html
@@ -199,7 +203,7 @@ class PydanticSettingDirective(SphinxDirective):
     def get_text(self, setting: str) -> str:
         """Get the text for the extension."""
         # Get the field info
-        field_info: FieldInfo = SettingsModel.model_fields[setting]
+        field_info: FieldInfo = ProjectSettingsModel.model_fields[setting]
         description = field_info.description
 
         extra = field_info.json_schema_extra
@@ -256,7 +260,7 @@ class PydanticSettingDirective(SphinxDirective):
 
         if self.options.get("default") and self.options.get("example"):
             raise self.error("You can't specify both `default` and `example`")
-        if setting not in SettingsModel.model_fields:
+        if setting not in ProjectSettingsModel.model_fields:
             raise self.error(f"Setting '{setting}' not found.")
 
         try:

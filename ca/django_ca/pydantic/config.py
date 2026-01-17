@@ -481,3 +481,9 @@ class SettingsModel(BaseModel):
     def get_default_elliptic_curve(self) -> ec.EllipticCurve:
         """Get the |EllipticCurve| instance for this model."""
         return constants.ELLIPTIC_CURVE_TYPES[self.CA_DEFAULT_ELLIPTIC_CURVE]()
+
+
+class ProjectSettingsModel(SettingsModel):
+    """Model representing project settings."""
+
+    ALLOWED_HOSTS: list[str]
