@@ -15,6 +15,7 @@
 
 import os
 from pathlib import Path
+from typing import Any
 
 from ca.settings_utils import load_secret_key, load_settings, update_database_setting_from_environment
 
@@ -209,7 +210,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 300,
     },
 }
-EXTEND_CELERY_BEAT_SCHEDULE = {}
+EXTEND_CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = {}
 
 # Load settings from files and environment variables
 for _setting, _value in load_settings(BASE_DIR):

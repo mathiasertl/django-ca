@@ -147,7 +147,16 @@ def test_load_settings_from_files() -> None:
 
     with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": f"{single_file}:{settings_dir}:{empty_file}"}):
         assert dict(load_settings_from_files(FIXTURES_DIR)) == {
-            "EXTEND_CELERY_BEAT_SCHEDULE": {},
+            "EXTEND_CELERY_BEAT_SCHEDULE": {
+                "custom-task-one": {
+                    "schedule": 300,
+                    "task": "myapp.tasks.custom_task_one",
+                },
+                "custom-task-two": {
+                    "schedule": 300,
+                    "task": "myapp.tasks.custom_task_two",
+                },
+            },
             "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2"],
             "EXTEND_URL_PATTERNS": [
                 {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
@@ -210,7 +219,16 @@ def test_load_settings_from_files_and_environment() -> None:
         clear=True,
     ):
         assert dict(load_settings(settings_dir)) == {
-            "EXTEND_CELERY_BEAT_SCHEDULE": {},
+            "EXTEND_CELERY_BEAT_SCHEDULE": {
+                "custom-task-one": {
+                    "schedule": 300,
+                    "task": "myapp.tasks.custom_task_one",
+                },
+                "custom-task-two": {
+                    "schedule": 300,
+                    "task": "myapp.tasks.custom_task_two",
+                },
+            },
             "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2", "envapp"],
             "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate(
                 [

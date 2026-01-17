@@ -28,6 +28,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views import View
 
+from django_ca.pydantic.config import OnlyProjectSettingsModel
+
 try:
     import yaml
 except ImportError:  # pragma: no cover
@@ -183,23 +185,14 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
 
 def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
     """Load settings from the environment."""
-    types = {
-        "ALLOWED_HOSTS": list[str],
-        "CACHES": dict[str, dict[str, Any]],
-        "CELERY_BEAT_SCHEDULE": dict[str, dict[str, Any]],
-        "DATABASES": dict[str, dict[str, Any]],
-        "EXTEND_CELERY_BEAT_SCHEDULE": dict[str, dict[str, Any]],
-        "EXTEND_INSTALLED_APPS": list[str],
-        "EXTEND_URL_PATTERNS": list[dict[str, Any]],
-        "STORAGES": dict[str, dict[str, Any]],
-    }
+    types = {k: v.annotation for k, v in OnlyProjectSettingsModel.model_fields.items()}
     for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files
             continue
 
         if key in ("ENABLE_ADMIN", "CA_ENABLE_CLICKJACKING_PROTECTION", "USE_TZ"):
             yield key, parse_bool(key, value)
-        elif typ := types.get(key, None):
+        elif typ := types.get(key):
             yield key, parse_json(key, value, typ)
         else:
             yield key, value

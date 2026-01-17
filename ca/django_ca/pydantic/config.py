@@ -483,7 +483,32 @@ class SettingsModel(BaseModel):
         return constants.ELLIPTIC_CURVE_TYPES[self.CA_DEFAULT_ELLIPTIC_CURVE]()
 
 
-class ProjectSettingsModel(SettingsModel):
-    """Model representing project settings."""
+class ProjectSettingsModelMixin:
+    """Mixin for models that contain project settings."""
 
-    ALLOWED_HOSTS: list[str]
+    ALLOWED_HOSTS: list[str] = Field(default_factory=list)
+    CACHES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    DATABASES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    EXTEND_CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        examples=[
+            {
+                "generate-crls": {"task": "django_ca.tasks.generate_crls", "schedule": 3600},
+                "custom-task": {"task": "myapp.tasks.custom_task", "schedule": 300},
+            }
+        ],
+    )
+    EXTEND_INSTALLED_APPS: list[str] = Field(
+        default_factory=list, examples=[["myapp", "otherapp.apps.OtherAppConfig"]]
+    )
+    EXTEND_URL_PATTERNS: list[dict[str, Any]] = Field(default_factory=list)
+    STORAGES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+class OnlyProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
+    """Model representing only project settings (used to load settings)."""
+
+
+class ProjectSettingsModel(ProjectSettingsModelMixin, SettingsModel):
+    """Model representing settings plus project settings."""

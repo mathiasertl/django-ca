@@ -7,3 +7,8 @@ EXTEND_URL_PATTERNS:
 
 EXTEND_INSTALLED_APPS:
   - yourapp1
+
+EXTEND_CELERY_BEAT_SCHEDULE:
+  custom-task-one:
+    schedule: 300
+    task: myapp.tasks.custom_task_one

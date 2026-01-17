@@ -25,7 +25,7 @@ from mypy.nodes import MemberExpr, TypeInfo, Var
 from mypy.plugin import AttributeContext, Plugin
 from mypy.types import AnyType, Instance, Type, TypeOfAny
 
-from django_ca.conf import SettingsModel
+from django_ca.pydantic.config import SettingsModel
 
 
 class DjangoCaPlugin(Plugin):

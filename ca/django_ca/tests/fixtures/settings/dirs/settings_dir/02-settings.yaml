@@ -8,3 +8,9 @@ EXTEND_URL_PATTERNS:
 
 EXTEND_INSTALLED_APPS:
   - yourapp2
+
+
+EXTEND_CELERY_BEAT_SCHEDULE:
+  custom-task-two:
+    schedule: 300
+    task: myapp.tasks.custom_task_two

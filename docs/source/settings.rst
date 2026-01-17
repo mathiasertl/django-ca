@@ -510,28 +510,35 @@ ENABLE_ADMIN
 .. _settings-extend-celery-beat-schedule:
 
 EXTEND_CELERY_BEAT_SCHEDULE
-    Default: ``{}``
+    .. pydantic-setting:: EXTEND_CELERY_BEAT_SCHEDULE
 
     Add `periodic Celery tasks <https://docs.celeryq.dev/en/main/userguide/periodic-tasks.html>`_ to the
     default schedule. Any existing task will be overwritten by this setting, which can be used to change the
     schedule of existing tasks.
 
+    The following example will overwrite the ``generate-crls`` task to run every hour and add a custom task
+    to run every five minutes:
+
+    .. pydantic-setting:: EXTEND_CELERY_BEAT_SCHEDULE
+        :example: 0
+
+    Note that for `schedule`, only ``int`` is supported.
+
 .. _settings-extend-installed-apps:
 
 EXTEND_INSTALLED_APPS
-   Default: ``[]``
+    .. pydantic-setting:: EXTEND_INSTALLED_APPS
 
-   Append Django applications to `INSTALLED_APPS
-   <https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-INSTALLED_APPS>`_.
+    Append Django applications to `INSTALLED_APPS
+    <https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-INSTALLED_APPS>`_.
 
-   This setting is extended if given in multiple configuration sources, see
-   `EXTEND_* settings <settings-extend-settings>`_ for more information.
+    This setting is extended if given in multiple configuration sources, see
+    `EXTEND_* settings <settings-extend-settings>`_ for more information.
 
-   If this setting is an environment variable, it must be a JSON-encoded list:
+    If this setting is an environment variable, it must be a JSON-encoded list:
 
-   .. code-block:: bash
-
-      DJANGO_CA_EXTEND_INSTALLED_APPS='["myapp", "otherapp.apps.OtherAppConfig"]'
+    .. pydantic-setting:: EXTEND_INSTALLED_APPS
+        :example: 0
 
 .. _settings-extend-url-patterns:
 
@@ -590,9 +597,9 @@ SECRET_KEY_FILE
    <https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY>`_. The setting is only used if
    no ``SECRET_KEY`` is defined.
 
-   If you use Docker/docker-compose, the file is automatically generated with a random value on first startup.
+   If you use Docker/Docker Compose, the file is automatically generated with a random value on first startup.
    You only have to use this setting if you want to specify a custom value for some reason. If you use
-   docker-compose, you should make sure that ``frontend`` and ``backend`` container have access to the same
+   Docker Compose, you should make sure that ``frontend`` and ``backend`` container have access to the same
    file.
 
 .. _settings-global-environment-variables:
