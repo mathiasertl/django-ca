@@ -115,7 +115,7 @@ def _validate_crl_ocsp(
         _openssl_verify(ca_file, cert_file)
 
     # Re-cache CRLs
-    compose_manage("backend", "cache_crls")
+    compose_manage("backend", "generate_crls")
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
@@ -179,8 +179,8 @@ POSTGRES_PASSWORD=mysecretpassword
                 compose_exec("backend", "./create-testdata.py", "--env", "backend")
                 compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
 
-                compose_manage("backend", "cache_crls")
-                compose_manage("backend", "regenerate_ocsp_keys")
+                compose_manage("backend", "generate_crls")
+                compose_manage("backend", "generate_ocsp_keys")
 
                 # Write root CA and cert to disk for OpenSSL validation
                 ca_subject = "rsa.example.com"  # created by create-testdata.py

@@ -11,32 +11,26 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Management command to cache CRLs.
+"""**Deprecated.** Management command to generate CRLs.
 
-.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
+.. deprecated:: 3.0.0
+
+    Use `manage.py generate_crls` instead.
 """
 
-import argparse
 from typing import Any
 
-from django_ca.celery import run_task
-from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
-from django_ca.management.base import BaseCommand
-from django_ca.tasks import cache_crls
+from django_ca.management.commands.generate_crls import Command as GenerateCrlsCommand
 
 
-class Command(BaseCommand):
-    """Implement the :command:`manage.py cache_crls` command."""
-
-    help = "Cache CRLs"
-
-    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "serial",
-            nargs="*",
-            help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.",
-        )
+class Command(GenerateCrlsCommand):  # noqa: D101
+    help = "(Deprecated) Cache CRLs. Use generate_crls instead."
 
     def handle(self, serial: list[str], **options: Any) -> None:
-        data = UseCertificateAuthoritiesTaskArgs(serials=serial)
-        run_task(cache_crls, data)
+        self.stderr.write(
+            self.style.WARNING(
+                "Warning: This command is deprecated. Please use generate_crls instead. "
+                "This alias will be removed in django_ca~=3.2.0."
+            )
+        )
+        super().handle(serial, **options)

@@ -24,28 +24,28 @@ from typing import Any, TypeVar, cast
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-class RemovedInDjangoCA260Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca~=2.6.0."""
+class RemovedInDjangoCA310Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca~=3.1.0."""
 
-    version = "2.6"
-
-
-class RemovedInDjangoCA270Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca~=2.7.0."""
-
-    version = "2.7"
+    version = "3.1"
 
 
-class RemovedInDjangoCA280Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca~=2.8.0."""
+class RemovedInDjangoCA320Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca~=3.2.0."""
 
-    version = "2.8"
+    version = "3.2"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA260Warning
+class RemovedInDjangoCA330Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca~=3.3.0."""
+
+    version = "3.3"
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA310Warning
 
 DeprecationWarningType = (
-    type[RemovedInDjangoCA260Warning] | type[RemovedInDjangoCA270Warning] | type[RemovedInDjangoCA280Warning]
+    type[RemovedInDjangoCA310Warning] | type[RemovedInDjangoCA320Warning] | type[RemovedInDjangoCA330Warning]
 )
 
 

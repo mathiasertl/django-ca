@@ -17,6 +17,7 @@
 """
 
 import logging
+import warnings
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
@@ -38,6 +39,7 @@ from django_ca.celery.messages import (
 )
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
+from django_ca.deprecation import RemovedInDjangoCA320Warning
 from django_ca.models import (
     AcmeAuthorization,
     AcmeCertificate,
@@ -55,18 +57,50 @@ log = logging.getLogger(__name__)
 
 @shared_task(base=DjangoCaTask)
 def cache_crl(data: UseCertificateAuthorityTaskArgs) -> None:
-    """Task to cache the CRL for a given CA."""
-    assert isinstance(data, UseCertificateAuthorityTaskArgs)
-    ca = CertificateAuthority.objects.get(serial=data.serial)
-    key_backend_options = ca.key_backend.use_model.model_validate(
-        data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
-    )
-    ca.cache_crls(key_backend_options)
+    """**Deprecated.** Use :py:func:`django_ca.tasks.generate_crl` instead.
+
+    This task will be removed in ``django-ca~=3.1.0``.
+    """
+    warning = "This task is deprecated, call `django_ca.tasks.generate_crl`."
+    warnings.warn(warning, RemovedInDjangoCA320Warning, stacklevel=1)
+    generate_crl(data)
 
 
 @shared_task(base=DjangoCaTask)
 def cache_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None:
-    """Task to cache the CRLs for all CAs."""
+    """**Deprecated.** Use :py:func:`django_ca.tasks.generate_crls` instead.
+
+    This task will be removed in ``django-ca~=3.1.0``.
+    """
+    warning = "This task is deprecated, call `django_ca.tasks.generate_crls`."
+    warnings.warn(warning, RemovedInDjangoCA320Warning, stacklevel=1)
+    generate_crls(data)
+
+
+@shared_task(base=DjangoCaTask)
+def generate_crl(data: UseCertificateAuthorityTaskArgs) -> None:
+    """Celery task to generate CRLs for a single certificate authority.
+
+    .. versionadded:: 3.0.0
+
+        This task was previously called ``cache_crl``.
+    """
+    assert isinstance(data, UseCertificateAuthorityTaskArgs)
+    ca: CertificateAuthority = CertificateAuthority.objects.get(serial=data.serial)
+    key_backend_options = ca.key_backend.use_model.model_validate(
+        data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
+    )
+    ca.generate_crls(key_backend_options)
+
+
+@shared_task(base=DjangoCaTask)
+def generate_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None:
+    """Task to cache the CRLs for all CAs.
+
+    .. versionadded:: 3.0.0
+
+        This task was previously called ``cache_crls``.
+    """
     if data is None:
         data = UseCertificateAuthoritiesTaskArgs()
     assert isinstance(data, UseCertificateAuthoritiesTaskArgs)
@@ -79,17 +113,17 @@ def cache_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None:
         try:
             options = data.key_backend_options.get(serial, {})
             message = UseCertificateAuthorityTaskArgs(serial=serial, key_backend_options=options)
-            run_task(cache_crl, message)
+            run_task(generate_crl, message)
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
-            # exception, e.g. if the connection to the broker fails. Without celery, exceptions in cache_crl()
-            # are raised here directly.
+            # exception, e.g. if the connection to the broker fails. Without celery, exceptions in
+            # `generate_crl()` are raised here directly.
             log.exception("Error caching CRL for %s", serial)
 
 
 @shared_task(base=DjangoCaTask)
 def generate_ocsp_key(data: GenerateOCSPKeyTaskArgs) -> int | None:
-    """Task to generate an OCSP key for the CA named by `serial`.
+    """Celery task to generate an OCSP key for a single certificate authority.
 
     The `serial` names the certificate authority for which to regenerate the OCSP responder certificate. All
     other arguments are passed on to :py:func:`~django_ca.models.CertificateAuthority.generate_ocsp_key`.

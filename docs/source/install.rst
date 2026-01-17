@@ -27,31 +27,31 @@ mess with some very specific settings.
 If chose to use **django-ca** as a Django app, you have to :ref:`setup periodic tasks manually
 <quickstart-as-app-setup-periodic-tasks>`.
 
-Regenerate Certificate Revocation Lists (CRLs)
-==============================================
+Generate Certificate Revocation Lists (CRLs)
+============================================
 
-The :py:func:`django_ca.tasks.cache_crls` Celery task is responsible for regenerating CRLS before they
-expire. By default, the Celery task is run a bit less then once a day.
+The :py:func:`django_ca.tasks.generate_crls` Celery task is responsible for generating CRLS. By default, the
+Celery task is run a bit less then once a day.
 
 CRLs expire after one day by default, but this can be changed via :ref:`CA_CRL_PROFILES
 <settings-ca-crl-profiles>`. If you change this setting, the frequency of this task must be *higher* then
 that setting.
 
 If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
-cache_crls` with a similar frequency.
+generate_crls` with a similar frequency.
 
-Regenerate OCSP responder certificates
-======================================
+Generate OCSP responder certificates
+====================================
 
-The :py:func:`django_ca.tasks.generate_ocsp_keys` Celery task is responsible for regenerating OCSP keys
-before they expire. By default, the Celery task is run every hour.
+The :py:func:`django_ca.tasks.generate_ocsp_keys` Celery task is responsible for generating OCSP keys. By
+default, the Celery task is run every hour.
 
 Certificates are not renewed unless they expire within the interval defined by
 :ref:`CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL <settings-ca-ocsp-responder-certificate-renewal>`. If you
 change that setting, the frequency of this task must be *higher* then that setting.
 
 If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
-regenerate_ocsp_keys` with a similar frequency.
+generate_ocsp_keys` with a similar frequency.
 
 Clean up ACME database records
 ==============================

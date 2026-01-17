@@ -43,7 +43,7 @@ from django_ca.management.mixins import (
     StorePrivateKeyMixin,
 )
 from django_ca.models import CertificateAuthority
-from django_ca.tasks import cache_crl, generate_ocsp_key
+from django_ca.tasks import generate_crl, generate_ocsp_key
 from django_ca.typehints import (
     ArgumentGroup,
     CertificateExtension,
@@ -592,8 +592,8 @@ class Command(
         )
         run_task(generate_ocsp_key, generate_ocsp_key_message)
 
-        cache_crl_message = UseCertificateAuthorityTaskArgs(
+        generate_crl_message = UseCertificateAuthorityTaskArgs(
             serial=ca.serial, key_backend_options=serialized_key_backend_options
         )
-        run_task(cache_crl, cache_crl_message)
+        run_task(generate_crl, generate_crl_message)
         self.output_certificate(ca, **options)

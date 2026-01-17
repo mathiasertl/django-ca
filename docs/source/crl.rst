@@ -23,10 +23,10 @@ web server under that URL, **django-ca** will automatically serve CRLs under the
 
 If you use django-ca :doc:`as Django app </quickstart/as_app>`, you have to make sure that you either have
 a `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon running or run
-:command:`manage.py cache_crls` as a regular, daily CRON job. If you have neither, django-ca will try to sign
-a CRL on the fly, implying that the CAs private key must be available on the web server.
+:command:`manage.py generate_crls` as a regular, daily CRON job. If you have neither, django-ca will try to
+sign a CRL on the fly, implying that the CAs private key must be available on the web server.
 
-All other supported setups (Docker Compose, etc) automatically cache CRLs using celery beat.
+All other supported setups (Docker Compose, etc) automatically generate CRLs using celery beat.
 
 Override default hostname
 =========================

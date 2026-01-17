@@ -29,7 +29,7 @@ certificates e.g. once a day. To regenerate them, you only need to keys/certific
 
 .. code-block:: console
 
-   $ python manage.py regenerate_ocsp_keys
+   $ python manage.py generate_ocsp_keys
 
 Note that you need to pass a password if you have a CA where the private key is encrypted. If you have only
 some CAs with a password, or you use different passwords, you'll have to generate keys individually:
@@ -39,8 +39,8 @@ some CAs with a password, or you use different passwords, you'll have to generat
    $ python manage.py list_cas
    11:22:33 - CA with password foo
    44:55:66 - CA with password bar
-   $ python manage.py regenerate_ocsp_keys --password foo 11:22:33
-   $ python manage.py regenerate_ocsp_keys --password bar 44:55:66
+   $ python manage.py generate_ocsp_keys --password foo 11:22:33
+   $ python manage.py generate_ocsp_keys --password bar 44:55:66
 
 
 ************

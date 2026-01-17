@@ -55,6 +55,7 @@ from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
+from django_ca.deprecation import RemovedInDjangoCA310Warning, deprecate_function
 from django_ca.extensions import get_extension_name
 from django_ca.key_backends import KeyBackend, OCSPKeyBackend, key_backends, ocsp_key_backends
 from django_ca.managers import (
@@ -643,12 +644,21 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
             return "Ed448"
         raise ValueError(f"{pub}: Unknown key type.")  # pragma: no cover
 
-    def cache_crls(self, key_backend_options: BaseModel) -> None:
-        """Function to cache all CRLs for this CA.
+    @deprecate_function(RemovedInDjangoCA310Warning)
+    def cache_crls(self, key_backend_options: BaseModel) -> None:  # pylint: disable=C0116
+        self.generate_crls(key_backend_options)
+
+    def generate_crls(self, key_backend_options: BaseModel) -> None:
+        """Generate certificate revocation lists (CRLs) for this certificate authority.
+
+        .. versionchanged:: 3.0.0
+
+            The function was renamed to `generate_crls`. The old name, `cache_crls`, will be removed in
+            ``django_ca~=3.1.0``.
 
         .. versionchanged:: 1.25.0
 
-           Support for passing a custom hash algorithm to this function was removed.
+            Support for passing a custom hash algorithm to this function was removed.
         """
         for crl_profile in model_settings.CA_CRL_PROFILES.values():
             now = datetime.now(tz=UTC)

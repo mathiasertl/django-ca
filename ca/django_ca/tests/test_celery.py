@@ -175,6 +175,6 @@ def test_run_task(settings: SettingsWrapper) -> None:
     """Test our run_task wrapper."""
     # run_task() without celery
     settings.CA_USE_CELERY = False
-    with mock.patch("django_ca.tasks.cache_crls") as task_mock:
-        run_task(tasks.cache_crls)
+    with mock.patch("django_ca.tasks.generate_crls") as task_mock:
+        run_task(tasks.generate_crls)
     assert task_mock.call_count == 1

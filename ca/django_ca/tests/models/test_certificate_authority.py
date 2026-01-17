@@ -47,7 +47,12 @@ from django_ca.key_backends.storages import StoragesOCSPBackend
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.pydantic import CertificatePoliciesModel
-from django_ca.tests.base.assertions import assert_certificate, assert_crl, assert_sign_cert_signals
+from django_ca.tests.base.assertions import (
+    assert_certificate,
+    assert_crl,
+    assert_removed_in_310,
+    assert_sign_cert_signals,
+)
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import (
     authority_information_access,
@@ -64,7 +69,7 @@ from django_ca.tests.models.base import assert_bundle
 
 pytestmark = pytest.mark.django_db
 
-key_backend_options = StoragesUsePrivateKeyOptions(password=None)
+KEY_BACKEND_OPTIONS = StoragesUsePrivateKeyOptions(password=None)
 
 CACHE_KEY_KWARGS = {
     "only_contains_ca_certs": False,
@@ -117,8 +122,8 @@ def test_root(root: CertificateAuthority, child: CertificateAuthority) -> None:
 
 @pytest.mark.usefixtures("clear_cache")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) -> None:
-    """Test caching of CRLs."""
+def test_generate_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) -> None:
+    """Test generation of CRLs."""
     ca_private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
     der_user_key = crl_cache_key(usable_ca.serial, only_contains_user_certs=True)
     pem_user_key = crl_cache_key(usable_ca.serial, Encoding.PEM, only_contains_user_certs=True)
@@ -132,7 +137,7 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     assert cache.get(der_user_key) is None
     assert cache.get(pem_user_key) is None
 
-    usable_ca.cache_crls(ca_private_key_options)
+    usable_ca.generate_crls(ca_private_key_options)
 
     der_user_crl = cache.get(der_user_key)
     pem_user_crl = cache.get(pem_user_key)
@@ -169,7 +174,7 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     )
 
     # cache again - which will force triggering a new computation
-    usable_ca.cache_crls(ca_private_key_options)
+    usable_ca.generate_crls(ca_private_key_options)
 
     # Get CRLs from cache - we have a new CRLNumber
     der_user_crl = cache.get(der_user_key)
@@ -219,7 +224,7 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
     crl_profiles["user"]["OVERRIDES"][usable_ca.serial] = {"skip": True}
 
     settings.CA_CRL_PROFILES = crl_profiles
-    usable_ca.cache_crls(ca_private_key_options)
+    usable_ca.generate_crls(ca_private_key_options)
 
     assert cache.get(der_ca_key) is None
     assert cache.get(pem_ca_key) is None
@@ -238,12 +243,12 @@ def test_cache_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) 
         {"only_contains_user_certs": True, "only_some_reasons": frozenset([x509.ReasonFlags.key_compromise])},
     ),
 )
-def test_cache_crls_with_profiles(
+def test_generate_crls_with_profiles(
     settings: SettingsWrapper, usable_root: CertificateAuthority, parameters: dict[str, Any]
 ) -> None:
-    """Test cache_crls() with various CRL profiles."""
+    """Test generate_crls() with various CRL profiles."""
     settings.CA_CRL_PROFILES = {"test": parameters}
-    usable_root.cache_crls(key_backend_options)
+    usable_root.generate_crls(KEY_BACKEND_OPTIONS)
 
     der_key = crl_cache_key(usable_root.serial, **parameters)
     pem_key = crl_cache_key(usable_root.serial, Encoding.PEM, **parameters)
@@ -258,8 +263,8 @@ def test_cache_crls_with_profiles(
 
 @pytest.mark.usefixtures("clear_cache")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_cache_crls_with_overrides(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
-    """Test cache_crls() with overrides for CRL profiles."""
+def test_generate_crls_with_overrides(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
+    """Test generate_crls() with overrides for CRL profiles."""
     ca_crl_profile = model_settings.CA_CRL_PROFILES["user"].model_dump(exclude={"encodings", "scope"})
     ca_crl_profile["OVERRIDES"] = {usable_root.serial: {"expires": timedelta(days=3)}}
 
@@ -267,12 +272,28 @@ def test_cache_crls_with_overrides(settings: SettingsWrapper, usable_root: Certi
     pem_user_key = crl_cache_key(usable_root.serial, Encoding.PEM, only_contains_user_certs=True)
 
     settings.CA_CRL_PROFILES = {"user": ca_crl_profile}
-    usable_root.cache_crls(key_backend_options)
+    usable_root.generate_crls(KEY_BACKEND_OPTIONS)
 
     der_user_crl = x509.load_der_x509_crl(cache.get(der_user_key))
     pem_user_crl = x509.load_pem_x509_crl(cache.get(pem_user_key))
     assert der_user_crl.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=3)
     assert pem_user_crl.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=3)
+
+
+@pytest.mark.usefixtures("clear_cache")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_deprecated_cache_crls(usable_root: CertificateAuthority) -> None:
+    """Test cache_crls() deprecation."""
+    der_user_key = crl_cache_key(usable_root.serial, only_contains_user_certs=True)
+    pem_user_key = crl_cache_key(usable_root.serial, Encoding.PEM, only_contains_user_certs=True)
+    with assert_removed_in_310(r"^cache_crls\(\) is deprecated and will be removed in django-ca 3\.1\.$"):
+        usable_root.cache_crls(KEY_BACKEND_OPTIONS)
+
+    der_user_crl = x509.load_der_x509_crl(cache.get(der_user_key))
+    pem_user_crl = x509.load_pem_x509_crl(cache.get(pem_user_key))
+    idp = get_idp(only_contains_user_certs=True)
+    assert_crl(der_user_crl, idp=idp, signer=usable_root)
+    assert_crl(pem_user_crl, idp=idp, signer=usable_root)
 
 
 def test_max_path_length(root: CertificateAuthority, child: CertificateAuthority) -> None:
@@ -302,7 +323,7 @@ def test_generate_ocsp_responder_certificate(usable_root: CertificateAuthority) 
     # EC key for an EC based CA should inherit the key
     root_public_key = usable_root.pub.loaded.public_key()
     assert isinstance(root_public_key, rsa.RSAPublicKey)
-    with generate_ocsp_key(usable_root, key_backend_options) as (key, _cert):
+    with generate_ocsp_key(usable_root, KEY_BACKEND_OPTIONS) as (key, _cert):
         # key = cast(rsa.RSAPrivateKey, key)
         assert isinstance(key, rsa.RSAPrivateKey)
         assert key.key_size == root_public_key.key_size
@@ -312,18 +333,18 @@ def test_regenerate_ocsp_responder_certificate(usable_root: CertificateAuthority
     """Test regenerating an OCSP responder certificate that is due to expire soon."""
     with freeze_time(TIMESTAMPS["everything_valid"]) as frozen_time:
         # TYPEHINT NOTE: We know that the certificate was not yet generated here
-        ocsp_responder_key_data = usable_root.generate_ocsp_key(key_backend_options)
+        ocsp_responder_key_data = usable_root.generate_ocsp_key(KEY_BACKEND_OPTIONS)
         assert ocsp_responder_key_data is not None
         ocsp_responder_certificate = ocsp_responder_key_data
 
         # OCSP key is not immediately regenerated
-        assert usable_root.generate_ocsp_key(key_backend_options) is None
+        assert usable_root.generate_ocsp_key(KEY_BACKEND_OPTIONS) is None
         assert (
             usable_root.ocsp_key_backend_options["certificate"]["pem"] == ocsp_responder_certificate.pub.pem
         )
 
         frozen_time.tick(delta=timedelta(days=2))
-        updated_ocsp_responder_key_data = usable_root.generate_ocsp_key(key_backend_options)
+        updated_ocsp_responder_key_data = usable_root.generate_ocsp_key(KEY_BACKEND_OPTIONS)
         assert updated_ocsp_responder_key_data is not None
         updated_ocsp_responder_certificate = updated_ocsp_responder_key_data
         assert updated_ocsp_responder_certificate.not_after > ocsp_responder_certificate.not_after
@@ -331,12 +352,12 @@ def test_regenerate_ocsp_responder_certificate(usable_root: CertificateAuthority
 
 def test_force_regenerate_ocsp_responder_certificate(usable_root: CertificateAuthority) -> None:
     """Test forcing recreation of OCSP responder certificates."""
-    with generate_ocsp_key(usable_root, key_backend_options) as (key, cert):
+    with generate_ocsp_key(usable_root, KEY_BACKEND_OPTIONS) as (key, cert):
         key = cast(rsa.RSAPrivateKey, key)
         assert isinstance(key, rsa.RSAPrivateKey)
 
     # force regenerating the OCSP key:
-    with generate_ocsp_key(usable_root, key_backend_options, force=True) as (_key_renewed, cert_renewed):
+    with generate_ocsp_key(usable_root, KEY_BACKEND_OPTIONS, force=True) as (_key_renewed, cert_renewed):
         assert cert_renewed.serial != cert.serial
 
 
@@ -588,7 +609,7 @@ def test_sign(subject: x509.Name, usable_root: CertificateAuthority) -> None:
     now = datetime.now(tz=UTC)
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     with assert_sign_cert_signals():
-        cert = usable_root.sign(key_backend_options, csr, subject=subject)
+        cert = usable_root.sign(KEY_BACKEND_OPTIONS, csr, subject=subject)
 
     assert_certificate(cert, subject, hashes.SHA256, signer=usable_root)
     assert cert.not_valid_after_utc == now + model_settings.CA_DEFAULT_EXPIRES
@@ -602,7 +623,7 @@ def test_sign_with_non_default_values(subject: x509.Name, usable_root: Certifica
     not_after = datetime.now(tz=UTC) + model_settings.CA_DEFAULT_EXPIRES + timedelta(days=3)
     with assert_sign_cert_signals():
         cert = usable_root.sign(
-            key_backend_options, csr, subject=subject, algorithm=algorithm, not_after=not_after
+            KEY_BACKEND_OPTIONS, csr, subject=subject, algorithm=algorithm, not_after=not_after
         )
 
     assert_certificate(cert, subject, hashes.SHA256, signer=usable_root)
@@ -636,7 +657,7 @@ def test_sign_with_invalid_extensions(
     msg = rf"{extension.oid.dotted_string}.* Extension must not be provided by the end user\."
     with pytest.raises(ValueError, match=msg):
         root.sign(
-            key_backend_options,
+            KEY_BACKEND_OPTIONS,
             csr,
             subject=subject,
             extensions=[extension],  # type: ignore[list-item]  # what we're testing

@@ -42,6 +42,8 @@ Setup and packaging
 * Docker images now also load configuration from ``conf/local/``. Previously, this directory was only added
   in the Compose setup.
 * The Alpine variant of the Docker image now also sets ``VIRTUAL_ENV`` as environment variable.
+* **BACKWARDS INCOMPATIBLE:** For Docker images, the ``DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS`` environment
+  variable was renamed to ``DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS`` for consistency.
 
 ******
 ACMEv2
@@ -65,7 +67,10 @@ No changes yet.
 Command-line
 ************
 
-No changes yet.
+* The `cache_crls` command was renamed to :command:`manage.py generate_crls` for consistency. The old name
+  will be removed in ``django-ca~=3.2.0``.
+* The `regenerate_ocsp_keys` command was renamed to :command:`manage.py generate_ocsp_keys` for consistency.
+  The old name will be removed in ``django-ca~=3.2.0``.
 
 ***************
 Admin interface
@@ -77,7 +82,12 @@ No changes yet.
 Celery tasks
 ************
 
-* Arguments to Celery tasks are now passed as Pydantic models, greatly improving type safety.
+* The `cache_crl` task was renamed to :py:func:`~django_ca.tasks.generate_crl` for consistency. The old task
+  name will be removed in ``django-ca~=3.1.0``.
+* The `cache_crls` task was renamed to :py:func:`~django_ca.tasks.generate_crls` for consistency. The old task
+  name will be removed in ``django-ca~=3.1.0``.
+* **BACKWARDS INCOMPATIBLE:** Arguments to Celery tasks are now passed as Pydantic models, greatly improving
+  type safety. This will require you to change your code if you call the task directly.
 
 **********
 Python API
@@ -91,7 +101,7 @@ Views
 
 * The `expires` parameter for :py:class:`~django_ca.views.OCSPView` should now be a
   :py:class:`~datetime.timedelta`. Support for passing an ``int`` is deprecated and will be removed in
-  ``django-ca~=2.7.0``.
+  ``django-ca~=3.1.0``.
 
 ************
 Dependencies

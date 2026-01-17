@@ -372,7 +372,7 @@ CA_OCSP_KEY_BACKENDS
 CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
     .. pydantic-setting:: CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL
 
-    This setting is used by the :ref:`periodic task to regenerate OCSP responder certificates
+    This setting is used by the :ref:`periodic task to generate OCSP responder certificates
     <periodic-tasks-explanation>` to determine if an OCSP responder certificate should be renewed or not.
 
     .. WARNING::
@@ -648,9 +648,6 @@ By default, all ``manage.py`` commands are run on startup, but the :doc:`Compose
 </quickstart/docker_compose>` disables them on some containers to optimize startup times and ensure that they
 are only run once.
 
-DJANGO_CA_STARTUP_CACHE_CRLS
-    Set to ``0`` if you don't want to run :command:`manage.py cache_crls` on startup.
-
 DJANGO_CA_STARTUP_CHECK
     Set to ``0`` if you don't want to run :command:`manage.py check` (see Djangos :doc:`django:ref/checks`)
     on startup. This will save a second or two in container startup time.
@@ -661,8 +658,19 @@ DJANGO_CA_STARTUP_COLLECTSTATIC
 DJANGO_CA_STARTUP_MIGRATE
     Set to ``0`` if you don't want to run :command:`manage.py migrate` on startup.
 
-DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS
-    Set to ``0`` if you don't want to run :command:`manage.py regenerate_ocsp_keys` on startup.
+DJANGO_CA_STARTUP_GENERATE_CRLS
+    Set to ``0`` if you don't want to run :command:`manage.py generate_crls` on startup.
+
+    .. versionchanged:: 3.0.0
+
+        The variable was from ``DJANGO_CA_STARTUP_CACHE_CRLS``.
+
+DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS
+    Set to ``0`` if you don't want to run :command:`manage.py generate_ocsp_keys` on startup.
+
+    .. versionchanged:: 3.0.0
+
+        The variable was from ``DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS``.
 
 DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS
     A space-separated string in the form of ``hostname:port``, for example ``db.example.com:5432``. If set,

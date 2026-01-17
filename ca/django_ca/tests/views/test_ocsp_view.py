@@ -36,7 +36,7 @@ from _pytest.logging import LogCaptureFixture
 from django_ca.constants import ReasonFlags
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_removed_in_270
+from django_ca.tests.base.assertions import assert_removed_in_310
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.views.assertions import assert_ocsp_response
 from django_ca.utils import hex_to_bytes
@@ -538,7 +538,7 @@ def test_bad_responder_cert(caplog: LogCaptureFixture, client: Client) -> None:
 
 def test_deprecated_expires(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
     """Test an int for expires."""
-    with assert_removed_in_270(r"^Passing `int` for `expires` is deprecated\.$"):
+    with assert_removed_in_310(r"^Passing `int` for `expires` is deprecated\.$"):
         response = client.post(reverse("int-as-expires"), req1, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
     assert_ocsp_response(

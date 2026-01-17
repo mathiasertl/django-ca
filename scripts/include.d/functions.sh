@@ -65,13 +65,13 @@ run_manage_commands() {
     echo "Running database migrations..."
     python manage.py migrate --noinput
   fi
-  if [ "${DJANGO_CA_STARTUP_CACHE_CRLS}" != "0" ]; then
+  if [ "${DJANGO_CA_STARTUP_GENERATE_CRLS}" != "0" ]; then
     echo "Caching CRLs..."
-    python manage.py cache_crls &
+    python manage.py generate_crls &
   fi
-  if [ "${DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS}" != "0" ]; then
-    echo "Regenerating OCSP keys..."
-    python manage.py regenerate_ocsp_keys &
+  if [ "${DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS}" != "0" ]; then
+    echo "Generating OCSP keys..."
+    python manage.py generate_ocsp_keys &
   fi
   if [ "${DJANGO_CA_STARTUP_COLLECTSTATIC}" != "0" ]; then
     echo "Collecting static files..."

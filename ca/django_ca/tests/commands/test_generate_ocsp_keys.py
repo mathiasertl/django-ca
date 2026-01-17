@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Test the regenerate_ocsp_keys management command."""
+"""Test the generate_ocsp_keys management command."""
 
 import io
 import typing
@@ -40,9 +40,9 @@ from django_ca.tests.base.utils import cmd
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-def regenerate_ocsp_keys(*serials: str, stdout: str = "", stderr: str = "", **kwargs: Any) -> tuple[str, str]:
-    """Execute the regenerate_ocsp_keys command."""
-    actual_stdout, actual_stderr = cmd("regenerate_ocsp_keys", *serials, **kwargs)
+def generate_ocsp_keys(*serials: str, stdout: str = "", stderr: str = "", **kwargs: Any) -> tuple[str, str]:
+    """Execute the generate_ocsp_keys command."""
+    actual_stdout, actual_stderr = cmd("generate_ocsp_keys", *serials, **kwargs)
     assert actual_stdout == stdout
     assert actual_stderr == stderr
     return actual_stdout, actual_stderr
@@ -104,7 +104,7 @@ def assert_no_key(serial: str) -> None:
 
 def test_with_serial(usable_root: CertificateAuthority) -> None:
     """Basic test."""
-    regenerate_ocsp_keys(usable_root.serial)
+    generate_ocsp_keys(usable_root.serial)
     certificate = assert_key(usable_root)
 
     # test expiry of the certificate
@@ -116,7 +116,7 @@ def test_with_serial(usable_root: CertificateAuthority) -> None:
     excludes = list(Certificate.objects.all().values_list("pk", flat=True))
 
     # Try regenerating certificate
-    regenerate_ocsp_keys(usable_root.serial, force=True)
+    generate_ocsp_keys(usable_root.serial, force=True)
     new_cert = assert_key(usable_root, excludes=excludes)
 
     # Cert should now be different
@@ -139,7 +139,7 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
             },
         ),
     ):
-        regenerate_ocsp_keys(usable_root.serial)
+        generate_ocsp_keys(usable_root.serial)
     assert_no_key(usable_root.serial)
 
 
@@ -154,29 +154,40 @@ def test_without_serial(
         (mock.call(tuple(), {"data": {"serial": root.serial, **kwargs}})),
         (mock.call(tuple(), {"data": {"serial": ec.serial, **kwargs}})),
     ):
-        cmd("regenerate_ocsp_keys")
+        cmd("generate_ocsp_keys")
 
 
 @pytest.mark.django_db
 def test_wrong_serial() -> None:
     """Try passing an unknown CA."""
-    regenerate_ocsp_keys("ZZZZZ", stderr="0Z:ZZ:ZZ: Unknown CA.\n", no_color=True)
+    generate_ocsp_keys("ZZZZZ", stderr="0Z:ZZ:ZZ: Unknown CA.\n", no_color=True)
 
 
 def test_no_ocsp_profile(settings: SettingsWrapper, root: CertificateAuthority) -> None:
     """Try when there is no OCSP profile."""
     settings.CA_PROFILES = {"ocsp": None}
     with assert_command_error(r"^ocsp: Undefined profile\.$"):
-        regenerate_ocsp_keys(root.serial)
+        generate_ocsp_keys(root.serial)
     assert_no_key(root.serial)
+
+
+def test_deprecated_command_name(usable_root: CertificateAuthority) -> None:
+    """Test the deprecated command-name alias."""
+    actual_stdout, actual_stderr = cmd("regenerate_ocsp_keys", usable_root.serial)
+    assert actual_stdout == ""
+    assert actual_stderr == (
+        "Warning: This command is deprecated. Please use generate_ocsp_keys instead. "
+        "This alias will be removed in django_ca~=3.2.0.\n"
+    )
+    assert_key(usable_root)
 
 
 @pytest.mark.usefixtures("tmpcadir")
 def test_without_private_key(root: CertificateAuthority) -> None:
     """Try regenerating the OCSP key when no CA private key is available."""
     stderr_buffer = io.StringIO()
-    with assert_command_error(r"Regeneration of 1 OCSP key\(s\) failed\."):
-        cmd("regenerate_ocsp_keys", root.serial, stderr=stderr_buffer)
+    with assert_command_error(r"Generation of 1 OCSP key\(s\) failed\."):
+        cmd("generate_ocsp_keys", root.serial, stderr=stderr_buffer)
     assert "No such file or directory" in stderr_buffer.getvalue()
 
 
@@ -187,4 +198,4 @@ def test_model_validation_error(root: CertificateAuthority) -> None:
     checked by argparse. Other backends however might have other validation mechanisms.
     """
     with assert_command_error(r"^password: Input should be a valid string"):
-        regenerate_ocsp_keys(root.serial, password=123)
+        generate_ocsp_keys(root.serial, password=123)

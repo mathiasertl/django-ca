@@ -237,7 +237,10 @@ def test_boolean_setting_from_environment(setting: str, value: str, expected: bo
                 },
             },
         ),
-        ("CELERY_BEAT_SCHEDULE", {"cache-crls": {"task": "django_ca.tasks.cache_crls", "schedule": 86100}}),
+        (
+            "CELERY_BEAT_SCHEDULE",
+            {"generate-crls": {"task": "django_ca.tasks.generate_crls", "schedule": 86100}},
+        ),
     ),
 )
 def test_complex_setting_from_environment(setting: str, expected: bool) -> None:

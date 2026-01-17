@@ -220,7 +220,7 @@ The available key backends can be configured using the :ref:`CA_OCSP_KEY_BACKEND
 The OCSP key backend that is used for a specific certificate authority can be configured using the admin
 interface or with the `--ocsp-key-backend` option to :command:`manage.py init_ca`,
 :command:`manage.py edit_ca` and :command:`manage.py import_ca`. Note that when you change the backend,
-you must manually regenerate OCSP keys (e.g. using :command:`manage.py regenerate_ocsp_keys`).
+you must manually generate OCSP keys (e.g. using :command:`manage.py generate_ocsp_keys`).
 
 .. _storages_ocsp-key-backend:
 

@@ -159,7 +159,7 @@ OCSP responder out of the box, if you use the docker compose. If you installed f
 
 .. code-block:: console
 
-   $ python manage.py regenerate_ocsp_keys
+   $ python manage.py generate_ocsp_keys
 
 How can configure how long certificates will be valid via the ``--ocsp-responder-key-validity`` argument when
 creating/editing a certificate authority. You can also configure how long responses are valid via the

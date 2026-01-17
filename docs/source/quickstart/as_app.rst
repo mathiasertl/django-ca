@@ -131,8 +131,8 @@ If you use a `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic
 refer to the ``CELERY_BEAT_SCHEDULE`` setting in the current `settings.py
 <https://github.com/mathiasertl/django-ca/blob/main/ca/ca/settings.py>`_ used in project-based setups.
 
-If you do not use Celery, you need to run :command:`manage.py regenerate_ocsp_keys` and
-:command:`manage.py cache_crls` periodically, usually once per hour.
+If you do not use Celery, please refer to :ref:`periodic-tasks-explanation` for which management commands to
+run periodically.
 
 ******
 Update

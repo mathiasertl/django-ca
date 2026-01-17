@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Test the cache_crls management command."""
+"""Test the generate_crls management command."""
 
 from cryptography.hazmat.primitives.serialization import Encoding
 
@@ -25,7 +25,10 @@ from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.utils import cmd, crl_cache_key, get_idp
 
 # freeze time as otherwise CRLs might have rounding errors
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.usefixtures("clear_cache")]
+pytestmark = [
+    pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]),
+    pytest.mark.usefixtures("db", "clear_cache"),
+]
 
 
 def assert_crl_by_ca(ca: CertificateAuthority, expected: list[Certificate] | None = None) -> None:
@@ -45,7 +48,7 @@ def assert_crl_by_ca(ca: CertificateAuthority, expected: list[Certificate] | Non
 
 def test_cmd(usable_cas: list[CertificateAuthority]) -> None:
     """Test the basic command."""
-    stdout, stderr = cmd("cache_crls")
+    stdout, stderr = cmd("generate_crls")
     assert stdout == ""
     assert stderr == ""
 
@@ -57,18 +60,28 @@ def test_cmd(usable_cas: list[CertificateAuthority]) -> None:
 def test_with_serial(usable_cert: Certificate) -> None:
     """Test passing an explicit serial."""
     usable_cert.revoke()
-    ca = usable_cert.ca
 
-    stdout, stderr = cmd("cache_crls", ca.serial)
+    stdout, stderr = cmd("generate_crls", usable_cert.ca.serial)
     assert stdout == ""
     assert stderr == ""
-    assert_crl_by_ca(ca, expected=[usable_cert])
+    assert_crl_by_ca(usable_cert.ca, expected=[usable_cert])
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_with_serial_with_empty_crl(usable_ca: CertificateAuthority) -> None:
     """Test passing an explicit serial."""
-    stdout, stderr = cmd("cache_crls", usable_ca.serial)
+    stdout, stderr = cmd("generate_crls", usable_ca.serial)
     assert stdout == ""
     assert stderr == ""
     assert_crl_by_ca(usable_ca)
+
+
+def test_deprecated_cmd_name(usable_root: CertificateAuthority) -> None:
+    """Test the basic command."""
+    stdout, stderr = cmd("cache_crls")
+    assert stdout == ""
+    assert (
+        stderr == "Warning: This command is deprecated. Please use generate_crls instead. "
+        "This alias will be removed in django_ca~=3.2.0.\n"
+    )
+    assert_crl_by_ca(usable_root)

@@ -65,11 +65,11 @@ def mock_celery_task(task: str, *calls: tuple[tuple[Any, ...], dict[str, Any]]) 
        The `args` and `kwargs` passed to the task are the first and second *argument* passed to the mocked
        ``apply_async``. You must consider this when passing calls. For example::
 
-           with self.mock_celery_task("django_ca.tasks.cache_crls", (((), {}), {})):
-               cache_crls.delay()
+           with self.mock_celery_task("django_ca.tasks.generate_crls", (((), {}), {})):
+               generate_crls.delay()
 
-           with self.mock_celery_task("django_ca.tasks.cache_crls", ((("foo"), {"key": "bar"}), {})):
-               cache_crls.delay("foo", key="bar")
+           with self.mock_celery_task("django_ca.tasks.generate_crls", ((("foo"), {"key": "bar"}), {})):
+               generate_crls.delay("foo", key="bar")
     """
     with mock.patch(f"{task}.apply_async", spec_set=True) as mocked:
         yield mocked

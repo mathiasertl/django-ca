@@ -53,7 +53,7 @@ from django.views.generic.base import View
 
 from django_ca import constants
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
-from django_ca.deprecation import RemovedInDjangoCA270Warning
+from django_ca.deprecation import RemovedInDjangoCA310Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.querysets import CertificateRevocationListQuerySet
@@ -338,7 +338,7 @@ class OCSPView(View):
         expires = self.expires
         if isinstance(expires, int):
             warnings.warn(
-                "Passing `int` for `expires` is deprecated.", RemovedInDjangoCA270Warning, stacklevel=1
+                "Passing `int` for `expires` is deprecated.", RemovedInDjangoCA310Warning, stacklevel=1
             )
             expires = timedelta(seconds=expires)
         return now + expires

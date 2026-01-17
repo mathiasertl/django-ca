@@ -203,8 +203,8 @@ CSRF_COOKIE_SECURE = True
 
 # Celery configuration
 CELERY_BEAT_SCHEDULE = {
-    "cache-crls": {
-        "task": "django_ca.tasks.cache_crls",
+    "generate-crls": {
+        "task": "django_ca.tasks.generate_crls",
         "schedule": 86100,
     },
     "generate-ocsp-keys": {

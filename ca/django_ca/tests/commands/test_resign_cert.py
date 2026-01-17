@@ -36,7 +36,7 @@ pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 def resign_cert(serial: str, stderr: str = "", **kwargs: Any) -> Certificate:
-    """Execute the regenerate_ocsp_keys command."""
+    """Execute the resign_cert command."""
     with assert_create_cert_signals():
         stdout, actual_stderr = cmd("resign_cert", serial, **kwargs)
     assert actual_stderr == stderr
