@@ -146,6 +146,7 @@ def test_load_settings_from_files() -> None:
 
     with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": f"{single_file}:{settings_dir}:{empty_file}"}):
         assert dict(load_settings_from_files(FIXTURES_DIR)) == {
+            "EXTEND_CELERY_BEAT_SCHEDULE": {},
             "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2"],
             "EXTEND_URL_PATTERNS": [
                 {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
@@ -208,6 +209,7 @@ def test_load_settings_from_files_and_environment() -> None:
         clear=True,
     ):
         assert dict(load_settings(settings_dir)) == {
+            "EXTEND_CELERY_BEAT_SCHEDULE": {},
             "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2", "envapp"],
             "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate(
                 [
@@ -944,3 +946,16 @@ def test_extend_url_patterns_with_invalid_value() -> None:
     ):
         with assert_improperly_configured(r"Field required"):
             dict(load_settings(FIXTURES_DIR))
+
+
+def test_extend_celery_beat_schedule_from_environment(tmp_path: Path) -> None:
+    """Test loading EXTEND_CELERY_BEAT_SCHEDULE from the environment."""
+    key = "EXTEND_CELERY_BEAT_SCHEDULE"
+    value = {"generate-crls": {"task": "django_ca.tasks.generate_crls", "schedule": 86100}}
+    with mock.patch.dict(os.environ, {f"DJANGO_CA_{key}": json.dumps(value)}, clear=True):
+        assert dict(load_settings(tmp_path)) == {
+            key: value,
+            "EXTEND_INSTALLED_APPS": [],
+            "EXTEND_URL_PATTERNS": UrlPatternsModel(root=[]),
+            "SETTINGS_FILES": (),
+        }

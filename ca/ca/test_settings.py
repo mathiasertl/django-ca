@@ -309,6 +309,12 @@ CA_ENABLE_REST_API = True
 CA_PASSWORDS = {
     _fixture_data["certs"]["pwd"]["serial"]: _fixture_data["certs"]["pwd"]["password"].encode("utf-8"),
 }
+CELERY_BEAT_SCHEDULE = {
+    "generate-crls": {
+        "task": "django_ca.tasks.generate_crls",
+        "schedule": 86100,
+    },
+}
 
 EXTEND_URL_PATTERNS = UrlPatternsModel([])
 EXTEND_INSTALLED_APPS: list[str] = []

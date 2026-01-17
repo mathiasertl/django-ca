@@ -101,7 +101,7 @@ class UrlPatternsModel(RootModel[list[UrlPatternModel]]):
 
 def get_empty_extend_settings() -> dict[str, Any]:
     """Get list of empty extend settings."""
-    return {"EXTEND_INSTALLED_APPS": [], "EXTEND_URL_PATTERNS": []}
+    return {"EXTEND_INSTALLED_APPS": [], "EXTEND_URL_PATTERNS": [], "EXTEND_CELERY_BEAT_SCHEDULE": {}}
 
 
 def load_secret_key(secret_key: str | None, secret_key_file: str | None) -> str:
@@ -167,7 +167,10 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
             settings_files.append(full_path)
             for setting_name, setting_value in data.items():
                 if setting_name in extend_settings:
-                    extend_settings[setting_name] += setting_value
+                    if isinstance(extend_settings[setting_name], list):
+                        extend_settings[setting_name] += setting_value
+                    elif isinstance(extend_settings[setting_name], dict):  # pragma: no branch
+                        extend_settings[setting_name].update(setting_value)
                 else:
                     yield setting_name, setting_value
 
@@ -185,6 +188,7 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
         "CACHES": dict[str, dict[str, Any]],
         "CELERY_BEAT_SCHEDULE": dict[str, dict[str, Any]],
         "DATABASES": dict[str, dict[str, Any]],
+        "EXTEND_CELERY_BEAT_SCHEDULE": dict[str, dict[str, Any]],
         "EXTEND_INSTALLED_APPS": list[str],
         "EXTEND_URL_PATTERNS": list[dict[str, Any]],
         "STORAGES": dict[str, dict[str, Any]],
@@ -208,6 +212,7 @@ def load_settings(base_dir: Path) -> Iterator[tuple[str, Any]]:
     # Load settings from files
     for _setting, _value in load_settings_from_files(base_dir):
         if _setting in extends:
+            # NOTE: No need to extend/update, as load_settings_from_files() already takes care of merging.
             extends[_setting] = _value
         else:
             yield _setting, _value
@@ -216,7 +221,10 @@ def load_settings(base_dir: Path) -> Iterator[tuple[str, Any]]:
     for _setting, _value in load_settings_from_environment():
         # NOTE: load_settings_from_environment is responsible for parsing values.
         if _setting in extends:
-            extends[_setting] += _value
+            if isinstance(extends[_setting], list):
+                extends[_setting] += _value
+            elif isinstance(extends[_setting], dict):  # pragma: no branch
+                extends[_setting].update(_value)
         else:
             yield _setting, _value
 

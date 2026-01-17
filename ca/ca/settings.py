@@ -15,7 +15,6 @@
 
 import os
 from pathlib import Path
-from typing import Any
 
 from ca.settings_utils import load_secret_key, load_settings, update_database_setting_from_environment
 
@@ -143,7 +142,6 @@ CA_URL_PATH = "django_ca/"
 CA_ENABLE_REST_API = False
 
 EXTEND_INSTALLED_APPS: list[str] = []
-_EXTEND_URL_PATTERNS: list[dict[str, Any]] = []
 
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver
 CA_ENABLE_CLICKJACKING_PROTECTION = True
@@ -211,6 +209,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 300,
     },
 }
+EXTEND_CELERY_BEAT_SCHEDULE = {}
 
 # Load settings from files and environment variables
 for _setting, _value in load_settings(BASE_DIR):
@@ -242,6 +241,7 @@ if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
 
 # Add additional applications to INSTALLED_APPS
 INSTALLED_APPS += EXTEND_INSTALLED_APPS
+CELERY_BEAT_SCHEDULE.update(EXTEND_CELERY_BEAT_SCHEDULE)
 
 if STORAGES is None:
     # Set the default storages argument

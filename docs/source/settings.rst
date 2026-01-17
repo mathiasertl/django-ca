@@ -507,6 +507,15 @@ ENABLE_ADMIN
 
    Set to ``False`` to disable the default Django admin interface. The interface is enabled by default.
 
+.. _settings-extend-celery-beat-schedule:
+
+EXTEND_CELERY_BEAT_SCHEDULE
+    Default: ``{}``
+
+    Add `periodic Celery tasks <https://docs.celeryq.dev/en/main/userguide/periodic-tasks.html>`_ to the
+    default schedule. Any existing task will be overwritten by this setting, which can be used to change the
+    schedule of existing tasks.
+
 .. _settings-extend-installed-apps:
 
 EXTEND_INSTALLED_APPS

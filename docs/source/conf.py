@@ -43,6 +43,9 @@ _SRC_DIR = os.path.join(_ROOT_DIR, "ca")
 _FIXTURES = os.path.join(_SRC_DIR, "django_ca", "tests", "fixtures")
 sys.path.insert(0, _SRC_DIR)
 sys.path.insert(0, _ROOT_DIR)
+
+# Important: django_ca_sphinx extension loads settings from here for documentation, so don't be tempted to
+# use test_settings.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ca.settings")
 
 import django  # NOQA: E402
