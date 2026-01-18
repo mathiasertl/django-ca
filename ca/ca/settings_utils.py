@@ -28,8 +28,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views import View
 
-from django_ca.pydantic.config import ProjectSettingsModelMixin
-
 try:
     import yaml
 except ImportError:  # pragma: no cover
@@ -101,7 +99,38 @@ class UrlPatternsModel(RootModel[list[UrlPatternModel]]):
         return iter(self.root)
 
 
-class OnlyProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
+class ProjectSettingsModelMixin:
+    """Mixin for models that contain project settings.
+
+    This is implemented as a mixin so that the Sphinx extension can import it and use it to generate
+    documentation.
+    """
+
+    ALLOWED_HOSTS: list[str] = Field(default_factory=list)
+    CACHES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    DATABASES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    EXTEND_CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        examples=[
+            {
+                "generate-crls": {"task": "django_ca.tasks.generate_crls", "schedule": 3600},
+                "custom-task": {"task": "myapp.tasks.custom_task", "schedule": 300},
+            }
+        ],
+    )
+    EXTEND_INSTALLED_APPS: list[str] = Field(
+        default_factory=list, examples=[["myapp", "otherapp.apps.OtherAppConfig"]]
+    )
+    EXTEND_URL_PATTERNS: list[dict[str, Any]] = Field(default_factory=list)
+    LOG_FORMAT: str = Field(
+        description="The default log format of log messages. "
+        "This setting has no effect if you define the ``LOGGING`` setting."
+    )
+    STORAGES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+class ProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
     """Model representing only project settings (used to load settings)."""
 
 
@@ -189,7 +218,7 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
 
 def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
     """Load settings from the environment."""
-    types = {k: v.annotation for k, v in OnlyProjectSettingsModel.model_fields.items()}
+    types = {k: v.annotation for k, v in ProjectSettingsModel.model_fields.items()}
     for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files
             continue

@@ -33,8 +33,8 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 from django.conf import settings
 
+from ca.settings_utils import ProjectSettingsModelMixin
 from django_ca.conf import SettingsModel
-from django_ca.pydantic.config import ProjectSettingsModelMixin
 
 # Logger with the Sphinx logging API:
 #   https://www.sphinx-doc.org/en/master/extdev/logging.html
