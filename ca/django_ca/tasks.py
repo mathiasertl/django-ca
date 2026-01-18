@@ -99,6 +99,10 @@ def generate_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None
     .. versionadded:: 3.0.0
 
         This task was previously called ``cache_crls``.
+
+    .. versionchanged:: 3.0.0
+
+        The task now supports the `force` and the `exclude` parameter.
     """
     if data is None:
         data = UseCertificateAuthoritiesTaskArgs()
@@ -106,12 +110,17 @@ def generate_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None
 
     serials = data.serials
     if not serials:
-        serials = tuple(CertificateAuthority.objects.usable().values_list("serial", flat=True))
+        ca_qs = CertificateAuthority.objects.usable()
+        if data.exclude:
+            ca_qs = ca_qs.exclude(serial__in=data.exclude)
+        serials = tuple(ca_qs.values_list("serial", flat=True))
 
     for serial in serials:
         try:
             options = data.key_backend_options.get(serial, {})
-            message = UseCertificateAuthorityTaskArgs(serial=serial, key_backend_options=options)
+            message = UseCertificateAuthorityTaskArgs(
+                serial=serial, force=data.force, key_backend_options=options
+            )
             run_task(generate_crl, message)
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an

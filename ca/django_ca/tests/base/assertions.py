@@ -281,19 +281,29 @@ def assert_crl(  # noqa: PLR0913
             assert not list(entry.extensions)
 
 
-def assert_crls(ca: CertificateAuthority, number: int = 0) -> None:
+def assert_crls(
+    ca: CertificateAuthority,
+    number: int = 0,
+    expected_user: list[Certificate] | None = None,
+    expected_ca: list[Certificate] | None = None,
+) -> None:
     """Test the CRLs for the given certificate authority."""
-    algorithm = ca.algorithm
     for kwargs in [{"only_contains_ca_certs": True}, {"only_contains_user_certs": True}]:
         der_key = crl_cache_key(ca.serial, **kwargs)  # type: ignore[arg-type]
         pem_key = crl_cache_key(ca.serial, Encoding.PEM, **kwargs)  # type: ignore[arg-type]
         idp = get_idp(full_name=None, **kwargs)  # type: ignore[arg-type]
 
+        # Determine expected certificates based on scope
+        if kwargs.get("only_contains_user_certs"):
+            expected = expected_user
+        else:
+            expected = expected_ca
+
         # Fetch and test CRLs from the cache
         der_crl = cache.get(der_key)
         pem_crl = cache.get(pem_key)
-        assert_crl(der_crl, crl_number=number, idp=idp, encoding=Encoding.DER, signer=ca, algorithm=algorithm)
-        assert_crl(pem_crl, crl_number=number, idp=idp, encoding=Encoding.PEM, signer=ca, algorithm=algorithm)
+        assert_crl(der_crl, expected, ca, encoding=Encoding.DER, idp=idp, crl_number=number)
+        assert_crl(pem_crl, expected, ca, encoding=Encoding.PEM, idp=idp, crl_number=number)
 
         # Fetch from the database and verify
         db_crl = CertificateRevocationList.objects.scope(serial=ca.serial, **kwargs).newest()  # type: ignore[arg-type]

@@ -46,7 +46,7 @@ from django_ca.typehints import (
     SignatureHashAlgorithm,
     X509CertMixinTypeVar,
 )
-from django_ca.utils import add_colons, hex_to_int, name_for_display
+from django_ca.utils import add_colons, hex_to_int, name_for_display, sanitize_serial
 
 if typing.TYPE_CHECKING:
     # When type checking, mixins use BaseCommand as base class for all mixins.
@@ -673,3 +673,20 @@ class UsePrivateKeyMixin:
             raise CommandError(str(ex)) from ex
 
         return key_backend_options, algorithm
+
+    def get_key_backend_options(
+        self, serial: str, options: dict[str, Any]
+    ) -> tuple[CertificateAuthority, BaseModel]:
+        serial = sanitize_serial(serial)
+        hr_serial = add_colons(serial)
+        try:
+            ca: CertificateAuthority = CertificateAuthority.objects.get(serial=serial)
+        except CertificateAuthority.DoesNotExist as ex:
+            raise CommandError(f"{hr_serial}: Unknown CA.") from ex
+
+        try:
+            return ca, ca.key_backend.get_use_private_key_options(ca, options)
+        except ValidationError as ex:
+            self.validation_error_to_command_error(ex)
+        except Exception as ex:  # pragma: no cover  # pylint: disable=broad-exception-caught
+            raise CommandError(str(ex)) from ex

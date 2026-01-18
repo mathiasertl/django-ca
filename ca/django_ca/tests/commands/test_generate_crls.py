@@ -13,37 +13,18 @@
 
 """Test the generate_crls management command."""
 
-from cryptography.hazmat.primitives.serialization import Encoding
-
-from django.core.cache import cache
-
 import pytest
 
-from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.assertions import assert_crl
+from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
+from django_ca.tests.base.assertions import assert_command_error, assert_crls
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.utils import cmd, crl_cache_key, get_idp
+from django_ca.tests.base.utils import cmd
 
 # freeze time as otherwise CRLs might have rounding errors
 pytestmark = [
     pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]),
     pytest.mark.usefixtures("db", "clear_cache"),
 ]
-
-
-def assert_crl_by_ca(ca: CertificateAuthority, expected: list[Certificate] | None = None) -> None:
-    """Assert all cached CRLs for the given CA."""
-    key = crl_cache_key(ca.serial, only_contains_ca_certs=True)
-    crl = cache.get(key)
-    assert crl is not None
-    idp = get_idp(only_contains_ca_certs=True)
-    assert_crl(crl, signer=ca, algorithm=ca.algorithm, encoding=Encoding.DER, idp=idp)
-
-    key = crl_cache_key(ca.serial, only_contains_user_certs=True)
-    crl = cache.get(key)
-    assert crl is not None
-    idp = get_idp(only_contains_user_certs=True)
-    assert_crl(crl, signer=ca, algorithm=ca.algorithm, encoding=Encoding.DER, idp=idp, expected=expected)
 
 
 def test_cmd(usable_cas: list[CertificateAuthority]) -> None:
@@ -53,7 +34,7 @@ def test_cmd(usable_cas: list[CertificateAuthority]) -> None:
     assert stderr == ""
 
     for ca in usable_cas:
-        assert_crl_by_ca(ca)
+        assert_crls(ca)
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
@@ -64,7 +45,31 @@ def test_with_serial(usable_cert: Certificate) -> None:
     stdout, stderr = cmd("generate_crls", usable_cert.ca.serial)
     assert stdout == ""
     assert stderr == ""
-    assert_crl_by_ca(usable_cert.ca, expected=[usable_cert])
+    assert_crls(usable_cert.ca, expected_user=[usable_cert])
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
+def test_with_exclude(usable_root: CertificateAuthority, usable_ec: CertificateAuthority) -> None:
+    """Test passing an explicit serial."""
+    stdout, stderr = cmd("generate_crls", exclude=[usable_ec.serial])
+    assert stdout == ""
+    assert stderr == ""
+    assert_crls(usable_root)
+    assert CertificateRevocationList.objects.filter(ca=usable_ec).exists() is False
+
+
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
+def test_with_force(usable_root: CertificateAuthority) -> None:
+    """Test passing an explicit serial."""
+    stdout, stderr = cmd("generate_crls")
+    assert stdout == ""
+    assert stderr == ""
+    assert_crls(usable_root)
+
+    stdout, stderr = cmd("generate_crls", force=True)
+    assert stdout == ""
+    assert stderr == ""
+    assert_crls(usable_root, number=1)
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
@@ -73,15 +78,21 @@ def test_with_serial_with_empty_crl(usable_ca: CertificateAuthority) -> None:
     stdout, stderr = cmd("generate_crls", usable_ca.serial)
     assert stdout == ""
     assert stderr == ""
-    assert_crl_by_ca(usable_ca)
+    assert_crls(usable_ca)
 
 
 def test_deprecated_cmd_name(usable_root: CertificateAuthority) -> None:
-    """Test the basic command."""
+    """Test the deprecated command name."""
     stdout, stderr = cmd("cache_crls")
     assert stdout == ""
     assert (
         stderr == "Warning: This command is deprecated. Please use generate_crls instead. "
         "This alias will be removed in django_ca~=3.2.0.\n"
     )
-    assert_crl_by_ca(usable_root)
+    assert_crls(usable_root)
+
+
+def test_with_serial_and_exclude() -> None:
+    """Test passing both an explicit serial and an exclusion (makes no sense)."""
+    with assert_command_error(r"^Cannot name serials and exclude list at the same time\.$"):
+        cmd("generate_crls", serials=["abc"], exclude=["def"])

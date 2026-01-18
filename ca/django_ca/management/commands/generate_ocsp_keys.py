@@ -40,9 +40,8 @@ class Command(UsePrivateKeyMixin, BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
-            "serial",
-            dest="serials",
-            metavar="serial",
+            "serials",
+            metavar="SERIAL",
             nargs="*",
             help="Generate OCSP keys only for the given CA. If omitted, generate keys for all CAs.",
         )
@@ -56,13 +55,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         parser.add_argument("--quiet", action="store_true", default=False, help="Do not output warnings.")
         self.add_use_private_key_arguments(parser)
 
-    def handle(
-        self,
-        serials: Iterable[str],
-        quiet: bool,
-        force: bool,
-        **options: Any,
-    ) -> None:
+    def handle(self, serials: Iterable[str], quiet: bool, force: bool, **options: Any) -> None:
         if not serials:
             serials = CertificateAuthority.objects.all().order_by("serial").values_list("serial", flat=True)
 
