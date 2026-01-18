@@ -13,7 +13,9 @@
 
 """Messages for Celery tasks."""
 
-from pydantic import AwareDatetime, Field
+from typing import Self
+
+from pydantic import AwareDatetime, Field, model_validator
 
 from django_ca.celery import CeleryMessageModel
 from django_ca.conf import model_settings
@@ -38,7 +40,15 @@ class UseCertificateAuthoritiesTaskArgs(CeleryMessageModel):
     """Parameters for using multiple certificate authorities."""
 
     serials: tuple[Serial, ...] = Field(default_factory=tuple)
+    exclude: tuple[Serial, ...] = Field(default_factory=tuple)
+    force: bool = False
     key_backend_options: dict[str, KeyBackendOptions] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_exclude(self) -> Self:
+        if self.serials and self.exclude:
+            raise ValueError("Message cannot contain both serials and excluded serials.")
+        return self
 
 
 class ApiSignCertificateTaskArgs(CeleryMessageModel):

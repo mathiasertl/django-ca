@@ -16,28 +16,14 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import argparse
-from typing import Any
-
-from django_ca.celery import run_task
-from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
-from django_ca.management.base import BaseCommand
-from django_ca.tasks import generate_crls
+from django_ca.management.base import GenerateCommandBase
+from django_ca.tasks import generate_crl, generate_crls
 
 
-class Command(BaseCommand):
+class Command(GenerateCommandBase):
     """Implement the :command:`manage.py generate_crls` command."""
 
     help = "Generate Certificate Revocation Lists (CRLs)."
-
-    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "serial",
-            dest="serials",
-            nargs="*",
-            help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.",
-        )
-
-    def handle(self, serials: list[str], **options: Any) -> None:
-        data = UseCertificateAuthoritiesTaskArgs(serials=serials)
-        run_task(generate_crls, data)
+    what = "CRLS"
+    single_task = generate_crl
+    multiple_task = generate_crls

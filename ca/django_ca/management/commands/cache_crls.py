@@ -26,11 +26,11 @@ from django_ca.management.commands.generate_crls import Command as GenerateCrlsC
 class Command(GenerateCrlsCommand):  # noqa: D101
     help = "(Deprecated) Cache CRLs. Use generate_crls instead."
 
-    def handle(self, serial: list[str], **options: Any) -> None:
+    def handle(self, serials: list[str], **options: Any) -> None:
         self.stderr.write(
             self.style.WARNING(
                 "Warning: This command is deprecated. Please use generate_crls instead. "
                 "This alias will be removed in django_ca~=3.2.0."
             )
         )
-        super().handle(serial, **options)
+        super().handle(serials, **options)

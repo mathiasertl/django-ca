@@ -14,7 +14,9 @@
 """Command subclasses and argparse helpers for django-ca."""
 
 import abc
+import argparse
 import typing
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -26,6 +28,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
+from django_ca.celery import run_task
+from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs, UseCertificateAuthorityTaskArgs
 from django_ca.conf import model_settings
 from django_ca.constants import ExtensionOID
 from django_ca.management import actions, mixins
@@ -574,3 +578,50 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
             self.add_extension(extensions, tls_feature, tls_feature_critical)
 
         return extensions
+
+
+class GenerateCommandBase(UsePrivateKeyMixin, BaseCommand):
+    """Base class for commands to generate CRLs and OCSP keys."""
+
+    what: str
+    single_task: Callable[..., Any]
+    multiple_task: Callable[..., Any]
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "serials",
+            metavar="SERIAL",
+            nargs="*",
+            help=f"Generate {self.what} for the given CAs. If omitted, generate {self.what} for all CAs.",
+        )
+        parser.add_argument(
+            "--exclude",
+            metavar="SERIAL",
+            action="append",
+            default=[],
+            help="Serials to exclude from generation if no serials are named.",
+        )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help=f"Force generation of {self.what} even if they are not scheduled to be renewed.",
+        )
+        self.add_use_private_key_arguments(parser)
+
+    def handle(self, serials: list[str], exclude: list[str], force: bool, **options: Any) -> None:
+        if serials and exclude:
+            raise CommandError("Cannot name serials and exclude list at the same time.")
+
+        if len(serials) == 1:
+            ca, key_backend_options = self.get_key_backend_options(serials[0], options)
+
+            data = UseCertificateAuthorityTaskArgs(
+                serial=ca.serial,
+                force=force,
+                key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
+            )
+            run_task(self.single_task, data)
+        else:
+            data = UseCertificateAuthoritiesTaskArgs(serials=serials, exclude=exclude, force=force)
+            run_task(self.multiple_task, data)
