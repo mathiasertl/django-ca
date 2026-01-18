@@ -180,12 +180,13 @@ class ProjectSettingsModelMixin:
         "This setting has no effect if you define the ``LOGGING`` setting."
     )
     STORAGES: dict[str, dict[str, Any]] = Field(default_factory=dict)
-    SECRET_KEY_FILE: str | None = Field(
-        default=None,
+    SECRET_KEY_FILE: str = Field(
+        default="",
         description="A path to a file that stores Django's `SECRET_KEY "
         "<https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY>`_. The setting is only "
         "used if no ``SECRET_KEY`` is defined.",
         examples=["/var/lib/django-ca/certs/ca/shared/secret_key"],
+        json_schema_extra={"default_explanation": "Not set."},
     )
     USE_TZ: bool
 

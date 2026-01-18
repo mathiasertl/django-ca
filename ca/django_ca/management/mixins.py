@@ -674,9 +674,10 @@ class UsePrivateKeyMixin:
 
         return key_backend_options, algorithm
 
-    def get_key_backend_options(
+    def get_key_backend_options(  # type: ignore[return]  # b/c of validation_error_to_command_error
         self, serial: str, options: dict[str, Any]
     ) -> tuple[CertificateAuthority, BaseModel]:
+        """Get CA and key backend options for the given input data."""
         serial = sanitize_serial(serial)
         hr_serial = add_colons(serial)
         try:
@@ -687,6 +688,6 @@ class UsePrivateKeyMixin:
         try:
             return ca, ca.key_backend.get_use_private_key_options(ca, options)
         except ValidationError as ex:
-            self.validation_error_to_command_error(ex)
-        except Exception as ex:  # pragma: no cover  # pylint: disable=broad-exception-caught
+            self.validation_error_to_command_error(ex)  # type: ignore[attr-defined]
+        except Exception as ex:  # pragma: no cover
             raise CommandError(str(ex)) from ex

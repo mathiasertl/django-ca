@@ -81,7 +81,7 @@ def test_with_exception_child_task(caplog: LogCaptureFixture) -> None:
         caplog.at_level(logging.INFO),
     ):
         generate_crls()
-    assert "Error caching CRL" in caplog.text
+    assert "Error generating CRL" in caplog.text
 
 
 def test_deprecated_task_name(usable_root: CertificateAuthority) -> None:

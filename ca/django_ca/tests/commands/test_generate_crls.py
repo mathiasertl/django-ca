@@ -95,4 +95,4 @@ def test_deprecated_cmd_name(usable_root: CertificateAuthority) -> None:
 def test_with_serial_and_exclude() -> None:
     """Test passing both an explicit serial and an exclusion (makes no sense)."""
     with assert_command_error(r"^Cannot name serials and exclude list at the same time\.$"):
-        cmd("generate_crls", serials=["abc"], exclude=["def"])
+        cmd("generate_crls", ["abc"], exclude=["def"])
