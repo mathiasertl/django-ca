@@ -126,7 +126,7 @@ def generate_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in
             # `generate_crl()` are raised here directly.
-            log.exception("Error caching CRL for %s", serial)
+            log.exception("Error generating CRL for %s", serial)
 
 
 @shared_task(base=DjangoCaTask)

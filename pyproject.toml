@@ -428,7 +428,7 @@ env = [
 DJANGO_SETTINGS_MODULE = "ca.test_settings"
 addopts = [
     "--cov",
-    "--cov-report=html:docs/build/coverage/",
+    "--cov-report=html",
     "--cov-fail-under=100",
     "--random-order",
 ]

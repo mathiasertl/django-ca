@@ -13,7 +13,6 @@
 
 """Test the generate_ocsp_keys management command."""
 
-import io
 import typing
 from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
@@ -143,32 +142,28 @@ def test_with_celery(settings: SettingsWrapper, usable_root: CertificateAuthorit
     assert_no_key(usable_root.serial)
 
 
-def test_without_serial(
-    settings: SettingsWrapper, root: CertificateAuthority, ec: CertificateAuthority
-) -> None:
+def test_without_serial(settings: SettingsWrapper) -> None:
     """Test for all CAs."""
     settings.CA_USE_CELERY = True
-    kwargs = {"key_backend_options": {"password": None}, "force": False}
     with mock_celery_task(
-        "django_ca.tasks.generate_ocsp_key",
-        (mock.call(tuple(), {"data": {"serial": root.serial, **kwargs}})),
-        (mock.call(tuple(), {"data": {"serial": ec.serial, **kwargs}})),
+        "django_ca.tasks.generate_ocsp_keys",
+        (mock.call(tuple(), {"data": {"serials": [], "exclude": [], "force": False}})),
     ):
         cmd("generate_ocsp_keys")
 
 
 @pytest.mark.django_db
-def test_wrong_serial() -> None:
-    """Try passing an unknown CA."""
-    generate_ocsp_keys("ZZZZZ", stderr="0Z:ZZ:ZZ: Unknown CA.\n", no_color=True)
+def test_unknown_serial() -> None:
+    """Try passing an invalid CA."""
+    with assert_command_error(r"^0A:BC: Unknown CA\.$"):
+        generate_ocsp_keys("abc")
 
 
-def test_no_ocsp_profile(settings: SettingsWrapper, root: CertificateAuthority) -> None:
-    """Try when there is no OCSP profile."""
-    settings.CA_PROFILES = {"ocsp": None}
-    with assert_command_error(r"^ocsp: Undefined profile\.$"):
-        generate_ocsp_keys(root.serial)
-    assert_no_key(root.serial)
+@pytest.mark.django_db
+def test_invalid_serial() -> None:
+    """Try passing an invalid CA."""
+    with assert_command_error(r"^ZZZZZ: Serial has invalid characters$"):
+        generate_ocsp_keys("ZZZZZ")
 
 
 def test_deprecated_command_name(usable_root: CertificateAuthority) -> None:
@@ -185,10 +180,8 @@ def test_deprecated_command_name(usable_root: CertificateAuthority) -> None:
 @pytest.mark.usefixtures("tmpcadir")
 def test_without_private_key(root: CertificateAuthority) -> None:
     """Try regenerating the OCSP key when no CA private key is available."""
-    stderr_buffer = io.StringIO()
-    with assert_command_error(r"Generation of 1 OCSP key\(s\) failed\."):
-        cmd("generate_ocsp_keys", root.serial, stderr=stderr_buffer)
-    assert "No such file or directory" in stderr_buffer.getvalue()
+    with assert_command_error(r"No such file or directory"):
+        cmd("generate_ocsp_keys", root.serial)
 
 
 def test_model_validation_error(root: CertificateAuthority) -> None:

@@ -46,6 +46,7 @@ class UseCertificateAuthoritiesTaskArgs(CeleryMessageModel):
 
     @model_validator(mode="after")
     def validate_exclude(self) -> Self:
+        """Validator to make sure that not both `serials` and `exclude` is set."""
         if self.serials and self.exclude:
             raise ValueError("Message cannot contain both serials and excluded serials.")
         return self

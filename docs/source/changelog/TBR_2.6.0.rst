@@ -55,8 +55,12 @@ No changes yet.
 OCSP and CRLs
 *************
 
-* CRLs are now only regenerated if they expire within a renewal timeframe, similar to OCSP keys. This enables
+* CRLs are now only regenerated if they expire within a renewal interval, similar to OCSP keys. This enables
   running the task to generate CRLs much more frequently and only re-generating CRLs when required.
+* Celery tasks and management commands now accept key backend options when acting on a single CA and an
+  `exclude` parameter to exclude CAs. This allows you to exclude CAs that require special key backend options
+  (e.g. a password) from the default periodic task, and adding an additional, dedicated periodic task with key
+  backend options for that CA.
 
 ********
 REST API
@@ -73,6 +77,11 @@ Command-line
   will be removed in ``django-ca~=3.2.0``.
 * The `regenerate_ocsp_keys` command was renamed to :command:`manage.py generate_ocsp_keys` for consistency.
   The old name will be removed in ``django-ca~=3.2.0``.
+* :command:`manage.py generate_crls` now allows passing key backend options if exactly one CA is specified.
+* :command:`manage.py generate_crls` and :command:`manage.py generate_ocsp_keys` now use a unified interface
+  and have the same arguments.
+* :command:`manage.py generate_crls` and :command:`manage.py generate_ocsp_keys` now allow forcing generation
+  of CRLs/OCSP keys (even if not due for renewal) and excluding CAs from renewal.
 
 ***************
 Admin interface
@@ -90,6 +99,11 @@ Celery tasks
   name will be removed in ``django-ca~=3.1.0``.
 * **BACKWARDS INCOMPATIBLE:** Arguments to Celery tasks are now passed as Pydantic models, greatly improving
   type safety. This will require you to change your code if you call the task directly.
+* :py:func:`~django_ca.tasks.generate_crls` and :py:func:`~django_ca.tasks.generate_ocsp_keys` now support
+  the `force` parameter to force generating CRLs/OCSP keys, even if not due for renewal.
+* :py:func:`~django_ca.tasks.generate_crls` and :py:func:`~django_ca.tasks.generate_ocsp_keys` now support
+  the `exclude` parameter to exclude CAs from generating CRLs/OCSP keys.
+
 
 **********
 Python API

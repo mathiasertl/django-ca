@@ -14,11 +14,8 @@
 """Command subclasses and argparse helpers for django-ca."""
 
 import abc
-import argparse
-import typing
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from cryptography import x509
 from cryptography.x509.oid import AuthorityInformationAccessOID
@@ -44,7 +41,8 @@ from django_ca.typehints import (
     ConfigurableExtensionType,
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
+    from celery.local import Proxy  # celery.local is defined in our stubs
     from django_stubs_ext import StrOrPromise
 
 
@@ -381,7 +379,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
     """Base class for commands signing certificates (sign_cert, resign_cert)."""
 
     add_extensions_help = ""  # concrete classes should set this
-    subject_help: typing.ClassVar[str]  # concrete classes should set this
+    subject_help: ClassVar[str]  # concrete classes should set this
 
     def add_base_args(self, parser: CommandParser, no_default_ca: bool = False) -> ArgumentGroup:
         """Add common arguments for signing certificates."""
@@ -584,10 +582,10 @@ class GenerateCommandBase(UsePrivateKeyMixin, BaseCommand):
     """Base class for commands to generate CRLs and OCSP keys."""
 
     what: str
-    single_task: Callable[..., Any]
-    multiple_task: Callable[..., Any]
+    single_task: "Proxy[[UseCertificateAuthorityTaskArgs], Any]"
+    multiple_task: "Proxy[[UseCertificateAuthoritiesTaskArgs], Any]"
 
-    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "serials",
             metavar="SERIAL",
@@ -614,14 +612,23 @@ class GenerateCommandBase(UsePrivateKeyMixin, BaseCommand):
             raise CommandError("Cannot name serials and exclude list at the same time.")
 
         if len(serials) == 1:
-            ca, key_backend_options = self.get_key_backend_options(serials[0], options)
+            try:
+                ca, key_backend_options = self.get_key_backend_options(serials[0], options)
 
-            data = UseCertificateAuthorityTaskArgs(
-                serial=ca.serial,
-                force=force,
-                key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
-            )
-            run_task(self.single_task, data)
+                single_data = UseCertificateAuthorityTaskArgs(
+                    serial=ca.serial,
+                    force=force,
+                    key_backend_options=key_backend_options.model_dump(mode="json", exclude_unset=True),
+                )
+
+                run_task(self.single_task, single_data)
+            except Exception as ex:
+                # Exceptions only happen if Celery is not used or the connection to the broker fails
+                raise CommandError(ex) from ex
         else:
-            data = UseCertificateAuthoritiesTaskArgs(serials=serials, exclude=exclude, force=force)
-            run_task(self.multiple_task, data)
+            multiple_data = UseCertificateAuthoritiesTaskArgs(serials=serials, exclude=exclude, force=force)
+            try:
+                run_task(self.multiple_task, multiple_data)
+            except Exception as ex:  # pragma: no cover  # does not usually happen
+                # Exceptions only happen if Celery is not used or the connection to the broker fails
+                raise CommandError(ex) from ex

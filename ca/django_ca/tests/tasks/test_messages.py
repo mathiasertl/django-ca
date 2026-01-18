@@ -11,19 +11,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Management command to generate OCSP keys.
+"""Test celery message validators."""
 
-.. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
-"""
+import pytest
 
-from django_ca.management.base import GenerateCommandBase
-from django_ca.tasks import generate_ocsp_key, generate_ocsp_keys
+from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
 
 
-class Command(GenerateCommandBase):
-    """Implement the :command:`manage.py generate_ocsp_keys` command."""
-
-    help = "Generate OCSP keys."
-    what = "OCSP keys"
-    single_task = generate_ocsp_key
-    multiple_task = generate_ocsp_keys
+def test_serial_and_exclude() -> None:
+    """Test passing a serial and an exclude."""
+    with pytest.raises(ValueError, match=r"Message cannot contain both serials and excluded serials\."):
+        UseCertificateAuthoritiesTaskArgs(serials=["abc"], exclude=["def"])
