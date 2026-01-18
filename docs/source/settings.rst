@@ -254,8 +254,7 @@ CA_DEFAULT_STORAGE_ALIAS
 
     The storage alias used by the :ref:`Storages key backend <storages_backend>` and the
     :ref:`Storages OCSP key backend <storages_ocsp-key-backend>` (the default key backends) to store
-    private keys. The value defined here has to be an alias in `STORAGES
-    <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_.
+    private keys.
 
 .. _settings-ca-default-subject:
 
@@ -307,28 +306,14 @@ CA_ENABLE_REST_API
 .. _settings-ca-key-backends:
 
 CA_KEY_BACKENDS
-   Default:
+    .. pydantic-setting:: CA_KEY_BACKENDS
 
-   .. tab:: Python
+    See :doc:`Key backends </python/key_backends>` for a list of available backends and their options.
 
-      .. literalinclude:: /include/config/settings_default_ca_key_backends.py
-         :language: python
-
-   .. tab:: YAML
-
-      .. literalinclude:: /include/config/settings_default_ca_key_backends.yaml
-         :language: YAML
-
-   The backends available to store private keys. Currently, only file system storage is supported out of the
-   box, see :doc:`Key backends </python/key_backends>` for a list of available backends and their options.
-
-   The default ``StoragesBackend`` uses a storage alias called ``"django-ca"`` by default, so it implies that
-   the `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ setting has a "django-ca"
-   alias defined. If you use the full project (e.g. installed with :doc:`from source
-   </quickstart/from_source>`, :doc:`with Docker </quickstart/docker>` or :doc:`Docker Compose
-   </quickstart/docker_compose>`), this will be the file system directory set by :ref:`settings-ca-dir`,
-   unless you define your own storage backend. If you use django-ca :doc:`as Django app </quickstart/as_app>`,
-   you have to define this storage alias.
+    The ``StoragesBackend`` configured by default uses a storage alias called ``"django-ca"`` by default, so
+    it implies that the `STORAGES <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ setting has
+    a "django-ca" alias defined. See :ref:`project documentation on storages <settings-STORAGES>` for more
+    information.
 
 .. _settings-ca-min-key-size:
 
@@ -353,19 +338,7 @@ CA_OCSP_URLS
 .. _settings-ca-ocsp-key-backends:
 
 CA_OCSP_KEY_BACKENDS
-   Default:
-
-   .. tab:: Python
-
-      .. literalinclude:: /include/config/settings_default_ca_ocsp_key_backends.py
-         :language: python
-
-   .. tab:: YAML
-
-      .. literalinclude:: /include/config/settings_default_ca_ocsp_key_backends.yaml
-         :language: YAML
-
-   Configuration for storing OCSP keys. See :ref:`ocsp_key_backends` for more information.
+    .. pydantic-setting:: CA_OCSP_KEY_BACKENDS
 
 .. _settings-ca-ocsp-responder-certificate-renewal:
 
@@ -471,50 +444,42 @@ set ``LOG_LEVEL``, set the ``DJANGO_CA_LOG_LEVEL`` environment variable).
 .. _settings-ca-dir:
 
 CA_DIR
-   Default: ``"files/"``
+    .. pydantic-setting:: CA_DIR
 
-   Where the root certificate is stored. The default is a ``files`` directory in the same location as your
-   ``manage.py`` file.
-
-   This setting has no effect if you define a ``"django-ca"`` alias in `STORAGES
-   <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ (see also:
-   :ref:`settings-ca-key-backends`).
+    This setting has no effect if you define a ``"django-ca"`` alias in `STORAGES
+    <https://docs.djangoproject.com/en/dev/ref/settings/#storages>`_ (see also:
+    :ref:`settings-ca-key-backends`).
 
 
 CA_ENABLE_CLICKJACKING_PROTECTION
-   Default: ``True``
+    .. pydantic-setting:: CA_ENABLE_CLICKJACKING_PROTECTION
 
-   Set to ``False`` to disable :doc:`django:ref/clickjacking`. The setting influences if the
-   ``XFrameOptionsMiddleware`` is added to the list of middlewares.  This setting is useful if the header is
-   already set by the web server.
+    The setting influences if the ``XFrameOptionsMiddleware`` is added to the list of middlewares. This
+    setting is useful if the header is already set by the web server.
 
 .. _settings-ca-url-path:
 
 CA_URL_PATH
-   Default: ``django_ca/``
+    .. pydantic-setting:: CA_URL_PATH
 
-   .. include:: include/change_settings_warning.rst
+    .. include:: include/change_settings_warning.rst
 
-   To URL path to use for ACMEv2, OCSP, CRL and the API, but *not* the admin interface.
-
-   If you use **django-ca** as app, the effect of this setting is achieved by the URL path given in your root
-   URL conf.
+    If you use **django-ca** as app, the effect of this setting is achieved by the URL path given in your root
+    URL conf.
 
 .. _settings-enable-admin:
 
 ENABLE_ADMIN
-   Default: ``True``
+   .. pydantic-setting:: ENABLE_ADMIN
 
-   Set to ``False`` to disable the default Django admin interface. The interface is enabled by default.
-
-.. _settings-extend-celery-beat-schedule:
+.. _settings-EXTEND_CELERY_BEAT_SCHEDULE:
 
 EXTEND_CELERY_BEAT_SCHEDULE
     .. pydantic-setting:: EXTEND_CELERY_BEAT_SCHEDULE
 
     Add `periodic Celery tasks <https://docs.celeryq.dev/en/main/userguide/periodic-tasks.html>`_ to the
-    default schedule. Any existing task will be overwritten by this setting, which can be used to change the
-    schedule of existing tasks.
+    default schedule. Any existing task (see :ref:`settings-CELERY_BEAT_SCHEDULE`) will be overwritten by this
+    setting, which can be used to change the schedule of existing tasks.
 
     The following example will overwrite the ``generate-crls`` task to run every hour and add a custom task
     to run every five minutes:
@@ -543,7 +508,7 @@ EXTEND_INSTALLED_APPS
 .. _settings-extend-url-patterns:
 
 EXTEND_URL_PATTERNS
-   Default: ``[]``
+   .. pydantic-setting:: EXTEND_URL_PATTERNS
 
    Append URL patterns to the default :doc:`URL configuration <django:ref/urls>`. This allows you to add
    custom endpoints to your project.
@@ -565,6 +530,14 @@ EXTEND_URL_PATTERNS
 
    If this setting is an environment variable, it must be a JSON-encoded list.
 
+.. _settings-library-log-level:
+
+LIBRARY_LOG_LEVEL
+    .. pydantic-setting:: LIBRARY_LOG_LEVEL
+
+    The value must be a valid `Python logging level <https://docs.python.org/3/library/logging.html#levels>`_,
+    e.g. ``"WARNING"`` or ``"DEBUG"``.
+
 .. _settings-log-format:
 
 LOG_FORMAT
@@ -573,32 +546,93 @@ LOG_FORMAT
 .. _settings-log-level:
 
 LOG_LEVEL
-   Default: ``"WARNING"``
+    .. pydantic-setting:: LOG_LEVEL
 
-   The log level for all messages from **django-ca**. This setting has no effect if you define the ``LOGGING``
-   setting.
-
-.. _settings-library-log-level:
-
-LIBRARY_LOG_LEVEL
-   Default: ``"WARNING"``
-
-   The log level for all messages _except_ from **django-ca**.  This setting has no effect if you define the
-   ``LOGGING`` setting.
+    The value must be a valid `Python logging level <https://docs.python.org/3/library/logging.html#levels>`_,
+    e.g. ``"WARNING"`` or ``"DEBUG"``.
 
 .. _settings-secret-key-file:
 
 SECRET_KEY_FILE
-   Default: ``"/var/lib/django-ca/secret_key"``
+    .. pydantic-setting:: SECRET_KEY_FILE
 
-   A path to a file that stores Django's `SECRET_KEY
-   <https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY>`_. The setting is only used if
-   no ``SECRET_KEY`` is defined.
+    If you use Docker/Docker Compose, the file is automatically generated with a random value on first startup.
+    You only have to use this setting if you want to specify a custom value for some reason. If you use
+    Docker Compose, you should make sure that the``frontend``, ``backend`` and ``beat`` container have access
+    to the same file.
 
-   If you use Docker/Docker Compose, the file is automatically generated with a random value on first startup.
-   You only have to use this setting if you want to specify a custom value for some reason. If you use
-   Docker Compose, you should make sure that ``frontend`` and ``backend`` container have access to the same
-   file.
+    The default value for Docker/Docker Compose is:
+
+    .. pydantic-setting:: SECRET_KEY_FILE
+        :example: 0
+
+.. _settings-project-3rd-party:
+
+3rd-party settings (Django, Celery, etc)
+========================================
+
+All standard :doc:`Django setting <django:ref/settings>` or Celery settings (as well as for any third-party
+apps you add via :ref:`settings-extend-installed-apps` can be configured if you use Python or YAML-based
+configuration.
+
+If you use environment variables, variables have to be prefixed with ``DJANGO_CA_``, so e.g. the
+``SECRET_KEY`` setting has to use the ``DJANGO_CA_SECRET_KEY`` environment variable. Any standard string
+setting (such as ``EMAIL_BACKEND`` or ``EMAIL_HOST``) will just work, but for other settings, only some
+standard settings are parsed correctly.
+
+The ``USE_TZ`` setting is parsed as an |int|, while :ref:`settings-ALLOWED_HOSTS` is parsed as |list|.
+``CACHES``, ``DATABASES`` and ``STORAGES`` are parsed as |dict|. The :ref:`settings-CELERY_BEAT_SCHEDULE`
+setting is also supported.
+
+.. _settings-ALLOWED_HOSTS:
+
+ALLOWED_HOSTS
+    .. pydantic-setting:: ALLOWED_HOSTS
+
+    If you do not define this setting but define :ref:`settings-ca-default-hostname`, this setting defaults to
+    the default CA hostname.
+
+    An example value could be:
+
+    .. pydantic-setting:: ALLOWED_HOSTS
+        :example: 0
+
+.. _settings-CELERY_BEAT_SCHEDULE:
+
+CELERY_BEAT_SCHEDULE
+    .. pydantic-setting:: CELERY_BEAT_SCHEDULE
+
+    **Do not change this setting,** instead use :ref:`EXTEND_CELERY_BEAT_SCHEDULE
+    <settings-EXTEND_CELERY_BEAT_SCHEDULE>` to add new tasks or update existing tasks.
+
+.. _settings-DATABASES:
+
+DATABASES
+    **django-ca** does not directly set a default for this value, but see :ref:`settings-django-ca-databases`
+    for how environment variables can be used to configure database access details in a unified way for
+    Docker-based setups.
+
+    An example for PostgreSQL (not using ``POSTGRES_*`` environment variables):
+
+    .. pydantic-setting:: DATABASES
+        :example: 0
+
+    And an example for MariaDB (not using ``MARIADB_*`` environment variables):
+
+    .. pydantic-setting:: DATABASES
+        :example: 1
+
+.. _settings-STORAGES:
+
+STORAGES
+    .. pydantic-setting:: STORAGES
+
+    If this value is not defined, the default will include the backends defined above. The
+    configuration for storing private keys with the :ref:`storages_backend` is added based on
+    :ref:`settings-ca-default-storage-alias` and :ref:`settings-ca-dir`.
+
+    Note that the configuration for storing private keys is *not used* if you do not use the
+    :ref:`storages_backend`.
 
 .. _settings-global-environment-variables:
 
@@ -632,25 +666,6 @@ DJANGO_CA_SETTINGS
    If not set, the value of the ``CONFIGURATION_DIRECTORY`` environment variable (see
    :ref:`settings-global-environment-variables-systemd`) is used as a fallback.
 
-.. _settings-env-django-settings:
-
-Django settings
-===============
-
-Some standard Django settings (see the :doc:`settings reference <django:ref/settings>`) can also be set via
-environment variables. Variables have to be prefixed with ``DJANGO_CA_``, so e.g. the ``SECRET_KEY`` setting
-has to use the ``DJANGO_CA_SECRET_KEY`` environment variable.
-
-The ``USE_TZ`` setting is parsed as an |int|, while ``ALLOWED_HOSTS``, ``CACHES``, ``DATABASES``
-and ``STORAGES`` are parsed as |dict|. Any standard string setting (such as ``EMAIL_BACKEND`` or
-``EMAIL_HOST``) will just work.
-
-Celery settings
-===============
-
-If ``CELERY_BEAT_SCHEDULE`` is set as environment variable, it will be parsed as |dict|. Note that it is not
-possible to parse a crontab entry that way.
-
 .. _settings-django-ca-startup:
 
 Startup (Docker only)
@@ -677,14 +692,14 @@ DJANGO_CA_STARTUP_GENERATE_CRLS
 
     .. versionchanged:: 3.0.0
 
-        The variable was from ``DJANGO_CA_STARTUP_CACHE_CRLS``.
+        The variable was renamed from ``DJANGO_CA_STARTUP_CACHE_CRLS``.
 
 DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS
     Set to ``0`` if you don't want to run :command:`manage.py generate_ocsp_keys` on startup.
 
     .. versionchanged:: 3.0.0
 
-        The variable was from ``DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS``.
+        The variable was renamed from ``DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS``.
 
 DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS
     A space-separated string in the form of ``hostname:port``, for example ``db.example.com:5432``. If set,
@@ -715,9 +730,8 @@ environment variable to configure the database, all other options use default va
 But any other setup can also make use of this feature. For example, with plain Docker, you could just
 configure PostgreSQL:
 
-.. literalinclude:: /include/config/setting_databases_example.yaml
-   :language: yaml
-   :caption: localsettings.yaml
+.. pydantic-setting:: DATABASES
+    :example: 2
 
 ... and then start your docker containers with (not a full example here):
 

@@ -17,15 +17,7 @@ Default configuration
 The default configuration is to store private keys on the file system. This works on any system, but is not
 the most secure method possible.
 
-.. tab:: Python
-
-   .. literalinclude:: /include/config/settings_default_ca_key_backends.py
-      :language: python
-
-.. tab:: YAML
-
-   .. literalinclude:: /include/config/settings_default_ca_key_backends.yaml
-      :language: YAML
+.. pydantic-setting:: CA_KEY_BACKENDS
 
 *****************
 Multiple backends
@@ -72,17 +64,7 @@ use any custom Django storage system, for example from `django-storages
 
 This backend takes a single option, ``storage_alias``. It defines the storage system (as defined in
 `STORAGES <https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-STORAGES>`_) to use.
-The default configuration is a good example:
-
-.. tab:: Python
-
-   .. literalinclude:: /include/config/settings_default_ca_key_backends.py
-      :language: python
-
-.. tab:: YAML
-
-   .. literalinclude:: /include/config/settings_default_ca_key_backends.yaml
-      :language: YAML
+The default configuration shown above is a good example.
 
 .. seealso::
 

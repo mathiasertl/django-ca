@@ -340,7 +340,9 @@ class SettingsModel(BaseModel):
         default=True, description="Set to ``False`` to disable all ACME functionality.", examples=[True]
     )
     CA_ENABLE_REST_API: bool = False
-    CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
+    CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(
+        default_factory=dict, description="The backends available to store private keys."
+    )
     CA_MIN_KEY_SIZE: Annotated[PowerOfTwoInt, Ge(1024)] = Field(
         default=2048,
         description="The minimum key size for new CAs (not used for CAs based on EC, Ed448 or Ed25519).",
@@ -350,7 +352,10 @@ class SettingsModel(BaseModel):
         description="Days before expiry that certificate watchers will receive notifications.",
         examples=[(14, 7, 3, 1)],
     )
-    CA_OCSP_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(default_factory=dict)
+    CA_OCSP_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(
+        default_factory=dict,
+        description="Configuration for storing OCSP keys. See :ref:`ocsp_key_backends` for more information.",
+    )
 
     # The minimum value comes from the fact that the renewal task only runs every hour by default.
     CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL: Annotated[timedelta, Ge(timedelta(hours=2))] = Field(

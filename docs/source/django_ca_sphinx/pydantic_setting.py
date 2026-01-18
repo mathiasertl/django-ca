@@ -16,14 +16,14 @@
 import json
 import types
 from datetime import timedelta
-from typing import Annotated, Any, ClassVar, Literal, Union, get_args, get_origin
+from typing import Annotated, Any, ClassVar, Literal, Self, Union, get_args, get_origin
 
 import yaml
 from docutils import nodes
 from docutils.parsers.rst import DirectiveError, directives
 from docutils.statemachine import StringList
 from jinja2 import Environment
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter, model_validator
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from rich.pretty import pretty_repr
@@ -84,6 +84,12 @@ class ProjectSettingsModel(ProjectSettingsModelMixin, SettingsModel):
     """Model representing settings plus project settings."""
 
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+    @model_validator(mode="after")
+    def update_storages(self) -> Self:
+        """Minor hack to display the location as relative path by default."""
+        self.STORAGES[self.CA_DEFAULT_STORAGE_ALIAS]["OPTIONS"]["location"] = ".../files/"
+        return self
 
 
 model_settings = ProjectSettingsModel.model_validate(settings)
@@ -229,20 +235,22 @@ class PydanticSettingDirective(SphinxDirective):
                 )
 
             shows_default = True
-            value = field_info.default
-            if field_type is dict and field_info.default_factory is dict:
-                value = {}
-            elif field_info.default_factory is not None:
-                value = getattr(model_settings, setting)
-            elif model_value := getattr(model_settings, setting):
-                value = model_value
-            elif optional and value is None:
+
+            # If the field is optional and has no default defined or the default is ``None``, we display a
+            # special message:
+            if optional and (field_info.default == PydanticUndefined or field_info.default is None):
                 text = template.render(
                     explanation="Not set.", description=description, field_type=field_type_key, default=True
                 )
                 return text
-            elif value == PydanticUndefined:
-                raise self.error(f"{setting}: No default defined.")
+
+            # If the field defines a default, use it:
+            if field_info.default != PydanticUndefined:
+                value = field_info.default
+
+            # Get value from the model settings instance itself.
+            else:
+                value = getattr(model_settings, setting)
 
         # Handle 'example' option
         elif "example" in self.options:

@@ -106,10 +106,54 @@ class ProjectSettingsModelMixin:
     documentation.
     """
 
-    ALLOWED_HOSTS: list[str] = Field(default_factory=list)
+    ALLOWED_HOSTS: list[str] = Field(default_factory=list, examples=[["ca.example.com"]])
     CACHES: dict[str, dict[str, Any]] = Field(default_factory=dict)
-    CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(default_factory=dict)
-    DATABASES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    CA_DEFAULT_STORAGE_ALIAS: str
+    CA_DIR: str = Field(
+        description="Directory root for storing private keys if you use the :ref:`storages_backend` "
+        "(the default configuration)."
+    )
+    CA_ENABLE_CLICKJACKING_PROTECTION: bool = Field(
+        description="Set to ``False`` to disable :doc:`django:ref/clickjacking`."
+    )
+    CA_URL_PATH: str = Field(
+        description="To URL path to use for ACMEv2, OCSP, CRL and the :doc:`rest_api`, but not the admin "
+        "interface."
+    )
+    CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Default `periodic tasks "
+        "<https://docs.celeryq.dev/en/main/userguide/periodic-tasks.html>`_ for Celery.",
+    )
+    DATABASES: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        examples=[
+            {
+                "default": {
+                    "ENGINE": "django.db.backends.postgresql",
+                    "HOST": "localhost",
+                    "NAME": "django_ca",
+                    "USER": "django_ca",
+                    "PASSWORD": "change_me",
+                }
+            },
+            {
+                "default": {
+                    "ENGINE": "django.db.backends.mysql",
+                    "HOST": "localhost",
+                    "NAME": "django_ca",
+                    "USER": "django_ca",
+                    "PASSWORD": "change_me",
+                }
+            },
+            {
+                "default": {
+                    "ENGINE": "django.db.backends.postgresql",
+                }
+            },
+        ],
+    )
+    ENABLE_ADMIN: bool = Field(description="Set to ``False`` to disable the default Django admin interface.")
     EXTEND_CELERY_BEAT_SCHEDULE: dict[str, dict[str, Any]] = Field(
         default_factory=dict,
         examples=[
@@ -123,11 +167,26 @@ class ProjectSettingsModelMixin:
         default_factory=list, examples=[["myapp", "otherapp.apps.OtherAppConfig"]]
     )
     EXTEND_URL_PATTERNS: list[dict[str, Any]] = Field(default_factory=list)
+    LIBRARY_LOG_LEVEL: str = Field(
+        description="The log level for all messages *except* from **django-ca**. "
+        "This setting has no effect if you define the ``LOGGING`` setting."
+    )
     LOG_FORMAT: str = Field(
         description="The default log format of log messages. "
         "This setting has no effect if you define the ``LOGGING`` setting."
     )
+    LOG_LEVEL: str = Field(
+        description="The log level for all messages from **django-ca**. "
+        "This setting has no effect if you define the ``LOGGING`` setting."
+    )
     STORAGES: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    SECRET_KEY_FILE: str | None = Field(
+        default=None,
+        description="A path to a file that stores Django's `SECRET_KEY "
+        "<https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY>`_. The setting is only "
+        "used if no ``SECRET_KEY`` is defined.",
+        examples=["/var/lib/django-ca/certs/ca/shared/secret_key"],
+    )
 
 
 class ProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
