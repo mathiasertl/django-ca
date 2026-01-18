@@ -212,7 +212,7 @@ class Watcher(models.Model):
         return self.mail
 
     @classmethod
-    def from_addr(cls, addr: str) -> "Self":
+    def from_addr(cls, addr: str) -> Self:
         """Class constructor that creates an instance from an email address."""
         name = ""
         match = re.match(r"(.*?)\s*<(.*)>", addr)
@@ -648,7 +648,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
     def cache_crls(self, key_backend_options: BaseModel) -> None:  # pylint: disable=C0116
         self.generate_crls(key_backend_options)
 
-    def generate_crls(self, key_backend_options: BaseModel) -> None:
+    def generate_crls(self, key_backend_options: BaseModel, force: bool = False) -> None:
         """Generate certificate revocation lists (CRLs) for this certificate authority.
 
         .. versionchanged:: 3.0.0
@@ -659,9 +659,17 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         .. versionchanged:: 1.25.0
 
             Support for passing a custom hash algorithm to this function was removed.
+
+        Parameters
+        ----------
+        key_backend_options : BaseModel
+            Options required for using the private key of the certificate authority.
+        force : bool, optional
+            Set to ``True`` to force regeneration of CRLs. By default, keys are only regenerated if they
+            expire within the renewal period of the respective :ref:settings-ca-crl-profiles`.
         """
-        for crl_profile in model_settings.CA_CRL_PROFILES.values():
-            now = datetime.now(tz=UTC)
+        for name, crl_profile in model_settings.CA_CRL_PROFILES.items():
+            now = timezone.now()
 
             # If there is an override for the current CA, create a new profile model with values updated from
             # the override.
@@ -672,6 +680,19 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
                 config = crl_profile.model_dump(exclude_unset=True)
                 config.update(crl_profile_override.model_dump(exclude_unset=True))
                 crl_profile = CertificateRevocationListProfile.model_validate(config)
+
+            if force is False:
+                crl_qs = CertificateRevocationList.objects.scope(
+                    serial=self.serial,
+                    only_contains_ca_certs=crl_profile.only_contains_ca_certs,
+                    only_contains_user_certs=crl_profile.only_contains_user_certs,
+                    only_contains_attribute_certs=crl_profile.only_contains_attribute_certs,
+                    only_some_reasons=crl_profile.only_some_reasons,
+                )
+                current_crl = crl_qs.valid(now=now).newest()
+                if current_crl is not None and current_crl.next_update > now + crl_profile.renewal:
+                    log.info("%s: %s CRL profile is not yet scheduled for renewal.", self.serial, name)
+                    continue
 
             crl = CertificateRevocationList.objects.create_certificate_revocation_list(
                 ca=self,

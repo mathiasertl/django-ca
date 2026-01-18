@@ -39,6 +39,7 @@ from django_ca.pydantic.type_aliases import (
     AnnotatedEllipticCurveName,
     AnnotatedSignatureHashAlgorithmName,
     CertificateRevocationListReasonCode,
+    PositiveTimedelta,
     PowerOfTwoInt,
     Serial,
     UniqueElementsTuple,
@@ -56,8 +57,7 @@ BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 #   https://github.com/pydantic/pydantic/issues/10459
 # TimedeltaAsDays = Annotated[timedelta, BeforeValidator(timedelta_as_number_parser("days"))]
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
-PositiveTimedelta = Annotated[timedelta, Ge(timedelta(days=1))]
-AcmeCertValidity = Annotated[PositiveTimedelta, Le(timedelta(days=365)), DayValidator]
+AcmeCertValidity = Annotated[PositiveTimedelta, Ge(timedelta(days=1)), Le(timedelta(days=365)), DayValidator]
 
 _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
@@ -205,14 +205,16 @@ class CertificateRevocationListBaseModel(BaseModel):
 class CertificateRevocationListProfileOverride(CertificateRevocationListBaseModel):
     """Model for overriding fields of a CRL Profile."""
 
-    expires: timedelta | None = None
+    expires: Annotated[PositiveTimedelta, Ge(timedelta(seconds=600))] | None = None
+    renewal: Annotated[PositiveTimedelta, Ge(timedelta(seconds=300))] | None = None
     skip: bool = False
 
 
 class CertificateRevocationListProfile(CertificateRevocationListBaseModel):
     """Model for profiles for CRL generation."""
 
-    expires: timedelta = timedelta(days=1)
+    expires: Annotated[PositiveTimedelta, Ge(timedelta(seconds=600))] = timedelta(days=1)
+    renewal: Annotated[PositiveTimedelta, Ge(timedelta(seconds=300))] = timedelta(hours=12)
     OVERRIDES: dict[Serial, CertificateRevocationListProfileOverride] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -279,7 +281,7 @@ class SettingsModel(BaseModel):
     CA_DEFAULT_ELLIPTIC_CURVE: AnnotatedEllipticCurveName = Field(
         default="secp256r1", description="The default elliptic curve for EC based CAs."
     )
-    CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, DayValidator] = Field(
+    CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, Ge(timedelta(days=1)), DayValidator] = Field(
         default=timedelta(days=100),
         description="The default validity time for a new certificate.",
         examples=[timedelta(days=45), 45],

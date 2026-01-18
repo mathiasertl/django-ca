@@ -48,4 +48,4 @@ jobs:
             uv build
 
       - name: Run pylint
-        run: uv run pylint --verbose ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/
+        run: uv run pylint ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/

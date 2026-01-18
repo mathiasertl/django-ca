@@ -17,7 +17,7 @@ from collections.abc import Hashable
 from datetime import timedelta
 from typing import Annotated, Any, TypeVar
 
-from annotated_types import Ge
+from annotated_types import Gt
 from pydantic import AfterValidator, AwareDatetime, BeforeValidator, Field, PlainSerializer
 
 from cryptography import x509
@@ -134,7 +134,7 @@ FutureAwareDatetime = Annotated[AwareDatetime, AfterValidator(future_validator)]
 """A datetime that is timezone-aware and in the future."""
 
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
-PositiveTimedelta = Annotated[timedelta, Ge(timedelta(seconds=0))]
+PositiveTimedelta = Annotated[timedelta, Gt(timedelta(seconds=0))]
 
 UniqueTupleTypeVar = TypeVar("UniqueTupleTypeVar", bound=tuple[Hashable, ...])
 UniqueElementsTuple = Annotated[UniqueTupleTypeVar, AfterValidator(unique_validator)]

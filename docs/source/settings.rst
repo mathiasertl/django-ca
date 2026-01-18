@@ -73,11 +73,16 @@ CA_CRL_PROFILES
     only_some_reasons             |list|      ``None``    Optional set of
                                                           :class:`~cg:cryptography.x509.ReasonFlags`.
     expires                       |timedelta| 1 day       How long the CRL remains valid.
+    renewal                       |timedelta| 12 hours    How soon the CRL is renewed.
     OVERRIDES                     dict        ``{}``      See below.
     ============================= =========== =========== ==============================================
 
     Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` is
     may be set to ``True``. If none are, all certificates (CAs and end-entity) are included.
+
+    The `expires` key determines how long a newly generated CRL is valid. The `renewal` key specifies for how
+    soon the CRL must expire to be automatically renewed by the :ref:`periodic task to generate CRLs
+    <periodic-tasks-explanation>`.
 
     You may also specify an ``"OVERRIDES"`` key for a particular profile to specify custom behavior for select
     certificate authorities named by serial. It can set the same values as a general profile, plus the

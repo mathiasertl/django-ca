@@ -40,6 +40,7 @@ from django.db import connection
 
 import pytest
 from freezegun import freeze_time
+from freezegun.api import FrozenDateTimeFactory
 from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.conf import model_settings
@@ -50,6 +51,7 @@ from django_ca.pydantic import CertificatePoliciesModel
 from django_ca.tests.base.assertions import (
     assert_certificate,
     assert_crl,
+    assert_crls,
     assert_removed_in_310,
     assert_sign_cert_signals,
 )
@@ -122,114 +124,50 @@ def test_root(root: CertificateAuthority, child: CertificateAuthority) -> None:
 
 @pytest.mark.usefixtures("clear_cache")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_generate_crls(settings: SettingsWrapper, usable_ca: CertificateAuthority) -> None:
+def test_generate_crls(usable_ca: CertificateAuthority) -> None:
     """Test generation of CRLs."""
-    ca_private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
-    der_user_key = crl_cache_key(usable_ca.serial, only_contains_user_certs=True)
-    pem_user_key = crl_cache_key(usable_ca.serial, Encoding.PEM, only_contains_user_certs=True)
-    der_ca_key = crl_cache_key(usable_ca.serial, only_contains_ca_certs=True)
-    pem_ca_key = crl_cache_key(usable_ca.serial, Encoding.PEM, only_contains_ca_certs=True)
-    user_idp = get_idp(full_name=None, only_contains_user_certs=True)
-    ca_idp = get_idp(full_name=None, only_contains_ca_certs=True)
+    key_backend_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
 
-    assert cache.get(der_ca_key) is None
-    assert cache.get(pem_ca_key) is None
-    assert cache.get(der_user_key) is None
-    assert cache.get(pem_user_key) is None
+    usable_ca.generate_crls(key_backend_options)
+    assert_crls(usable_ca)
 
-    usable_ca.generate_crls(ca_private_key_options)
 
-    der_user_crl = cache.get(der_user_key)
-    pem_user_crl = cache.get(pem_user_key)
-    assert_crl(
-        der_user_crl,
-        idp=user_idp,
-        encoding=Encoding.DER,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
-    assert_crl(
-        pem_user_crl,
-        idp=user_idp,
-        encoding=Encoding.PEM,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
+@pytest.mark.usefixtures("clear_cache")
+@pytest.mark.freeze_time
+def test_generate_crls_with_regeneration(
+    freezer: FrozenDateTimeFactory, usable_root: CertificateAuthority
+) -> None:
+    """Test generation of CRLs."""
+    print(TIMESTAMPS["everything_valid"])
+    key_backend_options = StoragesUsePrivateKeyOptions()
 
-    der_ca_crl = cache.get(der_ca_key)
-    pem_ca_crl = cache.get(pem_ca_key)
-    assert_crl(
-        der_ca_crl,
-        idp=ca_idp,
-        encoding=Encoding.DER,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
-    assert_crl(
-        pem_ca_crl,
-        idp=ca_idp,
-        encoding=Encoding.PEM,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
+    # Generate CRLs and test contents (just to be sure)
+    usable_root.generate_crls(key_backend_options)
+    assert_crls(usable_root)
 
-    # cache again - which will force triggering a new computation
-    usable_ca.generate_crls(ca_private_key_options)
+    # Generate again - should not do anything, b/c values are cached
+    usable_root.generate_crls(key_backend_options)
+    assert_crls(usable_root)
 
-    # Get CRLs from cache - we have a new CRLNumber
-    der_user_crl = cache.get(der_user_key)
-    pem_user_crl = cache.get(pem_user_key)
-    assert_crl(
-        der_user_crl,
-        idp=user_idp,
-        crl_number=1,
-        encoding=Encoding.DER,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
-    assert_crl(
-        pem_user_crl,
-        idp=user_idp,
-        crl_number=1,
-        encoding=Encoding.PEM,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
+    # move time ahead so that we regenerate
+    freezer.tick(timedelta(hours=12))
 
-    der_ca_crl = cache.get(der_ca_key)
-    pem_ca_crl = cache.get(pem_ca_key)
-    assert_crl(
-        der_ca_crl,
-        idp=ca_idp,
-        crl_number=1,
-        encoding=Encoding.DER,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
-    assert_crl(
-        pem_ca_crl,
-        idp=ca_idp,
-        crl_number=1,
-        encoding=Encoding.PEM,
-        signer=usable_ca,
-        algorithm=usable_ca.algorithm,
-    )
+    # generate again - values should be cached and no new CRLs are created
+    usable_root.generate_crls(key_backend_options)
+    assert_crls(usable_root, number=1)
 
-    # clear caches and skip generation
-    cache.clear()
-    crl_profiles = {
-        k: v.model_dump(exclude={"encodings", "scope"}) for k, v in model_settings.CA_CRL_PROFILES.items()
-    }
-    crl_profiles["ca"]["OVERRIDES"][usable_ca.serial] = {"skip": True}
-    crl_profiles["user"]["OVERRIDES"][usable_ca.serial] = {"skip": True}
 
-    settings.CA_CRL_PROFILES = crl_profiles
-    usable_ca.generate_crls(ca_private_key_options)
+@pytest.mark.usefixtures("clear_cache")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_generate_crls_with_force(usable_root: CertificateAuthority) -> None:
+    """Test the force option."""
+    # Initially generate CRLs
+    usable_root.generate_crls(KEY_BACKEND_OPTIONS)
+    assert_crls(usable_root)
 
-    assert cache.get(der_ca_key) is None
-    assert cache.get(pem_ca_key) is None
-    assert cache.get(der_user_key) is None
-    assert cache.get(pem_user_key) is None
+    # Generate CRLs again, forcing regeneration
+    usable_root.generate_crls(KEY_BACKEND_OPTIONS, force=True)
+    assert_crls(usable_root, number=1)
 
 
 @pytest.mark.usefixtures("clear_cache")
@@ -278,6 +216,29 @@ def test_generate_crls_with_overrides(settings: SettingsWrapper, usable_root: Ce
     pem_user_crl = x509.load_pem_x509_crl(cache.get(pem_user_key))
     assert der_user_crl.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=3)
     assert pem_user_crl.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=3)
+
+
+@pytest.mark.usefixtures("clear_cache")
+@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
+def test_generate_crls_with_skip(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
+    """Test the skip option in CRL profiles."""
+    crl_profiles = {
+        k: v.model_dump(exclude={"encodings", "scope"}) for k, v in model_settings.CA_CRL_PROFILES.items()
+    }
+    crl_profiles["ca"]["OVERRIDES"][usable_root.serial] = {"skip": True}
+    crl_profiles["user"]["OVERRIDES"][usable_root.serial] = {"skip": True}
+
+    settings.CA_CRL_PROFILES = crl_profiles
+    usable_root.generate_crls(StoragesUsePrivateKeyOptions())
+
+    der_user_key = crl_cache_key(usable_root.serial, only_contains_user_certs=True)
+    pem_user_key = crl_cache_key(usable_root.serial, Encoding.PEM, only_contains_user_certs=True)
+    der_ca_key = crl_cache_key(usable_root.serial, only_contains_ca_certs=True)
+    pem_ca_key = crl_cache_key(usable_root.serial, Encoding.PEM, only_contains_ca_certs=True)
+    assert cache.get(der_ca_key) is None
+    assert cache.get(pem_ca_key) is None
+    assert cache.get(der_user_key) is None
+    assert cache.get(pem_user_key) is None
 
 
 @pytest.mark.usefixtures("clear_cache")

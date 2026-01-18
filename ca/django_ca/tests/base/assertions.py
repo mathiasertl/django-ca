@@ -31,6 +31,7 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
 from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
+from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management import CommandError
 
@@ -40,15 +41,17 @@ from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
 from django_ca.deprecation import RemovedInDjangoCA310Warning, RemovedInDjangoCA320Warning
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
-from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
+from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
     authority_information_access,
     basic_constraints,
     cmd_e2e,
+    crl_cache_key,
     crl_distribution_points,
     distribution_point,
+    get_idp,
     uri,
 )
 
@@ -276,6 +279,27 @@ def assert_crl(  # noqa: PLR0913
             assert list(entry.extensions) == entry_extensions[i]
         else:
             assert not list(entry.extensions)
+
+
+def assert_crls(ca: CertificateAuthority, number: int = 0) -> None:
+    """Test the CRLs for the given certificate authority."""
+    algorithm = ca.algorithm
+    for kwargs in [{"only_contains_ca_certs": True}, {"only_contains_user_certs": True}]:
+        der_key = crl_cache_key(ca.serial, **kwargs)  # type: ignore[arg-type]
+        pem_key = crl_cache_key(ca.serial, Encoding.PEM, **kwargs)  # type: ignore[arg-type]
+        idp = get_idp(full_name=None, **kwargs)  # type: ignore[arg-type]
+
+        # Fetch and test CRLs from the cache
+        der_crl = cache.get(der_key)
+        pem_crl = cache.get(pem_key)
+        assert_crl(der_crl, crl_number=number, idp=idp, encoding=Encoding.DER, signer=ca, algorithm=algorithm)
+        assert_crl(pem_crl, crl_number=number, idp=idp, encoding=Encoding.PEM, signer=ca, algorithm=algorithm)
+
+        # Fetch from the database and verify
+        db_crl = CertificateRevocationList.objects.scope(serial=ca.serial, **kwargs).newest()  # type: ignore[arg-type]
+        assert db_crl is not None
+        assert db_crl.data == der_crl
+        assert db_crl.number == number
 
 
 def assert_e2e_error(

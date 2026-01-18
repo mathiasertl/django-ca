@@ -141,8 +141,7 @@ class CertificateRevocationListView(View):
                     only_contains_attribute_certs=self.only_contains_attribute_certs,
                     only_some_reasons=self.only_some_reasons,
                 )
-                .exclude(next_update__lt=now)
-                .exclude(last_update__gt=now)
+                .valid(now=now)
                 .filter(data__isnull=False)  # Only objects that have CRL data associated with it
             )
             crl_obj: CertificateRevocationList | None = crl_qs.newest()

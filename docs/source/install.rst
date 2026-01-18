@@ -33,9 +33,10 @@ Generate Certificate Revocation Lists (CRLs)
 The :py:func:`django_ca.tasks.generate_crls` Celery task is responsible for generating CRLS. By default, the
 Celery task is run a bit less then once a day.
 
-CRLs expire after one day by default, but this can be changed via :ref:`CA_CRL_PROFILES
-<settings-ca-crl-profiles>`. If you change this setting, the frequency of this task must be *higher* then
-that setting.
+CRLs expire after one day and are renewed after twelve hours by default, but this can be changed via
+:ref:`CA_CRL_PROFILES <settings-ca-crl-profiles>`. If you change this setting, the frequency of this task
+should be at least ``(expires - renewal) / 2`` (e.g. with the default "24 hours - 12 hours / 2" at least every
+six hours) to make sure that the CRL is renewed in time.
 
 If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
 generate_crls` with a similar frequency.

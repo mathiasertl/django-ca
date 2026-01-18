@@ -736,6 +736,8 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
             only_some_reasons: frozenset[x509.ReasonFlags] | None = None,
         ) -> "CertificateRevocationListQuerySet": ...
 
+        def valid(self, now: datetime | None = None) -> "CertificateRevocationListQuerySet": ...
+
     def _add_issuing_distribution_point_extension(
         self,
         builder: x509.CertificateRevocationListBuilder,

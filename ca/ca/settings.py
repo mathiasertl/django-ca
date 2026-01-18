@@ -194,7 +194,7 @@ CSRF_COOKIE_SECURE = True
 CELERY_BEAT_SCHEDULE = {
     "generate-crls": {
         "task": "django_ca.tasks.generate_crls",
-        "schedule": 86100,
+        "schedule": 3600,
     },
     "generate-ocsp-keys": {
         # Attempt to regenerate OCSP responder certificates every hour. Certificates are only regenerated if

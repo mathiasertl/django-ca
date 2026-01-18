@@ -33,7 +33,6 @@ from django_ca.acme.validation import validate_dns_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
     ApiSignCertificateTaskArgs,
-    GenerateOCSPKeyTaskArgs,
     UseCertificateAuthoritiesTaskArgs,
     UseCertificateAuthorityTaskArgs,
 )
@@ -90,7 +89,7 @@ def generate_crl(data: UseCertificateAuthorityTaskArgs) -> None:
     key_backend_options = ca.key_backend.use_model.model_validate(
         data.key_backend_options, context={"ca": ca, "backend": ca.key_backend}, strict=True
     )
-    ca.generate_crls(key_backend_options)
+    ca.generate_crls(key_backend_options, force=data.force)
 
 
 @shared_task(base=DjangoCaTask)
@@ -122,7 +121,7 @@ def generate_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None
 
 
 @shared_task(base=DjangoCaTask)
-def generate_ocsp_key(data: GenerateOCSPKeyTaskArgs) -> int | None:
+def generate_ocsp_key(data: UseCertificateAuthorityTaskArgs) -> int | None:
     """Celery task to generate an OCSP key for a single certificate authority.
 
     The `serial` names the certificate authority for which to regenerate the OCSP responder certificate. All
@@ -130,7 +129,7 @@ def generate_ocsp_key(data: GenerateOCSPKeyTaskArgs) -> int | None:
 
     The task returns the primary key of the generated certificate if it was generated, or ``None`` otherwise.
     """
-    assert isinstance(data, GenerateOCSPKeyTaskArgs)
+    assert isinstance(data, UseCertificateAuthorityTaskArgs)
 
     ca: CertificateAuthority = CertificateAuthority.objects.get(serial=data.serial)
     key_backend_options = ca.key_backend.use_model.model_validate(
@@ -157,7 +156,7 @@ def generate_ocsp_keys(data: UseCertificateAuthoritiesTaskArgs | None = None) ->
     for serial in serials:
         try:
             options = data.key_backend_options.get(serial, {})
-            message = GenerateOCSPKeyTaskArgs(serial=serial, key_backend_options=options)
+            message = UseCertificateAuthorityTaskArgs(serial=serial, key_backend_options=options)
             run_task(generate_ocsp_key, message)
         except Exception:  # pylint: disable=broad-exception-caught
             # NOTE: When using Celery, an exception will only be raised here if task.delay() itself raises an
