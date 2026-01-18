@@ -634,7 +634,7 @@ def test_ca_default_ocsp_key_backend_is_not_configured(settings: SettingsWrapper
 
 
 def test_ca_default_key_size_with_larger_ca_min_key_size(settings: SettingsWrapper) -> None:
-    """Test error when ``A_DEFAULT_KEY_SIZE`` is smaller then minimum key size."""
+    """Test error when ``A_DEFAULT_KEY_SIZE`` is smaller than minimum key size."""
     with assert_improperly_configured("CA_DEFAULT_KEY_SIZE cannot be lower then 8192"):
         settings.CA_MIN_KEY_SIZE = 8192
 

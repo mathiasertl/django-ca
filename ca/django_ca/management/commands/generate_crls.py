@@ -28,15 +28,16 @@ from django_ca.tasks import generate_crls
 class Command(BaseCommand):
     """Implement the :command:`manage.py generate_crls` command."""
 
-    help = "Generate CRLs"
+    help = "Generate Certificate Revocation Lists (CRLs)."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "serial",
+            dest="serials",
             nargs="*",
             help="Generate CRLs for the given CAs. If omitted, generate CRLs for all CAs.",
         )
 
-    def handle(self, serial: list[str], **options: Any) -> None:
-        data = UseCertificateAuthoritiesTaskArgs(serials=serial)
+    def handle(self, serials: list[str], **options: Any) -> None:
+        data = UseCertificateAuthoritiesTaskArgs(serials=serials)
         run_task(generate_crls, data)

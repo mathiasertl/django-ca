@@ -30,6 +30,7 @@ class UseCertificateAuthorityTaskArgs(CeleryMessageModel):
     """Parameters for using a single certificate authority."""
 
     serial: Serial
+    force: bool = False
     key_backend_options: KeyBackendOptions = Field(default_factory=dict)
 
 
@@ -38,12 +39,6 @@ class UseCertificateAuthoritiesTaskArgs(CeleryMessageModel):
 
     serials: tuple[Serial, ...] = Field(default_factory=tuple)
     key_backend_options: dict[str, KeyBackendOptions] = Field(default_factory=dict)
-
-
-class GenerateOCSPKeyTaskArgs(UseCertificateAuthorityTaskArgs):
-    """Parameters for generating a single OCSP keys (adds the `force` flag)."""
-
-    force: bool = False
 
 
 class ApiSignCertificateTaskArgs(CeleryMessageModel):

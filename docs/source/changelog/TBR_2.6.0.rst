@@ -55,7 +55,8 @@ No changes yet.
 OCSP and CRLs
 *************
 
-No changes yet.
+* CRLs are now only regenerated if they expire within a renewal timeframe, similar to OCSP keys. This enables
+  running the task to generate CRLs much more frequently and only re-generating CRLs when required.
 
 ********
 REST API

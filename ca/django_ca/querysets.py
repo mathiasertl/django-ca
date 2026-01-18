@@ -290,6 +290,12 @@ class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):
             only_contains_attribute_certs=only_contains_attribute_certs,
         ).reasons(only_some_reasons)
 
+    def valid(self, now: datetime | None = None) -> "CertificateRevocationListQuerySet":
+        """Filter by CRLs that are currently valid."""
+        if now is None:  # pragma: no cover
+            now = timezone.now()
+        return self.exclude(next_update__lt=now).exclude(last_update__gt=now)
+
 
 class AcmeAccountQuerySet(AcmeAccountQuerySetBase):
     """QuerySet for :py:class:`~django_ca.models.AcmeAccount`."""
