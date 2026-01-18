@@ -187,6 +187,7 @@ class ProjectSettingsModelMixin:
         "used if no ``SECRET_KEY`` is defined.",
         examples=["/var/lib/django-ca/certs/ca/shared/secret_key"],
     )
+    USE_TZ: bool
 
 
 class ProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
@@ -282,10 +283,13 @@ def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files
             continue
 
-        if key in ("ENABLE_ADMIN", "CA_ENABLE_CLICKJACKING_PROTECTION", "USE_TZ"):
-            yield key, parse_bool(key, value)
-        elif typ := types.get(key):
-            yield key, parse_json(key, value, typ)
+        if typ := types.get(key):
+            if typ is str:
+                yield key, value
+            elif typ is bool:
+                yield key, parse_bool(key, value)
+            else:
+                yield key, parse_json(key, value, typ)
         else:
             yield key, value
 
@@ -295,12 +299,13 @@ def load_settings(base_dir: Path) -> Iterator[tuple[str, Any]]:
     extends = get_empty_extend_settings()
 
     # Load settings from files
-    for _setting, _value in load_settings_from_files(base_dir):
-        if _setting in extends:
-            # NOTE: No need to extend/update, as load_settings_from_files() already takes care of merging.
-            extends[_setting] = _value
-        else:
-            yield _setting, _value
+    if os.environ.get("DJANGO_CA_SKIP_LOCAL_CONFIGURATION_FILES") != "1":
+        for _setting, _value in load_settings_from_files(base_dir):
+            if _setting in extends:
+                # NOTE: No need to extend/update, as load_settings_from_files() already takes care of merging.
+                extends[_setting] = _value
+            else:
+                yield _setting, _value
 
     # Load settings from environment variables
     for _setting, _value in load_settings_from_environment():

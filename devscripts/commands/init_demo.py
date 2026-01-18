@@ -203,14 +203,15 @@ class Command(DevCommand):
         return loaded_cas
 
     def handle(self, args: argparse.Namespace) -> None:
-        os.environ["DJANGO_CA_SECRET_KEY"] = "dummy"
+        os.environ.setdefault("DJANGO_CA_SECRET_KEY", "dummy")
+        os.environ.setdefault("DJANGO_CA_CA_DIR", os.path.join(config.SRC_DIR, "files/"))
 
         if "TOX_ENV_DIR" in os.environ:
             # insert ca/ into path, otherwise it won't find test_settings in django project
             sys.path.insert(0, str(config.SRC_DIR))
 
-            os.environ["DJANGO_CA_SKIP_LOCAL_CONFIG"] = "1"
-            os.environ["CA_DIR"] = os.environ["TOX_ENV_DIR"]
+            os.environ["DJANGO_CA_SKIP_LOCAL_CONFIGURATION_FILES"] = "1"
+            os.environ["DJANGO_CA_CA_DIR"] = os.path.join(os.environ["TOX_ENV_DIR"], "files")
             os.environ["SQLITE_NAME"] = os.path.join(os.environ["TOX_ENV_DIR"], "db.sqlite3")
 
         self.setup_django("ca.settings")

@@ -211,6 +211,7 @@ def test_load_settings_from_files_and_environment() -> None:
     with mock.patch.dict(
         os.environ,
         {
+            "DJANGO_CA_CA_DIR": "/does/not/exist/",
             "DJANGO_CA_EXTEND_INSTALLED_APPS": '["envapp"]',
             "DJANGO_CA_EXTEND_URL_PATTERNS": url_patters,
             "DJANGO_CA_SETTINGS_DIR_ONE": "foo",
@@ -218,6 +219,7 @@ def test_load_settings_from_files_and_environment() -> None:
         clear=True,
     ):
         assert dict(load_settings(settings_dir)) == {
+            "CA_DIR": "/does/not/exist/",
             "EXTEND_CELERY_BEAT_SCHEDULE": {
                 "custom-task-one": {
                     "schedule": 300,
@@ -239,6 +241,31 @@ def test_load_settings_from_files_and_environment() -> None:
             "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
             "SETTINGS_DIR_TWO": True,
             "SETTINGS_FILES": (settings_dir / "01-settings.yaml", settings_dir / "02-settings.yaml"),
+        }
+
+
+def test_load_settings_from_files_and_environment_with_skip_files() -> None:
+    """Load the full settings module with loading settings from files and env."""
+    settings_dir = FIXTURES_DIR / "settings" / "dirs" / "settings_dir"
+    url_patters = json.dumps(RAW_URL_PATTERNS)
+    with mock.patch.dict(
+        os.environ,
+        {
+            "DJANGO_CA_SKIP_LOCAL_CONFIGURATION_FILES": "1",
+            "DJANGO_CA_CA_DIR": "/does/not/exist/",
+            "DJANGO_CA_EXTEND_INSTALLED_APPS": '["envapp"]',
+            "DJANGO_CA_EXTEND_URL_PATTERNS": url_patters,
+            "DJANGO_CA_SETTINGS_DIR_ONE": "foo",
+        },
+        clear=True,
+    ):
+        assert dict(load_settings(settings_dir)) == {
+            "CA_DIR": "/does/not/exist/",
+            "EXTEND_CELERY_BEAT_SCHEDULE": {},
+            "EXTEND_INSTALLED_APPS": ["envapp"],
+            "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate([*RAW_URL_PATTERNS]),
+            "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
+            "SKIP_LOCAL_CONFIGURATION_FILES": "1",
         }
 
 
