@@ -111,9 +111,7 @@ class DjangoCaTask(Task):  # pylint: disable=abstract-method  # pylint complains
     """Custom base class for Celery tasks."""
 
     def __call__(self, data: dict[str, JSON] | None = None) -> Any:
-        log.error("celery: running __call__(*%s)", data)
         type_hints = get_type_hints(self.run)
-        log.error("typehints: %s", type_hints)
 
         # Task defines a `data` argument
         if sorted(type_hints) == ["data", "return"]:
@@ -140,7 +138,6 @@ class DjangoCaTask(Task):  # pylint: disable=abstract-method  # pylint complains
 
     # TODO: return type annotation should be AsyncResult
     def delay(self, data: BaseModel | None = None) -> Any:
-        log.error("celery: running delay(*%s)", data)
         kwargs = {}
         if isinstance(data, BaseModel):
             kwargs["data"] = data.model_dump(mode="json", exclude_unset=True)

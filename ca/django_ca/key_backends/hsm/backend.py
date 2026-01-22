@@ -208,10 +208,13 @@ class HSMBackend(
     def get_use_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> HSMUsePrivateKeyOptions:
+        data = {}
         so_pin, user_pin = self._get_pins(options)
-        return HSMUsePrivateKeyOptions.model_validate(
-            {"so_pin": so_pin, "user_pin": user_pin}, context={"ca": ca, "backend": self}, strict=True
-        )
+        if so_pin is not None:
+            data["so_pin"] = so_pin
+        if user_pin is not None:
+            data["user_pin"] = user_pin
+        return HSMUsePrivateKeyOptions.model_validate(data, context={"ca": ca, "backend": self}, strict=True)
 
     def get_store_private_key_options(self, options: dict[str, Any]) -> HSMStorePrivateKeyOptions:
         key_label = options[f"{self.options_prefix}key_label"]

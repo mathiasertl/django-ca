@@ -197,6 +197,15 @@ def test_store_private_key_with_unknown_type(
         )
 
 
+def test_get_use_private_key_options_with_so_pin(root: CertificateAuthority) -> None:
+    """Test that HSMUsePrivateKeyOptions serializes to an empty dict when no options are passed."""
+    backend: HSMBackend = key_backends["hsm"]  # type: ignore[assignment]
+    backend.so_pin = backend.user_pin = None
+    assert backend.get_use_private_key_options(root, {"hsm_so_pin": "foo"}).model_dump(
+        exclude_unset=True
+    ) == {"so_pin": "foo"}
+
+
 class TestKeyBackend(KeyBackendTestBase):
     """Generic tests for the Storages backend."""
 
