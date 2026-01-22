@@ -51,6 +51,15 @@ def test_with_expired_certificate_authorities(usable_cas: list[CertificateAuthor
         assert cache.get(key) is None
 
 
+def test_with_exclude(usable_root: CertificateAuthority, usable_ec: CertificateAuthority) -> None:
+    """Test that nothing is cashed if all CAs are expired."""
+    generate_crls(UseCertificateAuthoritiesTaskArgs(exclude=[usable_ec.serial]))
+    assert_crls(usable_root)
+
+    key = crl_cache_key(usable_ec.serial, only_contains_ca_certs=True)
+    assert cache.get(key) is None
+
+
 def test_with_key_options(usable_pwd: CertificateAuthority) -> None:
     """Test passing the password explicitly."""
     password: bytes = CERT_DATA["pwd"]["password"]

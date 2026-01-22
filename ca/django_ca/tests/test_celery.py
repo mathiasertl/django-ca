@@ -172,9 +172,18 @@ def test_dummy_task_with_args() -> None:
 
 
 def test_run_task(settings: SettingsWrapper) -> None:
-    """Test our run_task wrapper."""
+    """Test run_task() without Celery."""
     # run_task() without celery
     settings.CA_USE_CELERY = False
     with mock.patch("django_ca.tasks.generate_crls") as task_mock:
+        run_task(tasks.generate_crls)
+    assert task_mock.call_count == 1
+
+
+def test_run_task_with_celery(settings: SettingsWrapper) -> None:
+    """Test run_task() with Celery enabled."""
+    # run_task() without celery
+    settings.CA_USE_CELERY = True
+    with mock_celery_task("django_ca.tasks.generate_crls", mock.call((), {})) as task_mock:
         run_task(tasks.generate_crls)
     assert task_mock.call_count == 1

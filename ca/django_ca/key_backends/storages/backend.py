@@ -157,10 +157,11 @@ class StoragesBackend(
     def get_use_private_key_options(
         self, ca: "CertificateAuthority", options: dict[str, Any]
     ) -> StoragesUsePrivateKeyOptions:
+        data = {}
+        if password := options.get(f"{self.options_prefix}password"):
+            data["password"] = password
         return StoragesUsePrivateKeyOptions.model_validate(
-            {"password": options.get(f"{self.options_prefix}password")},
-            context={"ca": ca, "backend": self},
-            strict=True,
+            data, context={"ca": ca, "backend": self}, strict=True
         )
 
     def get_use_parent_private_key_options(
