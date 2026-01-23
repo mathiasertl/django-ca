@@ -203,8 +203,8 @@ def assert_create_cert_signals(pre: bool = True, post: bool = True) -> Iterator[
             assert post_sig.called is post
 
 
-def assert_crl(  # noqa: PLR0913
-    crl: bytes | x509.CertificateRevocationList,
+def assert_crl(
+    crl: bytes,
     expected: typing.Sequence[X509CertMixin] | None = None,
     signer: CertificateAuthority | None = None,
     expires: int = 86400,
@@ -214,7 +214,6 @@ def assert_crl(  # noqa: PLR0913
     extensions: list[x509.Extension[x509.ExtensionType]] | None = None,
     crl_number: int = 0,
     entry_extensions: tuple[list[x509.Extension[x509.ExtensionType]]] | None = None,
-    last_update: datetime | None = None,
 ) -> None:
     """Test the given CRL.
 
@@ -230,6 +229,7 @@ def assert_crl(  # noqa: PLR0913
     idp
     extensions
     crl_number
+    entry_extensions
     """
     expected = expected or []
     signer = signer or CertificateAuthority.objects.get(name="child")
@@ -239,8 +239,7 @@ def assert_crl(  # noqa: PLR0913
 
     if idp is not None:  # pragma: no branch
         extensions.append(idp)
-    if last_update is None:  # pragma: no branch
-        last_update = now.replace(microsecond=0)
+    last_update = now.replace(microsecond=0)
     extensions.append(signer.get_authority_key_identifier_extension())
     extensions.append(
         x509.Extension(
@@ -248,9 +247,7 @@ def assert_crl(  # noqa: PLR0913
         )
     )
 
-    if isinstance(crl, x509.CertificateRevocationList):
-        parsed_crl = crl
-    elif encoding == Encoding.PEM:
+    if encoding == Encoding.PEM:
         parsed_crl = x509.load_pem_x509_crl(crl)
     else:
         parsed_crl = x509.load_der_x509_crl(crl)

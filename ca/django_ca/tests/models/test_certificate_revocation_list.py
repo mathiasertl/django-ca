@@ -49,7 +49,9 @@ def assert_no_idp(crl: CertificateRevocationList) -> None:
 def test_create_empty_certificate_revocation_list(usable_ca: CertificateAuthority) -> None:
     """Test creating an empty CRL."""
     key_backend_options = StoragesUsePrivateKeyOptions.model_validate({}, context={"ca": usable_ca})
-    obj = CertificateRevocationList.objects.create_certificate_revocation_list(usable_ca, key_backend_options)
+    obj: CertificateRevocationList = CertificateRevocationList.objects.create_certificate_revocation_list(
+        usable_ca, key_backend_options
+    )
     assert obj.ca == usable_ca
     assert_crl_number(obj, 0)
     assert_no_idp(obj)
@@ -77,7 +79,7 @@ def test_full_crl(
     usable_root: CertificateAuthority, child: CertificateAuthority, root_cert: Certificate
 ) -> None:
     """Test generating a full CRL parameters (and some of its properties)."""
-    obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+    obj: CertificateRevocationList = CertificateRevocationList.objects.create_certificate_revocation_list(
         usable_root, KEY_BACKEND_OPTIONS
     )
     assert obj.ca == usable_root
@@ -87,7 +89,7 @@ def test_full_crl(
     root_cert.revoke()
     child.revoke()
 
-    obj = CertificateRevocationList.objects.create_certificate_revocation_list(
+    obj: CertificateRevocationList = CertificateRevocationList.objects.create_certificate_revocation_list(
         usable_root, KEY_BACKEND_OPTIONS
     )
     assert obj.ca == usable_root
@@ -249,7 +251,7 @@ def test_invalid_reasons(root: CertificateAuthority) -> None:
 
 def test_loaded_with_data_is_none(root: CertificateAuthority) -> None:
     """Try accessing the `loaded` property when data has not yet been set."""
-    crl = CertificateRevocationList.objects.create(
+    crl: CertificateRevocationList = CertificateRevocationList.objects.create(
         ca=root,
         number=1,
         last_update=TIMESTAMPS["everything_valid"],
@@ -261,7 +263,7 @@ def test_loaded_with_data_is_none(root: CertificateAuthority) -> None:
 
 def test_cache_with_data_is_none(root: CertificateAuthority) -> None:
     """Try accessing the `loaded` property when data has not yet been set."""
-    crl = CertificateRevocationList.objects.create(
+    crl: CertificateRevocationList = CertificateRevocationList.objects.create(
         ca=root,
         number=1,
         last_update=TIMESTAMPS["everything_valid"],
