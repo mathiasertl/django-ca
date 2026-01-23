@@ -191,12 +191,12 @@ def test_generate_crls_with_profiles(
     der_key = crl_cache_key(usable_root.serial, **parameters)
     pem_key = crl_cache_key(usable_root.serial, Encoding.PEM, **parameters)
 
-    der_crl = x509.load_der_x509_crl(cache.get(der_key))
-    pem_crl = x509.load_pem_x509_crl(cache.get(pem_key))
+    der_crl = cache.get(der_key)
+    pem_crl = cache.get(pem_key)
     idp = get_idp(**parameters)
 
-    assert_crl(der_crl, idp=idp, signer=usable_root)
-    assert_crl(pem_crl, idp=idp, signer=usable_root)
+    assert_crl(der_crl, signer=usable_root, encoding=Encoding.DER, idp=idp)
+    assert_crl(pem_crl, signer=usable_root, encoding=Encoding.PEM, idp=idp)
 
 
 @pytest.mark.usefixtures("clear_cache")
@@ -250,11 +250,11 @@ def test_deprecated_cache_crls(usable_root: CertificateAuthority) -> None:
     with assert_removed_in_310(r"^cache_crls\(\) is deprecated and will be removed in django-ca 3\.1\.$"):
         usable_root.cache_crls(KEY_BACKEND_OPTIONS)
 
-    der_user_crl = x509.load_der_x509_crl(cache.get(der_user_key))
-    pem_user_crl = x509.load_pem_x509_crl(cache.get(pem_user_key))
+    der_user_crl = cache.get(der_user_key)
+    pem_user_crl = cache.get(pem_user_key)
     idp = get_idp(only_contains_user_certs=True)
-    assert_crl(der_user_crl, idp=idp, signer=usable_root)
-    assert_crl(pem_user_crl, idp=idp, signer=usable_root)
+    assert_crl(der_user_crl, signer=usable_root, encoding=Encoding.DER, idp=idp)
+    assert_crl(pem_user_crl, signer=usable_root, encoding=Encoding.PEM, idp=idp)
 
 
 def test_max_path_length(root: CertificateAuthority, child: CertificateAuthority) -> None:

@@ -25,11 +25,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.management import CommandError
 from django.urls import reverse
 from django.utils import timezone
@@ -56,7 +54,7 @@ from django_ca.tests.base.assertions import (
     assert_certificate,
     assert_command_error,
     assert_create_ca_signals,
-    assert_crl,
+    assert_crls,
     assert_e2e_error,
     assert_extensions,
     assert_signature,
@@ -70,12 +68,10 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     cmd,
     cmd_e2e,
-    crl_cache_key,
     crl_distribution_points,
     distribution_point,
     dns,
     extended_key_usage,
-    get_idp,
     issuer_alternative_name,
     key_usage,
     name_constraints,
@@ -148,19 +144,6 @@ def assert_ocsp_responder_certificate(ca: CertificateAuthority) -> Certificate:
         signer=ca,
     )
     return cert
-
-
-def assert_crls(ca: CertificateAuthority) -> None:
-    """Assert CRLs."""
-    cache_key = crl_cache_key(ca.serial, Encoding.PEM, only_contains_user_certs=True)
-    user_idp = get_idp(only_contains_user_certs=True)
-    crl = cache.get(cache_key)
-    assert_crl(crl, signer=ca, algorithm=ca.algorithm, idp=user_idp)
-
-    cache_key = crl_cache_key(ca.serial, Encoding.PEM, only_contains_ca_certs=True)
-    ca_idp = get_idp(only_contains_ca_certs=True)
-    crl = cache.get(cache_key)
-    assert_crl(crl, signer=ca, algorithm=ca.algorithm, idp=ca_idp)
 
 
 def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:

@@ -25,12 +25,14 @@ from _pytest.logging import LogCaptureFixture
 from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
 from django_ca.models import CertificateAuthority
 from django_ca.tasks import cache_crls, generate_crls
-from django_ca.tests.base.assertions import assert_removed_in_320
+from django_ca.tests.base.assertions import assert_crls, assert_removed_in_320
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import crl_cache_key
-from django_ca.tests.tasks.conftest import assert_crls
 
-pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [
+    pytest.mark.usefixtures("clear_cache"),
+    pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]),  # otherwise CRLs might have rounding errors
+]
 
 
 def test_all_crls(usable_cas: list[CertificateAuthority]) -> None:
