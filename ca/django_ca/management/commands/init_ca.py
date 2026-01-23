@@ -585,15 +585,11 @@ class Command(
             raise CommandError(ex) from ex
 
         # Generate OCSP keys and cache CRLs
-        serialized_key_backend_options = load_key_backend_options.model_dump(mode="json")
+        serialized_key_backend_options = load_key_backend_options.model_dump(mode="json", exclude_unset=True)
 
-        generate_ocsp_key_message = UseCertificateAuthorityTaskArgs(
+        message = UseCertificateAuthorityTaskArgs(
             serial=ca.serial, key_backend_options=serialized_key_backend_options
         )
-        run_task(generate_ocsp_key, generate_ocsp_key_message)
-
-        generate_crl_message = UseCertificateAuthorityTaskArgs(
-            serial=ca.serial, key_backend_options=serialized_key_backend_options
-        )
-        run_task(generate_crl, generate_crl_message)
+        run_task(generate_ocsp_key, message)
+        run_task(generate_crl, message)
         self.output_certificate(ca, **options)
