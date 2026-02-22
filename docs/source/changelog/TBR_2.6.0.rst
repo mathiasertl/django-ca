@@ -108,6 +108,7 @@ Views
 Dependencies
 ************
 
+* Add support for ``acme~=5.3.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Python 3.10.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=45.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.11.0``.

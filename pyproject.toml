@@ -12,11 +12,11 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["46"]
-acme = ["5.2"]
+acme = ["5.2", "5.3"]
 pydantic = ["2.12"]
 josepy = ["2.1", "2.2"]
 # Newest uv release: https://pypi.org/project/uv/
-uv = "0.9.26"
+uv = "0.10.4"
 
 # https://www.postgresql.org/support/versioning/
 postgres = [
@@ -548,12 +548,12 @@ exclude = ["django_ca.tests*"]
 local_scheme = "no-local-version"
 
 [tool.uv]
-required-version = "0.9.26"
+required-version = ">=0.10.4"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
     #[ { group = "cryptography46" }, ],
-    [ { group = "acme5.0" }, { group = "acme5.1" }, { group = "acme5.2" }, ],
+    [ { group = "acme5.2" }, { group = "acme5.3" }, ],
     #[ { group = "pydantic2.12" }, ],
 ]
 
@@ -638,4 +638,5 @@ gunicorn = [ "gunicorn>=23" ]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography46" = ["cryptography~=46.0"]
 "acme5.2" = ["acme~=5.2.0"]
+"acme5.3" = ["acme~=5.3.0"]
 "pydantic2.12" = ["pydantic~=2.12.0"]
