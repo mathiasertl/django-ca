@@ -90,16 +90,6 @@ DEFAULT_OCSP_KEY_BACKEND = "django_ca.key_backends.storages.StoragesOCSPBackend"
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurveName, type[ec.EllipticCurve]] = MappingProxyType(
     {
-        "sect571r1": ec.SECT571R1,
-        "sect409r1": ec.SECT409R1,
-        "sect283r1": ec.SECT283R1,
-        "sect233r1": ec.SECT233R1,
-        "sect163r2": ec.SECT163R2,
-        "sect571k1": ec.SECT571K1,
-        "sect409k1": ec.SECT409K1,
-        "sect283k1": ec.SECT283K1,
-        "sect233k1": ec.SECT233K1,
-        "sect163k1": ec.SECT163K1,
         "secp521r1": ec.SECP521R1,
         "secp384r1": ec.SECP384R1,
         "secp256r1": ec.SECP256R1,

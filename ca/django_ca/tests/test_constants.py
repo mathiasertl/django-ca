@@ -103,7 +103,8 @@ def test_elliptic_curves() -> None:
     # MYPY NOTE: mypy does not allow passing abstract classes for type variables, see
     #            https://github.com/python/mypy/issues/5374#issuecomment-436638471
     subclasses = get_subclasses(ec.EllipticCurve)  # type: ignore[type-var, type-abstract]
-    assert constants.ELLIPTIC_CURVE_TYPES == {e.name: e for e in subclasses}
+    names = {e.name: e for e in subclasses if not e.name.startswith("sect")}  # type: ignore[attr-defined]
+    assert constants.ELLIPTIC_CURVE_TYPES == names
 
 
 def test_end_entity_certificate_extension_keys_typehints() -> None:

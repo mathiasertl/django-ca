@@ -21,4 +21,4 @@ from django_ca.key_backends.db.models import DBCreatePrivateKeyOptions
 def test_create_with_elliptic_curve_with_no_ec_key() -> None:
     """Test creating a private key options object with an EC curve and no EC key."""
     with pytest.raises(ValueError):  # noqa: PT011
-        DBCreatePrivateKeyOptions(key_type="RSA", elliptic_curve="sect233r1")
+        DBCreatePrivateKeyOptions(key_type="RSA", elliptic_curve="secp521r1")

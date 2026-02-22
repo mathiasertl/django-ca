@@ -210,16 +210,6 @@ OtherName = Literal[
 """Valid OtherName types"""
 
 EllipticCurveName = Literal[
-    "sect571r1",
-    "sect409r1",
-    "sect283r1",
-    "sect233r1",
-    "sect163r2",
-    "sect571k1",
-    "sect409k1",
-    "sect283k1",
-    "sect233k1",
-    "sect163k1",
     "secp521r1",
     "secp384r1",
     "secp256r1",

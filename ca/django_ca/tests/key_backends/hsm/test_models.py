@@ -48,7 +48,7 @@ def test_with_elliptic_curve_with_rsa_key() -> None:
     """Test creating a model with an elliptic curve with a key type that doesn't support it."""
     with pytest.raises(ValueError, match=r"Elliptic curves are not supported for RSA keys."):
         HSMCreatePrivateKeyOptions(
-            key_label="foo", user_pin="123", key_type="RSA", elliptic_curve="sect571r1"
+            key_label="foo", user_pin="123", key_type="RSA", elliptic_curve="secp521r1"
         )
 
 
