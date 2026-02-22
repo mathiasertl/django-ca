@@ -96,11 +96,13 @@ DISTRIBUTION_POINT_REASONS_ERROR = (
 
 KNOWN_EXTENSION_OIDS = list(
     filter(
-        lambda attr: isinstance(attr, x509.ObjectIdentifier)
-        and attr
-        not in (
-            ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES,  # cryptography has OID, but no class
-            ExtensionOID.POLICY_MAPPINGS,  # cryptography has OID, but no class
+        lambda attr: (
+            isinstance(attr, x509.ObjectIdentifier)
+            and attr
+            not in (
+                ExtensionOID.SUBJECT_DIRECTORY_ATTRIBUTES,  # cryptography has OID, but no class
+                ExtensionOID.POLICY_MAPPINGS,  # cryptography has OID, but no class
+            )
         ),
         [getattr(ExtensionOID, attr) for attr in dir(ExtensionOID)],
     )
