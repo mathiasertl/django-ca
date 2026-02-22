@@ -2,7 +2,7 @@
 Description=django-ca socket
 
 [Socket]
-ListenStream=/run/django-ca.socket
+ListenStream=/run/%N/gunicorn.socket
 # Our service won't need permissions for the socket, since it
 # inherits the file descriptor by socket activation.
 # Only the nginx daemon will need access to the socket:

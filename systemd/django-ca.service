@@ -16,6 +16,7 @@ ExecReload=/bin/kill -s HUP $MAINPID
 User=%N
 Group=%N
 ConfigurationDirectory=%N
+ConfigurationDirectoryMode=0750
 RuntimeDirectory=%N
 Restart=on-failure
 KillMode=mixed

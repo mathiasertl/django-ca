@@ -548,7 +548,7 @@ exclude = ["django_ca.tests*"]
 local_scheme = "no-local-version"
 
 [tool.uv]
-required-version = "0.10.4"
+required-version = ">=0.10.4"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
