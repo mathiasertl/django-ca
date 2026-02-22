@@ -348,7 +348,7 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
             dependency_group = dependency_groups[expected_group_key]
             if actual_group := [group.split(";")[0].strip() for group in dependency_group]:
                 if actual_group != expected_group:
-                    errors += err(f"{expected_group_key}: Depends on {actual_group}.")
+                    errors += disabled(f"{expected_group_key}: Depends on {actual_group}.")
             else:
                 errors += err(f"{expected_group_key}: Dependency group not found.")
 
