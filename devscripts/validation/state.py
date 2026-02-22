@@ -286,7 +286,7 @@ def check_pyproject_toml() -> int:  # pylint: disable=too-many-locals
 
     errors += _check_classifiers()
 
-    newest_uv = data["django-ca"]["release"]["uv"]
+    newest_uv = f">={data['django-ca']['release']['uv']}"
     if newest_uv != data["tool"]["uv"]["required-version"]:
         errors += err(f"tool.uv: Outdated uv version ({data['tool']['uv']['required-version']}).")
 
