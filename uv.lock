@@ -11,40 +11,15 @@ conflicts = [[
     { package = "django-ca", group = "django6-0" },
     { package = "django-ca", group = "djangolts" },
 ], [
+    { package = "django-ca", group = "acme5-0" },
+    { package = "django-ca", group = "acme5-1" },
     { package = "django-ca", group = "acme5-2" },
-    { package = "django-ca", group = "acme5-3" },
 ]]
 
 [[package]]
 name = "acme"
 version = "5.2.2"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13'",
-    "python_full_version == '3.12.*'",
-    "python_full_version < '3.12'",
-]
-dependencies = [
-    { name = "cryptography", marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "josepy", marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "pyopenssl", marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "pyrfc3339", marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "requests", marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/39/55/767394a0fdd70ab69f14368109c8db50a1ed937615ab02458120f5356e37/acme-5.2.2.tar.gz", hash = "sha256:7702d5b99149d5cd9cd48a9270c04693e925730c023ca3e1b853ab43746a9d01", size = 90013, upload-time = "2025-12-10T18:17:17.808Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/b3/bef9cc4e3dc4ccc18386b5f4f1f594fa48c738fc085d994b7948fd247849/acme-5.2.2-py3-none-any.whl", hash = "sha256:354ef66cf226b2bef02006311778e97123237207b4febe8829ded9860784ee64", size = 94222, upload-time = "2025-12-10T18:16:56.74Z" },
-]
-
-[[package]]
-name = "acme"
-version = "5.3.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.13'",
-    "python_full_version == '3.12.*'",
-    "python_full_version < '3.12'",
-]
 dependencies = [
     { name = "cryptography" },
     { name = "josepy" },
@@ -52,9 +27,9 @@ dependencies = [
     { name = "pyrfc3339" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/f3/21fa1903f86ea71c73bde0ab7fbbc789ce7cdf0f5ae0d1cbd2bf66b6475f/acme-5.3.1.tar.gz", hash = "sha256:9c54fdb60e6decf06947a6da4a9bb05bcfff3cd12f2079eb39f0e985d44fcc0a", size = 90648, upload-time = "2026-02-10T04:00:26.9Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/39/55/767394a0fdd70ab69f14368109c8db50a1ed937615ab02458120f5356e37/acme-5.2.2.tar.gz", hash = "sha256:7702d5b99149d5cd9cd48a9270c04693e925730c023ca3e1b853ab43746a9d01", size = 90013, upload-time = "2025-12-10T18:17:17.808Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/2e/e43e30163d86620476132086d53b8d45ba47f5b972e837c9fd7a53d39bca/acme-5.3.1-py3-none-any.whl", hash = "sha256:75527446121b3da1ce8c90b663eed71f2f2bbe184f257d4d8a0e9fa322705efb", size = 94963, upload-time = "2026-02-10T04:00:02.992Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/b3/bef9cc4e3dc4ccc18386b5f4f1f594fa48c738fc085d994b7948fd247849/acme-5.2.2-py3-none-any.whl", hash = "sha256:354ef66cf226b2bef02006311778e97123237207b4febe8829ded9860784ee64", size = 94222, upload-time = "2025-12-10T18:16:56.74Z" },
 ]
 
 [[package]]
@@ -215,7 +190,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -291,11 +266,11 @@ wheels = [
 
 [[package]]
 name = "chardet"
-version = "6.0.0.post1"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7f/42/fb9436c103a881a377e34b9f58d77b5f503461c702ff654ebe86151bcfe9/chardet-6.0.0.post1.tar.gz", hash = "sha256:6b78048c3c97c7b2ed1fbad7a18f76f5a6547f7d34dbab536cc13887c9a92fa4", size = 12521798, upload-time = "2026-02-22T15:09:17.925Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/f3/3005cbe63db313a572c6094611da51be38e1354a4b039d089ad22820e5ee/chardet-6.0.0.tar.gz", hash = "sha256:aaa00ede13dd39a582de2b1254221a1f3e1c77e7738036431b6cb7e6a05b4f19", size = 18975991, upload-time = "2026-02-22T03:26:08.298Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/42/5de54f632c2de53cd3415b3703383d5fff43a94cbc0567ef362515261a21/chardet-6.0.0.post1-py3-none-any.whl", hash = "sha256:c894a36800549adf7bb5f2af47033281b75fdfcd2aa0f0243be0ad22a52e2dcb", size = 627245, upload-time = "2026-02-22T15:09:15.876Z" },
+    { url = "https://files.pythonhosted.org/packages/db/4d/e80f926abb83cff88710b275667173fe8407a093bc42369739c37535cb90/chardet-6.0.0-py3-none-any.whl", hash = "sha256:502eee44c943b21e178cb537980b1331b42abf99505085e8ae881e27245083bb", size = 627175, upload-time = "2026-02-22T03:26:04.988Z" },
 ]
 
 [[package]]
@@ -376,7 +351,7 @@ name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
 wheels = [
@@ -530,7 +505,7 @@ wheels = [
 
 [package.optional-dependencies]
 toml = [
-    { name = "tomli", marker = "python_full_version <= '3.11' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "tomli", marker = "python_full_version <= '3.11' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 
 [[package]]
@@ -538,7 +513,7 @@ name = "cryptography"
 version = "46.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/60/04/ee2a9e8542e4fa2773b81771ff8349ff19cdd56b7258a0cc442639052edb/cryptography-46.0.5.tar.gz", hash = "sha256:abace499247268e3757271b2f1e244b36b06f8515cf27c4d49468fc9eb16e93d", size = 750064, upload-time = "2026-02-10T19:18:38.255Z" }
 wheels = [
@@ -650,9 +625,9 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "asgiref", marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
-    { name = "sqlparse", marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
-    { name = "tzdata", marker = "(python_full_version < '3.12' and sys_platform == 'win32') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "asgiref", marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
+    { name = "sqlparse", marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
+    { name = "tzdata", marker = "(python_full_version < '3.12' and sys_platform == 'win32') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/17/f2/3e57ef696b95067e05ae206171e47a8e53b9c84eec56198671ef9eaa51a6/django-5.2.11.tar.gz", hash = "sha256:7f2d292ad8b9ee35e405d965fbbad293758b858c34bbf7f3df551aeeac6f02d3", size = 10885017, upload-time = "2026-02-03T13:52:50.554Z" }
 wheels = [
@@ -668,9 +643,9 @@ resolution-markers = [
     "python_full_version == '3.12.*'",
 ]
 dependencies = [
-    { name = "asgiref", marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "sqlparse", marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "tzdata", marker = "(python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version < '3.12' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "asgiref", marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sqlparse", marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "tzdata", marker = "(python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version < '3.12' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/26/3e/a1c4207c5dea4697b7a3387e26584919ba987d8f9320f59dc0b5c557a4eb/django-6.0.2.tar.gz", hash = "sha256:3046a53b0e40d4b676c3b774c73411d7184ae2745fe8ce5e45c0f33d3ddb71a7", size = 10886874, upload-time = "2026-02-03T13:50:31.596Z" }
 wheels = [
@@ -681,12 +656,11 @@ wheels = [
 name = "django-ca"
 source = { editable = "." }
 dependencies = [
-    { name = "acme", version = "5.2.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "acme", version = "5.3.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-django-ca-acme5-3' or extra != 'group-9-django-ca-acme5-2' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "acme" },
     { name = "asn1crypto" },
     { name = "cryptography" },
-    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
-    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
+    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
     { name = "django-object-actions" },
     { name = "dnspython" },
     { name = "idna" },
@@ -694,7 +668,7 @@ dependencies = [
     { name = "packaging" },
     { name = "pydantic" },
     { name = "requests" },
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 
 [package.optional-dependencies]
@@ -723,10 +697,7 @@ yaml = [
 
 [package.dev-dependencies]
 acme5-2 = [
-    { name = "acme", version = "5.2.2", source = { registry = "https://pypi.org/simple" } },
-]
-acme5-3 = [
-    { name = "acme", version = "5.3.1", source = { registry = "https://pypi.org/simple" } },
+    { name = "acme" },
 ]
 cryptography46 = [
     { name = "cryptography" },
@@ -765,7 +736,7 @@ django5-2 = [
     { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" } },
 ]
 django6-0 = [
-    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
+    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
 ]
 djangolts = [
     { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" } },
@@ -844,7 +815,6 @@ provides-extras = ["api", "celery", "hsm", "mysql", "postgres", "redis", "yaml"]
 
 [package.metadata.requires-dev]
 acme5-2 = [{ name = "acme", specifier = "~=5.2.0" }]
-acme5-3 = [{ name = "acme", specifier = "~=5.3.0" }]
 cryptography46 = [{ name = "cryptography", specifier = "~=46.0" }]
 dev = [
     { name = "coverage", extras = ["toml"], specifier = ">=7.6.12" },
@@ -926,8 +896,8 @@ name = "django-ninja"
 version = "1.5.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
-    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
+    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
     { name = "pydantic" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/02/84/27a5fceac29bd85eb8dc8a6697e93019a8742d626180f0d67b894e20a8a1/django_ninja-1.5.3.tar.gz", hash = "sha256:974803944965ad0566071633ffd4999a956f2ad1ecbed815c0de37c1c969592b", size = 3658996, upload-time = "2026-01-10T20:02:23.821Z" }
@@ -949,8 +919,8 @@ name = "django-stubs"
 version = "5.2.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
-    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
+    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
     { name = "django-stubs-ext" },
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
@@ -965,8 +935,8 @@ name = "django-stubs-ext"
 version = "5.2.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3')" },
-    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-3' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "django", version = "5.2.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2')" },
+    { name = "django", version = "6.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra != 'group-9-django-ca-django5-2' and extra != 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts')" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/55/03/9c2be939490d2282328db4611bc5956899f5ff7eabc3e88bd4b964a87373/django_stubs_ext-5.2.9.tar.gz", hash = "sha256:6db4054d1580657b979b7d391474719f1a978773e66c7070a5e246cd445a25a9", size = 6497, upload-time = "2026-01-20T23:58:59.462Z" }
@@ -1015,7 +985,7 @@ name = "docker"
 version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pywin32", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pywin32", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "requests" },
     { name = "urllib3" },
 ]
@@ -1253,17 +1223,17 @@ name = "ipython"
 version = "9.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "decorator" },
     { name = "ipython-pygments-lexers" },
     { name = "jedi" },
     { name = "matplotlib-inline" },
-    { name = "pexpect", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pexpect", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (sys_platform == 'emscripten' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (sys_platform == 'emscripten' and extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (sys_platform == 'win32' and extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'emscripten' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform == 'win32' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "prompt-toolkit" },
     { name = "pygments" },
     { name = "stack-data" },
     { name = "traitlets" },
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a6/60/2111715ea11f39b1535bed6024b7dec7918b71e5e5d30855a5b503056b50/ipython-9.10.0.tar.gz", hash = "sha256:cd9e656be97618a0676d058134cd44e6dc7012c0e5cb36a9ce96a8c904adaf77", size = 4426526, upload-time = "2026-02-02T10:00:33.594Z" }
 wheels = [
@@ -1581,7 +1551,7 @@ name = "mypy"
 version = "1.19.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "mypy-extensions" },
     { name = "pathspec" },
     { name = "typing-extensions" },
@@ -1803,8 +1773,8 @@ name = "psycopg"
 version = "3.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d3/b6/379d0a960f8f435ec78720462fd94c4863e7a31237cf81bf76d0af5883bf/psycopg-3.3.3.tar.gz", hash = "sha256:5e9a47458b3c1583326513b2556a2a9473a1001a56c9efe9e587245b43148dd9", size = 165624, upload-time = "2026-02-18T16:52:16.546Z" }
 wheels = [
@@ -1813,7 +1783,7 @@ wheels = [
 
 [package.optional-dependencies]
 c = [
-    { name = "psycopg-c", marker = "implementation_name != 'pypy' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "psycopg-c", marker = "implementation_name != 'pypy' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 pool = [
     { name = "psycopg-pool" },
@@ -2002,7 +1972,7 @@ version = "4.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "dill" },
     { name = "isort" },
     { name = "mccabe" },
@@ -2044,7 +2014,7 @@ version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/80/be/97b83a464498a79103036bc74d1038df4a7ef0e402cfaf4d5e113fb14759/pyopenssl-25.3.0.tar.gz", hash = "sha256:c981cb0a3fd84e8602d7afc209522773b94c1c2446a3c710a75b06fe1beae329", size = 184073, upload-time = "2025-09-17T00:32:21.037Z" }
 wheels = [
@@ -2086,7 +2056,7 @@ name = "pytest"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -2332,7 +2302,7 @@ name = "redis"
 version = "7.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "async-timeout", marker = "python_full_version < '3.11.3' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "async-timeout", marker = "python_full_version < '3.11.3' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9f/32/6fac13a11e73e1bc67a2ae821a72bfe4c2d8c4c48f0267e4a952be0f1bae/redis-7.2.0.tar.gz", hash = "sha256:4dd5bf4bd4ae80510267f14185a15cba2a38666b941aff68cccf0256b51c1f26", size = 4901247, upload-time = "2026-02-16T17:16:22.797Z" }
 wheels = [
@@ -2346,7 +2316,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "rpds-py" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [
@@ -2668,7 +2638,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alabaster" },
     { name = "babel" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "docutils" },
     { name = "imagesize" },
     { name = "jinja2" },
@@ -3046,7 +3016,7 @@ version = "0.33.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
-    { name = "cffi", marker = "(implementation_name != 'pypy' and os_name == 'nt') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "cffi", marker = "(implementation_name != 'pypy' and os_name == 'nt') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (implementation_name == 'pypy' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (os_name != 'nt' and extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (os_name != 'nt' and extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (os_name != 'nt' and extra != 'group-9-django-ca-acme5-0' and extra != 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "idna" },
     { name = "outcome" },
     { name = "sniffio" },
@@ -3258,7 +3228,7 @@ name = "tzlocal"
 version = "5.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8b/2e/c14812d3d4d9cd1773c6be938f89e5735a1f11a9f184ac3639b93cef35d5/tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd", size = 30761, upload-time = "2025-03-05T21:17:41.549Z" }
 wheels = [
@@ -3350,7 +3320,7 @@ name = "webob"
 version = "1.8.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "legacy-cgi", marker = "python_full_version >= '3.13' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "legacy-cgi", marker = "python_full_version >= '3.13' or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-1') or (extra == 'group-9-django-ca-acme5-0' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-acme5-1' and extra == 'group-9-django-ca-acme5-2') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/85/0b/1732085540b01f65e4e7999e15864fe14cd18b12a95731a43fd6fd11b26a/webob-1.8.9.tar.gz", hash = "sha256:ad6078e2edb6766d1334ec3dee072ac6a7f95b1e32ce10def8ff7f0f02d56589", size = 279775, upload-time = "2024-10-24T03:19:20.651Z" }
 wheels = [
