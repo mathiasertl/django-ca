@@ -549,11 +549,8 @@ class EllipticCurveActionTestCase(ParserTestCaseMixin, TestCase):
 
     def test_basic(self) -> None:
         """Test basic functionality of action."""
-        args = self.parser.parse_args(["--curve=sect409k1"])
-        assert isinstance(args.curve, ec.SECT409K1)
-
-        args = self.parser.parse_args(["--curve=sect409r1"])
-        assert isinstance(args.curve, ec.SECT409R1)
+        args = self.parser.parse_args(["--curve=secp521r1"])
+        assert isinstance(args.curve, ec.SECP521R1)
 
         args = self.parser.parse_args(["--curve=brainpoolP512r1"])
         assert isinstance(args.curve, ec.BrainpoolP512R1)

@@ -2,6 +2,9 @@
 2.6.0 (TBR)
 ###########
 
+* Drop support for ``SECT*`` binary elliptic curves. Cryptography deprecated them in ``cryptography==46.0.5``
+  and will remove them in their next release.
+
 ********
 Settings
 ********

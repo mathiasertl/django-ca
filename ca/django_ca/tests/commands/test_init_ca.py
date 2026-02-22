@@ -1051,19 +1051,19 @@ def test_non_default_key_backend_with_ec_key(
 ) -> None:
     """Test creating an EC key with a non-default key backend."""
     # make sure that curve is not default
-    assert not isinstance(model_settings.CA_DEFAULT_ELLIPTIC_CURVE, ec.SECT571R1)
+    assert not isinstance(model_settings.CA_DEFAULT_ELLIPTIC_CURVE, ec.SECP521R1)
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
         "--key-backend=secondary",
         "--key-type=EC",
-        "--elliptic-curve=sect571r1",  # non default curve
+        "--elliptic-curve=secp521r1",  # non default curve
     )
     assert ca.key_backend_alias == "secondary"
 
     key = secondary_backend.get_key(ca, use_options)
     assert isinstance(key, ec.EllipticCurvePrivateKey)
-    assert isinstance(key.curve, ec.SECT571R1)
+    assert isinstance(key.curve, ec.SECP521R1)
 
 
 @pytest.mark.django_db
@@ -1536,7 +1536,7 @@ def test_non_ec_key_with_elliptic_curve(ca_name: str, key_type: str) -> None:
     """Test creating a key with an elliptic curve where the key type does not support it."""
     msg = rf"^Value error, Elliptic curves are not supported for {key_type} keys\.$"
     with assert_command_error(msg), assert_create_ca_signals(False, False):
-        init_ca(ca_name, key_type=key_type, elliptic_curve=ec.SECT571R1())
+        init_ca(ca_name, key_type=key_type, elliptic_curve=ec.SECP192R1())
 
 
 @pytest.mark.parametrize("key_type", ("EC", "Ed448", "Ed25519"))
