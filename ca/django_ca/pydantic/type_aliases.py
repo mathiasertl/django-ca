@@ -52,7 +52,7 @@ from django_ca.typehints import (
 T = TypeVar("T", bound=type[Any])
 
 
-PromiseTypeAlias = Annotated[Promise, PlainSerializer(lambda v: str(v), return_type=str)]  # pylint: disable=unnecessary-lambda
+PromiseTypeAlias = Annotated[Promise, PlainSerializer(lambda v: str(v), return_type=str)]  # noqa: PLW0108
 """Type alias for Djangos lazily translated strings.
 
 Translated strings will be evaluated (= translated) upon JSON serialization. For JSON schemas, this type alias

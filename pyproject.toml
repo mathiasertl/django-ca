@@ -356,6 +356,7 @@ disable = [
     "use-sequence-for-iteration",  # ruff: PLC0208
     "useless-import-alias",  # ruff: PLC0414
     "comparison-with-itself",  # ruff: PLR0124
+    "unnecessary-lambda",  # ruff: PLW0108
 
     # covered by ruff/flake8-bugbear
     "pointless-statement",  # ruff: B018

@@ -168,7 +168,7 @@ POSTGRES_PASSWORD=mysecretpassword
             info(f"Start previous version ({last_release}).")
             with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
                 # Make sure old containers started properly
-                errors += compose_status(f"{docker_tag.split(':')[0]}:{last_release}")
+                errors += compose_status(f"{docker_tag.split(':', 1)[0]}:{last_release}")
 
                 # Make sure we have started the right version
                 compose_validate_container_versions(last_release)
