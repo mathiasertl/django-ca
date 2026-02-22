@@ -15,6 +15,7 @@ Restart=always
 User=django-ca
 Group=django-ca
 ConfigurationDirectory=django-ca
+ConfigurationDirectoryMode=0750
 LogsDirectory=django-ca
 StateDirectory=django-ca
 RuntimeDirectory=%N

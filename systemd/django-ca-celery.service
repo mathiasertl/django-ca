@@ -19,6 +19,7 @@ ExecReload=/bin/sh -c '${VIRTUAL_ENV}/bin/celery -A ca multi restart $CELERYD_NO
 User=django-ca
 Group=django-ca
 ConfigurationDirectory=django-ca
+ConfigurationDirectoryMode=0750
 LogsDirectory=django-ca
 RuntimeDirectory=%N
 Restart=on-failure

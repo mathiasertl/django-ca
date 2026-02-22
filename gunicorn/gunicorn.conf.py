@@ -4,7 +4,7 @@ Gunicorn is responsible for serving HTTP requests.
 
 For a list of available settings, please see the official documentation:
 
-    https://docs.gunicorn.org/en/latest/settings.html
+    https://gunicorn.org/reference/settings/
 """
 
 import multiprocessing

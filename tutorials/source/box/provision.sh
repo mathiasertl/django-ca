@@ -1,0 +1,20 @@
+#!/bin/bash -ex
+#
+# Provisioning script to prepare the box used in the tutorial
+
+# Make sure that apt runs non-interactively
+echo DEBIAN_FRONTEND=noninteractive >> /home/vagrant/.profile
+echo DEBIAN_FRONTEND=noninteractive >> /root/.profile
+
+# Update the system
+apt-get update
+apt-get dist-upgrade -y
+
+# Allow the root user to log in with the same credentials.
+# The tutorial assumes root access.
+echo "PermitRootLogin Yes" >> /etc/ssh/sshd_config
+
+mkdir -p /root/.ssh
+cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys
+chmod 700 /root/.ssh
+chmod 600 /root/.ssh/authorized_keys

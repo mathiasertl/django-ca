@@ -1,0 +1,8 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "{{ base_box }}"
+
+  # Do not update key with generated one, so that we can copy it to root in provisioning script
+  config.ssh.insert_key = false
+
+  config.vm.provision "shell", path: "provision.sh"
+end

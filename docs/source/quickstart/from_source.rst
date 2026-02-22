@@ -2,10 +2,19 @@
 Quickstart from source
 ######################
 
+.. structured-tutorial:: source/tutorial.yaml
+
 This guide provides instructions for running your own certificate authority by installing django-ca from
 source. This method requires a lot of manual configuration and a lot of expert knowledge, but is a good choice
 if you use an exotic system or other options do not work for you for some reason. If you're looking for a
 faster and easier option, you might consider using :doc:`Docker Compose </quickstart/docker_compose>`.
+
+.. NOTE::
+
+    This tutorial uses `structured-tutorials <https://structured-tutorials.readthedocs.io/en/latest/>`_.
+
+    This means that the documentation you see here is rendered from a configuration file and can also be run
+    locally to verify correctness and completeness.
 
 .. NOTE::
 
@@ -24,35 +33,64 @@ Requirements
 
 .. include:: /include/guide-requirements.rst
 
+
 Required software
 =================
 
-To run **django-ca**, you need Python. You will also need at least a `supported database
-<https://docs.djangoproject.com/en/4.0/ref/databases/>`_ and a web server (like NGINX or Apache) to serve
-static files.
+To run **django-ca**, you need Python, a database and a web server (like NGINX or Apache).
 
-In our guide, we are going to run PostgreSQL as a database, Redis as a cache and NGINX as a front-facing web
-server installed via APT. Please refer to your operating system installation instructions for how to install
-the software on your own.
+Whenever this tutorial installs software, it assumes a Debian/Ubuntu based system. If you use a different
+distribution, refer to their manuals for instructions. We assume that the APT cache is up to date and you have
+some basics installed:
 
-On Debian/Ubuntu, simply do:
+.. structured-tutorial-part:: apt-update
 
-.. tab:: PostgreSQL
+Install database
+----------------
+**django-ca** will not run without a `supported database
+<https://docs.djangoproject.com/en/dev/ref/databases/>`_. This tutorial will show you how to use PostgreSQL
+or MariaDB.
 
-    .. code-block:: console
+To install and configure the database, run:
 
-       root@host:~# apt update
-       root@host:~# apt install build-essential postgresql-client libpq-dev
+.. structured-tutorial-part:: install-db
 
-.. tab:: MariaDB
+Install cache
+-------------
 
-    .. code-block:: console
+Using a distributed cache like `Memcached <https://memcached.org/>`_ or `Redis <https://redis.io/>`_ is highly
+recommended, and this tutorial will show how to install and configure either.
 
-       root@host:~# apt update
-       root@host:~# apt install build-essential pkg-config mariadb-client libmariadb-dev
+To install and configure the cache, run:
+
+.. structured-tutorial-part:: install-cache
+
+Install broker for Celery
+-------------------------
+
+Using `Celery <https://docs.celeryq.dev/>`_ is optional but also highly recommended for performance and
+security reasons. If you use Celery, the web server does not need to use the private key (or the HSM
+storing the private key). If you want to split the setup accross multiple hosts, only those running Celery
+need to be able to sign data (certificates, CRLs, ...).
+
+For Celery, you'll need a broker. Redis can double as a broker, but you can use a variety
+of `other systems <https://docs.celeryq.dev/en/main/getting-started/backends-and-brokers/index.html>`_. This
+tutorial will show you how to use Redis or `RabbitMQ <https://www.rabbitmq.com/>`_.
+
+Redis was already installed above. If you want to use RabbitMQ instead:
+
+.. structured-tutorial-part:: install-broker
+
+Install uv
+----------
 
 Additionally, this guide uses `uv` to set up a Python Virtual Environment. Please refer to the `installation
-instructions <https://docs.astral.sh/uv/getting-started/installation/>`_ for how to install it.
+instructions <https://docs.astral.sh/uv/getting-started/installation/>`_ for how to install it. On most Linux
+systems you can simply run:
+
+.. structured-tutorial-part:: install-uv
+
+.. structured-tutorial-part:: install-uv-python
 
 Environment
 ===========
@@ -60,9 +98,7 @@ Environment
 To make the guide less error-prone, we export the domain name for your certificate authority to
 ``$HOSTNAME``. In all commands below assume that you have set the environment variable like this:
 
-.. code-block:: console
-
-   root@host:~# export HOSTNAME=ca.example.com
+.. structured-tutorial-part:: set-hostname
 
 
 ************
@@ -73,11 +109,7 @@ With this guide, you will install **django-ca** to ``/opt/django-ca/``, with you
 in ``/etc/django-ca/``. You also need to create a system user to run the Gunicorn application server and
 Celery task worker:
 
-.. code-block:: console
-
-   root@host:~# mkdir -p /opt/django-ca/src/ /etc/django-ca/
-   root@host:~# adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca
-   root@host:~# adduser django-ca www-data
+.. structured-tutorial-part:: prepare-host
 
 Get the source
 ==============
@@ -87,8 +119,7 @@ You can clone django-ca from git or download an archive `from GitHub
 ``/opt/django-ca/src/`` and create a symlink without a version so that you can roll back to old versions
 during an update:
 
-.. jinja::
-   :file: /include/guide-get-source.rst.jinja
+.. structured-tutorial-part:: install-source
 
 Create a virtualenv
 ===================
@@ -97,21 +128,7 @@ We use `uv <https://docs.astral.sh/uv/>`_ to create and manage the Python enviro
 manage both a local Python installation and `virtualenv <https://docs.python.org/3/tutorial/venv.html>`_ for
 you, but you can instruct it to use the system Python installation (try ``uv sync --help``).
 
-.. tab:: PostgreSQL
-
-    .. code-block:: console
-
-       root@host:~# cd /opt/django-ca/src/django-ca/
-       root@host:/opt/django-ca/src/django-ca/# uv sync --no-default-groups \
-       >     --all-extras --no-extra mysql
-
-.. tab:: MariaDB
-
-    .. code-block:: console
-
-       root@host:~# cd /opt/django-ca/src/django-ca/
-       root@host:/opt/django-ca/src/django-ca/# uv sync --no-default-groups \
-       >     --all-extras --no-extra postgres
+.. structured-tutorial-part:: create-virtualenv
 
 Depending on your needs you might also want to disable other extras as well. This is a list of all currently
 available extras:
@@ -129,23 +146,13 @@ You can of course use a regular `virtualenv` and ``pip`` to manage your environm
    root@host:/opt/django-ca/src/django-ca/# .venv/bin/pip install -U \
    >     -e /opt/django-ca/src/django-ca[api,hsm,postgres,celery,redis,yaml]
 
-PostgreSQL database
-===================
+Create database
+===============
 
-Create a PostgreSQL database and make sure to use a randomly generated password and keep it for later
-configuration:
+Create a database and make sure to use a randomly generated password. You will need to again when
+configuring django-ca:
 
-.. code-block:: console
-
-   root@host:~# openssl rand -base64 32
-   ...
-   root@host:~# sudo -u postgres psql
-   postgres=# CREATE DATABASE django_ca;
-   CREATE DATABASE
-   postgres=# CREATE USER django_ca WITH ENCRYPTED PASSWORD 'random-password';
-   CREATE ROLE
-   postgres=# GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
-   GRANT
+.. structured-tutorial-part:: setup-database
 
 .. _from-source-add-systemd-services:
 
@@ -156,12 +163,7 @@ SystemD services are included with **django-ca**. You need to add three services
 application server (``django-ca``), one for the Celery task worker (``django-ca-celery``) and one for the
 Celery task scheduler (``django-ca-celerybeat``):
 
-.. code-block:: console
-
-   root@host:~# ln -s /opt/django-ca/src/django-ca/systemd/systemd.conf /etc/django-ca/
-   root@host:~# ln -s /opt/django-ca/src/django-ca/systemd/*.service /etc/systemd/system/
-   root@host:~# systemctl daemon-reload
-   root@host:~# systemctl enable django-ca django-ca-celery django-ca-celerybeat
+.. structured-tutorial-part:: add-systemd-services
 
 Note that the services will not yet start due to :ref:`missing configuration <from-source-configuration>`.
 
@@ -184,20 +186,39 @@ If you (mostly) followed the above examples, you can symlink :file:`conf/source/
 ``/etc/django-ca`` and just override a few settings in :file:`/etc/django-ca/10-localsettings.yaml`. To create
 the symlink:
 
-.. code-block:: console
-
-   root@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/00-settings.yaml /etc/django-ca/
+.. structured-tutorial-part:: add-basic-settings
 
 And then simply create a minimal :file:`/etc/django-ca/10-localsettings.yaml` - but you can override any other
 setting here as well:
 
-.. template-include:: yaml /include/quickstart_from_source/localsettings.yaml.jinja
-   :caption: /etc/django-ca/10-localsettings.yaml
-   :context: quickstart-from-source
+.. structured-tutorial-part:: add-required-settings
 
 Please see :doc:`/settings` for a list of available settings.
 
+Configure the database
+======================
+
+.. structured-tutorial-part:: add-db-settings
+
+Configure the cache
+===================
+
+.. structured-tutorial-part:: add-cache-settings
+
+Configure Gunicorn
+==================
+
+.. structured-tutorial-part:: add-gunicorn-config
+
 .. _systemd-configuration:
+
+Secure configuration
+====================
+
+Since the configuration contains sensitive information (database password, etc), make sure it is not
+world-readable:
+
+.. structured-tutorial-part:: secure-configuration
 
 SystemD configuration
 =====================
@@ -215,21 +236,14 @@ As optional convenience, you can create a symlink to a small wrapper script that
 ``manage.py`` commands. In the examples below the guide assumes you created this symlink at
 :file:`/usr/local/bin/django-ca`, but of course you can name the symlink anything you like:
 
-.. code-block:: console
-
-   root@host:~# ln -s /opt/django-ca/src/django-ca/conf/source/manage /usr/local/bin/django-ca
-   root@host:~# django-ca check
-   System check identified no issues (0 silenced).
+.. structured-tutorial-part:: add-shortcut
 
 Setup Database and static files
 ===============================
 
 Populate the database and setup the static files directory:
 
-.. code-block:: console
-
-   root@host:~# django-ca migrate
-   root@host:~# FORCE_USER=root django-ca collectstatic
+.. structured-tutorial-part:: run-initial-manage-commands
 
 The ``collectstatic`` command needs to run as root.
 
@@ -240,9 +254,7 @@ Start
 You can now finally start the Gunicorn application server and the Celery worker (omit ``django-ca`` service if
 you do not intend to run a web server):
 
-.. code-block:: console
-
-   root@host:~# systemctl start django-ca django-ca-celery django-ca-celerybeat
+.. structured-tutorial-part:: start
 
 Create admin user and set up CAs
 ================================
@@ -267,32 +279,22 @@ A web server is required for the admin interface, certificate revocation status 
 In this setup, we'll create certificates using the CA we created above. If you want to use Let's Encrypt
 certificates instead, you can have a look at our :doc:`/quickstart/docker_compose` for an example.
 
+First, you need to install NGINX:
+
+.. structured-tutorial-part:: install-nginx
+
 Create a private/public key pair for NGINX to use:
 
-.. code-block:: console
-
-   root@host:~# openssl genrsa -out /etc/ssl/$HOSTNAME.key 4096
-   root@host:~# openssl req -new -key /etc/ssl/$HOSTNAME.key -out /tmp/ca.csr -utf8 -batch
-   root@host:~# django-ca sign_cert --ca=Intermediate --csr=/tmp/ca.csr --bundle --webserver --subject CN=$HOSTNAME \
-   >     > /etc/ssl/$HOSTNAME.pem
+.. structured-tutorial-part:: create-tls-key
 
 Create DH parameters:
 
-.. code-block:: console
-
-   root@host:~# mkdir -p /etc/nginx/dhparams/
-   root@host:~# openssl dhparam -dsaparam -out /etc/nginx/dhparams/dhparam.pem 4096
+.. structured-tutorial-part:: create-dh-params
 
 **django-ca** includes a template for :manpage:`envsubst(1)` that you can use. The template assumes that you
 have set ``$HOSTNAME``:
 
-.. code-block:: console
-
-   root@host:~# envsubst < /opt/django-ca/src/django-ca/nginx/source.template \
-   >     > /etc/nginx/sites-available/django-ca.conf
-   root@host:~# ln -fs /etc/nginx/sites-available/django-ca.conf /etc/nginx/sites-enabled/
-   root@host:~# nginx -t
-   root@host:~# systemctl restart nginx
+.. structured-tutorial-part:: create-nginx-config
 
 .. jinja:: guide-source-where-to-go
    :file: /include/guide-where-to-go.rst.jinja

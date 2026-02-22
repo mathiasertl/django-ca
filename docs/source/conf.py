@@ -215,6 +215,7 @@ intersphinx_mapping = {
 rst_epilog = f"""
 .. |last-version| replace:: {last_version}
 .. |minimum-python| replace:: {config.PYTHON_RELEASES[0]}
+.. |uv-version| replace:: {config.UV}
 .. |Extension| replace:: :py:class:`~cg:cryptography.x509.Extension`
 .. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
 .. |Name| replace:: :py:class:`~cg:cryptography.x509.Name`
@@ -246,6 +247,9 @@ structured_tutorials_context: dict[str, dict[str, Any]] = {
         "DJANGO_CA_VERSION": last_version,
         "DOCKER_TAG": f"mathiasertl/django-ca:{last_version}",
     },
+    "source/tutorial.yaml": {
+        "DJANGO_CA_VERSION": last_version,
+    },
 }
 
 # Jinja template contexts
@@ -262,7 +266,7 @@ jinja_contexts = {
         "context": "quickstart-with-docker-compose",
         "path": "~/ca/",
     },
-    "manage-from-source": {"manage": "django-ca"},
+    "manage-from-source": {"manage": "django-ca", "structured_tutorial": True},
     "guide-source-where-to-go": {
         "ca_default_hostname": _ca_default_hostname,
         "ca_url_path": "",
@@ -304,6 +308,7 @@ qualname_overrides = {
     "_io.BytesIO": "python:io.BytesIO",
     "_io.StringIO": "python:io.StringIO",
     "mappingproxy": "python:types.MappingProxyType",
+    "type": "python:type",
     "cryptography.hazmat.bindings._rust.x509.Certificate": "cg:cryptography.x509.Certificate",
     "cryptography.hazmat.bindings._rust.x509.CertificateRevocationList": "cg:cryptography.x509.CertificateRevocationList",  # noqa: E501
     "cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest": "cg:cryptography.x509.CertificateSigningRequest",  # noqa: E501
