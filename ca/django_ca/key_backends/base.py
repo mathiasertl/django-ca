@@ -507,7 +507,7 @@ class CryptographyOCSPKeyBackend(OCSPKeyBackend):
             log.error("%s: Unsupported private key type.", type(loaded_key))
             raise ValueError(f"{type(loaded_key)}: Unsupported private key type.")
 
-        return loaded_key  # type: ignore[return-value]  # mypy is not smart enough for the above isinstance()
+        return loaded_key
 
     def sign_ocsp_response(
         self,

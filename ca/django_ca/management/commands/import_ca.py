@@ -16,14 +16,12 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-import typing
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.x509.oid import ExtensionOID
 
 from django.core.management.base import CommandError, CommandParser
@@ -121,7 +119,6 @@ Note that the private key will be copied to the directory configured by the CA_D
         # Ensure correct private key type
         if not isinstance(key_loaded, PRIVATE_KEY_TYPES):
             raise CommandError(f"{key_loaded.__class__.__name__}: Invalid private key type.")
-        key_loaded = typing.cast(CertificateIssuerPrivateKeyTypes, key_loaded)
 
         # Make sure that the private key type is supported by the backend
         key_type = get_private_key_type(key_loaded)

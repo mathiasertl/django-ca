@@ -12,7 +12,7 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["46"]
-acme = ["5.2"]
+acme = ["5.2", "5.3", "5.4"]
 pydantic = ["2.12"]
 josepy = ["2.1", "2.2"]
 # Newest uv release: https://pypi.org/project/uv/
@@ -246,14 +246,8 @@ module = [
     "psycopg_c",
     "pytest_cov.*",
     "requests.packages.urllib3.response",
-    # semantic-version==2.10.0 does not have typehints. See also:
-    #   https://github.com/rbarrois/python-semanticversion/issues/138
-    "semantic_version",
-    "sphinx_rtd_theme",
     "sphinxcontrib",
     "sniffio",
-    # Identical to tomllib from Python 3.11, becomes unused once Python 3.10 is dropped
-    "tomli",
 ]
 ignore_missing_imports = true
 
@@ -356,6 +350,7 @@ disable = [
     "use-sequence-for-iteration",  # ruff: PLC0208
     "useless-import-alias",  # ruff: PLC0414
     "comparison-with-itself",  # ruff: PLR0124
+    "unnecessary-lambda",  # ruff: PLW0108
 
     # covered by ruff/flake8-bugbear
     "pointless-statement",  # ruff: B018
@@ -553,7 +548,7 @@ default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
     #[ { group = "cryptography46" }, ],
-    [ { group = "acme5.0" }, { group = "acme5.1" }, { group = "acme5.2" }, ],
+    [ { group = "acme5.2" }, { group = "acme5.3" }, { group = "acme5.4" }, ],
     #[ { group = "pydantic2.12" }, ],
 ]
 
@@ -638,4 +633,6 @@ gunicorn = [ "gunicorn>=23" ]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography46" = ["cryptography~=46.0"]
 "acme5.2" = ["acme~=5.2.0"]
+"acme5.3" = ["acme~=5.3.0"]
+"acme5.4" = ["acme~=5.4.0"]
 "pydantic2.12" = ["pydantic~=2.12.0"]
