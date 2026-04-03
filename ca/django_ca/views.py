@@ -273,7 +273,7 @@ class OCSPView(View):
             log.error("%s: Unsupported private key type.", type(loaded_key))
             raise ValueError(f"{type(loaded_key)}: Unsupported private key type.")
 
-        return loaded_key  # type: ignore[return-value]  # mypy not smart enough for above isinstance() check
+        return loaded_key
 
     def get_responder_key_data(self) -> bytes:
         """Read the file containing the private key used to sign OCSP responses."""
