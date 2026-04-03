@@ -1,7 +1,7 @@
 [Unit]
 Description=django-ca application server
 Requires=django-ca.socket
-After=syslog.target network.target
+After=syslog.target network.target django-ca.socket
 
 [Service]
 Type=notify

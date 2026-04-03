@@ -27,8 +27,7 @@ parts:
     commands:
       - command: sudo apt update
       - command: sudo apt install docker.io
-    run:
-      skip: true
+    run: false
   - id: add-docker-group
     name: Add user to Docker group
     commands:
@@ -38,8 +37,7 @@ parts:
       text_before: |
         If you want to run :command:`docker` as a regular user, you need to add your user to the ``docker``
         group and log in again:
-    run:
-      skip: true
+    run: false
   - id: generate-secret-key
     name: Generate secret key
     commands:
@@ -84,8 +82,7 @@ parts:
           test:
             - regex: (?P<DOCKER_NETWORK>.*)
           show_output: false
-    doc:
-      skip: true
+    doc: false
 
   # [run only] Build docker image
   - id: build-docker-image
@@ -144,8 +141,7 @@ parts:
           {%- endif %}
         run:
           show_output: false
-    doc:
-      skip: true
+    doc: false
 
   # Start PostgreSQL and Redis
   - id: start-dependencies
@@ -182,8 +178,7 @@ parts:
             ✓ Verification succeeded
             ...
 
-    run:
-      skip: true
+    run: false
   - id: start-django-ca
     name: Start django-ca
     commands:
@@ -322,8 +317,7 @@ parts:
       - command: docker start {{ BACKEND_HOST }}
       - command: docker start {{ FRONTEND_HOST }}
       - command: docker start {{ NGINX_HOST }}
-    doc:
-      skip: true
+    doc: false
 
   - id: sign-cert
     name: Sign a certificate with a CSR from stdin
