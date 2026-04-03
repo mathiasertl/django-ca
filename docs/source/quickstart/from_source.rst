@@ -84,11 +84,16 @@ Redis was already installed above. If you want to use RabbitMQ instead:
 Install uv
 ----------
 
-Additionally, this guide uses `uv` to set up a Python Virtual Environment. Please refer to the `installation
+Additionally, this guide uses :command:`uv` to set up a Python Virtual Environment. Please refer to the `installation
 instructions <https://docs.astral.sh/uv/getting-started/installation/>`_ for how to install it. On most Linux
 systems you can simply run:
 
 .. structured-tutorial-part:: install-uv
+
+Later in the tutorial, we will let :command:`uv` manage python versions. This allows you to use the newest
+Python version regardless of what your distribution (version) offers. :command:`uv` will install Python
+versions in ``/root/`` by default, which then can not be accessed by Gunicorn and Celery (which run with a
+lower-privileged user):
 
 .. structured-tutorial-part:: install-uv-python
 
@@ -283,7 +288,13 @@ First, you need to install NGINX:
 
 .. structured-tutorial-part:: install-nginx
 
-Create a private/public key pair for NGINX to use:
+Delete the default hostname to minimize the setup, and add the system user to the ``django-ca`` group so that
+it can access the Gunicorn socket:
+
+.. structured-tutorial-part:: nginx-basic-setup
+
+Create a private/public key pair for NGINX to use - you could also sign the certificate using a 3rd-party
+certificate authority of course:
 
 .. structured-tutorial-part:: create-tls-key
 

@@ -42,11 +42,11 @@ server {
     # Include any custom extra configuration
     include /etc/nginx/templates/include.d/https/*.conf;
 
-    location /admin/ {
+    location /admin {
         try_files "" @django_ca;
     }
     location /static/ {
-        root   /opt/django-ca/www/;
+        root   /opt/django-ca/html;
     }
 
     error_page   500 502 503 504  /50x.html;

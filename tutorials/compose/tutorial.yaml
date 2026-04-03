@@ -7,7 +7,7 @@ configuration:
     EXEC_FRONTEND: docker compose exec frontend
     POSTGRES_PASSWORD: mysecretpassword
     TLS_CERT_ROOT: /etc/certs
-    TLS_LIVE_DIR: /etc/certs/live
+    TLS_LIVE_DIR: "{{ TLS_CERT_ROOT }}/live"
   doc:
     context:
       CERTBOT_CHALLENGES_PATH: "$(pwd)/acme"
@@ -35,6 +35,7 @@ configuration:
       LETSENCRYPT_DIR: ./letsencrypt/live/webserver/
     environment:
       COMPOSE_FILE: "compose.yaml:compose.override.yaml:compose.pebble.yaml"
+      DJANGO_CA_ALLOWED_HOSTS: '["localhost", "{{ CA_HOSTNAME }}"]'
       NGINX_ADDITIONAL_HOSTS: localhost
 parts:
   # [doc only] Install dependencies
@@ -43,8 +44,7 @@ parts:
     commands:
       - command: sudo apt update
       - command: sudo apt install docker.io docker-compose certbot openssl
-    run:
-      skip: true
+    run: false
   - id: add-docker-group
     name: Add user to Docker group
     commands:
@@ -54,8 +54,7 @@ parts:
       text_before: |
         If you want to run :command:`docker` as a regular user, you need to add your user to the ``docker``
         group and log in again:
-    run:
-      skip: true
+    run: false
 
   # [run only] Build docker image
   - id: build-docker-image
@@ -111,8 +110,7 @@ parts:
           {%- endif %}
         run:
           show_output: false
-    doc:
-      skip: true
+    doc: false
 
   # Create sub-directory for compose setup
   - id: create-ca-directory
@@ -124,8 +122,7 @@ parts:
           update_context:
             cwd: "~/ca/"
     # Skip this part when running, we already are in a temporary directory:
-    run:
-      skip: true
+    run: false
 
   # Create dhparam file
   - id: generate-dh-params
@@ -156,9 +153,7 @@ parts:
     name: Create Docker Compose configuration
     source: ../../compose.yaml
     destination: compose.yaml
-    doc:
-      # Skip in documentation, as test gives list of links on GitHub instead
-      skip: true
+    doc: false  # Skip in documentation, as test gives list of links on GitHub instead
   - id: copy-compose-override-yaml
     name: Create Docker Compose override configuration
     source: compose.override.yaml
@@ -169,8 +164,7 @@ parts:
     name: Create Docker Compose override configuration for Pebble
     source: compose.pebble.yaml
     destination: compose.pebble.yaml
-    doc:
-      skip: true
+    doc: false
   - id: copy-env
     source: env
     destination: .env
@@ -224,18 +218,15 @@ parts:
           docker compose cp \
             pebble:/test/config/pebble-config.json pebble/pebble-config.json
       - command: sed -i s/5002/80/ pebble/pebble-config.json
-    doc:
-      skip: True
+    doc: false
 
   # Get certificates with certbot
   - id: get-certificates-with-certbot
     commands:
       - command: mkdir -p {{ LETSENCRYPT_DIR }} {{ LETSENCRYPT_ARCHIVE_DIR }} ./acme/
-        doc:
-          skip: true
+        doc: false
       - command: docker compose -f compose.pebble.yaml up -d
-        doc:
-          skip: true
+        doc: false
         run:
           show_output: false
           cleanup:
@@ -299,8 +290,7 @@ parts:
       - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-container-versions {{ RELEASE }}"
       - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-secret-keys"
       - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-connectivity"
-    doc:
-      skip: true
+    doc: false
 
   - id: run-manage-check
     commands:
@@ -387,8 +377,7 @@ parts:
               port: 443
             # Note: First check for the ports to open, then check the status
             - command: "{{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose test-compose-status {{ DOCKER_TAG }}"
-    doc:
-      skip: true
+    doc: false
 
   - id: check-setup-final
     name: Run final checks on the current setup after restart
@@ -433,14 +422,12 @@ parts:
       - command: |
           {{ orig_cwd }}/dev.py --show-commands tutorial-helpers compose \
               test-endpoints {{ LETSENCRYPT_DIR }}/fullchain.pem
-    doc:
-      skip: true
+    doc: false
 
   - id: setup-certbot-automatic-renewal
     commands:
       - command: rm -rf letsencrypt/accounts
-        doc:
-          skip: true
+        doc: false
       - command: |
           {% if run %}docker compose run --rm certbot \
           {% else   %}sudo certbot {% endif -%}
@@ -457,7 +444,7 @@ parts:
   - prompt: |
       Test admin interface at:
 
-      * URL: https://{{ CA_HOSTNAME }}/admin/
+      * URL: https://localhost/admin/
       * Credentials: user/nopass
 
       Working directory is {{ cwd }}

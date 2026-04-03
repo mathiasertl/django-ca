@@ -1,18 +1,25 @@
 configuration:
   context:
+    apt_install: "{{ apt }} install{% if run %} -y{% endif %}"
+    uv: uv
     base_box: ubuntu/jammy64
     hostname: ca.example.com
     DHPARAM_BITS: "4096"
     DB_PASSWORD: ...
     DJANGO_CA_CA_URL_PATH: ""
-    SRC_DIR: /opt/django-ca/src
+    PROFILE_PATH: ~/.profile
     SECRET_KEY_COMMAND: openssl rand -base64 32
+    # Directories:
+    BASE_DIR: /opt/django-ca
+    ETC_DIR: /etc/django-ca
+    HOME_DIR: "{{ BASE_DIR }}/home"
+    PYTHON_INSTALL_DIR: "{{ BASE_DIR }}/python"
+    SRC_BASE_DIR: "{{ BASE_DIR }}/src"
+    SRC_DIR: "{{ SRC_BASE_DIR }}/django-ca"
   doc:
     context:
       apt: apt
       user: root
-      uv: uv
-      PROFILE_PATH: ~/.profile
       SECRET_KEY: ...
     alternatives:
       mariadb:
@@ -32,44 +39,41 @@ configuration:
   run:
     context:
       apt: apt-get
-      uv: uv
       DHPARAM_BITS: "2048"  # a little faster
-      PROFILE_PATH: ~/.profile
       DJANGO_CA_VERSION: main
     runner:
       path: structured_tutorials.runners.vagrant.VagrantRunner
       options:
         prepare_box:
-          cwd: box
+          path: box
           name: django-ca-from-source
 parts:
   - id: apt-update
     commands:
       - command: "{{ apt }} update"
       - command: "{{ apt }} dist-upgrade{% if run %} -y{% endif %}"
-      - command: "{{ apt }} install{% if run %} -y{% endif %} python3 curl"
+      - command: "{{ apt_install }} python3 curl"
   - id: install-db
     alternatives:
       postgres:
         commands:
-          - command: "{{ apt }} install{% if run %} -y{% endif %} build-essential postgresql postgresql-client libpq-dev"
+          - command: "{{ apt_install }} build-essential postgresql postgresql-client libpq-dev"
       mariadb:
         commands:
-          - command: "{{ apt }} install{% if run %} -y{% endif %} build-essential mariadb pkg-config mariadb-client libmariadb-dev"
+          - command: "{{ apt_install }} build-essential mariadb pkg-config mariadb-client libmariadb-dev"
   - id: install-cache
     alternatives:
       redis:
         commands:
-          - command: "{{ apt }} install{% if run %} -y{% endif %} redis-server"
+          - command: "{{ apt_install }} redis-server"
       memcached:
         commands:
-          - command: "{{ apt }} install{% if run %} -y{% endif %} memcached"
-
+          - command: "{{ apt_install }} memcached"
   - id: install-broker
     alternatives:
       rabbitmq:
         commands:
-          - command: "{{ apt }} install{% if run %} -y{% endif %} rabbitmq"
+          - command: "{{ apt_install }} rabbitmq"
     required: false
   - id: install-uv
     commands:
@@ -78,8 +82,8 @@ parts:
           output: "downloading uv ..."
   - id: install-uv-python
     commands:
-      - command: export UV_PYTHON_INSTALL_DIR=/opt/django-ca/python
-      - command: echo "export UV_PYTHON_INSTALL_DIR=/opt/django-ca/python" | tee -a {{ PROFILE_PATH }}
+      - command: export UV_PYTHON_INSTALL_DIR={{ PYTHON_INSTALL_DIR }}
+      - command: echo "export UV_PYTHON_INSTALL_DIR={{ PYTHON_INSTALL_DIR }}" | tee -a {{ PROFILE_PATH }}
       - command: "{{ uv }} python install"
   - id: set-hostname
     commands:
@@ -91,19 +95,15 @@ parts:
           {%- endif -%}
   - id: prepare-host
     commands:
-      - command: "mkdir -p {{ SRC_DIR }} /etc/django-ca/"
-      - command: "adduser --system --group --disabled-login --home=/opt/django-ca/home/ django-ca"
+      - command: "mkdir -p {{ SRC_DIR }} {{ ETC_DIR }}"
+      - command: "adduser --system --group --disabled-login --home={{ HOME_DIR }} django-ca"
       - command: "adduser django-ca www-data"
   - id: install-source
     alternatives:
       download_source:
         commands:
-          - command: cd {{ SRC_DIR }}
-            doc:
-              update_context:
-                cwd: /opt/django-ca/src
-            run:
-              chdir: /opt/django-ca/src
+          - command: cd {{ SRC_BASE_DIR }}
+            chdir: "{{ SRC_BASE_DIR }}"
           - command: |
               curl -Lo django-ca-{{ DJANGO_CA_VERSION }}.tar.gz {% if run and DJANGO_CA_VERSION == 'main' -%}
                 https://github.com/mathiasertl/django-ca/archive/refs/heads/main.tar.gz
@@ -119,16 +119,12 @@ parts:
       clone_source:
         commands:
           - command: "{{ apt }} install git"
-          - command: cd {{ SRC_DIR }}
-            doc:
-              update_context:
-                cwd: /opt/django-ca/src
-            run:
-              chdir: /opt/django-ca/src
-          - command: "git clone https://github.com/mathiasertl/django-ca.git {{ SRC_DIR }}/django-ca -v {{ DJANGO_CA_VERSION }}"
+          - command: cd {{ SRC_BASE_DIR }}
+            chdir: "{{ SRC_BASE_DIR }}"
+          - command: "git clone https://github.com/mathiasertl/django-ca.git -v {{ DJANGO_CA_VERSION }}"
       export_source:
         commands:
-          - command: mkdir /opt/django-ca/src/django-ca/
+          - command: mkdir -p {{ SRC_DIR }}
           - command: |
               cd /vagrant && \
               uv run -q --no-project --isolated --with setuptools-scm python -m setuptools_scm
@@ -137,31 +133,21 @@ parts:
                 - regex: "^(?P<DJANGO_CA_VERSION>.*)$"
               update_environment:
                 SETUPTOOLS_SCM_PRETEND_VERSION_FOR_django_ca: "{{ DJANGO_CA_VERSION }}"
-          - command: cd /vagrant && git archive HEAD | tar -x -C /opt/django-ca/src/django-ca/
-        doc:
-          skip: true
+          - command: cd /vagrant && git archive HEAD | tar -x -C {{ SRC_DIR }}/
+        doc: false
   - id: create-virtualenv
     alternatives:
       postgres:
         commands:
-        - command: cd {{ SRC_DIR }}/django-ca
-          doc:
-            update_context:
-              cwd: /opt/django-ca/src/django-ca
-          run:
-            chdir: /opt/django-ca/src/django-ca
+        - command: cd {{ SRC_DIR }}
+          chdir: "{{ SRC_DIR }}"
         - command: "{{ uv }} sync -p `{{ uv }} python find` --no-default-groups --group gunicorn --all-extras --no-extra mysql"
       mariadb:
         commands:
-        - command: cd {{ SRC_DIR }}/django-ca
-          doc:
-            update_context:
-              cwd: /opt/django-ca/src/django-ca
-          run:
-            chdir: /opt/django-ca/src/django-ca
+        - command: cd {{ SRC_DIR }}
+          chdir: "{{ SRC_DIR }}"
         - command: "{{ uv }} sync -p `{{ uv }} python find` --no-default-groups --group gunicorn --all-extras --no-extra postgres"
-          run:
-            chdir: ""
+          chdir: ""
   - id: setup-database
     alternatives:
       postgres:
@@ -199,61 +185,64 @@ parts:
         run:
           test:
             - regex: "(?P<SECRET_KEY>.*)"
-    doc:
-      skip: true
+    doc: false
   - id: add-systemd-services
     commands:
-      - command: ln -s {{ SRC_DIR }}/django-ca/systemd/systemd.conf /etc/django-ca/
-      - command: ln -s {{ SRC_DIR }}/django-ca/systemd/*.socket /etc/systemd/system/
-      - command: ln -s {{ SRC_DIR }}/django-ca/systemd/*.service /etc/systemd/system/
+      - command: ln -s {{ SRC_DIR }}/systemd/systemd.conf {{ ETC_DIR }}/
+      - command: ln -s {{ SRC_DIR }}/systemd/*.socket /etc/systemd/system/
+      - command: ln -s {{ SRC_DIR }}/systemd/*.service /etc/systemd/system/
       - command: systemctl daemon-reload
       - command: systemctl enable django-ca django-ca-celery django-ca-celerybeat
         doc:
           output: Created symlink ...
   - id: add-basic-settings
     commands:
-      - command: ln -s {{ SRC_DIR }}/django-ca/conf/source/00-settings.yaml /etc/django-ca/
+      - command: ln -s {{ SRC_DIR }}/conf/source/00-settings.yaml {{ ETC_DIR }}/
   - id: add-required-settings
     source: 10-localsettings.yaml
-    destination: /etc/django-ca/10-localsettings.yaml
+    destination: "{{ ETC_DIR }}/10-localsettings.yaml"
     doc:
-      language: python
+      language: yaml
   - id: add-db-settings
     alternatives:
       postgres:
         source: 20-database-postgres.yaml
-        destination: /etc/django-ca/20-database.yaml
+        destination: "{{ ETC_DIR }}/20-database.yaml"
         doc:
-          language: python
+          language: yaml
       mariadb:
         source: 20-database-mariadb.yaml
-        destination: /etc/django-ca/20-database.yaml
+        destination: "{{ ETC_DIR }}/20-database.yaml"
         doc:
-          language: python
+          language: yaml
   - id: add-cache-settings
     alternatives:
       redis:
         source: 20-cache-redis.yaml
-        destination: /etc/django-ca/20-cache.yaml
+        destination: "{{ ETC_DIR }}/20-cache.yaml"
         doc:
-          language: python
+          language: yaml
       memcached:
         source: 20-cache-memcached.yaml
-        destination: /etc/django-ca/20-cache.yaml
+        destination: "{{ ETC_DIR }}/20-cache.yaml"
         doc:
-          language: python
+          language: yaml
+  - id: add-runtime-config
+    source: 99-runtime.yaml
+    destination: "{{ ETC_DIR }}/99-runtime.yaml"
+    doc: false
   - id: add-gunicorn-config
     source: ../../gunicorn/gunicorn.conf.py
-    destination: /etc/django-ca/gunicorn.conf.py
+    destination: "{{ ETC_DIR }}/gunicorn.conf.py"
     doc:
       language: python
   - id: secure-configuration
     commands:
-      - command: chown -R root:django-ca /etc/django-ca/
-      - command: chmod -R u+rwX,g+rX,o-rwx /etc/django-ca/
+      - command: chown -R root:django-ca {{ ETC_DIR }}
+      - command: chmod -R u+rwX,g+rX,o-rwx {{ ETC_DIR }}
   - id: add-shortcut
     commands:
-      - command: ln -s {{ SRC_DIR }}/django-ca/conf/source/manage /usr/local/bin/django-ca
+      - command: ln -s {{ SRC_DIR }}/conf/source/manage /usr/local/bin/django-ca
       - command: chmod a+rx /usr/local/bin/django-ca
       - command: django-ca check
         doc:
@@ -287,13 +276,20 @@ parts:
   - id: install-nginx
     name: Install NGINX
     commands:
-      - command: "{{ apt }} install{% if run %} -y{% endif %} nginx"
+      - command: "{{ apt_install }} nginx"
+  - id: nginx-basic-setup
+    name: "Basic NGINX configuration"
+    commands:
+      - command: rm -f /etc/nginx/sites-enabled/default
+      - command: adduser www-data django-ca
   - id: create-tls-key
+    name: "Create TLS key"
     commands:
       - command: openssl genrsa -out /etc/ssl/$HOSTNAME.key 4096
       - command: openssl req -new -key /etc/ssl/$HOSTNAME.key -out /tmp/ca.csr -utf8 -batch
       - command: django-ca sign_cert --ca=Intermediate --csr=/tmp/ca.csr --bundle --webserver --subject CN=$HOSTNAME > /etc/ssl/$HOSTNAME.pem
   - id: create-dh-params
+    name: "Create DH parameters"
     commands:
       - command: mkdir -p /etc/nginx/dhparams/
       - command: openssl dhparam -dsaparam -out /etc/nginx/dhparams/dhparam.pem {{ DHPARAM_BITS }}
@@ -302,10 +298,15 @@ parts:
             Generating DSA parameters, {{ DHPARAM_BITS }} bit long prime
             ...
   - id: create-nginx-config
+    name: "Create NGINX configuration"
     commands:
-      - command: envsubst < /opt/django-ca/src/django-ca/nginx/source.template > /etc/nginx/sites-available/django-ca.conf
+      - command: envsubst < {{ SRC_DIR }}/nginx/source.template > /etc/nginx/sites-available/django-ca.conf
       - command: ln -fs /etc/nginx/sites-available/django-ca.conf /etc/nginx/sites-enabled/
       - command: nginx -t
+        doc:
+          output: |
+            nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+            nginx: configuration file /etc/nginx/nginx.conf test is successful
       - command: systemctl restart nginx
 
   - prompt: "Confirm state?"

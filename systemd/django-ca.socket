@@ -1,5 +1,6 @@
 [Unit]
 Description=django-ca socket
+PartOf=django-ca.service
 
 [Socket]
 ListenStream=/run/%N/gunicorn.socket

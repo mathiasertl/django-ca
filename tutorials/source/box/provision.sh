@@ -10,6 +10,10 @@ echo DEBIAN_FRONTEND=noninteractive >> /root/.profile
 apt-get update
 apt-get dist-upgrade -y
 
+# Remove unattended-upgrades, this sometimes causes apt-get in the main
+# tutorial to fail
+apt-get remove -y unattended-upgrades
+
 # Allow the root user to log in with the same credentials.
 # The tutorial assumes root access.
 echo "PermitRootLogin Yes" >> /etc/ssh/sshd_config
