@@ -49,11 +49,13 @@ configuration:
           name: django-ca-from-source
 parts:
   - id: apt-update
+    name: Install required packages...
     commands:
       - command: "{{ apt }} update"
       - command: "{{ apt }} dist-upgrade{% if run %} -y{% endif %}"
       - command: "{{ apt_install }} python3 curl"
   - id: install-db
+    name: Install database
     alternatives:
       postgres:
         commands:
@@ -62,6 +64,7 @@ parts:
         commands:
           - command: "{{ apt_install }} build-essential mariadb pkg-config mariadb-client libmariadb-dev"
   - id: install-cache
+    name: Install distributed cache...
     alternatives:
       redis:
         commands:
@@ -70,17 +73,20 @@ parts:
         commands:
           - command: "{{ apt_install }} memcached"
   - id: install-broker
+    name: Install a message broker...
     alternatives:
       rabbitmq:
         commands:
           - command: "{{ apt_install }} rabbitmq"
-    required: false
+    required: false  # Redis is already installed as Cache
   - id: install-uv
+    name: Install uv...
     commands:
       - command: "curl -LsSf https://astral.sh/uv/install.sh | sh"
         doc:
           output: "downloading uv ..."
   - id: install-uv-python
+    name: Install Python using uv...
     commands:
       - command: export UV_PYTHON_INSTALL_DIR={{ PYTHON_INSTALL_DIR }}
       - command: echo "export UV_PYTHON_INSTALL_DIR={{ PYTHON_INSTALL_DIR }}" | tee -a {{ PROFILE_PATH }}
@@ -97,8 +103,10 @@ parts:
     commands:
       - command: "mkdir -p {{ SRC_DIR }} {{ ETC_DIR }}"
       - command: "adduser --system --group --disabled-login --home={{ HOME_DIR }} django-ca"
-      - command: "adduser django-ca www-data"
+        doc:
+          output: Adding system user `django-ca' ...
   - id: install-source
+    name: Install source code...
     alternatives:
       download_source:
         commands:
@@ -135,20 +143,24 @@ parts:
                 SETUPTOOLS_SCM_PRETEND_VERSION_FOR_django_ca: "{{ DJANGO_CA_VERSION }}"
           - command: cd /vagrant && git archive HEAD | tar -x -C {{ SRC_DIR }}/
         doc: false
+    chdir: "{{ SRC_BASE_DIR }}"
   - id: create-virtualenv
+    name: Create virtual environment...
     alternatives:
       postgres:
         commands:
-        - command: cd {{ SRC_DIR }}
+        - command: cd django-ca
           chdir: "{{ SRC_DIR }}"
         - command: "{{ uv }} sync -p `{{ uv }} python find` --no-default-groups --group gunicorn --all-extras --no-extra mysql"
       mariadb:
         commands:
-        - command: cd {{ SRC_DIR }}
+        - command: cd django-ca
           chdir: "{{ SRC_DIR }}"
         - command: "{{ uv }} sync -p `{{ uv }} python find` --no-default-groups --group gunicorn --all-extras --no-extra postgres"
           chdir: ""
+    chdir: "{{ SRC_DIR }}"
   - id: setup-database
+    name: Setup database...
     alternatives:
       postgres:
         commands:
@@ -180,6 +192,7 @@ parts:
               test:
                 - regex: "(?P<DB_PASSWORD>.*)"
   - id: calculate-secret-key
+    name: Generate secret key...
     commands:
       - command: "{{ SECRET_KEY_COMMAND }}"
         run:
@@ -187,6 +200,7 @@ parts:
             - regex: "(?P<SECRET_KEY>.*)"
     doc: false
   - id: add-systemd-services
+    name: Add systemd services...
     commands:
       - command: ln -s {{ SRC_DIR }}/systemd/systemd.conf {{ ETC_DIR }}/
       - command: ln -s {{ SRC_DIR }}/systemd/*.socket /etc/systemd/system/
@@ -196,14 +210,17 @@ parts:
         doc:
           output: Created symlink ...
   - id: add-basic-settings
+    name: Add basic settings...
     commands:
       - command: ln -s {{ SRC_DIR }}/conf/source/00-settings.yaml {{ ETC_DIR }}/
   - id: add-required-settings
+    name: Add required settings...
     source: 10-localsettings.yaml
     destination: "{{ ETC_DIR }}/10-localsettings.yaml"
     doc:
       language: yaml
   - id: add-db-settings
+    name: Add database settings...
     alternatives:
       postgres:
         source: 20-database-postgres.yaml
@@ -216,6 +233,7 @@ parts:
         doc:
           language: yaml
   - id: add-cache-settings
+    name: Add cache settings...
     alternatives:
       redis:
         source: 20-cache-redis.yaml
@@ -228,19 +246,23 @@ parts:
         doc:
           language: yaml
   - id: add-runtime-config
+    name: Add runtime configuration...
     source: 99-runtime.yaml
     destination: "{{ ETC_DIR }}/99-runtime.yaml"
     doc: false
   - id: add-gunicorn-config
+    name: Add gunicorn configuration
     source: ../../gunicorn/gunicorn.conf.py
     destination: "{{ ETC_DIR }}/gunicorn.conf.py"
     doc:
       language: python
   - id: secure-configuration
+    name: Make sure that configuration is not world-readable...
     commands:
       - command: chown -R root:django-ca {{ ETC_DIR }}
       - command: chmod -R u+rwX,g+rX,o-rwx {{ ETC_DIR }}
   - id: add-shortcut
+    name: Add manage.py shortcut...
     commands:
       - command: ln -s {{ SRC_DIR }}/conf/source/manage /usr/local/bin/django-ca
       - command: chmod a+rx /usr/local/bin/django-ca
@@ -251,13 +273,29 @@ parts:
           test:
             - regex: "0 silenced"
   - id: run-initial-manage-commands
+    name: Run initial manage.py commands...
     commands:
       - command: django-ca migrate
+        doc:
+          output: |
+            Operations to perform:
+            ...
       - command: FORCE_USER=root django-ca collectstatic
+        doc:
+          output: "... static files copied to '{{ BASE_DIR }}/html/static'."
   - id: start
+    name: Start systemd services...
     commands:
       - command: systemctl start django-ca django-ca-celery django-ca-celerybeat
+        run:
+          test:
+            - command: systemctl is-active django-ca
+              retry: 3  # first service might not be up immediately
+              backoff_factor: 0.3
+            - command: systemctl is-active django-ca-celery
+            - command: systemctl is-active django-ca-celerybeat
   - id: create-user-and-ca
+    name: Create user and initial CAs...
     commands:
       - command: |
           {%- if doc -%}
@@ -274,16 +312,15 @@ parts:
         doc:
           output: "<child serial>"
   - id: install-nginx
-    name: Install NGINX
+    name: Install NGINX...
     commands:
       - command: "{{ apt_install }} nginx"
   - id: nginx-basic-setup
-    name: "Basic NGINX configuration"
+    name: "Remove basic NGINX configuration..."
     commands:
       - command: rm -f /etc/nginx/sites-enabled/default
-      - command: adduser www-data django-ca
   - id: create-tls-key
-    name: "Create TLS key"
+    name: "Create TLS key..."
     commands:
       - command: openssl genrsa -out /etc/ssl/$HOSTNAME.key 4096
       - command: openssl req -new -key /etc/ssl/$HOSTNAME.key -out /tmp/ca.csr -utf8 -batch
@@ -309,4 +346,12 @@ parts:
             nginx: configuration file /etc/nginx/nginx.conf test is successful
       - command: systemctl restart nginx
 
-  - prompt: "Confirm state?"
+  - prompt: |
+      Test admin interface at:
+
+      * URL: https://localhost:8443/admin/
+      * Credentials: user/nopass
+
+      Working directory is {{ cwd }}
+      Is the state okay? (Y/n)
+    response: confirm

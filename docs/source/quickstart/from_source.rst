@@ -49,19 +49,15 @@ Install database
 ----------------
 **django-ca** will not run without a `supported database
 <https://docs.djangoproject.com/en/dev/ref/databases/>`_. This tutorial will show you how to use PostgreSQL
-or MariaDB.
-
-To install and configure the database, run:
+or MariaDB. To install either:
 
 .. structured-tutorial-part:: install-db
 
 Install cache
 -------------
 
-Using a distributed cache like `Memcached <https://memcached.org/>`_ or `Redis <https://redis.io/>`_ is highly
-recommended, and this tutorial will show how to install and configure either.
-
-To install and configure the cache, run:
+Using a distributed cache is highly recommended. This tutorial will show you how to use `Memcached
+<https://memcached.org/>`_ or `Redis <https://redis.io/>`_. To install either:
 
 .. structured-tutorial-part:: install-cache
 
@@ -70,14 +66,14 @@ Install broker for Celery
 
 Using `Celery <https://docs.celeryq.dev/>`_ is optional but also highly recommended for performance and
 security reasons. If you use Celery, the web server does not need to use the private key (or the HSM
-storing the private key). If you want to split the setup accross multiple hosts, only those running Celery
+storing the private key). If you want to split the setup across multiple hosts, only those running Celery
 need to be able to sign data (certificates, CRLs, ...).
 
 For Celery, you'll need a broker. Redis can double as a broker, but you can use a variety
 of `other systems <https://docs.celeryq.dev/en/main/getting-started/backends-and-brokers/index.html>`_. This
 tutorial will show you how to use Redis or `RabbitMQ <https://www.rabbitmq.com/>`_.
 
-Redis was already installed above. If you want to use RabbitMQ instead:
+Redis was already installed above, as it can double as a cache. If you want to use RabbitMQ instead:
 
 .. structured-tutorial-part:: install-broker
 
@@ -288,8 +284,7 @@ First, you need to install NGINX:
 
 .. structured-tutorial-part:: install-nginx
 
-Delete the default hostname to minimize the setup, and add the system user to the ``django-ca`` group so that
-it can access the Gunicorn socket:
+Delete the default hostname to minimize the setup:
 
 .. structured-tutorial-part:: nginx-basic-setup
 
