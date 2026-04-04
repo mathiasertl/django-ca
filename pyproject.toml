@@ -173,6 +173,7 @@ hsm = ["python-pkcs11>=0.9"]
 mysql = ["mysqlclient"]
 postgres = ["psycopg[c,pool]>=3.1"]
 redis = ["hiredis>=3.1.0", "redis>=6.0"]
+memcached = ["pymemcache>=4.0"]
 yaml = ["PyYAML>=6.0.0"]
 
 [project.urls]

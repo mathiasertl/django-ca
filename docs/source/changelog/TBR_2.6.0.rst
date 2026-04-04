@@ -126,7 +126,9 @@ Views
 Dependencies
 ************
 
-* Add support for ``acme~=5.3.0``.
+* Add support for ``acme~=5.3.0`` and ``acme~=5.4.0`` .
+* Add a ``memcached`` extra to install memcached support via `pymemcache
+  <https://github.com/pinterest/pymemcache>`_.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for Python 3.10.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=45.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``pydantic~=2.11.0``.
@@ -140,4 +142,4 @@ Dependencies
 Deprecation notices
 *******************
 
-None yet.
+* This is the last release to support ``acme~=5.2.0`` and ``acme~=5.3.0``.

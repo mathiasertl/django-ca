@@ -1,1 +1,10 @@
-# TODO
+DATABASES:
+    default:
+        ENGINE: django.db.backends.mysql
+        NAME: django_ca
+        USER: django_ca
+        PASSWORD: "{{ DB_PASSWORD }}"
+        HOST: localhost
+        PORT: 3306
+        OPTIONS:
+          charset: utf8mb4

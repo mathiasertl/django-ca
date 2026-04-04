@@ -107,10 +107,23 @@ Installation
 ************
 
 With this guide, you will install **django-ca** to ``/opt/django-ca/``, with your local configuration residing
-in ``/etc/django-ca/``. You also need to create a system user to run the Gunicorn application server and
-Celery task worker:
+in ``/etc/django-ca/``.
+
+Start by creating a system user and some essential directories:
 
 .. structured-tutorial-part:: prepare-host
+
+.. _from-source-create-database:
+
+Create database
+===============
+
+Create a database and make sure to use a randomly generated password. You will need to again when
+configuring django-ca:
+
+.. structured-tutorial-part:: setup-database
+
+.. _from-source-add-systemd-services:
 
 Get the source
 ==============
@@ -146,16 +159,6 @@ You can of course use a regular `virtualenv` and ``pip`` to manage your environm
    >     pip setuptools wheel
    root@host:/opt/django-ca/src/django-ca/# .venv/bin/pip install -U \
    >     -e /opt/django-ca/src/django-ca[api,hsm,postgres,celery,redis,yaml]
-
-Create database
-===============
-
-Create a database and make sure to use a randomly generated password. You will need to again when
-configuring django-ca:
-
-.. structured-tutorial-part:: setup-database
-
-.. _from-source-add-systemd-services:
 
 Add SystemD services
 ====================
@@ -199,17 +202,27 @@ Please see :doc:`/settings` for a list of available settings.
 Configure the database
 ======================
 
+Configure database access in a dedicated configuration file. Use the ``PASSWORD`` you used when you
+:ref:`created a database <from-source-create-database>`:
+
 .. structured-tutorial-part:: add-db-settings
 
 Configure the cache
 ===================
+
+Configure the cache in a dedicated configuration file:
 
 .. structured-tutorial-part:: add-cache-settings
 
 Configure Gunicorn
 ==================
 
+Gunicorn requires a dedicated configuration file. Minimal default settings are included in django-ca:
+
 .. structured-tutorial-part:: add-gunicorn-config
+
+If you need different `Gunicorn settings <https://gunicorn.org/reference/settings/>`_, you'll have to copy
+and modify the file instead.
 
 .. _systemd-configuration:
 
