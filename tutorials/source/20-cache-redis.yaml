@@ -3,4 +3,6 @@ CACHES:
         BACKEND: django.core.cache.backends.redis.RedisCache
         LOCATION: redis://localhost:6379
         OPTIONS:
+            # WARNING: When using Redis both as cache and message broker for
+            #   Celery, ensure that the Redis db is different between the two.
             db: "1"

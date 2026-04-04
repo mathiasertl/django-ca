@@ -21,19 +21,8 @@ CA_ENABLE_ACME: true
 STATIC_ROOT: /opt/django-ca/html/static
 MEDIA_ROOT: /opt/django-ca/html/media
 
-# Cache configuration
-CACHES:
-    default:
-        BACKEND: django.core.cache.backends.redis.RedisCache
-        LOCATION: redis://cache:6379
-        OPTIONS:
-            db: "1"
-
 ###################
 # Celery settings #
 ###################
 # Celery has more settings, see:
 #   https://docs.celeryproject.org/en/stable/userguide/configuration.html
-
-# django-ca will use Celery as an asynchronous task worker
-CELERY_BROKER_URL: redis://localhost:6379/0

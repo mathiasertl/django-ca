@@ -123,6 +123,14 @@ configuring django-ca:
 
 .. structured-tutorial-part:: setup-database
 
+Setup broker
+============
+
+If you use Redis as a broker, you can use it out of the box. For RabbitMQ, a little configuration is
+necessary:
+
+.. structured-tutorial-part:: setup-broker
+
 .. _from-source-add-systemd-services:
 
 Get the source
@@ -213,6 +221,13 @@ Configure the cache
 Configure the cache in a dedicated configuration file:
 
 .. structured-tutorial-part:: add-cache-settings
+
+Configure broker
+================
+
+Configure the Broker used by Celery in a dedicated configuration file:
+
+.. structured-tutorial-part:: add-broker-settings
 
 Configure Gunicorn
 ==================

@@ -1,0 +1,2 @@
+# Use RabbitMQ as a broker.
+CELERY_BROKER_URL: "amqp://django_ca:{{ CACHE_PASSWORD }}@127.0.0.1:5672/django_ca"

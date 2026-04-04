@@ -82,7 +82,7 @@ parts:
           - command: "{{ apt_install }} redis-server"
       rabbitmq:
         commands:
-          - command: "{{ apt_install }} rabbitmq"
+          - command: "{{ apt_install }} rabbitmq-server"
   - id: install-uv
     name: Install uv...
     commands:
@@ -168,6 +168,30 @@ parts:
                   CREATE USER 'django_ca'@'localhost' IDENTIFIED BY '{{ DB_PASSWORD }}';
                   GRANT ALL PRIVILEGES ON django_ca.* TO 'django_ca'@'localhost';
                   FLUSH PRIVILEGES;
+  - id: setup-broker
+    name: Setup broker...
+    alternatives:
+      rabbitmq:
+        commands:
+          - command: python3 -c "import secrets, string; print(secrets.token_urlsafe(32))"
+            doc:
+              output: "..."
+            run:
+              test:
+                - regex: "(?P<CACHE_PASSWORD>.*)"
+          - command: rabbitmqctl delete_user guest
+            doc:
+              output: Deleting user "guest" ...
+          - command: rabbitmqctl add_vhost django_ca
+            doc:
+              output: Adding vhost "django_ca" ...
+          - command: rabbitmqctl add_user django_ca {{ CACHE_PASSWORD }}
+            doc:
+              output: Adding user "django_ca" ...
+          - command: 'rabbitmqctl set_permissions -p django_ca django_ca ".*" ".*" ".*"'
+            doc:
+              output: Setting permissions for user "django_ca" in vhost "django_ca" ...
+    required: false
   - id: install-source
     name: Install source code...
     alternatives:
@@ -274,6 +298,19 @@ parts:
       memcached:
         source: 20-cache-memcached.yaml
         destination: "{{ ETC_DIR }}/20-cache.yaml"
+        doc:
+          language: yaml
+  - id: add-broker-settings
+    name: Add broker settings...
+    alternatives:
+      redis-broker:
+        source: 30-broker-redis.yaml
+        destination: "{{ ETC_DIR }}/30-broker.yaml"
+        doc:
+          language: yaml
+      rabbitmq:
+        source: 30-broker-rabbitmq.yaml
+        destination: "{{ ETC_DIR }}/30-broker.yaml"
         doc:
           language: yaml
   - id: add-runtime-config
