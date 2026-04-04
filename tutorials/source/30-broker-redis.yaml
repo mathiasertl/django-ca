@@ -1,0 +1,4 @@
+# Use Redis as a broker.
+# WARNING: When using Redis both as cache and message broker for Celery, ensure
+#   that the Redis db is different between the two.
+CELERY_BROKER_URL: redis://localhost:6379/0
