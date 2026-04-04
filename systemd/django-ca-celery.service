@@ -22,7 +22,31 @@ ConfigurationDirectory=django-ca
 ConfigurationDirectoryMode=0750
 LogsDirectory=django-ca
 RuntimeDirectory=%N
+RuntimeDirectoryMode=0750
 Restart=on-failure
+
+# Secure the service
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/django-ca/home/files/
+NoNewPrivileges=true
+PrivateUsers=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
+SystemCallArchitectures=native
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
 
 [Install]
 WantedBy=multi-user.target

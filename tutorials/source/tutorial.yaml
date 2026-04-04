@@ -26,7 +26,9 @@ configuration:
         name: MariaDB
       postgres:
         name: PostgreSQL
-      redis:
+      redis-broker:
+        name: Redis
+      redis-cache:
         name: Redis
       memcached:
         name: Memcached
@@ -62,11 +64,11 @@ parts:
           - command: "{{ apt_install }} build-essential postgresql postgresql-client libpq-dev"
       mariadb:
         commands:
-          - command: "{{ apt_install }} build-essential mariadb pkg-config mariadb-client libmariadb-dev"
+          - command: "{{ apt_install }} build-essential pkg-config mariadb-server mariadb-client libmariadb-dev"
   - id: install-cache
     name: Install distributed cache...
     alternatives:
-      redis:
+      redis-cache:
         commands:
           - command: "{{ apt_install }} redis-server"
       memcached:
@@ -75,10 +77,12 @@ parts:
   - id: install-broker
     name: Install a message broker...
     alternatives:
+      redis-broker:
+        commands:
+          - command: "{{ apt_install }} redis-server"
       rabbitmq:
         commands:
           - command: "{{ apt_install }} rabbitmq"
-    required: false  # Redis is already installed as Cache
   - id: install-uv
     name: Install uv...
     commands:
@@ -101,10 +105,69 @@ parts:
           {%- endif -%}
   - id: prepare-host
     commands:
-      - command: "mkdir -p {{ SRC_DIR }} {{ ETC_DIR }}"
       - command: "adduser --system --group --disabled-login --home={{ HOME_DIR }} django-ca"
         doc:
           output: Adding system user `django-ca' ...
+      - command: "mkdir -p {{ SRC_DIR }} {{ ETC_DIR }} {{ HOME_DIR }}/files"
+      - command: chown django-ca:django-ca {{ HOME_DIR }}/files
+      - command: chmod go-rwx {{ HOME_DIR }}/files
+  - id: setup-database
+    name: Setup database...
+    alternatives:
+      postgres:
+        commands:
+          - command: openssl rand -base64 32
+            doc:
+              output: "..."
+            run:
+              test:
+                - regex: "(?P<DB_PASSWORD>.*)"
+          - command: sudo -u postgres psql
+            doc:
+              output: |
+                postgres=# CREATE DATABASE django_ca;
+                CREATE DATABASE
+                postgres=# CREATE USER django_ca WITH ENCRYPTED PASSWORD '...';
+                CREATE ROLE
+                postgres=# GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
+                GRANT
+            run:
+              stdin:
+                contents: |
+                  CREATE DATABASE django_ca;
+                  CREATE USER django_ca WITH ENCRYPTED PASSWORD '{{ DB_PASSWORD }}';
+                  GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
+      mariadb:
+        commands:
+          - command: openssl rand -base64 32
+            doc:
+              output: "..."
+            run:
+              test:
+                - regex: "(?P<DB_PASSWORD>.*)"
+          - command: mariadb
+            doc:
+              output: |
+                ....
+                MariaDB [(none)]> CREATE DATABASE django_ca CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+                Query OK, 1 row affected (0.000 sec)
+
+                MariaDB [(none)]> CREATE USER 'django_ca'@'localhost' IDENTIFIED BY '...';
+                Query OK, 0 rows affected (0.001 sec)
+
+                MariaDB [(none)]>
+                MariaDB [(none)]> GRANT ALL PRIVILEGES ON django_ca.* TO 'django_ca'@'localhost';
+                Query OK, 0 rows affected (0.001 sec)
+
+                MariaDB [(none)]> FLUSH PRIVILEGES;
+                Query OK, 0 rows affected (0.000 sec)
+            run:
+              stdin:
+                contents: |
+                  CREATE DATABASE django_ca CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+                  CREATE USER 'django_ca'@'localhost' IDENTIFIED BY '{{ DB_PASSWORD }}';
+                  GRANT ALL PRIVILEGES ON django_ca.* TO 'django_ca'@'localhost';
+                  FLUSH PRIVILEGES;
   - id: install-source
     name: Install source code...
     alternatives:
@@ -159,38 +222,6 @@ parts:
         - command: "{{ uv }} sync -p `{{ uv }} python find` --no-default-groups --group gunicorn --all-extras --no-extra postgres"
           chdir: ""
     chdir: "{{ SRC_DIR }}"
-  - id: setup-database
-    name: Setup database...
-    alternatives:
-      postgres:
-        commands:
-          - command: openssl rand -base64 32
-            doc:
-              output: "..."
-            run:
-              test:
-                - regex: "(?P<DB_PASSWORD>.*)"
-          - command: sudo -u postgres psql
-            doc:
-              output: |
-                postgres=# CREATE DATABASE django_ca;
-                CREATE DATABASE
-                postgres=# CREATE USER django_ca WITH ENCRYPTED PASSWORD '...';
-                CREATE ROLE
-                postgres=# GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
-                GRANT
-            run:
-              stdin:
-                contents: |
-                  CREATE DATABASE django_ca;
-                  CREATE USER django_ca WITH ENCRYPTED PASSWORD '{{ DB_PASSWORD }}';
-                  GRANT ALL PRIVILEGES ON DATABASE django_ca TO django_ca;
-      mariadb:
-        commands:
-          - command: openssl rand -base64 32
-            run:
-              test:
-                - regex: "(?P<DB_PASSWORD>.*)"
   - id: calculate-secret-key
     name: Generate secret key...
     commands:
@@ -235,7 +266,7 @@ parts:
   - id: add-cache-settings
     name: Add cache settings...
     alternatives:
-      redis:
+      redis-cache:
         source: 20-cache-redis.yaml
         destination: "{{ ETC_DIR }}/20-cache.yaml"
         doc:
@@ -251,11 +282,9 @@ parts:
     destination: "{{ ETC_DIR }}/99-runtime.yaml"
     doc: false
   - id: add-gunicorn-config
-    name: Add gunicorn configuration
-    source: ../../gunicorn/gunicorn.conf.py
-    destination: "{{ ETC_DIR }}/gunicorn.conf.py"
-    doc:
-      language: python
+    name: Add Gunicorn configuration...
+    commands:
+      - command: ln -s {{ SRC_DIR }}/gunicorn/gunicorn.conf.py {{ ETC_DIR }}/
   - id: secure-configuration
     name: Make sure that configuration is not world-readable...
     commands:

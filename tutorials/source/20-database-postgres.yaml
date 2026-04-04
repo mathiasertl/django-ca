@@ -1,8 +1,8 @@
 DATABASES:
     default:
         ENGINE: django.db.backends.postgresql
-        HOST: localhost
-        PORT: 5432
         NAME: django_ca
         USER: django_ca
+        HOST: localhost
+        PORT: 5432
         PASSWORD: "{{ DB_PASSWORD }}"
