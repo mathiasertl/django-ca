@@ -3,7 +3,7 @@
 Extra         Description
 ============= ===============================================================================================
 ``api``       Adds support for the :doc:`/rest_api` using `Django Ninja <https://django-ninja.dev/>`_.
-``celery``    Adds `Celery <https://docs.celeryproject.org/>`_ support.
+``celery``    Adds `Celery <https://docs.celeryq.dev/>`__ support.
 ``hsm``       Adds support for hardware security modules (HSMs).
 ``mysql``     Adds MySQL support.
 ``postgres``  Adds PostgreSQL support using `Psycopg 3 <https://pypi.org/project/psycopg/>`_.

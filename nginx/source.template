@@ -1,5 +1,5 @@
 upstream django_ca_frontend {
-    server unix:/run/django-ca/gunicorn.socket;
+    server unix:/run/django-ca.socket;
 }
 
 server {

@@ -9,7 +9,6 @@ EnvironmentFile=/etc/django-ca/systemd.conf
 EnvironmentFile=-/etc/django-ca/systemd-local.conf
 ExecStart=/bin/sh -c '${VIRTUAL_ENV}/bin/celery -A ca beat  \
     --schedule=${STATE_DIRECTORY}/schedule.db \
-    --pidfile=${RUNTIME_DIRECTORY}/celerybeat.pid \
     --loglevel=${CELERYD_LOG_LEVEL}'
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
@@ -19,7 +18,6 @@ ConfigurationDirectory=django-ca
 ConfigurationDirectoryMode=0750
 LogsDirectory=django-ca
 StateDirectory=django-ca
-RuntimeDirectory=%N
 
 [Install]
 WantedBy=multi-user.target

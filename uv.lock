@@ -784,7 +784,8 @@ dev = [
     { name = "rich" },
     { name = "selenium" },
     { name = "semantic-version" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "sphinx-copybutton" },
     { name = "sphinxcontrib-spelling" },
     { name = "structured-tutorials" },
@@ -901,11 +902,11 @@ dev = [
     { name = "rich", specifier = ">=14.2.0" },
     { name = "selenium", specifier = ">=4.29.0" },
     { name = "semantic-version", specifier = ">=2.10.0" },
-    { name = "sphinx", marker = "python_full_version < '3.11'", specifier = "~=8.1.0" },
-    { name = "sphinx", marker = "python_full_version >= '3.11'", specifier = "~=8.2.0" },
+    { name = "sphinx", marker = "python_full_version < '3.12'", specifier = "~=8.1.0" },
+    { name = "sphinx", marker = "python_full_version >= '3.12'", specifier = "~=9.1.0" },
     { name = "sphinx-copybutton", specifier = ">=0.5.2" },
     { name = "sphinxcontrib-spelling", specifier = ">=8.0.1" },
-    { name = "structured-tutorials", specifier = ">=0.1.0" },
+    { name = "structured-tutorials", specifier = ">=0.4.0" },
     { name = "tabulate", specifier = ">=0.9.0" },
     { name = "termcolor", specifier = ">=2.5.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.2.1" },
@@ -1759,7 +1760,8 @@ name = "numpydoc"
 version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e9/3c/dfccc9e7dee357fb2aa13c3890d952a370dd0ed071e0f7ed62ed0df567c1/numpydoc-1.10.0.tar.gz", hash = "sha256:3f7970f6eee30912260a6b31ac72bba2432830cd6722569ec17ee8d3ef5ffa01", size = 94027, upload-time = "2025-12-02T16:39:12.937Z" }
 wheels = [
@@ -2502,18 +2504,6 @@ wheels = [
 ]
 
 [[package]]
-name = "roman-numerals-py"
-version = "4.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "roman-numerals" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/b5/de96fca640f4f656eb79bbee0e79aeec52e3e0e359f8a3e6a0d366378b64/roman_numerals_py-4.1.0.tar.gz", hash = "sha256:f5d7b2b4ca52dd855ef7ab8eb3590f428c0b1ea480736ce32b01fef2a5f8daf9", size = 4274, upload-time = "2025-12-17T18:25:41.153Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/2c/daca29684cbe9fd4bc711f8246da3c10adca1ccc4d24436b17572eb2590e/roman_numerals_py-4.1.0-py3-none-any.whl", hash = "sha256:553114c1167141c1283a51743759723ecd05604a1b6b507225e91dc1a6df0780", size = 4547, upload-time = "2025-12-17T18:25:40.136Z" },
-]
-
-[[package]]
 name = "rpds-py"
 version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2751,30 +2741,64 @@ wheels = [
 
 [[package]]
 name = "sphinx"
-version = "8.2.3"
+version = "8.1.3"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "alabaster" },
-    { name = "babel" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "docutils" },
-    { name = "imagesize" },
-    { name = "jinja2" },
-    { name = "packaging" },
-    { name = "pygments" },
-    { name = "requests" },
-    { name = "roman-numerals-py" },
-    { name = "snowballstemmer" },
-    { name = "sphinxcontrib-applehelp" },
-    { name = "sphinxcontrib-devhelp" },
-    { name = "sphinxcontrib-htmlhelp" },
-    { name = "sphinxcontrib-jsmath" },
-    { name = "sphinxcontrib-qthelp" },
-    { name = "sphinxcontrib-serializinghtml" },
+resolution-markers = [
+    "python_full_version < '3.12'",
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/ad/4360e50ed56cb483667b8e6dadf2d3fda62359593faabbe749a27c4eaca6/sphinx-8.2.3.tar.gz", hash = "sha256:398ad29dee7f63a75888314e9424d40f52ce5a6a87ae88e7071e80af296ec348", size = 8321876, upload-time = "2025-03-02T22:31:59.658Z" }
+dependencies = [
+    { name = "alabaster", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "babel", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "(python_full_version < '3.12' and sys_platform == 'win32') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (python_full_version >= '3.12' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "docutils", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "imagesize", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "jinja2", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "packaging", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pygments", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "requests", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "snowballstemmer", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6f/6d/be0b61178fe2cdcb67e2a92fc9ebb488e3c51c4f74a36a7824c0adf23425/sphinx-8.1.3.tar.gz", hash = "sha256:43c1911eecb0d3e161ad78611bc905d1ad0e523e4ddc202a58a821773dc4c927", size = 8184611, upload-time = "2024-10-13T20:27:13.93Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/53/136e9eca6e0b9dc0e1962e2c908fbea2e5ac000c2a2fbd9a35797958c48b/sphinx-8.2.3-py3-none-any.whl", hash = "sha256:4405915165f13521d875a8c29c8970800a0141c14cc5416a38feca4ea5d9b9c3", size = 3589741, upload-time = "2025-03-02T22:31:56.836Z" },
+    { url = "https://files.pythonhosted.org/packages/26/60/1ddff83a56d33aaf6f10ec8ce84b4c007d9368b21008876fceda7e7381ef/sphinx-8.1.3-py3-none-any.whl", hash = "sha256:09719015511837b76bf6e03e42eb7595ac8c2e41eeb9c29c5b755c6b677992a2", size = 3487125, upload-time = "2024-10-13T20:27:10.448Z" },
+]
+
+[[package]]
+name = "sphinx"
+version = "9.1.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+]
+dependencies = [
+    { name = "alabaster", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "babel", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "colorama", marker = "(python_full_version >= '3.12' and sys_platform == 'win32') or (python_full_version < '3.12' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (python_full_version < '3.12' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (python_full_version < '3.12' and extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (python_full_version < '3.12' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (python_full_version < '3.12' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (python_full_version < '3.12' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (sys_platform != 'win32' and extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (sys_platform != 'win32' and extra != 'group-9-django-ca-acme5-2' and extra != 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "docutils", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "imagesize", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "jinja2", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "packaging", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pygments", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "requests", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "roman-numerals", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "snowballstemmer", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cd/bd/f08eb0f4eed5c83f1ba2a3bd18f7745a2b1525fad70660a1c00224ec468a/sphinx-9.1.0.tar.gz", hash = "sha256:7741722357dd75f8190766926071fed3bdc211c74dd2d7d4df5404da95930ddb", size = 8718324, upload-time = "2025-12-31T15:09:27.646Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/f7/b1884cb3188ab181fc81fa00c266699dab600f927a964df02ec3d5d1916a/sphinx-9.1.0-py3-none-any.whl", hash = "sha256:c84fdd4e782504495fe4f2c0b3413d6c2bf388589bb352d439b2a3bb99991978", size = 3921742, upload-time = "2025-12-31T15:09:25.561Z" },
 ]
 
 [[package]]
@@ -2782,7 +2806,8 @@ name = "sphinx-copybutton"
 version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/2b/a964715e7f5295f77509e59309959f4125122d648f86b4fe7d70ca1d882c/sphinx-copybutton-0.5.2.tar.gz", hash = "sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd", size = 23039, upload-time = "2023-04-14T08:10:22.998Z" }
 wheels = [
@@ -2794,7 +2819,8 @@ name = "sphinx-inline-tabs"
 version = "2025.12.21.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/6a/f39bde46a79b80a9983233d99b773bd24b468bdd9c1e87acb46ff69af441/sphinx_inline_tabs-2025.12.21.14.tar.gz", hash = "sha256:c71a75800326e613fb4e410eed92a0934214741326aca9897c18018b9f968cb6", size = 45572, upload-time = "2025-12-21T13:30:51.071Z" }
 wheels = [
@@ -2808,7 +2834,8 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "jinja2" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ea/90/7cf0e91aadcb5b3ff4796acbaf2c7887a55434df360914af9fc067c753c1/sphinx-jinja-2.0.2.tar.gz", hash = "sha256:c6232b59a894139770be1dc6d0b00a379e4288ce78157904e1f8473dea3e0718", size = 4587, upload-time = "2022-07-05T11:57:49.579Z" }
 wheels = [
@@ -2823,7 +2850,8 @@ dependencies = [
     { name = "docutils" },
     { name = "mistune" },
     { name = "pygments" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b6/a7/c9a7888bb2187fdb06955d71e75f6f266b7e179b356ac76138d160a5b7eb/sphinx_mdinclude-0.6.2.tar.gz", hash = "sha256:447462e82cb8be61404a2204227f920769eb923d2f57608e3325f3bb88286b4c", size = 65257, upload-time = "2024-08-03T19:07:37.643Z" }
 wheels = [
@@ -2836,7 +2864,8 @@ version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "sphinxcontrib-jquery" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/84/68/a1bfbf38c0f7bccc9b10bbf76b94606f64acb1552ae394f0b8285bfaea25/sphinx_rtd_theme-3.1.0.tar.gz", hash = "sha256:b44276f2c276e909239a4f6c955aa667aaafeb78597923b1c60babc76db78e4c", size = 7620915, upload-time = "2026-01-12T16:03:31.17Z" }
@@ -2876,7 +2905,8 @@ name = "sphinxcontrib-httpdomain"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/a2/b9b96904f691a0b4ccb8277a72b4ec351590286b44a433d0cefe78703c2b/sphinxcontrib_httpdomain-2.0.0.tar.gz", hash = "sha256:9e4e8733bf41ee4d9d5f9eb4dbf3cc2c22a665221ba42c5c3ae181b98af8855d", size = 17155, upload-time = "2026-02-04T21:23:56.422Z" }
 wheels = [
@@ -2888,7 +2918,8 @@ name = "sphinxcontrib-jquery"
 version = "4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/de/f3/aa67467e051df70a6330fe7770894b3e4f09436dea6881ae0b4f3d87cad8/sphinxcontrib-jquery-4.1.tar.gz", hash = "sha256:1620739f04e36a2c779f1a131a2dfd49b2fd07351bf1968ced074365933abc7a", size = 122331, upload-time = "2023-03-14T15:01:01.944Z" }
 wheels = [
@@ -2913,7 +2944,8 @@ dependencies = [
     { name = "jsonschema" },
     { name = "picobox" },
     { name = "pyyaml" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "sphinx-mdinclude" },
     { name = "sphinxcontrib-httpdomain" },
 ]
@@ -2947,7 +2979,8 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyenchant" },
     { name = "requests" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4b/cd/fa8039cedce6295644ff5f03367742d21e7922da426e8c666b7f5a213682/sphinxcontrib_spelling-8.0.2.tar.gz", hash = "sha256:afbc7b8e93721ab88f12bdd39d848b92017b3763b9ed6226b4b0e54b06664fea", size = 30955, upload-time = "2025-11-28T15:31:50.235Z" }
 wheels = [
@@ -2988,20 +3021,21 @@ wheels = [
 
 [[package]]
 name = "structured-tutorials"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
     { name = "jinja2" },
     { name = "pydantic" },
     { name = "pyyaml" },
-    { name = "sphinx" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-3') or (extra == 'group-9-django-ca-acme5-2' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-acme5-3' and extra == 'group-9-django-ca-acme5-4') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "sphinx-inline-tabs" },
     { name = "termcolor" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/ea/3c51fdd3da4760dfc33462884c23395d0d9af62830d1ad2db34ca412a6fc/structured_tutorials-0.3.0.tar.gz", hash = "sha256:733f81b477c01432c4992f4acbfd5cc08152e6ff3453f77bd4354fc2bb835bb1", size = 218662, upload-time = "2025-12-26T12:10:30.545Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/af/117faea51454e39cf0ae6b57ed2e47067e606a2e93e92ed71ddfd822354e/structured_tutorials-0.4.0.tar.gz", hash = "sha256:d8d39e679b3c0713a8a91fb91f1d8ddfa1b2a441fb87d59339c6fc20da550431", size = 253154, upload-time = "2026-04-04T11:35:40.068Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/a0/99c3cb56650da80cdf35738042fc1ad0abdf51ac58bbf37ec6b0ea8b8d29/structured_tutorials-0.3.0-py3-none-any.whl", hash = "sha256:d473b981cf9247ba16929eef693d979282ac374adf70966048c1114b5e75d5ad", size = 30622, upload-time = "2025-12-26T12:10:32.016Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/d7/46f799db5fef86af84710a37299bd885900b62a955cd3a631716963b332c/structured_tutorials-0.4.0-py3-none-any.whl", hash = "sha256:98d289e4833fd30159d4165a7b23fffb5956171fab7cf7ce6c6d7bfe46e6322f", size = 35664, upload-time = "2026-04-04T11:35:38.494Z" },
 ]
 
 [[package]]

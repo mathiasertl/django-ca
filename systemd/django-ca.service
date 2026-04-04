@@ -17,7 +17,6 @@ User=%N
 Group=%N
 ConfigurationDirectory=%N
 ConfigurationDirectoryMode=0750
-RuntimeDirectory=%N
 Restart=on-failure
 KillMode=mixed
 TimeoutStopSec=5
