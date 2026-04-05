@@ -54,7 +54,8 @@ No changes yet.
 Python API
 **********
 
-No changes yet.
+* ``django_ca.models.CertificateAuthority.cache_crls`` was removed. Use
+  :py:func:`~django_ca.models.CertificateAuthority.generate_crls` instead.
 
 *****
 Views

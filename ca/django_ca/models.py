@@ -55,7 +55,6 @@ from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA310Warning, deprecate_function
 from django_ca.extensions import get_extension_name
 from django_ca.key_backends import KeyBackend, OCSPKeyBackend, key_backends, ocsp_key_backends
 from django_ca.managers import (
@@ -643,10 +642,6 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         if isinstance(pub, ed448.Ed448PublicKey):
             return "Ed448"
         raise ValueError(f"{pub}: Unknown key type.")  # pragma: no cover
-
-    @deprecate_function(RemovedInDjangoCA310Warning)
-    def cache_crls(self, key_backend_options: BaseModel) -> None:  # pylint: disable=C0116
-        self.generate_crls(key_backend_options)
 
     def generate_crls(self, key_backend_options: BaseModel, force: bool = False) -> None:
         """Generate certificate revocation lists (CRLs) for this certificate authority.
