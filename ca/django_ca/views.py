@@ -23,7 +23,6 @@ import base64
 import binascii
 import logging
 import typing
-import warnings
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any, cast
@@ -53,7 +52,6 @@ from django.views.generic.base import View
 
 from django_ca import constants
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
-from django_ca.deprecation import RemovedInDjangoCA310Warning
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.querysets import CertificateRevocationListQuerySet
@@ -334,13 +332,7 @@ class OCSPView(View):
     # pylint: disable-next=unused-argument  # ca is required by subclasses
     def get_expires(self, ca: CertificateAuthority, now: datetime) -> datetime:
         """Get the timestamp when the OCSP response expires."""
-        expires = self.expires
-        if isinstance(expires, int):
-            warnings.warn(
-                "Passing `int` for `expires` is deprecated.", RemovedInDjangoCA310Warning, stacklevel=1
-            )
-            expires = timedelta(seconds=expires)
-        return now + expires
+        return now + self.expires
 
     def http_response(self, data: bytes, status: int = HTTPStatus.OK) -> HttpResponse:
         """Get an HTTP OCSP response with given status and data."""

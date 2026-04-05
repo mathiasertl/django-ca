@@ -61,7 +61,8 @@ Python API
 Views
 *****
 
-No changes yet.
+* Support for passing an ``int`` as the `expires` parameter for :py:class:`~django_ca.views.OCSPView` was
+  removed (deprecated since 3.0.0).
 
 ************
 Dependencies
