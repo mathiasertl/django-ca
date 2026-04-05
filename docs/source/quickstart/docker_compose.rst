@@ -134,7 +134,8 @@ bundled third-party Docker images.
 ==================================================================================== ===== ========== ========
 Version                                                                              Redis PostgreSQL NGINX
 ==================================================================================== ===== ========== ========
-`2.5.0 <https://github.com/mathiasertl/django-ca/blob/2.4.0/compose.yaml>`_          **8** 16         **1.28**
+`3.0.0 <https://github.com/mathiasertl/django-ca/blob/3.0.0/compose.yaml>`_          8     16         1.28
+`2.5.0 <https://github.com/mathiasertl/django-ca/blob/2.5.0/compose.yaml>`_          **8** 16         **1.28**
 `2.4.0 <https://github.com/mathiasertl/django-ca/blob/2.4.0/compose.yaml>`_          7     16         1.26
 `2.3.0 <https://github.com/mathiasertl/django-ca/blob/2.3.0/compose.yaml>`_          7     16         1.26
 `2.2.0 <https://github.com/mathiasertl/django-ca/blob/2.2.0/compose.yaml>`_          7     16         1.26

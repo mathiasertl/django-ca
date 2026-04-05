@@ -22,7 +22,7 @@ import shutil
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -60,9 +60,11 @@ from django_ca.pydantic.extensions import (
     ExtensionModel,
     UnrecognizedExtensionModel,
 )
-from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 from django_ca.typehints import ParsableKeyType
 from django_ca.utils import bytes_to_hex
+
+if TYPE_CHECKING:
+    from django_ca.tests.base.typehints import CertFixtureData, OcspFixtureData
 
 DEFAULT_KEY_SIZE = 2048  # Size for private keys
 TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
@@ -138,7 +140,7 @@ def _update_cert_data(cert: CertificateAuthority | Certificate, data: dict[str, 
 
 
 def _write_ca(
-    dest: Path, ca: CertificateAuthority, cert_data: CertFixtureData, password: bytes | None = None
+    dest: Path, ca: CertificateAuthority, cert_data: "CertFixtureData", password: bytes | None = None
 ) -> None:
     # Encode private key
     if password is None:
@@ -168,7 +170,9 @@ def _write_ca(
     _update_cert_data(ca, cert_data)
 
 
-def _copy_cert(dest: Path, cert: Certificate, data: CertFixtureData, key_path: Path, csr_path: Path) -> None:
+def _copy_cert(
+    dest: Path, cert: Certificate, data: "CertFixtureData", key_path: Path, csr_path: Path
+) -> None:
     csr_dest = dest / data["csr_filename"]
 
     shutil.copy(key_path, dest / data["key_filename"])
@@ -262,7 +266,7 @@ def _generate_contrib_files(data: dict[str, dict[str, Any]]) -> None:
             raise ValueError(f"Unknown type of Public key encountered: {public_key}")
 
 
-def create_cas(dest: Path, now: datetime, delay: bool, data: CertFixtureData) -> list[CertificateAuthority]:
+def create_cas(dest: Path, now: datetime, delay: bool, data: "CertFixtureData") -> list[CertificateAuthority]:
     """Create CAs."""
     ca_names = [v["name"] for k, v in data.items() if v.get("type") == "ca"]
 
@@ -387,7 +391,7 @@ def create_certs(
 
 
 def create_special_certs(  # noqa: PLR0915
-    dest: Path, now: datetime, delay: bool, data: CertFixtureData
+    dest: Path, now: datetime, delay: bool, data: "CertFixtureData"
 ) -> None:
     """Create special-interest certificates (edge cases etc.)."""
     # create a cert with absolutely no extensions
@@ -508,9 +512,9 @@ def create_special_certs(  # noqa: PLR0915
     _copy_cert(dest, cert, data[name], key_path, csr_path)
 
 
-def regenerate_ocsp_files(dest: Path, data: CertFixtureData) -> dict[str, OcspFixtureData]:
+def regenerate_ocsp_files(dest: Path, data: "CertFixtureData") -> dict[str, "OcspFixtureData"]:
     """Regenerate OCSP example requests."""
-    ocsp_data: dict[str, OcspFixtureData] = {
+    ocsp_data: dict[str, "OcspFixtureData"] = {  # noqa
         "nonce": {"name": "nonce", "filename": "nonce.req"},
         "no-nonce": {"name": "no-nonce", "filename": "no-nonce.req"},
     }
