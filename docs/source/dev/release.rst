@@ -27,6 +27,11 @@ Create a file with pinned requirements, so that users can reliably reproduce a s
 
    $ uv sync --all-extras --upgrade
 
+Update Docker maintenance action
+================================
+
+Add the new release ``.github/workflows/docker-maintenance.yml``.
+
 Docker Compose
 ==============
 
@@ -107,11 +112,20 @@ The release script will:
 * Test the various tutorials.
 * Push the git tag.
 
-Update GitHub/Docker Hub
-========================
+Update Docker Hub
+=================
 
-* Create a `release on GitHub <https://github.com/mathiasertl/django-ca/tags>`_.
 * Update `Docker Hub <https://hub.docker.com/r/mathiasertl/django-ca>`_.
+
+*********************
+Create release branch
+*********************
+
+Note that the release branch solely exists to update Docker images on a regular basis:
+
+* Create the branch.
+* Run ``./dev.py validate state --release-branch`` and fix errors.
+* Push that branch.
 
 ***************
 After a release
@@ -133,12 +147,3 @@ After a release
 * Update ``.github/workflows/docker-maintenance.yml`` to include the new release.
 
   * Make sure that ``NEWEST_DJANGO_CA`` is also updated!
-
-Create release branch
-=====================
-
-Note that the release branch solely exists to update Docker images on a regular basis:
-
-* Create the branch.
-* Run ``./dev.py validate state --release-branch`` and fix errors.
-* Push that branch.
