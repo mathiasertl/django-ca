@@ -88,7 +88,11 @@ def _openssl_ocsp(
 
 
 def _validate_crl_ocsp(
-    ca_file: str, cert_file: str, cert_subject: str, already_revoked: bool = False
+    ca_file: str,
+    cert_file: str,
+    cert_subject: str,
+    already_revoked: bool = False,
+    old_management_commands: bool = False,  # use management commands in django-ca<3.0.0.
 ) -> None:
     """Test OpenSSL CRL and OCSP validation.
 
@@ -115,7 +119,10 @@ def _validate_crl_ocsp(
         _openssl_verify(ca_file, cert_file)
 
     # Re-cache CRLs
-    compose_manage("backend", "generate_crls")
+    if old_management_commands:
+        compose_manage("backend", "cache_crls", "--force")
+    else:
+        compose_manage("backend", "generate_crls", "--force")
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
@@ -141,7 +148,7 @@ def get_postgres_version(path: Path | str) -> str:
     return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
 
 
-def test_update(docker_tag: str, release: str) -> int:
+def test_update(docker_tag: str, release: str) -> int:  # noqa: PLR0915
     """Validate updating with docker compose."""
     info("Validating docker compose update...")
     errors = 0
@@ -192,8 +199,7 @@ POSTGRES_PASSWORD=mysecretpassword
                     )
 
                 # Test CRL and OCSP validation
-                # TODO: Re-enable after 3.0.0, check is just to different in old version
-                # _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
+                _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}", old_management_commands=True)
 
             old_postgres_version = get_postgres_version("compose.yaml")
             new_postgres_version = get_postgres_version(config.ROOT_DIR / "compose.yaml")
