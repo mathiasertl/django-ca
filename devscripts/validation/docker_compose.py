@@ -179,16 +179,16 @@ POSTGRES_PASSWORD=mysecretpassword
                 compose_exec("backend", "./create-testdata.py", "--env", "backend")
                 compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
 
-                compose_manage("backend", "generate_crls")
-                compose_manage("backend", "generate_ocsp_keys")
+                compose_manage("backend", "cache_crls")  # TODO: Renamed to generate_crls in 3.0.0
+                compose_manage("backend", "regenerate_ocsp_keys")  # TODO: Renamed to generate_ocsp_keys
 
                 # Write root CA and cert to disk for OpenSSL validation
                 ca_subject = "rsa.example.com"  # created by create-testdata.py
                 with open("ca.pem", "w", encoding="utf-8") as stream:
-                    compose_manage("backend", "view_ca", "--output-format=PEM", ca_subject, stdout=stream)
+                    compose_manage("backend", "view_ca", "--output-format=pem", ca_subject, stdout=stream)
                 with open("cert.pem", "w", encoding="utf-8") as stream:
                     compose_manage(
-                        "frontend", "view_cert", "--output-format=PEM", f"cert.{ca_subject}", stdout=stream
+                        "frontend", "view_cert", "--output-format=pem", f"cert.{ca_subject}", stdout=stream
                     )
 
                 # Test CRL and OCSP validation

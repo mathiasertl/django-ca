@@ -5,7 +5,7 @@
 * **BACKWARDS INCOMPATIBLE:** Drop support for ``SECT*`` binary elliptic curves. Cryptography deprecated them
   in ``cryptography==46.0.5`` and will remove them in their next release.
 * Quickstart guides have been rewritten using `structured-tutorials
-  <https://structured-tutorials.readthedocs.io/en/latest/>` to make them testable.
+  <https://structured-tutorials.readthedocs.io/en/latest/>`_ to make them testable.
 * The :doc:`Quickstart from source </quickstart/from_source>` was extensively rewritten to include setup
   instructions for MariaDB, RabbitMQ and Memcached in addition to the default PostreSQL and Redis.
 
