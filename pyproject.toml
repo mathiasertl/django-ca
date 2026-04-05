@@ -12,7 +12,7 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["46"]
-acme = ["5.2", "5.3", "5.4"]
+acme = ["5.4"]
 pydantic = ["2.12"]
 josepy = ["2.1", "2.2"]
 # Newest uv release: https://pypi.org/project/uv/
@@ -152,7 +152,7 @@ requires-python = ">=3.11"
 dependencies = [
     "Django~=5.2.0;python_version<'3.12'",
     "Django>=5.2;python_version>='3.12'",
-    "acme>=5.2",
+    "acme>=5.4",
     "asn1crypto>=1.5",
     "cryptography>=46",
     "django-object-actions>=5.0",
@@ -550,7 +550,7 @@ default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
     #[ { group = "cryptography46" }, ],
-    [ { group = "acme5.2" }, { group = "acme5.3" }, { group = "acme5.4" }, ],
+    #[ { group = "acme5.4" }, ],
     #[ { group = "pydantic2.12" }, ],
 ]
 
@@ -634,7 +634,5 @@ gunicorn = [ "gunicorn>=23" ]
 "Django5.2" = ["Django~=5.2.0"]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography46" = ["cryptography~=46.0"]
-"acme5.2" = ["acme~=5.2.0"]
-"acme5.3" = ["acme~=5.3.0"]
 "acme5.4" = ["acme~=5.4.0"]
 "pydantic2.12" = ["pydantic~=2.12.0"]

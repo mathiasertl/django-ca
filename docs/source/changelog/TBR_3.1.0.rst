@@ -68,7 +68,7 @@ Views
 Dependencies
 ************
 
-No changes yet.
+* **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=5.2.0`` and ``acme~=5.3.0``.
 
 *******************
 Deprecation notices
