@@ -16,7 +16,7 @@ acme = ["5.2", "5.3", "5.4"]
 pydantic = ["2.12"]
 josepy = ["2.1", "2.2"]
 # Newest uv release: https://pypi.org/project/uv/
-uv = "0.10.4"
+uv = "0.11.3"
 
 # https://www.postgresql.org/support/versioning/
 postgres = [
@@ -246,6 +246,7 @@ module = [
     "psycopg",
     "psycopg_c",
     "pytest_cov.*",
+    "pymemcache",  # Never imported directly except for test-imports.py
     "requests.packages.urllib3.response",
     "sphinxcontrib",
     "sniffio",
@@ -544,7 +545,7 @@ exclude = ["django_ca.tests*"]
 local_scheme = "no-local-version"
 
 [tool.uv]
-required-version = ">=0.10.4"
+required-version = ">=0.11.3"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],

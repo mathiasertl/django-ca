@@ -94,6 +94,7 @@ subtree
 subtrees
 superset
 symlink
+Systemd
 themself
 tox
 tls
