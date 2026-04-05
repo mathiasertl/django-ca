@@ -8,7 +8,7 @@ services:
     backend:
         command: celery.sh -l ${CELERY_LOG_LEVEL:-debug}
         environment:
-            DJANGO_CA_ALLOWED_HOSTS: ca.example.com localhost
+            DJANGO_CA_ALLOWED_HOSTS: '["ca.example.com", "localhost"]'
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
             DJANGO_CA_LOG_LEVEL: DEBUG
@@ -24,7 +24,7 @@ services:
             - "10.5.0.5"
     frontend:
         environment:
-            DJANGO_CA_ALLOWED_HOSTS: ca.example.com webserver localhost
+            DJANGO_CA_ALLOWED_HOSTS: '["ca.example.com", "webserver", "localhost"]'
             DJANGO_CA_CA_ENABLE_ACME: "true"
             DJANGO_CA_CA_DEFAULT_HOSTNAME: ca.example.com
             DJANGO_CA_LOG_LEVEL: DEBUG
