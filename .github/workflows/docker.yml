@@ -51,7 +51,7 @@ jobs:
       DJANGO_CA_VERSION: ${{ needs.calc-version.outputs.django-ca-version }}
     strategy:
       matrix:
-        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.14" ]
         debian-version: [ "trixie" ]
     permissions:
       contents: read
@@ -91,7 +91,7 @@ jobs:
     strategy:
       matrix:
         alpine-version: [ "3.22", "3.23" ]
-        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.14" ]
     permissions:
       contents: read
       actions: write
