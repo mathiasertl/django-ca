@@ -346,8 +346,6 @@ nitpick_ignore = [
     ("py:class", "django_ca.key_backends.base.CreatePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.StorePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.UsePrivateKeyOptionsTypeVar"),
-    # Just no need to document these
-    ("py:class", "django_ca.key_backends.base.Self"),  # pragma: only py<3.11  # replace with typing.Self
     # Undocumented in Python:
     ("py:class", "argparse._ArgumentGroup"),
     ("py:class", "doctest.TestResults"),

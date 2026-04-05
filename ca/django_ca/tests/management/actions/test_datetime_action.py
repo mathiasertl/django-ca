@@ -41,8 +41,7 @@ def parser() -> argparse.ArgumentParser:
         ("2011-11-04", datetime(2011, 11, 4, 0, 0, tzinfo=UTC)),
         ("2011-11-04T00:05:23", datetime(2011, 11, 4, 0, 5, 23, tzinfo=UTC)),
         ("2011-11-04T00:05:23+00:00", datetime(2011, 11, 4, 0, 5, 23, tzinfo=UTC)),
-        # pragma: only py<3.11: Z is only supported with python 3.11
-        # ("2011-11-04T00:05:23Z", datetime(2011, 11, 4, 0, 5, 23, tzinfo=timezone.utc)),
+        ("2011-11-04T00:05:23Z", datetime(2011, 11, 4, 0, 5, 23, tzinfo=UTC)),
         ("2011-11-04 00:05:23.283+00:00", datetime(2011, 11, 4, 0, 5, 23, 283000, tzinfo=UTC)),
     ),
 )
