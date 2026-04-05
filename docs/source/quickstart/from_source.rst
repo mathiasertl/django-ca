@@ -77,8 +77,8 @@ Redis was already installed above, as it can double as a cache. If you want to u
 
 .. structured-tutorial-part:: install-broker
 
-Install uv
-----------
+Install :command:`uv`
+---------------------
 
 Additionally, this guide uses :command:`uv` to set up a Python Virtual Environment. Please refer to the `installation
 instructions <https://docs.astral.sh/uv/getting-started/installation/>`_ for how to install it. On most Linux
