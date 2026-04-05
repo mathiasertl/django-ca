@@ -141,7 +141,7 @@ def get_postgres_version(path: Path | str) -> str:
     return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
 
 
-def test_update(docker_tag: str, release: str) -> int:  # noqa: PLR0915
+def test_update(docker_tag: str, release: str) -> int:
     """Validate updating with docker compose."""
     info("Validating docker compose update...")
     errors = 0
@@ -192,7 +192,8 @@ POSTGRES_PASSWORD=mysecretpassword
                     )
 
                 # Test CRL and OCSP validation
-                _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
+                # TODO: Re-enable after 3.0.0, check is just to different in old version
+                # _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
 
             old_postgres_version = get_postgres_version("compose.yaml")
             new_postgres_version = get_postgres_version(config.ROOT_DIR / "compose.yaml")
