@@ -282,13 +282,6 @@ def test_acme(release: str, image: str) -> int:
     environ = dict(os.environ, COMPOSE_FILE=compose_files, DJANGO_CA_VERSION=release)
     errors = 0
 
-    extra_certonly_args = []
-    if image in ("ubuntu:focal",):
-        # ubuntu:focal does not always run non-interactively if --manual-public-ip-logging-ok is not given.
-        # This option is deprecated in newer certbot versions:
-        #   https://community.letsencrypt.org/t/manual-public-ip-logging-ok-deprecated-and-now-what/199274
-        extra_certonly_args.append("--manual-public-ip-logging-ok")
-
     with tempfile.TemporaryDirectory() as tmpdir:
         dest = utils.git_archive("HEAD", tmpdir)
 
@@ -320,21 +313,11 @@ def test_acme(release: str, image: str) -> int:
                 try:
                     compose_exec("certbot", "certbot", "register", stdout=subprocess.DEVNULL, env=environ)
                     compose_exec(
-                        "certbot",
-                        "django-ca-test-validation.sh",
-                        "http",
-                        "http-01.example.com",
-                        *extra_certonly_args,
-                        env=environ,
+                        "certbot", "django-ca-test-validation.sh", "http", "http-01.example.com", env=environ
                     )
                     ok("Created certificate via a http-01 challenge.")
                     compose_exec(
-                        "certbot",
-                        "django-ca-test-validation.sh",
-                        "dns",
-                        "dns-01.example.com",
-                        *extra_certonly_args,
-                        env=environ,
+                        "certbot", "django-ca-test-validation.sh", "dns", "dns-01.example.com", env=environ
                     )
                     ok("Created certificate via a dns-01 challenge.")
                 except subprocess.SubprocessError as ex:
