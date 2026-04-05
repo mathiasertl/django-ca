@@ -49,6 +49,7 @@ iterable
 linters
 localhost
 localsettings
+Memcached
 middlewares
 misconfiguration
 mixin

@@ -2,7 +2,7 @@
 # Minimum requirements for the build system to execute (PEP-518)
 # >= 61: Add pyproject.toml support and setuptools.config.setupcfg.read_configuration
 # >= 68.1: "Promote pyproject.toml’s [tool.setuptools] out of beta." in the ChangeLog
-requires = ["setuptools>=68.1", "wheel", "setuptools-scm>=8"]
+requires = ["setuptools>=68.1", "wheel", "setuptools-scm~=9.0"]
 build-backend = "setuptools.build_meta"
 
 [django-ca.release]
@@ -584,7 +584,7 @@ dev = [
     "rich>=14.2.0",
 ]
 dist = [
-    "setuptools-scm>=8.2.0",
+    "setuptools-scm~=9.0",
 ]
 docs = [
     "doc8>=1.1.2",
