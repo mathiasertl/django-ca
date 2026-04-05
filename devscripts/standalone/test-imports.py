@@ -131,14 +131,14 @@ for static_file in [
 try:
     from django_ca import tests
 
-    print(f"Was able to import django_ca.tests from {tests.__path__}")
+    print(f"Error: Was able to import django_ca.tests from {tests.__path__}")
     sys.exit(1)
 except ImportError:
     pass
 try:
     from django_ca.tests import base
 
-    print(f"Was able to import django_ca.tests from {base.__path__}")
+    print(f"Error: Was able to import django_ca.tests from {base.__path__}")
     sys.exit(1)
 except ImportError:
     pass
@@ -166,6 +166,8 @@ for extra in args.extra:
         from yaml import safe_load
     elif extra == "hsm":
         import pkcs11
+    elif extra == "memcached":
+        import pymemcache
     elif extra == "none":  # alias to no actions.
         pass
     else:
