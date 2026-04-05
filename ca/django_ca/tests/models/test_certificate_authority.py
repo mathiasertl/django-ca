@@ -52,7 +52,6 @@ from django_ca.tests.base.assertions import (
     assert_certificate,
     assert_crl,
     assert_crls,
-    assert_removed_in_310,
     assert_sign_cert_signals,
 )
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
@@ -239,22 +238,6 @@ def test_generate_crls_with_skip(settings: SettingsWrapper, usable_root: Certifi
     assert cache.get(pem_ca_key) is None
     assert cache.get(der_user_key) is None
     assert cache.get(pem_user_key) is None
-
-
-@pytest.mark.usefixtures("clear_cache")
-@pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_deprecated_cache_crls(usable_root: CertificateAuthority) -> None:
-    """Test cache_crls() deprecation."""
-    der_user_key = crl_cache_key(usable_root.serial, only_contains_user_certs=True)
-    pem_user_key = crl_cache_key(usable_root.serial, Encoding.PEM, only_contains_user_certs=True)
-    with assert_removed_in_310(r"^cache_crls\(\) is deprecated and will be removed in django-ca 3\.1\.$"):
-        usable_root.cache_crls(KEY_BACKEND_OPTIONS)
-
-    der_user_crl = cache.get(der_user_key)
-    pem_user_crl = cache.get(pem_user_key)
-    idp = get_idp(only_contains_user_certs=True)
-    assert_crl(der_user_crl, signer=usable_root, encoding=Encoding.DER, idp=idp)
-    assert_crl(pem_user_crl, signer=usable_root, encoding=Encoding.PEM, idp=idp)
 
 
 def test_max_path_length(root: CertificateAuthority, child: CertificateAuthority) -> None:
