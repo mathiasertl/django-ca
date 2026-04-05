@@ -53,12 +53,6 @@ Setup and packaging
 * **BACKWARDS INCOMPATIBLE:** For Docker images, the ``DJANGO_CA_STARTUP_REGENERATE_OCSP_KEYS`` environment
   variable was renamed to ``DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS`` for consistency.
 
-******
-ACMEv2
-******
-
-No changes yet.
-
 *************
 OCSP and CRLs
 *************
@@ -69,12 +63,6 @@ OCSP and CRLs
   `exclude` parameter to exclude CAs. This allows you to exclude CAs that require special key backend options
   (e.g. a password) from the default periodic task, and adding an additional, dedicated periodic task with key
   backend options for that CA.
-
-********
-REST API
-********
-
-No changes yet.
 
 ************
 Command-line
@@ -91,12 +79,6 @@ Command-line
 * :command:`manage.py generate_crls` and :command:`manage.py generate_ocsp_keys` now allow forcing generation
   of CRLs/OCSP keys (even if not due for renewal) and excluding CAs from renewal.
 
-***************
-Admin interface
-***************
-
-No changes yet.
-
 ************
 Celery tasks
 ************
@@ -111,13 +93,6 @@ Celery tasks
   the `force` parameter to force generating CRLs/OCSP keys, even if not due for renewal.
 * :py:func:`~django_ca.tasks.generate_crls` and :py:func:`~django_ca.tasks.generate_ocsp_keys` now support
   the `exclude` parameter to exclude CAs from generating CRLs/OCSP keys.
-
-
-**********
-Python API
-**********
-
-No changes yet.
 
 *****
 Views
