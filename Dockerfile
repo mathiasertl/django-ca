@@ -58,7 +58,7 @@ COPY ca/django_ca/__init__.py ca/django_ca/
 COPY pyproject.toml uv.lock ./
 
 ARG DJANGO_CA_VERSION
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DJANGO_CA=$DJANGO_CA_VERSION
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=$DJANGO_CA_VERSION
 RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
     uv sync --all-extras --no-default-groups --group gunicorn --group DjangoLTS
 
