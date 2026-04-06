@@ -229,7 +229,10 @@ raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["ca/django_ca"]
-exclude = ["ca/django_ca/tests"]
+exclude = [
+    "ca/django_ca/tests",
+    "pyproject.toml",
+]
 
 [tool.mypy]
 strict = true
