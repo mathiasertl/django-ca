@@ -8,12 +8,6 @@ Settings
 
 No changes yet.
 
-*******************
-Setup and packaging
-*******************
-
-No changes yet.
-
 ******
 ACMEv2
 ******
@@ -62,6 +56,12 @@ Views
 
 No changes yet.
 
+***************************
+Models and database support
+***************************
+
+No changes yet.
+
 ************
 Dependencies
 ************
@@ -73,3 +73,9 @@ Deprecation notices
 *******************
 
 None yet.
+
+*******************
+Setup and packaging
+*******************
+
+No changes yet.

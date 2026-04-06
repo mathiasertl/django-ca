@@ -2,17 +2,16 @@
 3.1.0 (TBR)
 ###########
 
+.. WARNING::
+
+   Old database migrations have been removed in this release. You can upgrade to this release *only* from
+   version 2.3.0 or later.
+
 ********
 Settings
 ********
 
 No changes yet.
-
-*******************
-Setup and packaging
-*******************
-
-* Switch to `hatch <https://github.com/pypa/hatch>`_ to build Python Wheels.
 
 ******
 ACMEv2
@@ -64,6 +63,12 @@ Views
 * Support for passing an ``int`` as the `expires` parameter for :py:class:`~django_ca.views.OCSPView` was
   removed (deprecated since 3.0.0).
 
+***************************
+Models and database support
+***************************
+
+* Removed initial set of migrations, squashed migrations where added in ``django-ca==2.3.0``.
+
 ************
 Dependencies
 ************
@@ -75,3 +80,9 @@ Deprecation notices
 *******************
 
 None yet.
+
+*******************
+Setup and packaging
+*******************
+
+* Switch to `hatch <https://github.com/pypa/hatch>`_ to build Python Wheels.
