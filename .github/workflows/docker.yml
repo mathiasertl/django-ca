@@ -36,7 +36,7 @@ jobs:
         run: uv sync --no-default-groups --group dist
 
       - name: Calculate version
-        run: echo "DJANGO_CA_VERSION=$(uv run -q python -m setuptools_scm)" >> $GITHUB_ENV
+        run: echo "DJANGO_CA_VERSION=$(uv run -q hatch -q version)" >> $GITHUB_ENV
 
       - name: Export version
         id: setuptools-scm
