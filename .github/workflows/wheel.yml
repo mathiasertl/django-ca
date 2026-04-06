@@ -13,18 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Acquire sources
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6.0.0
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: "3.14"
           architecture: x64
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6.6.1
+        uses: astral-sh/setup-uv@v8.0.0
         with:
           enable-cache: true
 
@@ -32,7 +32,7 @@ jobs:
         run: uv build
 
       - name: Archive Wheel
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: python-packages
           path: dist/
@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@v8.0.1
         with:
           name: python-packages
           path: dist/
@@ -79,7 +79,7 @@ jobs:
 
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@v8.0.1
         with:
           name: python-packages
           path: dist/
@@ -98,12 +98,12 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@v8.0.1
         with:
           name: python-packages
           path: dist/
       - name: Sign the dists with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v3.0.1
+        uses: sigstore/gh-action-sigstore-python@v3.3.0
         with:
           inputs: >-
             ./dist/*.tar.gz
