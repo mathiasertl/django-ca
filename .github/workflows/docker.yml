@@ -14,7 +14,7 @@ jobs:
     name: Calculate version
     runs-on: ubuntu-latest
     outputs:
-      django-ca-version: ${{ steps.setuptools-scm.outputs.DJANGO_CA_VERSION }}
+      django-ca-version: ${{ steps.django-ca-version.outputs.DJANGO_CA_VERSION }}
     steps:
       - name: Acquire sources
         uses: actions/checkout@v6.0.2
@@ -39,7 +39,7 @@ jobs:
         run: echo "DJANGO_CA_VERSION=$(uv run -q hatch -q version)" >> $GITHUB_ENV
 
       - name: Export version
-        id: setuptools-scm
+        id: django-ca-version
         run: echo "DJANGO_CA_VERSION=$DJANGO_CA_VERSION" | tee -a $GITHUB_OUTPUT
 
   test:

@@ -222,12 +222,12 @@ parts:
           - command: mkdir -p {{ SRC_DIR }}
           - command: |
               cd /vagrant && \
-              uv run -q --no-project --isolated --with setuptools-scm python -m setuptools_scm
+              uv run -q --no-project --isolated --with hatch hatch --no-color -q version 2> /dev/null | tail -n 1
             run:
               test:
                 - regex: "^(?P<DJANGO_CA_VERSION>.*)$"
               update_environment:
-                SETUPTOOLS_SCM_PRETEND_VERSION_FOR_django_ca: "{{ DJANGO_CA_VERSION }}"
+                SETUPTOOLS_SCM_PRETEND_VERSION: "{{ DJANGO_CA_VERSION }}"
           - command: cd /vagrant && git archive HEAD | tar -x -C {{ SRC_DIR }}/
         doc: false
     chdir: "{{ SRC_BASE_DIR }}"
