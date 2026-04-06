@@ -224,6 +224,9 @@ source = "vcs"
 # needs to resolve the version.
 fallback-version = "0.0.0"
 
+# Exclude local version, as uploading to TestPyPI will fail with it.
+raw-options = { local_scheme = "no-local-version" }
+
 [tool.hatch.build.targets.wheel]
 packages = ["ca/django_ca"]
 exclude = ["ca/django_ca/tests"]
