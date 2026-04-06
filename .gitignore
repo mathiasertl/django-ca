@@ -35,7 +35,7 @@
 /docs/build/
 /docs/source/_files/compose.yaml
 /docs/source/_files/openapi.json
-/fab.conf
+/htmlcov/
 /include/
 /lib/
 /local/

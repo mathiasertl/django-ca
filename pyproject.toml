@@ -227,6 +227,20 @@ fallback-version = "0.0.0"
 # Exclude local version, as uploading to TestPyPI will fail with it.
 raw-options = { local_scheme = "no-local-version" }
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+    ".env.example",
+    ".github",
+    ".pre-commit-config.yaml",
+    ".readthedocs.yaml",
+    ".stunnel4*",
+    "Dockerfile*",
+    "compose.yaml",
+    "dev.py",
+    "devscripts/",
+    "tox.ini",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["ca/django_ca"]
 exclude = [
