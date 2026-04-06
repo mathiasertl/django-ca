@@ -12,7 +12,7 @@ No changes yet.
 Setup and packaging
 *******************
 
-No changes yet.
+* Switch to `hatch <https://github.com/pypa/hatch>`_ to build Python Wheels.
 
 ******
 ACMEv2

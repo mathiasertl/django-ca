@@ -2,8 +2,8 @@
 # Minimum requirements for the build system to execute (PEP-518)
 # >= 61: Add pyproject.toml support and setuptools.config.setupcfg.read_configuration
 # >= 68.1: "Promote pyproject.toml’s [tool.setuptools] out of beta." in the ChangeLog
-requires = ["setuptools>=68.1", "wheel", "setuptools-scm~=9.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [django-ca.release]
 # https://devguide.python.org/versions/#versions
@@ -126,6 +126,7 @@ authors = [
 ]
 license = "GPL-3.0-or-later"
 description = "A Django app providing a TLS certificate authority."
+readme = {file = "docs/source/intro.rst", content-type = "text/x-rst"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: Django :: 5.2",
@@ -145,7 +146,7 @@ classifiers = [
 ]
 
 # Dynamic metadata, further specified in the tool.setuptools.dynamic section below
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 
 # Dependency information
 requires-python = ">=3.11"
@@ -215,6 +216,17 @@ ignore = [
 ignore-path = [
     "docs/source/generated/",
 ]
+
+[tool.hatch.version]
+source = "vcs"
+# `fallback-version` is used when uv is called without .git being present. This
+# is at least used by the Docker image, as `uv sync --no-install-project` still
+# needs to resolve the version.
+fallback-version = "0.0.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ca/django_ca"]
+exclude = ["ca/django_ca/tests"]
 
 [tool.mypy]
 strict = true
@@ -531,18 +543,6 @@ max-returns = 8
 
 # Maximum number of statements in function / method body (see R0915).
 max-statements = 60
-
-[tool.setuptools.dynamic]
-# NOTE: readme is equivalent to long_description in setup.cfg
-readme = {file = ["docs/source/intro.rst"], content-type = "text/x-rst"}
-
-[tool.setuptools.packages.find]
-where = ["ca"]
-include = ["django_ca*"]
-exclude = ["django_ca.tests*"]
-
-[tool.setuptools_scm]
-local_scheme = "no-local-version"
 
 [tool.uv]
 required-version = ">=0.11.3"
