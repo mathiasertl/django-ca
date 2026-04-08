@@ -451,6 +451,9 @@ filterwarnings = [
     # django-ninja==1.5.1
     #   Found in 1.5.1, only shows up in Python 3.14.
     "ignore:'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16::ninja.signature.utils",
+
+    # ignore warning for cryptography>=46.0.5
+    "ignore:SECT.* will be removed in the next release.::",
 ]
 
 [tool.ruff]
@@ -638,7 +641,7 @@ gunicorn = [ "gunicorn>=23" ]
 "Django5.2" = ["Django~=5.2.0"]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography45" = ["cryptography~=45.0"]
-"cryptography46" = ["cryptography~=46.0,<46.0.5"]
+"cryptography46" = ["cryptography~=46.0"]
 "acme5.0" = ["acme~=5.0.0"]
 "acme5.1" = ["acme~=5.1.0"]
 "acme5.2" = ["acme~=5.2.0"]
