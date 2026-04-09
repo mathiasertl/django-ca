@@ -209,7 +209,7 @@ class ExpiresAction(SingleValueAction[str, timedelta]):
         if parsed <= 0:
             raise argparse.ArgumentError(self, f"{value}: Value must not be negative.")
 
-        return timedelta(**{self.unit: parsed})  # type: ignore[misc]  # mypy does not expect Literal as str
+        return timedelta(**{self.unit: parsed})
 
 
 class FormatAction(SingleValueAction[str, Encoding]):
