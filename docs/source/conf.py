@@ -385,6 +385,7 @@ nitpick_ignore = [
     ("py:class", "RootModelRootType"),
     ("py:class", "pathlib._local.Path"),
     ("py:class", "JSON"),
+    ("py:func", "pydantic.main.BaseModel.model_validate"),
     # annotated_types does not have intersphinx mapping
     ("py:class", "annotated_types.Ge"),
 ]
