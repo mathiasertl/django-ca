@@ -68,6 +68,9 @@ Models and database support
 ***************************
 
 * Removed initial set of migrations, squashed migrations where added in ``django-ca==2.3.0``.
+* Reduced the maximum length for the name of certificate authorities to 255, from 256. The field is indexed
+  and MariaDB does not allow an index with a length greater then 255 characters.
+* Names for watchers can now be up to 255 characters long (from 64).
 
 ************
 Dependencies

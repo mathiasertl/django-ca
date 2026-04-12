@@ -197,7 +197,7 @@ class DjangoCAModel(models.Model):
 class Watcher(models.Model):
     """A watcher represents an email address that will receive notifications about expiring certificates."""
 
-    name = models.CharField(max_length=64, blank=True, default="", verbose_name=_("CommonName"))
+    name = models.CharField(max_length=255, blank=True, default="", verbose_name=_("CommonName"))
     mail = models.EmailField(verbose_name=_("E-Mail"), unique=True)
 
     if typing.TYPE_CHECKING:
@@ -490,7 +490,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         certificate_set: "CertificateManager"
         acmeaccount_set: "manager.RelatedManager[AcmeAccount]"
 
-    name = models.CharField(max_length=256, help_text=_("A human-readable name"), unique=True)
+    name = models.CharField(max_length=255, help_text=_("A human-readable name"), unique=True)
     enabled = models.BooleanField(default=True)
     parent = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
