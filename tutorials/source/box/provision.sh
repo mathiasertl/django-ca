@@ -2,9 +2,12 @@
 #
 # Provisioning script to prepare the box used in the tutorial
 
-# Make sure that apt runs non-interactively
-echo DEBIAN_FRONTEND=noninteractive >> /home/vagrant/.profile
-echo DEBIAN_FRONTEND=noninteractive >> /root/.profile
+# Make sure that apt in this provisioning script runs non-interactively
+export DEBIAN_FRONTEND=noninteractive
+
+# Make sure that apt in the tutorial runs non-interactively
+echo "export DEBIAN_FRONTEND=noninteractive" >> /home/vagrant/.profile
+echo "export DEBIAN_FRONTEND=noninteractive" >> /root/.profile
 
 # Update the system
 apt-get update
