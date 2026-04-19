@@ -347,8 +347,10 @@ class SettingsModel(BaseModel):
         default=2048,
         description="The minimum key size for new CAs (not used for CAs based on EC, Ed448 or Ed25519).",
     )
-    CA_NOTIFICATION_DAYS: tuple[int, ...] = Field(
-        default=(14, 7, 3, 1),
+    CA_NOTIFICATION_DAYS: tuple[
+        Annotated[timedelta, Ge(timedelta(days=1)), Le(timedelta(days=355)), DayValidator], ...
+    ] = Field(
+        default=(timedelta(days=14), timedelta(days=7), timedelta(days=3), timedelta(days=1)),
         description="Days before expiry that certificate watchers will receive notifications.",
         examples=[(14, 7, 3, 1)],
     )

@@ -763,6 +763,21 @@ def test_ca_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
     }
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    (
+        ((7, 5), (timedelta(days=7), timedelta(days=5))),
+        (("P7D", "P5D"), (timedelta(days=7), timedelta(days=5))),
+    ),
+)
+def test_ca_notification_days(
+    settings: SettingsWrapper, value: tuple[Any, ...], expected: tuple[timedelta, ...]
+) -> None:
+    """Test valid values for CA_NOTIFICATION_DAYS."""
+    settings.CA_NOTIFICATION_DAYS = value
+    assert model_settings.CA_NOTIFICATION_DAYS == expected
+
+
 def test_ca_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
     """Test that the default key backend is configured."""
     # Note: setting value to None (=removing the value) does not currently call settings_changed, so our

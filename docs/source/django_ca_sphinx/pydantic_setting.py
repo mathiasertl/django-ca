@@ -161,25 +161,27 @@ class PydanticSettingDirective(SphinxDirective):
         """
         yaml_value = env_value = value
 
+        def _convert_value(v: Any) -> Any:
+            if isinstance(v, BaseModel):
+                return v.model_dump(mode="json", exclude_unset=True)
+            if isinstance(v, timedelta):
+                return TypeAdapter(timedelta).dump_json(value).decode("ascii").strip('"')
+            return v
+
         if isinstance(value, bool):
             if value is True:
                 env_value = "true"
             else:
                 env_value = "false"
         elif isinstance(value, timedelta):
-            type_adapter = TypeAdapter(timedelta)
-            env_value = yaml_value = type_adapter.dump_json(value).decode("ascii").strip('"')
+            env_value = yaml_value = _convert_value(value)
         elif isinstance(value, dict):
-            yaml_value = {}
-            for k, v in value.items():
-                if isinstance(v, BaseModel):
-                    yaml_value[k] = v.model_dump(mode="json", exclude_unset=True)
-                else:
-                    yaml_value[k] = v
+            yaml_value = {k: _convert_value(v) for k, v in value.items()}
             value = yaml_value
             env_value = json.dumps(yaml_value)
         elif isinstance(value, list | tuple):
-            env_value = json.dumps(value)
+            yaml_value = [_convert_value(v) for v in value]
+            env_value = json.dumps(yaml_value)
         elif isinstance(value, BaseModel):
             yaml_value = value.model_dump(mode="json")
             env_value = value.model_dump_json().strip('"')

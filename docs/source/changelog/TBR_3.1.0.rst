@@ -11,7 +11,7 @@
 Settings
 ********
 
-No changes yet.
+* :ref:`settings-ca-notification-days` can now be set using using an ISO 8601 timedelta string.
 
 ******
 ACMEv2

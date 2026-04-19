@@ -327,6 +327,8 @@ CA_MIN_KEY_SIZE
 
    The value must be a power of two (e.g. ``2048``, ``4096``, ...) and no lower then ``1024``.
 
+.. _settings-ca-notification-days:
+
 CA_NOTIFICATION_DAYS
     .. pydantic-setting:: CA_NOTIFICATION_DAYS
 
