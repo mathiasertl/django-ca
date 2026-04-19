@@ -548,6 +548,8 @@ def test_ca_acme_cert_validity_limits(
     (
         (timedelta(seconds=59), "Input should be greater than or equal to 1 minute"),
         (timedelta(days=2), "Input should be less than or equal to 1 day"),
+        (2, "Input should be less than or equal to 1 day"),
+        ("P2D", "Input should be less than or equal to 1 day"),
     ),
 )
 def test_ca_acme_order_validity_limits(settings: SettingsWrapper, value: timedelta, message: str) -> None:

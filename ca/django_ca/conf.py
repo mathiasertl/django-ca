@@ -53,10 +53,8 @@ from django_ca.pydantic.validators import (
 from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
 
 BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
-# BeforeValidator currently does not work together with Le(), see:
-#   https://github.com/pydantic/pydantic/issues/10459
-# TimedeltaAsDays = Annotated[timedelta, BeforeValidator(timedelta_as_number_parser("days"))]
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
+TimedeltaAsDays = Annotated[timedelta, DayValidator]
 AcmeCertValidity = Annotated[PositiveTimedelta, Ge(timedelta(days=1)), Le(timedelta(days=365)), DayValidator]
 
 _KT = TypeVar("_KT")
@@ -281,7 +279,7 @@ class SettingsModel(BaseModel):
     CA_DEFAULT_ELLIPTIC_CURVE: AnnotatedEllipticCurveName = Field(
         default="secp256r1", description="The default elliptic curve for EC based CAs."
     )
-    CA_DEFAULT_EXPIRES: Annotated[PositiveTimedelta, Ge(timedelta(days=1)), DayValidator] = Field(
+    CA_DEFAULT_EXPIRES: Annotated[timedelta, Ge(timedelta(days=1)), DayValidator] = Field(
         default=timedelta(days=100),
         description="The default validity time for a new certificate.",
         examples=[timedelta(days=45), 45],
