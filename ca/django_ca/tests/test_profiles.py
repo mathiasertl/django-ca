@@ -33,7 +33,7 @@ from django_ca.profiles import Profile, get_profile, profile, profiles
 from django_ca.pydantic import NameModel
 from django_ca.signals import pre_sign_cert
 from django_ca.tests.base.assertions import assert_extensions
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.constants import CERT_DATA, CRYPTOGRAPHY_VERSION, TIMESTAMPS
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.mocks import mock_signal
 from django_ca.tests.base.utils import (
@@ -79,12 +79,14 @@ def create_cert(
     return cert
 
 
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (47,), reason="Output changed in cryptography 47.")
 def test_doctests_module(doctest_globs: dict[str, Any]) -> None:  # pylint: disable=redefined-outer-name
     """Run doctests for this module."""
     failures, *_tests = doctest_module("django_ca.profiles", globs=doctest_globs)
     assert failures == 0, f"{failures} doctests failed, see above for output."
 
 
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (47,), reason="Output changed in cryptography 47.")
 def test_doctest_documentation(doctest_globs: dict[str, Any]) -> None:  # pylint: disable=redefined-outer-name
     """Test python/profiles.rst."""
     failures, *_tests = doctest.testfile("../../../docs/source/python/profiles.rst", globs=doctest_globs)

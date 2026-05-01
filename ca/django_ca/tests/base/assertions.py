@@ -29,7 +29,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa, x448, x25519
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import ExtensionOID
-from OpenSSL.crypto import FILETYPE_PEM, X509Store, X509StoreContext, load_certificate
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -53,6 +52,7 @@ from django_ca.tests.base.utils import (
     distribution_point,
     get_idp,
     uri,
+    verify_chain_signatures,
 )
 
 
@@ -487,23 +487,7 @@ def assert_signature(chain: Iterable[CertificateAuthority], cert: Certificate | 
 
     .. seealso:: http://stackoverflow.com/questions/30700348
     """
-    store = X509Store()
-
-    # set the time of the OpenSSL context - freezegun doesn't work, because timestamp comes from OpenSSL
-    now = datetime.now(tz=UTC).replace(tzinfo=None)
-    store.set_time(now)
-
-    for elem in chain:
-        ca = load_certificate(FILETYPE_PEM, elem.pub.pem.encode())
-        store.add_cert(ca)
-
-        # Verify that the CA itself is valid
-        store_ctx = X509StoreContext(store, ca)
-        assert store_ctx.verify_certificate() is None  # type: ignore[func-returns-value]
-
-    loaded_cert = load_certificate(FILETYPE_PEM, cert.pub.pem.encode())
-    store_ctx = X509StoreContext(store, loaded_cert)
-    assert store_ctx.verify_certificate() is None  # type: ignore[func-returns-value]
+    verify_chain_signatures(list(reversed([*chain, cert])))
 
 
 @contextmanager

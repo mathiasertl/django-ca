@@ -83,7 +83,7 @@ def test_public_key_caching() -> None:
 )
 def test_not_implemented_error(key_class: type[PKCS11PrivateKeyTypes]) -> None:
     """Test methods that are not implemented."""
-    key: PKCS11PrivateKeyTypes = key_class(None, "key_id", "key_label")
+    key: PKCS11PrivateKeyTypes = key_class(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
 
     error = r"^Private numbers cannot be retrieved for keys stored in a hardware security module \(HSM\)\.$"
     with pytest.raises(NotImplementedError, match=error):
@@ -104,14 +104,14 @@ def test_not_implemented_error(key_class: type[PKCS11PrivateKeyTypes]) -> None:
 
 def test_rsa_with_sha3_error() -> None:
     """Test signing data with SHA3, which is unsupported (by the underlying library)."""
-    key = PKCS11RSAPrivateKey(None, "key_id", "key_label")
+    key = PKCS11RSAPrivateKey(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
     with pytest.raises(ValueError, match=r"^SHA3 is not support by the HSM backend\.$"):
         key.sign(b"", PKCS1v15(), hashes.SHA3_256())
 
 
 def test_rsa_with_unsupported_algorithm() -> None:
     """Test signing data with an unsupported algorithms."""
-    key = PKCS11RSAPrivateKey(None, "key_id", "key_label")
+    key = PKCS11RSAPrivateKey(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
     with pytest.raises(
         ValueError,
         match=r"^blake2s with EMSA-PKCS1-v1_5 padding: Unknown signing algorithm and/or padding\.$",
@@ -121,7 +121,7 @@ def test_rsa_with_unsupported_algorithm() -> None:
 
 def test_elliptic_curve_key_not_implemented_error() -> None:
     """Test methods that are not implemented for elliptic curve keys."""
-    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")
+    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
 
     with pytest.raises(
         NotImplementedError,
@@ -132,7 +132,7 @@ def test_elliptic_curve_key_not_implemented_error() -> None:
 
 def test_elliptic_curve_with_sha3_error() -> None:
     """Test signing data with SHA3, which is unsupported (by the underlying library)."""
-    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")
+    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
     algo = ec.ECDSA(hashes.SHA3_256())
     with pytest.raises(ValueError, match=r"^SHA3 is not support by the HSM backend\.$"):
         key.sign(b"", algo)
@@ -140,7 +140,7 @@ def test_elliptic_curve_with_sha3_error() -> None:
 
 def test_elliptic_curve_with_unsupported_algorithm() -> None:
     """Test signing data with an unsupported algorithm."""
-    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")
+    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
     algo = ec.ECDSA(hashes.BLAKE2s(32))
     with pytest.raises(ValueError, match=r"^blake2s: Signature algorithm is not supported\.$"):
         key.sign(b"", algo)
@@ -148,7 +148,7 @@ def test_elliptic_curve_with_unsupported_algorithm() -> None:
 
 def test_elliptic_curve_with_prehashed_data() -> None:
     """Test signing data with prehashed data."""
-    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")
+    key = PKCS11EllipticCurvePrivateKey(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
     algo = ec.ECDSA(Prehashed(hashes.BLAKE2s(32)))
     with pytest.raises(ValueError, match=r"^Signing of prehashed data is not supported\.$"):
         key.sign(b"", algo)
@@ -159,7 +159,7 @@ def test_ed_key_not_implemented_error(
     key_class: type[PKCS11Ed25519PrivateKey | PKCS11Ed448PrivateKey],
 ) -> None:
     """Test methods that are not implemented for Ed448/Ed25519 keys."""
-    key: PKCS11Ed25519PrivateKey | PKCS11Ed448PrivateKey = key_class(None, "key_id", "key_label")
+    key: PKCS11Ed25519PrivateKey | PKCS11Ed448PrivateKey = key_class(None, "key_id", "key_label")  # type: ignore[arg-type]  # no session needed
 
     with pytest.raises(
         NotImplementedError,

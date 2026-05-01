@@ -44,10 +44,10 @@ from django.utils.translation import gettext_lazy as _
 from django_ca.typehints import (
     AccessMethodName,
     CertificateExtensionKey,
-    CertificateRevocationListEncoding,
     CertificateRevocationListEncodingNames,
     ConfigurableExtensionKey,
     EllipticCurveName,
+    EncodingNames,
     EndEntityCertificateExtensionKey,
     ExtensionKey,
     GeneralName,
@@ -81,12 +81,21 @@ ACCESS_METHOD_TYPES: MappingProxyType[AccessMethodName, x509.ObjectIdentifier] =
 
 #: Types of encodings available for certificate revocation lists (CRLs).
 CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES: MappingProxyType[
-    CertificateRevocationListEncodingNames, CertificateRevocationListEncoding
+    CertificateRevocationListEncodingNames, Encoding
 ] = MappingProxyType({"PEM": Encoding.PEM, "DER": Encoding.DER})
 
 DEFAULT_STORAGE_BACKEND = "django_ca.key_backends.storages.StoragesBackend"
 DEFAULT_OCSP_KEY_BACKEND = "django_ca.key_backends.storages.StoragesOCSPBackend"
 DEFAULT_KEY_BACKEND_KEY = DEFAULT_OCSP_KEY_BACKEND_KEY = "default"
+
+ENCODING_NAMES: dict[Encoding, EncodingNames] = {
+    Encoding.PEM: "PEM",
+    Encoding.DER: "DER",
+    Encoding.OpenSSH: "OpenSSH",
+    Encoding.Raw: "Raw",
+    Encoding.X962: "X962",
+    Encoding.SMIME: "SMIME",
+}
 
 #: Mapping of elliptic curve names to the implementing classes
 ELLIPTIC_CURVE_TYPES: MappingProxyType[EllipticCurveName, type[ec.EllipticCurve]] = MappingProxyType(

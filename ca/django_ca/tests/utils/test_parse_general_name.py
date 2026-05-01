@@ -109,6 +109,13 @@ def test_unicode_domains() -> None:
     assert parse_general_name("dns:*.exämple.com") == dns("*.xn--exmple-cua.com")
 
 
+def test_parse_othername() -> None:
+    """Test parsing other names."""
+    assert parse_general_name("otherName:2.5.4.3;UTF8:example.com") == x509.OtherName(
+        type_id=x509.ObjectIdentifier("2.5.4.3"), value=b"\x0c\x0bexample.com"
+    )
+
+
 def test_wrong_email() -> None:
     """Test using an invalid email."""
     with pytest.raises(ValueError, match=r"^Invalid domain: user@:"):

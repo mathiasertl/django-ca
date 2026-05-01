@@ -16,6 +16,7 @@
 from typing import Any, get_args
 
 from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding
 
 import pytest
 
@@ -38,6 +39,13 @@ def test_configurable_extension_keys() -> None:
     keys = get_args(typehints.ConfigurableExtensionKey)
     expected = sorted((ext.oid for ext in get_args(typehints.ConfigurableExtensionType)), key=oid_sorter)
     actual = sorted((constants.CONFIGURABLE_EXTENSION_KEY_OIDS[v] for v in keys), key=oid_sorter)
+    assert actual == expected
+
+
+def test_encoding_names() -> None:
+    """Test completeness of encoding names typehints."""
+    expected = sorted([attr for attr in dir(Encoding) if isinstance(getattr(Encoding, attr), Encoding)])
+    actual = sorted(get_args(typehints.EncodingNames))
     assert actual == expected
 
 

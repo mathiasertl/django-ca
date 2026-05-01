@@ -15,7 +15,7 @@
 
 from collections.abc import Iterator
 
-from pkcs11._pkcs11 import Session
+from pkcs11 import Session
 
 from django.conf import settings
 
@@ -48,7 +48,7 @@ def session_pool() -> Iterator[None]:
 
 
 @pytest.fixture
-def session(softhsm_token: str, session_pool: None) -> Session:  # pylint: disable=unused-argument
+def session(softhsm_token: str, session_pool: None) -> Iterator[Session]:  # pylint: disable=unused-argument
     """Fixture providing a fresh (read-only) session."""
     with SessionPool(settings.PKCS11_PATH, softhsm_token, None, settings.PKCS11_USER_PIN) as session:
         yield session

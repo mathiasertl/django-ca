@@ -31,7 +31,7 @@ But you can also create your own profile manually to create a special type of ce
    ... )
    >>> ca = CertificateAuthority.objects.first()
    >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)
-   <Certificate(subject=<Name(C=AT,CN=example.com)>, ...)>
+   <Certificate(subject=<Name(CN=example.com,C=AT)>, ...)>
 
 
 .. autoclass:: django_ca.profiles.Profile

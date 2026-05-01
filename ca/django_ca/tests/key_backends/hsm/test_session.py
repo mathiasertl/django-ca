@@ -17,7 +17,7 @@
 import subprocess
 from collections.abc import Iterator
 
-from pkcs11._pkcs11 import Session
+from pkcs11 import Session
 
 from django.conf import settings
 from django.utils.crypto import get_random_string

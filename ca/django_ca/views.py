@@ -55,7 +55,7 @@ from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
 from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.querysets import CertificateRevocationListQuerySet
-from django_ca.typehints import CertificateRevocationListEncoding, SignatureHashAlgorithm
+from django_ca.typehints import SignatureHashAlgorithm
 from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
 
 log = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class CertificateRevocationListView(View):
     """Generic view that provides Certificate Revocation Lists (CRLs)."""
 
     # parameters for the CRL itself
-    type: CertificateRevocationListEncoding = Encoding.DER
+    type: Encoding = Encoding.DER
     """Encoding for CRL."""
 
     only_contains_ca_certs: bool = False
@@ -107,7 +107,7 @@ class CertificateRevocationListView(View):
         """
         return ca.key_backend.get_use_private_key_options(ca, {})
 
-    def fetch_crl(self, serial: str, encoding: CertificateRevocationListEncoding) -> bytes:
+    def fetch_crl(self, serial: str, encoding: Encoding) -> bytes:
         """Actually fetch the CRL (nested function so that we can easily catch any exception)."""
         crl_scope_validator(
             only_contains_ca_certs=self.only_contains_ca_certs,
@@ -177,7 +177,7 @@ class CertificateRevocationListView(View):
             if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
                 return HttpResponseBadRequest("Invalid encoding requested.", content_type="text/plain")
             # TYPEHINT NOTE: type is verified in the previous line
-            encoding = cast(CertificateRevocationListEncoding, parse_encoding(get_encoding))
+            encoding = parse_encoding(get_encoding)
         else:
             encoding = self.type
 

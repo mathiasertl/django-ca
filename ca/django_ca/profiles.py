@@ -104,7 +104,7 @@ class Profile(ProfileConfigurationModel):
             >>> key_backend_options = StoragesUsePrivateKeyOptions(password=None)
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
-            <Certificate(subject=<Name(...,CN=example.com)>, ...)>
+            <Certificate(subject=<Name(CN=example.com,...)>, ...)>
 
         .. versionchanged:: 2.4.0
 

@@ -18,6 +18,7 @@ from typing import Any, TypeVar, get_args
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django_ca import constants, typehints
 from django_ca.constants import CRYPTOGRAPHY_VERSION, ExtensionOID
@@ -106,6 +107,14 @@ def test_elliptic_curves() -> None:
     # pragma: only cg<=46.0.5: SECT* elliptic curves are removed.
     names = {e.name: e for e in subclasses if not e.name.startswith("sect")}  # type: ignore[attr-defined]
     assert constants.ELLIPTIC_CURVE_TYPES == names
+
+
+def test_encoding_names() -> None:
+    """Test that ``utils.ENCODING_NAMES`` covers all known encodings."""
+    expected = set(
+        getattr(Encoding, attr) for attr in dir(Encoding) if isinstance(getattr(Encoding, attr), Encoding)
+    )
+    assert set(constants.ENCODING_NAMES) == expected
 
 
 def test_end_entity_certificate_extension_keys_typehints() -> None:

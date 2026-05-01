@@ -43,7 +43,7 @@ from django_ca.pydantic.validators import (
     is_power_two_validator,
     url_validator,
 )
-from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
+from django_ca.typehints import EncodingNames, ParsableKeyType, SignatureHashAlgorithm
 
 #: Regular expression to match general names.
 GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
@@ -71,7 +71,7 @@ def parse_name_rfc4514(value: str) -> x509.Name:
     >>> parse_name_rfc4514("CN=example.com")
     <Name(CN=example.com)>
     >>> parse_name_rfc4514("C=AT,O=MyOrg,OU=MyOrgUnit,CN=example.com")
-    <Name(C=AT,O=MyOrg,OU=MyOrgUnit,CN=example.com)>
+    <Name(CN=example.com,OU=MyOrgUnit,O=MyOrg,C=AT)>
     """
     try:
         name = x509.Name.from_rfc4514_string(
@@ -281,7 +281,7 @@ def merge_x509_names(base: x509.Name, update: x509.Name) -> x509.Name:
         ... ])
         >>> update = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'example.com')])
         >>> merge_x509_names(base, update)
-        <Name(C=AT,O=Example Org,OU=Example Org Unit,CN=example.com)>
+        <Name(CN=example.com,OU=Example Org Unit,O=Example Org,C=AT)>
     """
     attributes: list[x509.NameAttribute[str | bytes]] = []
     if any(name_attr.oid not in model_settings.CA_DEFAULT_NAME_ORDER for name_attr in base):
@@ -777,17 +777,31 @@ def parse_encoding(value: str) -> Encoding:
     alias for ``"DER"``.
 
         >>> parse_encoding("PEM")
-        <Encoding.PEM: 'PEM'>
+        Encoding.PEM
         >>> parse_encoding("ASN1")
-        <Encoding.DER: 'DER'>
+        Encoding.DER
     """
     if value == "ASN1":
         value = "DER"
 
     try:
-        return Encoding[value]
-    except KeyError as e:
-        raise ValueError(f"Unknown encoding: {value}") from e
+        if constants.CRYPTOGRAPHY_VERSION < (47,):  # pragma: only cryptography<47
+            value = Encoding[value]  # type: ignore[misc]
+        else:  # pragma: only cryptography>=47
+            value = getattr(Encoding, value)
+    except (KeyError, AttributeError) as ex:
+        raise ValueError(f"Unknown encoding: {value}") from ex
+
+    assert isinstance(value, Encoding)
+    return value
+
+
+def format_encoding(value: Encoding) -> EncodingNames:
+    """Format an encoding."""
+    if constants.CRYPTOGRAPHY_VERSION < (47,):  # pragma: only cryptography<47
+        return value.name  # type: ignore[no-any-return,attr-defined]
+
+    return constants.ENCODING_NAMES[value]  # pragma: only cryptography>=47
 
 
 def get_cert_builder(not_after: datetime, serial: int | None = None) -> x509.CertificateBuilder:
@@ -868,8 +882,9 @@ def get_crl_cache_key(
     if only_some_reasons is not None:
         reasons = ",".join(sorted(reason.name for reason in only_some_reasons))
 
+    encoding_name = format_encoding(encoding)
     return (
-        f"crl_{serial}_{encoding.name}_{only_contains_ca_certs}_{only_contains_user_certs}_"
+        f"crl_{serial}_{encoding_name}_{only_contains_ca_certs}_{only_contains_user_certs}_"
         f"{only_contains_attribute_certs}_{reasons}"
     )
 

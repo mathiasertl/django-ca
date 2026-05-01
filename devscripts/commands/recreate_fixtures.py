@@ -33,6 +33,8 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 from django.test import override_settings
 from django.urls import reverse
 
+from freezegun import freeze_time
+
 from devscripts import config
 from devscripts.commands import DevCommand
 
@@ -664,8 +666,12 @@ def recreate_fixtures(  # pylint: disable=too-many-locals  # noqa: PLR0915
             create_certs(dest, ca_instances, now, delay, data)
             create_special_certs(dest, now, delay, data)
 
-            # Rebuild CRLs
-            recreate_crls(dest)
+            # Rebuild CRLs - must run inside freeze_time because cryptography's Rust
+            # extension caches datetime.datetime on first use; if that first use happened
+            # inside a freeze_time context, it cached FakeDatetime. A real datetime.now()
+            # call outside freeze_time would then fail the isinstance check in the Rust code.
+            with freeze_time(now):
+                recreate_crls(dest)
 
         # Rebuild example OCSP requests
         if regenerate_ocsp:

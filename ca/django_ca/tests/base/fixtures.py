@@ -17,6 +17,7 @@
 
 import copy
 import os
+import re
 import subprocess
 from collections.abc import Iterator
 from datetime import timedelta
@@ -198,7 +199,10 @@ def hostname(ca_name: str) -> str:
 
     The value is unique for each test, and it includes the CA name, which includes the test name.
     """
-    return f"{ca_name.replace('_', '-')}.example.com"[-64:].lstrip("-.")
+    ca_name = ca_name.replace("_", "-").lower()
+    # Make sure that parametrized values (e.g. "test_something[foo]") are a valid domain name.
+    ca_name = re.sub(r"\[(\w+)\]", r".\1", ca_name)
+    return f"{ca_name}.example.com"[-64:].lstrip("-.")
 
 
 @pytest.fixture(params=interesting_certificate_names)

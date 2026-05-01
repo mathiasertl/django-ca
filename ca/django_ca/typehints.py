@@ -23,7 +23,6 @@ import packaging.version
 import cryptography
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.core.management.base import CommandParser
 
@@ -227,7 +226,6 @@ EllipticCurveName = Literal[
 ]
 """Valid elliptic curve names."""
 
-CertificateRevocationListEncoding = Literal[Encoding.PEM, Encoding.DER]
 CertificateRevocationListEncodingNames = Literal["PEM", "DER"]
 
 
@@ -251,6 +249,9 @@ ConfigurableExtensionType = (
     | x509.SubjectAlternativeName
     | x509.TLSFeature
 )
+
+#: A list of possible names for :py:class:`~cryptography.hazmat.primitives.serialization.Encoding` instances.
+EncodingNames = Literal["PEM", "DER", "OpenSSH", "Raw", "X962", "SMIME"]
 
 #: :py:class:`~cg:cryptography.x509.ExtensionType` classes that may appear in an end entity certificate.
 #:

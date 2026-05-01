@@ -68,6 +68,7 @@ from django_ca.tests.base.utils import (
     certificate_policies,
     cmd,
     cmd_e2e,
+    cn,
     crl_distribution_points,
     distribution_point,
     dns,
@@ -183,7 +184,7 @@ def init_ca_e2e(
 
     ca = CertificateAuthority.objects.get(name=name)
     assert_post_create_ca(post, ca)
-    assert_signature([*chain, ca], ca)
+    assert_signature(chain, ca)
     ca.full_clean()  # assert e.g. max_length in serials
     return ca
 
@@ -550,6 +551,7 @@ def test_add_extensions_with_formatting_without_uri(
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("mock_tasks")
+@pytest.mark.django_db
 def test_sign_extensions(hostname: str, ca_name: str, usable_root: CertificateAuthority) -> None:
     """Test adding extensions for signed certificates."""
     ca = init_ca_e2e(
@@ -1037,7 +1039,6 @@ def test_multiple_ocsp_and_ca_issuers(hostname: str, ca_name: str, usable_root: 
 @pytest.mark.usefixtures("tmpcadir")
 def test_non_default_key_backend_with_rsa_key(
     ca_name: str,
-    rfc4514_subject: str,
     secondary_backend: StoragesBackend,
     generate_crl: MagicMock,
     generate_ocsp_key: MagicMock,
@@ -1046,7 +1047,7 @@ def test_non_default_key_backend_with_rsa_key(
     password = "secure-password"
     ca = init_ca_e2e(
         ca_name,
-        rfc4514_subject,
+        "CN=root.example.com",
         "--key-backend=secondary",
         "--secondary-path=secondary-ca-path",
         "--key-size=2048",
@@ -1064,7 +1065,7 @@ def test_non_default_key_backend_with_rsa_key(
     # Create a child CA to test parent password
     child = init_ca_e2e(
         f"{ca_name} child",
-        rfc4514_subject,
+        "CN=child.example.com",
         f"--parent={ca.serial}",
         f"--secondary-parent-password={password}",
         chain=[ca],
@@ -1168,6 +1169,7 @@ def test_db_backend(
     # Sign a certificate to make sure that the key is actually usable
     cert_data = CERT_DATA["root-cert"]
     csr = cert_data["csr"]["parsed"]
+    subject = x509.Name([cn("cert." + ca.cn)])
     cert = Certificate.objects.create_cert(ca, DBUsePrivateKeyOptions(), csr, subject=subject)
     assert_signature([ca], cert)
 
@@ -1178,7 +1180,6 @@ def test_db_backend(
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_hsm_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
     """Basic test for creating a key in the HSM."""
-    assert settings.CA_MIN_KEY_SIZE == 2048  # assert initial state
     assert settings.CA_MIN_KEY_SIZE == 2048  # assert initial state
     ca = init_ca_e2e(
         ca_name,

@@ -14,7 +14,8 @@
 """Private key implementations that use an HSM in the background."""
 
 import hashlib
-from typing import ClassVar, Generic, NoReturn, Self, TypeVar, cast
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, NoReturn, Self, TypeVar, cast
 
 import pkcs11
 from pkcs11 import MGF, Mechanism, Session
@@ -37,6 +38,9 @@ from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
 EdwardsPublicKeyTypeVar = TypeVar("EdwardsPublicKeyTypeVar", ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)
+
+if TYPE_CHECKING:  # pragma: only cryptography<47  # NoDigestInfo was added in 47
+    from cryptography.hazmat.primitives.asymmetric.utils import NoDigestInfo
 
 
 class PKCS11PrivateKeyMixin:
@@ -71,6 +75,15 @@ class PKCS11PrivateKeyMixin:
             self._pkcs11_public_key,
         )
 
+    def __deepcopy__(self, memo: Any) -> Self:  # pragma: no cover
+        return type(self)(
+            deepcopy(self._session),
+            self._key_id.decode(),
+            self._key_label,
+            deepcopy(self._pkcs11_private_key),
+            deepcopy(self._pkcs11_public_key),
+        )
+
     def decrypt(self, ciphertext: bytes, padding: AsymmetricPadding) -> bytes:
         raise NotImplementedError(
             "Decryption is not implemented for keys stored in a hardware security module (HSM)."
@@ -94,23 +107,27 @@ class PKCS11PrivateKeyMixin:
     @property
     def pkcs11_private_key(self) -> pkcs11.PrivateKey:
         if self._pkcs11_private_key is None:
-            self._pkcs11_private_key = self._session.get_key(
+            # TYPEHINT NOTE: pkcs11 does a lot of mixin magic
+            self._pkcs11_private_key = self._session.get_key(  # type: ignore[assignment]
                 key_type=self.key_type,
                 object_class=pkcs11.ObjectClass.PRIVATE_KEY,
                 id=self._key_id,
                 label=self._key_label,
             )
+        assert self._pkcs11_private_key is not None
         return self._pkcs11_private_key
 
     @property
     def pkcs11_public_key(self) -> pkcs11.PublicKey:
         if self._pkcs11_public_key is None:
-            self._pkcs11_public_key = self._session.get_key(
+            # TYPEHINT NOTE: pkcs11 does a lot of mixin magic
+            self._pkcs11_public_key = self._session.get_key(  # type: ignore[assignment]
                 key_type=self.key_type,
                 object_class=pkcs11.ObjectClass.PUBLIC_KEY,
                 id=self._key_id,
                 label=self._key_label,
             )
+        assert self._pkcs11_public_key is not None
         return self._pkcs11_public_key
 
 
@@ -136,7 +153,7 @@ class PKCS11EdwardsPrivateKeyMixin(PKCS11PrivateKeyMixin, Generic[EdwardsPublicK
         return cast(EdwardsPublicKeyTypeVar, load_der_public_key(public_key))
 
     def sign(self, data: bytes) -> bytes:
-        return self.pkcs11_private_key.sign(data, mechanism=pkcs11.Mechanism.EDDSA)  # type: ignore[no-any-return]
+        return self.pkcs11_private_key.sign(data, mechanism=pkcs11.Mechanism.EDDSA)  # type: ignore[no-any-return,attr-defined]
 
 
 # pylint: disable-next=abstract-method  # private key functions are deliberately not implemented in base.
@@ -200,15 +217,18 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
         self,
         data: bytes,
         padding: AsymmetricPadding,
-        algorithm: asym_utils.Prehashed | hashes.HashAlgorithm,
+        algorithm: "asym_utils.Prehashed | hashes.HashAlgorithm | NoDigestInfo",
     ) -> bytes:
         mechanism_param = None
         if isinstance(padding, PSS):
-            mechanism_param = self._get_pss_signing_parameters(padding, algorithm)
+            if isinstance(algorithm, hashes.HashAlgorithm | Prehashed):
+                mechanism_param = self._get_pss_signing_parameters(padding, algorithm)
+            else:  # pragma: no cover
+                raise ValueError(f"{algorithm}: Not supported as padding algorithm.")
 
         if isinstance(algorithm, hashes.SHA224) and isinstance(padding, PSS):
             # NOTE: using Mechanism.RSA_PKCS_PSS as suggested in the docs does not work at all.
-            mechanism: hashes.HashAlgorithm = pkcs11.Mechanism.SHA224_RSA_PKCS_PSS
+            mechanism: pkcs11.Mechanism = pkcs11.Mechanism.SHA224_RSA_PKCS_PSS
         elif isinstance(algorithm, hashes.SHA224) and isinstance(padding, PKCS1v15):
             mechanism = pkcs11.Mechanism.SHA224_RSA_PKCS
         elif isinstance(algorithm, hashes.SHA256) and isinstance(padding, PSS):
@@ -237,7 +257,7 @@ class PKCS11RSAPrivateKey(PKCS11PrivateKeyMixin, rsa.RSAPrivateKey):
             )
 
         # TYPEHINT NOTE: library is not type-hinted.
-        return self.pkcs11_private_key.sign(data, mechanism=mechanism, mechanism_param=mechanism_param)  # type: ignore[no-any-return]
+        return self.pkcs11_private_key.sign(data, mechanism=mechanism, mechanism_param=mechanism_param)  # type: ignore[no-any-return,attr-defined]
 
 
 class PKCS11EllipticCurvePrivateKey(PKCS11PrivateKeyMixin, ec.EllipticCurvePrivateKey):
@@ -288,8 +308,8 @@ class PKCS11EllipticCurvePrivateKey(PKCS11PrivateKeyMixin, ec.EllipticCurvePriva
         hasher.update(data)
         data = hasher.digest()
 
-        signature = self.pkcs11_private_key.sign(data, mechanism=pkcs11.Mechanism.ECDSA)
-        return encode_ecdsa_signature(signature)  # type: ignore[no-any-return]
+        signature = self.pkcs11_private_key.sign(data, mechanism=pkcs11.Mechanism.ECDSA)  # type: ignore[attr-defined]
+        return encode_ecdsa_signature(signature)
 
 
 # pylint: disable-next=abstract-method  # private key functions are deliberately not implemented in base.

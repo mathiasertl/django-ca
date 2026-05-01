@@ -30,6 +30,7 @@ from unittest import mock
 from pydantic import BaseModel
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
@@ -46,7 +47,7 @@ from django.utils.crypto import get_random_string
 
 from django_ca.extensions import extension_as_text
 from django_ca.key_backends import KeyBackend
-from django_ca.models import CertificateAuthority, X509CertMixin
+from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.profiles import profiles
 from django_ca.tests.acme.views.constants import SERVER_NAME
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR
@@ -618,3 +619,56 @@ class override_tmpcadir(override_settings):  # pylint: disable=invalid-name; in 
     def disable(self) -> None:
         super().disable()
         shutil.rmtree(self.options["CA_DIR"])
+
+
+def verify_signature(cert: x509.Certificate, issuer: x509.Certificate) -> None:
+    """Verify cert was signed by issuer. Raises InvalidSignature on failure.
+
+    Requires cryptography >= 42.0.0 (for signature_algorithm_parameters,
+    used to detect RSA-PSS vs PKCS1v15).
+    """
+    pub = issuer.public_key()
+    if isinstance(pub, rsa.RSAPublicKey):
+        assert pub.key_size >= 2048  # 1024 bit keys may cause issues in OpenSSL>=4
+
+        # signature_algorithm_parameters returns a PSS instance for RSA-PSS,
+        # or None for PKCS1v15
+        params = cert.signature_algorithm_parameters
+        pad = params if isinstance(params, padding.PSS) else padding.PKCS1v15()
+        pub.verify(
+            cert.signature,
+            cert.tbs_certificate_bytes,
+            pad,
+            cert.signature_hash_algorithm,  # type: ignore[arg-type]
+        )
+    elif isinstance(pub, ec.EllipticCurvePublicKey):
+        pub.verify(
+            cert.signature,
+            cert.tbs_certificate_bytes,
+            ec.ECDSA(cert.signature_hash_algorithm),  # type: ignore[arg-type]
+        )
+    elif isinstance(pub, (ed25519.Ed25519PublicKey, ed448.Ed448PublicKey)):
+        # Ed25519/Ed448 embed the hash; no algorithm argument
+        pub.verify(cert.signature, cert.tbs_certificate_bytes)
+    elif isinstance(pub, dsa.DSAPublicKey):
+        pub.verify(
+            cert.signature,
+            cert.tbs_certificate_bytes,
+            cert.signature_hash_algorithm,  # type: ignore[arg-type]
+        )
+    else:  # pragma: no cover
+        raise ValueError(f"Unsupported key type: {type(pub)}")
+
+
+def verify_chain_signatures(chain: list[Certificate | CertificateAuthority]) -> None:
+    """Verify signatures for a chain ordered leaf -> ... -> root.
+
+    Raises InvalidSignature if any signature is invalid.
+    """
+    print(0, [c.cn for c in chain])
+    for i, cert in enumerate(chain[:-1]):
+        print(1, cert.cn, " --> signed by:", chain[i + 1].cn)
+        verify_signature(cert.pub.loaded, issuer=chain[i + 1].pub.loaded)
+    # Verify the root is self-signed
+    print(2, chain[-1].cn, "--> signed by:", chain[-1].cn)
+    verify_signature(chain[-1].pub.loaded, issuer=chain[-1].pub.loaded)

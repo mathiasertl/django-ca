@@ -20,12 +20,10 @@ import typing
 from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448
-from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
 from django.test import TestCase, override_settings
@@ -35,6 +33,7 @@ from freezegun import freeze_time
 
 from django_ca import utils
 from django_ca.conf import model_settings
+from django_ca.tests.base.constants import CRYPTOGRAPHY_VERSION
 from django_ca.tests.base.doctest import doctest_module
 from django_ca.tests.base.utils import cn, country, dns
 from django_ca.utils import (
@@ -43,7 +42,6 @@ from django_ca.utils import (
     generate_private_key,
     get_cert_builder,
     merge_x509_names,
-    parse_encoding,
     read_file,
     validate_private_key_parameters,
     validate_public_key_parameters,
@@ -52,6 +50,7 @@ from django_ca.utils import (
 SuperclassTypeVar = typing.TypeVar("SuperclassTypeVar", bound=type[object])
 
 
+@pytest.mark.skipif(CRYPTOGRAPHY_VERSION < (47,), reason="Output changed in cryptography 47.")
 def test_doctests() -> None:
     """Load doctests."""
     failures, *_tests = doctest_module("django_ca.utils")
@@ -109,21 +108,6 @@ class GeneratePrivateKeyTestCase(TestCase):
 def test_format_general_name(general_name: x509.GeneralName, expected: str) -> None:
     """Test :py:func:`django_ca.utils.format_general_name`."""
     assert format_general_name(general_name) == expected
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    (("PEM", Encoding.PEM), ("DER", Encoding.DER), ("ASN1", Encoding.DER), ("OpenSSH", Encoding.OpenSSH)),
-)
-def test_parse_encoding(value: Any, expected: Encoding) -> None:
-    """Test :py:func:`django_ca.utils.parse_encoding`."""
-    assert parse_encoding(value) == expected
-
-
-def test_parse_encoding_with_invalid_value() -> None:
-    """Test some error cases."""
-    with pytest.raises(ValueError, match=r"^Unknown encoding: foo$"):
-        parse_encoding("foo")
 
 
 class AddColonsTestCase(TestCase):

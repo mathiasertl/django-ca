@@ -46,7 +46,7 @@ from django_ca.typehints import (
     SignatureHashAlgorithm,
     X509CertMixinTypeVar,
 )
-from django_ca.utils import add_colons, hex_to_int, name_for_display, sanitize_serial
+from django_ca.utils import add_colons, format_encoding, hex_to_int, name_for_display, sanitize_serial
 
 if typing.TYPE_CHECKING:
     # When type checking, mixins use BaseCommand as base class for all mixins.
@@ -108,6 +108,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
 
     def add_format(self, parser: CommandParser) -> None:
         """Add the -f/--format option."""
+        encoding_name = format_encoding(Encoding.PEM)
         parser.add_argument(
             "-f",
             "--format",
@@ -115,7 +116,7 @@ class ArgumentsMixin(_Base, metaclass=abc.ABCMeta):
             default=Encoding.PEM,
             action=actions.FormatAction,
             dest="encoding",
-            help=f'The format to use ("ASN1" is an alias for "DER", default: {Encoding.PEM.name}).',
+            help=f'The format to use ("ASN1" is an alias for "DER", default: {encoding_name}).',
         )
 
 

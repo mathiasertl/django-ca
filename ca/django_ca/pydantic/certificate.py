@@ -40,6 +40,7 @@ from django_ca.pydantic.extensions import CertificateExtensionModel
 from django_ca.pydantic.padding import AsymmetricPaddingTypes
 from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmNameWithLegacy, OIDType, Serial
 from django_ca.typehints import SignatureHashAlgorithmName
+from django_ca.utils import parse_encoding
 
 
 def version_validator(value: Any) -> Any:
@@ -120,7 +121,7 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
     def public_bytes(self, encoding: str | Encoding) -> bytes:
         """See :class:`cg:~cryptography.x509.Certificate`."""
         if isinstance(encoding, str):
-            encoding = Encoding[encoding]
+            encoding = parse_encoding(encoding)
         return self.cryptography.public_bytes(encoding)
 
 
