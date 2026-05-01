@@ -51,7 +51,7 @@ creates a minimal CA using the file system storage backend::
    >>> from django_ca.models import CertificateAuthority
    >>> key_backend = key_backends["default"]
    >>> key_backend_options = StoragesCreatePrivateKeyOptions(
-   ...     key_type="RSA", key_size=1024, password=None, path="ca"
+   ...     key_type="RSA", key_size=2048, password=None, path="ca"
    ... )
    >>> not_after = datetime.now(tz=timezone.utc) + timedelta(days=365 * 10)
    >>> CertificateAuthority.objects.init(

@@ -449,7 +449,7 @@ class ValidatePrivateKeyParametersTest(TestCase):
         with pytest.raises(ValueError, match=r"^4000: Key size must be a power of two$"):
             validate_private_key_parameters("RSA", 4000, None)
 
-        with pytest.raises(ValueError, match=r"^16: Key size must be least 1024 bits$"):
+        with pytest.raises(ValueError, match=r"^16: Key size must be least 2048 bits$"):
             validate_private_key_parameters("RSA", 16, None)
 
         with pytest.raises(ValueError, match=r"^Key size is not supported for EC keys\.$"):

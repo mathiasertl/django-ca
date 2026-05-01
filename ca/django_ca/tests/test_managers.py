@@ -81,7 +81,7 @@ def assert_intermediate_extensions(parent: CertificateAuthority, intermediate: C
 
 
 key_backend_options = StoragesCreatePrivateKeyOptions(
-    key_type="RSA", password=None, path=Path("ca"), key_size=1024
+    key_type="RSA", password=None, path=Path("ca"), key_size=2048
 )
 parent_key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
@@ -116,7 +116,7 @@ def test_init_with_dsa(ca_name: str, subject: x509.Name, key_backend: StoragesBa
 def test_init_with_password(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Create a CA with a password."""
     test_key_backend_options = StoragesCreatePrivateKeyOptions(
-        password=b"password", path=Path("ca"), key_type="RSA", key_size=1024
+        password=b"password", path=Path("ca"), key_type="RSA", key_size=2048
     )
     test_parent_key_backend_options = StoragesUsePrivateKeyOptions(password=b"password")
     expires = datetime.now(tz=UTC) + timedelta(days=10)

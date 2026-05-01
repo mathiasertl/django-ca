@@ -81,7 +81,7 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
     kwargs.setdefault("not_after", datetime.now(tz=UTC) + timedelta(days=365 * 2))
     key_backend = key_backends["default"]
     key_backend_options = StoragesCreatePrivateKeyOptions(
-        key_type="RSA", password=None, path="ca", key_size=1024
+        key_type="RSA", password=None, path="ca", key_size=2048
     )
     if kwargs.get("parent"):
         kwargs["use_parent_private_key_options"] = key_backend.use_model(password=None)

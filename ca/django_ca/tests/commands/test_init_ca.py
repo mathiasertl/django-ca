@@ -211,7 +211,7 @@ def test_basic(
     # test the private key
     key = key_backend.get_key(ca, use_options)
     assert isinstance(key, RSAPrivateKey)
-    assert key.key_size == 1024
+    assert key.key_size == 2048
     assert_authority_key_identifier(ca, ca)
 
     # Test that extensions that do not work for root CAs are NOT present
@@ -720,7 +720,7 @@ def test_dsa(ca_name: str, key_backend: StoragesBackend) -> None:
 
     key = key_backend.get_key(ca, use_options)
     assert isinstance(key, dsa.DSAPrivateKey)
-    assert key.key_size == 1024
+    assert key.key_size == 2048
 
 
 @pytest.mark.django_db
@@ -924,7 +924,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
     # test the private key
     key = key_backend.get_key(parent, StoragesUsePrivateKeyOptions(password=password))
     assert isinstance(key, RSAPrivateKey)
-    assert key.key_size == 1024
+    assert key.key_size == 2048
 
     # create a child ca, also password protected
     child_password = b"childpassword"
@@ -1178,7 +1178,8 @@ def test_db_backend(
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_hsm_with_rsa_options(ca_name: str, rfc4514_subject: str) -> None:
     """Basic test for creating a key in the HSM."""
-    assert settings.CA_MIN_KEY_SIZE == 1024  # assert initial state
+    assert settings.CA_MIN_KEY_SIZE == 2048  # assert initial state
+    assert settings.CA_MIN_KEY_SIZE == 2048  # assert initial state
     ca = init_ca_e2e(
         ca_name,
         rfc4514_subject,
@@ -1540,7 +1541,7 @@ def test_algorithm_not_supported_by_backend(settings: SettingsWrapper, ca_name: 
 def test_small_key_size(ca_name: str) -> None:
     """Test creating a key with a key size that is too small."""
     with (
-        assert_command_error(r"^key_size: Input should be greater than or equal to 1024$"),
+        assert_command_error(r"^key_size: Input should be greater than or equal to 2048$"),
         assert_create_ca_signals(False, False),
     ):
         init_ca(ca_name, key_size=256)

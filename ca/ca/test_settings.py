@@ -275,8 +275,9 @@ CA_DEFAULT_SUBJECT = (
     {"oid": "O", "value": "Django CA"},
     {"oid": "OU", "value": "Django CA Testsuite"},
 )
-CA_MIN_KEY_SIZE = 1024
-CA_DEFAULT_KEY_SIZE = 1024
+
+CA_MIN_KEY_SIZE = 2048
+CA_DEFAULT_KEY_SIZE = 2048
 
 # Default expiry is 100 days, note that pre-generated CAs have lifetime of only 365 days
 CA_DEFAULT_EXPIRES = 100
