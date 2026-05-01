@@ -92,7 +92,7 @@ Dependencies
 Deprecation notices
 *******************
 
-None yet.
+* This is the last release to support ``acme~=5.4.0``.
 
 *******************
 Setup and packaging
