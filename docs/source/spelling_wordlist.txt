@@ -96,6 +96,7 @@ superset
 symlink
 Systemd
 themself
+timedelta
 tox
 tls
 typehints

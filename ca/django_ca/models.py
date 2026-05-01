@@ -1236,6 +1236,16 @@ class CertificateRevocationList(DjangoCAModel):
             cache.set(cache_key, encoded_crl, expires_seconds)
 
 
+class CertificateExpiryNotification(DjangoCAModel):
+    """A notification that was sent to watchers."""
+
+    certificate = models.ForeignKey(Certificate, on_delete=models.CASCADE, related_name="notifications")
+    days = models.PositiveSmallIntegerField()
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.certificate.serial}: {self.days} days"
+
+
 class CertificateOrder(DjangoCAModel):
     """An order for a certificate that is issued asynchronously (usually via the API)."""
 

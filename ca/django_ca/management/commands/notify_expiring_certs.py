@@ -15,41 +15,24 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from datetime import timedelta
 from typing import Any
 
-from django.conf import settings
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandParser
-from django.utils import timezone
 
-from django_ca.conf import model_settings
-from django_ca.models import Certificate
+from django_ca.celery import run_task
+from django_ca.tasks import notify_watchers
 
 
 class Command(BaseCommand):
     """Implement the :command:`manage.py notify_expiring_certs` command."""
 
     help = "Send notifications about expiring certificates to watchers."
+    _warning = "no longer has any effect and will be removed in django-ca==3.3.0."
 
     def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument(
-            "--days", type=int, default=14, help="Warn DAYS days ahead of time (default: %(default)s)."
-        )
+        parser.add_argument("--days", type=int, help=f"DEPRECATED: This setting {self._warning}")
 
     def handle(self, **options: Any) -> None:
-        now = timezone.now()
-        expires = now + timedelta(days=options["days"] + 1)  # add a day to avoid one-of errors
-
-        qs = Certificate.objects.valid().filter(not_after__lt=expires)
-        for cert in qs:
-            days = (cert.not_after - now).days
-
-            if days not in model_settings.CA_NOTIFICATION_DAYS:
-                continue
-
-            timestamp = cert.not_after.strftime("%Y-%m-%d")
-            subj = f"Certificate expiration for {cert.cn} on {timestamp}"
-            msg = f"The certificate for {cert.cn} will expire on {timestamp}."
-            recipient = list(cert.watchers.values_list("mail", flat=True))
-            send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, recipient)
+        if options["days"] is not None:
+            self.stdout.write(self.style.WARNING(f"The --days option {self._warning}"))
+        run_task(notify_watchers)

@@ -26,6 +26,8 @@ import requests
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
@@ -46,6 +48,7 @@ from django_ca.models import (
     AcmeOrder,
     Certificate,
     CertificateAuthority,
+    CertificateExpiryNotification,
     CertificateOrder,
 )
 from django_ca.profiles import profiles
@@ -172,6 +175,47 @@ def generate_ocsp_keys(data: UseCertificateAuthoritiesTaskArgs | None = None) ->
             # exception, e.g. if the connection to the broker fails. Without celery, exceptions in
             # generate_ocsp_key() are raised here directly.
             log.exception("Error creating OCSP responder key for %s", serial)
+
+
+@shared_task
+def notify_watchers() -> None:
+    """Task to send notification emails for expiring certificates."""
+    if not model_settings.CA_NOTIFICATION_DAYS:  # no notifications are configured
+        return
+
+    # Retrieve non-expired, non-revoked certificates within the notification window
+    now = timezone.now()
+    max_expiry = now + max(model_settings.CA_NOTIFICATION_DAYS)
+    certificates = (
+        Certificate.objects.valid(now)
+        .filter(not_after__lte=max_expiry, watchers__isnull=False)
+        .distinct()
+        .prefetch_related("notifications", "watchers")
+    )
+
+    notification_days = {td.days for td in model_settings.CA_NOTIFICATION_DAYS}
+
+    for cert in certificates:
+        days_until_expiry = (cert.not_after - now).days
+
+        if days_until_expiry not in notification_days:
+            continue
+
+        # Skip if a notification was already sent for this day (uses prefetch cache)
+        if any(n.days == days_until_expiry for n in cert.notifications.all()):
+            continue
+
+        # Only send if there are watchers to notify
+        recipient = [w.mail for w in cert.watchers.all()]
+        if not recipient:  # pragma: no cover  # already excluded via queryset - this is just a safeguard
+            continue
+
+        timestamp = cert.not_after.strftime("%Y-%m-%d")
+        subj = f"Certificate expiration for {cert.cn} on {timestamp}"
+        msg = f"The certificate for {cert.cn} will expire on {timestamp}."
+        send_mail(subj, msg, settings.DEFAULT_FROM_EMAIL, recipient)
+
+        CertificateExpiryNotification.objects.create(certificate=cert, days=days_until_expiry)
 
 
 @shared_task(base=DjangoCaTask)

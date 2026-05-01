@@ -202,6 +202,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "django_ca.tasks.generate_ocsp_keys",
         "schedule": 3600,
     },
+    "notify_watchers": {
+        "task": "django_ca.tasks.notify_watchers",
+        "schedule": 3600 * 6,  # every six hours
+    },
     "acme-cleanup": {
         # ACME cleanup runs once a day
         "task": "django_ca.tasks.acme_cleanup",

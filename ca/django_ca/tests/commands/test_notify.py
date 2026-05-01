@@ -13,69 +13,30 @@
 
 """Test the notify_expiring_certs management command."""
 
-from datetime import timedelta
+from unittest import mock
 
-from django.core import mail
-from django.test import TestCase, override_settings
+import pytest
 
-from freezegun import freeze_time
-
-from django_ca.models import Watcher
-from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.mixins import TestCaseMixin
+from django_ca.tasks import notify_watchers
 from django_ca.tests.base.utils import cmd
 
+pytestmark = [pytest.mark.django_db]
 
-@override_settings(CA_NOTIFICATION_DAYS=[14, 7, 3, 1])
-class NotifyExpiringCertsTestCase(TestCaseMixin, TestCase):
-    """Main test class for this command."""
 
-    load_cas = "__usable__"
-    load_certs = "__usable__"
-
-    @freeze_time(TIMESTAMPS["everything_valid"])
-    def test_no_certs(self) -> None:
-        """Try notify command when all certs are still valid."""
+def test_calls_task() -> None:
+    """The command delegates to the notify_watchers task via run_task."""
+    with mock.patch("django_ca.management.commands.notify_expiring_certs.run_task") as mock_run_task:
         stdout, stderr = cmd("notify_expiring_certs")
-        assert stdout == ""
-        assert stderr == ""
-        assert len(mail.outbox) == 0
+    assert stdout == ""
+    assert stderr == ""
+    mock_run_task.assert_called_once_with(notify_watchers)
 
-    @freeze_time(TIMESTAMPS["ca_certs_expiring"])
-    def test_no_watchers(self) -> None:
-        """Try expiring certs, but with no watchers."""
-        # certs have no watchers by default, so we get no mails
-        stdout, stderr = cmd("notify_expiring_certs")
-        assert stdout == ""
-        assert stderr == ""
-        assert len(mail.outbox) == 0
 
-    @freeze_time(TIMESTAMPS["ca_certs_expiring"])
-    def test_one_watcher(self) -> None:
-        """Test one expiring certificate."""
-        email = "user1@example.com"
-        watcher = Watcher.from_addr(f"First Last <{email}>")
-        self.cert.watchers.add(watcher)
-        timestamp = self.cert.not_after.strftime("%Y-%m-%d")
-
-        stdout, stderr = cmd("notify_expiring_certs")
-        assert stdout == ""
-        assert stderr == ""
-        assert len(mail.outbox) == 1
-        assert mail.outbox[0].subject == f"Certificate expiration for {self.cert.cn} on {timestamp}"
-        assert mail.outbox[0].to == [email]
-
-    def test_notification_days(self) -> None:
-        """Test that user gets multiple notifications of expiring certs."""
-        email = "user1@example.com"
-        watcher = Watcher.from_addr(f"First Last <{email}>")
-        self.cert.watchers.add(watcher)
-
-        with freeze_time(self.cert.not_after - timedelta(days=20)) as frozen_time:
-            for _i in reversed(range(0, 20)):
-                stdout, stderr = cmd("notify_expiring_certs", days=14)
-                assert stdout == ""
-                assert stderr == ""
-                frozen_time.tick(timedelta(days=1))
-
-        assert len(mail.outbox) == 4
+def test_deprecated_days_option() -> None:
+    """Passing --days prints a deprecation warning to stdout."""
+    with mock.patch("django_ca.management.commands.notify_expiring_certs.run_task") as mock_run_task:
+        stdout, stderr = cmd("notify_expiring_certs", days=3)
+    warning = "The --days option no longer has any effect and will be removed in django-ca==3.3.0."
+    assert stdout == f"{warning}\n"
+    assert stderr == ""
+    mock_run_task.assert_called_once_with(notify_watchers)

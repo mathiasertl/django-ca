@@ -4,6 +4,7 @@
 *.py[co]
 *.sqlite3
 *.sw[po]
+.coverage
 .idea/
 .vagrant/
 /*.crl
@@ -13,7 +14,6 @@
 /.cache/
 /.certbot/
 /.config/
-/.coverage
 /.dbus/
 /.docker/
 /.env

@@ -35,7 +35,12 @@ No changes yet.
 Command-line
 ************
 
-No changes yet.
+* `notify_expiring_certs`:
+
+  * The command now always sends all pending notifications. The ``--days`` parameter no longer has any effect
+    and will be removed in ``django-ca==3.3.0``.
+  * The command now uses the Celery task internally to send notifications, so it will return instantly if
+    Celery is configured. The improvements described below thus also apply to this command.
 
 ***************
 Admin interface
@@ -47,7 +52,12 @@ No changes yet.
 Celery tasks
 ************
 
-No changes yet.
+* Add the :py:func:`~django_ca.tasks.notify_watchers` task to send notifications for expiring certificates
+  in Celery:
+
+  * The task remembers which notifications were already sent. It can thus be called multiple times a day to
+    protect against outages.
+  * In setups that use Celery, the task is configured to run every six hours.
 
 **********
 Python API

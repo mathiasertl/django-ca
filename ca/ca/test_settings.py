@@ -303,6 +303,8 @@ CA_OCSP_URLS = {
 CA_ENABLE_ACME = True
 
 
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
 CA_USE_CELERY = False
 CA_ENABLE_REST_API = True
 

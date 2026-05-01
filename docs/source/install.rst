@@ -54,6 +54,19 @@ change that setting, the frequency of this task must be *higher* then that setti
 If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
 generate_ocsp_keys` with a similar frequency.
 
+Send notification emails about expiring certificates
+====================================================
+
+The :py:func:`~django_ca.tasks.notify_watchers` Celery task is responsible for sending notification emails
+about expiring certificates. If you do not want to send any notifications, you can safely skip this part.
+
+Notification emails are sent out based on :ref:`CA_NOTIFICATION_DAYS <settings-ca-notification-days>`. To send
+notifications for an expiring certificate, a watcher needs to be added when signing the certificate or later
+via the admin interface or the `manage.py cert_watchers` command.
+
+If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
+notify_expiring_certs` at least daily, preferably every six hours.
+
 Clean up ACME database records
 ==============================
 
