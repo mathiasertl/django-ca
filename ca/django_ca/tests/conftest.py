@@ -18,9 +18,22 @@
 import importlib.metadata
 import os
 import sys
+from collections import defaultdict
+from collections.abc import Generator
 from typing import Any
+from unittest.mock import patch
 
 import coverage
+
+from cryptography.hazmat.primitives.asymmetric import (
+    dsa as crypto_dsa,
+    ec as crypto_ec,
+    ed448 as crypto_ed448,
+    ed25519 as crypto_ed25519,
+    rsa as crypto_rsa,
+)
+from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
+from cryptography.hazmat.primitives.serialization import load_der_private_key
 
 from django.conf import settings
 from django.test import Client
@@ -44,13 +57,82 @@ from django_ca.tests.base.conftest_helpers import (
     usable_ca_names,
     usable_cert_names,
 )
-from django_ca.tests.base.constants import GECKODRIVER_PATH, RUN_SELENIUM_TESTS
+from django_ca.tests.base.constants import FIXTURES_DIR, GECKODRIVER_PATH, RUN_SELENIUM_TESTS
 from django_ca.tests.base.typehints import User
 
 # NOTE: Assertion rewrites are in __init__.py
 
 # Load fixtures from local "plugin":
 pytest_plugins = ["django_ca.tests.base.fixtures"]
+
+# Cross-test in-memory cache: maps DER filename (e.g. "rsa_2048.0.der") to loaded key object.
+_KEY_FIXTURE_CACHE: dict[str, CertificateIssuerPrivateKeyTypes] = {}
+
+
+@pytest.fixture(autouse=True)
+def mock_generate_private_key() -> Generator[None, None, None]:
+    """Replace cryptography key-generation calls with pre-generated fixture keys.
+
+    Instead of generating real private keys during tests, each call loads a DER file from
+    ``tests/fixtures/{stem}.{n}.der`` where *stem* encodes the key type and its parameters
+    (e.g. ``rsa_2048``, ``ec_secp256r1``, ``ed25519``) and *n* is a zero-based call counter
+    that increments for each key generated within a single test, ensuring distinct keys when a
+    test generates more than one key of the same type/parameters.
+
+    Loaded files are cached in :data:`_KEY_FIXTURE_CACHE` so each DER file is read from disk
+    at most once across the entire test session.
+    """
+    # Per-test counter: maps stem -> number of times that stem has been requested so far.
+    counters: dict[str, int] = defaultdict(int)
+
+    def _load_key(stem: str) -> CertificateIssuerPrivateKeyTypes:
+        n = counters[stem]
+        counters[stem] += 1
+        filename = f"{stem}.{n}.der"
+        if filename not in _KEY_FIXTURE_CACHE:
+            path = FIXTURES_DIR / "keys" / filename
+            _KEY_FIXTURE_CACHE[filename] = load_der_private_key(path.read_bytes(), password=None)  # type: ignore[assignment]
+        return _KEY_FIXTURE_CACHE[filename]
+
+    def _mock_rsa_generate(
+        public_exponent: int,  # pylint: disable=unused-argument
+        key_size: int,
+    ) -> crypto_rsa.RSAPrivateKey:
+        key = _load_key(f"rsa_{key_size}")
+        assert isinstance(key, crypto_rsa.RSAPrivateKey)
+        assert key.key_size == key_size
+        return key
+
+    def _mock_dsa_generate(key_size: int) -> crypto_dsa.DSAPrivateKey:
+        key = _load_key(f"dsa_{key_size}")
+        assert isinstance(key, crypto_dsa.DSAPrivateKey)
+        assert key.key_size == key_size
+        return key
+
+    def _mock_ec_generate(curve: crypto_ec.EllipticCurve) -> crypto_ec.EllipticCurvePrivateKey:
+        key = _load_key(f"ec_{curve.name}")
+        assert isinstance(key, crypto_ec.EllipticCurvePrivateKey)
+        assert isinstance(key.curve, type(curve))
+        return key
+
+    def _mock_ed25519_generate() -> crypto_ed25519.Ed25519PrivateKey:
+        key = _load_key("ed25519")
+        assert isinstance(key, crypto_ed25519.Ed25519PrivateKey)
+        return key
+
+    def _mock_ed448_generate() -> crypto_ed448.Ed448PrivateKey:
+        key = _load_key("ed448")
+        assert isinstance(key, crypto_ed448.Ed448PrivateKey)
+        return key
+
+    with (
+        patch("cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key", _mock_rsa_generate),
+        patch("cryptography.hazmat.primitives.asymmetric.dsa.generate_private_key", _mock_dsa_generate),
+        patch("cryptography.hazmat.primitives.asymmetric.ec.generate_private_key", _mock_ec_generate),
+        patch.object(crypto_ed25519.Ed25519PrivateKey, "generate", _mock_ed25519_generate),
+        patch.object(crypto_ed448.Ed448PrivateKey, "generate", _mock_ed448_generate),
+    ):
+        yield
 
 
 def pytest_addoption(parser: Parser) -> None:

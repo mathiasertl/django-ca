@@ -91,7 +91,7 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
         cls, subject: x509.Name
     ) -> tuple[CertificateIssuerPrivateKeyTypes, x509.CertificateSigningRequest]:
         """Generate a CSR with the given subject."""
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         builder = x509.CertificateSigningRequestBuilder()
 
         builder = builder.subject_name(subject)
