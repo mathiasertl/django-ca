@@ -858,6 +858,15 @@ def read_file(path: str) -> bytes:
         stream.close()
 
 
+def get_ocsp_cache_key(ca_serial: str, cert_serial: str, ca: bool) -> str:
+    """Get a cache key for OCSP responses."""
+    if ca is True:
+        typ = "ca"
+    else:
+        typ = "ee"  # end entity certificates
+    return f"ocsp_{typ}_{ca_serial}_{cert_serial}"
+
+
 def get_crl_cache_key(
     serial: str,
     encoding: Encoding,

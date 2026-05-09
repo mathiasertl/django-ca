@@ -51,12 +51,20 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
 from django_ca import constants
+from django_ca.conf import model_settings
 from django_ca.constants import CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES
-from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
+from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList, X509CertMixin
 from django_ca.pydantic.validators import crl_scope_validator
 from django_ca.querysets import CertificateRevocationListQuerySet
 from django_ca.typehints import SignatureHashAlgorithm
-from django_ca.utils import SERIAL_RE, get_crl_cache_key, int_to_hex, parse_encoding, read_file
+from django_ca.utils import (
+    SERIAL_RE,
+    get_crl_cache_key,
+    get_ocsp_cache_key,
+    int_to_hex,
+    parse_encoding,
+    read_file,
+)
 
 log = logging.getLogger(__name__)
 
@@ -454,6 +462,69 @@ class GenericOCSPView(OCSPView):
 
         cert = Certificate.objects.select_related("ca").get(ca__serial=ca_serial, serial=cert_serial)
         return cert.ca, cert
+
+    def process_ocsp_request(self, data: bytes) -> HttpResponse:
+        """Process OCSP request with optional caching.
+
+        When :ref:`settings-ca-ocsp-response-cache-expires` is set, this method first tries to serve a
+        pre-generated cached response (from Django's cache, then from the database). If no valid cached
+        response is available, an OCSP INTERNAL_ERROR response is returned.
+
+        Requests that include a nonce extension bypass the cache and are computed on the fly, because a nonce
+        makes each response unique and cannot be pre-cached.
+        """
+        if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is None:
+            # Caching disabled or CA-OCSP mode: use the standard (uncached) path.
+            return super().process_ocsp_request(data)
+
+        # Parse OCSP request to extract serial and check for nonce.
+        try:
+            ocsp_req = ocsp.load_der_ocsp_request(data)
+        except Exception as e:  # pylint: disable=broad-except
+            log.exception(e)
+            return self.malformed_request()
+
+        # Fail if there are any critical extensions (Nonce doesn't work when caching).
+        if any(ext.critical for ext in ocsp_req.extensions):
+            return self.malformed_request()
+
+        ca_serial = self.kwargs["serial"]
+        cert_serial = int_to_hex(ocsp_req.serial_number)
+        now = datetime.now(tz=UTC)
+
+        # Try Django cache first.
+        cache_key = get_ocsp_cache_key(ca_serial, cert_serial, ca=self.ca_ocsp)
+        cached_der: bytes | None = cache.get(cache_key)
+
+        if cached_der is None:
+            # Try the database cache field.
+            _fields = ["serial", "ocsp_response", "ocsp_response_expires"]
+            if self.ca_ocsp:
+                try:
+                    cert: X509CertMixin = CertificateAuthority.objects.only(*_fields).get(
+                        parent=ca_serial, serial=cert_serial
+                    )
+                except Certificate.DoesNotExist:
+                    log.warning("%s: OCSP request for unknown cert received.", cert_serial)
+                    return self.fail()
+            else:
+                try:
+                    cert = Certificate.objects.only(*_fields).get(ca__serial=ca_serial, serial=cert_serial)
+                except Certificate.DoesNotExist:
+                    log.warning("%s: OCSP request for unknown cert received.", cert_serial)
+                    return self.fail()
+
+            # If we found an OCSP response in the database, but not in the cache, add it to the cache.
+            if cert.ocsp_response and cert.ocsp_response_expires and cert.ocsp_response_expires > now:
+                cached_der = bytes(cert.ocsp_response)
+                remaining = (cert.ocsp_response_expires - now).total_seconds()
+                cache.set(cache_key, cached_der, timeout=int(remaining))
+
+        if cached_der is not None:
+            return self.http_response(cached_der)
+
+        log.warning("%s: No cached OCSP response available.", cert_serial)
+        return self.fail()
 
     def get_expires(self, ca: CertificateAuthority, now: datetime) -> datetime:
         return now + timedelta(seconds=ca.ocsp_response_validity)

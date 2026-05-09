@@ -364,6 +364,24 @@ class SettingsModel(BaseModel):
         default=timedelta(days=1),
         description="Renew OCSP certificates if they expire within the given interval.",
     )
+
+    CA_OCSP_RESPONSE_CACHE_EXPIRES: timedelta | None = Field(
+        default=None,
+        description=(
+            "How long cached OCSP responses remain valid. Set to ``None`` (the default) to disable caching. "
+            "When caching is enabled, the :ref:`periodic task <periodic-tasks-explanation>` "
+            "``cache_ocsp_responses`` must run regularly to pre-generate responses."
+        ),
+        examples=[timedelta(hours=24)],
+    )
+    CA_OCSP_RESPONSE_CACHE_RENEWAL: Annotated[PositiveTimedelta, DayValidator] = Field(
+        default=timedelta(hours=12),
+        description=(
+            "How soon before expiry a cached OCSP response should be renewed. "
+            "The ``cache_ocsp_responses`` periodic task will regenerate responses that expire "
+            "within this interval."
+        ),
+    )
     CA_OCSP_URLS: dict[str, OcspUrlModel] = Field(
         default_factory=dict,
         description="Configuration for OCSP responders. See :doc:`/ocsp` for more information.",
