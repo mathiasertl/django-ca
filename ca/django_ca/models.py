@@ -267,6 +267,14 @@ class X509CertMixin(DjangoCAModel):
         help_text=_("Optional: When this certificate was compromised. You can change this date later."),
     )
 
+    # OCSP response cache fields
+    ocsp_response = models.BinaryField(
+        null=True, blank=True, help_text=_("Cached DER-encoded OCSP response for this certificate.")
+    )
+    ocsp_response_expires = models.DateTimeField(
+        null=True, blank=True, help_text=_("Expiry time of the cached OCSP response.")
+    )
+
     _x509 = None
 
     class Meta:

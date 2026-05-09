@@ -70,3 +70,10 @@ class ApiSignCertificateTaskArgs(CeleryMessageModel):
         if self.algorithm is not None:
             return SIGNATURE_HASH_ALGORITHM_TYPES[self.algorithm]()
         return None
+
+
+class CacheOCSPResponseTaskArgs(CeleryMessageModel):
+    """Parameters for ``django_ca.tasks.cache_ocsp_response``."""
+
+    serial: Serial
+    ca: bool
