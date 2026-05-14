@@ -319,7 +319,7 @@ def cache_ocsp_responses() -> None:
 
     # Include certificates whose cached response is missing or expires soon.
     certs_qs = (
-        Certificate.objects.valid(now)
+        Certificate.objects.current(now)
         .select_related("ca")
         .filter(
             models.Q(ocsp_response_expires__isnull=True)
@@ -344,7 +344,8 @@ def notify_watchers() -> None:
     now = timezone.now()
     max_expiry = now + max(model_settings.CA_NOTIFICATION_DAYS)
     certificates = (
-        Certificate.objects.valid(now)
+        Certificate.objects.current(now)
+        .not_revoked()
         .filter(not_after__lte=max_expiry, watchers__isnull=False)
         .distinct()
         .prefetch_related("notifications", "watchers")

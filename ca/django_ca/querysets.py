@@ -81,18 +81,21 @@ class X509CertMixinQuerySetProtocol(
     .. seealso:: https://mypy.readthedocs.io/en/latest/more_types.html#mixin-classes
     """
 
-    model: X509CertMixinTypeVar
+    if TYPE_CHECKING:
+        model: type[X509CertMixinTypeVar]
 
-    def filter(self, *args: Any, **kwargs: Any) -> "Self": ...
+        def filter(self, *args: Any, **kwargs: Any) -> Self: ...
 
-    def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
+        def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
 
-    def _serial_or_cn_query(self, identifier: str) -> tuple[Q, Q]: ...
+        # def _serial_or_cn_query(self, identifier: str) -> tuple[Q, Q]: ...
+        #
+        # def revoked(self) -> Self: ...
 
-    def revoked(self) -> "Self": ...
 
-
-class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
+class X509CertMixinQuerySet(
+    X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
+):
     """Mixin with common methods for CertificateAuthority and Certificate models."""
 
     def _serial_or_cn_query(
@@ -109,9 +112,18 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
             pass
         return exact_query, startswith_query
 
-    def get_by_serial_or_cn(
-        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
-    ) -> X509CertMixinTypeVar:
+    def current(self, now: datetime | None = None) -> Self:
+        """Return CAs that are currently valid."""
+        if now is None:
+            now = timezone.now()
+        return self.filter(not_after__gte=now, not_before__lt=now)
+
+    def expired(self, now: datetime | None = None) -> Self:
+        if now is None:
+            now = timezone.now()
+        return self.filter(not_after__lte=now)
+
+    def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar:
         """Get a model by serial *or* by common name.
 
         This method is meant to get a CA from a user input value. If `identifier` is a serial, colons (``:``)
@@ -129,13 +141,17 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
         except self.model.DoesNotExist:
             return self.get(startswith_query)
 
+    def not_revoked(self) -> Self:
+        """Return certificates that are **not** revoked."""
+        return self.filter(revoked=False)
+
     def for_certificate_revocation_list(
-        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar],
+        self,
         *,
         now: datetime,
         reasons: Iterable[x509.ReasonFlags] | None,
         grace_timedelta: timedelta = timedelta(minutes=10),
-    ) -> X509CertMixinQuerySetProtocol[X509CertMixinTypeVar]:
+    ) -> Self:
         """Get certificates for a certificate revocation list (CRL).
 
         .. versionadded:: 2.1.0
@@ -151,8 +167,14 @@ class DjangoCAMixin(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
             qs = self.filter(revoked_reason__in=reason_names)
         return qs
 
+    def revoked(self) -> Self:
+        """Return revoked certificates."""
+        return self.filter(revoked=True)
 
-class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], CertificateAuthorityQuerySetBase):
+
+class CertificateAuthorityQuerySet(
+    X509CertMixinQuerySet["CertificateAuthority"], CertificateAuthorityQuerySetBase
+):
     """QuerySet for the CertificateAuthority model."""
 
     def acme(self) -> "CertificateAuthorityQuerySet":
@@ -196,10 +218,6 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
             raise ImproperlyConfigured("No CA is currently usable.")
         return first_ca
 
-    def disabled(self) -> "CertificateAuthorityQuerySet":
-        """Return CAs that are disabled."""
-        return self.filter(enabled=False)
-
     def enabled(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are enabled."""
         return self.filter(enabled=True)
@@ -208,55 +226,13 @@ class CertificateAuthorityQuerySet(DjangoCAMixin["CertificateAuthority"], Certif
         """Return CAs in order of preference."""
         return self.order_by("-not_after", "serial")
 
-    def valid(self) -> "CertificateAuthorityQuerySet":
-        """Return CAs that are currently valid."""
-        now = timezone.now()
-        return self.filter(not_after__gt=now, not_before__lt=now)
-
-    def invalid(self) -> "CertificateAuthorityQuerySet":
-        """Return CAs that are either expired or not yet valid."""
-        now = timezone.now()
-        return self.exclude(not_after__gt=now, not_before__lt=now)
-
-    def revoked(self) -> "CertificateAuthorityQuerySet":
-        """Return revoked certificates."""
-        return self.filter(revoked=True)
-
     def usable(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are enabled and currently valid."""
-        return self.enabled().valid()
+        return self.enabled().current()
 
 
-class CertificateQuerySet(DjangoCAMixin["Certificate"], CertificateQuerySetBase):
+class CertificateQuerySet(X509CertMixinQuerySet["Certificate"], CertificateQuerySetBase):
     """QuerySet for the Certificate model."""
-
-    def currently_valid(self, now: datetime | None = None) -> "CertificateQuerySet":
-        """Return certificates currently valid according to their not_before/not_after fields.
-
-        .. WARNING:: This does not exclude revoked certificates.
-        """
-        if now is None:
-            now = timezone.now()
-        return self.filter(not_after__gt=now, not_before__lt=now)
-
-    def not_yet_valid(self) -> "CertificateQuerySet":
-        """Return certificates that are not yet valid."""
-        return self.filter(revoked=False, not_before__gt=timezone.now())
-
-    def valid(self, now: datetime | None = None) -> "CertificateQuerySet":
-        """Return valid certificates."""
-        return self.currently_valid(now=now).filter(revoked=False)
-
-    def expired(self) -> "CertificateQuerySet":
-        """Returns expired certificates.
-
-        Note that this method does not return revoked certificates that would otherwise be expired.
-        """
-        return self.filter(revoked=False, not_after__lt=timezone.now())
-
-    def revoked(self) -> "CertificateQuerySet":
-        """Return revoked certificates."""
-        return self.filter(revoked=True)
 
 
 class CertificateRevocationListQuerySet(CertificateRevocationListQuerySetBase):

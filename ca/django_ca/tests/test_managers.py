@@ -662,26 +662,23 @@ class TypingExamples:
     def test_acme(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.acme()
 
+    def test_current(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.current()
+
     def test_get_by_serial_or_cn(self) -> CertificateAuthority:
         return CertificateAuthority.objects.get_by_serial_or_cn("foo")
 
     def test_default(self) -> CertificateAuthority:
         return CertificateAuthority.objects.default()
 
-    def test_disabled(self) -> CertificateAuthorityQuerySet:
-        return CertificateAuthority.objects.disabled()
-
     def test_enabled(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.enabled()
 
-    def test_invalid(self) -> CertificateAuthorityQuerySet:
-        return CertificateAuthority.objects.invalid()
+    def test_expired(self) -> CertificateAuthorityQuerySet:
+        return CertificateAuthority.objects.expired()
 
     def test_usable(self) -> CertificateAuthorityQuerySet:
         return CertificateAuthority.objects.usable()
-
-    def test_valid(self) -> CertificateAuthorityQuerySet:
-        return CertificateAuthority.objects.valid()
 
     # Tests for Certificate
     def test_cert_get(self) -> Certificate:
@@ -696,6 +693,9 @@ class TypingExamples:
     def test_cert_all(self) -> CertificateQuerySet:
         return Certificate.objects.all()
 
+    def test_cert_current(self) -> CertificateQuerySet:
+        return Certificate.objects.current()
+
     def test_cert_filter(self) -> CertificateQuerySet:
         return Certificate.objects.filter()
 
@@ -707,9 +707,3 @@ class TypingExamples:
 
     def test_cert_expired(self) -> CertificateQuerySet:
         return Certificate.objects.expired()
-
-    def test_cert_not_yet_valid(self) -> CertificateQuerySet:
-        return Certificate.objects.not_yet_valid()
-
-    def test_cert_valid(self) -> CertificateQuerySet:
-        return Certificate.objects.valid()
