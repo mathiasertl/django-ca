@@ -20,15 +20,19 @@ import typing
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, x448, x25519
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa, x448, x25519
+from cryptography.hazmat.primitives.asymmetric.types import (
+    CertificateIssuerPrivateKeyTypes,
+    CertificateIssuerPublicKeyTypes,
+)
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509.oid import ExtensionOID
+from cryptography.x509 import ocsp
+from cryptography.x509.oid import ExtensionOID, OCSPExtensionOID
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -54,6 +58,7 @@ from django_ca.tests.base.utils import (
     uri,
     verify_chain_signatures,
 )
+from django_ca.utils import get_ocsp_cache_key
 
 
 @contextmanager
@@ -445,6 +450,120 @@ def assert_issuing_distribution_point(
             indirect_crl=indirect_crl,
             only_some_reasons=only_some_reasons,
         ),
+    )
+
+
+def assert_ocsp_signature(public_key: CertificateIssuerPublicKeyTypes, response: ocsp.OCSPResponse) -> None:
+    """Validate `response` with the given `public_key`."""
+    tbs_response = response.tbs_response_bytes
+    hash_algorithm = response.signature_hash_algorithm
+
+    if isinstance(public_key, rsa.RSAPublicKey):
+        hash_algorithm = cast(hashes.HashAlgorithm, hash_algorithm)  # to make mypy happy
+        assert public_key.verify(response.signature, tbs_response, padding.PKCS1v15(), hash_algorithm) is None
+
+    elif isinstance(public_key, ec.EllipticCurvePublicKey):
+        hash_algorithm = cast(hashes.HashAlgorithm, hash_algorithm)  # to make mypy happy
+        assert public_key.verify(response.signature, tbs_response, ec.ECDSA(hash_algorithm)) is None
+    elif isinstance(public_key, dsa.DSAPublicKey):
+        hash_algorithm = cast(hashes.HashAlgorithm, hash_algorithm)  # to make mypy happy
+        public_key.verify(response.signature, tbs_response, hash_algorithm)
+    elif isinstance(public_key, ed25519.Ed25519PublicKey | ed448.Ed448PublicKey):
+        public_key.verify(response.signature, tbs_response)
+    else:  # pragma: no cover
+        # All valid types should be implemented, but if you see this happen, go here:
+        #   https://cryptography.io/en/latest/hazmat/primitives/asymmetric/
+        raise ValueError(f"Unsupported public key type: {public_key}")
+
+
+def assert_ocsp_response(
+    raw_response: bytes,
+    requested_certificate: Certificate | CertificateAuthority,
+    responder_certificate: x509.Certificate,
+    response_status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.SUCCESSFUL,
+    certificate_status: ocsp.OCSPCertStatus = ocsp.OCSPCertStatus.GOOD,
+    nonce: bytes | None = None,
+    expires: timedelta = timedelta(seconds=86400),
+    signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
+    single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
+) -> ocsp.OCSPResponse:
+    """Assert the contents of an OCSP response."""
+    response = ocsp.load_der_ocsp_response(raw_response)
+
+    assert response.response_status == response_status
+    if signature_hash_algorithm is None:
+        assert response.signature_hash_algorithm is None
+    else:
+        assert isinstance(response.signature_hash_algorithm, signature_hash_algorithm)
+
+    assert response.certificates == [responder_certificate]  # responder certificate!
+    assert response.responder_name is None
+    assert isinstance(response.responder_key_hash, bytes)  # TODO: Validate responder id
+    # TODO: validate issuer_key_hash, issuer_name_hash
+
+    # Check TIMESTAMPS
+    now = datetime.now(tz=UTC)
+    next_update = now + expires
+    assert response.this_update_utc == now
+    assert response.next_update_utc == next_update
+
+    # Check nonce if passed
+    if nonce is None:
+        assert len(response.extensions) == 0
+    else:
+        nonce_extension = response.extensions.get_extension_for_oid(OCSPExtensionOID.NONCE)
+        assert nonce_extension.critical is False
+        assert nonce_extension.value.nonce == nonce  # type: ignore[attr-defined]
+
+    assert response.serial_number == requested_certificate.pub.loaded.serial_number
+    assert response.certificate_status == certificate_status
+
+    # Assert single response
+    single_responses = list(response.responses)  # otherwise it has no len()/index
+    assert len(single_responses) == 1
+    assert single_responses[0].serial_number == requested_certificate.pub.loaded.serial_number
+    assert isinstance(single_responses[0].hash_algorithm, single_response_hash_algorithm)
+
+    # Validate the response signature
+    assert_ocsp_signature(responder_certificate.public_key(), response)
+
+
+def assert_ocsp_response_for_model(
+    certificate: Certificate | CertificateAuthority,
+    response_status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.SUCCESSFUL,
+    nonce: bytes | None = None,
+    expires: timedelta = timedelta(seconds=86400),
+    signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
+    single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
+):
+    """Assert the contents of an OCSP response in the database and cache."""
+    if isinstance(certificate, Certificate):
+        signer = certificate.ca
+        cache_key = get_ocsp_cache_key(signer.serial, certificate.serial, False)
+    else:
+        signer = certificate.parent
+        cache_key = get_ocsp_cache_key(signer.serial, certificate.serial, True)
+
+    responder_pem = signer.ocsp_key_backend_options["certificate"]["pem"].encode()
+    responder_certificate = x509.load_pem_x509_certificate(responder_pem)
+
+    if certificate.revoked:
+        certificate_status = ocsp.OCSPCertStatus.REVOKED
+    else:
+        certificate_status = ocsp.OCSPCertStatus.GOOD
+
+    cached_response = cache.get(cache_key)
+    assert certificate.ocsp_response == cached_response
+    assert_ocsp_response(
+        certificate.ocsp_response,
+        certificate,
+        responder_certificate,
+        response_status,
+        certificate_status,
+        nonce,
+        expires,
+        signature_hash_algorithm,
+        single_response_hash_algorithm,
     )
 
 

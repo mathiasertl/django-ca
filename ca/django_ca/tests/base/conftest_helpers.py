@@ -212,6 +212,30 @@ def generate_usable_ca_fixture(
     return fixture
 
 
+def generate_ca_with_ocsp_responder_certificate_fixture(
+    name: str,
+) -> typing.Callable[[pytest.FixtureRequest, Path], CertificateAuthority]:
+    """Function to generate a fixture for a CA that has an OCSP responder certificate."""
+
+    @pytest.fixture
+    def fixture(request: pytest.FixtureRequest, tmpcadir: Path) -> CertificateAuthority:
+        ca = request.getfixturevalue(name)  # load the CA into the database
+        cert = request.getfixturevalue(f"{name}_cert")
+
+        destination = tmpcadir / f"{name}-cert.key"
+        shutil.copy(FIXTURES_DIR / f"{name}-cert.key", destination)
+
+        ca.ocsp_key_backend_options = {
+            "private_key": {"path": str(destination)},
+            "certificate": {"pem": cert.pub.pem},
+        }
+        ca.save()
+
+        return ca  # type: ignore[no-any-return]
+
+    return fixture
+
+
 def generate_cert_fixture(name: str) -> typing.Callable[[pytest.FixtureRequest], Certificate]:
     """Function to generate cert fixtures (root_cert, all_extensions, no_extensions, ...)."""
 

@@ -36,6 +36,7 @@ from django_ca.tests.base.conftest_helpers import (
     contrib_ca_names,
     contrib_cert_names,
     generate_ca_fixture,
+    generate_ca_with_ocsp_responder_certificate_fixture,
     generate_cert_fixture,
     generate_hsm_ca_fixture,
     generate_pub_fixture,
@@ -168,6 +169,9 @@ def user_client(user: "User", client: Client) -> Client:
 for _ca_name in usable_ca_names:
     globals()[_ca_name] = generate_ca_fixture(_ca_name)
     globals()[f"usable_{_ca_name}"] = generate_usable_ca_fixture(_ca_name)
+    globals()[f"{_ca_name}_with_ocsp_responder_certificate"] = (
+        generate_ca_with_ocsp_responder_certificate_fixture(_ca_name)
+    )
 for _ca_name in contrib_ca_names:
     globals()[f"contrib_{_ca_name}"] = generate_ca_fixture(_ca_name)
 for _ca_name in usable_ca_names + usable_cert_names:

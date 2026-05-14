@@ -56,7 +56,12 @@ from django_ca.tests.base.conftest_helpers import (
     usable_ca_names_by_type,
     usable_cert_names,
 )
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.constants import (
+    CA_OCSP_RESPONSE_CACHE_EXPIRES,
+    CA_OCSP_RESPONSE_CACHE_RENEWAL,
+    CERT_DATA,
+    TIMESTAMPS,
+)
 
 
 @pytest.fixture(params=all_cert_names)
@@ -219,6 +224,13 @@ def key_backend(request: pytest.FixtureRequest) -> StoragesBackend:
     """Return a :py:class:`~django_ca.key_backends.storages.StoragesBackend` for creating a new CA."""
     request.getfixturevalue("tmpcadir")
     return key_backends[DEFAULT_KEY_BACKEND_KEY]  # type: ignore[return-value]
+
+
+@pytest.fixture
+def ocsp_response_caching(settings: SettingsWrapper) -> None:
+    """Fixture to enable OCSP repsonse caching."""
+    settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = CA_OCSP_RESPONSE_CACHE_EXPIRES
+    settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = CA_OCSP_RESPONSE_CACHE_RENEWAL
 
 
 @pytest.fixture(params=precertificate_signed_certificate_timestamps_cert_names)

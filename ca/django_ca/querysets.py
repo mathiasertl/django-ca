@@ -14,7 +14,6 @@
 """QuerySet classes for DjangoCA models."""
 
 import abc
-import typing
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Optional, Self, TypeVar
@@ -66,41 +65,19 @@ else:  # pragma: no cover  # only used for type checking
     QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=models.QuerySet[X509CertMixin])
 
 
-class X509CertMixinQuerySetProtocol(
-    typing.Protocol[X509CertMixinTypeVar]
-):  # pragma: nocover; pylint: disable=missing-function-docstring
-    """Protocol used for a generic-self in mixins.
-
-    Note that I couldn't get this to work in functions that should return the same type as well. So::
-
-        def filter(self: X509CertMixinQuerySetProtocol) -> X509CertMixinQuerySetProtocol:
-            ...
-
-    ... doesn't work, unfortunately.
-
-    .. seealso:: https://mypy.readthedocs.io/en/latest/more_types.html#mixin-classes
-    """
+class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
+    """Mixin with common methods for CertificateAuthority and Certificate models."""
 
     if TYPE_CHECKING:
         model: type[X509CertMixinTypeVar]
+
+        def exclude(self, *args: Any, **kwargs: Any) -> Self: ...
 
         def filter(self, *args: Any, **kwargs: Any) -> Self: ...
 
         def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
 
-        # def _serial_or_cn_query(self, identifier: str) -> tuple[Q, Q]: ...
-        #
-        # def revoked(self) -> Self: ...
-
-
-class X509CertMixinQuerySet(
-    X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
-):
-    """Mixin with common methods for CertificateAuthority and Certificate models."""
-
-    def _serial_or_cn_query(
-        self: X509CertMixinQuerySetProtocol[X509CertMixinTypeVar], identifier: str
-    ) -> tuple[Q, Q]:
+    def _serial_or_cn_query(self, identifier: str) -> tuple[Q, Q]:
         identifier = identifier.strip()
         exact_query = startswith_query = Q(cn=identifier)
 
@@ -167,6 +144,16 @@ class X509CertMixinQuerySet(
             qs = self.filter(revoked_reason__in=reason_names)
         return qs
 
+    def for_ocsp_cache(self, *, now: datetime | None = None) -> Self:
+        if now is None:
+            now = timezone.now()
+
+        renewal_threshold = now + model_settings.CA_OCSP_RESPONSE_CACHE_RENEWAL
+        return self.current().filter(
+            models.Q(ocsp_response_expires__isnull=True)
+            | models.Q(ocsp_response_expires__lt=renewal_threshold)
+        )
+
     def revoked(self) -> Self:
         """Return revoked certificates."""
         return self.filter(revoked=True)
@@ -221,6 +208,9 @@ class CertificateAuthorityQuerySet(
     def enabled(self) -> "CertificateAuthorityQuerySet":
         """Return CAs that are enabled."""
         return self.filter(enabled=True)
+
+    def for_ocsp_cache(self, *, now: datetime | None = None) -> Self:
+        return super().for_ocsp_cache(now=now).exclude(parent=None)
 
     def preferred_order(self) -> "CertificateAuthorityQuerySet":
         """Return CAs in order of preference."""
