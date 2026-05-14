@@ -20,20 +20,15 @@ import logging
 import warnings
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import cast
 
 import requests
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509 import ocsp
 from cryptography.x509.oid import ExtensionOID
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.mail import send_mail
-from django.db import models, transaction
+from django.db import transaction
 from django.utils import timezone
 
 from django_ca.acme.validation import validate_dns_01
@@ -58,8 +53,7 @@ from django_ca.models import (
     CertificateOrder,
 )
 from django_ca.profiles import profiles
-from django_ca.typehints import SignatureHashAlgorithm
-from django_ca.utils import get_ocsp_cache_key, parse_general_name
+from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
 
@@ -184,90 +178,6 @@ def generate_ocsp_keys(data: UseCertificateAuthoritiesTaskArgs | None = None) ->
             log.exception("Error creating OCSP responder key for %s", serial)
 
 
-def _build_and_store_ocsp_response(cert: Certificate | CertificateAuthority) -> None:
-    """Build a fresh OCSP response for *cert* and persist it to the cache and the database.
-
-    Uses SHA-256 as the hash algorithm for the issuer key/name hash within the response, which is the
-    algorithm used by the vast majority of OCSP clients and is the only algorithm pre-generated responses
-    are cached for.
-
-    This helper is intentionally a plain function (not a task) so it can be called both from the
-    :py:func:`cache_ocsp_response` task and from within :py:func:`cache_ocsp_responses`.
-    """
-    if isinstance(cert, Certificate):
-        ca = cert.ca
-    elif cert.parent is None:
-        raise ValueError("Cannot generate an OCSP response for a root certificate authority.")
-    else:
-        ca = cert.parent
-
-    now = datetime.now(tz=UTC)
-    assert model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None  # caller is responsible for checking
-    expires = now + model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES
-
-    # Resolve revocation status.
-    if cert.revoked:
-        status = ocsp.OCSPCertStatus.REVOKED
-    else:
-        status = ocsp.OCSPCertStatus.GOOD
-
-    builder = ocsp.OCSPResponseBuilder()
-    builder = builder.add_response(
-        cert=cert.pub.loaded,
-        issuer=ca.pub.loaded,
-        # Pre-generated responses always use SHA-256 for the issuer hash.  The view only serves them for
-        # incoming requests that also use SHA-256, so algorithm and cached data always match.
-        algorithm=hashes.SHA256(),
-        cert_status=status,
-        this_update=now.replace(tzinfo=None),
-        next_update=expires.replace(tzinfo=None),
-        revocation_time=cert.get_revocation_time(),
-        revocation_reason=cert.get_revocation_reason(),
-    )
-
-    # Load the OCSP responder certificate from the CA's key-backend options.
-    try:
-        responder_pem = ca.ocsp_key_backend_options["certificate"]["pem"]
-    except KeyError:
-        log.error("%s: OCSP responder certificate not found, cannot cache response.", cert.serial)
-        return
-
-    responder_certificate = x509.load_pem_x509_certificate(responder_pem.encode("ascii"))
-
-    now_check = datetime.now(tz=UTC)
-    if not (
-        responder_certificate.not_valid_before_utc <= now_check <= responder_certificate.not_valid_after_utc
-    ):
-        log.error(
-            "%s: OCSP responder certificate is not currently valid, cannot cache response.", cert.serial
-        )
-        return
-
-    builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, responder_certificate)
-    builder = builder.certificates([responder_certificate])
-
-    # TYPEHINT NOTE: Certificates are always generated with a supported algorithm, so we do not check.
-    algorithm = cast(SignatureHashAlgorithm | None, responder_certificate.signature_hash_algorithm)
-
-    try:
-        response = ca.ocsp_key_backend.sign_ocsp_response(ca, builder, algorithm)
-    except Exception:  # pylint: disable=broad-exception-caught
-        log.exception("%s: Error signing OCSP response.", cert.serial)
-        return
-
-    response_der = response.public_bytes(Encoding.DER)
-
-    # Persist in Django cache.
-    cache_key = get_ocsp_cache_key(ca.serial, cert.serial, isinstance(cert, CertificateAuthority))
-    remaining = (expires - datetime.now(tz=UTC)).total_seconds()
-    cache.set(cache_key, response_der, timeout=int(remaining))
-
-    # Persist in the database so the response survives cache evictions.
-    cert.ocsp_response = response_der
-    cert.ocsp_response_expires = expires
-    cert.save(update_fields=["ocsp_response", "ocsp_response_expires"])
-
-
 @shared_task(base=DjangoCaTask)
 def cache_ocsp_response(data: CacheOCSPResponseTaskArgs) -> None:
     """Celery task to generate and cache an OCSP response for a single certificate.
@@ -285,20 +195,16 @@ def cache_ocsp_response(data: CacheOCSPResponseTaskArgs) -> None:
 
     if data.ca is True:
         try:
-            cert: Certificate | CertificateAuthority = CertificateAuthority.objects.select_related(
-                "parent"
-            ).get(serial=data.serial)
+            ca = CertificateAuthority.objects.select_related("parent").get(serial=data.serial)
+            ca.cache_ocsp_response()
         except Certificate.DoesNotExist:
             log.error("%s: Certificate not found.", data.serial)
-            return
     else:
         try:
             cert = Certificate.objects.select_related("ca").get(serial=data.serial)
+            cert.cache_ocsp_response()
         except Certificate.DoesNotExist:
             log.error("%s: Certificate not found.", data.serial)
-            return
-
-    _build_and_store_ocsp_response(cert)
 
 
 @shared_task
@@ -314,20 +220,14 @@ def cache_ocsp_responses() -> None:
     if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is None:
         return  # Caching disabled — nothing to do.
 
-    now = timezone.now()
-    renewal_threshold = now + model_settings.CA_OCSP_RESPONSE_CACHE_RENEWAL
+    for ca in CertificateAuthority.objects.for_ocsp_cache():
+        try:
+            run_task(cache_ocsp_response, CacheOCSPResponseTaskArgs(serial=ca.serial, ca=True))
+        except Exception:  # pylint: disable=broad-exception-caught
+            log.exception("Error scheduling OCSP response caching for %s", ca.serial)
 
-    # Include certificates whose cached response is missing or expires soon.
-    certs_qs = (
-        Certificate.objects.current(now)
-        .select_related("ca")
-        .filter(
-            models.Q(ocsp_response_expires__isnull=True)
-            | models.Q(ocsp_response_expires__lt=renewal_threshold)
-        )
-    )
-
-    for cert in certs_qs:
+    for cert in Certificate.objects.for_ocsp_cache():
+        print(cert)
         try:
             run_task(cache_ocsp_response, CacheOCSPResponseTaskArgs(serial=cert.serial, ca=False))
         except Exception:  # pylint: disable=broad-exception-caught

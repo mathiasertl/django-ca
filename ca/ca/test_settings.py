@@ -291,13 +291,13 @@ CA_DEFAULT_HOSTNAME = "localhost:8000"
 CA_OCSP_URLS = {
     "child": {
         "ca": _fixture_data["certs"]["child"]["serial"],
-        "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
-        "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
+        "responder_key": _fixture_data["certs"]["child-cert"]["key_filename"],
+        "responder_cert": _fixture_data["certs"]["child-cert"]["pub_filename"],
     },
     "child-with-expires": {
         "ca": _fixture_data["certs"]["child"]["serial"],
-        "responder_key": _fixture_data["certs"]["profile-ocsp"]["key_filename"],
-        "responder_cert": _fixture_data["certs"]["profile-ocsp"]["pub_filename"],
+        "responder_key": _fixture_data["certs"]["child-cert"]["key_filename"],
+        "responder_cert": _fixture_data["certs"]["child-cert"]["pub_filename"],
         "expires": "P1D",
     },
 }

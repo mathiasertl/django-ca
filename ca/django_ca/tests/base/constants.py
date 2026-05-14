@@ -99,6 +99,9 @@ NEWEST_VERSIONS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_DJANGO and NE
 # Only run Selenium tests if we use the newest Python, cryptography and acme.
 RUN_SELENIUM_TESTS = NEWEST_PYTHON and NEWEST_CRYPTOGRAPHY and NEWEST_ACME and NEWEST_PYDANTIC
 
+CA_OCSP_RESPONSE_CACHE_EXPIRES = timedelta(hours=1)
+CA_OCSP_RESPONSE_CACHE_RENEWAL = timedelta(minutes=30)
+
 # Fixture data used by test cases
 with open(FIXTURES_DIR / "cert-data.json", encoding="utf-8") as cert_data_stream:
     FIXTURES_DATA = json.load(cert_data_stream)

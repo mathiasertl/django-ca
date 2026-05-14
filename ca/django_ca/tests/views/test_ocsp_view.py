@@ -26,6 +26,7 @@ from unittest.mock import patch
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509 import ocsp
+from cryptography.x509.ocsp import OCSPCertStatus
 
 from django.test import Client
 from django.urls import include, path, re_path, reverse
@@ -37,7 +38,7 @@ from django_ca.constants import ReasonFlags
 from django_ca.modelfields import LazyCertificate
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DATA, FIXTURES_DIR, TIMESTAMPS
-from django_ca.tests.views.assertions import assert_ocsp_response
+from django_ca.tests.views.assertions import assert_ocsp_response_via_http
 from django_ca.utils import hex_to_bytes
 from django_ca.views import OCSPView
 
@@ -53,6 +54,10 @@ def _load_req(req: str) -> bytes:
         return stream.read()
 
 
+root_cert = CERT_DATA["root-cert"]
+root_cert_pem = root_cert["pub"]["pem"]
+child_cert = CERT_DATA["child-cert"]
+child_cert_pem = child_cert["pub"]["pem"]
 ocsp_profile = CERT_DATA["profile-ocsp"]
 ocsp_pem = ocsp_profile["pub"]["pem"]
 req1 = _load_req(FIXTURES_DATA["ocsp"]["nonce"]["filename"])
@@ -67,8 +72,8 @@ urlpatterns = [
         "ocsp/",
         OCSPView.as_view(
             ca=CERT_DATA["child"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert=ocsp_profile["pub_filename"],
+            responder_key=child_cert["key_filename"],
+            responder_cert=child_cert["pub_filename"],
             expires=timedelta(seconds=1200),
         ),
         name="post",
@@ -77,8 +82,8 @@ urlpatterns = [
         "ocsp/serial/",
         OCSPView.as_view(
             ca=CERT_DATA["child"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert=CERT_DATA["profile-ocsp"]["serial"],
+            responder_key=child_cert["key_filename"],
+            responder_cert=CERT_DATA["child-cert"]["serial"],
             expires=timedelta(seconds=1300),
         ),
         name="post-serial",
@@ -87,8 +92,8 @@ urlpatterns = [
         "ocsp/full-pem/",
         OCSPView.as_view(
             ca=CERT_DATA["child"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert=ocsp_pem,
+            responder_key=child_cert["key_filename"],
+            responder_cert=child_cert_pem,
             expires=timedelta(seconds=1400),
         ),
         name="post-full-pem",
@@ -97,8 +102,8 @@ urlpatterns = [
         "ocsp/loaded-cryptography/",
         OCSPView.as_view(
             ca=CERT_DATA["child"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert=CERT_DATA["profile-ocsp"]["pub"]["parsed"],
+            responder_key=child_cert["key_filename"],
+            responder_cert=CERT_DATA["child-cert"]["pub"]["parsed"],
             expires=timedelta(seconds=1500),
         ),
         name="post-loaded-cryptography",
@@ -107,8 +112,8 @@ urlpatterns = [
         r"^ocsp/cert/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
             ca=CERT_DATA["child"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert=ocsp_profile["pub_filename"],
+            responder_key=child_cert["key_filename"],
+            responder_cert=child_cert["pub_filename"],
         ),
         name="get",
     ),
@@ -116,8 +121,8 @@ urlpatterns = [
         r"^ocsp/ca/(?P<data>[a-zA-Z0-9=+/]+)$",
         OCSPView.as_view(
             ca=CERT_DATA["root"]["serial"],
-            responder_key=ocsp_profile["key_filename"],
-            responder_cert=ocsp_profile["pub_filename"],
+            responder_key=root_cert["key_filename"],
+            responder_cert=root_cert["pub_filename"],
             ca_ocsp=True,
         ),
         name="get-ca",
@@ -175,25 +180,49 @@ urlpatterns = [
 
 
 @pytest.fixture
-def profile_ocsp(tmpcadir: Path, profile_ocsp: Certificate) -> Certificate:
+def root_with_ocsp_responder_certificate(
+    request: pytest.FixtureRequest, tmpcadir: Path, root_with_ocsp_responder_certificate: CertificateAuthority
+) -> CertificateAuthority:
+    """Overwritten to write the public key to tmpcadir as well."""
+    pem = root_with_ocsp_responder_certificate.ocsp_key_backend_options["certificate"]["pem"]
+    with open(tmpcadir / "root-cert.pub", "w", encoding="ascii") as stream:
+        stream.write(pem)
+    return root_with_ocsp_responder_certificate
+
+
+@pytest.fixture
+def child_with_ocsp_responder_certificate(
+    request: pytest.FixtureRequest,
+    tmpcadir: Path,
+    child_with_ocsp_responder_certificate: CertificateAuthority,
+) -> CertificateAuthority:
+    """Overwritten to write the public key to tmpcadir as well."""
+    pem = child_with_ocsp_responder_certificate.ocsp_key_backend_options["certificate"]["pem"]
+    with open(tmpcadir / "child-cert.pub", "w", encoding="ascii") as stream:
+        stream.write(pem)
+    return child_with_ocsp_responder_certificate
+
+
+@pytest.fixture
+def profile_ocsp(tmpcadir: Path) -> Certificate:
     """Augmented fixture to copy the certificates into the tmpcadir."""
     shutil.copy(FIXTURES_DIR / "profile-ocsp.key", tmpcadir)
     shutil.copy(FIXTURES_DIR / "profile-ocsp.pub", tmpcadir)
     return profile_ocsp
 
 
-def test_get(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_get(client: Client, child_cert: Certificate) -> None:
     """Basic GET test."""
     data = base64.b64encode(req1).decode("utf-8")
     response = client.get(reverse("get", kwargs={"data": data}))
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         child_cert,
         nonce=req1_nonce,
-        expires=600,
+        expires=timedelta(seconds=600),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
@@ -233,17 +262,17 @@ def test_raises_exception(caplog: LogCaptureFixture, client: Client) -> None:
     ]
 
 
-def test_post(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_post(client: Client, child_cert: Certificate) -> None:
     """Test the post request."""
     response = client.post(reverse("post"), req1, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         child_cert,
         nonce=req1_nonce,
-        expires=1200,
+        expires=timedelta(seconds=1200),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
     response = client.post(
@@ -253,72 +282,70 @@ def test_post(client: Client, child_cert: Certificate, profile_ocsp: Certificate
         single_response_hash_algorithm=hashes.SHA1,
     )
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         child_cert,
         nonce=req1_nonce,
-        expires=1300,
+        expires=timedelta(seconds=1300),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
     response = client.post(reverse("post-full-pem"), req1, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         child_cert,
         nonce=req1_nonce,
-        expires=1400,
+        expires=timedelta(seconds=1400),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
-def test_loaded_cryptography_cert(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_loaded_cryptography_cert(client: Client, child_cert: Certificate) -> None:
     """Test view with loaded cryptography cert."""
     response = client.post(reverse("post-loaded-cryptography"), req1, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         child_cert,
         nonce=req1_nonce,
-        expires=1500,
+        expires=timedelta(seconds=1500),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
-def test_revoked(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_revoked(client: Client, child_cert: Certificate) -> None:
     """Test fetching for revoked certificate."""
     child_cert.revoke()
 
     response = client.post(reverse("post"), req1, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
-        child_cert,
+        requested_certificate=child_cert,
+        certificate_status=OCSPCertStatus.REVOKED,
         nonce=req1_nonce,
-        expires=1200,
+        expires=timedelta(seconds=1200),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
     child_cert.revoke(ReasonFlags.affiliation_changed)
     response = client.post(reverse("post"), req1, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         requested_certificate=child_cert,
+        certificate_status=OCSPCertStatus.REVOKED,
         nonce=req1_nonce,
-        expires=1200,
+        expires=timedelta(seconds=1200),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
-def test_ca_ocsp(
-    client: Client, child: CertificateAuthority, child_cert: Certificate, profile_ocsp: Certificate
-) -> None:
+@pytest.mark.usefixtures("root_with_ocsp_responder_certificate")
+def test_ca_ocsp(client: Client, child: CertificateAuthority, child_cert: Certificate) -> None:
     """Make a CA OCSP request."""
     # req1 has serial for self.cert hard-coded, so we update the child CA to contain data for self.cert
     child.serial = child_cert.serial
@@ -328,47 +355,44 @@ def test_ca_ocsp(
     data = base64.b64encode(req1).decode("utf-8")
     response = client.get(reverse("get-ca", kwargs={"data": data}))
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         requested_certificate=child,
         nonce=req1_nonce,
-        expires=600,
+        expires=timedelta(seconds=600),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
 @pytest.mark.urls("ca.urls")
-def test_default_child_view(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_default_child_view(client: Client, child_cert: Certificate) -> None:
     """Test the default view for the child ca."""
     data = base64.b64encode(req1).decode("utf-8")
     response = client.get(reverse("django_ca:ocsp-get-child", kwargs={"data": data}))
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         requested_certificate=child_cert,
         nonce=req1_nonce,
-        expires=600,
+        expires=timedelta(seconds=600),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
 @pytest.mark.urls("ca.urls")
-def test_default_child_view_with_expires(
-    client: Client, child_cert: Certificate, profile_ocsp: Certificate
-) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_default_child_view_with_expires(client: Client, child_cert: Certificate) -> None:
     """Test the default view for the child ca."""
     data = base64.b64encode(req1).decode("utf-8")
     response = client.get(reverse("django_ca:ocsp-get-child-with-expires", kwargs={"data": data}))
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
+    assert_ocsp_response_via_http(
         response,
         requested_certificate=child_cert,
         nonce=req1_nonce,
         expires=timedelta(days=1),
         single_response_hash_algorithm=hashes.SHA1,
-        responder_certificate=profile_ocsp,
     )
 
 
@@ -387,7 +411,8 @@ def test_bad_ca(caplog: LogCaptureFixture, client: Client) -> None:
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
 
 
-@pytest.mark.usefixtures("profile_ocsp")
+@pytest.mark.django_db
+@pytest.mark.usefixtures("child_cert")
 def test_unknown_certificate(caplog: LogCaptureFixture, client: Client) -> None:
     """Test fetching data for an unknown certificate."""
     data = base64.b64encode(unknown_req).decode("utf-8")
@@ -401,7 +426,8 @@ def test_unknown_certificate(caplog: LogCaptureFixture, client: Client) -> None:
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
 
 
-@pytest.mark.usefixtures("profile_ocsp")
+@pytest.mark.django_db
+@pytest.mark.usefixtures("child_cert")
 def test_unknown_ca(caplog: LogCaptureFixture, client: Client) -> None:
     """Try requesting an unknown CA in a CA OCSP view."""
     data = base64.b64encode(req1).decode("utf-8")
@@ -421,7 +447,7 @@ def test_unknown_ca(caplog: LogCaptureFixture, client: Client) -> None:
 
 
 @pytest.mark.usefixtures("child_cert")
-@pytest.mark.usefixtures("profile_ocsp")
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
 def test_private_key_with_error(caplog: LogCaptureFixture, client: Client) -> None:
     """Test unreadable OCSP private key."""
     data = base64.b64encode(req1).decode("utf-8")
@@ -444,7 +470,7 @@ def test_private_key_with_error(caplog: LogCaptureFixture, client: Client) -> No
 
 
 @pytest.mark.usefixtures("child_cert")
-@pytest.mark.usefixtures("profile_ocsp")
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
 def test_unsupported_private_key_type(caplog: LogCaptureFixture, client: Client) -> None:
     """Test that we log an error when the private key is of an unsupported type."""
     data = base64.b64encode(req1).decode("utf-8")

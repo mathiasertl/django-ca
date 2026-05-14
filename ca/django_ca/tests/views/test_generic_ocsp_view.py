@@ -13,12 +13,11 @@
 
 """Test GenericOCSPView."""
 
-import base64
-
 # pylint: disable=redefined-outer-name
+
+import base64
 import logging
 import shutil
-import typing
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from pathlib import Path
@@ -44,10 +43,10 @@ from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tasks import cache_ocsp_response
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
-from django_ca.tests.views.assertions import assert_ocsp_response
-from django_ca.tests.views.conftest import generate_ocsp_key, ocsp_get
+from django_ca.tests.views.assertions import assert_ocsp_response_via_http
+from django_ca.tests.views.conftest import ocsp_get
 
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 @pytest.fixture
@@ -64,29 +63,26 @@ def child(tmpcadir: Path, child: CertificateAuthority, profile_ocsp: Certificate
     return child
 
 
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
 def test_get(
-    django_assert_num_queries: DjangoAssertNumQueries,
-    client: Client,
-    child_cert: Certificate,
-    profile_ocsp: Certificate,
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, child_cert: Certificate
 ) -> None:
     """Test getting OCSP responses."""
     with django_assert_num_queries(1):
         response = ocsp_get(client, child_cert)
-    assert_ocsp_response(response, child_cert, responder_certificate=profile_ocsp)
+    assert_ocsp_response_via_http(response, child_cert)
 
 
-def test_get_with_nonce(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+@pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
+def test_get_with_nonce(client: Client, child_cert: Certificate) -> None:
     """Test OCSP responder via GET request while passing a nonce."""
     response = ocsp_get(client, child_cert, nonce=b"foo")
-    assert_ocsp_response(response, child_cert, nonce=b"foo", responder_certificate=profile_ocsp)
+    assert_ocsp_response_via_http(response, child_cert, nonce=b"foo")
 
 
+@pytest.mark.usefixtures("root_with_ocsp_responder_certificate")
 def test_get_with_ca(
-    django_assert_num_queries: DjangoAssertNumQueries,
-    client: Client,
-    child: CertificateAuthority,
-    profile_ocsp: Certificate,
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, child: CertificateAuthority
 ) -> None:
     """Test getting OCSP responses for CA OCSP URLs."""
     # Copy OCSP key config from child to root. This cert is issued by the child, but this is not tested
@@ -97,7 +93,7 @@ def test_get_with_ca(
 
     with django_assert_num_queries(1):
         response = ocsp_get(client, child)
-    assert_ocsp_response(response, child, responder_certificate=profile_ocsp)
+    assert_ocsp_response_via_http(response, child)
 
 
 @pytest.mark.usefixtures("hsm_ocsp_backend")
@@ -122,7 +118,7 @@ def test_hsm_ocsp_key(client: Client, child_cert: Certificate, usable_hsm_ca: Ce
         algorithm = type(cert.algorithm)
 
     response = ocsp_get(client, child_cert)
-    assert_ocsp_response(response, child_cert, responder_certificate=cert, signature_hash_algorithm=algorithm)
+    assert_ocsp_response_via_http(response, child_cert, signature_hash_algorithm=algorithm)
 
 
 def test_db_ocsp_key(client: Client, root_cert: Certificate, usable_root: CertificateAuthority) -> None:
@@ -133,15 +129,13 @@ def test_db_ocsp_key(client: Client, root_cert: Certificate, usable_root: Certif
     key_backend_options = StoragesUsePrivateKeyOptions.model_validate(
         {}, context={"backend": usable_root.key_backend, "ca": usable_root}
     )
-    cert = typing.cast(Certificate, usable_root.generate_ocsp_key(key_backend_options))
+    usable_root.generate_ocsp_key(key_backend_options)
 
     response = ocsp_get(client, root_cert)
-    assert_ocsp_response(
-        response, root_cert, responder_certificate=cert, signature_hash_algorithm=hashes.SHA256
-    )
+    assert_ocsp_response_via_http(response, root_cert, signature_hash_algorithm=hashes.SHA256)
 
 
-def test_response_validity(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+def test_response_validity(client: Client, child_cert: Certificate) -> None:
     """Test a custom OCSP response validity."""
     # Reduce OCSP response validity before making request
     child_cert.ca.ocsp_response_validity = 3600
@@ -150,19 +144,17 @@ def test_response_validity(client: Client, child_cert: Certificate, profile_ocsp
     response = ocsp_get(client, child_cert)
 
     # URL config sets expires to 3600
-    assert_ocsp_response(response, child_cert, expires=3600, responder_certificate=profile_ocsp)
+    assert_ocsp_response_via_http(response, child_cert, expires=timedelta(seconds=3600))
 
 
-def test_sha512_hash_algorithm(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+def test_sha512_hash_algorithm(client: Client, child_cert: Certificate) -> None:
     """Test the OCSP responder with an EC-based certificate authority."""
     response = ocsp_get(client, child_cert, hash_algorithm=hashes.SHA512)
 
-    assert_ocsp_response(
-        response, child_cert, responder_certificate=profile_ocsp, single_response_hash_algorithm=hashes.SHA512
-    )
+    assert_ocsp_response_via_http(response, child_cert, single_response_hash_algorithm=hashes.SHA512)
 
 
-def test_pem_responder_key(client: Client, child_cert: Certificate, profile_ocsp: Certificate) -> None:
+def test_pem_responder_key(client: Client, child_cert: Certificate) -> None:
     """Test the OCSP responder with PEM-encoded private key."""
     # Overwrite key with PEM format
     storage = storages[model_settings.CA_DEFAULT_STORAGE_ALIAS]
@@ -180,45 +172,35 @@ def test_pem_responder_key(client: Client, child_cert: Certificate, profile_ocsp
     child_cert.ca.save()
 
     response = ocsp_get(client, child_cert)
-    assert_ocsp_response(response, child_cert, responder_certificate=profile_ocsp)
+    assert_ocsp_response_via_http(response, child_cert)
 
 
-def test_dsa_certificate_authority(
-    client: Client, usable_dsa: CertificateAuthority, dsa_cert: Certificate
-) -> None:
+@pytest.mark.usefixtures("dsa_with_ocsp_responder_certificate")
+def test_dsa_certificate_authority(client: Client, dsa_cert: Certificate) -> None:
     """Test the OCSP responder with an DSA-based certificate authority."""
-    _private_key, ocsp_cert = generate_ocsp_key(usable_dsa)
     response = ocsp_get(client, dsa_cert)
-    assert_ocsp_response(response, dsa_cert, responder_certificate=ocsp_cert)
+    assert_ocsp_response_via_http(response, dsa_cert)
 
 
-def test_ec_certificate_authority(
-    client: Client, usable_ec: CertificateAuthority, ec_cert: Certificate
-) -> None:
+@pytest.mark.usefixtures("ec_with_ocsp_responder_certificate")
+def test_ec_certificate_authority(client: Client, ec_cert: Certificate) -> None:
     """Test the OCSP responder with an EC-based certificate authority."""
-    _private_key, ocsp_cert = generate_ocsp_key(usable_ec)
     response = ocsp_get(client, ec_cert)
-    assert_ocsp_response(response, ec_cert, responder_certificate=ocsp_cert)
+    assert_ocsp_response_via_http(response, ec_cert)
 
 
-def test_ed25519_certificate_authority(
-    client: Client, usable_ed25519: CertificateAuthority, ed25519_cert: Certificate
-) -> None:
+@pytest.mark.usefixtures("ed25519_with_ocsp_responder_certificate")
+def test_ed25519_certificate_authority(client: Client, ed25519_cert: Certificate) -> None:
     """Test the OCSP responder with an Ed25519-based certificate authority."""
-    _private_key, ocsp_cert = generate_ocsp_key(usable_ed25519)
     response = ocsp_get(client, ed25519_cert)
-    assert_ocsp_response(
-        response, ed25519_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None
-    )
+    assert_ocsp_response_via_http(response, ed25519_cert, signature_hash_algorithm=None)
 
 
-def test_ed448_certificate_authority(
-    client: Client, usable_ed448: CertificateAuthority, ed448_cert: Certificate
-) -> None:
+@pytest.mark.usefixtures("ed448_with_ocsp_responder_certificate")
+def test_ed448_certificate_authority(client: Client, ed448_cert: Certificate) -> None:
     """Test the OCSP responder with an Ed448-based certificate authority."""
-    _private_key, ocsp_cert = generate_ocsp_key(usable_ed448)
     response = ocsp_get(client, ed448_cert)
-    assert_ocsp_response(response, ed448_cert, responder_certificate=ocsp_cert, signature_hash_algorithm=None)
+    assert_ocsp_response_via_http(response, ed448_cert, signature_hash_algorithm=None)
 
 
 def test_ca_request_with_root_ca(client: Client, root: CertificateAuthority) -> None:
@@ -298,13 +280,6 @@ def test_method_not_allowed(client: Client) -> None:
 _CACHE_EXPIRES = timedelta(hours=1)
 
 
-@pytest.fixture
-def _clear_cache() -> None:  # type: ignore[return]
-    """Clear the Django cache after the test."""
-    yield
-    cache.clear()
-
-
 def _make_raw_ocsp_get(client: Client, cert: Certificate) -> bytes:
     """Return a raw (DER-encoded) OCSP response for *cert* without any caching logic."""
     builder = ocsp.OCSPRequestBuilder()
@@ -320,13 +295,11 @@ def _make_raw_ocsp_get(client: Client, cert: Certificate) -> bytes:
     return client.get(url).content
 
 
-@pytest.mark.usefixtures("_clear_cache")
 def test_cached_response_served_from_django_cache(
     settings: SettingsWrapper,
     django_assert_num_queries: DjangoAssertNumQueries,
     client: Client,
     child_cert: Certificate,
-    profile_ocsp: Certificate,
 ) -> None:
     """When a cached response exists in Django cache, it is returned directly."""
     # Now enable caching and make a second request — must be served from cache.
@@ -337,18 +310,14 @@ def test_cached_response_served_from_django_cache(
         response = ocsp_get(client, child_cert)
 
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
-        response, child_cert, nonce=None, responder_certificate=profile_ocsp, expires=_CACHE_EXPIRES
-    )
+    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=_CACHE_EXPIRES)
 
 
-@pytest.mark.usefixtures("_clear_cache")
 def test_cached_response_served_from_db(
     settings: SettingsWrapper,
     django_assert_num_queries: DjangoAssertNumQueries,
     client: Client,
     child_cert: Certificate,
-    profile_ocsp: Certificate,
 ) -> None:
     """When no Django-cache entry exists, a valid DB-stored response is used."""
     # Obtain a real OCSP response without caching.
@@ -360,12 +329,9 @@ def test_cached_response_served_from_db(
         response = ocsp_get(client, child_cert)
 
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response(
-        response, child_cert, nonce=None, responder_certificate=profile_ocsp, expires=_CACHE_EXPIRES
-    )
+    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=_CACHE_EXPIRES)
 
 
-@pytest.mark.usefixtures("_clear_cache")
 def test_no_cached_response_returns_error(
     caplog: LogCaptureFixture, client: Client, child_cert: Certificate
 ) -> None:
@@ -394,13 +360,12 @@ def test_no_cached_response_returns_error(
     assert "No cached OCSP response available" in caplog.text
 
 
-@pytest.mark.usefixtures("_clear_cache")
 def test_expired_db_response_returns_error(
     caplog: LogCaptureFixture, client: Client, child_cert: Certificate
 ) -> None:
     """An expired DB-stored response is not served; INTERNAL_ERROR is returned instead."""
     now = datetime.now(tz=UTC)
-    child_cert.ocsp_response = b"stale-data"  # type: ignore[assignment]
+    child_cert.ocsp_response = b"stale-data"
     child_cert.ocsp_response_expires = now - timedelta(seconds=1)  # already expired
     child_cert.save()
 

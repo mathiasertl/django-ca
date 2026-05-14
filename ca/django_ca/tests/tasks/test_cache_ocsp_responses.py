@@ -17,27 +17,15 @@ import logging
 from datetime import UTC, datetime, timedelta
 from unittest import mock
 
-from django.core.cache import cache
-from django.test import override_settings
-
 import pytest
 from _pytest.logging import LogCaptureFixture
 
-from django_ca.models import Certificate
+from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tasks import cache_ocsp_responses
-from django_ca.tests.base.constants import TIMESTAMPS
+from django_ca.tests.base.assertions import assert_ocsp_response_for_model
+from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, TIMESTAMPS
 
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
-
-_CACHE_EXPIRES = timedelta(hours=1)
-_RENEWAL = timedelta(minutes=30)
-
-
-@pytest.fixture(autouse=True)
-def _clear_cache() -> None:
-    """Clear the Django cache after every test."""
-    yield  # type: ignore[misc]
-    cache.clear()
+pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
 def test_caching_disabled(child_cert: Certificate) -> None:
@@ -47,43 +35,55 @@ def test_caching_disabled(child_cert: Certificate) -> None:
     mock_run.assert_not_called()
 
 
-@pytest.mark.usefixtures("make_ocsp_key")
-@override_settings(CA_OCSP_RESPONSE_CACHE_EXPIRES=_CACHE_EXPIRES, CA_OCSP_RESPONSE_CACHE_RENEWAL=_RENEWAL)
-def test_caches_uncached_certs(child_cert: Certificate) -> None:
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_caches_uncached_certs(
+    root_with_ocsp_responder_certificate: CertificateAuthority,
+    child_with_ocsp_responder_certificate: CertificateAuthority,
+    root_cert: Certificate,
+    child_cert: Certificate,
+) -> None:
     """Task schedules caching for certificates with no cached response yet."""
     assert child_cert.ocsp_response is None
+    cache_ocsp_responses()
 
-    with mock.patch("django_ca.tasks.run_task") as mock_run:
-        cache_ocsp_responses()
+    # The root CA does not get an OCSP response as it would have to be signed by the CA itself.
+    root_with_ocsp_responder_certificate.refresh_from_db()
+    assert root_with_ocsp_responder_certificate.ocsp_response is None
 
-    # At least child_cert should be scheduled.
-    assert mock_run.called
-    scheduled_serials = [call.args[1].serial for call in mock_run.call_args_list]
-    assert child_cert.serial in scheduled_serials
+    for cert in child_with_ocsp_responder_certificate, root_cert, child_cert:
+        cert.refresh_from_db()
+        assert_ocsp_response_for_model(cert, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
 
 
-@pytest.mark.usefixtures("make_ocsp_key")
-@override_settings(CA_OCSP_RESPONSE_CACHE_EXPIRES=_CACHE_EXPIRES, CA_OCSP_RESPONSE_CACHE_RENEWAL=_RENEWAL)
-def test_skips_fresh_certs(child_cert: Certificate) -> None:
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_skips_fresh_certs(
+    root_with_ocsp_responder_certificate: CertificateAuthority,
+    child_with_ocsp_responder_certificate: CertificateAuthority,
+    root_cert: Certificate,
+    child_cert: Certificate,
+) -> None:
     """Certificates whose cached response is still far from expiry are not renewed."""
     now = datetime.now(tz=UTC)
-    child_cert.ocsp_response = b"dummy"  # type: ignore[assignment]
-    child_cert.ocsp_response_expires = now + timedelta(hours=2)  # well past renewal threshold
-    child_cert.save()
+    for cert in child_with_ocsp_responder_certificate, root_cert, child_cert:
+        cert.ocsp_response = b"dummy"
+        cert.ocsp_response_expires = now + CA_OCSP_RESPONSE_CACHE_EXPIRES * 2
+        cert.save()
 
     with mock.patch("django_ca.tasks.run_task") as mock_run:
         cache_ocsp_responses()
+    mock_run.assert_not_called()
 
-    scheduled_serials = [call.args[1].serial for call in mock_run.call_args_list]
-    assert child_cert.serial not in scheduled_serials
+    for cert in child_with_ocsp_responder_certificate, root_cert, child_cert:
+        cert.refresh_from_db()
+        assert cert.ocsp_response == b"dummy"
+        assert cert.ocsp_response_expires == now + CA_OCSP_RESPONSE_CACHE_EXPIRES * 2
 
 
-@pytest.mark.usefixtures("make_ocsp_key")
-@override_settings(CA_OCSP_RESPONSE_CACHE_EXPIRES=_CACHE_EXPIRES, CA_OCSP_RESPONSE_CACHE_RENEWAL=_RENEWAL)
+@pytest.mark.usefixtures("ocsp_response_caching")
 def test_renews_expiring_certs(child_cert: Certificate) -> None:
     """Certificates whose cached response is within the renewal window are renewed."""
     now = datetime.now(tz=UTC)
-    child_cert.ocsp_response = b"dummy"  # type: ignore[assignment]
+    child_cert.ocsp_response = b"dummy"
     child_cert.ocsp_response_expires = now + timedelta(minutes=10)  # within renewal threshold
     child_cert.save()
 
@@ -94,8 +94,7 @@ def test_renews_expiring_certs(child_cert: Certificate) -> None:
     assert child_cert.serial in scheduled_serials
 
 
-@pytest.mark.usefixtures("make_ocsp_key")
-@override_settings(CA_OCSP_RESPONSE_CACHE_EXPIRES=_CACHE_EXPIRES, CA_OCSP_RESPONSE_CACHE_RENEWAL=_RENEWAL)
+@pytest.mark.usefixtures("ocsp_response_caching")
 def test_error_handling(caplog: LogCaptureFixture, child_cert: Certificate) -> None:
     """Exceptions when scheduling per-cert tasks are caught and logged."""
     with (

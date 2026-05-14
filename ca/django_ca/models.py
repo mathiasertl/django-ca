@@ -37,6 +37,7 @@ from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS, Asymmet
 from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPublicKeyTypes
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from cryptography.x509 import ocsp
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from django.conf import settings
@@ -98,7 +99,13 @@ from django_ca.typehints import (
     ParsableKeyType,
     SignatureHashAlgorithm,
 )
-from django_ca.utils import bytes_to_hex, get_crl_cache_key, int_to_hex, validate_public_key_parameters
+from django_ca.utils import (
+    bytes_to_hex,
+    get_crl_cache_key,
+    get_ocsp_cache_key,
+    int_to_hex,
+    validate_public_key_parameters,
+)
 
 if typing.TYPE_CHECKING:
     from django_stubs_ext.db.models import manager
@@ -348,6 +355,77 @@ class X509CertMixin(DjangoCAModel):
         if not isinstance(jwk, jose.jwk.JWKRSA | jose.jwk.JWKEC):  # pragma: no cover
             raise TypeError(f"Loading JWK RSA key returned {type(jwk)}.")
         return jwk
+
+    def cache_ocsp_response(self) -> None:
+        """Build a fresh OCSP response for *cert* and persist it to the cache and the database.
+
+        Uses SHA-256 as the hash algorithm for the issuer key/name hash within the response, which is the
+        algorithm used by the vast majority of OCSP clients and is the only algorithm pre-generated responses
+        are cached for.
+
+        This helper is intentionally a plain function (not a task) so it can be called both from the
+        :py:func:`cache_ocsp_response` task and from within :py:func:`cache_ocsp_responses`.
+        """
+        if isinstance(self, CertificateAuthority) and self.parent is not None:
+            ca = self.parent
+        elif isinstance(self, Certificate):
+            ca = self.ca
+        else:
+            assert isinstance(self, CertificateAuthority)
+            raise ValueError(
+                f"{self.name}: {self.serial}: Cannot cache an OCSP response for a root certificate authority."
+            )
+
+        # Load the OCSP responder certificate from the CA's key-backend options.
+        try:
+            responder_pem = ca.ocsp_key_backend_options["certificate"]["pem"]
+        except KeyError as ex:
+            raise ValueError(f"{ca.name}: {ca.serial}: OCSP responder certificate not found.") from ex
+
+        now = datetime.now(tz=UTC)
+        assert model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None  # caller is responsible for checking
+        expires = now + model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES
+
+        # Resolve revocation status.
+        if self.revoked:
+            status = ocsp.OCSPCertStatus.REVOKED
+        else:
+            status = ocsp.OCSPCertStatus.GOOD
+
+        builder = ocsp.OCSPResponseBuilder()
+        builder = builder.add_response(
+            cert=self.pub.loaded,
+            issuer=ca.pub.loaded,
+            # Pre-generated responses always use SHA-256 for the issuer hash.  The view only serves them for
+            # incoming requests that also use SHA-256, so algorithm and cached data always match.
+            algorithm=hashes.SHA256(),
+            cert_status=status,
+            this_update=now.replace(tzinfo=None),
+            next_update=expires.replace(tzinfo=None),
+            revocation_time=self.get_revocation_time(),
+            revocation_reason=self.get_revocation_reason(),
+        )
+
+        responder_certificate = x509.load_pem_x509_certificate(responder_pem.encode("ascii"))
+
+        builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, responder_certificate)
+        builder = builder.certificates([responder_certificate])
+
+        # TYPEHINT NOTE: Certificates are always generated with a supported algorithm, so we do not check.
+        algorithm = cast(SignatureHashAlgorithm | None, responder_certificate.signature_hash_algorithm)
+
+        response = ca.ocsp_key_backend.sign_ocsp_response(ca, builder, algorithm)
+        response_der = response.public_bytes(Encoding.DER)
+
+        # Persist in Django cache (add 300s/5m to time out to account for clock skew).
+        cache_key = get_ocsp_cache_key(ca.serial, self.serial, isinstance(self, CertificateAuthority))
+        cache_timeout = (expires - datetime.now(tz=UTC)).total_seconds() + 300
+        cache.set(cache_key, response_der, timeout=int(cache_timeout))
+
+        # Persist in the database so the response survives cache evictions.
+        self.ocsp_response = response_der
+        self.ocsp_response_expires = expires
+        self.save()
 
     def get_revocation_reason(self) -> x509.ReasonFlags | None:
         """Get the revocation reason of this certificate."""
