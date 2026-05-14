@@ -552,9 +552,9 @@ class StatusListFilter(DefaultListFilter):
         self, request: HttpRequest, queryset: CertificateQuerySet
     ) -> CertificateQuerySet:
         if self.value() is None:
-            return queryset.valid()
+            return queryset.current().not_revoked()
         if self.value() == "expired":
-            return queryset.expired()
+            return queryset.expired().not_revoked()
         if self.value() == "revoked":
             return queryset.revoked()
         return queryset

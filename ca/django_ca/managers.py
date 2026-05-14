@@ -110,6 +110,10 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
 
         def exclude(self, *args: Any, **kwargs: Any) -> QuerySetTypeVar: ...
 
+        def current(self, now: datetime | None = None) -> QuerySetTypeVar: ...
+
+        def expired(self, now: datetime | None = None) -> QuerySetTypeVar: ...
+
         def for_certificate_revocation_list(
             self,
             reasons: Iterable[x509.ReasonFlags] | None = None,
@@ -119,7 +123,9 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
 
         def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar: ...
 
-        def valid(self, now: datetime | None = None) -> QuerySetTypeVar: ...
+        def not_revoked(self) -> QuerySetTypeVar: ...
+
+        def revoked(self) -> QuerySetTypeVar: ...
 
 
 class CertificateAuthorityManager(
@@ -135,11 +141,11 @@ class CertificateAuthorityManager(
 
         def acme(self) -> "CertificateAuthorityQuerySet": ...
 
-        def disabled(self) -> "CertificateAuthorityQuerySet": ...
+        def default(self) -> "CertificateAuthority": ...
 
         def enabled(self) -> "CertificateAuthorityQuerySet": ...
 
-        def invalid(self) -> "CertificateAuthorityQuerySet": ...
+        def preferred_order(self) -> "CertificateAuthorityQuerySet": ...
 
         def usable(self) -> "CertificateAuthorityQuerySet": ...
 
@@ -218,11 +224,6 @@ class CertificateAuthorityManager(
                 [x509.DistributionPoint(full_name=[uri], relative_name=None, reasons=None, crl_issuer=None)]
             ),
         )
-
-    # PYLINT NOTE: documented in queryset
-    def default(self) -> "CertificateAuthority":  # pylint: disable=missing-function-docstring
-        # Needs to be here because the async_to_sync version in the queryset does not get mirrored here.
-        return self.all().default()
 
     def init(  # noqa: PLR0912,PLR0913,PLR0915
         self,
@@ -589,20 +590,6 @@ class CertificateManager(
     CertificateManagerMixin["Certificate", "CertificateQuerySet"], CertificateManagerBase
 ):
     """Model manager for the Certificate model."""
-
-    if typing.TYPE_CHECKING:
-        # See CertificateManagerMixin for description on this branch
-        #
-        # pylint: disable=missing-function-docstring; just defining stubs here
-        def currently_valid(self) -> "CertificateQuerySet": ...
-
-        def expired(self) -> "CertificateQuerySet": ...
-
-        def not_yet_valid(self) -> "CertificateQuerySet": ...
-
-        def preferred_order(self) -> "CertificateQuerySet": ...
-
-        def revoked(self) -> "CertificateQuerySet": ...
 
     def create_cert(  # noqa: PLR0913
         self,

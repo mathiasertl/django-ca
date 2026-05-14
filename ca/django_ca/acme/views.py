@@ -1130,7 +1130,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         This function handles the special authorization requirements for this request (they can be signed by
         either the account key pair or the certificate key pair).
         """
-        certs = Certificate.objects.filter(ca=self.ca).currently_valid()
+        certs = Certificate.objects.filter(ca=self.ca).current()
 
         # If the request is signed with the certificate key (and not the account), a JWK is set for this
         # request, and we verify it was signed by the certificate on record.

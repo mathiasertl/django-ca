@@ -35,7 +35,7 @@ def get_certificate_authority(serial: str, expired: bool = False) -> Certificate
     """Get a certificate authority from the given serial."""
     qs = CertificateAuthority.objects.enabled().exclude(api_enabled=False)
     if expired is False:
-        qs = qs.valid()
+        qs = qs.current()
 
     try:
         return qs.get(serial=serial)
