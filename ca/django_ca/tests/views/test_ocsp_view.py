@@ -204,11 +204,10 @@ def child_with_ocsp_responder_certificate(
 
 
 @pytest.fixture
-def profile_ocsp(tmpcadir: Path) -> Certificate:
+def profile_ocsp(tmpcadir: Path) -> None:
     """Augmented fixture to copy the certificates into the tmpcadir."""
     shutil.copy(FIXTURES_DIR / "profile-ocsp.key", tmpcadir)
     shutil.copy(FIXTURES_DIR / "profile-ocsp.pub", tmpcadir)
-    return profile_ocsp
 
 
 @pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
