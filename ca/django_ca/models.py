@@ -44,7 +44,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator, URLValidator
-from django.db import models
+from django.db import models, transaction
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
@@ -546,6 +546,15 @@ class X509CertMixin(DjangoCAModel):
         self.revoked_reason = reason.name
         self.compromised = compromised
         self.save()
+
+        if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None:
+            from django_ca.celery.messages import CacheOCSPResponseTaskArgs  # noqa: PLC0415
+            from django_ca.tasks import cache_ocsp_response, run_task  # noqa: PLC0415
+
+            task_args = CacheOCSPResponseTaskArgs(
+                serial=self.serial, ca=isinstance(self, CertificateAuthority)
+            )
+            transaction.on_commit(lambda: run_task(cache_ocsp_response, task_args))
 
         post_revoke_cert.send(sender=self.__class__, cert=self)
 

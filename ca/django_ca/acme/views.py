@@ -1231,5 +1231,5 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             raise AcmeMalformed(typ="alreadyRevoked", message="Certificate was already revoked.")
 
         # Finally actually revoke the certificate
-        cert.revoke(reason)
+        cert.revoke(reason=reason)
         return AcmeResponse({})  # No response specified in RFC 8555!
