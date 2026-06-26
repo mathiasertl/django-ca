@@ -13,14 +13,13 @@
 
 """Messages for Celery tasks."""
 
-from datetime import datetime
 from typing import Self
 
 from pydantic import AwareDatetime, Field, model_validator
 
 from django_ca.celery import CeleryMessageModel
 from django_ca.conf import model_settings
-from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES, ReasonFlags
+from django_ca.constants import SIGNATURE_HASH_ALGORITHM_TYPES
 from django_ca.pydantic import NameModel
 from django_ca.pydantic.extensions import ConfigurableExtensionModel
 from django_ca.pydantic.type_aliases import CSRType, Serial
@@ -80,15 +79,5 @@ class ApiSignCertificateTaskArgs(CeleryMessageModel):
         return None
 
 
-class RevokeTaskArgs(SerialTaskArgs):
-    """Parameters for ``django_ca.tasks.revoke``."""
-
-    reason: ReasonFlags = ReasonFlags.unspecified
-    compromised: datetime | None = None
-
-
-class CacheOCSPResponseTaskArgs(CeleryMessageModel):
+class CacheOCSPResponseTaskArgs(SerialTaskArgs):
     """Parameters for ``django_ca.tasks.cache_ocsp_response``."""
-
-    serial: Serial
-    ca: bool
