@@ -36,6 +36,7 @@ from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
     ApiSignCertificateTaskArgs,
     CacheOCSPResponseTaskArgs,
+    RevokeTaskArgs,
     UseCertificateAuthoritiesTaskArgs,
     UseCertificateAuthorityTaskArgs,
 )
@@ -51,11 +52,27 @@ from django_ca.models import (
     CertificateAuthority,
     CertificateExpiryNotification,
     CertificateOrder,
+    X509CertMixin,
 )
 from django_ca.profiles import profiles
 from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
+
+
+@shared_task(base=DjangoCaTask)
+def revoke(data: RevokeTaskArgs) -> None:
+    """Task to revoke a certificate."""
+    if data.ca is True:
+        cert: X509CertMixin = CertificateAuthority.objects.get(serial=data.serial)
+    else:
+        cert = Certificate.objects.get(serial=data.serial)
+    cert.revoke(reason=data.reason, compromised=data.compromised)
+
+    if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None:
+        transaction.on_commit(
+            lambda: run_task(cache_ocsp_response, CacheOCSPResponseTaskArgs(serial=cert.serial, ca=data.ca))
+        )
 
 
 @shared_task(base=DjangoCaTask)

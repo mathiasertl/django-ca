@@ -69,6 +69,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
     """Mixin with common methods for CertificateAuthority and Certificate models."""
 
     if TYPE_CHECKING:
+        # pylint: disable=missing-function-docstring
         model: type[X509CertMixinTypeVar]
 
         def exclude(self, *args: Any, **kwargs: Any) -> Self: ...
@@ -96,6 +97,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         return self.filter(not_after__gte=now, not_before__lt=now)
 
     def expired(self, now: datetime | None = None) -> Self:
+        """Return CAs that are expired."""
         if now is None:
             now = timezone.now()
         return self.filter(not_after__lte=now)
@@ -145,6 +147,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         return qs
 
     def for_ocsp_cache(self, *, now: datetime | None = None) -> Self:
+        """Return certificates that should have cached OCSP responses."""
         if now is None:
             now = timezone.now()
 

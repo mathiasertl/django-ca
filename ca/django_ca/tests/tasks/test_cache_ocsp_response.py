@@ -20,7 +20,7 @@ from _pytest.logging import LogCaptureFixture
 
 from django_ca.celery.messages import CacheOCSPResponseTaskArgs
 from django_ca.constants import ReasonFlags
-from django_ca.models import Certificate, CertificateAuthority
+from django_ca.models import Certificate
 from django_ca.tasks import cache_ocsp_response
 from django_ca.tests.base.assertions import assert_ocsp_response_for_model
 from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, TIMESTAMPS
@@ -69,7 +69,7 @@ def test_unknown_certificate(caplog: LogCaptureFixture) -> None:
 
 
 @pytest.mark.usefixtures("ocsp_response_caching")
-def test_missing_responder_cert(root_cert: Certificate, usable_root: CertificateAuthority) -> None:
+def test_missing_responder_cert(root_cert: Certificate) -> None:
     """Task logs an error when the CA has no OCSP responder certificate configured."""
     # root's CA has no OCSP key configured by default.
     root_cert.ca.refresh_from_db()

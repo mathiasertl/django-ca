@@ -23,6 +23,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 from unittest.mock import Mock
 
+from asn1crypto.ocsp import OCSPResponse
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa, x448, x25519
@@ -525,7 +526,9 @@ def assert_ocsp_response(
     assert isinstance(single_responses[0].hash_algorithm, single_response_hash_algorithm)
 
     # Validate the response signature
-    assert_ocsp_signature(responder_certificate.public_key(), response)
+    public_key = cast(CertificateIssuerPublicKeyTypes, responder_certificate.public_key())
+    assert_ocsp_signature(public_key, response)
+    return response
 
 
 def assert_ocsp_response_for_model(
@@ -535,12 +538,13 @@ def assert_ocsp_response_for_model(
     expires: timedelta = timedelta(seconds=86400),
     signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
     single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
-):
+) -> OCSPResponse:
     """Assert the contents of an OCSP response in the database and cache."""
     if isinstance(certificate, Certificate):
         signer = certificate.ca
         cache_key = get_ocsp_cache_key(signer.serial, certificate.serial, False)
     else:
+        assert certificate.parent is not None
         signer = certificate.parent
         cache_key = get_ocsp_cache_key(signer.serial, certificate.serial, True)
 
@@ -554,8 +558,8 @@ def assert_ocsp_response_for_model(
 
     cached_response = cache.get(cache_key)
     assert certificate.ocsp_response == cached_response
-    assert_ocsp_response(
-        certificate.ocsp_response,
+    return assert_ocsp_response(
+        certificate.ocsp_response,  # type: ignore[arg-type]
         certificate,
         responder_certificate,
         response_status,

@@ -25,10 +25,14 @@ from django_ca.tasks import cache_ocsp_responses
 from django_ca.tests.base.assertions import assert_ocsp_response_for_model
 from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, TIMESTAMPS
 
-pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [
+    pytest.mark.usefixtures("clear_cache"),
+    pytest.mark.django_db,
+    pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]),
+]
 
 
-def test_caching_disabled(child_cert: Certificate) -> None:
+def test_caching_disabled() -> None:
     """Task is a no-op when CA_OCSP_RESPONSE_CACHE_EXPIRES is None (the default)."""
     with mock.patch("django_ca.tasks.run_task") as mock_run:
         cache_ocsp_responses()
@@ -57,7 +61,6 @@ def test_caches_uncached_certs(
 
 @pytest.mark.usefixtures("ocsp_response_caching")
 def test_skips_fresh_certs(
-    root_with_ocsp_responder_certificate: CertificateAuthority,
     child_with_ocsp_responder_certificate: CertificateAuthority,
     root_cert: Certificate,
     child_cert: Certificate,
@@ -94,8 +97,8 @@ def test_renews_expiring_certs(child_cert: Certificate) -> None:
     assert child_cert.serial in scheduled_serials
 
 
-@pytest.mark.usefixtures("ocsp_response_caching")
-def test_error_handling(caplog: LogCaptureFixture, child_cert: Certificate) -> None:
+@pytest.mark.usefixtures("ocsp_response_caching", "child_cert")
+def test_error_handling(caplog: LogCaptureFixture) -> None:
     """Exceptions when scheduling per-cert tasks are caught and logged."""
     with (
         mock.patch("django_ca.tasks.run_task", side_effect=Exception("boom")),
