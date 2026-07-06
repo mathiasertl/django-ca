@@ -18,29 +18,14 @@ from http import HTTPStatus
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric.types import CertificateIssuerPrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509 import ocsp
 
 from django.test import Client
 from django.urls import reverse
 
-from django_ca.key_backends.storages import StoragesOCSPBackend
-from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.typehints import HttpResponse
-
-
-def generate_ocsp_key(ca: CertificateAuthority) -> tuple[CertificateIssuerPrivateKeyTypes, Certificate]:
-    """Generate an OCSP key for the given CA and return private kay and public key model instance."""
-    key_backend_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[ca.name].get("password"))
-    ocsp_cert = ca.generate_ocsp_key(key_backend_options)
-    assert ocsp_cert is not None
-    ocsp_key_backend = ca.ocsp_key_backend
-    assert isinstance(ocsp_key_backend, StoragesOCSPBackend)
-    private_key = ocsp_key_backend.load_private_key(ca)
-    return private_key, ocsp_cert
 
 
 def ocsp_get(

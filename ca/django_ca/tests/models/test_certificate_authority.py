@@ -305,6 +305,15 @@ def test_force_regenerate_ocsp_responder_certificate(usable_root: CertificateAut
         assert cert_renewed.serial != cert.serial
 
 
+def test_cache_ocsp_response_with_root(root: CertificateAuthority) -> None:
+    """Test `cache_ocsp_response` with a root CA."""
+    with pytest.raises(
+        ValueError,
+        match=rf"^{root.name}: {root.serial}: Cannot cache OCSP response for root certificate authority\.$",
+    ):
+        root.cache_ocsp_response()
+
+
 def test_empty_extensions_for_certificate(root: CertificateAuthority) -> None:
     """Test extensions_for_certificate property when no values are set."""
     root.sign_certificate_policies = None
