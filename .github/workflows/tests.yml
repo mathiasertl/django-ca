@@ -7,7 +7,7 @@ env:
   UV_PYTHON_PREFERENCE: only-system
   UV_NO_SYNC: 1
   NEWEST_PYTHON: "3.14"
-  NEWEST_CRYPTOGRAPHY: "47"
+  NEWEST_CRYPTOGRAPHY: "49"
   NEWEST_PYDANTIC: "2.13"
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
         os: [ ubuntu-latest ]
         python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         django-version: [ "5.2", "6.0" ]
-        cryptography-version: [ "46", "47" ]
+        cryptography-version: [ "46", "47", "48", "49" ]
         pydantic-version: [ "2.12", "2.13" ]
         exclude:
           - python-version: "3.10"
