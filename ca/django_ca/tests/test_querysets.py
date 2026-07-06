@@ -18,19 +18,11 @@ from contextlib import contextmanager
 from typing import Any
 
 from django.db import models
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TransactionTestCase
 
 from freezegun import freeze_time
 
-from django_ca.models import (
-    AcmeAccount,
-    AcmeAuthorization,
-    AcmeCertificate,
-    AcmeChallenge,
-    AcmeOrder,
-    Certificate,
-    CertificateAuthority,
-)
+from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.assertions import assert_count_equal
 from django_ca.tests.base.constants import TIMESTAMPS
 from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
@@ -56,84 +48,6 @@ class QuerySetTestCaseMixin(TestCaseMixin):
         finally:
             setattr(obj, attr, original)
             obj.save()
-
-
-@override_settings(CA_MIN_KEY_SIZE=1024)
-class CertificateAuthorityQuerySetTestCase(TestCaseMixin, TestCase):
-    """Test cases for :py:class:`~django_ca.querysets.CertificateAuthorityQuerySet`."""
-
-    load_cas = ("root", "child")
-
-    def test_enabled_disabled(self) -> None:
-        """Test enabled/disabled filter."""
-        self.load_named_cas("__usable__")
-
-        assert_count_equal(CertificateAuthority.objects.enabled(), self.cas.values())
-        assert not CertificateAuthority.objects.filter(enabled=False)
-
-        self.ca.enabled = False
-        self.ca.save()
-
-        assert_count_equal(
-            CertificateAuthority.objects.enabled(),
-            [c for c in self.cas.values() if c.name != self.ca.name],
-        )
-
-    def test_valid(self) -> None:
-        """Test valid/usable/invalid filters."""
-        self.load_named_cas("__usable__")
-
-        with freeze_time(TIMESTAMPS["before_cas"]):
-            assert not CertificateAuthority.objects.current()
-            assert not CertificateAuthority.objects.usable()
-
-        with freeze_time(TIMESTAMPS["before_child"]):
-            valid = [c for c in self.cas.values() if c.name != "child"]
-            assert_count_equal(CertificateAuthority.objects.current(), valid)
-            assert_count_equal(CertificateAuthority.objects.usable(), valid)
-
-        with freeze_time(TIMESTAMPS["after_child"]):
-            assert_count_equal(CertificateAuthority.objects.current(), self.cas.values())
-            assert_count_equal(CertificateAuthority.objects.usable(), self.cas.values())
-
-        with freeze_time(TIMESTAMPS["cas_expired"]):
-            assert not CertificateAuthority.objects.current()
-            assert not CertificateAuthority.objects.usable()
-
-
-class CertificateQuerysetTestCase(QuerySetTestCaseMixin, TestCase):
-    """Test cases for :py:class:`~django_ca.querysets.CertificateQuerySet`."""
-
-    load_cas = "__usable__"
-    load_certs = "__usable__"
-
-    def test_validity(self) -> None:
-        """Test validity filter."""
-        with freeze_time(TIMESTAMPS["everything_valid"]):
-            self.assertQuerySet(Certificate.objects.expired())
-            self.assertQuerySet(Certificate.objects.current(), *self.certs.values())
-
-        with freeze_time(TIMESTAMPS["everything_expired"]):
-            self.assertQuerySet(Certificate.objects.expired(), *self.certs.values())
-            self.assertQuerySet(Certificate.objects.current())
-
-        with freeze_time(TIMESTAMPS["before_everything"]):
-            self.assertQuerySet(Certificate.objects.expired())
-            self.assertQuerySet(Certificate.objects.current())
-
-        expired = [
-            self.certs["root-cert"],
-            self.certs["child-cert"],
-            self.certs["ec-cert"],
-            self.certs["dsa-cert"],
-            self.certs["pwd-cert"],
-            self.certs["ed448-cert"],
-            self.certs["ed25519-cert"],
-        ]
-        valid = [c for c in self.certs.values() if c not in expired]
-        with freeze_time(TIMESTAMPS["ca_certs_expired"]):
-            self.assertQuerySet(Certificate.objects.expired(), *expired)
-            self.assertQuerySet(Certificate.objects.current(), *valid)
 
 
 class AcmeQuerySetTestCase(QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTestCase):

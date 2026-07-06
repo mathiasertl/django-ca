@@ -364,8 +364,7 @@ def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
 
 @pytest.fixture
 def softhsm_token(  # pragma: hsm
-    request: pytest.FixtureRequest,
-    settings: SettingsWrapper,
+    request: pytest.FixtureRequest, settings: SettingsWrapper
 ) -> str:
     """Get a unique token for the current test."""
     request.getfixturevalue("softhsm_setup")

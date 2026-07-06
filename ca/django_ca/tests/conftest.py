@@ -73,6 +73,7 @@ def pytest_configure(config: "PytestConfig") -> None:
         cov: coverage.Coverage = cov_plugin.cov_controller.combining_cov
         setup_pragmas(cov)
 
+    config.addinivalue_line("markers", "requires_ca: (Internal only) Require a specific CA in some fixtures.")
     config.addinivalue_line("markers", "selenium: mark tests that use selenium")
     config.addinivalue_line("markers", "hsm: mark tests that use HSM")
 
