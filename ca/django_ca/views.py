@@ -40,7 +40,7 @@ from cryptography.x509 import (
     load_pem_x509_certificate,
     ocsp,
 )
-from cryptography.x509.ocsp import OCSPResponse, OCSPResponseBuilder
+from cryptography.x509.ocsp import OCSPRequest, OCSPResponse, OCSPResponseBuilder
 
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
@@ -243,7 +243,7 @@ class OCSPView(View):
             return self.malformed_request()
 
         try:
-            return self.process_ocsp_request(decoded_data)
+            return self.handle_ocsp_request_data(decoded_data)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
@@ -251,10 +251,20 @@ class OCSPView(View):
     def post(self, request: HttpRequest) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
-            return self.process_ocsp_request(request.body)
+            return self.handle_ocsp_request_data(request.body)
         except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
             log.exception(e)
             return self.fail()
+
+    def handle_ocsp_request_data(self, data: bytes) -> HttpResponse:
+        """Parse raw request data and call `process_ocsp_request()`."""
+        try:
+            ocsp_req = ocsp.load_der_ocsp_request(data)
+        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
+            log.debug("Cannot parse OCSP request: %s", e)
+            return self.malformed_request()
+
+        return self.process_ocsp_request(ocsp_req)
 
     def fail(self, status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.INTERNAL_ERROR) -> HttpResponse:
         """Generic method to return a failure response."""
@@ -358,21 +368,15 @@ class OCSPView(View):
         cert = self.get_cert(ca, cert_serial)
         return ca, cert
 
-    def process_ocsp_request(self, data: bytes) -> HttpResponse:
-        """Process OCSP request data."""
-        try:
-            ocsp_req = ocsp.load_der_ocsp_request(data)
-        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
-            log.exception(e)
-            return self.malformed_request()
-
+    def process_ocsp_request(self, request: OCSPRequest) -> HttpResponse:
+        """Process a parsed OCSP request."""
         # Fail if there are any critical extensions that we do not understand
-        for ext in ocsp_req.extensions:
+        for ext in request.extensions:
             if ext.critical and not isinstance(ext.value, OCSPNonce):  # pragma: no cover
                 # It seems impossible to get cryptography to create such a request, so it's not tested
                 return self.malformed_request()
 
-        cert_serial = int_to_hex(ocsp_req.serial_number)
+        cert_serial = int_to_hex(request.serial_number)
 
         # NOINSPECTION NOTE: PyCharm wrongly things that second except is already covered by the first.
         # noinspection PyExceptClausesOrder
@@ -399,7 +403,7 @@ class OCSPView(View):
             issuer=ca.pub.loaded,
             # The algorithm used must be the same as in the request, or "openssl ocsp" won't be able to
             # determine the status (verified: NOT the hash algorithm of the requested certificate).
-            algorithm=ocsp_req.hash_algorithm,
+            algorithm=request.hash_algorithm,
             cert_status=status,
             this_update=now.replace(tzinfo=None),
             next_update=expires,
@@ -409,7 +413,7 @@ class OCSPView(View):
 
         # Add OCSP nonce if present
         try:
-            nonce = ocsp_req.extensions.get_extension_for_class(OCSPNonce)
+            nonce = request.extensions.get_extension_for_class(OCSPNonce)
             builder = builder.add_extension(nonce.value, critical=nonce.critical)
         except ExtensionNotFound:
             pass
@@ -463,7 +467,7 @@ class GenericOCSPView(OCSPView):
         cert = Certificate.objects.select_related("ca").get(ca__serial=ca_serial, serial=cert_serial)
         return cert.ca, cert
 
-    def process_ocsp_request(self, data: bytes) -> HttpResponse:
+    def process_ocsp_request(self, request: OCSPRequest) -> HttpResponse:
         """Process OCSP request with optional caching.
 
         When :ref:`settings-ca-ocsp-response-cache-expires` is set, this method first tries to serve a
@@ -474,54 +478,48 @@ class GenericOCSPView(OCSPView):
         makes each response unique and cannot be pre-cached.
         """
         if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is None:
-            # Caching disabled or CA-OCSP mode: use the standard (uncached) path.
-            return super().process_ocsp_request(data)
-
-        # Parse OCSP request to extract serial and check for nonce.
-        try:
-            ocsp_req = ocsp.load_der_ocsp_request(data)
-        except Exception as e:  # pylint: disable=broad-except
-            log.exception(e)
-            return self.malformed_request()
+            # Caching disabled: use the standard (uncached) path.
+            return super().process_ocsp_request(request)
 
         # Fail if there are any critical extensions (Nonce doesn't work when caching).
-        if any(ext.critical for ext in ocsp_req.extensions):
+        if any(ext.critical for ext in request.extensions):
+            log.debug("Critical extension received, but cached OCSP responses are enabled.")
             return self.malformed_request()
 
         ca_serial = self.kwargs["serial"]
-        cert_serial = int_to_hex(ocsp_req.serial_number)
+        cert_serial = int_to_hex(request.serial_number)
         now = datetime.now(tz=UTC)
 
         # Try Django cache first.
         cache_key = get_ocsp_cache_key(ca_serial, cert_serial, ca=self.ca_ocsp)
-        cached_der: bytes | None = cache.get(cache_key)
+        response: bytes | None = cache.get(cache_key)
 
-        if cached_der is None:
+        if response is None:
             # Try the database cache field.
-            _fields = ["serial", "ocsp_response", "ocsp_response_expires"]
+            _fields = ("serial", "ocsp_response", "ocsp_response_expires")
             if self.ca_ocsp:
                 try:
                     cert: X509CertMixin = CertificateAuthority.objects.only(*_fields).get(
-                        parent=ca_serial, serial=cert_serial
+                        parent__serial=ca_serial, serial=cert_serial
                     )
-                except Certificate.DoesNotExist:
-                    log.warning("%s: OCSP request for unknown cert received.", cert_serial)
-                    return self.fail()
+                except CertificateAuthority.DoesNotExist:
+                    log.warning("%s: OCSP request for unknown CA received.", cert_serial)
+                    return self.malformed_request()
             else:
                 try:
                     cert = Certificate.objects.only(*_fields).get(ca__serial=ca_serial, serial=cert_serial)
                 except Certificate.DoesNotExist:
-                    log.warning("%s: OCSP request for unknown cert received.", cert_serial)
-                    return self.fail()
+                    log.warning("%s: OCSP request for unknown certificate received.", cert_serial)
+                    return self.malformed_request()
 
             # If we found an OCSP response in the database, but not in the cache, add it to the cache.
             if cert.ocsp_response and cert.ocsp_response_expires and cert.ocsp_response_expires > now:
-                cached_der = bytes(cert.ocsp_response)
+                response = bytes(cert.ocsp_response)
                 remaining = (cert.ocsp_response_expires - now).total_seconds()
-                cache.set(cache_key, cached_der, timeout=int(remaining))
+                cache.set(cache_key, response, timeout=int(remaining))
 
-        if cached_der is not None:
-            return self.http_response(cached_der)
+        if response is not None:
+            return self.http_response(response)
 
         log.warning("%s: No cached OCSP response available.", cert_serial)
         return self.fail()

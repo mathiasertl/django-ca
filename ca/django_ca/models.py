@@ -428,6 +428,14 @@ class X509CertMixin(DjangoCAModel):
         self.ocsp_response_expires = expires
         self.save()
 
+    def run_cache_ocsp_response_task(self) -> None:
+        if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None:
+            from django_ca.celery.messages import CacheOCSPResponseTaskArgs  # noqa: PLC0415
+            from django_ca.tasks import cache_ocsp_response, run_task  # noqa: PLC0415
+
+            args = CacheOCSPResponseTaskArgs(serial=self.serial, ca=isinstance(self, CertificateAuthority))
+            transaction.on_commit(lambda: run_task(cache_ocsp_response, args))
+
     def get_revocation_reason(self) -> x509.ReasonFlags | None:
         """Get the revocation reason of this certificate."""
         if self.revoked is False:
@@ -548,15 +556,7 @@ class X509CertMixin(DjangoCAModel):
         self.compromised = compromised
         self.save()
 
-        if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None:
-            from django_ca.celery.messages import CacheOCSPResponseTaskArgs  # noqa: PLC0415
-            from django_ca.tasks import cache_ocsp_response, run_task  # noqa: PLC0415
-
-            task_args = CacheOCSPResponseTaskArgs(
-                serial=self.serial, ca=isinstance(self, CertificateAuthority)
-            )
-            transaction.on_commit(lambda: run_task(cache_ocsp_response, task_args))
-
+        self.run_cache_ocsp_response_task()
         post_revoke_cert.send(sender=self.__class__, cert=self)
 
 
@@ -891,7 +891,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
 
-        # Add mandatory end-entity certificate extensions
+        # Add mandatory end-entity certificate extensions (AuthorityKeyIdentifier, BasicConstraints, SubjectKeyIdentifier)
         certificate_extensions = self.get_end_entity_certificate_extensions(public_key) + extensions
 
         pre_sign_cert.send(
@@ -918,7 +918,7 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         )
 
         post_sign_cert.send(sender=self.__class__, ca=self, cert=signed_cert)
-
+        self.run_cache_ocsp_response_task()
         return signed_cert
 
     def sign_data(

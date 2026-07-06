@@ -33,6 +33,7 @@ def ocsp_get(
     certificate: CertificateAuthority | Certificate,
     nonce: bytes | None = None,
     hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
+    nonce_critical: bool = False,
 ) -> "HttpResponse":
     """Make an OCSP get request."""
     if isinstance(certificate, CertificateAuthority):
@@ -47,7 +48,7 @@ def ocsp_get(
     builder = builder.add_certificate(certificate.pub.loaded, ca.pub.loaded, hash_algorithm())
 
     if nonce is not None:  # Add Nonce if requested
-        builder = builder.add_extension(x509.OCSPNonce(nonce), False)
+        builder = builder.add_extension(x509.OCSPNonce(nonce), nonce_critical)
 
     request = builder.build()
 

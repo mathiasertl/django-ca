@@ -507,14 +507,13 @@ def test_responder_cert_not_found(caplog: LogCaptureFixture, client: Client) -> 
     assert "No such file or directory:" in caplog.text
 
 
-def test_bad_request(caplog: LogCaptureFixture, client: Client) -> None:
+def test_bad_request(client: Client) -> None:
     """Try making a bad request."""
     data = base64.b64encode(b"foobar").decode("utf-8")
     response = client.get(reverse("get", kwargs={"data": data}))
     assert response.status_code == HTTPStatus.OK
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
-    assert "ValueError: error parsing asn1 value" in caplog.text
 
 
 def test_multiple(caplog: LogCaptureFixture, client: Client) -> None:
@@ -524,7 +523,6 @@ def test_multiple(caplog: LogCaptureFixture, client: Client) -> None:
     assert response.status_code == HTTPStatus.OK
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
-    assert "OCSP request contains more than one request" in caplog.text
 
 
 def test_bad_ca_cert(caplog: LogCaptureFixture, client: Client, child_cert: Certificate) -> None:

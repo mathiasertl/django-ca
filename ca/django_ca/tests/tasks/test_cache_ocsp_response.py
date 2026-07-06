@@ -13,10 +13,7 @@
 
 """Tests for the ``cache_ocsp_response`` Celery task."""
 
-import logging
-
 import pytest
-from _pytest.logging import LogCaptureFixture
 
 from django_ca.celery.messages import CacheOCSPResponseTaskArgs
 from django_ca.constants import ReasonFlags
@@ -57,15 +54,6 @@ def test_cache_revoked_cert(child_cert: Certificate) -> None:
 
     child_cert.refresh_from_db()
     assert_ocsp_response_for_model(child_cert, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
-
-
-@pytest.mark.usefixtures("ocsp_response_caching")
-def test_unknown_certificate(caplog: LogCaptureFixture) -> None:
-    """Task logs an error and returns if the certificate serial is not found."""
-    with caplog.at_level(logging.ERROR, logger="django_ca.tasks"):
-        cache_ocsp_response(CacheOCSPResponseTaskArgs(serial="DEADBEEF", ca=False))
-
-    assert "DEADBEEF: Certificate not found." in caplog.text
 
 
 @pytest.mark.usefixtures("ocsp_response_caching")

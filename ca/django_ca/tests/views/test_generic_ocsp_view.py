@@ -28,7 +28,7 @@ from cryptography.x509 import ocsp
 
 from django.core.cache import cache
 from django.core.files.storage import storages
-from django.test import Client, override_settings
+from django.test import Client
 from django.urls import reverse
 
 import pytest
@@ -42,7 +42,7 @@ from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tasks import cache_ocsp_response
-from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
+from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.views.assertions import assert_ocsp_response_via_http
 from django_ca.tests.views.conftest import ocsp_get
 
@@ -51,11 +51,14 @@ pytestmark = [pytest.mark.usefixtures("clear_cache"), pytest.mark.freeze_time(TI
 
 @pytest.fixture
 def child(tmpcadir: Path, child: CertificateAuthority, profile_ocsp: Certificate) -> CertificateAuthority:
-    """Augment the child_cert fixture to add a usable OCSP certificate."""
-    shutil.copy(FIXTURES_DIR / "profile-ocsp.key", tmpcadir / "ocsp")
+    """Augment the child fixture to add a usable OCSP certificate."""
+    ocsp_dir = tmpcadir / "ocsp"
+    ocsp_dir.mkdir(exist_ok=True, parents=True)
+    dest = ocsp_dir / "child-ocsp.key"
+    shutil.copy(FIXTURES_DIR / "profile-ocsp.key", dest)
 
     child.ocsp_key_backend_options = {
-        "private_key": {"path": str(tmpcadir / "ocsp")},
+        "private_key": {"path": str(dest)},
         "certificate": {"pem": profile_ocsp.pub.pem},
     }
     child.save()
@@ -277,24 +280,8 @@ def test_method_not_allowed(client: Client) -> None:
 # OCSP response caching tests
 # ---------------------------------------------------------------------------
 
-_CACHE_EXPIRES = timedelta(hours=1)
 
-
-def _make_raw_ocsp_get(client: Client, cert: Certificate) -> bytes:
-    """Return a raw (DER-encoded) OCSP response for *cert* without any caching logic."""
-    builder = ocsp.OCSPRequestBuilder()
-    builder = builder.add_certificate(cert.pub.loaded, cert.ca.pub.loaded, hashes.SHA256())
-    request = builder.build()
-    url = reverse(
-        "django_ca:ocsp-cert-get",
-        kwargs={
-            "serial": cert.ca.serial,
-            "data": base64.b64encode(request.public_bytes(Encoding.DER)).decode("utf-8"),
-        },
-    )
-    return client.get(url).content
-
-
+@pytest.mark.usefixtures("ocsp_response_caching")
 def test_cached_response_served_from_django_cache(
     settings: SettingsWrapper,
     django_assert_num_queries: DjangoAssertNumQueries,
@@ -302,26 +289,38 @@ def test_cached_response_served_from_django_cache(
     child_cert: Certificate,
 ) -> None:
     """When a cached response exists in Django cache, it is returned directly."""
-    # Now enable caching and make a second request — must be served from cache.
-    settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = _CACHE_EXPIRES
     cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
 
     with django_assert_num_queries(0):
         response = ocsp_get(client, child_cert)
 
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=_CACHE_EXPIRES)
+    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
 
 
-def test_cached_response_served_from_db(
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_cached_response_with_non_critical_nonce(
     settings: SettingsWrapper,
     django_assert_num_queries: DjangoAssertNumQueries,
     client: Client,
     child_cert: Certificate,
 ) -> None:
+    """Test that non-critical extensions are ignored."""
+    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+
+    with django_assert_num_queries(0):
+        response = ocsp_get(client, child_cert, nonce=b"nonce", nonce_critical=False)
+
+    assert response.status_code == HTTPStatus.OK
+    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
+
+
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_cached_response_served_from_db(
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, child_cert: Certificate
+) -> None:
     """When no Django-cache entry exists, a valid DB-stored response is used."""
     # Obtain a real OCSP response without caching.
-    settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = _CACHE_EXPIRES
     cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
     cache.clear()  # clear cache again
 
@@ -329,30 +328,34 @@ def test_cached_response_served_from_db(
         response = ocsp_get(client, child_cert)
 
     assert response.status_code == HTTPStatus.OK
-    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=_CACHE_EXPIRES)
+    assert_ocsp_response_via_http(response, child_cert, nonce=None, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
 
 
+@pytest.mark.usefixtures("usable_root", "ocsp_response_caching")
+def test_cached_response_served_from_db_with_certificate_authority(
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, child: CertificateAuthority
+) -> None:
+    """When no Django-cache entry exists, a valid DB-stored response is used."""
+    # Obtain a real OCSP response without caching.
+    child.parent.generate_ocsp_key(StoragesUsePrivateKeyOptions(password=None))
+    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child.serial, ca=True))
+    cache.clear()  # clear cache again
+
+    with django_assert_num_queries(1):
+        response = ocsp_get(client, child)
+
+    assert response.status_code == HTTPStatus.OK
+    assert_ocsp_response_via_http(response, child, nonce=None, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
+
+
+@pytest.mark.usefixtures("ocsp_response_caching")
 def test_no_cached_response_returns_error(
     caplog: LogCaptureFixture, client: Client, child_cert: Certificate
 ) -> None:
     """When caching is enabled but no response is available, INTERNAL_ERROR is returned."""
     # Build a request manually so we can inspect the raw HTTP response (ocsp_get asserts HTTP 200).
-    builder = ocsp.OCSPRequestBuilder()
-    builder = builder.add_certificate(child_cert.pub.loaded, child_cert.ca.pub.loaded, hashes.SHA256())
-    ocsp_request = builder.build()
-    url = reverse(
-        "django_ca:ocsp-cert-get",
-        kwargs={
-            "serial": child_cert.ca.serial,
-            "data": base64.b64encode(ocsp_request.public_bytes(Encoding.DER)).decode("utf-8"),
-        },
-    )
-
-    with (
-        override_settings(CA_OCSP_RESPONSE_CACHE_EXPIRES=_CACHE_EXPIRES),
-        caplog.at_level(logging.WARNING, logger="django_ca.views"),
-    ):
-        response = client.get(url)
+    with caplog.at_level(logging.WARNING, logger="django_ca.views"):
+        response = ocsp_get(client, child_cert)
 
     assert response.status_code == HTTPStatus.OK
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
@@ -360,31 +363,83 @@ def test_no_cached_response_returns_error(
     assert "No cached OCSP response available" in caplog.text
 
 
-def test_expired_db_response_returns_error(
-    caplog: LogCaptureFixture, client: Client, child_cert: Certificate
-) -> None:
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_expired_db_response_returns_error(client: Client, child_cert: Certificate) -> None:
     """An expired DB-stored response is not served; INTERNAL_ERROR is returned instead."""
     now = datetime.now(tz=UTC)
     child_cert.ocsp_response = b"stale-data"
     child_cert.ocsp_response_expires = now - timedelta(seconds=1)  # already expired
     child_cert.save()
 
-    builder = ocsp.OCSPRequestBuilder()
-    builder = builder.add_certificate(child_cert.pub.loaded, child_cert.ca.pub.loaded, hashes.SHA256())
-    ocsp_request = builder.build()
-    url = reverse(
-        "django_ca:ocsp-cert-get",
-        kwargs={
-            "serial": child_cert.ca.serial,
-            "data": base64.b64encode(ocsp_request.public_bytes(Encoding.DER)).decode("utf-8"),
-        },
-    )
-
-    with (
-        override_settings(CA_OCSP_RESPONSE_CACHE_EXPIRES=_CACHE_EXPIRES),
-        caplog.at_level(logging.WARNING, logger="django_ca.views"),
-    ):
-        response = client.get(url)
+    response = ocsp_get(client, child_cert)
 
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
+
+
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_cache_requests_with_invalid_request(
+    caplog: LogCaptureFixture, client: Client, child: CertificateAuthority
+) -> None:
+    """Test fetching a cached response for a request that cannot be parsed."""
+    url = reverse("django_ca:ocsp-ca-get", kwargs={"serial": child.serial, "data": "deadbeef"})
+
+    with caplog.at_level(logging.DEBUG, logger="django_ca.views"):
+        response = client.get(url)
+
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
+    assert "Cannot parse OCSP request:" in caplog.text
+
+
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_cache_requests_with_critical_extensions(
+    caplog: LogCaptureFixture, client: Client, child_cert: Certificate
+) -> None:
+    """Test fetching a cached response for a request with a critical extension."""
+    with caplog.at_level(logging.DEBUG, logger="django_ca.views"):
+        response = ocsp_get(client, child_cert, nonce=b"nonce", nonce_critical=True)
+
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
+    assert "Critical extension received" in caplog.text
+
+
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_cache_requests_with_unknown_ca(
+    caplog: LogCaptureFixture, client: Client, child_cert: Certificate
+) -> None:
+    """Test fetching a cached response for a request with a critical extension."""
+    builder = ocsp.OCSPRequestBuilder()
+    builder = builder.add_certificate(child_cert.pub.loaded, child_cert.ca.pub.loaded, hashes.SHA512())
+    ocsp_request = builder.build()
+    encoded_ocsp_request = base64.b64encode(ocsp_request.public_bytes(Encoding.DER)).decode("utf-8")
+
+    url = reverse("django_ca:ocsp-ca-get", kwargs={"serial": "0", "data": encoded_ocsp_request})
+
+    with caplog.at_level(logging.INFO, logger="django_ca.views"):
+        response = client.get(url)
+
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
+    assert "OCSP request for unknown CA received" in caplog.text
+
+
+@pytest.mark.usefixtures("ocsp_response_caching")
+def test_cache_requests_with_unknown_cert(
+    caplog: LogCaptureFixture, client: Client, child_cert: Certificate
+) -> None:
+    """Test fetching a cached response for a request with a critical extension."""
+    builder = ocsp.OCSPRequestBuilder()
+    builder = builder.add_certificate(child_cert.pub.loaded, child_cert.ca.pub.loaded, hashes.SHA512())
+    ocsp_request = builder.build()
+    encoded_ocsp_request = base64.b64encode(ocsp_request.public_bytes(Encoding.DER)).decode("utf-8")
+
+    url = reverse("django_ca:ocsp-cert-get", kwargs={"serial": "0", "data": encoded_ocsp_request})
+
+    with caplog.at_level(logging.INFO, logger="django_ca.views"):
+        response = client.get(url)
+
+    ocsp_response = ocsp.load_der_ocsp_response(response.content)
+    assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
+    assert "OCSP request for unknown certificate received" in caplog.text
