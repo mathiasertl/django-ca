@@ -80,7 +80,7 @@ Dependencies
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=5.2.0`` and ``acme~=5.3.0``.
 * Added support for ``cryptography~=47.0``, ``cryptography~=48.0`` and ``cryptography~=49.0``.
 * Added support for ``pydantic~=2.13.0``.
-* Added support for ``pydantic~=5.6.0``.
+* Added support for ``acme~=5.6.0``.
 
 *******************
 Deprecation notices

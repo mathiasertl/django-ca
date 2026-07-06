@@ -41,13 +41,14 @@ mariadb = [
 # image tags.
 mysql = [
     "8.4",  # until 2029-04-30
-    "9",  # Currently in innovation cycle, 9.7 will be next LTS release
+    "9.7",  # until 2029-04-21
 ]
 
 # https://alpinelinux.org/releases/
 alpine = [
     "3.22",  # until 2027-05-01
     "3.23",  # until 2027-11-01
+    "3.24",  # until 2028-06-01
 ]
 
 # List of tested Debian releases:
@@ -61,7 +62,7 @@ debian-releases = [
 ubuntu-releases = [
     "jammy",  # 22.04, until 2027-04-21
     "noble",  # 24.04, until 2029-05-31
-    "questing",  # 25.10, until 2026-07-09
+    "raccoon",  # 26.04, until 2031-05-29
 ]
 
 [django-ca.release.github]
