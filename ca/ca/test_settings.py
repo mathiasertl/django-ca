@@ -188,6 +188,8 @@ TEMPLATES = [
     },
 ]
 
+DJANGO_OBJECT_ACTIONS_DEFAULT_HTTP_METHOD = "POST"
+
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to email the site admins
 # on every HTTP 500 error when DEBUG=False. See
