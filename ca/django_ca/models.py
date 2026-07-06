@@ -362,9 +362,6 @@ class X509CertMixin(DjangoCAModel):
         Uses SHA-256 as the hash algorithm for the issuer key/name hash within the response, which is the
         algorithm used by the vast majority of OCSP clients and is the only algorithm pre-generated responses
         are cached for.
-
-        This helper is intentionally a plain function (not a task) so it can be called both from the
-        :py:func:`cache_ocsp_response` task and from within :py:func:`cache_ocsp_responses`.
         """
         if isinstance(self, CertificateAuthority):
             if self.parent is None:
@@ -429,9 +426,11 @@ class X509CertMixin(DjangoCAModel):
         self.save()
 
     def run_cache_ocsp_response_task(self) -> None:
+        """Run task to cache OCSP responses."""
         if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None:
+            from django_ca.celery import run_task  # noqa: PLC0415
             from django_ca.celery.messages import CacheOCSPResponseTaskArgs  # noqa: PLC0415
-            from django_ca.tasks import cache_ocsp_response, run_task  # noqa: PLC0415
+            from django_ca.tasks import cache_ocsp_response  # noqa: PLC0415
 
             args = CacheOCSPResponseTaskArgs(serial=self.serial, ca=isinstance(self, CertificateAuthority))
             transaction.on_commit(lambda: run_task(cache_ocsp_response, args))
@@ -891,7 +890,8 @@ class CertificateAuthority(X509CertMixin):  # type: ignore[django-manager-missin
         if not isinstance(public_key, constants.PUBLIC_KEY_TYPES):  # pragma: no cover
             raise ValueError(f"{public_key}: Unsupported public key type.")
 
-        # Add mandatory end-entity certificate extensions (AuthorityKeyIdentifier, BasicConstraints, SubjectKeyIdentifier)
+        # Add mandatory end-entity certificate extensions (AuthorityKeyIdentifier, BasicConstraints and
+        # SubjectKeyIdentifier)
         certificate_extensions = self.get_end_entity_certificate_extensions(public_key) + extensions
 
         pre_sign_cert.send(

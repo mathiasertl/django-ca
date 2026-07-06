@@ -365,7 +365,7 @@ class SettingsModel(BaseModel):
         description="Renew OCSP certificates if they expire within the given interval.",
     )
 
-    CA_OCSP_RESPONSE_CACHE_EXPIRES: timedelta | None = Field(
+    CA_OCSP_RESPONSE_CACHE_EXPIRES: PositiveTimedelta | None = Field(
         default=None,
         description=(
             "How long cached OCSP responses remain valid. Set to ``None`` (the default) to disable caching. "
@@ -374,13 +374,13 @@ class SettingsModel(BaseModel):
         ),
         examples=[timedelta(hours=24)],
     )
-    CA_OCSP_RESPONSE_CACHE_RENEWAL: Annotated[PositiveTimedelta, DayValidator] = Field(
+    CA_OCSP_RESPONSE_CACHE_RENEWAL: PositiveTimedelta = Field(
         default=timedelta(hours=12),
         description=(
-            "How soon before expiry a cached OCSP response should be renewed. "
-            "The ``cache_ocsp_responses`` periodic task will regenerate responses that expire "
-            "within this interval."
+            "How soon before expiry a cached OCSP response should be renewed. The ``cache_ocsp_responses`` "
+            "periodic task will regenerate responses that expire within this interval."
         ),
+        examples=[timedelta(hours=24)],
     )
     CA_OCSP_URLS: dict[str, OcspUrlModel] = Field(
         default_factory=dict,

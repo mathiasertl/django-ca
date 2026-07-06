@@ -382,7 +382,7 @@ CA_OCSP_RESPONSE_CACHE_EXPIRES
 
     .. NOTE::
 
-        When enabled, Nonces in OCSP requests will silently be ignored. If the extension is marked as
+        When enabled, nonces in OCSP requests will silently be ignored. If the extension is marked as
         critical, an error is returned to the client.
 
 .. _settings-ca-ocsp-response-cache-renewal:
@@ -393,9 +393,6 @@ CA_OCSP_RESPONSE_CACHE_RENEWAL
     Controls how early the ``cache_ocsp_responses`` periodic task will renew a cached response before it
     expires.  A certificate whose cached response expires within this window will have its response
     regenerated on the next task run.
-
-    .. pydantic-setting:: CA_OCSP_RESPONSE_CACHE_RENEWAL
-        :example: 0
 
     .. WARNING::
 
