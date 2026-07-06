@@ -194,17 +194,11 @@ def cache_ocsp_response(data: CacheOCSPResponseTaskArgs) -> None:
         return  # Caching disabled — nothing to do.
 
     if data.ca is True:
-        try:
-            ca = CertificateAuthority.objects.select_related("parent").get(serial=data.serial)
-            ca.cache_ocsp_response()
-        except Certificate.DoesNotExist:
-            log.error("%s: Certificate not found.", data.serial)
+        ca = CertificateAuthority.objects.select_related("parent").get(serial=data.serial)
+        ca.cache_ocsp_response()
     else:
-        try:
-            cert = Certificate.objects.select_related("ca").get(serial=data.serial)
-            cert.cache_ocsp_response()
-        except Certificate.DoesNotExist:
-            log.error("%s: Certificate not found.", data.serial)
+        cert = Certificate.objects.select_related("ca").get(serial=data.serial)
+        cert.cache_ocsp_response()
 
 
 @shared_task

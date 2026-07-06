@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/ref/applications/
 """
 
-from typing import Any
-
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
@@ -33,21 +31,7 @@ class DjangoCAConfig(AppConfig):
     verbose_name = _("Certificate Authority")
 
     def ready(self) -> None:
-        from django_ca import checks  # noqa  # import already registers the checks
-
-        from django_ca.signals import post_issue_cert, post_revoke_cert  # noqa: PLC0415
-
-        def _on_post_issue_cert(sender: Any, cert: Any, **kwargs: Any) -> None:
-            """Trigger OCSP response caching when a new certificate is issued."""
-            from django_ca.celery import run_task  # noqa: PLC0415
-            from django_ca.celery.messages import CacheOCSPResponseTaskArgs  # noqa: PLC0415
-            from django_ca.conf import model_settings  # noqa: PLC0415
-            from django_ca.tasks import cache_ocsp_response  # noqa: PLC0415
-
-            if model_settings.CA_OCSP_RESPONSE_CACHE_EXPIRES is not None:
-                run_task(cache_ocsp_response, CacheOCSPResponseTaskArgs(serial=cert.serial, ca=False))
-
-        post_issue_cert.connect(_on_post_issue_cert)
+        from django_ca import checks  # noqa: F401,PLC0415  # import registers the checks
 
         # log_settings_files = os.environ.get("CA_LOG_SETTINGS_FILES", "").lower()
         # if log_settings_files in ("1", "true", "yes"):
