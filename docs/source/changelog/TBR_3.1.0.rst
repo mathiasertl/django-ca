@@ -97,7 +97,7 @@ Dependencies
 
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=5.2.0`` and ``acme~=5.3.0``.
 * Added support for ``pydantic~=2.13.0``.
-* Added support for ``cryptography~=47.0``.
+* Added support for ``cryptography~=47.0``, ``cryptography~=48.0`` and ``cryptography~=49.0``.
 
 *******************
 Deprecation notices
@@ -105,7 +105,8 @@ Deprecation notices
 
 * This is the last release to support ``acme~=5.4.0``.
 * This is the last release to support ``pydantic~=2.12.0``.
-* This is the last release to support ``cryptography~=46.0``.
+* This is the last release to support ``cryptography~=46.0``, ``cryptography~=47.0`` and
+  ``cryptography~=48.0``.
 
 *******************
 Setup and packaging
