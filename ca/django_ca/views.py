@@ -487,36 +487,37 @@ class GenericOCSPView(OCSPView):
             return self.malformed_request()
 
         ca_serial = self.kwargs["serial"]
-        cert_serial = int_to_hex(request.serial_number)
+
         now = datetime.now(tz=UTC)
-
         # Try Django cache first.
-        cache_key = get_ocsp_cache_key(ca_serial, cert_serial, ca=self.ca_ocsp)
+        cache_key = get_ocsp_cache_key(ca_serial, request.serial_number, ca=self.ca_ocsp)
         response: bytes | None = cache.get(cache_key)
+        if response is not None:
+            return self.http_response(response)
 
-        if response is None:
-            # Response not found in cache - try fetching it from the database.
-            _fields = ("serial", "ocsp_response", "ocsp_response_expires")
-            if self.ca_ocsp:
-                try:
-                    cert: X509CertMixin = CertificateAuthority.objects.only(*_fields).get(
-                        parent__serial=ca_serial, serial=cert_serial
-                    )
-                except CertificateAuthority.DoesNotExist:
-                    log.warning("%s: OCSP request for unknown CA received.", cert_serial)
-                    return self.malformed_request()
-            else:
-                try:
-                    cert = Certificate.objects.only(*_fields).get(ca__serial=ca_serial, serial=cert_serial)
-                except Certificate.DoesNotExist:
-                    log.warning("%s: OCSP request for unknown certificate received.", cert_serial)
-                    return self.malformed_request()
+        # Response not found in cache - try fetching it from the database.
+        cert_serial = int_to_hex(request.serial_number)
+        _fields = ("serial", "ocsp_response", "ocsp_response_expires")
+        if self.ca_ocsp:
+            try:
+                cert: X509CertMixin = CertificateAuthority.objects.only(*_fields).get(
+                    parent__serial=ca_serial, serial=cert_serial
+                )
+            except CertificateAuthority.DoesNotExist:
+                log.warning("%s: OCSP request for unknown CA received.", cert_serial)
+                return self.malformed_request()
+        else:
+            try:
+                cert = Certificate.objects.only(*_fields).get(ca__serial=ca_serial, serial=cert_serial)
+            except Certificate.DoesNotExist:
+                log.warning("%s: OCSP request for unknown certificate received.", cert_serial)
+                return self.malformed_request()
 
-            # If we found an OCSP response in the database, but not in the cache, add it to the cache.
-            if cert.ocsp_response and cert.ocsp_response_expires and cert.ocsp_response_expires > now:
-                response = bytes(cert.ocsp_response)
-                remaining = (cert.ocsp_response_expires - now).total_seconds()
-                cache.set(cache_key, response, timeout=int(remaining))
+        # If we found an OCSP response in the database, but not in the cache, add it to the cache.
+        if cert.ocsp_response and cert.ocsp_response_expires and cert.ocsp_response_expires > now:
+            response = bytes(cert.ocsp_response)
+            remaining = (cert.ocsp_response_expires - now).total_seconds()
+            cache.set(cache_key, response, timeout=int(remaining))
 
         if response is not None:
             return self.http_response(response)

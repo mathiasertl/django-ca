@@ -416,7 +416,9 @@ class X509CertMixin(DjangoCAModel):
         response_der = response.public_bytes(Encoding.DER)
 
         # Persist in Django cache (add 300s/5m to time out to account for clock skew).
-        cache_key = get_ocsp_cache_key(ca.serial, self.serial, isinstance(self, CertificateAuthority))
+        cache_key = get_ocsp_cache_key(
+            ca.serial, self.pub.loaded.serial_number, isinstance(self, CertificateAuthority)
+        )
         cache_timeout = (expires - datetime.now(tz=UTC)).total_seconds() + 300
         cache.set(cache_key, response_der, timeout=int(cache_timeout))
 
