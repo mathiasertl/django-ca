@@ -23,7 +23,6 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 from unittest.mock import Mock
 
-from asn1crypto.ocsp import OCSPResponse
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa, x448, x25519
@@ -32,7 +31,7 @@ from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPublicKeyTypes,
 )
 from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.x509 import ocsp
+from cryptography.x509.ocsp import OCSPCertStatus, OCSPResponse, OCSPResponseStatus, load_der_ocsp_response
 from cryptography.x509.oid import ExtensionOID, OCSPExtensionOID
 
 from django.core.cache import cache
@@ -454,7 +453,7 @@ def assert_issuing_distribution_point(
     )
 
 
-def assert_ocsp_signature(public_key: CertificateIssuerPublicKeyTypes, response: ocsp.OCSPResponse) -> None:
+def assert_ocsp_signature(public_key: CertificateIssuerPublicKeyTypes, response: OCSPResponse) -> None:
     """Validate `response` with the given `public_key`."""
     tbs_response = response.tbs_response_bytes
     hash_algorithm = response.signature_hash_algorithm
@@ -481,15 +480,15 @@ def assert_ocsp_response(
     raw_response: bytes,
     requested_certificate: Certificate | CertificateAuthority,
     responder_certificate: x509.Certificate,
-    response_status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.SUCCESSFUL,
-    certificate_status: ocsp.OCSPCertStatus = ocsp.OCSPCertStatus.GOOD,
+    response_status: OCSPResponseStatus = OCSPResponseStatus.SUCCESSFUL,
+    certificate_status: OCSPCertStatus = OCSPCertStatus.GOOD,
     nonce: bytes | None = None,
     expires: timedelta = timedelta(seconds=86400),
     signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
     single_response_hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
-) -> ocsp.OCSPResponse:
+) -> OCSPResponse:
     """Assert the contents of an OCSP response."""
-    response = ocsp.load_der_ocsp_response(raw_response)
+    response = load_der_ocsp_response(raw_response)
 
     assert response.response_status == response_status
     if signature_hash_algorithm is None:
@@ -533,7 +532,7 @@ def assert_ocsp_response(
 
 def assert_ocsp_response_for_model(
     certificate: Certificate | CertificateAuthority,
-    response_status: ocsp.OCSPResponseStatus = ocsp.OCSPResponseStatus.SUCCESSFUL,
+    response_status: OCSPResponseStatus = OCSPResponseStatus.SUCCESSFUL,
     nonce: bytes | None = None,
     expires: timedelta = timedelta(seconds=86400),
     signature_hash_algorithm: type[hashes.HashAlgorithm] | None = hashes.SHA256,
@@ -552,9 +551,9 @@ def assert_ocsp_response_for_model(
     responder_certificate = x509.load_pem_x509_certificate(responder_pem)
 
     if certificate.revoked:
-        certificate_status = ocsp.OCSPCertStatus.REVOKED
+        certificate_status = OCSPCertStatus.REVOKED
     else:
-        certificate_status = ocsp.OCSPCertStatus.GOOD
+        certificate_status = OCSPCertStatus.GOOD
 
     cached_response = cache.get(cache_key)
     assert certificate.ocsp_response == cached_response

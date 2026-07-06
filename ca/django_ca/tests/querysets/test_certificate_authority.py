@@ -29,10 +29,13 @@ class TestX509CertMixin(
 
     @pytest.fixture
     def obj(self, request: pytest.FixtureRequest, root: CertificateAuthority) -> CertificateAuthority:
+        """Overwritten to honor requires_ca fixture."""
         marker = request.node.get_closest_marker("requires_ca")
         if marker is None:
             return root
-        return request.getfixturevalue(marker.args[0])
+        obj = request.getfixturevalue(marker.args[0])
+        assert isinstance(obj, CertificateAuthority)
+        return obj
 
 
 def test_enabled(root: CertificateAuthority) -> None:
@@ -43,7 +46,7 @@ def test_enabled(root: CertificateAuthority) -> None:
     root.enabled = False
     root.save()
 
-    assert list(CertificateAuthority.objects.all().enabled()) == []
+    assert not list(CertificateAuthority.objects.all().enabled())
 
 
 def test_acme_enabled(root: CertificateAuthority) -> None:
@@ -54,4 +57,4 @@ def test_acme_enabled(root: CertificateAuthority) -> None:
     root.acme_enabled = False
     root.save()
 
-    assert list(CertificateAuthority.objects.all().acme()) == []
+    assert not list(CertificateAuthority.objects.all().acme())

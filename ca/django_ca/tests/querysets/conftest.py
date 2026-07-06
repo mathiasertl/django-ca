@@ -22,12 +22,12 @@ from django.utils import timezone
 import pytest
 from pytest_django.fixtures import SettingsWrapper
 
-from django_ca.models import X509CertMixin
-from django_ca.querysets import X509CertMixinQuerySet
+from django_ca.models import Certificate, CertificateAuthority
+from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
 from django_ca.tests.base.constants import TIMESTAMPS
 
-ModelTypeVar = TypeVar("ModelTypeVar", bound=X509CertMixin)
-QuerySetTypeVar = TypeVar("QuerySetTypeVar", bound=X509CertMixinQuerySet)
+ModelTypeVar = TypeVar("ModelTypeVar", CertificateAuthority, Certificate)
+QuerySetTypeVar = TypeVar("QuerySetTypeVar", CertificateAuthorityQuerySet, CertificateQuerySet)
 
 
 class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], metaclass=abc.ABCMeta):
@@ -37,7 +37,8 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
 
     @pytest.fixture
     def queryset(self) -> QuerySetTypeVar:
-        return self.model.objects.all()
+        """Fixture for the QuerySet."""
+        return self.model.objects.all()  # type: ignore[return-value]
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
     def test_current(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
@@ -45,25 +46,29 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
         assert list(queryset.current()) == [obj]
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
-    def test_current_after_expiry(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_current_after_expiry(self, queryset: QuerySetTypeVar) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.current` after everything expired."""
-        assert list(queryset.current()) == []
+        assert not list(queryset.current())
 
     @pytest.mark.freeze_time(TIMESTAMPS["before_cas"])
-    def test_current_before_valid(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_current_before_valid(self, queryset: QuerySetTypeVar) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.current` before anything is valid."""
-        assert list(queryset.current()) == []
+        assert not list(queryset.current())
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-    def test_current_with_now(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_current_with_now(self, queryset: QuerySetTypeVar) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.current` with now parameter."""
-        assert list(queryset.current(now=TIMESTAMPS["before_cas"])) == []
-        assert list(queryset.current(now=TIMESTAMPS["everything_expired"])) == []
+        assert not list(queryset.current(now=TIMESTAMPS["before_cas"]))
+        assert not list(queryset.current(now=TIMESTAMPS["everything_expired"]))
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-    def test_expired(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_expired(self, queryset: QuerySetTypeVar) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.expired`."""
-        assert list(queryset.expired()) == []
+        assert not list(queryset.expired())
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
     def test_expired_after_expiry(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
@@ -71,14 +76,15 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
         assert list(queryset.expired()) == [obj]
 
     @pytest.mark.freeze_time(TIMESTAMPS["before_cas"])
-    def test_expired_before_valid(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_expired_before_valid(self, queryset: QuerySetTypeVar) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.expired` before anything is valid."""
-        assert list(queryset.expired()) == []
+        assert not list(queryset.expired())
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
     def test_expired_with_now(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.expired` with now parameter."""
-        assert list(queryset.expired(now=TIMESTAMPS["before_cas"])) == []
+        assert not list(queryset.expired(now=TIMESTAMPS["before_cas"]))
         assert list(queryset.expired(now=TIMESTAMPS["everything_expired"])) == [obj]
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
@@ -95,7 +101,7 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
         settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = timedelta(days=1)
         obj.ocsp_response_expires = timezone.now() + timedelta(days=100)
         obj.save()
-        assert list(queryset.for_ocsp_cache()) == []
+        assert not list(queryset.for_ocsp_cache())
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
     @pytest.mark.requires_ca("child")
@@ -109,25 +115,28 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
         assert list(queryset.for_ocsp_cache()) == [obj]
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
-    def test_for_ocsp_cache_after_expiry(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_for_ocsp_cache_after_expiry(self, queryset: QuerySetTypeVar) -> None:
         """Test `for_ocsp_cache` after everything is expired."""
-        assert list(queryset.for_ocsp_cache()) == []
+        assert not list(queryset.for_ocsp_cache())
 
     @pytest.mark.freeze_time(TIMESTAMPS["before_cas"])
-    def test_for_ocsp_cache_before_valid(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_for_ocsp_cache_before_valid(self, queryset: QuerySetTypeVar) -> None:
         """Test `for_ocsp_cache` before anything is valid."""
-        assert list(queryset.for_ocsp_cache()) == []
+        assert not list(queryset.for_ocsp_cache())
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-    def test_for_ocsp_cache_with_now(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
+    @pytest.mark.usefixtures("obj")
+    def test_for_ocsp_cache_with_now(self, queryset: QuerySetTypeVar) -> None:
         """Test `for_ocsp_cache` with now parameter."""
-        assert list(queryset.for_ocsp_cache(now=TIMESTAMPS["before_cas"])) == []
-        assert list(queryset.for_ocsp_cache(now=TIMESTAMPS["everything_expired"])) == []
+        assert not list(queryset.for_ocsp_cache(now=TIMESTAMPS["before_cas"]))
+        assert not list(queryset.for_ocsp_cache(now=TIMESTAMPS["everything_expired"]))
 
     def test_revoked(self, obj: ModelTypeVar, queryset: QuerySetTypeVar) -> None:
         """Test the :py:func:`~django_ca.querysets.X509CertMixinQuerySet.revoked`."""
         assert obj.revoked is False
-        assert list(queryset.revoked()) == []
+        assert not list(queryset.revoked())
 
         obj.revoked = True
         obj.save()

@@ -27,4 +27,5 @@ class TestX509CertMixin(X509CertMixinQuerySetTestCaseBase[Certificate, Certifica
 
     @pytest.fixture
     def obj(self, root_cert: Certificate) -> Certificate:
+        """Fixture is an alias for `root_cert`."""
         return root_cert

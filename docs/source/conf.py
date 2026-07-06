@@ -315,6 +315,7 @@ qualname_overrides = {
     "cryptography.hazmat.bindings._rust.x509.RevokedCertificate": "cg:cryptography.x509.RevokedCertificate",
     "cryptography.hazmat.primitives._serialization.Encoding.PEM": "cg:cryptography.hazmat.primitives.serialization.Encoding.PEM",  # noqa: E501
     "cryptography.hazmat.primitives._serialization.Encoding.DER": "cg:cryptography.hazmat.primitives.serialization.Encoding.DER",  # noqa: E501
+    "cryptography.hazmat.bindings._rust.ocsp.OCSPRequest": "cg:cryptography.x509.ocsp.OCSPRequest",
     "cryptography.hazmat.bindings._rust.ocsp.OCSPResponse": "cg:cryptography.x509.ocsp.OCSPResponse",
     "cryptography.hazmat.bindings._rust.ObjectIdentifier": "cg:cryptography.x509.ObjectIdentifier",
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",

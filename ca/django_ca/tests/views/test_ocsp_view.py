@@ -516,7 +516,7 @@ def test_bad_request(client: Client) -> None:
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.MALFORMED_REQUEST
 
 
-def test_multiple(caplog: LogCaptureFixture, client: Client) -> None:
+def test_multiple(client: Client) -> None:
     """Try making multiple OCSP requests (not currently supported)."""
     data = base64.b64encode(multiple_req).decode("utf-8")
     response = client.get(reverse("get", kwargs={"data": data}))

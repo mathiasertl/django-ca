@@ -495,7 +495,7 @@ class GenericOCSPView(OCSPView):
         response: bytes | None = cache.get(cache_key)
 
         if response is None:
-            # Try the database cache field.
+            # Response not found in cache - try fetching it from the database.
             _fields = ("serial", "ocsp_response", "ocsp_response_expires")
             if self.ca_ocsp:
                 try:

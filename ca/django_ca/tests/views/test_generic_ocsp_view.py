@@ -34,7 +34,6 @@ from django.urls import reverse
 import pytest
 from _pytest.logging import LogCaptureFixture
 from pytest_django import DjangoAssertNumQueries
-from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.celery.messages import CacheOCSPResponseTaskArgs
 from django_ca.conf import model_settings
@@ -283,10 +282,7 @@ def test_method_not_allowed(client: Client) -> None:
 
 @pytest.mark.usefixtures("ocsp_response_caching")
 def test_cached_response_served_from_django_cache(
-    settings: SettingsWrapper,
-    django_assert_num_queries: DjangoAssertNumQueries,
-    client: Client,
-    child_cert: Certificate,
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, child_cert: Certificate
 ) -> None:
     """When a cached response exists in Django cache, it is returned directly."""
     cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
@@ -300,10 +296,7 @@ def test_cached_response_served_from_django_cache(
 
 @pytest.mark.usefixtures("ocsp_response_caching")
 def test_cached_response_with_non_critical_nonce(
-    settings: SettingsWrapper,
-    django_assert_num_queries: DjangoAssertNumQueries,
-    client: Client,
-    child_cert: Certificate,
+    django_assert_num_queries: DjangoAssertNumQueries, client: Client, child_cert: Certificate
 ) -> None:
     """Test that non-critical extensions are ignored."""
     cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
@@ -337,7 +330,7 @@ def test_cached_response_served_from_db_with_certificate_authority(
 ) -> None:
     """When no Django-cache entry exists, a valid DB-stored response is used."""
     # Obtain a real OCSP response without caching.
-    child.parent.generate_ocsp_key(StoragesUsePrivateKeyOptions(password=None))
+    child.parent.generate_ocsp_key(StoragesUsePrivateKeyOptions(password=None))  # type: ignore[union-attr]
     cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child.serial, ca=True))
     cache.clear()  # clear cache again
 
