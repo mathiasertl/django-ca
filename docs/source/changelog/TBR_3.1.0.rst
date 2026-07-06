@@ -12,6 +12,8 @@ Settings
 ********
 
 * :ref:`settings-ca-notification-days` can now be set using using an ISO 8601 timedelta string.
+* Added :ref:`settings-ca-ocsp-response-cache-expires` and `CA_OCSP_RESPONSE_CACHE_EXPIRES` settings to
+  configure :ref:`OCSP response caching <ocsp-response-caching>`.
 
 ******
 ACMEv2
@@ -23,7 +25,7 @@ No changes yet.
 OCSP and CRLs
 *************
 
-No changes yet.
+* Implement :ref:`OCSP response caching <ocsp-response-caching>`.
 
 ********
 REST API
@@ -77,6 +79,8 @@ Views
 Models and database support
 ***************************
 
+* Cleaned up QuerySEt methods to ensure consistency and more readable code. QuerySet methods are now
+  documented in the :doc:`model reference </python/models>`.
 * Removed initial set of migrations, squashed migrations where added in ``django-ca==2.3.0``.
 * Reduced the maximum length for the name of certificate authorities to 255, from 256. The field is indexed
   and MariaDB does not allow an index with a length greater then 255 characters.

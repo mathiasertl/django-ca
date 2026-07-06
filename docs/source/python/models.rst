@@ -27,6 +27,9 @@ CertificateAuthority
    :members:
    :exclude-members: DoesNotExist, MultipleObjectsReturned
 
+.. autoclass:: django_ca.querysets.CertificateAuthorityQuerySet
+   :members:
+
 Creating CAs
 ============
 
@@ -243,6 +246,9 @@ X509CertMixin
 attributes.
 
 .. autoclass:: django_ca.models.X509CertMixin
+   :members:
+
+.. autoclass:: django_ca.querysets.X509CertMixinQuerySet
    :members:
 
 *************************

@@ -66,7 +66,7 @@ else:  # pragma: no cover  # only used for type checking
 
 
 class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta):
-    """Mixin with common methods for CertificateAuthority and Certificate models."""
+    """Mixin with common methods for |CertificateAuthority| and |Certificate| models."""
 
     if TYPE_CHECKING:
         # pylint: disable=missing-function-docstring
@@ -91,19 +91,19 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         return exact_query, startswith_query
 
     def current(self, now: datetime | None = None) -> Self:
-        """Return CAs that are currently valid."""
+        """Return instances that are currently valid."""
         if now is None:
             now = timezone.now()
         return self.filter(not_after__gte=now, not_before__lt=now)
 
     def expired(self, now: datetime | None = None) -> Self:
-        """Return CAs that are expired."""
+        """Return instances that are expired."""
         if now is None:
             now = timezone.now()
         return self.filter(not_after__lte=now)
 
     def get_by_serial_or_cn(self, identifier: str) -> X509CertMixinTypeVar:
-        """Get a model by serial *or* by common name.
+        """Get an instance by serial *or* by common name.
 
         This method is meant to get a CA from a user input value. If `identifier` is a serial, colons (``:``)
         and leading zeros are ignored. If no exact match is found it will search for CAs starting with that
@@ -121,7 +121,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
             return self.get(startswith_query)
 
     def not_revoked(self) -> Self:
-        """Return certificates that are **not** revoked."""
+        """Return instances that are **not** revoked."""
         return self.filter(revoked=False)
 
     def for_certificate_revocation_list(
@@ -131,7 +131,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         reasons: Iterable[x509.ReasonFlags] | None,
         grace_timedelta: timedelta = timedelta(minutes=10),
     ) -> Self:
-        """Get certificates for a certificate revocation list (CRL).
+        """Get instances that should be added to a certificate revocation list (CRL).
 
         .. versionadded:: 2.1.0
         """
@@ -147,7 +147,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         return qs
 
     def for_ocsp_cache(self, *, now: datetime | None = None) -> Self:
-        """Return certificates that should have cached OCSP responses."""
+        """Return instances that should have cached OCSP responses."""
         if now is None:
             now = timezone.now()
 
@@ -158,14 +158,17 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         )
 
     def revoked(self) -> Self:
-        """Return revoked certificates."""
+        """Return instances that are revoked."""
         return self.filter(revoked=True)
 
 
 class CertificateAuthorityQuerySet(
     X509CertMixinQuerySet["CertificateAuthority"], CertificateAuthorityQuerySetBase
 ):
-    """QuerySet for the CertificateAuthority model."""
+    """QuerySet for the :py:class:`~django_ca.models.CertificateAuthority` model.
+
+    .. seealso:: :py:class:`~django_ca.querysets.X509CertMixinQuerySet` defines many common methods.
+    """
 
     def acme(self) -> "CertificateAuthorityQuerySet":
         """Return usable CAs that have support for the ACME protocol enabled."""

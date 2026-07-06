@@ -38,7 +38,7 @@ CRLs expire after one day and are renewed after twelve hours by default, but thi
 should be at least ``(expires - renewal) / 2`` (e.g. with the default "24 hours - 12 hours / 2" at least every
 six hours) to make sure that the CRL is renewed in time.
 
-If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
+If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`manage.py
 generate_crls` with a similar frequency.
 
 Generate OCSP responder certificates
@@ -51,8 +51,23 @@ Certificates are not renewed unless they expire within the interval defined by
 :ref:`CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL <settings-ca-ocsp-responder-certificate-renewal>`. If you
 change that setting, the frequency of this task must be *higher* then that setting.
 
-If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
+If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`manage.py
 generate_ocsp_keys` with a similar frequency.
+
+.. _periodic-tasks-cache-ocsp-responses:
+
+Cache OCSP responses
+====================
+
+The :py:func:`django_ca.tasks.cache_ocsp_responses` Celery task is responsible for generating OCSP keys. By
+default, the Celery task is run every hour if :ref:`settings-ca-ocsp-response-cache-expires` is set.
+
+OCSP responses are not renewed unless they expire within the interval defined by
+:ref:`settings-ca-ocsp-response-cache-renewal`. If you change that setting, the frequency of this task must
+be *higher* then that setting.
+
+If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`manage.py
+cache_ocsp_responses` with a similar frequency.
 
 Send notification emails about expiring certificates
 ====================================================
@@ -64,7 +79,7 @@ Notification emails are sent out based on :ref:`CA_NOTIFICATION_DAYS <settings-c
 notifications for an expiring certificate, a watcher needs to be added when signing the certificate or later
 via the admin interface or the `manage.py cert_watchers` command.
 
-If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`python manage.py
+If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`manage.py
 notify_expiring_certs` at least daily, preferably every six hours.
 
 Clean up ACME database records

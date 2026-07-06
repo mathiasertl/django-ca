@@ -24,8 +24,11 @@ OCSP with other setups
 ======================
 
 If your setup does *not* run with a Celery task broker, you need to automatically regenerate the OCSP
-certificates e.g. once a day. To regenerate them, you only need to keys/certificates using a
-:command:`manage.py` command:
+certificates e.g. once a day.
+
+.. NOTE:: Configuring a :command:`manage.py` command is only needed if you do not run a Celery broker.
+
+To regenerate them, you only need to keys/certificates using a :command:`manage.py` command:
 
 .. code-block:: console
 
@@ -42,6 +45,30 @@ some CAs with a password, or you use different passwords, you'll have to generat
    $ python manage.py generate_ocsp_keys --password foo 11:22:33
    $ python manage.py generate_ocsp_keys --password bar 44:55:66
 
+.. _ocsp-response-caching:
+
+OCSP response caching
+=====================
+
+By default, **django-ca** creates and signs a new OCSP response on every request. To improve performance, you
+can enable OCSP response caching by configuring the :ref:`settings-ca-ocsp-response-cache-expires` setting:
+
+.. pydantic-setting:: CA_OCSP_RESPONSE_CACHE_EXPIRES
+   :example: 0
+
+The :ref:`settings-ca-ocsp-response-cache-renewal` setting lets you configure how soon before expiry a
+cached response will be renewed. The value should naturally be *lower* then the above setting.
+
+.. NOTE::
+
+    If you use :doc:`django-ca as app </quickstart/as_app>` or do not use Celery, be sure to run the
+    :command:`manage.py cache_ocsp_responses` command regularly. See
+    :ref:`periodic-tasks-cache-ocsp-responses` for more information.
+
+Caching OCSP responses greatly improves performance, especially in setups that see many OCSP requests. It
+also enables setups where the OCSP responder certificate is not available to the webserver, improving
+security. The downside is that all OCSP request extensions - including Nonces - are ignored. If a client marks
+an extension as critical, an error will be returned.
 
 ************
 Manual setup

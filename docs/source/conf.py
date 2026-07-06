@@ -216,6 +216,8 @@ rst_epilog = f"""
 .. |last-version| replace:: {last_version}
 .. |minimum-python| replace:: {config.PYTHON_RELEASES[0]}
 .. |uv-version| replace:: {config.UV}
+.. |Certificate| replace:: :py:class:`~django_ca.models.Certificate`
+.. |CertificateAuthority| replace:: :py:class:`~django_ca.models.CertificateAuthority`
 .. |Extension| replace:: :py:class:`~cg:cryptography.x509.Extension`
 .. |ExtensionType| replace:: :py:class:`~cg:cryptography.x509.ExtensionType`
 .. |Name| replace:: :py:class:`~cg:cryptography.x509.Name`
@@ -348,6 +350,7 @@ nitpick_ignore = [
     ("py:class", "django_ca.key_backends.base.CreatePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.StorePrivateKeyOptionsTypeVar"),
     ("py:class", "django_ca.key_backends.base.UsePrivateKeyOptionsTypeVar"),
+    ("py:class", "django_ca.typehints.X509CertMixinTypeVar"),
     # Undocumented in Python:
     ("py:class", "argparse._ArgumentGroup"),
     ("py:class", "doctest.TestResults"),
