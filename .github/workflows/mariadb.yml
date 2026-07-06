@@ -18,7 +18,7 @@ jobs:
         django-version: [ "5.2", "6.0" ]
         mariadb-image: [
           "mysql:8.4",
-          "mysql:9",
+          "mysql:9.7",
           "mariadb:11.4",
           "mariadb:11.8",
           "mariadb:12",
