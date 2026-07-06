@@ -152,7 +152,7 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
             now = timezone.now()
 
         renewal_threshold = now + model_settings.CA_OCSP_RESPONSE_CACHE_RENEWAL
-        return self.current().filter(
+        return self.current(now=now).filter(
             models.Q(ocsp_response_expires__isnull=True)
             | models.Q(ocsp_response_expires__lt=renewal_threshold)
         )
@@ -213,7 +213,7 @@ class CertificateAuthorityQuerySet(
         return self.filter(enabled=True)
 
     def for_ocsp_cache(self, *, now: datetime | None = None) -> Self:
-        return super().for_ocsp_cache(now=now).exclude(parent=None)
+        return super().for_ocsp_cache().exclude(parent=None)
 
     def preferred_order(self) -> "CertificateAuthorityQuerySet":
         """Return CAs in order of preference."""
