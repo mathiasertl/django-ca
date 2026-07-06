@@ -15,23 +15,11 @@ Settings
 * Added :ref:`settings-ca-ocsp-response-cache-expires` and `CA_OCSP_RESPONSE_CACHE_EXPIRES` settings to
   configure :ref:`OCSP response caching <ocsp-response-caching>`.
 
-******
-ACMEv2
-******
-
-No changes yet.
-
 *************
 OCSP and CRLs
 *************
 
 * Implement :ref:`OCSP response caching <ocsp-response-caching>`.
-
-********
-REST API
-********
-
-No changes yet.
 
 ************
 Command-line
@@ -46,12 +34,6 @@ Command-line
 
 * Add the :command:`manage.py generate_ocsp_responses` command to generate OCSP responses from the command
   line.
-
-***************
-Admin interface
-***************
-
-No changes yet.
 
 ************
 Celery tasks
