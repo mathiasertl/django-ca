@@ -365,7 +365,7 @@ class SettingsModel(BaseModel):
         description="Renew OCSP certificates if they expire within the given interval.",
     )
 
-    CA_OCSP_RESPONSE_CACHE_EXPIRES: PositiveTimedelta | None = Field(
+    CA_OCSP_RESPONSE_CACHE_EXPIRES: Annotated[PositiveTimedelta, Ge(timedelta(minutes=10))] | None = Field(
         default=None,
         description=(
             "How long cached OCSP responses remain valid. Set to ``None`` (the default) to disable caching. "
@@ -374,7 +374,7 @@ class SettingsModel(BaseModel):
         ),
         examples=[timedelta(hours=24)],
     )
-    CA_OCSP_RESPONSE_CACHE_RENEWAL: PositiveTimedelta = Field(
+    CA_OCSP_RESPONSE_CACHE_RENEWAL: Annotated[PositiveTimedelta, Ge(timedelta(minutes=5))] = Field(
         default=timedelta(hours=12),
         description=(
             "How soon before expiry a cached OCSP response should be renewed. The ``cache_ocsp_responses`` "
@@ -498,6 +498,19 @@ class SettingsModel(BaseModel):
         """Validate that ``CA_ACME_MAX_CERT_VALIDITY`` is >= ``CA_ACME_DEFAULT_CERT_VALIDITY``."""
         if self.CA_ACME_MAX_CERT_VALIDITY < self.CA_ACME_DEFAULT_CERT_VALIDITY:
             raise ValueError("CA_ACME_DEFAULT_CERT_VALIDITY is greater then CA_ACME_MAX_CERT_VALIDITY.")
+        return self
+
+    @model_validator(mode="after")
+    def validate_ocsp_cache_settings(self) -> Self:
+        """Validate that ``CA_OCSP_RESPONSE_CACHE_EXPIRES > CA_OCSP_RESPONSE_CACHE_RENEWAL``."""
+        if self.CA_OCSP_RESPONSE_CACHE_EXPIRES is None:
+            return self
+
+        if self.CA_OCSP_RESPONSE_CACHE_EXPIRES <= self.CA_OCSP_RESPONSE_CACHE_RENEWAL:
+            raise ValueError(
+                "CA_OCSP_RESPONSE_CACHE_EXPIRES must be larger then CA_OCSP_RESPONSE_CACHE_RENEWAL."
+            )
+
         return self
 
     def get_default_signature_hash_algorithm(self) -> SignatureHashAlgorithm:
