@@ -37,7 +37,7 @@ No changes yet.
 Command-line
 ************
 
-* `notify_expiring_certs`:
+* :command:`manage.py notify_expiring_certs`:
 
   * The command now always sends all pending notifications. The ``--days`` parameter no longer has any effect
     and will be removed in ``django-ca==3.3.0``.

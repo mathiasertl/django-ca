@@ -229,8 +229,8 @@ def key_backend(request: pytest.FixtureRequest) -> StoragesBackend:
 @pytest.fixture
 def ocsp_response_caching(settings: SettingsWrapper) -> None:
     """Fixture to enable OCSP response caching."""
-    settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = CA_OCSP_RESPONSE_CACHE_EXPIRES
     settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = CA_OCSP_RESPONSE_CACHE_RENEWAL
+    settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = CA_OCSP_RESPONSE_CACHE_EXPIRES
 
 
 @pytest.fixture(params=precertificate_signed_certificate_timestamps_cert_names)

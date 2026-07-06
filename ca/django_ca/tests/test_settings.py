@@ -806,6 +806,15 @@ def test_ca_ocsp_responder_certificate_renewal_with_invalid_value(settings: Sett
         settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = "600"
 
 
+def test_ca_ocsp_cache_settings(settings: SettingsWrapper) -> None:
+    """Test model validator for OCSP cache settings."""
+    settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = timedelta(days=1)
+    with assert_improperly_configured(
+        r"CA_OCSP_RESPONSE_CACHE_EXPIRES must be larger then CA_OCSP_RESPONSE_CACHE_RENEWAL\."
+    ):
+        settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = timedelta(days=1)
+
+
 def test_ca_passwords(settings: SettingsWrapper) -> None:
     """Test type coercion and sanitization of keys."""
     settings.CA_PASSWORDS = {"AA:BB:CC": "secret-str", "01:23:45": b"secret-bytes"}
