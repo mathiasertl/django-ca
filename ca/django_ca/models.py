@@ -366,15 +366,16 @@ class X509CertMixin(DjangoCAModel):
         This helper is intentionally a plain function (not a task) so it can be called both from the
         :py:func:`cache_ocsp_response` task and from within :py:func:`cache_ocsp_responses`.
         """
-        if isinstance(self, CertificateAuthority) and self.parent is not None:
+        if isinstance(self, CertificateAuthority):
+            if self.parent is None:
+                raise ValueError(
+                    f"{self.name}: {self.serial}: Cannot cache OCSP response for root certificate authority."
+                )
             ca = self.parent
         elif isinstance(self, Certificate):
             ca = self.ca
-        else:
-            assert isinstance(self, CertificateAuthority)
-            raise ValueError(
-                f"{self.name}: {self.serial}: Cannot cache an OCSP response for a root certificate authority."
-            )
+        else:  # pragma: no cover
+            raise TypeError("Unknown type for caching OCSP responses.")
 
         # Load the OCSP responder certificate from the CA's key-backend options.
         try:
