@@ -80,4 +80,4 @@ class ApiSignCertificateTaskArgs(CeleryMessageModel):
 
 
 class CacheOCSPResponseTaskArgs(SerialTaskArgs):
-    """Parameters for ``django_ca.tasks.cache_ocsp_response``."""
+    """Parameters for ``django_ca.tasks.generate_ocsp_response``."""

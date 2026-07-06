@@ -11,14 +11,14 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Tests for the ``cache_ocsp_response`` Celery task."""
+"""Tests for the ``generate_ocsp_response`` Celery task."""
 
 import pytest
 
 from django_ca.celery.messages import CacheOCSPResponseTaskArgs
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate
-from django_ca.tasks import cache_ocsp_response
+from django_ca.tasks import generate_ocsp_response
 from django_ca.tests.base.assertions import assert_ocsp_response_for_model
 from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, TIMESTAMPS
 
@@ -31,7 +31,7 @@ pytestmark = [
 
 def test_caching_disabled(child_cert: Certificate) -> None:
     """Task is a no-op when CA_OCSP_RESPONSE_CACHE_EXPIRES is None (the default)."""
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
 
     child_cert.refresh_from_db()
     assert child_cert.ocsp_response is None
@@ -41,7 +41,7 @@ def test_caching_disabled(child_cert: Certificate) -> None:
 @pytest.mark.usefixtures("ocsp_response_caching", "child_with_ocsp_responder_certificate")
 def test_cache_good_cert(child_cert: Certificate) -> None:
     """Task caches a GOOD response for a valid, non-revoked certificate."""
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
     child_cert.refresh_from_db()
     assert_ocsp_response_for_model(child_cert, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
 
@@ -50,7 +50,7 @@ def test_cache_good_cert(child_cert: Certificate) -> None:
 def test_cache_revoked_cert(child_cert: Certificate) -> None:
     """Task caches a REVOKED response for a revoked certificate."""
     child_cert.revoke(reason=ReasonFlags.key_compromise)
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
 
     child_cert.refresh_from_db()
     assert_ocsp_response_for_model(child_cert, expires=CA_OCSP_RESPONSE_CACHE_EXPIRES)
@@ -65,4 +65,4 @@ def test_missing_responder_cert(root_cert: Certificate) -> None:
 
     message = rf"^{root_cert.ca.name}: {root_cert.ca.serial}: OCSP responder certificate not found\.$"
     with pytest.raises(ValueError, match=message):
-        cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=root_cert.serial, ca=False))
+        generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=root_cert.serial, ca=False))

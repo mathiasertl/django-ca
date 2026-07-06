@@ -179,7 +179,7 @@ def generate_ocsp_keys(data: UseCertificateAuthoritiesTaskArgs | None = None) ->
 
 
 @shared_task(base=DjangoCaTask)
-def cache_ocsp_response(data: CacheOCSPResponseTaskArgs) -> None:
+def generate_ocsp_response(data: CacheOCSPResponseTaskArgs) -> None:
     """Celery task to generate and cache an OCSP response for a single certificate.
 
     Does nothing when :ref:`settings-ca-ocsp-response-cache-expires` is ``None`` (caching disabled).
@@ -194,15 +194,17 @@ def cache_ocsp_response(data: CacheOCSPResponseTaskArgs) -> None:
         return  # Caching disabled — nothing to do.
 
     if data.ca is True:
-        ca = CertificateAuthority.objects.select_related("parent").get(serial=data.serial)
-        ca.cache_ocsp_response()
+        ca: CertificateAuthority = CertificateAuthority.objects.select_related("parent").get(
+            serial=data.serial
+        )
+        ca.generate_ocsp_response()
     else:
-        cert = Certificate.objects.select_related("ca").get(serial=data.serial)
-        cert.cache_ocsp_response()
+        cert: Certificate = Certificate.objects.select_related("ca").get(serial=data.serial)
+        cert.generate_ocsp_response()
 
 
 @shared_task
-def cache_ocsp_responses() -> None:
+def generate_ocsp_responses() -> None:
     """Celery task to renew cached OCSP responses that are about to expire.
 
     Does nothing when :ref:`settings-ca-ocsp-response-cache-expires` is ``None`` (caching disabled).
@@ -216,14 +218,14 @@ def cache_ocsp_responses() -> None:
 
     for ca in CertificateAuthority.objects.for_ocsp_cache():
         try:
-            run_task(cache_ocsp_response, CacheOCSPResponseTaskArgs(serial=ca.serial, ca=True))
+            run_task(generate_ocsp_response, CacheOCSPResponseTaskArgs(serial=ca.serial, ca=True))
         except Exception:  # pylint: disable=broad-exception-caught
             log.exception("Error scheduling OCSP response caching for %s", ca.serial)
 
     for cert in Certificate.objects.for_ocsp_cache():
         print(cert)
         try:
-            run_task(cache_ocsp_response, CacheOCSPResponseTaskArgs(serial=cert.serial, ca=False))
+            run_task(generate_ocsp_response, CacheOCSPResponseTaskArgs(serial=cert.serial, ca=False))
         except Exception:  # pylint: disable=broad-exception-caught
             log.exception("Error scheduling OCSP response caching for %s", cert.serial)
 

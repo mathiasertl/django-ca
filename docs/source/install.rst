@@ -59,7 +59,7 @@ generate_ocsp_keys` with a similar frequency.
 Cache OCSP responses
 ====================
 
-The :py:func:`django_ca.tasks.cache_ocsp_responses` Celery task is responsible for generating OCSP keys. By
+The :py:func:`django_ca.tasks.generate_ocsp_responses` Celery task is responsible for generating OCSP keys. By
 default, the Celery task is run every hour if :ref:`settings-ca-ocsp-response-cache-expires` is set.
 
 OCSP responses are not renewed unless they expire within the interval defined by
@@ -67,7 +67,7 @@ OCSP responses are not renewed unless they expire within the interval defined by
 be *higher* then that setting.
 
 If you use **django-ca** as a Django app and do not want to use Celery, execute :command:`manage.py
-cache_ocsp_responses` with a similar frequency.
+generate_ocsp_responses` with a similar frequency.
 
 Send notification emails about expiring certificates
 ====================================================

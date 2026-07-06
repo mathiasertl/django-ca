@@ -17,11 +17,11 @@ from typing import Any
 
 from django_ca.celery import run_task
 from django_ca.management.base import BaseCommand
-from django_ca.tasks import cache_ocsp_responses
+from django_ca.tasks import generate_ocsp_responses
 
 
 class Command(BaseCommand):  # noqa: D101
     help = "Cache OCSP responses."
 
     def handle(self, **options: Any) -> None:
-        run_task(cache_ocsp_responses)
+        run_task(generate_ocsp_responses)

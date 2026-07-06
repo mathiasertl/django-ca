@@ -44,7 +44,8 @@ Command-line
   * The command now uses the Celery task internally to send notifications, so it will return instantly if
     Celery is configured. The improvements described below thus also apply to this command.
 
-* Add the :command:`manage.py cache_ocsp_responses` command to generate OCSP responses from the command line.
+* Add the :command:`manage.py generate_ocsp_responses` command to generate OCSP responses from the command
+  line.
 
 ***************
 Admin interface
@@ -63,7 +64,7 @@ Celery tasks
     protect against outages.
   * In setups that use Celery, the task is configured to run every six hours.
 
-* Add the :py:func:`~django_ca.tasks.cache_ocsp_responses` task to cache OCSP responses periodically.
+* Add the :py:func:`~django_ca.tasks.generate_ocsp_responses` task to cache OCSP responses periodically.
 
 **********
 Python API
