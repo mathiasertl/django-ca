@@ -144,6 +144,9 @@ CA_ENABLE_REST_API = False
 
 EXTEND_INSTALLED_APPS: list[str] = []
 
+# OCSP cache settings
+CA_OCSP_RESPONSE_CACHE_EXPIRES = None
+
 # Setting to allow us to disable clickjacking projection if header is already set by the webserver
 CA_ENABLE_CLICKJACKING_PROTECTION = True
 
@@ -246,6 +249,13 @@ if CA_ENABLE_REST_API and "ninja" not in INSTALLED_APPS:
 # Add additional applications to INSTALLED_APPS
 INSTALLED_APPS += EXTEND_INSTALLED_APPS
 CELERY_BEAT_SCHEDULE.update(EXTEND_CELERY_BEAT_SCHEDULE)
+if CA_OCSP_RESPONSE_CACHE_EXPIRES is not None and "cache-ocsp-responses" not in CELERY_BEAT_SCHEDULE:
+    CELERY_BEAT_SCHEDULE["cache-ocsp-responses"] = {
+        # Attempt to regenerate OCSP responder certificates every hour. Certificates are only regenerated if
+        # they expire in the near future.
+        "task": "django_ca.tasks.cache_ocsp_responses",
+        "schedule": 3600,
+    }
 
 if STORAGES is None:
     # Set the default storages argument
