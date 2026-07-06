@@ -370,7 +370,7 @@ CA_OCSP_RESPONSE_CACHE_EXPIRES
     the :py:class:`~django_ca.views.GenericOCSPView` serves pre-generated responses from Django's cache
     backend (falling back to the database) instead of signing a new response on every request.
 
-    When enabled you **must** schedule the ``cache_ocsp_responses`` periodic task to run regularly so that
+    When enabled you **must** schedule the ``generate_ocsp_responses`` periodic task to run regularly so that
     cached responses are refreshed before they expire. This is already set up if you use the full django-ca
     project (e.g. if you :doc:`install from source </quickstart/from_source>` or use
     :doc:`Docker </quickstart/docker>` or :doc:`docker-compose </quickstart/docker_compose>`).
@@ -390,13 +390,13 @@ CA_OCSP_RESPONSE_CACHE_EXPIRES
 CA_OCSP_RESPONSE_CACHE_RENEWAL
     .. pydantic-setting:: CA_OCSP_RESPONSE_CACHE_RENEWAL
 
-    Controls how early the ``cache_ocsp_responses`` periodic task will renew a cached response before it
+    Controls how early the ``generate_ocsp_responses`` periodic task will renew a cached response before it
     expires.  A certificate whose cached response expires within this window will have its response
     regenerated on the next task run.
 
     .. WARNING::
 
-        This value should be *greater than* the interval at which ``cache_ocsp_responses`` is scheduled,
+        This value should be *greater than* the interval at which ``generate_ocsp_responses`` is scheduled,
         otherwise responses may expire before they are renewed.
 
 .. _settings-ca-passwords:

@@ -62,7 +62,7 @@ cached response will be renewed. The value should naturally be *lower* then the 
 .. NOTE::
 
     If you use :doc:`django-ca as app </quickstart/as_app>` or do not use Celery, be sure to run the
-    :command:`manage.py cache_ocsp_responses` command regularly. See
+    :command:`manage.py generate_ocsp_responses` command regularly. See
     :ref:`periodic-tasks-cache-ocsp-responses` for more information.
 
 Caching OCSP responses greatly improves performance, especially in setups that see many OCSP requests. It

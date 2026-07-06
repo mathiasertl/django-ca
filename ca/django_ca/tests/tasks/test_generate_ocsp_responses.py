@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License along with django-ca. If not, see
 # <http://www.gnu.org/licenses/>.
 
-"""Tests for the ``cache_ocsp_responses`` Celery task."""
+"""Tests for the ``generate_ocsp_responses`` Celery task."""
 
 import logging
 from datetime import UTC, datetime, timedelta
@@ -21,7 +21,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tasks import cache_ocsp_responses
+from django_ca.tasks import generate_ocsp_responses
 from django_ca.tests.base.assertions import assert_ocsp_response_for_model
 from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, TIMESTAMPS
 
@@ -35,7 +35,7 @@ pytestmark = [
 def test_caching_disabled() -> None:
     """Task is a no-op when CA_OCSP_RESPONSE_CACHE_EXPIRES is None (the default)."""
     with mock.patch("django_ca.tasks.run_task") as mock_run:
-        cache_ocsp_responses()
+        generate_ocsp_responses()
     mock_run.assert_not_called()
 
 
@@ -48,7 +48,7 @@ def test_caches_uncached_certs(
 ) -> None:
     """Task schedules caching for certificates with no cached response yet."""
     assert child_cert.ocsp_response is None
-    cache_ocsp_responses()
+    generate_ocsp_responses()
 
     # The root CA does not get an OCSP response as it would have to be signed by the CA itself.
     root_with_ocsp_responder_certificate.refresh_from_db()
@@ -73,7 +73,7 @@ def test_skips_fresh_certs(
         cert.save()
 
     with mock.patch("django_ca.tasks.run_task") as mock_run:
-        cache_ocsp_responses()
+        generate_ocsp_responses()
     mock_run.assert_not_called()
 
     for cert in child_with_ocsp_responder_certificate, root_cert, child_cert:
@@ -91,7 +91,7 @@ def test_renews_expiring_certs(child_cert: Certificate) -> None:
     child_cert.save()
 
     with mock.patch("django_ca.tasks.run_task") as mock_run:
-        cache_ocsp_responses()
+        generate_ocsp_responses()
 
     scheduled_serials = [call.args[1].serial for call in mock_run.call_args_list]
     assert child_cert.serial in scheduled_serials
@@ -104,6 +104,6 @@ def test_error_handling(caplog: LogCaptureFixture) -> None:
         mock.patch("django_ca.tasks.run_task", side_effect=Exception("boom")),
         caplog.at_level(logging.ERROR, logger="django_ca.tasks"),
     ):
-        cache_ocsp_responses()
+        generate_ocsp_responses()
 
     assert "Error scheduling OCSP response caching for" in caplog.text

@@ -40,7 +40,7 @@ from django_ca.conf import model_settings
 from django_ca.key_backends.hsm.models import HSMUsePrivateKeyOptions
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority
-from django_ca.tasks import cache_ocsp_response
+from django_ca.tasks import generate_ocsp_response
 from django_ca.tests.base.constants import CA_OCSP_RESPONSE_CACHE_EXPIRES, CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.views.assertions import assert_ocsp_response_via_http
 from django_ca.tests.views.conftest import ocsp_get
@@ -285,7 +285,7 @@ def test_cached_response_served_from_django_cache(
     django_assert_num_queries: DjangoAssertNumQueries, client: Client, child_cert: Certificate
 ) -> None:
     """When a cached response exists in Django cache, it is returned directly."""
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
 
     with django_assert_num_queries(0):
         response = ocsp_get(client, child_cert)
@@ -299,7 +299,7 @@ def test_cached_response_with_non_critical_nonce(
     django_assert_num_queries: DjangoAssertNumQueries, client: Client, child_cert: Certificate
 ) -> None:
     """Test that non-critical extensions are ignored."""
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
 
     with django_assert_num_queries(0):
         response = ocsp_get(client, child_cert, nonce=b"nonce", nonce_critical=False)
@@ -314,7 +314,7 @@ def test_cached_response_served_from_db(
 ) -> None:
     """When no Django-cache entry exists, a valid DB-stored response is used."""
     # Obtain a real OCSP response without caching.
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child_cert.serial, ca=False))
     cache.clear()  # clear cache again
 
     with django_assert_num_queries(1):
@@ -331,7 +331,7 @@ def test_cached_response_served_from_db_with_certificate_authority(
     """When no Django-cache entry exists, a valid DB-stored response is used."""
     # Obtain a real OCSP response without caching.
     child.parent.generate_ocsp_key(StoragesUsePrivateKeyOptions(password=None))  # type: ignore[union-attr]
-    cache_ocsp_response(CacheOCSPResponseTaskArgs(serial=child.serial, ca=True))
+    generate_ocsp_response(CacheOCSPResponseTaskArgs(serial=child.serial, ca=True))
     cache.clear()  # clear cache again
 
     with django_assert_num_queries(1):
