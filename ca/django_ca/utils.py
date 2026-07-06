@@ -858,7 +858,7 @@ def read_file(path: str) -> bytes:
         stream.close()
 
 
-def get_ocsp_cache_key(ca_serial: str, cert_serial: str, ca: bool) -> str:
+def get_ocsp_cache_key(ca_serial: str, cert_serial: int, ca: bool) -> str:
     """Get a cache key for OCSP responses."""
     if ca is True:
         typ = "ca"

@@ -541,11 +541,11 @@ def assert_ocsp_response_for_model(
     """Assert the contents of an OCSP response in the database and cache."""
     if isinstance(certificate, Certificate):
         signer = certificate.ca
-        cache_key = get_ocsp_cache_key(signer.serial, certificate.serial, False)
+        cache_key = get_ocsp_cache_key(signer.serial, certificate.pub.loaded.serial_number, False)
     else:
         assert certificate.parent is not None
         signer = certificate.parent
-        cache_key = get_ocsp_cache_key(signer.serial, certificate.serial, True)
+        cache_key = get_ocsp_cache_key(signer.serial, certificate.pub.loaded.serial_number, True)
 
     responder_pem = signer.ocsp_key_backend_options["certificate"]["pem"].encode()
     responder_certificate = x509.load_pem_x509_certificate(responder_pem)
