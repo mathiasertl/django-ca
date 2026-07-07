@@ -96,6 +96,10 @@ Validate that the tutorials are still working::
     $ ./dev.py validate docker
     $ ./dev.py validate docker-compose --no-rebuild
 
+Also run the source tutorial::
+
+    $ structured-tutorial -a postgres -a redis-broker -a redis-cache -a export_source tutorials/source/tutorial.yaml
+
 ****************
 Create a release
 ****************
