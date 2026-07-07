@@ -340,20 +340,34 @@ class Command(DevCommand):
         return [self.parent.docker_options]  # type: ignore[union-attr]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "--no-debian", dest="debian", action="store_false", help="Do not test Debian-based image."
-        )
-        parser.add_argument(
-            "--no-alpine", dest="alpine", action="store_false", help="Do not test Alpine-based image."
-        )
-        parser.add_argument(
+        tutorial_group = parser.add_argument_group("Tutorial options")
+        tutorial_group.add_argument(
             "--no-tutorial",
             dest="tutorial",
             default=True,
             action="store_false",
             help="Do not test the tutorial.",
         )
-        parser.add_argument(
+
+        tutorial_group.add_argument(
+            "--no-debian",
+            dest="debian",
+            action="store_false",
+            default=True,
+            help="Do not test Debian-based image.",
+        )
+        tutorial_group.add_argument(
+            "--no-alpine",
+            dest="alpine",
+            action="store_false",
+            default=True,
+            help="Do not test Alpine-based image.",
+        )
+        tutorial_group.add_argument(
+            "--interactive", action="store_true", default=False, help="Run tutorial in interactive mode."
+        )
+
+        tutorial_group.add_argument(
             "--no-update",
             dest="update",
             default=True,
@@ -367,19 +381,21 @@ class Command(DevCommand):
             "--acme-dist", metavar="DIST", help="Test ACMEv2 only with DIST (example: ubuntu:jammy)."
         )
 
-    def run_tutorial(self, release: str, docker_tag: str, alpine: bool = False) -> int:
+    def run_tutorial(
+        self, release: str, docker_tag: str, alpine: bool = False, interactive: bool = False
+    ) -> int:
         """Run the Compose tutorial."""
         errors = 0
         if alpine:
             docker_tag += "-alpine"
 
-        defines = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
+        args = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
         if alpine:
-            defines += ["-D", "DOCKER_IMAGE_VARIANT", "alpine"]
+            args += ["-D", "DOCKER_IMAGE_VARIANT", "alpine"]
+        if not interactive:
+            args.append("--non-interactive")
 
-        proc = utils.run(
-            ["structured-tutorial", "--non-interactive", *defines, "tutorials/compose/tutorial.yaml"]
-        )
+        proc = utils.run(["structured-tutorial", *args, "tutorials/compose/tutorial.yaml"])
         if proc.returncode != 0:
             errors += err("Error running tutorial.")
         return errors
@@ -405,11 +421,11 @@ class Command(DevCommand):
         if args.tutorial:
             if args.debian:
                 info("Running tutorial...")
-                errors += self.run_tutorial(release, docker_tag, alpine=False)
+                errors += self.run_tutorial(release, docker_tag, alpine=False, interactive=args.interactive)
 
             if args.alpine:
                 info("Running tutorial with Alpine image...")
-                errors += self.run_tutorial(release, docker_tag, alpine=True)
+                errors += self.run_tutorial(release, docker_tag, alpine=True, interactive=args.interactive)
 
         if args.update and errors == 0:
             errors += test_update(docker_tag, release)
