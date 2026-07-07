@@ -17,7 +17,7 @@ env:
   UV_NO_SYNC: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  NEWEST_DJANGO_CA: "3.0.0"
+  NEWEST_DJANGO_CA: "3.1.0"
 
 jobs:
   build:
