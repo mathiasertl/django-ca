@@ -341,6 +341,12 @@ class Command(DevCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
+            "--no-debian", dest="debian", action="store_false", help="Do not test Debian-based image."
+        )
+        parser.add_argument(
+            "--no-alpine", dest="alpine", action="store_false", help="Do not test Alpine-based image."
+        )
+        parser.add_argument(
             "--no-tutorial",
             dest="tutorial",
             default=True,
@@ -397,11 +403,13 @@ class Command(DevCommand):
         errors = 0
 
         if args.tutorial:
-            info("Running tutorial...")
-            errors += self.run_tutorial(release, docker_tag, alpine=False)
+            if args.debian:
+                info("Running tutorial...")
+                errors += self.run_tutorial(release, docker_tag, alpine=False)
 
-            info("Running tutorial with Alpine image...")
-            errors += self.run_tutorial(release, docker_tag, alpine=True)
+            if args.alpine:
+                info("Running tutorial with Alpine image...")
+                errors += self.run_tutorial(release, docker_tag, alpine=True)
 
         if args.update and errors == 0:
             errors += test_update(docker_tag, release)
