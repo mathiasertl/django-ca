@@ -367,7 +367,7 @@ class Command(DevCommand):
             "--interactive", action="store_true", default=False, help="Run tutorial in interactive mode."
         )
 
-        tutorial_group.add_argument(
+        parser.add_argument(
             "--no-update",
             dest="update",
             default=True,

@@ -62,7 +62,7 @@ debian-releases = [
 ubuntu-releases = [
     "jammy",  # 22.04, until 2027-04-21
     "noble",  # 24.04, until 2029-05-31
-    "raccoon",  # 26.04, until 2031-05-29
+    "resolute",  # 26.04, until 2031-05-29
 ]
 
 [django-ca.release.github]
