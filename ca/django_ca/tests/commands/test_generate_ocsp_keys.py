@@ -13,11 +13,8 @@
 
 """Test the generate_ocsp_keys management command."""
 
-from unittest import mock
-
 import pytest
 
-from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -34,16 +31,6 @@ class TestGenerateOcspKeys(GenerateCommandTestCaseBase):
     cmd = "generate_ocsp_keys"
     single_path = "django_ca.management.commands.generate_ocsp_keys.Command.single_task"
     multiple_path = "django_ca.management.commands.generate_ocsp_keys.Command.multiple_task"
-
-    def test_deprecated_command_name(self, multiple: mock.MagicMock) -> None:
-        """Test the deprecated command-name alias."""
-        stdout, stderr = cmd("regenerate_ocsp_keys")
-        assert stdout == ""
-        assert stderr == (
-            "Warning: This command is deprecated. Please use generate_ocsp_keys instead. "
-            "This alias will be removed in django_ca~=3.2.0.\n"
-        )
-        multiple.assert_called_once_with(UseCertificateAuthoritiesTaskArgs())
 
 
 def test_model_validation_error(root: CertificateAuthority) -> None:

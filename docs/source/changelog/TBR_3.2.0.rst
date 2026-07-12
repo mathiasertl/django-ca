@@ -30,7 +30,10 @@ No changes yet.
 Command-line
 ************
 
-No changes yet.
+* Removed the ``cache_crls`` command (deprecated since ``django-ca==3.0.0``). Use :command:`generate_crls`
+  instead.
+* Removed the ``regenerate_ocsp_keys`` command (deprecated since ``django-ca==3.0.0``). Use
+  :command:`generate_ocsp_keys` instead.
 
 ***************
 Admin interface

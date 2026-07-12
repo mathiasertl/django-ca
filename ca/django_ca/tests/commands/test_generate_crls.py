@@ -13,13 +13,9 @@
 
 """Test the generate_crls management command."""
 
-from unittest import mock
-
 import pytest
 
-from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
 from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.utils import cmd
 from django_ca.tests.commands.base import GenerateCommandTestCaseBase
 
 # freeze time as otherwise CAs would not be valid
@@ -32,13 +28,3 @@ class TestGenerateCrls(GenerateCommandTestCaseBase):
     cmd = "generate_crls"
     single_path = "django_ca.management.commands.generate_crls.Command.single_task"
     multiple_path = "django_ca.management.commands.generate_crls.Command.multiple_task"
-
-    def test_deprecated_command_name(self, multiple: mock.MagicMock) -> None:
-        """Test the deprecated command name."""
-        stdout, stderr = cmd("cache_crls")
-        assert stdout == ""
-        assert (
-            stderr == "Warning: This command is deprecated. Please use generate_crls instead. "
-            "This alias will be removed in django_ca~=3.2.0.\n"
-        )
-        multiple.assert_called_once_with(UseCertificateAuthoritiesTaskArgs())
