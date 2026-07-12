@@ -785,11 +785,8 @@ def parse_encoding(value: str) -> Encoding:
         value = "DER"
 
     try:
-        if constants.CRYPTOGRAPHY_VERSION < (47,):  # pragma: only cryptography<47
-            value = Encoding[value]  # type: ignore[misc]
-        else:  # pragma: only cryptography>=47
-            value = getattr(Encoding, value)
-    except (KeyError, AttributeError) as ex:
+        value = getattr(Encoding, value)
+    except AttributeError as ex:
         raise ValueError(f"Unknown encoding: {value}") from ex
 
     assert isinstance(value, Encoding)
@@ -798,10 +795,7 @@ def parse_encoding(value: str) -> Encoding:
 
 def format_encoding(value: Encoding) -> EncodingNames:
     """Format an encoding."""
-    if constants.CRYPTOGRAPHY_VERSION < (47,):  # pragma: only cryptography<47
-        return value.name  # type: ignore[no-any-return,attr-defined]
-
-    return constants.ENCODING_NAMES[value]  # pragma: only cryptography>=47
+    return constants.ENCODING_NAMES[value]
 
 
 def get_cert_builder(not_after: datetime, serial: int | None = None) -> x509.CertificateBuilder:

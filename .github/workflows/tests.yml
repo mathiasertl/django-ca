@@ -18,7 +18,7 @@ jobs:
         os: [ ubuntu-latest ]
         python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         django-version: [ "5.2", "6.0" ]
-        cryptography-version: [ "46", "47", "48", "49" ]
+        cryptography-version: [ "49" ]
         pydantic-version: [ "2.12", "2.13" ]
         exclude:
           - python-version: "3.10"
