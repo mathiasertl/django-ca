@@ -10,8 +10,8 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["49"]
-acme = ["5.4", "5.5", "5.6"]
-pydantic = ["2.12", "2.13"]
+acme = ["5.6"]
+pydantic = ["2.13"]
 josepy = ["2.2"]
 # Newest uv release: https://pypi.org/project/uv/
 uv = "0.11.26"
@@ -154,7 +154,7 @@ requires-python = ">=3.11"
 dependencies = [
     "Django~=5.2.0;python_version<'3.12'",
     "Django>=5.2;python_version>='3.12'",
-    "acme>=5.4",
+    "acme>=5.6",
     "asn1crypto>=1.5",
     "cryptography>=49",
     "django-object-actions>=5.0",
@@ -162,7 +162,7 @@ dependencies = [
     "idna>=3.10",
     "josepy>=2.1.0",
     "packaging",
-    "pydantic>=2.12",
+    "pydantic>=2.13",
     "requests>=2.32.3",
     # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
     "typing_extensions>=4.6.0;python_version<'3.12'",
@@ -571,8 +571,8 @@ default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
     [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
     #[ { group = "cryptography49" }, ],
-    [ { group = "acme5.4" }, { group = "acme5.5" }, { group = "acme5.6" }, ],
-    [ { group = "pydantic2.12" }, { group = "pydantic2.13" }, ],
+    #[ { group = "acme5.6" }, ],
+    #[ { group = "pydantic2.13" }, ],
 ]
 
 [dependency-groups]
@@ -654,8 +654,5 @@ gunicorn = [ "gunicorn>=23" ]
 "Django5.2" = ["Django~=5.2.0"]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography49" = ["cryptography~=49.0"]
-"acme5.4" = ["acme~=5.4.0"]
-"acme5.5" = ["acme~=5.5.0"]
 "acme5.6" = ["acme~=5.6.0"]
-"pydantic2.12" = ["pydantic~=2.12.0"]
 "pydantic2.13" = ["pydantic~=2.13.0"]

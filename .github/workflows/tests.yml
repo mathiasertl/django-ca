@@ -19,7 +19,7 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13", "3.14" ]
         django-version: [ "5.2", "6.0" ]
         cryptography-version: [ "49" ]
-        pydantic-version: [ "2.12", "2.13" ]
+        pydantic-version: [ "2.13" ]
         exclude:
           - python-version: "3.10"
             django-version: "6.0"
