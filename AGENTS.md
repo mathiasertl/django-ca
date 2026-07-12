@@ -80,34 +80,9 @@ dev.py                     # central developer script — see sub-commands below
 uv sync --all-extras         # install all default groups (dev, dist, docs, lint, mypy, local)
 ```
 
-## Running tests
+## Running and writing tests
 
-```bash
-uv run pytest --no-selenium                       # all tests with coverage (slow)
-uv run pytest --no-selenium --no-cov               # skip coverage (much faster for local work)
-uv run pytest ca/django_ca/tests/test_models.py           # single file
-uv run pytest ca/django_ca/tests/test_models.py::Cls::method  # single test
-uv run pytest -k "test_something"    # keyword filter
-```
-
-**Critical test quirks:**
-- `--cov-fail-under=100` is in `addopts` — 100% coverage is enforced by default. New code must be covered or use `# pragma: no cover` (version-conditional variants like `# pragma: only cryptography>46` also exist).
-- Tests run in **random order** by default (`pytest-random-order`).
-- `DJANGO_SETTINGS_MODULE=ca.test_settings` is set automatically by pytest-env.
-- `ca/` and `docs/source/` are on `pythonpath` via pytest config — no need to set `PYTHONPATH` manually when running pytest.
-- `cert-data.json` is loaded at `test_settings.py` import time; it must exist before any test run. Regenerate with `uv run python dev.py recreate-fixtures`.
-- Selenium tests auto-skip unless on newest Python + cryptography + pydantic combo. Require Firefox + `contrib/selenium/geckodriver`.
-- HSM tests require `softhsm2` (`apt-get install softhsm2`). Skip locally: `--no-hsm`.
-- Crypto-related tests use pre-generated fixtures in `ca/django_ca/tests/`
-- Do not regenerate fixtures unless explicitly asked.
-
-## Before running tests (first time or after fixture changes)
-
-```bash
-uv run python dev.py init-demo       # runs migrate + recreate-fixtures, seeds demo DB
-```
-
-For external DBs (Postgres/MariaDB), set `POSTGRES_HOST` or `MARIADB_HOST` env vars and run `manage.py migrate` first.
+Load the `pytest` skill for all test-related work (running, writing, or modifying tests).
 
 ## Code quality (run before committing)
 
@@ -161,9 +136,6 @@ The `docs/Makefile` auto-generates `docs/source/_files/openapi.json` and `docs/s
 - **isort custom sections**: `future → stdlib → third-party → crypto → django → django-addon → test → first-party → local-folder`. Both `django_ca` and `ca` are `known-first-party`.
 - **Max line length: 110** (ruff, pylint, doc8, editorconfig).
 - **`stubs/`** on `mypy_path` — hand-written stubs for untyped libs (celery, webtest, pyvirtualdisplay, etc.). Do not delete.
-- **`COLUMNS=80`** is set in pytest env to make argparse output deterministic.
-- **Pydantic models pre-imported** in `pytest_sessionstart` to avoid freezegun/Pydantic metaclass conflicts — do not move that import.
-- **`CA_DIR = "/non/existent"`** in test settings — tests needing a real CA dir must use `override_settings` or a temp-dir fixture.
 - **`DJANGO_CA_SECRET_KEY`** env var must be set for `code-quality` and `docs` runs outside of tests (CI sets it to `"dummy"`).
 
 ## Tox
