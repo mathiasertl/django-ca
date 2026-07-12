@@ -132,6 +132,8 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
     expected_django = config.DJANGO
     expected_cryptography = config.CRYPTOGRAPHY
     expected_pydantic = config.PYDANTIC
+    expected_debian = config.DEBIAN_RELEASES
+    expected_alpine = config.ALPINE_RELEASES
 
     # Some versions are treated differently if on a release branch
     if release_branch:
@@ -139,6 +141,8 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
         expected_django = (config.RELEASE["django-lts"],)
         expected_cryptography = (config.CRYPTOGRAPHY[-1],)
         expected_pydantic = (config.PYDANTIC[-1],)
+        expected_debian = (config.DEBIAN_RELEASES[-1],)
+        expected_alpine = (config.ALPINE_RELEASES[-1],)
 
     for action_path in Path(".github", "actions").glob("*/action.yaml"):
         check_path(action_path)
@@ -165,9 +169,9 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
                     elif key == "pydantic-version":
                         errors += simple_diff("Pydantic versions", tuple(values), expected_pydantic)
                     elif key == "debian-version":
-                        errors += simple_diff("Debian versions", tuple(values), config.DEBIAN_RELEASES)
+                        errors += simple_diff("Debian versions", tuple(values), expected_debian)
                     elif key == "alpine-version":
-                        errors += simple_diff("Alpine versions", tuple(values), config.ALPINE_RELEASES)
+                        errors += simple_diff("Alpine versions", tuple(values), expected_alpine)
                     elif key == "extra":
                         errors += simple_diff("Extras", tuple(values), tuple(config.EXTRAS))
                     elif key == "postgres-version":
