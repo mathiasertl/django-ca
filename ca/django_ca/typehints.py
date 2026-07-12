@@ -329,7 +329,6 @@ ActionsContainer = CommandParser | ArgumentGroup
 ############
 # TypeVars #
 ############
-# pylint: disable-next=invalid-name  # Should match class, but pylint is more sensitive here
 X509CertMixinTypeVar = TypeVar("X509CertMixinTypeVar", bound="models.X509CertMixin")
 
 # A TypeVar bound to :py:class:`~cg:cryptography.x509.ExtensionType`.

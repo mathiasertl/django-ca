@@ -100,6 +100,7 @@ openssl req -new -key priv.pem -out csr.pem -utf8 -batch -subj '/CN=example.com'
         """
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
             raise forms.ValidationError(
+                # pylint: disable-next=mark-safe-interpolation  # input is static
                 mark_safe(self.simple_validation_error % {"start": self.start, "end": self.end})
             )
         try:
