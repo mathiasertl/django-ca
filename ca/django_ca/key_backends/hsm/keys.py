@@ -15,7 +15,7 @@
 
 import hashlib
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, NoReturn, Self, TypeVar, cast
+from typing import Any, ClassVar, Generic, NoReturn, Self, TypeVar, cast
 
 import pkcs11
 from pkcs11 import MGF, Mechanism, Session
@@ -34,13 +34,10 @@ from cryptography.hazmat.primitives.asymmetric.padding import (
     calculate_max_pss_salt_length,
 )
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
-from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
+from cryptography.hazmat.primitives.asymmetric.utils import NoDigestInfo, Prehashed
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
 EdwardsPublicKeyTypeVar = TypeVar("EdwardsPublicKeyTypeVar", ed448.Ed448PublicKey, ed25519.Ed25519PublicKey)
-
-if TYPE_CHECKING:  # pragma: only cryptography<47  # NoDigestInfo was added in 47
-    from cryptography.hazmat.primitives.asymmetric.utils import NoDigestInfo
 
 
 class PKCS11PrivateKeyMixin:
