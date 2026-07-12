@@ -42,7 +42,10 @@ No changes yet.
 Celery tasks
 ************
 
-No changes yet.
+* Removed the ``django_ca.tasks.cache_crl`` task (deprecated since ``django-ca==3.0.0``). Use
+  :py:func:`django_ca.tasks.generate_crl` instead.
+* Removed the ``django_ca.tasks.cache_crls`` task (deprecated since ``django-ca==3.0.0``). Use
+  :py:func:`django_ca.tasks.generate_crls` instead.
 
 **********
 Python API

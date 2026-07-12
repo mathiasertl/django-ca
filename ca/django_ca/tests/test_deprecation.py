@@ -20,18 +20,18 @@ import pytest
 
 from django_ca.deprecation import (
     DeprecationWarningType,
-    RemovedInDjangoCA320Warning,
     RemovedInDjangoCA330Warning,
     RemovedInDjangoCA400Warning,
+    RemovedInDjangoCA410Warning,
     deprecate_argument,
     deprecate_function,
     deprecate_type,
 )
 
 WARNING_TYPES: tuple[DeprecationWarningType, ...] = (
-    RemovedInDjangoCA320Warning,
     RemovedInDjangoCA330Warning,
     RemovedInDjangoCA400Warning,
+    RemovedInDjangoCA410Warning,
 )
 
 

@@ -17,8 +17,8 @@ import pytest
 
 from django_ca.celery.messages import UseCertificateAuthorityTaskArgs
 from django_ca.models import CertificateAuthority
-from django_ca.tasks import cache_crl, generate_crl
-from django_ca.tests.base.assertions import assert_crls, assert_removed_in_320
+from django_ca.tasks import generate_crl
+from django_ca.tests.base.assertions import assert_crls
 from django_ca.tests.base.constants import TIMESTAMPS
 
 pytestmark = [
@@ -30,11 +30,4 @@ pytestmark = [
 def test_basic(usable_root: CertificateAuthority) -> None:
     """Test the most basic invocation."""
     generate_crl(UseCertificateAuthorityTaskArgs(serial=usable_root.serial))
-    assert_crls(usable_root)
-
-
-def test_deprecated_task(usable_root: CertificateAuthority) -> None:
-    """Try using the deprecated task name."""
-    with assert_removed_in_320(r"^This task is deprecated, call `django_ca\.tasks\.generate_crl`\.$"):
-        cache_crl(UseCertificateAuthorityTaskArgs(serial=usable_root.serial))
     assert_crls(usable_root)

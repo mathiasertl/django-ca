@@ -17,7 +17,6 @@
 """
 
 import logging
-import warnings
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
@@ -41,7 +40,6 @@ from django_ca.celery.messages import (
 )
 from django_ca.conf import model_settings
 from django_ca.constants import EXTENSION_DEFAULT_CRITICAL
-from django_ca.deprecation import RemovedInDjangoCA320Warning
 from django_ca.models import (
     AcmeAuthorization,
     AcmeCertificate,
@@ -56,28 +54,6 @@ from django_ca.profiles import profiles
 from django_ca.utils import parse_general_name
 
 log = logging.getLogger(__name__)
-
-
-@shared_task(base=DjangoCaTask)
-def cache_crl(data: UseCertificateAuthorityTaskArgs) -> None:
-    """**Deprecated.** Use :py:func:`django_ca.tasks.generate_crl` instead.
-
-    This task will be removed in ``django-ca~=3.1.0``.
-    """
-    warning = "This task is deprecated, call `django_ca.tasks.generate_crl`."
-    warnings.warn(warning, RemovedInDjangoCA320Warning, stacklevel=1)
-    generate_crl(data)
-
-
-@shared_task(base=DjangoCaTask)
-def cache_crls(data: UseCertificateAuthoritiesTaskArgs | None = None) -> None:
-    """**Deprecated.** Use :py:func:`django_ca.tasks.generate_crls` instead.
-
-    This task will be removed in ``django-ca~=3.1.0``.
-    """
-    warning = "This task is deprecated, call `django_ca.tasks.generate_crls`."
-    warnings.warn(warning, RemovedInDjangoCA320Warning, stacklevel=1)
-    generate_crls(data)
 
 
 @shared_task(base=DjangoCaTask)

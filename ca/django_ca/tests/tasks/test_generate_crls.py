@@ -24,8 +24,8 @@ from _pytest.logging import LogCaptureFixture
 
 from django_ca.celery.messages import UseCertificateAuthoritiesTaskArgs
 from django_ca.models import CertificateAuthority
-from django_ca.tasks import cache_crls, generate_crls
-from django_ca.tests.base.assertions import assert_crls, assert_removed_in_320
+from django_ca.tasks import generate_crls
+from django_ca.tests.base.assertions import assert_crls
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import crl_cache_key
 
@@ -93,10 +93,3 @@ def test_with_exception_child_task(caplog: LogCaptureFixture) -> None:
     ):
         generate_crls()
     assert "Error generating CRL" in caplog.text
-
-
-def test_deprecated_task_name(usable_root: CertificateAuthority) -> None:
-    """Try using the deprecated task name."""
-    with assert_removed_in_320(r"^This task is deprecated, call `django_ca\.tasks\.generate_crls`\.$"):
-        cache_crls()
-    assert_crls(usable_root)

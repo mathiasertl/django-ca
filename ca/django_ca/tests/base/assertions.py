@@ -42,7 +42,6 @@ import pytest
 
 from django_ca.conf import model_settings
 from django_ca.constants import ReasonFlags
-from django_ca.deprecation import RemovedInDjangoCA320Warning
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList, X509CertMixin
 from django_ca.signals import post_create_ca, post_issue_cert, post_sign_cert, pre_create_ca, pre_sign_cert
@@ -60,12 +59,11 @@ from django_ca.tests.base.utils import (
 )
 from django_ca.utils import get_ocsp_cache_key
 
-
-@contextmanager
-def assert_removed_in_320(match: str | re.Pattern[str] | None = None) -> Iterator[None]:  # pragma: no cover
-    """Assert that a ``RemovedInDjangoCA320Warning`` is emitted."""
-    with pytest.warns(RemovedInDjangoCA320Warning, match=match):
-        yield
+# @contextmanager
+# def assert_removed_in_320(match: str | re.Pattern[str] | None = None) -> Iterator[None]:  # pragma: no cover
+#     """Assert that a ``RemovedInDjangoCA320Warning`` is emitted."""
+#     with pytest.warns(RemovedInDjangoCA320Warning, match=match):
+#         yield
 
 
 def assert_authority_key_identifier(issuer: CertificateAuthority, cert: X509CertMixin) -> None:

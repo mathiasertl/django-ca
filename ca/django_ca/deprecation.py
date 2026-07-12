@@ -24,12 +24,6 @@ from typing import Any, TypeVar, cast
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-class RemovedInDjangoCA320Warning(PendingDeprecationWarning):
-    """Warning if a feature will be removed in django-ca~=3.2.0."""
-
-    version = "3.2"
-
-
 class RemovedInDjangoCA330Warning(PendingDeprecationWarning):
     """Warning if a feature will be removed in django-ca~=3.3.0."""
 
@@ -42,10 +36,16 @@ class RemovedInDjangoCA400Warning(PendingDeprecationWarning):
     version = "4.0"
 
 
-RemovedInNextVersionWarning = RemovedInDjangoCA320Warning
+class RemovedInDjangoCA410Warning(PendingDeprecationWarning):
+    """Warning if a feature will be removed in django-ca~=4.1.0."""
+
+    version = "4.1"
+
+
+RemovedInNextVersionWarning = RemovedInDjangoCA330Warning
 
 DeprecationWarningType = (
-    type[RemovedInDjangoCA320Warning] | type[RemovedInDjangoCA330Warning] | type[RemovedInDjangoCA400Warning]
+    type[RemovedInDjangoCA330Warning] | type[RemovedInDjangoCA400Warning] | type[RemovedInDjangoCA410Warning]
 )
 
 
