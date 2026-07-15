@@ -123,6 +123,11 @@ if model_settings.CA_ENABLE_ACME:  # pragma: no branch
             acme_views.AcmeCertificateRevocationView.as_view(),
             name="acme-revoke",
         ),
+        path(
+            "acme/<django-ca-serial:serial>/key-change/",
+            acme_views.AcmeKeyChangeView.as_view(),
+            name="acme-key-change",
+        ),
     ]
 
 

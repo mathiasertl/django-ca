@@ -12,7 +12,8 @@ No changes yet.
 ACMEv2
 ******
 
-No changes yet.
+* Implement Account Key Rollover as specified in `RFC 8555, section 7.3.5
+  <https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5>`_.
 
 *************
 OCSP and CRLs

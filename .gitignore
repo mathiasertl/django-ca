@@ -29,6 +29,9 @@
 /ca/*.pem
 /ca/ca/settings.yaml
 /ca/files/
+/ca/liveserver_files/
+/.opencode/skills/liveserver/liveserver.log
+/.opencode/skills/liveserver/liveserver.pid
 /contrib/
 /dist
 /dj18/

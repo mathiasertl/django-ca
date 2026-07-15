@@ -180,3 +180,18 @@ class AcmeResponseUnsupportedMediaType(AcmeResponseMalformed):
 
     status_code = HTTPStatus.UNSUPPORTED_MEDIA_TYPE
     message = "Requests must use the application/jose+json content type."
+
+
+class AcmeResponseConflict(AcmeResponseError):
+    """ACME response when a key is already in use by another account.
+
+    .. seealso:: RFC 8555, section 7.3.5:
+
+       "If there is an existing account with the new key
+        provided, then the server SHOULD use status code 409 (Conflict) and
+        provide the URL of that account in the Location header field."
+    """
+
+    status_code = HTTPStatus.CONFLICT  # 409
+    type = "malformed"
+    message = "New key is already in use."

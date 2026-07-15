@@ -44,7 +44,7 @@ def test_default(
     req = response.wsgi_request
     assert response.json() == {
         "Zm9vYmFy": RANDOM_URL,
-        "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+        "keyChange": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/key-change/"),
         "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/revoke/"),
         "newAccount": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-account/"),
         "newNonce": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-nonce/"),
@@ -64,7 +64,7 @@ def test_named_ca(
     req = response.wsgi_request
     assert response.json() == {
         "Zm9vYmFy": RANDOM_URL,
-        "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+        "keyChange": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/key-change/"),
         "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/revoke/"),
         "newAccount": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-account/"),
         "newNonce": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-nonce/"),
@@ -87,7 +87,7 @@ def test_meta(client: Client, root: CertificateAuthority) -> None:
     req = response.wsgi_request
     assert response.json() == {
         "Zm9vYmFy": RANDOM_URL,
-        "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+        "keyChange": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/key-change/"),
         "revokeCert": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/revoke/"),
         "newAccount": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-account/"),
         "newNonce": req.build_absolute_uri(f"/django_ca/acme/{root.serial}/new-nonce/"),

@@ -20,6 +20,7 @@
 """
 
 import abc
+import json
 import logging
 import secrets
 import typing
@@ -31,6 +32,7 @@ from typing import Generic, TypeVar, cast
 import acme.jws
 import josepy as jose
 from acme import messages
+from acme.jws import JWS, Header
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -57,6 +59,7 @@ from django_ca.acme.responses import (
     AcmeResponseAuthorization,
     AcmeResponseBadNonce,
     AcmeResponseChallenge,
+    AcmeResponseConflict,
     AcmeResponseError,
     AcmeResponseMalformed,
     AcmeResponseMalformedPayload,
@@ -170,7 +173,7 @@ class AcmeDirectory(View):
 
         directory: dict[str, str | DirectoryMetaAlias] = {
             rnd: "https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417",
-            "keyChange": "http://localhost:8000/django_ca/acme/todo/key-change",
+            "keyChange": self._url(request, "acme-key-change", ca),
             "newAccount": self._url(request, "acme-new-account", ca),
             "newNonce": self._url(request, "acme-new-nonce", ca),
             "newOrder": self._url(request, "acme-new-order", ca),
@@ -1233,3 +1236,149 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         # Finally actually revoke the certificate
         cert.revoke(reason=reason)
         return AcmeResponse({})  # No response specified in RFC 8555!
+
+
+class AcmeKeyChangeView(AcmeBaseView):
+    """Implements key rollover for an ACME account.
+
+    The client posts an outer JWS (signed with the *old* account key, using KID) whose payload is itself a
+    JWS (signed with the *new* key, using JWK). The inner JWS payload contains the account URL and the old
+    public key so the server can authenticate both sides of the rollover.
+
+    .. seealso:: `RFC 8555, section 7.3.5 <https://tools.ietf.org/html/rfc8555#section-7.3.5>`_
+    """
+
+    def process_acme_request(self, slug: str | None) -> AcmeResponse:  # noqa: PLR0911
+        # RFC 8555, section 7.3.5:
+        #
+        #   The client should send the keyChange request to the key-change URL, with the payload being a
+        #   "inner" JWS signed with the new account key.
+        #
+        # On receiving a keyChange request, the server MUST perform the
+        # following steps in addition to the typical JWS validation:
+        #
+        # 1. Validate the POST request belongs to a currently active account, ...
+        # -> Already done by AcmeBaseView
+
+        # 2.  Check that the payload of the JWS is a well-formed JWS object (the "inner JWS").
+        # -> Parse the jws payload of the outer JWS.
+        try:
+            inner_jws = acme.jws.JWS.json_loads(self.jws.payload)
+            assert isinstance(inner_jws, JWS)
+        except (jose.errors.DeserializationError, TypeError):
+            return AcmeResponseMalformed(message="Could not parse inner JWS.")
+
+        inner_combined = inner_jws.signature.combined
+        assert isinstance(inner_combined, Header)
+
+        # The inner JWS MUST have its "url" header parameter set to the same value as the outer JWS.
+        if inner_combined.url != self.request.build_absolute_uri():
+            return AcmeResponseMalformed(
+                message='Inner JWS MUST have the same "url" header parameter as the outer JWS.'
+            )
+        # The inner JWS MUST omit the "nonce" header parameter.
+        if inner_combined.nonce:
+            return AcmeResponseMalformed(message='Inner JWS MUST omit the "nonce" header parameter.')
+
+        # 3. Check that the JWS protected header of the inner JWS has a "jwk" field.
+        # -> Also check that there is no KID persent.
+        if not inner_combined.jwk:
+            return AcmeResponseMalformed(message="Inner JWS must use JWK for the new key.")
+        if inner_combined.kid:
+            return AcmeResponseMalformed(message="Inner JWS must not use KID.")  # pragma: no cover
+
+        new_jwk = inner_combined.jwk
+        assert isinstance(new_jwk, jose.jwk.JWK)
+
+        # 4. Check that the inner JWS verifies using the key in its "jwk" field.
+        try:
+            if not inner_jws.verify(new_jwk):
+                return AcmeResponseMalformed(message="Inner JWS signature invalid.")
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+            return AcmeResponseMalformed(message="Inner JWS signature invalid.")
+
+        # Parse payload of the inner JWS
+        try:
+            inner_payload: dict[str, str] = json.loads(inner_jws.payload)
+            assert isinstance(inner_payload, dict)
+        except (json.JSONDecodeError, TypeError):  # pragma: no cover
+            return AcmeResponseMalformed(message="Could not parse inner JWS payload.")
+
+        # 5. Check that the payload of the inner JWS is a well-formed keyChange object (as described above).
+        account_url = inner_payload.get("account")
+        old_key_data = inner_payload.get("oldKey")
+
+        if not account_url:
+            return AcmeResponseMalformed(message="Inner payload missing 'account' field.")
+        if not old_key_data:
+            return AcmeResponseMalformed(message="Inner payload missing 'oldKey' field.")
+
+        # 6. Check that the "url" parameters of the inner and outer JWSs are the same.
+        # -> Already done under point 2.
+
+        # 7. Check that the "account" field of the keyChange object contains the URL for the account matching
+        # the old key (i.e., the "kid" field in the outer JWS).
+        if account_url != self.account.kid:
+            return AcmeResponseMalformed(message="'account' in inner JWS does not match requesting account.")
+
+        # oldKey: The JWK representation of the old key.
+        try:
+            old_jwk: jose.jwk.JWK = jose.jwk.JWK.json_loads(json.dumps(old_key_data))
+            assert isinstance(old_jwk, jose.jwk.JWK)
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+            return AcmeResponseMalformed(message="Could not parse 'oldKey' from inner JWS.")
+
+        # 8. Check that the "oldKey" field of the keyChange object is the same as the account key for the
+        # account in question.
+        # We compare PEM representations for reliability, and also check josepy equality as a secondary
+        # measure (mirroring the revocation view pattern).
+        try:
+            old_pem = (
+                old_jwk.key.public_bytes(
+                    encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                )
+                .decode("utf-8")
+                .strip()
+            )
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+            return AcmeResponseMalformed(message="Could not serialize 'oldKey'.")
+
+        if old_pem != self.account.pem or old_jwk != self.jwk:
+            return AcmeResponseMalformed(message="'oldKey' does not match current account key.")
+
+        # Derive PEM and thumbprint for the new key.
+        try:
+            new_pem = (
+                new_jwk.key.public_bytes(
+                    encoding=Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                )
+                .decode("utf-8")
+                .strip()
+            )
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+            return AcmeResponseMalformed(message="Could not serialize new key.")
+
+        new_thumbprint = jose.json_util.encode_b64jose(new_jwk.thumbprint())
+
+        # RFC 8555, section 7.3.5:
+        #
+        #   If the server is unable to update the account key because the new key is already associated with
+        #   another account, the server SHOULD return a response with status code 409 (Conflict) and provide
+        #   the URL of that account in the Location header field of the response.
+        try:
+            conflicting_account = AcmeAccount.objects.get(ca=self.ca, thumbprint=new_thumbprint)
+        except AcmeAccount.DoesNotExist:
+            conflicting_account = None
+
+        if conflicting_account is not None:
+            response = AcmeResponseConflict()
+            response["Location"] = conflicting_account.kid
+            return response
+
+        # 5. Update the account with the new key.
+        with transaction.atomic():
+            self.account.pem = new_pem
+            self.account.thumbprint = new_thumbprint
+            self.account.save()
+
+        return AcmeResponseAccount(self.request, self.account)
