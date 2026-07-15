@@ -66,6 +66,7 @@ from django_ca.acme.responses import (
     AcmeResponseNotFound,
     AcmeResponseOrder,
     AcmeResponseOrderCreated,
+    AcmeResponseOrders,
     AcmeResponseUnauthorized,
     AcmeResponseUnsupportedMediaType,
 )
@@ -685,12 +686,74 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
         return AcmeResponseAccount(self.request, self.account)
 
 
-class AcmeAccountOrdersView(AcmeBaseView):
-    """View showing orders for an account (not yet implemented)."""
+class AcmeAccountOrdersView(AcmePostAsGetView):
+    """View listing all orders for an account.
 
-    # TODO: implement this view
-    def process_acme_request(self, slug: str | None) -> AcmeResponse:  # pragma: no cover
-        raise AcmeException(message="Not Implemented.")
+    Returns a paginated list of order URLs for the authenticated account. Pagination is cursor-based:
+    when more orders than the page size exist, a ``cursor`` query parameter is appended to the "next"
+    link relation in the ``Link`` response header.
+
+    RFC 8555, section 7.1.2.1 requirements implemented here:
+
+    * SHOULD include pending orders.
+    * SHOULD NOT include invalid orders.
+    * Results are ordered most-recently-created first.
+    * Pagination via ``Link: <url>;rel="next"`` header.
+
+    .. seealso:: `RFC 8555, 7.1.2.1 <https://tools.ietf.org/html/rfc8555#section-7.1.2.1>`_
+    """
+
+    # Number of order URLs returned per page. Intentionally not configurable at this time.
+    _page_size = 100
+
+    # Set by acme_request() when a next page exists; read by set_link_relations().
+    _next_orders_url: str | None = None
+
+    def set_link_relations(self, response: "HttpResponseBase", **kwargs: str) -> None:
+        if self._next_orders_url is not None:
+            kwargs["next"] = self._next_orders_url
+        super().set_link_relations(response, **kwargs)
+
+    def acme_request(self, slug: str) -> AcmeResponse:
+        # RFC 8555, section 10.5: the authenticated account (resolved from the KID) must own the
+        # account slug embedded in the URL.  Returning 401 avoids leaking whether a given slug exists.
+        if self.account.slug != slug:
+            raise AcmeUnauthorized()
+
+        # RFC 8555, section 7.1.2.1:
+        #   SHOULD include pending orders and SHOULD NOT include orders that are invalid.
+        orders_qs = (
+            AcmeOrder.objects.viewable()
+            .account(self.account)
+            .url()
+            .exclude(status=AcmeOrder.STATUS_INVALID)
+            .order_by("-pk")
+        )
+
+        # Cursor-based pagination: the cursor is the PK of the last order on the previous page.
+        # Orders with PK strictly less than the cursor belong to subsequent pages.
+        cursor = self.request.GET.get("cursor")
+        if cursor is not None:
+            try:
+                orders_qs = orders_qs.filter(pk__lt=int(cursor))
+            except (ValueError, TypeError):
+                return AcmeResponseMalformed(message="Invalid pagination cursor.")
+
+        # Fetch one extra item to detect whether a next page exists.
+        page = list(orders_qs[: self._page_size + 1])
+        if len(page) > self._page_size:
+            next_cursor = page[self._page_size].pk
+            page = page[: self._page_size]
+            self._next_orders_url = (
+                reverse(
+                    "django_ca:acme-account-orders",
+                    kwargs={"serial": self.ca.serial, "slug": slug},
+                )
+                + f"?cursor={next_cursor}"
+            )
+
+        order_urls = [self.request.build_absolute_uri(order.acme_url) for order in page]
+        return AcmeResponseOrders(order_urls)
 
 
 class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):

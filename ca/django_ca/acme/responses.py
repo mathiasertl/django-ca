@@ -182,6 +182,16 @@ class AcmeResponseUnsupportedMediaType(AcmeResponseMalformed):
     message = "Requests must use the application/jose+json content type."
 
 
+class AcmeResponseOrders(AcmeResponse):
+    """Response for the account orders list endpoint.
+
+    .. seealso:: `RFC 8555, 7.1.2.1 <https://tools.ietf.org/html/rfc8555#section-7.1.2.1>`_
+    """
+
+    def __init__(self, order_urls: list[str]) -> None:
+        super().__init__({"orders": order_urls})
+
+
 class AcmeResponseConflict(AcmeResponseError):
     """ACME response when a key is already in use by another account.
 

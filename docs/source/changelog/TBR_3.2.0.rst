@@ -14,6 +14,8 @@ ACMEv2
 
 * Implement Account Key Rollover as specified in `RFC 8555, section 7.3.5
   <https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5>`_.
+* Implement Orders List endpoint as specified in `RFC 8555, section 7.1.2.1
+  <https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.2.1>`_.
 
 *************
 OCSP and CRLs
