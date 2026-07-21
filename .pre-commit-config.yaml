@@ -7,5 +7,6 @@ repos:
       rev: v4.4.0
       hooks:
       - id: check-yaml
+        exclude: ^tutorials/docker/20-database-(mariadb|postgres)\.yaml$
       - id: check-json
       - id: check-toml

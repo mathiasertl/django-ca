@@ -1,0 +1,11 @@
+# MariaDB/MySQL configuration for django-ca
+DATABASES:
+    default:
+        ENGINE: django.db.backends.mysql
+        NAME: "{{ MARIADB_DATABASE }}"
+        USER: "{{ MARIADB_USER }}"
+        PASSWORD: "{{ MARIADB_PASSWORD }}"
+        HOST: "{{ MARIADB_HOST }}"
+        PORT: {{ MARIADB_PORT }}
+        OPTIONS:
+          charset: utf8mb4

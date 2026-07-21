@@ -46,9 +46,9 @@ docker compose <https://docs.docker.com/compose/install/>`_ and `Get certbot
 
 .. structured-tutorial-part:: add-docker-group
 
-*****************
-Get configuration
-*****************
+*************
+Configuration
+*************
 
 .. NOTE::
 
@@ -222,9 +222,9 @@ The above example uses the ``standalone`` plugin to fulfill a `HTTP-01 challenge
 that does not work for you but you still want to use Let's Encrypt, you can use any of the `many plugins
 <https://eff-certbot.readthedocs.io/en/stable/using.html#third-party-plugins>`_.
 
-*************
-Start your CA
-*************
+*****
+Start
+*****
 
 Now, you can start **django-ca** for the first time. Inside the folder with all your configuration, run
 **docker compose** (and verify that everything is running):

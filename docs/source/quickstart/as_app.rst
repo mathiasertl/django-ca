@@ -72,9 +72,9 @@ To install django-ca with one or more extras, use the regular pip syntax:
 
    user@host:~$ pip install django-ca[celery,redis]
 
-*********************
-Initial configuration
-*********************
+*************
+Configuration
+*************
 
 Simply add ``django_ca`` to your ``INSTALLED_APPS`` (and if you don't use it already,
 ``django_object_actions``), as well as a few other required settings:

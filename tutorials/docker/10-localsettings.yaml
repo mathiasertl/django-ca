@@ -8,14 +8,6 @@
 #
 SECRET_KEY: "{{ SECRET_KEY }}"
 
-# Where to find your database
-DATABASES:
-    default:
-        ENGINE: django.db.backends.postgresql
-        HOST: "{{ POSTGRES_HOST }}"
-        PORT: 5432
-        PASSWORD: "{{ POSTGRES_PASSWORD }}"
-
 # Shared, persistent cache
 CACHES:
     default:

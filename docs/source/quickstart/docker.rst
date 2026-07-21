@@ -63,32 +63,40 @@ On Debian/Ubuntu, simply do:
 
 .. _docker-configuration:
 
-*********************
-Initial configuration
-*********************
+*************
+Configuration
+*************
 
-django-ca requires some initial configuration (like where to find the PostgreSQL server) to run and the domain
-name you have set up above.
+**django-ca** requires some initial configuration (like where to find the database server) to run and the
+domain name you have set up above.
+
+For convenience, we're going to split the configuration into multiple files in a subfolder called ``conf/``:
+
+.. structured-tutorial-part:: mkdir-conf
 
 Django requires a ``SECRET_KEY`` to run, and it should be shared between the Celery worker and the Gunicorn
 instance. Generate a sufficiently long secret key and set it as ``SECRET_KEY`` below:
 
 .. structured-tutorial-part:: generate-secret-key
 
-To provide initial configuration (and any later configuration), create a file called ``localsettings.yaml``
-and add at least these settings (and adjust to your configuration):
+To provide initial configuration (and any later configuration), create a file called
+``conf/10-localsettings.yaml`` and add at least these settings (and adjust to your configuration):
 
 .. structured-tutorial-part:: create-localsettings.yaml
 
-Please see :doc:`/settings` for a list of available settings.
-
-Note that you can pass simple configuration variables also via environment variables prefixed with
-``DJANGO_CA_``. For example, you could also configure the broker URL with:
+Please see :doc:`/settings` for a list of available settings. Note that settings can also be passed as
+environment variables, for example:
 
 .. code-block:: console
 
    user@host:~$ docker run -e DJANGO_CA_CELERY_BROKER_URL=... ...
 
+.. _quickstart-docker-configuration-database:
+
+Configure database access in a dedicated configuration file. You will need the ``PASSWORD`` again when
+:ref:`starting the database <quickstart-docker-start-the-database>`:
+
+.. structured-tutorial-part:: create-database-settings.yaml
 
 NGINX configuration
 ===================
@@ -105,9 +113,9 @@ django-ca, and ``nginx.conf`` configures NGINX itself:
 
 .. structured-tutorial-part:: recap-test-files
 
-***************
-Start django-ca
-***************
+*****
+Start
+*****
 
 After configuration, start service dependencies, django-ca itself and finally NGINX, then create an admin user
 and some initial certificate authorities.
@@ -120,6 +128,16 @@ in this guide. In practice, you do not need the custom network setup below, unle
 the services this way.
 
 .. structured-tutorial-part:: start-dependencies
+
+.. _quickstart-docker-start-the-database:
+
+Start the database
+------------------
+
+We start the database as a separate container. Use the same password as when you :ref:`configured the
+database <quickstart-docker-configuration-database>`.
+
+.. structured-tutorial-part:: start-database
 
 Choose Docker image
 ===================
@@ -159,24 +177,34 @@ Verify attestations
 
 .. structured-tutorial-part:: verify-attestations
 
-Start django-ca
-===============
+Start django-ca containers
+==========================
 
 django-ca (usually) consists of three containers (using the same image):
 
-#. A `celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon for periodic
+#. A `Celery beat <https://docs.celeryq.dev/en/latest/userguide/periodic-tasks.html>`_ daemon for periodic
    tasks.
 #. A Celery worker to handle asynchronous tasks
 #. A `Gunicorn <https://gunicorn.org/>`_-based WSGI server for HTTP endpoints
 
-You thus need to start three containers with slightly different configuration:
+You thus need to start three containers with slightly different configuration. The commands for MariaDB and
+PostgreSQL differ slightly, as they test database availability before starting using
+``-e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS=...``.
 
-.. structured-tutorial-part:: start-django-ca
+Start Celery beat daemon
+------------------------
 
+.. structured-tutorial-part:: start-celery-beat
 
-You can also use different versions of the Docker image, including images based on Alpine Linux. Please see
-the `Docker Hub page <https://hub.docker.com/r/mathiasertl/django-ca>`_ for more information about available
-tags.
+Start Celery worker
+-------------------
+
+.. structured-tutorial-part:: start-celery-worker
+
+Start WSGI server (Gunicorn)
+----------------------------
+
+.. structured-tutorial-part:: start-wsgi-server
 
 Start NGINX
 ===========

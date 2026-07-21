@@ -2,7 +2,13 @@ configuration:
   context:
     RANDOM_COMMAND: "cat /dev/urandom | tr -dc '[:alnum:][:print:]' | tr -d '\"\\\\ ' | fold -w ${1:-50} | head -n 1"
     SLUG_COMMAND: "cat /dev/urandom | tr -dc '[:lower:][:digit:]' | tr -d '\"' | fold -w ${1:-8} | head -n 1"
-    POSTGRES_HOST: postgres
+    MARIADB_HOST: &mariadb-host mariadb
+    MARIADB_PORT: &mariadb-port "3306"
+    MARIADB_DATABASE: django_ca
+    MARIADB_USER: django_ca
+    MARIADB_PASSWORD: changeme
+    POSTGRES_HOST: &postgres-host postgres
+    POSTGRES_PORT: &postgres-port "5432"
     POSTGRES_PASSWORD: changeme
     REDIS_HOST: redis
     BEAT_HOST: beat
@@ -14,12 +20,28 @@ configuration:
     context:
       SECRET_KEY: changeme
       CA_DEFAULT_HOSTNAME: ca.example.com
+    alternatives:
+      postgres:
+        name: PostgreSQL
+        context: &postgres-context
+          DB_HOST: *postgres-host
+          DB_PORT: *postgres-port
+      mariadb:
+        name: MariaDB
+        context: &mariadb-context
+          DB_HOST: *mariadb-host
+          DB_PORT: *mariadb-port
   run:
     temporary_directory: true
     context:
       BUILD_IMAGE: "y"
       CA_DEFAULT_HOSTNAME: localhost
       DOCKER_IMAGE_VARIANT: debian
+    alternatives:
+      postgres:
+        context: *postgres-context
+      mariadb:
+        context: *mariadb-context
 parts:
   # [doc only] Install dependencies
   - id: install-dependencies
@@ -38,6 +60,9 @@ parts:
         If you want to run :command:`docker` as a regular user, you need to add your user to the ``docker``
         group and log in again:
     run: false
+  - id: mkdir-conf
+    commands:
+      - command: mkdir conf/
   - id: generate-secret-key
     name: Generate secret key
     commands:
@@ -46,11 +71,24 @@ parts:
           test:
             - regex: (?P<SECRET_KEY>.*)
   - id: create-localsettings.yaml
-    name: Create localsettings.yaml
-    source: localsettings.yaml
-    destination: localsettings.yaml
+    name: Create conf/10-localsettings.yaml
+    source: 10-localsettings.yaml
+    destination: conf/10-localsettings.yaml
     doc:
       language: yaml
+  - id: create-database-settings.yaml
+    name: Create conf/10-database.yaml
+    alternatives:
+      postgres:
+        source: 20-database-postgres.yaml
+        destination: conf/10-database.yaml
+        doc:
+          language: yaml
+      mariadb:
+        source: 20-database-mariadb.yaml
+        destination: conf/20-database.yaml
+        doc:
+          language: yaml
   - id: create-nginx.conf
     name: Create nginx.conf
     source: nginx.conf
@@ -62,12 +100,11 @@ parts:
     commands:
       - command: ls
         doc:
-          output: "nginx.conf localsettings.yaml"
+          output: "nginx.conf conf"
         run:
           test:
             - line_count: 2
             - regex: "nginx\\.conf"
-            - regex: "localsettings\\.yaml"
 
   # [run only] Compute runtime variables
   - name: Compute runtime-variables
@@ -143,7 +180,7 @@ parts:
           show_output: false
     doc: false
 
-  # Start PostgreSQL and Redis
+  # Start Docker network and Redis
   - id: start-dependencies
     name: Start dependencies
     commands:
@@ -151,21 +188,41 @@ parts:
         run:
           cleanup:
             - command: docker network rm {{ DOCKER_NETWORK }}
-      - command: >
-          docker run --name {{ POSTGRES_HOST }} --network={{ DOCKER_NETWORK }} -e POSTGRES_PASSWORD={{ POSTGRES_PASSWORD }}
-          -v pgdata:/var/lib/postgresql -d postgres
-        run:
-          cleanup:
-            - command: docker kill {{ POSTGRES_HOST }}
-            - command: docker rm -fv {{ POSTGRES_HOST }}
-            - command: docker volume rm pgdata
       - command: docker run --name {{ REDIS_HOST }} --network={{ DOCKER_NETWORK }} -d redis
         run:
           cleanup:
             - command: docker kill {{ REDIS_HOST }}
             - command: docker rm -fv {{ REDIS_HOST }}
     doc:
-      text_before: "Create a Docker network and start PostgreSQL and Redis:"
+      text_before: "Create a Docker network and Redis:"
+  - id: start-database
+    alternatives:
+      postgres:
+        commands:
+          - command: >
+              docker run --name {{ DB_HOST }} --network={{ DOCKER_NETWORK }} -e POSTGRES_PASSWORD={{ POSTGRES_PASSWORD }}
+              -v pgdata:/var/lib/postgresql -d postgres
+            run:
+              cleanup:
+                - command: docker kill {{ DB_HOST }}
+                - command: docker rm -fv {{ DB_HOST }}
+                - command: docker volume rm pgdata
+      mariadb:
+        commands:
+          - command: >
+              docker run --name {{ DB_HOST }} --network={{ DOCKER_NETWORK }}
+              -e MARIADB_DATABASE={{ MARIADB_DATABASE }}
+              -e MARIADB_USER={{ MARIADB_USER }}
+              -e MARIADB_PASSWORD={{ MARIADB_PASSWORD }}
+              -e MARIADB_RANDOM_ROOT_PASSWORD=1
+              -v mariadb:/var/lib/mysql:Z -d mariadb:latest
+            run:
+              cleanup:
+                - command: docker kill {{ DB_HOST }}
+                - command: docker rm -fv {{ DB_HOST }}
+                - command: docker volume rm mariadb
+    doc:
+      text_before: "Start a PostgreSQL or MariaDB container, depending on our choice:"
   - id: verify-attestations
     commands:
       - command: |
@@ -179,72 +236,87 @@ parts:
             ...
 
     run: false
-  - id: start-django-ca
-    name: Start django-ca
-    commands:
-      # Start celery beat worker for periodic tasks
-      - command: |
-          docker run -d \
-              -e DJANGO_CA_STARTUP_COLLECTSTATIC=0 \
-              -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ POSTGRES_HOST }}:5432 \
-              -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
-              -v backend_ca_dir:/var/lib/django-ca/certs/ \
-              -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
-              -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-              --name={{ BEAT_HOST }} --network={{ DOCKER_NETWORK }} \
-              {{ DOCKER_TAG }} \
-              celerybeat.sh -l warning
-        run:
-          cleanup:
-            - command: docker kill {{ BEAT_HOST }}
-            - command: docker rm -fv {{ BEAT_HOST }}
-            - command: docker volume rm backend_ca_dir
-            - command: docker volume rm shared_ca_dir
-            - command: docker volume rm ocsp_key_dir
-      # Start celery worker
-      - command: |
-          docker run -d \
-              -e DJANGO_CA_STARTUP_COLLECTSTATIC=0 \
-              -e DJANGO_CA_STARTUP_GENERATE_CRLS=0 \
-              -e DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS=0 \
-              -e DJANGO_CA_STARTUP_MIGRATE=0 \
-              -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ POSTGRES_HOST }}:5432 \
-              -e DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE=1 \
-              -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
-              -v backend_ca_dir:/var/lib/django-ca/certs/ \
-              -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
-              -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-              --name={{ BACKEND_HOST }} --network={{ DOCKER_NETWORK }} \
-              {{ DOCKER_TAG }} \
-              celery.sh -l warning
-        run:
-          cleanup:
-            - command: docker kill {{ BACKEND_HOST }}
-            - command: docker rm -fv {{ BACKEND_HOST }}
-      # Start frontend
-      - command: |
-          docker run -d \
-              -e DJANGO_CA_STARTUP_GENERATE_CRLS=0 \
-              -e DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS=0 \
-              -e DJANGO_CA_STARTUP_MIGRATE=0 \
-              -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ POSTGRES_HOST }}:5432 \
-              -e DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE=1 \
-              -v `pwd`/localsettings.yaml:/usr/src/django-ca/ca/conf/localsettings.yaml \
-              -v static:/usr/share/django-ca/static/ \
-              -v frontend_ca_dir:/var/lib/django-ca/certs/ \
-              -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
-              -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
-              -v nginx_config:/usr/src/django-ca/nginx/ \
-              --name={{ FRONTEND_HOST }} --network={{ DOCKER_NETWORK }} \
-              {{ DOCKER_TAG }}
-        run:
-          cleanup:
-            - command: docker kill {{ FRONTEND_HOST }}
-            - command: docker rm -fv {{ FRONTEND_HOST }}
-            - command: docker volume rm frontend_ca_dir
-            - command: docker volume rm static
-            - command: docker volume rm nginx_config
-
+  - id: start-celery-beat
+    name: "Start Celery beat daemon"
+    alternatives:
+      postgres:
+        commands: &celery-beat-command
+          # Start celery beat worker for periodic tasks
+          - command: |
+              docker run -d \
+                  -e DJANGO_CA_STARTUP_COLLECTSTATIC=0 \
+                  -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ DB_HOST }}:{{ DB_PORT }} \
+                  -v `pwd`/conf/:/usr/src/django-ca/ca/conf/local/:ro \
+                  -v backend_ca_dir:/var/lib/django-ca/certs/ \
+                  -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+                  -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+                  --name={{ BEAT_HOST }} --network={{ DOCKER_NETWORK }} \
+                  {{ DOCKER_TAG }} \
+                  celerybeat.sh -l warning
+            run:
+              cleanup:
+                - command: docker kill {{ BEAT_HOST }}
+                - command: docker rm -fv {{ BEAT_HOST }}
+                - command: docker volume rm backend_ca_dir
+                - command: docker volume rm shared_ca_dir
+                - command: docker volume rm ocsp_key_dir
+      mariadb:
+        commands: *celery-beat-command
+  - id: start-celery-worker
+    name: "Start Celery worker"
+    alternatives:
+      postgres:
+        commands: &celery-worker-command
+          - command: |
+              docker run -d \
+                  -e DJANGO_CA_STARTUP_COLLECTSTATIC=0 \
+                  -e DJANGO_CA_STARTUP_GENERATE_CRLS=0 \
+                  -e DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS=0 \
+                  -e DJANGO_CA_STARTUP_MIGRATE=0 \
+                  -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ DB_HOST }}:{{ DB_PORT }} \
+                  -e DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE=1 \
+                  -v `pwd`/conf/:/usr/src/django-ca/ca/conf/local/:ro \
+                  -v backend_ca_dir:/var/lib/django-ca/certs/ \
+                  -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+                  -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+                  --name={{ BACKEND_HOST }} --network={{ DOCKER_NETWORK }} \
+                  {{ DOCKER_TAG }} \
+                  celery.sh -l warning
+            run:
+              cleanup:
+                - command: docker kill {{ BACKEND_HOST }}
+                - command: docker rm -fv {{ BACKEND_HOST }}
+      mariadb:
+        commands: *celery-worker-command
+  - id: start-wsgi-server
+    name: Start WSGI server
+    alternatives:
+      postgres:
+        commands: &wsgi-command
+          - command: |
+              docker run -d \
+                  -e DJANGO_CA_STARTUP_GENERATE_CRLS=0 \
+                  -e DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS=0 \
+                  -e DJANGO_CA_STARTUP_MIGRATE=0 \
+                  -e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS={{ DB_HOST }}:{{ DB_PORT }} \
+                  -e DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE=1 \
+                  -v `pwd`/conf/:/usr/src/django-ca/ca/conf/local/:ro \
+                  -v static:/usr/share/django-ca/static/ \
+                  -v frontend_ca_dir:/var/lib/django-ca/certs/ \
+                  -v shared_ca_dir:/var/lib/django-ca/certs/ca/shared/ \
+                  -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
+                  -v nginx_config:/usr/src/django-ca/nginx/ \
+                  --name={{ FRONTEND_HOST }} --network={{ DOCKER_NETWORK }} \
+                  {{ DOCKER_TAG }}
+            run:
+              cleanup:
+                - command: docker kill {{ FRONTEND_HOST }}
+                - command: docker rm -fv {{ FRONTEND_HOST }}
+                - command: docker volume rm frontend_ca_dir
+                - command: docker volume rm static
+                - command: docker volume rm nginx_config
+      mariadb:
+        commands: *wsgi-command
   - id: start-nginx
     name: Start nginx
     commands:
@@ -269,8 +341,9 @@ parts:
     doc:
       text_before: |
         To verify that everything worked correctly, check if all containers started successfully. You
-        should see that all containers you just started (`{{ POSTGRES_HOST }}`, `{{ REDIS_HOST }}`,
-        `{{ BEAT_HOST }}`, `{{ BACKEND_HOST }}` and `{{ FRONTEND_HOST }}`) are up and running:
+        should see that all containers you just started (`{{ POSTGRES_HOST }}`/`{{ MARIADB_HOST }}`,
+        `{{ REDIS_HOST }}`, `{{ BEAT_HOST }}`, `{{ BACKEND_HOST }}` and `{{ FRONTEND_HOST }}`) are up and
+        running:
   - id: deployment-checks
     name: Run deployment checks
     commands:
@@ -307,12 +380,12 @@ parts:
   # [run only]
   - name: Restart containers
     commands:
-      - command: docker stop {{ POSTGRES_HOST }}
+      - command: docker stop {{ DB_HOST }}
       - command: docker stop {{ BEAT_HOST }}
       - command: docker stop {{ BACKEND_HOST }}
       - command: docker stop {{ FRONTEND_HOST }}
       - command: docker stop {{ NGINX_HOST }}
-      - command: docker start {{ POSTGRES_HOST }}
+      - command: docker start {{ DB_HOST }}
       - command: docker start {{ BEAT_HOST }}
       - command: docker start {{ BACKEND_HOST }}
       - command: docker start {{ FRONTEND_HOST }}

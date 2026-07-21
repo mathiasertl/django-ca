@@ -1,0 +1,7 @@
+# PostgreSQL configuration for django-ca
+DATABASES:
+    default:
+        ENGINE: django.db.backends.postgresql
+        HOST: "{{ POSTGRES_HOST }}"
+        PORT: {{ POSTGRES_PORT }}
+        PASSWORD: "{{ POSTGRES_PASSWORD }}"
