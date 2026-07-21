@@ -87,4 +87,5 @@ None yet.
 Setup and packaging
 *******************
 
-No changes yet.
+* Docker images no longer include command-line clients for PostgreSQL and MariaDB, to minimize the attack
+  surface. As a consequence, :command:`manage.py dbshell` no longer works out of the box.
