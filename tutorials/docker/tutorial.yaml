@@ -180,7 +180,7 @@ parts:
           show_output: false
     doc: false
 
-  - id: verify-attestations
+  - id: verify-provenance-attestations
     commands:
       - command: |
           gh attestation verify \
@@ -193,6 +193,26 @@ parts:
             ...
 
     run: false
+
+  - id: sbom-view-full
+    commands:
+      - command: |
+          docker buildx imagetools inspect mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
+          --format "{% raw %}{{ json .SBOM.SPDX }}{% endraw %}"
+
+  - id: sbom-view-package-versions
+    commands:
+      - command: |
+          docker buildx imagetools inspect mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} --format \
+          "{% raw %}{{ range .SBOM.SPDX.packages }}{{ .name }}@{{ .versionInfo }}{{ println }}{{ end }}{% endraw %}"
+
+  - id: sbom-verify-signature
+    commands:
+      - command: |
+          gh attestation verify \
+            oci://ghcr.io/mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
+            -R mathiasertl/django-ca \
+            --predicate-type https://spdx.dev/Document/v2.3
 
   # Start Docker network and Redis
   - id: start-dependencies

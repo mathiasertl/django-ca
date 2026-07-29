@@ -90,3 +90,20 @@ runs:
         subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
         subject-digest: ${{ steps.build.outputs.digest }}
         push-to-registry: true
+
+    - name: Extract SBOM from image
+      if: ${{ inputs.push == 'true' && inputs.sbom == 'true' }}
+      shell: bash
+      run: |
+        docker buildx imagetools inspect \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }} \
+          --format '{{ json .SBOM.SPDX }}' > sbom.spdx.json
+
+    - name: Generate SBOM attestation
+      uses: actions/attest@v4.2.0
+      if: ${{ inputs.push == 'true' && inputs.sbom == 'true' }}
+      with:
+        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        subject-digest: ${{ steps.build.outputs.digest }}
+        sbom-path: sbom.spdx.json
+        push-to-registry: true

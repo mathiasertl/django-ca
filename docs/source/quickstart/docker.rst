@@ -4,9 +4,10 @@ Quickstart with Docker
 
 .. spelling:word-list::
 
-   mathiasertl
-   ghcr
-   io
+    mathiasertl
+    ghcr
+    io
+    YYYYMMDD
 
 .. structured-tutorial:: docker/tutorial.yaml
 
@@ -164,7 +165,7 @@ to verify how an image was built.
 To verify provenance attestations, you'll need `GitHub CLI <https://cli.github.com/>`_ (or a different
 signature verification tool):
 
-.. structured-tutorial-part:: verify-attestations
+.. structured-tutorial-part:: verify-provenance-attestations
 
 Note that images *without* a timestamp are updated weekly, hence Build and Signer workflow will reference
 ``refs/heads/main`` unless you verify the attestation immediately after the release or use the immutable tag
@@ -173,6 +174,32 @@ that was used in the original release build.
 .. versionadded:: 2.3.0
 
    Provenance attestations were added.
+
+.. _quickstart-docker-verify-sbom-attestations:
+
+Verify SBOM attestations
+========================
+
+.. versionadded:: 3.2.0
+
+    SBOM attestations were added.
+
+For advanced security requirements (see `purpose of attestations
+<https://docs.docker.com/build/metadata/attestations/#purpose-of-attestations>`_), **django-ca** images attach
+`SBOM attestatinos <https://docs.docker.com/build/metadata/attestations/sbom/>`_ to allow you to verify the
+contents of a Docker image.
+
+To view the full SBOM of an image, use:
+
+.. structured-tutorial-part:: sbom-view-full
+
+To view just the installed packages and versions:
+
+.. structured-tutorial-part:: sbom-view-package-versions
+
+Finally, to also verify the signature of the SBOM:
+
+.. structured-tutorial-part:: sbom-verify-signature
 
 *****
 Start

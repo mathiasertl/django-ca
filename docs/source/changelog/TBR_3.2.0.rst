@@ -89,3 +89,4 @@ Setup and packaging
 
 * Docker images no longer include command-line clients for PostgreSQL and MariaDB, to minimize the attack
   surface. As a consequence, :command:`manage.py dbshell` no longer works out of the box.
+* Docker images now include signed SBOMs, see :ref:`quickstart-docker-verify-sbom-attestations`.
