@@ -113,6 +113,67 @@ django-ca, and ``nginx.conf`` configures NGINX itself:
 
 .. structured-tutorial-part:: recap-test-files
 
+.. _quickstart-docker-choose-docker-image:
+
+*******************
+Choose Docker image
+*******************
+
+The Docker image is published in a Debian (the default) and an Alpine Linux based variant, published to both
+Docker Hub and the GitHub Container registry.
+
+The available images are - replace ``YYYYMMDD`` with a date found `on Docker Hub
+<https://hub.docker.com/r/mathiasertl/django-ca/tags>`_, and "|last-version|" with any older version you might
+want to use:
+
+==================================================== ========================================================
+Tag                                                  Description
+==================================================== ========================================================
+mathiasertl/django-ca                                Latest version, Debian based. Updated weekly.
+mathiasertl/django-ca:alpine                         Latest version, Alpine based. Updated weekly.
+mathiasertl/django-ca:|last-version|                 Specific version, Debian based. Updated weekly.
+mathiasertl/django-ca:|last-version|-YYYYMMDD        Specific version, Debian based. Immutable.
+mathiasertl/django-ca:|last-version|-alpine          Specific version, Alpine based. Updated weekly.
+mathiasertl/django-ca:|last-version|-alpine-YYYYMMDD Specific version, Alpine based. Immutable.
+==================================================== ========================================================
+
+If you rather want to use the images on GitHub Container registry, prefix image tags with ``ghcr.io/``:
+
+* ghcr.io/mathiasertl/django-ca:|last-version|
+* ghcr.io/mathiasertl/django-ca:|last-version|-YYYYMMDD
+* ghcr.io/mathiasertl/django-ca:|last-version|-alpine
+* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-YYYYMMDD
+* ...
+
+.. versionchanged:: 2.5.0
+
+   Docker images now use a datestamp (e.g. "20251231") as suffix, instead of an increasing integer.
+
+.. versionadded:: 2.3.0
+
+   Docker images are now also published to the GitHub container registry at ``ghcr.io``.
+
+Verify provenance attestations
+==============================
+
+For advanced security requirements (see `purpose of attestations
+<https://docs.docker.com/build/metadata/attestations/#purpose-of-attestations>`_), **django-ca** images attach
+`provenance attestations <https://docs.docker.com/build/metadata/attestations/slsa-provenance/>`_ to allow you
+to verify how an image was built.
+
+To verify provenance attestations, you'll need `GitHub CLI <https://cli.github.com/>`_ (or a different
+signature verification tool):
+
+.. structured-tutorial-part:: verify-attestations
+
+Note that images *without* a timestamp are updated weekly, hence Build and Signer workflow will reference
+``refs/heads/main`` unless you verify the attestation immediately after the release or use the immutable tag
+that was used in the original release build.
+
+.. versionadded:: 2.3.0
+
+   Provenance attestations were added.
+
 *****
 Start
 *****
@@ -139,44 +200,6 @@ database <quickstart-docker-configuration-database>`.
 
 .. structured-tutorial-part:: start-database
 
-Choose Docker image
-===================
-
-The Docker image is published in a Debian (the default) and an Alpine Linux based variant. In the examples
-below, we use the default, Debian based variant. For example, if you use |last-version|, you can either
-choose:
-
-* mathiasertl/django-ca:|last-version|
-* mathiasertl/django-ca:|last-version|-alpine
-
-The above images are updated if packaging issues or security vulnerabilities in dependencies are discovered.
-If you want to be sure that you can download the exact same image later, the same tags are also published with
-a datestamp suffix, e.g. mathiasertl/django-ca:|last-version|-20251231.
-
-.. versionchanged:: 2.5.0
-
-   Docker images now use a datestamp (e.g. "20251231") as suffix, instead of an increasing integer.
-
-.. versionadded:: 2.3.0
-
-   Docker images are now also published to the GitHub container registry at ``ghcr.io``.
-
-Starting with 2.3.0, GitHubs container registry also stores the same django-ca images:
-
-* ghcr.io/mathiasertl/django-ca:|last-version|
-* ghcr.io/mathiasertl/django-ca:|last-version|-20251231
-* ghcr.io/mathiasertl/django-ca:|last-version|-alpine
-* ghcr.io/mathiasertl/django-ca:|last-version|-alpine-20251231
-
-Verify attestations
--------------------
-
-.. versionadded:: 2.3.0
-
-   Docker image attestations where added. Earlier images do *not* have attestations.
-
-.. structured-tutorial-part:: verify-attestations
-
 Start django-ca containers
 ==========================
 
@@ -190,6 +213,12 @@ django-ca (usually) consists of three containers (using the same image):
 You thus need to start three containers with slightly different configuration. The commands for MariaDB and
 PostgreSQL differ slightly, as they test database availability before starting using
 ``-e DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS=...``.
+
+.. NOTE::
+
+    We use the default, weekly-updated Debian based image in the examples below. See
+    :ref:`quickstart-docker-choose-docker-image` if you want to use Alpine-based and/or immutable images
+    instead.
 
 Start Celery beat daemon
 ------------------------

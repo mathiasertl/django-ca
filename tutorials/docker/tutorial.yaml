@@ -180,6 +180,20 @@ parts:
           show_output: false
     doc: false
 
+  - id: verify-attestations
+    commands:
+      - command: |
+          gh attestation verify \
+            oci://index.docker.io/mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
+            -R mathiasertl/django-ca
+        doc:
+          output: |
+            ...
+            ✓ Verification succeeded
+            ...
+
+    run: false
+
   # Start Docker network and Redis
   - id: start-dependencies
     name: Start dependencies
@@ -223,19 +237,6 @@ parts:
                 - command: docker volume rm mariadb
     doc:
       text_before: "Start a PostgreSQL or MariaDB container, depending on our choice:"
-  - id: verify-attestations
-    commands:
-      - command: |
-          gh attestation verify \
-            oci://index.docker.io/mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
-            -R mathiasertl/django-ca
-        doc:
-          output: |
-            ...
-            ✓ Verification succeeded
-            ...
-
-    run: false
   - id: start-celery-beat
     name: "Start Celery beat daemon"
     alternatives:
