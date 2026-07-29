@@ -31,6 +31,10 @@ inputs:
     description: "True to enable GHA layer caching for the build."
     required: true
     default: "true"
+  sbom:
+    description: "True to generate an SBOM attestation for the build."
+    required: true
+    default: "true"
 outputs:
   digest:
     value: ${{ steps.build.outputs.digest }}
@@ -68,13 +72,12 @@ runs:
       id: build
       uses: docker/build-push-action@v7.0.0
       with:
-        # TODO: add SBOMs?
-        # https://docs.docker.com/build/ci/github-actions/attestations/
         file: ${{ inputs.dockerfile }}
         context: .
         push: ${{ inputs.push }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        sbom: ${{ inputs.sbom }}
         cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
         cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=max' || '' }}
         build-args: |

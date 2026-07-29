@@ -71,6 +71,7 @@ jobs:
         with:
           context: .
           push: false
+          sbom: false
           tags: test.${{ matrix.python-version }}
           target: test
           cache-from: type=gha,scope=test-${{ matrix.python-version }}-${{ matrix.debian-version }}
@@ -110,6 +111,7 @@ jobs:
         with:
           context: .
           push: false
+          sbom: false
           tags: test.${{ matrix.python-version }}
           target: test
           file: Dockerfile.alpine
