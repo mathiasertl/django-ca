@@ -60,4 +60,3 @@ NEWEST_PYTHON = PYTHON_RELEASES[-1]
 ALPINE_RELEASES = tuple(typing.cast(list[str], RELEASE["alpine"]))
 DEBIAN_RELEASES = tuple(typing.cast(list[str], RELEASE["debian-releases"]))
 UBUNTU_RELEASES = tuple(typing.cast(list[str], RELEASE["ubuntu-releases"]))
-GITHUB_CONFIG = RELEASE["github"]

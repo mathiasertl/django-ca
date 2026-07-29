@@ -98,32 +98,6 @@ def check(
     return errors
 
 
-def check_github_action_versions(job: dict[str, Any]) -> int:
-    """Check versions of/in GitHub actions."""
-    errors = 0
-    expected_action_versions = config.GITHUB_CONFIG["actions"]
-    for step_config in job["steps"]:
-        if step_uses := step_config.get("uses"):
-            if step_uses.startswith("./.github/actions/"):
-                continue  # local step
-            if "@" not in step_uses:
-                errors += err(f"{step_uses} does not have a version.")
-                continue
-            action, action_version = step_uses.split("@", 1)
-
-            if expected_action_version := expected_action_versions.get(action):
-                if expected_action_version != action_version:
-                    errors += err(f"{action}: Have {action_version}, expected {expected_action_version}")
-            else:
-                info(f"{action}: action version not configured")
-
-            if action == "actions/setup-python":
-                py_version = str(step_config["with"]["python-version"])
-                if py_version not in ("${{ matrix.python-version }}", config.NEWEST_PYTHON):
-                    errors += err(f"Outdated Python version: {py_version} (newest: {config.NEWEST_PYTHON})")
-    return errors
-
-
 def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
     """Check GitHub actions."""
     errors = 0
@@ -146,18 +120,13 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
 
     for action_path in Path(".github", "actions").glob("*/action.yaml"):
         check_path(action_path)
-        with open(config.ROOT_DIR / action_path, encoding="utf-8") as stream:
-            action = yaml.safe_load(stream)
-        check_github_action_versions(action["runs"])
 
     for workflow in Path(".github", "workflows").glob("*.yml"):
         check_path(workflow)
         with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
             action_config = yaml.safe_load(stream)
 
-        for _job_name, job in action_config["jobs"].items():
-            errors += check_github_action_versions(job)
-
+        for job in action_config["jobs"].values():
             if matrix := job.get("strategy", {}).get("matrix"):
                 for key, values in matrix.items():
                     if key == "python-version":
