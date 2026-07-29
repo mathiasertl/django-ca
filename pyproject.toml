@@ -476,6 +476,12 @@ filterwarnings = [
     "error:::josepy",
     "error:::pydantic",
 
+
+    # Django 6.1 introduced MAILERS setting, we set old EMAIL_BACKEND only in test_settings.py.
+    #   -> Remove this ignore once support for Django 5.2 is dropped.
+    # pragma: only django<6.1
+    "ignore:The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.",
+
     # django-ninja==1.5.1
     #   Found in 1.5.1, only shows up in Python 3.14.
     "ignore:'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16::ninja.signature.utils",
