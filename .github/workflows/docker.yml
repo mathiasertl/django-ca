@@ -17,12 +17,12 @@ jobs:
       django-ca-version: ${{ steps.django-ca-version.outputs.DJANGO_CA_VERSION }}
     steps:
       - name: Acquire sources
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: "3.14"
           architecture: x64
@@ -65,7 +65,7 @@ jobs:
           driver: docker-container
       - run: docker buildx ls
       - name: Acquire sources
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: Build test stage
         uses: docker/build-push-action@v7.3.0
         with:
@@ -105,7 +105,7 @@ jobs:
           driver: docker-container
       - run: docker buildx ls
       - name: Acquire sources
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: Build test stage
         uses: docker/build-push-action@v7.3.0
         with:
@@ -149,7 +149,7 @@ jobs:
         uses: docker/setup-buildx-action@v4.2.0
 
       - name: Acquire sources
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
 
       - id: build-and-upload
         name: Build and upload Docker image
@@ -180,7 +180,7 @@ jobs:
       attestations: write
       id-token: write
     steps: &upload-steps
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.1
       - id: upload-to-dockerhub
         name: Upload image to Docker Hub
         uses: ./.github/actions/push-to-dockerhub
