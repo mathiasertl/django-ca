@@ -56,6 +56,7 @@ jobs:
         uses: ./.github/actions/build-docker-image
         with:
           push: true
+          cache: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ matrix.version }}
           add-date-suffix: true
