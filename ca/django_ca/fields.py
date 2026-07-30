@@ -26,7 +26,7 @@ from cryptography.x509.oid import AuthorityInformationAccessOID
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import widgets
@@ -58,7 +58,7 @@ class CertificateSigningRequestField(forms.CharField):
     start = "-----BEGIN CERTIFICATE REQUEST-----"
     end = "-----END CERTIFICATE REQUEST-----"
     simple_validation_error = _(
-        "Could not parse PEM-encoded CSR. They usually look like this: <pre>%(start)s\n...\n%(end)s</pre>"
+        "Could not parse PEM-encoded CSR. They usually look like this: <pre>{}\n...\n{}</pre>"
     )
 
     def __init__(self, **kwargs: Any) -> None:
@@ -99,9 +99,9 @@ openssl req -new -key priv.pem -out csr.pem -utf8 -batch -subj '/CN=example.com'
         This function is called during form validation.
         """
         if not value.startswith(self.start) or not value.strip().endswith(self.end):
-            raise forms.ValidationError(
-                mark_safe(self.simple_validation_error % {"start": self.start, "end": self.end})
-            )
+            # TYPEHINT NOTE: django-stubs only has str, but StrPromise is okay too
+            error_msg = format_html(self.simple_validation_error, self.start, self.end)  # type: ignore[call-overload]
+            raise forms.ValidationError(error_msg)
         try:
             return x509.load_pem_x509_csr(value.encode("utf-8"))
         except ValueError as ex:
