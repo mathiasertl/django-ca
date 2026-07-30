@@ -36,6 +36,7 @@ from devscripts.docker import (
     compose_cp,
     compose_exec,
     compose_manage,
+    compose_python,
     compose_status,
     compose_test_connectivity,
     compose_validate_container_versions,
@@ -320,6 +321,54 @@ def test_acme(release: str, image: str) -> int:
                         "certbot", "django-ca-test-validation.sh", "dns", "dns-01.example.com", env=environ
                     )
                     ok("Created certificate via a dns-01 challenge.")
+
+                    compose_python(
+                        "backend",
+                        """
+from django_ca.models import AcmeAccount, AcmeCertificate
+
+acc = AcmeAccount.objects.get()
+assert acc.contact == "mailto:user@example.com", f"contact is {acc.contact}"
+assert acc.status == "valid", f"status is {acc.status}"
+assert acc.usable == True, f"usable is {acc.usable}"
+
+http_01 = AcmeCertificate.objects.get(cert__cn='http-01.example.com')
+assert http_01.cert.revoked is False
+""",
+                        capture_output=False,
+                    )
+                    compose_exec(
+                        "certbot",
+                        "certbot",
+                        "revoke",
+                        "-n",
+                        "--cert-name",
+                        "http-01.example.com",
+                        env=environ,
+                    )
+
+                    compose_exec("certbot", "certbot", "show_account", env=environ)
+                    compose_exec(
+                        "certbot", "certbot", "update_account", "-m", "user@example.org", env=environ
+                    )
+                    compose_exec("certbot", "certbot", "show_account", env=environ)
+                    compose_exec("certbot", "certbot", "unregister", "-n", env=environ)
+
+                    compose_python(
+                        "backend",
+                        """
+from django_ca.models import AcmeAccount, AcmeCertificate
+
+acc = AcmeAccount.objects.get()
+assert acc.contact == "mailto:user@example.org", f"contact is {acc.contact}"
+assert acc.status == "deactivated", f"status is {acc.status}"
+assert acc.usable == False, f"usable is {acc.usable}"
+
+http_01 = AcmeCertificate.objects.get(cert__cn='http-01.example.com')
+assert http_01.cert.revoked is True
+""",
+                        capture_output=False,
+                    )
                 except subprocess.SubprocessError as ex:
                     err(f"Error testing {image}: {ex}.")
                     errors += 1
@@ -409,7 +458,12 @@ class Command(DevCommand):
             release = args.release
             docker_tag = self.get_docker_tag(args.release)
         elif args.build:
-            release, docker_tag = self.command("build", "docker")
+            build_args = ["build", "docker"]
+            if not args.debian:
+                build_args.append("--no-debian")
+            elif not args.alpine or not args.tutorial:
+                build_args.append("--no-alpine")
+            release, docker_tag = self.command(*build_args)
         else:
             release = self.django_ca.__version__
             docker_tag = self.get_docker_tag(release)
