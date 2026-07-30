@@ -563,18 +563,16 @@ NAME_OID_DISPLAY_NAMES = MappingProxyType(
 NAME_OID_TYPES = MappingProxyType(
     {
         **{v: k for k, v in NAME_OID_NAMES.items()},
-        **{
-            "CN": NameOID.COMMON_NAME,
-            "C": NameOID.COUNTRY_NAME,
-            "DC": NameOID.DOMAIN_COMPONENT,
-            "L": NameOID.LOCALITY_NAME,
-            "O": NameOID.ORGANIZATION_NAME,
-            "OU": NameOID.ORGANIZATIONAL_UNIT_NAME,
-            "ST": NameOID.STATE_OR_PROVINCE_NAME,
-            "streetAddress": NameOID.STREET_ADDRESS,  # not specified in RFC 4519, but consistent with others
-            "SN": NameOID.SURNAME,
-            "userid": NameOID.USER_ID,
-        },
+        "CN": NameOID.COMMON_NAME,
+        "C": NameOID.COUNTRY_NAME,
+        "DC": NameOID.DOMAIN_COMPONENT,
+        "L": NameOID.LOCALITY_NAME,
+        "O": NameOID.ORGANIZATION_NAME,
+        "OU": NameOID.ORGANIZATIONAL_UNIT_NAME,
+        "ST": NameOID.STATE_OR_PROVINCE_NAME,
+        "streetAddress": NameOID.STREET_ADDRESS,  # not specified in RFC 4519, but consistent with others
+        "SN": NameOID.SURNAME,
+        "userid": NameOID.USER_ID,
     }
 )
 

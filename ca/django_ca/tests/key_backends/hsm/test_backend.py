@@ -159,11 +159,11 @@ def test_create_private_key_with_read_only_session(
     )
 
     backend: HSMBackend = key_backends["hsm"]  # type: ignore[assignment]
-    with pytest.raises(
-        ValueError, match=r"^Requested R/W session, but R/O session is already initialized\.$"
+    with (
+        pytest.raises(ValueError, match=r"^Requested R/W session, but R/O session is already initialized\.$"),
+        backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN),
     ):
-        with backend.session(so_pin=None, user_pin=settings.PKCS11_USER_PIN):
-            backend.create_private_key(root, options.key_type, options)
+        backend.create_private_key(root, options.key_type, options)
 
 
 @pytest.mark.usefixtures("softhsm_token")

@@ -83,7 +83,7 @@ class StoragesBackend(
             raise ValueError(f"{alias}: {storage_alias}: Storage alias is not configured.")
         super().__init__(alias, storage_alias=storage_alias)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, StoragesBackend) and self.storage_alias == other.storage_alias
 
     def __hash__(self) -> int:  # pragma: no cover

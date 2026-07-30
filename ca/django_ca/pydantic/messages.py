@@ -75,6 +75,6 @@ class SignCertificateMessage(ResignCertificateMessage):
     profile: str = Field(
         description="Issue the certificate with the given profile.",
         default=model_settings.CA_DEFAULT_PROFILE,
-        json_schema_extra={"enum": list(sorted(model_settings.CA_PROFILES))},
+        json_schema_extra={"enum": sorted(model_settings.CA_PROFILES)},
     )
     subject: NameModel = Field(description="The subject as list of name attributes.")

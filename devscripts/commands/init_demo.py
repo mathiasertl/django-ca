@@ -86,7 +86,7 @@ class Command(DevCommand):
         child_serial = loaded_cas["child"].serial[:11]
         child_bundle = "child.bundle.pem"
 
-        print("")
+        print()
         print(f"* All certificates are in {bold(ca_dir)}")
         self.ok("* Start webserver with the admin interface:")
         print(f'  * Run "{bold("python ca/manage.py runserver")}"')

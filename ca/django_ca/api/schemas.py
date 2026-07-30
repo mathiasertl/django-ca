@@ -115,7 +115,7 @@ class CertificateFilterSchema(Schema):
     profile: str | None = Field(
         description="Only return certificates generated with the given profile.",
         default=None,
-        json_schema_extra={"enum": list(sorted(model_settings.CA_PROFILES))},
+        json_schema_extra={"enum": sorted(model_settings.CA_PROFILES)},
     )
     revoked: bool = Field(default=False, description="Include revoked certificates.")
 

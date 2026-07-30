@@ -48,7 +48,6 @@ class MyStoragesBackend(
         group.add_argument("--key-size", type=int)
         group.add_argument("--path", type=Path, default=Path("ca"))
         self._add_password_argument(group)
-        ...
 
     # If init_ca creates an intermediate CA, it might need a password to load
     # its private key

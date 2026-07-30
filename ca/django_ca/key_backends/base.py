@@ -185,7 +185,7 @@ class KeyBackend(
         you add here are expected to be loaded (and validated) using
         :py:func:`~django_ca.key_backends.KeyBackend.get_create_private_key_options`.
         """
-        return None
+        return
 
     # pylint: disable-next=unused-argument  # default implementation does nothing.
     def add_use_parent_private_key_arguments(self, group: ArgumentGroup) -> None:
@@ -194,12 +194,12 @@ class KeyBackend(
         The arguments you add here are expected to be loaded (and validated) using
         :py:func:`~django_ca.key_backends.KeyBackend.get_use_parent_private_key_options`.
         """
-        return None
+        return
 
     # pylint: disable-next=unused-argument  # default implementation does nothing.
     def add_store_private_key_arguments(self, group: ArgumentGroup) -> None:
         """Add arguments for storing private keys (when importing an existing CA)."""
-        return None
+        return
 
     # pylint: disable=unused-argument  # Method may not be overwritten, just providing default here
     def add_use_private_key_arguments(self, group: ArgumentGroup) -> None:
@@ -208,7 +208,7 @@ class KeyBackend(
         The arguments you add here are expected to be loaded (and validated) using
         :py:func:`~django_ca.key_backends.KeyBackend.get_use_parent_private_key_options`.
         """
-        return None
+        return
 
     @abc.abstractmethod
     def get_create_private_key_options(

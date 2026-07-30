@@ -63,7 +63,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
     supported_key_types: tuple[ParsableKeyType, ...] = constants.PARSABLE_KEY_TYPES
     supported_elliptic_curves: tuple[EllipticCurveName, ...] = tuple(constants.ELLIPTIC_CURVE_TYPES)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, DBBackend)
 
     def __hash__(self) -> int:  # pragma: no cover

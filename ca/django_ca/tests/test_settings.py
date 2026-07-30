@@ -936,9 +936,8 @@ def test_ca_use_celery_is_true_with_celery_not_installed(settings: SettingsWrapp
     #   https://medium.com/python-pandemonium/how-to-test-your-imports-1461c1113be1
     #   https://docs.python.org/3.8/reference/import.html#the-module-cache
     msg = r"Value error, CA_USE_CELERY set to True, but Celery is not installed"
-    with mock.patch.dict("sys.modules", celery=None):
-        with assert_improperly_configured(msg):
-            settings.CA_USE_CELERY = True
+    with mock.patch.dict("sys.modules", celery=None), assert_improperly_configured(msg):
+        settings.CA_USE_CELERY = True
 
 
 def test_ca_crl_profiles_invalid_scope(settings: SettingsWrapper) -> None:
@@ -1012,11 +1011,13 @@ def test_extend_url_patterns(value: list[dict[str, Any]], expected: list[URLPatt
 
 def test_extend_url_patterns_with_invalid_value() -> None:
     """Test loading an invalid EXTEND_URL_PATTERNS into settings."""
-    with mock.patch.dict(
-        os.environ, {"DJANGO_CA_EXTEND_URL_PATTERNS": '[{"foo": {"foo": "bar"}}]'}, clear=True
+    with (
+        mock.patch.dict(
+            os.environ, {"DJANGO_CA_EXTEND_URL_PATTERNS": '[{"foo": {"foo": "bar"}}]'}, clear=True
+        ),
+        assert_improperly_configured(r"Field required"),
     ):
-        with assert_improperly_configured(r"Field required"):
-            dict(load_settings(FIXTURES_DIR))
+        dict(load_settings(FIXTURES_DIR))
 
 
 def test_extend_celery_beat_schedule_from_environment(tmp_path: Path) -> None:
