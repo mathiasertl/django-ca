@@ -67,7 +67,7 @@ def optional_arg_task(data: CeleryMessage | None = None) -> CeleryMessage | None
 
 def test_no_arg_task_delay() -> None:
     """Call a task that takes no arguments via delay()."""
-    with mock_celery_task("django_ca.tests.test_celery.no_arg_task", mock.call(tuple(), {})):
+    with mock_celery_task("django_ca.tests.test_celery.no_arg_task", mock.call((), {})):
         no_arg_task.delay()
 
 
@@ -88,12 +88,12 @@ def test_no_arg_task_call_with_argument() -> None:
 def test_arg_task_delay() -> None:
     """Call a task that takes an arguments via delay()."""
     msg = CeleryMessage(value=1)
-    with mock_celery_task("django_ca.tests.test_celery.arg_task", mock.call(tuple(), {"data": {"value": 1}})):
+    with mock_celery_task("django_ca.tests.test_celery.arg_task", mock.call((), {"data": {"value": 1}})):
         arg_task.delay(msg)
 
     msg = CeleryMessage(value=1, optional=3)
     with mock_celery_task(
-        "django_ca.tests.test_celery.arg_task", mock.call(tuple(), {"data": {"value": 1, "optional": 3}})
+        "django_ca.tests.test_celery.arg_task", mock.call((), {"data": {"value": 1, "optional": 3}})
     ):
         arg_task.delay(msg)
 

@@ -210,7 +210,7 @@ class LabeledCheckboxInput(CheckboxInput):
 
     template_name = "django_ca/forms/widgets/labeledcheckboxinput.html"
 
-    def __init__(self, label: str, wrapper_classes: Iterable[str] = tuple()) -> None:
+    def __init__(self, label: str, wrapper_classes: Iterable[str] = ()) -> None:
         self.wrapper_classes = (*tuple(wrapper_classes), "labeled-checkbox")
         self.label = label
         super().__init__()

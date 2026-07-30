@@ -58,7 +58,7 @@ class DevCommand:
     _docker_client: Optional["docker.client.DockerClient"] = None
     parser: argparse.ArgumentParser
 
-    modules: tuple[tuple[str, str], ...] = tuple()
+    modules: tuple[tuple[str, str], ...] = ()
     help_text: str = ""
     description = ""
 
@@ -82,7 +82,7 @@ class DevCommand:
         safe_tag = re.sub(r"[^\w.-]", ".", release)
         return f"{config.DOCKER_TAG}:{safe_tag}"
 
-    def handle(self, args: argparse.Namespace) -> None | int:
+    def handle(self, args: argparse.Namespace) -> int | None:
         """Method that is supposed to be implemented by sub-commands."""
         raise NotImplementedError
 

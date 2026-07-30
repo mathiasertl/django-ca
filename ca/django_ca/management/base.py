@@ -337,7 +337,7 @@ class BaseSignCommand(BaseCommand, metaclass=abc.ABCMeta):
         self,
         parser: CommandParser,
         description_suffix: str = "",
-        additional_option_strings: tuple[str, ...] = tuple(),
+        additional_option_strings: tuple[str, ...] = (),
     ) -> None:
         """Add argument group for the Subject Alternative Name extension."""
         ext_name = constants.EXTENSION_NAMES[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
@@ -504,7 +504,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         value = x509.PrivateKeyUsagePeriod(not_before=not_before, not_after=not_after)
         self.add_extension(extensions, value, critical=False)
 
-    def get_end_entity_extensions(  # pylint: disable=too-many-locals # noqa: PLR0913
+    def get_end_entity_extensions(  # pylint: disable=too-many-locals # noqa: PLR0913,PLR0917
         self,  # pylint: disable=unused-argument
         # Authority Information Access extension
         authority_information_access: x509.AuthorityInformationAccess | None,

@@ -373,6 +373,10 @@ disable = [
     "unnecessary-semicolon",
     "unneeded-not",
 
+    # covered by other ruff plugins
+    "exec-used",
+    "broad-except",  # ruff: BLE001
+
     # (seems to be) covered by mypy
     "unsubscriptable-object",  # mypy: index
     "arguments-differ",
@@ -485,6 +489,9 @@ ignore = [
     "D401",  # First line of docstring should be in imperative mood
     "PLR2004",  # Magic value used in comparison - not disabled in default pylint
     "PLW2901",  # redefined-loop-name - not disabled in default pylint
+    "SIM102", # Use a single `if` statement instead of nested `if` statements - sometimes preferred
+    "SIM117", # Combine `with` statements - I prefer this sometimes
+    "TRY004",  # Prefer `TypeError` exception for invalid type - impossible to change API sometimes
 ]
 unfixable = [
     "PLW1510",  # `subprocess.run` without explicit `check` argument - not deemed safe

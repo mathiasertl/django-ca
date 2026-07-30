@@ -273,7 +273,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         )
 
 
-class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass=abc.ABCMeta):
+class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass=abc.ABCMeta):  # noqa: PYI059
     """Mixin base class providing arguments and functions for outputting details on the command line."""
 
     def add_output_certificate_arguments(self, parser: CommandParser, default_format: str = "serial") -> None:

@@ -246,7 +246,7 @@ class EllipticCurveAction(SingleValueAction[EllipticCurveName, ec.EllipticCurve]
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        kwargs.setdefault("choices", sorted(tuple(constants.ELLIPTIC_CURVE_TYPES)))
+        kwargs.setdefault("choices", sorted(constants.ELLIPTIC_CURVE_TYPES))
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         super().__init__(**kwargs)
 

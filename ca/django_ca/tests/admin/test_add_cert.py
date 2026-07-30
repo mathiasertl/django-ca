@@ -15,7 +15,7 @@
 
 import json
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any, Literal
 
@@ -341,7 +341,7 @@ class TestSubmitAddView:
         usable_root: CertificateAuthority,
     ) -> None:
         """Test creating a certificate with multiple Org Units (which is allowed)."""
-        settings.CA_DEFAULT_SUBJECT = tuple()
+        settings.CA_DEFAULT_SUBJECT = ()
         with assert_create_cert_signals() as (_pre, post):
             response = admin_client.post(
                 Certificate.admin_add_url,
@@ -551,8 +551,10 @@ class TestSubmitAddView:
         assert not response.context["adminform"].form.is_valid()
         assert response.context["adminform"].form.errors == {
             "csr": [
-                "Could not parse PEM-encoded CSR. They usually look like this: "
-                "<pre>-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----</pre>"
+                (
+                    "Could not parse PEM-encoded CSR. They usually look like this: "
+                    "<pre>-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----</pre>"
+                )
             ]
         }
 
@@ -586,7 +588,7 @@ class TestSubmitAddView:
         self, admin_client: Client, hostname: str, usable_root: CertificateAuthority
     ) -> None:
         """Test creating a cert that not_after in the past."""
-        expires = datetime.now() - timedelta(days=3)
+        expires = datetime.now(UTC) - timedelta(days=3)
 
         with assert_create_cert_signals(False, False):
             response = admin_client.post(

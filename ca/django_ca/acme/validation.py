@@ -52,8 +52,8 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
     except resolver.NXDOMAIN:
         log.debug("TXT %s: record does not exist.", dns_name)
         return False
-    except dns.exception.DNSException as ex:
-        log.exception(ex)
+    except dns.exception.DNSException:
+        log.exception("Uncaught DNS lookup exception.")
         return False
 
     # RFC 8555, section 8.4: "Verify that the contents of one of the TXT records match the digest value"

@@ -159,7 +159,8 @@ class WatcherAdmin(WatcherAdminBase):
     """ModelAdmin for :py:class:`~django_ca.models.Watcher`."""
 
 
-class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=MediaDefiningClass):
+# RUFF NOTE: Generic[] should be last, but MRO not otherwise possible
+class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=MediaDefiningClass):  # noqa: PYI059
     """Mixin for CA/Certificate."""
 
     form = X509CertMixinAdminForm  # type: ignore[assignment]  # django-stubs false positive
@@ -855,7 +856,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         try:
             raw_csr = json.loads(request.body)["csr"]
             csr = x509.load_pem_x509_csr(raw_csr.encode("ascii"))
-        except Exception:  # pylint: disable=broad-except; docs don't list possible exceptions
+        except Exception:  # noqa: BLE001  # docs don't list possible exceptions
             return JsonResponse({"message": "Cannot parse CSR."}, status=HTTPStatus.BAD_REQUEST)
 
         subject = NameModel.model_validate(csr.subject).model_dump(mode="json")

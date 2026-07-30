@@ -244,23 +244,23 @@ class OCSPView(View):
 
         try:
             return self.handle_ocsp_request_data(decoded_data)
-        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
-            log.exception(e)
+        except Exception:  # pylint: disable=broad-except; we really need to catch everything here
+            log.exception("Uncaught OCSP request exception.")
             return self.fail()
 
     def post(self, request: HttpRequest) -> HttpResponse:
         # pylint: disable=missing-function-docstring; standard Django view function
         try:
             return self.handle_ocsp_request_data(request.body)
-        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
-            log.exception(e)
+        except Exception:  # pylint: disable=broad-except; we really need to catch everything here
+            log.exception("Uncaught OCSP request exception.")
             return self.fail()
 
     def handle_ocsp_request_data(self, data: bytes) -> HttpResponse:
         """Parse raw request data and call `process_ocsp_request()`."""
         try:
             ocsp_req = ocsp.load_der_ocsp_request(data)
-        except Exception as e:  # pylint: disable=broad-except; we really need to catch everything here
+        except Exception as e:  # noqa: BLE001  # we really need to catch everything here
             log.debug("Cannot parse OCSP request: %s", e)
             return self.malformed_request()
 
@@ -421,8 +421,8 @@ class OCSPView(View):
         # Get the signed OCSP response.
         try:
             response = self.get_ocsp_response(ca, builder)
-        except Exception as ex:  # pylint: disable=broad-exception-caught
-            log.exception(ex)
+        except Exception:  # pylint: disable=broad-exception-caught
+            log.exception("Uncaught exception when retrieving OCSP response.")
             return self.fail()
 
         if isinstance(response, HttpResponse):

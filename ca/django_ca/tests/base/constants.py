@@ -362,7 +362,7 @@ def _load_pub(data: dict[str, Any]) -> PubDict:
 
 
 # Augment data with various pre-computed paths
-for _name, _cert_data in CERT_DATA.items():
+for _cert_data in CERT_DATA.values():
     if _cert_data["cat"] == "sphinx-contrib":
         basedir = SPHINX_FIXTURES_DIR / _cert_data["type"]
     else:

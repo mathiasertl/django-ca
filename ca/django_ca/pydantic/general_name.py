@@ -116,9 +116,12 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
 
             raise ValueError(f"{value.tag}: Unknown otherName type found.")
 
-        if isinstance(data, dict) and data.get("type") == "OctetString":
-            if isinstance(data.get("value"), bytes):
-                data["value"] = cls._parse_bytes(data["value"])
+        if (
+            isinstance(data, dict)
+            and data.get("type") == "OctetString"
+            and isinstance(data.get("value"), bytes)
+        ):
+            data["value"] = cls._parse_bytes(data["value"])
 
         return data
 

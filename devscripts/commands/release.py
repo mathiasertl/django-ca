@@ -18,7 +18,7 @@ import difflib
 import importlib
 import types
 import typing
-from datetime import date
+from datetime import UTC, datetime
 from pathlib import Path
 
 from devscripts import config
@@ -70,13 +70,13 @@ class Command(DevCommand):
         parser.add_argument("release", help="The actual release you want to build.")
 
     def _validate_changelog(self, release: str) -> None:
-        today = date.today().strftime("%Y-%m-%d")
+        today = datetime.now(tz=UTC).strftime("%Y-%m-%d")
         path = config.DOCS_SOURCE_DIR / "changelog" / f"{today}_{release}.rst"
         with open(path, encoding="utf-8") as stream:
             changelog = stream.read()
         changelog_header = changelog.splitlines(keepends=True)[:3]
         expected = f"""##################
-{release} ({date.today().strftime("%Y-%m-%d")})
+{release} ({datetime.now(tz=UTC).strftime("%Y-%m-%d")})
 ##################\n""".splitlines(keepends=True)
         if changelog_header != expected:
             diff = difflib.unified_diff(changelog_header, expected, fromfile=str(path), tofile="expected")

@@ -447,20 +447,23 @@ def test_extensions_with_non_default_critical(
     (
         (
             ["--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00"],
-            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": None},
+            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": None},  # noqa: DTZ001
         ),
         (
             [
                 "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
             ],
-            {"not_before": None, "not_after": datetime(2011, 11, 4, 1, 5, 24)},
+            {"not_before": None, "not_after": datetime(2011, 11, 4, 1, 5, 24)},  # noqa: DTZ001
         ),
         (
             [
                 "--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00",
                 "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
             ],
-            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": datetime(2011, 11, 4, 1, 5, 24)},
+            {
+                "not_before": datetime(2011, 11, 4, 0, 5, 23),  # noqa: DTZ001
+                "not_after": datetime(2011, 11, 4, 1, 5, 24),  # noqa: DTZ001
+            },
         ),
     ),
 )
@@ -490,8 +493,8 @@ def test_private_key_usage_period_extension_with_not_after_before_not_before(
         sign_cert(
             usable_root,
             subject,
-            private_key_usage_period_not_before=datetime(2011, 11, 4, 1, 5, 24),
-            private_key_usage_period_not_after=datetime(2011, 11, 4, 0, 5, 23),
+            private_key_usage_period_not_before=datetime(2011, 11, 4, 1, 5, 24),  # noqa: DTZ001
+            private_key_usage_period_not_after=datetime(2011, 11, 4, 0, 5, 23),  # noqa: DTZ001
         )
 
 
@@ -499,11 +502,11 @@ def test_private_key_usage_period_extension_with_not_after_before_not_before(
 @pytest.mark.parametrize(
     "kwargs",
     (
-        {"private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23)},
-        {"private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24)},
+        {"private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23)},  # noqa: DTZ001
+        {"private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24)},  # noqa: DTZ001
         {
-            "private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23),
-            "private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24),
+            "private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23),  # noqa: DTZ001
+            "private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24),  # noqa: DTZ001
         },
     ),
 )
@@ -588,7 +591,7 @@ def test_multiple_sans(usable_root: CertificateAuthority, subject: x509.Name, rf
 def test_no_subject(settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str) -> None:
     """Test signing without a subject (but SANs)."""
     settings.CA_PROFILES = {}
-    settings.CA_DEFAULT_SUBJECT = tuple()
+    settings.CA_DEFAULT_SUBJECT = ()
     san = subject_alternative_name(dns(hostname)).value
     with assert_create_cert_signals():
         cmd("sign_cert", ca=usable_root, subject_alternative_name=san, stdin=csr)

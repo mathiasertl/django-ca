@@ -15,7 +15,7 @@
 
 import typing
 from collections.abc import Iterable
-from datetime import date, datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from cryptography import x509
@@ -49,7 +49,7 @@ HASH_ALGORITHM_CHOICES = (
 
 
 def _initial_expires() -> datetime:
-    return datetime.today() + model_settings.CA_DEFAULT_EXPIRES
+    return datetime.now(tz=UTC).date() + model_settings.CA_DEFAULT_EXPIRES
 
 
 def _profile_choices() -> Iterable[tuple[str, str]]:
@@ -194,7 +194,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
     def clean_not_after(self) -> datetime:  # pylint: disable=missing-function-docstring
         expires: datetime = self.cleaned_data["not_after"]
-        if expires < date.today():
+        if expires < datetime.now(tz=UTC).date():
             raise forms.ValidationError(_("Certificate cannot expire in the past."))
         return expires
 

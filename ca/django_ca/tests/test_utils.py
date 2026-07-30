@@ -340,7 +340,7 @@ class GetCertBuilderTestCase(TestCase):
 
     def parse_date(self, date: str) -> datetime:
         """Helper to parse a date."""
-        return datetime.strptime(date, "%Y%m%d%H%M%SZ")
+        return datetime.strptime(date, "%Y%m%d%H%M%SZ")  # noqa: DTZ007  # what we get
 
     @freeze_time("2018-11-03 11:21:33")
     @override_settings(CA_DEFAULT_EXPIRES=100)
@@ -349,8 +349,8 @@ class GetCertBuilderTestCase(TestCase):
         # pylint: disable=protected-access; only way to test builder attributes
         after = datetime(2020, 10, 23, 11, 21, tzinfo=UTC)
         builder = get_cert_builder(after)
-        assert builder._not_valid_before == datetime(2018, 11, 3, 11, 21)
-        assert builder._not_valid_after == datetime(2020, 10, 23, 11, 21)
+        assert builder._not_valid_before == datetime(2018, 11, 3, 11, 21)  # noqa: DTZ001
+        assert builder._not_valid_after == datetime(2020, 10, 23, 11, 21)  # noqa: DTZ001
         assert isinstance(builder._serial_number, int)
 
     @freeze_time("2021-01-23 14:42:11.1234")
@@ -359,7 +359,7 @@ class GetCertBuilderTestCase(TestCase):
         expires = datetime.now(UTC) + timedelta(days=10)
         assert expires.second != 0
         assert expires.microsecond != 0
-        expires_expected = datetime(2021, 2, 2, 14, 42)
+        expires_expected = datetime(2021, 2, 2, 14, 42)  # noqa: DTZ001
         builder = get_cert_builder(expires)
         assert builder._not_valid_after == expires_expected  # pylint: disable=protected-access
         assert isinstance(builder._serial_number, int)  # pylint: disable=protected-access
@@ -368,9 +368,10 @@ class GetCertBuilderTestCase(TestCase):
     def test_serial(self) -> None:
         """Test manually setting a serial."""
         after = datetime(2022, 10, 23, 11, 21, tzinfo=UTC)
+        expected_after = datetime(2022, 10, 23, 11, 21)  # noqa: DTZ001
         builder = get_cert_builder(after, serial=123)
         assert builder._serial_number == 123  # pylint: disable=protected-access
-        assert builder._not_valid_after == datetime(2022, 10, 23, 11, 21)  # pylint: disable=protected-access
+        assert builder._not_valid_after == expected_after  # pylint: disable=protected-access
 
     @freeze_time("2021-01-23 14:42:11")
     def test_negative_datetime(self) -> None:
@@ -386,7 +387,7 @@ class GetCertBuilderTestCase(TestCase):
     def test_naive_datetime(self) -> None:
         """Test passing a naive datetime."""
         with pytest.raises(ValueError, match=r"^not_after must not be a naive datetime$"):
-            get_cert_builder(datetime.now())
+            get_cert_builder(datetime.now())  # noqa: DTZ005  # what we test
 
 
 class ValidatePrivateKeyParametersTest(TestCase):

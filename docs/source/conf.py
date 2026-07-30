@@ -15,7 +15,7 @@
 
 import os
 import sys
-from datetime import date
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -120,7 +120,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-ca"
-copyright = f"2016 - {date.today().year}, Mathias Ertl"
+copyright = f"2016 - {datetime.now(tz=UTC).year}, Mathias Ertl"
 author = "Mathias Ertl"
 
 import django_ca  # NOQA: E402

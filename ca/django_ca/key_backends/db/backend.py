@@ -148,7 +148,7 @@ class DBBackend(KeyBackend[DBCreatePrivateKeyOptions, DBStorePrivateKeyOptions, 
         use_private_key_options: DBUsePrivateKeyOptions | None = None,
     ) -> bool:
         # If key_backend_options is not set or path is not set, it is certainly unusable.
-        if not ca.key_backend_options or not ca.key_backend_options.get("private_key"):
+        if not ca.key_backend_options or not ca.key_backend_options.get("private_key"):  # noqa: SIM103
             return False
         return True
 

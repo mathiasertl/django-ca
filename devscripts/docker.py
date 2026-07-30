@@ -106,9 +106,8 @@ def compose_status(tag: str) -> int:
             errors += err(f"{container_data['Service']}: Exit code {exit_code}")
 
         # Make sure that the expected container version is running:
-        if container_data["Service"] in COMPOSE_SERVICES:
-            if container_data["Image"] != tag:
-                errors += err(f"{container_data['Service']}: Image {container_data['Image']} != {tag}")
+        if container_data["Service"] in COMPOSE_SERVICES and container_data["Image"] != tag:
+            errors += err(f"{container_data['Service']}: Image {container_data['Image']} != {tag}")
 
     if not errors:
         ok("All containers have started successfully.")

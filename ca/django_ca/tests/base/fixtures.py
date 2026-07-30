@@ -22,7 +22,7 @@ import subprocess
 from collections.abc import Iterator
 from datetime import timedelta
 from pathlib import Path
-from typing import Literal, cast
+from typing import cast
 from unittest import mock
 
 from cryptography import x509
@@ -419,7 +419,7 @@ def db_backend() -> DBBackend:
 @pytest.fixture(params=HSMBackend.supported_key_types)
 def usable_hsm_ca(  # pragma: hsm
     request: pytest.FixtureRequest,
-    db: Literal[None],  # pylint: disable=unused-argument
+    db: None,  # pylint: disable=unused-argument
 ) -> CertificateAuthority:
     """Parametrized fixture yielding a certificate authority for every key type."""
     key_type = request.param

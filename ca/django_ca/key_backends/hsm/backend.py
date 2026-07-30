@@ -244,7 +244,7 @@ class HSMBackend(
             ) as session:
                 self._get_private_key(ca, session)
             return True
-        except Exception:  # pylint: disable=broad-exception-caught  # want to always return bool
+        except Exception:  # noqa: BLE001  # want to always return bool
             return False
 
     def check_usable(

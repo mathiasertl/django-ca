@@ -225,7 +225,7 @@ class AcmeGetNonceViewMixin:
             # raised if cache_key is not set
             return False
 
-        if count > 1:  # nonce was already used
+        if count > 1:  # nonce was already used  # noqa: SIM103
             # NOTE: "incr" returns the *new* value, so "1" is the expected value.
             return False
 
@@ -317,8 +317,8 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             response = cast(AcmeResponse, super().dispatch(request, serial=serial, slug=slug))
         except AcmeException as ex:
             response = ex.get_response()
-        except Exception as ex:  # pylint: disable=broad-except
-            log.exception(ex)
+        except Exception:  # pylint: disable=broad-except
+            log.exception("Uncaught ACME request exception.")
             response = AcmeResponseError(message="Internal server error")
 
         self.set_link_relations(response)
@@ -412,7 +412,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         try:
             if not self.jws.verify(self.jwk):
                 return AcmeResponseMalformed(message="JWS signature invalid.")
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             return AcmeResponseMalformed(message="JWS signature invalid.")
 
         # self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
@@ -927,7 +927,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             raise AcmeBadCSR(message="CSR signature is not valid.")
 
         # Get list of general names from the authorizations
-        names_from_order = set(auth.general_name for auth in authorizations)
+        names_from_order = {auth.general_name for auth in authorizations}
 
         # Perform sanity checks on the CSRs subject.
         # NOTE: certbot does *not* set any subject at all
@@ -1357,7 +1357,7 @@ class AcmeKeyChangeView(AcmeBaseView):
         try:
             if not inner_jws.verify(new_jwk):
                 return AcmeResponseMalformed(message="Inner JWS signature invalid.")
-        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             return AcmeResponseMalformed(message="Inner JWS signature invalid.")
 
         # Parse payload of the inner JWS
@@ -1388,7 +1388,7 @@ class AcmeKeyChangeView(AcmeBaseView):
         try:
             old_jwk: jose.jwk.JWK = jose.jwk.JWK.json_loads(json.dumps(old_key_data))
             assert isinstance(old_jwk, jose.jwk.JWK)
-        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             return AcmeResponseMalformed(message="Could not parse 'oldKey' from inner JWS.")
 
         # 8. Check that the "oldKey" field of the keyChange object is the same as the account key for the
@@ -1403,7 +1403,7 @@ class AcmeKeyChangeView(AcmeBaseView):
                 .decode("utf-8")
                 .strip()
             )
-        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             return AcmeResponseMalformed(message="Could not serialize 'oldKey'.")
 
         if old_pem != self.account.pem or old_jwk != self.jwk:
@@ -1418,7 +1418,7 @@ class AcmeKeyChangeView(AcmeBaseView):
                 .decode("utf-8")
                 .strip()
             )
-        except Exception:  # pylint: disable=broad-except  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             return AcmeResponseMalformed(message="Could not serialize new key.")
 
         new_thumbprint = jose.json_util.encode_b64jose(new_jwk.thumbprint())

@@ -78,7 +78,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         parser.add_argument("key", help="Path to the private key (PEM or DER format).")
         parser.add_argument("pem", help="Path to the public key (PEM or DER format).")
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0913,PLR0912,PLR0915
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0913,PLR0912,PLR0915,PLR0917
         self,
         name: str,
         key: str,
@@ -110,7 +110,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         # load private key
         try:
             key_loaded = serialization.load_pem_private_key(key_data, import_password)
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             try:
                 key_loaded = serialization.load_der_private_key(key_data, import_password)
             except Exception as ex:
@@ -128,7 +128,7 @@ Note that the private key will be copied to the directory configured by the CA_D
         # load certificate
         try:
             loaded_certificate = x509.load_pem_x509_certificate(certificate_data)
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             try:
                 loaded_certificate = x509.load_der_x509_certificate(certificate_data)
             except Exception as ex:

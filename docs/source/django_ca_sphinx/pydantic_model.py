@@ -53,7 +53,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
                 last_expression = ast.unparse(a_last.targets[0])
             elif isinstance(a_last, ast.AnnAssign | ast.AugAssign):
                 last_expression = ast.unparse(a_last.target)
-        exec(ast.unparse(a), global_variables)  # pylint: disable=exec-used
+        exec(ast.unparse(a), global_variables)  # noqa: S102
         if last_expression:
             return eval(last_expression, global_variables)  # pylint: disable=eval-used
 
@@ -180,7 +180,7 @@ class PydanticProfileExtensionDirective(PydanticModelDirectiveBase):
         # Get the value of the last line in the included profile file
         try:
             global_vars: dict[str, Any] = {}
-            exec(profile_code, global_vars)  # pylint: disable=exec-used
+            exec(profile_code, global_vars)  # noqa: S102
             profile_data_from_python = global_vars["CA_PROFILES"][profile_name]
         except Exception as ex:
             raise RuntimeError(f"{profile_filename}: Cannot execute code: {ex}") from ex

@@ -281,7 +281,7 @@ class StoragesBackend(
         try:
             self.get_key(ca, use_private_key_options)
             return True
-        except Exception:  # pylint: disable=broad-exception-caught  # want to always return bool
+        except Exception:  # noqa: BLE001  # want to always return bool
             return False
 
     def check_usable(

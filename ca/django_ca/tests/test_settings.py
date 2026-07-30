@@ -860,7 +860,7 @@ def test_ca_profiles_with_cryptography_extensions(settings: SettingsWrapper) -> 
     (
         (False, False),
         ([], x509.Name([])),
-        (tuple(), x509.Name([])),
+        ((), x509.Name([])),
         (x509.Name([country("AT")]), x509.Name([country("AT")])),
         ([{"oid": "C", "value": "AT"}], x509.Name([country("AT")])),
     ),

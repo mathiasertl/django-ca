@@ -55,8 +55,8 @@ else:
 class TestCaseMixin(TestCaseProtocol):
     """Mixin providing augmented functionality to all test cases."""
 
-    load_cas: str | tuple[str, ...] = tuple()
-    load_certs: str | tuple[str, ...] = tuple()
+    load_cas: str | tuple[str, ...] = ()
+    load_certs: str | tuple[str, ...] = ()
     default_ca = "child"
     default_cert = "child-cert"
     cas: dict[str, CertificateAuthority]

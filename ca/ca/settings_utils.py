@@ -252,7 +252,7 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
             try:
                 data = yaml.safe_load(stream)
             except Exception as ex:
-                logging.exception(ex)
+                logging.exception("Failed loading %s", full_path)  # noqa: LOG015
                 raise ImproperlyConfigured(f"{full_path}: Invalid YAML.") from ex
 
         if data is None:

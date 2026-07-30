@@ -288,7 +288,7 @@ class Command(
         # TYPEHINT NOTE: list has Extension[A] | Extension[B], but value has Extension[A | B].
         extensions.append(extension)  # type: ignore[arg-type]
 
-    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915
+    def handle(  # pylint: disable=too-many-locals  # noqa: PLR0912,PLR0913,PLR0915,PLR0917
         self,
         name: str,
         subject: x509.Name,

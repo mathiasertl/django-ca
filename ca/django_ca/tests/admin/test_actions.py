@@ -344,7 +344,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
     def test_with_compromised_without_use_tz(self) -> None:
         """Test revoking a certificate with a revocation date with USE_TZ=False."""
-        value = datetime.now() - timedelta(days=1)
+        value = datetime.now() - timedelta(days=1)  # noqa: DTZ005
         data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
 
         with self.mockSignals(), self.settings(USE_TZ=False):
@@ -353,7 +353,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
     def test_compromised_in_the_future(self) -> None:
         """Test that the compromised must be in the past."""
-        value = datetime.now() + timedelta(days=1)
+        value = datetime.now(UTC) + timedelta(days=1)
         data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
 
         with self.assertNoSignals():
@@ -509,7 +509,7 @@ class ResignChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], We
         response = form.submit().follow()
         self.assertSuccessfulRequest(response, obj=cert)
 
-    @override_tmpcadir(CA_DEFAULT_SUBJECT=tuple())
+    @override_tmpcadir(CA_DEFAULT_SUBJECT=())
     def test_webtest_no_ext(self) -> None:
         """Resign certificate with **no** extensions."""
         cert = self.load_named_cert("no-extensions")

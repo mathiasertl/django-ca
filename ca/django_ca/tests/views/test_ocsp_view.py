@@ -245,9 +245,7 @@ def test_raises_exception(caplog: LogCaptureFixture, client: Client) -> None:
     assert response.status_code == HTTPStatus.OK
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
-    assert caplog.record_tuples == [
-        ("django_ca.views", logging.ERROR, "django_ca.tests.views.test_ocsp_view.test_raises_exception")
-    ]
+    assert caplog.record_tuples == [("django_ca.views", logging.ERROR, "Uncaught OCSP request exception.")]
     caplog.clear()
 
     # also do a post request
@@ -256,9 +254,7 @@ def test_raises_exception(caplog: LogCaptureFixture, client: Client) -> None:
     assert response.status_code == HTTPStatus.OK
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
-    assert caplog.record_tuples == [
-        ("django_ca.views", logging.ERROR, "django_ca.tests.views.test_ocsp_view.test_raises_exception")
-    ]
+    assert caplog.record_tuples == [("django_ca.views", logging.ERROR, "Uncaught OCSP request exception.")]
 
 
 @pytest.mark.usefixtures("child_with_ocsp_responder_certificate")
@@ -460,11 +456,7 @@ def test_private_key_with_error(caplog: LogCaptureFixture, client: Client) -> No
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
     assert caplog.record_tuples == [
-        (
-            "django_ca.views",
-            logging.ERROR,
-            "Could not read responder key/cert: Could not decrypt private key.",
-        )
+        ("django_ca.views", logging.ERROR, "Uncaught exception when retrieving OCSP response.")
     ]
 
 
@@ -484,11 +476,7 @@ def test_unsupported_private_key_type(caplog: LogCaptureFixture, client: Client)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR
     assert caplog.record_tuples == [
         ("django_ca.views", logging.ERROR, "<class 'str'>: Unsupported private key type."),
-        (
-            "django_ca.views",
-            logging.ERROR,
-            "Could not read responder key/cert: <class 'str'>: Unsupported private key type.",
-        ),
+        ("django_ca.views", logging.ERROR, "Uncaught exception when retrieving OCSP response."),
     ]
 
 

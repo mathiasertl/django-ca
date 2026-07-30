@@ -115,7 +115,7 @@ class RevokeCertTestCase(TestCaseMixin, TestCase):
 
     def test_compromised_with_naive_datetime(self) -> None:
         """Test passing a naive datetime (which is an error)."""
-        now = datetime.now()
+        now = datetime.now()  # noqa: DTZ005  # what we test
         with assert_command_error(rf"{now.isoformat()}: Timestamp requires a timezone\."):
             cmd("revoke_cert", self.cert.serial, compromised=now)
         self.assertNotRevoked(self.cert)

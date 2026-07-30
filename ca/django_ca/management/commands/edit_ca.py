@@ -55,7 +55,7 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
             "--disable", action="store_false", dest="enabled", help="Disable the certificate authority."
         )
 
-    def handle(  # noqa: PLR0913
+    def handle(  # noqa: PLR0913,PLR0917
         self,
         ca: CertificateAuthority,
         enabled: bool | None,

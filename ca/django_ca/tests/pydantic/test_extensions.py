@@ -636,8 +636,10 @@ def test_authority_information_access(
                 (
                     "value_error",
                     (),
-                    f"Value error, {SubjectInformationAccessOID.CA_REPOSITORY.dotted_string}: access_method "
-                    "not acceptable for this extension.",
+                    (
+                        f"Value error, {SubjectInformationAccessOID.CA_REPOSITORY.dotted_string}: "
+                        "access_method not acceptable for this extension."
+                    ),
                 )
             ],
         ),
@@ -714,8 +716,10 @@ def test_authority_key_identifier(
                 (
                     "value_error",
                     ("value",),
-                    "Value error, authority_cert_issuer and authority_cert_serial_number must both be "
-                    "present or both None",
+                    (
+                        "Value error, authority_cert_issuer and authority_cert_serial_number must both be "
+                        "present or both None"
+                    ),
                 )
             ],
         ),
@@ -732,8 +736,10 @@ def test_authority_key_identifier(
                 (
                     "value_error",
                     ("value",),
-                    "Value error, authority_cert_issuer and authority_cert_serial_number must both be "
-                    "present or both None",
+                    (
+                        "Value error, authority_cert_issuer and authority_cert_serial_number must both be "
+                        "present or both None"
+                    ),
                 )
             ],
         ),
@@ -749,8 +755,10 @@ def test_authority_key_identifier(
                 (
                     "value_error",
                     ("value",),
-                    "Value error, At least one of key_identifier or "
-                    "authority_cert_issuer/authority_cert_serial_number must be given.",
+                    (
+                        "Value error, At least one of key_identifier or "
+                        "authority_cert_issuer/authority_cert_serial_number must be given."
+                    ),
                 )
             ],
         ),
@@ -1461,8 +1469,10 @@ def test_policy_constraints(
                 (
                     "value_error",
                     ("value",),
-                    "Value error, At least one of require_explicit_policy and inhibit_policy_mapping must "
-                    "not be None",
+                    (
+                        "Value error, At least one of require_explicit_policy and inhibit_policy_mapping "
+                        "must not be None"
+                    ),
                 )
             ],
         ),
@@ -1630,8 +1640,10 @@ def test_subject_information_access(
                 (
                     "value_error",
                     (),
-                    f"Value error, {AuthorityInformationAccessOID.OCSP.dotted_string}: access_method "
-                    "not acceptable for this extension.",
+                    (
+                        f"Value error, {AuthorityInformationAccessOID.OCSP.dotted_string}: access_method "
+                        "not acceptable for this extension."
+                    ),
                 )
             ],
         ),

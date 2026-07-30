@@ -110,9 +110,9 @@ def test_elliptic_curves() -> None:
 
 def test_encoding_names() -> None:
     """Test that ``utils.ENCODING_NAMES`` covers all known encodings."""
-    expected = set(
+    expected = {
         getattr(Encoding, attr) for attr in dir(Encoding) if isinstance(getattr(Encoding, attr), Encoding)
-    )
+    }
     assert set(constants.ENCODING_NAMES) == expected
 
 
@@ -202,7 +202,7 @@ def test_hash_algorithm_names() -> None:
         hashes.SHA512_224,
         hashes.SHA512_256,
     )
-    subclasses = set(sc for sc in subclasses if sc not in excluded_algorithms)
+    subclasses = {sc for sc in subclasses if sc not in excluded_algorithms}
 
     # These are deliberately not supported anymore:
     if hasattr(hashes, "MD5"):

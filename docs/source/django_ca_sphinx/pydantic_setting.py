@@ -204,7 +204,7 @@ class PydanticSettingDirective(SphinxDirective):
 
         origin = get_origin(field_type)
         if origin is Literal:
-            args = set(type(t) for t in get_args(field_type))
+            args = {type(t) for t in get_args(field_type)}
             if args == {str}:
                 return "str"
             raise self.error(f"Annotated with type {args}")
@@ -299,10 +299,10 @@ class PydanticSettingDirective(SphinxDirective):
 
             return [container]
 
-        except DirectiveError as ex:  # from raise self.error()
-            log.exception(ex)
+        except DirectiveError:  # from raise self.error()
+            log.exception("Uncaught DirectiveError.")
             raise
         except Exception as ex:
             # Otherwise, wrap it in a directive error
-            log.exception(ex)
+            log.exception("Uncaught Exception.")
             raise self.error(f"{setting}: Unexpected error: {ex}, {type(ex)}") from ex

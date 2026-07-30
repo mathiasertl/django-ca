@@ -149,7 +149,7 @@ def test_with_expires(root_cert: Certificate) -> None:
 @pytest.mark.usefixtures("usable_root")
 def test_overwrite(settings: SettingsWrapper, root_cert: Certificate) -> None:
     """Test overwriting extensions."""
-    settings.CA_DEFAULT_SUBJECT = tuple()
+    settings.CA_DEFAULT_SUBJECT = ()
     watcher = "new@example.com"
 
     # resign a cert, but overwrite all options

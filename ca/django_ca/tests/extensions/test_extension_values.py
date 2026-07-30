@@ -842,19 +842,26 @@ class TestPrivateKeyUsagePeriod(ExtensionTestCaseMixin):
         return {
             "not_before": {
                 "admin_html": "<ul><li>Not before: 2025-07-06T00:00:00+00:00</li></ul>",
-                "extension_type": x509.PrivateKeyUsagePeriod(not_before=datetime(2025, 7, 6), not_after=None),
+                "extension_type": x509.PrivateKeyUsagePeriod(
+                    not_before=datetime(2025, 7, 6),  # noqa: DTZ001
+                    not_after=None,
+                ),
                 "text": "* Not before: 2025-07-06T00:00:00+00:00",
             },
             "not_after": {
                 "admin_html": "<ul><li>Not after: 2025-07-06T00:00:00+00:00</li></ul>",
-                "extension_type": x509.PrivateKeyUsagePeriod(not_before=None, not_after=datetime(2025, 7, 6)),
+                "extension_type": x509.PrivateKeyUsagePeriod(
+                    not_before=None,
+                    not_after=datetime(2025, 7, 6),  # noqa: DTZ001
+                ),
                 "text": "* Not after: 2025-07-06T00:00:00+00:00",
             },
             "both": {
                 "admin_html": "<ul><li>Not before: 2025-07-05T00:00:00+00:00</li>"
                 "<li>Not after: 2025-07-06T00:00:00+00:00</li></ul>",
                 "extension_type": x509.PrivateKeyUsagePeriod(
-                    not_before=datetime(2025, 7, 5), not_after=datetime(2025, 7, 6)
+                    not_before=datetime(2025, 7, 5),  # noqa: DTZ001
+                    not_after=datetime(2025, 7, 6),  # noqa: DTZ001
                 ),
                 "text": "* Not before: 2025-07-05T00:00:00+00:00\n* Not after: 2025-07-06T00:00:00+00:00",
             },
@@ -924,25 +931,25 @@ class TestPrecertificateSignedCertificateTimestamps:
   </tr>
 </thead>
 <tbody>
-  
-  
+
+
   <tr>
     <td>Precertificate</td>
     <td>63:F2:DB:CD:E8:3B:CC:2C:CF:0B:72:84:27:57:6B:33:A4:8D:61:77:8F:BD:75:A6:38:B1:C7:68:54:4B:D8:8D</td>
     <td>2019-02-01 15:35:06.188000</td>
     <td>v1</td>
   </tr>
-  
-  
-  
+
+
+
   <tr>
     <td>Precertificate</td>
     <td>6F:53:76:AC:31:F0:31:19:D8:99:00:A4:51:15:FF:77:15:1C:11:D9:02:C1:00:29:06:8D:B2:08:9A:37:D9:13</td>
     <td>2019-02-01 15:35:06.526000</td>
     <td>v1</td>
   </tr>
-  
-  
+
+
 </tbody>
 </table>
 """,

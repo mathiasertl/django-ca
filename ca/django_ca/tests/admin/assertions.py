@@ -24,9 +24,7 @@ from pytest_django.asserts import assertInHTML
 from django_ca.tests.base.typehints import HttpResponse
 
 
-def assert_change_response(
-    response: "HttpResponse", media_css: tuple[tuple[str, str], ...] = tuple()
-) -> None:
+def assert_change_response(response: "HttpResponse", media_css: tuple[tuple[str, str], ...] = ()) -> None:
     """Assert that the passed response is a model change view."""
     assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}"
     templates = [t.name for t in response.templates]

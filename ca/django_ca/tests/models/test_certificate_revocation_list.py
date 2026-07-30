@@ -199,7 +199,7 @@ def test_use_tz_is_false_with_next_update(
     usable_root: CertificateAuthority, settings: SettingsWrapper
 ) -> None:
     """Generate a CRL with settings.USE_TZ = False and passing a timezone-naive next_update."""
-    next_update = datetime.now().replace(microsecond=10) + timedelta(days=2)
+    next_update = datetime.now(UTC).replace(microsecond=10) + timedelta(days=2)
     settings.USE_TZ = False
 
     obj = CertificateRevocationList.objects.create_certificate_revocation_list(

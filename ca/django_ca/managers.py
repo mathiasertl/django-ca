@@ -227,7 +227,7 @@ class CertificateAuthorityManager(
             ),
         )
 
-    def init(  # noqa: PLR0912,PLR0913,PLR0915
+    def init(  # noqa: PLR0912,PLR0913,PLR0915,PLR0917
         self,
         name: str,
         # If BaseModel is used, you can no longer pass subclasses without a mypy warning (-> variance)

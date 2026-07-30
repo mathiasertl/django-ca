@@ -231,9 +231,11 @@ if os.environ.get("DJANGO_CA_SKIP_LOCAL_CONFIGURATION") != "1":  # pragma: no br
     #       the first place.
     SECRET_KEY = load_secret_key(SECRET_KEY, SECRET_KEY_FILE)
 
-if CA_ENABLE_CLICKJACKING_PROTECTION is True:
-    if "django.middleware.clickjacking.XFrameOptionsMiddleware" not in MIDDLEWARE:
-        MIDDLEWARE.append("django.middleware.clickjacking.XFrameOptionsMiddleware")
+if (
+    CA_ENABLE_CLICKJACKING_PROTECTION
+    and "django.middleware.clickjacking.XFrameOptionsMiddleware" not in MIDDLEWARE
+):
+    MIDDLEWARE.append("django.middleware.clickjacking.XFrameOptionsMiddleware")
 
 # Set ALLOWED_HOSTS to CA_DEFAULT_HOSTNAME if the former is not yet defined but the latter isn't
 if not ALLOWED_HOSTS and CA_DEFAULT_HOSTNAME:

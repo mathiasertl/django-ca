@@ -227,7 +227,9 @@ def test_invalid_responder_key(caplog: LogCaptureFixture, client: Client, child_
         stream.write(b"bogus")
 
     response = ocsp_get(client, child_cert, hash_algorithm=hashes.SHA512)
-    assert caplog.record_tuples == [("django_ca.views", logging.ERROR, "Could not decrypt private key.")]
+    assert caplog.record_tuples == [
+        ("django_ca.views", logging.ERROR, "Uncaught exception when retrieving OCSP response.")
+    ]
     assert response.status_code == HTTPStatus.OK
     ocsp_response = ocsp.load_der_ocsp_response(response.content)
     assert ocsp_response.response_status == ocsp.OCSPResponseStatus.INTERNAL_ERROR

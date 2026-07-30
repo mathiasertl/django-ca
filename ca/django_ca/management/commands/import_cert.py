@@ -44,7 +44,7 @@ The authority that that signed the certificate must exist in the database."""
         # load public key
         try:
             pub_loaded = x509.load_pem_x509_certificate(pub_data)
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             try:
                 pub_loaded = x509.load_der_x509_certificate(pub_data)
             except Exception as ex:

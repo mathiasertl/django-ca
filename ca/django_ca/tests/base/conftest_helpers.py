@@ -19,7 +19,7 @@ import sys
 import typing
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import coverage
 
@@ -332,12 +332,12 @@ def load_ca(
 
 def generate_hsm_ca_fixture(
     key_type: SupportedKeyType,
-) -> typing.Callable[[Literal[None], HSMBackend, x509.Name], Certificate]:
+) -> typing.Callable[[None, HSMBackend, x509.Name], Certificate]:
     """Generate a fixture to initialize an HSM CA."""
 
     @pytest.fixture
     def fixture(
-        db: Literal[None],  # pylint: disable=unused-argument
+        db: None,  # pylint: disable=unused-argument
         hsm_backend: HSMBackend,
         subject: x509.Name,
     ) -> CertificateAuthority:  # pragma: hsm

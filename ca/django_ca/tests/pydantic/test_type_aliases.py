@@ -150,6 +150,6 @@ def test_future_aware_datetime_with_past_date() -> None:
 
 def test_future_aware_datetime_with_unaware_datetime() -> None:
     """Test FutureAwareDatetime with an unaware datetime."""
-    future = datetime.now() + timedelta(days=1)
+    future = datetime.now() + timedelta(days=1)  # noqa: DTZ005  # what we test
     with pytest.raises(ValueError, match="Input should have timezone info"):
         FutureAwareDatetimeModel(value=future)

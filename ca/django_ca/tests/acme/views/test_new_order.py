@@ -175,7 +175,7 @@ def test_no_identifiers(client: Client, url: str, root: CertificateAuthority, ki
         client,
         url,
         root,
-        acme.messages.NewOrder(identifiers=tuple()),
+        acme.messages.NewOrder(identifiers=()),
         kid=kid,
         payload_cb=lambda d: dict(d, identifiers=()),
     )

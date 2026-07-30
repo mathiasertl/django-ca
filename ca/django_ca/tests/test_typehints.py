@@ -72,5 +72,5 @@ def test_end_entity_certificate_extension_keys() -> None:
 def test_extension_types_equality(extension_types: Any, extensions: Any) -> None:
     """Test that extension_types typehints match the full extension typehints."""
     assert sorted(get_args(extension_types), key=_extension_type_sorter) == sorted(
-        list(get_args(ext)[0] for ext in get_args(extensions)), key=_extension_type_sorter
+        [get_args(ext)[0] for ext in get_args(extensions)], key=_extension_type_sorter
     )

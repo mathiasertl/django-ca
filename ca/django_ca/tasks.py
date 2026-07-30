@@ -351,8 +351,8 @@ def acme_validate_challenge(challenge_pk: int) -> None:
                     # But fetch one extra byte (if available) to make sure that response has no extra bytes
                     received = response.raw.read(len(expected) + 1, decode_content=True)
                     challenge_valid = received == expected
-        except Exception as ex:  # pylint: disable=broad-except
-            log.exception(ex)
+        except Exception:  # pylint: disable=broad-except
+            log.exception("Uncaught HTTP challenge validation exception.")
     elif challenge.type == AcmeChallenge.TYPE_DNS_01:
         challenge_valid = validate_dns_01(challenge)
     else:  # pragma: no cover
