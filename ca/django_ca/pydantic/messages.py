@@ -75,6 +75,7 @@ class SignCertificateMessage(ResignCertificateMessage):
     profile: str = Field(
         description="Issue the certificate with the given profile.",
         default=model_settings.CA_DEFAULT_PROFILE,
-        json_schema_extra={"enum": sorted(model_settings.CA_PROFILES)},
+        # TYPEHINT NOTE: false positive (list[str] is fine JSON of course).
+        json_schema_extra={"enum": sorted(model_settings.CA_PROFILES)},  # type: ignore[dict-item]
     )
     subject: NameModel = Field(description="The subject as list of name attributes.")

@@ -49,7 +49,7 @@ HASH_ALGORITHM_CHOICES = (
 
 
 def _initial_expires() -> datetime:
-    return datetime.now(tz=UTC).date() + model_settings.CA_DEFAULT_EXPIRES
+    return datetime.now(tz=UTC).today() + model_settings.CA_DEFAULT_EXPIRES
 
 
 def _profile_choices() -> Iterable[tuple[str, str]]:
