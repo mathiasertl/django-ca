@@ -447,6 +447,13 @@ CA_ENABLE_ACME
    Note that even when enabled, you need to explicitly enable ACMEv2 support for a certificate authority
    either via the admin interface or via :doc:`the command-line interface </cli/cas>`.
 
+.. _CA_ACME_NONCE_TIMEOUT:
+
+CA_ACME_NONCE_TIMEOUT
+    .. pydantic-setting:: CA_ACME_NONCE_TIMEOUT
+
+    An integer value will be parsed as a number of *days*. The maximum value is one day.
+
 .. _CA_ACME_DEFAULT_CERT_VALIDITY:
 
 CA_ACME_DEFAULT_CERT_VALIDITY

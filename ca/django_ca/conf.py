@@ -248,6 +248,12 @@ class SettingsModel(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, frozen=True, arbitrary_types_allowed=True)
 
+    CA_ACME_NONCE_TIMEOUT: Annotated[
+        timedelta, Ge(timedelta(seconds=60)), Le(timedelta(days=1)), DayValidator
+    ] = Field(
+        default=timedelta(hours=1),
+        description="The time an ACME nonce remains valid after being issued.",
+    )
     CA_ACME_ORDER_VALIDITY: Annotated[
         timedelta, Ge(timedelta(seconds=60)), Le(timedelta(days=1)), DayValidator
     ] = Field(

@@ -6,7 +6,8 @@
 Settings
 ********
 
-No changes yet.
+* Add :ref:`CA_ACME_NONCE_TIMEOUT <CA_ACME_NONCE_TIMEOUT>` to configure how long an ACME nonce remains
+  valid after being issued.
 
 ******
 ACMEv2
@@ -16,6 +17,9 @@ ACMEv2
   <https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5>`_.
 * Implement Orders List endpoint as specified in `RFC 8555, section 7.1.2.1
   <https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.2.1>`_.
+* ACME nonce lifetime is now configured independently of the default cache configuration via the
+  :ref:`CA_ACME_NONCE_TIMEOUT <CA_ACME_NONCE_TIMEOUT>` setting mentioned above. This ensures that a cache
+  configured with an infinite lifetime won't cause nonces to stay valid forever.
 
 *************
 OCSP and CRLs

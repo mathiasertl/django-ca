@@ -214,7 +214,8 @@ class AcmeGetNonceViewMixin:
         """Get a random Nonce and add it to the cache."""
         data = secrets.token_bytes(self.nonce_length)
         nonce = jose.json_util.encode_b64jose(data)
-        cache.set(self.get_cache_key(nonce), 0)
+        timeout = model_settings.CA_ACME_NONCE_TIMEOUT.total_seconds()
+        cache.set(self.get_cache_key(nonce), 0, timeout)
         return nonce
 
     def validate_nonce(self, nonce: str) -> bool:
