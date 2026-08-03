@@ -18,9 +18,6 @@
 
 import logging
 from datetime import UTC, datetime, timedelta
-from http import HTTPStatus
-
-import requests
 
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
@@ -30,7 +27,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
-from django_ca.acme.validation import validate_dns_01
+from django_ca.acme.validation import validate_dns_01, validate_http_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
     ApiSignCertificateTaskArgs,
@@ -326,33 +323,11 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         log.error("%s: Authentication is not usable", challenge)
         return
 
-    # General data for challenge validation
-    value = challenge.auth.value
-
     # Challenge is marked as invalid by default
     challenge_valid = False
 
-    # Validate HTTP challenge (only thing supported so far)
     if challenge.type == AcmeChallenge.TYPE_HTTP_01:
-        decoded_token = challenge.encoded_token.decode("utf-8")
-        expected = challenge.expected
-
-        if requests is None:  # pragma: no cover
-            log.error("requests is not installed, cannot do http-01 challenge validation.")
-            return
-
-        url = f"http://{value}/.well-known/acme-challenge/{decoded_token}"
-
-        try:
-            with requests.get(url, timeout=1, stream=True, allow_redirects=False) as response:
-                # Only fetch the response body if the status code is HTTP 200 (OK)
-                if response.status_code == HTTPStatus.OK:
-                    # Only fetch the expected number of bytes to prevent a large file ending up in memory
-                    # But fetch one extra byte (if available) to make sure that response has no extra bytes
-                    received = response.raw.read(len(expected) + 1, decode_content=True)
-                    challenge_valid = received == expected
-        except Exception:  # pylint: disable=broad-except
-            log.exception("Uncaught HTTP challenge validation exception.")
+        challenge_valid = validate_http_01(challenge)
     elif challenge.type == AcmeChallenge.TYPE_DNS_01:
         challenge_valid = validate_dns_01(challenge)
     else:  # pragma: no cover

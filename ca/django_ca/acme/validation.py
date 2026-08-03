@@ -14,13 +14,49 @@
 """Module collecting methods for ACME challenge validation."""
 
 import logging
+from http import HTTPStatus
 
 import dns.exception
+import requests
 from dns import resolver
 
 from django_ca.models import AcmeChallenge
 
 log = logging.getLogger(__name__)
+
+
+def validate_http_01(challenge: AcmeChallenge) -> bool:
+    """Function to validate an HTTP-01 challenge.
+
+    .. seealso:: `RFC 8555, section 8.3 <https://datatracker.ietf.org/doc/html/rfc8555#section-8.3>`_
+
+    Parameters
+    ----------
+    challenge : :py:class:`~django_ca.models.AcmeChallenge`
+        The challenge to validate.
+    timeout: int, optional
+        Timeout in seconds for the HTTP request.
+    """
+    if challenge.type != AcmeChallenge.TYPE_HTTP_01:
+        raise ValueError("This function can only validate HTTP-01 challenges")
+
+    domain = challenge.auth.value
+    decoded_token = challenge.encoded_token.decode("utf-8")
+    expected = challenge.expected
+    url = f"http://{domain}/.well-known/acme-challenge/{decoded_token}"
+
+    try:
+        with requests.get(url, timeout=1, stream=True, allow_redirects=False) as response:
+            # Only fetch the response body if the status code is HTTP 200 (OK)
+            if response.status_code == HTTPStatus.OK:
+                # Only fetch the expected number of bytes to prevent a large file ending up in memory.
+                # Fetch one extra byte (if available) to detect responses with trailing content.
+                received = response.raw.read(len(expected) + 1, decode_content=True)
+                return received == expected
+    except Exception:  # pylint: disable=broad-except
+        log.exception("Uncaught HTTP challenge validation exception.")
+
+    return False
 
 
 def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
