@@ -29,6 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.test import Client
 
 import pytest
+from pytest_django.fixtures import SettingsWrapper
 
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug as make_slug
 from django_ca.tests.acme.views.assertions import assert_acme_response, assert_malformed
@@ -55,7 +56,7 @@ def _make_new_jwk(new_key: CertificateIssuerPrivateKeyTypes = NEW_KEY) -> jose.j
     return jose.jwk.JWKRSA(key=comparable)
 
 
-def key_change_request(
+def key_change_request(  # pylint: disable=too-many-locals  # noqa: PLR0913,PLR0917
     client: Client,
     url: str,
     ca: CertificateAuthority,
@@ -65,12 +66,14 @@ def key_change_request(
     new_key: CertificateIssuerPrivateKeyTypes = NEW_KEY,
     inner_url: str | None = None,
     inner_nonce: bytes | None = None,
+    inner_alg: jose.jwa.JWASignature = jose.jwa.RS256,
     payload_cb: Any = None,
 ) -> Any:
     """Build and send a key-change ACME request.
 
     The outer JWS is signed by *old_key* (defaults to the standard test key) and the inner JWS is signed
-    by *new_key*. ``inner_url`` defaults to ``url`` (the key-change URL), matching the outer URL.
+    by *new_key* using *inner_alg* (defaults to RS256). ``inner_url`` defaults to ``url`` (the key-change
+    URL), matching the outer URL.
     """
     nonce = get_nonce(client, ca)
     if old_key is None:
@@ -97,7 +100,7 @@ def key_change_request(
     inner_jws = acme.jws.JWS.sign(
         inner_payload_bytes,
         new_jwk,
-        jose.jwa.RS256,
+        inner_alg,
         nonce=inner_nonce,
         url=inner_url,
         kid=None,
@@ -285,6 +288,23 @@ def test_inner_jws_with_nonce(
     account_url = absolute_acme_uri(":acme-account", serial=root.serial, slug=account_slug)
     resp = key_change_request(client, url, root, kid, account_url, inner_nonce=b"foobar")
     assert_malformed(resp, root, 'Inner JWS MUST omit the "nonce" header parameter.')
+
+
+@pytest.mark.usefixtures("account")
+def test_inner_jws_disallowed_algorithm(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+    account_slug: str,
+    settings: SettingsWrapper,
+) -> None:
+    """Malformed when the inner JWS uses an algorithm not in the allowlist."""
+    # RS256 is allowed (for the outer JWS to pass); PS256 is not.
+    settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS = ("RS256",)
+    account_url = absolute_acme_uri(":acme-account", serial=root.serial, slug=account_slug)
+    resp = key_change_request(client, url, root, kid, account_url, inner_alg=jose.jwa.PS256)
+    assert_malformed(resp, root, "Inner JWS algorithm 'PS256' is not allowed.")
 
 
 @pytest.mark.usefixtures("account")

@@ -50,7 +50,7 @@ from django_ca.pydantic.validators import (
     name_oid_parser,
     timedelta_as_number_parser,
 )
-from django_ca.typehints import ParsableKeyType, SignatureHashAlgorithm
+from django_ca.typehints import JwsAlgorithmName, ParsableKeyType, SignatureHashAlgorithm
 
 BaseModelTypeVar = TypeVar("BaseModelTypeVar", bound=BaseModel)
 DayValidator = BeforeValidator(timedelta_as_number_parser("days"))
@@ -263,6 +263,10 @@ class SettingsModel(BaseModel):
     CA_ACME_DEFAULT_CERT_VALIDITY: AcmeCertValidity = Field(
         default=timedelta(days=45),
         description="The default validity time any certificate issued via ACME is valid.",
+    )
+    CA_ACME_JWS_SIGNATURE_ALGORITHMS: UniqueElementsTuple[tuple[JwsAlgorithmName, ...]] = Field(
+        default=("ES256", "ES384", "ES512", "PS256", "PS384", "PS512", "RS256", "RS384", "RS512"),
+        description="The JWS signature algorithms accepted for ACME requests.",
     )
     CA_ACME_MAX_CERT_VALIDITY: AcmeCertValidity = Field(
         default=timedelta(days=90),

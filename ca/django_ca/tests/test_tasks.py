@@ -227,10 +227,15 @@ class AcmeValidateHttp01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Te
     def test_request_exception(self) -> None:
         """Test requests throwing an exception."""
         val = f"{__name__}.{self.__class__.__name__}.test_request_exception"
-        with self.patch("django_ca.acme.validation.requests.get", side_effect=Exception(val)) as req_mock, self.assertLogs() as logcm:
+        with (
+            self.patch("django_ca.acme.validation.requests.get", side_effect=Exception(val)) as req_mock,
+            self.assertLogs() as logcm,
+        ):
             tasks.acme_validate_challenge(self.chall.pk)
         self.assertInvalid()
-        assert req_mock.mock_calls == [((self.url,), {"timeout": 1, "stream": True, "allow_redirects": False})]
+        assert req_mock.mock_calls == [
+            ((self.url,), {"timeout": 1, "stream": True, "allow_redirects": False})
+        ]
         assert len(logcm.output) == 2
         assert val in logcm.output[0]
         assert logcm.output[1] == f"INFO:django_ca.tasks:{self.chall!s} is invalid"

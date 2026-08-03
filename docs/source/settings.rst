@@ -454,6 +454,14 @@ CA_ACME_NONCE_TIMEOUT
 
     An integer value will be parsed as a number of *days*. The maximum value is one day.
 
+.. _CA_ACME_JWS_SIGNATURE_ALGORITHMS:
+
+CA_ACME_JWS_SIGNATURE_ALGORITHMS
+    .. pydantic-setting:: CA_ACME_JWS_SIGNATURE_ALGORITHMS
+
+    Symmetric HMAC algorithms (``HS256``, ``HS384``, ``HS512``) are not valid values, as :rfc:`8555`
+    requires asymmetric keys for ACME requests.
+
 .. _CA_ACME_DEFAULT_CERT_VALIDITY:
 
 CA_ACME_DEFAULT_CERT_VALIDITY

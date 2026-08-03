@@ -15,12 +15,15 @@
 
 from typing import Any, get_args
 
+from josepy import jwa
+
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
 
 import pytest
 
 from django_ca import constants, typehints
+from django_ca.conf import model_settings
 from django_ca.tests.test_constants import oid_sorter
 
 
@@ -32,6 +35,22 @@ def _extension_type_sorter(extension_type: type[x509.ExtensionType]) -> str:
     if extension_type == x509.UnrecognizedExtension:
         return ""
     return extension_type.oid.dotted_string
+
+
+def test_jws_algorithm_names() -> None:
+    """Test that JwsAlgorithmName matches josepy's asymmetric algorithms (HS* excluded)."""
+    # HS* algorithms are symmetric and must not be allowed for ACME (RFC 8555 requires asymmetric keys).
+    excluded = {name for name in jwa.JWASignature.SIGNATURES if name.startswith("HS")}
+    expected = sorted(jwa.JWASignature.SIGNATURES.keys() - excluded)
+    actual = sorted(get_args(typehints.JwsAlgorithmName))
+    assert actual == expected
+
+
+def test_jws_algorithm_names_model_settings_default() -> None:
+    """Test that the CA_ACME_JWS_SIGNATURE_ALGORITHMS default matches JwsAlgorithmName exactly."""
+    expected = sorted(get_args(typehints.JwsAlgorithmName))
+    actual = sorted(model_settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS)
+    assert actual == expected
 
 
 def test_configurable_extension_keys() -> None:

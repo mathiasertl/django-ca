@@ -96,6 +96,22 @@ SignatureHashAlgorithmNameWithLegacy = Literal["MD5", "SHA1"] | SignatureHashAlg
 This value is used when displaying data which may include legacy signatures.
 """
 
+JwsAlgorithmName = Literal[
+    # Algorithm names are defined in RFC 7518 (JSON Web Algorithms).
+    # HS* (symmetric HMAC) algorithms are intentionally excluded: RFC 8555 requires asymmetric keys,
+    # and josepy would raise an AssertionError on key-type mismatch before verification completes.
+    "ES256",
+    "ES384",
+    "ES512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "RS256",
+    "RS384",
+    "RS512",
+]
+"""Names of asymmetric JWS signature algorithms valid for ACME (RFC 8555), as defined in RFC 7518."""
+
 #: Serialized values of :py:class:`~cg:cryptography.x509.certificate_transparency.LogEntryType` instances.
 LogEntryTypeName = Literal["precertificate", "x509_certificate"]
 

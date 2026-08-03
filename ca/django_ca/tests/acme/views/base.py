@@ -174,6 +174,20 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         resp = acme_request(client, url, root, message, kid=kid)
         assert_malformed(resp, root, expected)
 
+    def test_disallowed_jws_algorithm(
+        self,
+        client: Client,
+        url: str,
+        message: MessageTypeVar,
+        root: CertificateAuthority,
+        kid: str | None,
+        settings: SettingsWrapper,
+    ) -> None:
+        """Test that a JWS signed with a disallowed algorithm is rejected."""
+        settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS = ()
+        resp = acme_request(client, url, root, message, kid=kid)
+        assert_malformed(resp, root, "JWS algorithm 'RS256' is not allowed.")
+
     def test_invalid_jws(
         self,
         client: Client,

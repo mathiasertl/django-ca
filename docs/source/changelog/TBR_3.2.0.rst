@@ -8,6 +8,8 @@ Settings
 
 * Add :ref:`CA_ACME_NONCE_TIMEOUT <CA_ACME_NONCE_TIMEOUT>` to configure how long an ACME nonce remains
   valid after being issued.
+* Add :ref:`CA_ACME_JWS_SIGNATURE_ALGORITHMS <CA_ACME_JWS_SIGNATURE_ALGORITHMS>` to restrict which JWS
+  signature algorithms are accepted for ACME requests.
 
 ******
 ACMEv2
@@ -21,6 +23,10 @@ ACMEv2
   :ref:`CA_ACME_NONCE_TIMEOUT <CA_ACME_NONCE_TIMEOUT>` setting mentioned above. This ensures that a cache
   configured with an infinite lifetime won't cause nonces to stay valid forever.
 * No longer follow redirects when validating ``http-01`` challenges.
+* The JWS signature algorithm is now validated against
+  :ref:`CA_ACME_JWS_SIGNATURE_ALGORITHMS <CA_ACME_JWS_SIGNATURE_ALGORITHMS>`. Symmetric HMAC algorithms
+  (``HS256``, ``HS384``, ``HS512``) are no longer accepted. The algorithm is also validated for the inner
+  JWS in key-rollover requests.
 
 *************
 OCSP and CRLs

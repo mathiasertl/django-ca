@@ -409,6 +409,9 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # ... "alg"
             return AcmeResponseMalformed(message="No algorithm specified.")
 
+        if combined.alg.name not in model_settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS:
+            return AcmeResponseMalformed(message=f"JWS algorithm {combined.alg.name!r} is not allowed.")
+
         # Verify JWS signature
         try:
             if not self.jws.verify(self.jwk):
@@ -1353,6 +1356,14 @@ class AcmeKeyChangeView(AcmeBaseView):
 
         new_jwk = inner_combined.jwk
         assert isinstance(new_jwk, jose.jwk.JWK)
+
+        if (
+            inner_combined.alg
+            and inner_combined.alg.name not in model_settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS
+        ):
+            return AcmeResponseMalformed(
+                message=f"Inner JWS algorithm {inner_combined.alg.name!r} is not allowed."
+            )
 
         # 4. Check that the inner JWS verifies using the key in its "jwk" field.
         try:
