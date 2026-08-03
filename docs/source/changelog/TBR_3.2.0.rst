@@ -20,6 +20,7 @@ ACMEv2
 * ACME nonce lifetime is now configured independently of the default cache configuration via the
   :ref:`CA_ACME_NONCE_TIMEOUT <CA_ACME_NONCE_TIMEOUT>` setting mentioned above. This ensures that a cache
   configured with an infinite lifetime won't cause nonces to stay valid forever.
+* No longer follow redirects when validating ``http-01`` challenges.
 
 *************
 OCSP and CRLs

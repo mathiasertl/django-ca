@@ -344,7 +344,7 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         url = f"http://{value}/.well-known/acme-challenge/{decoded_token}"
 
         try:
-            with requests.get(url, timeout=1, stream=True) as response:
+            with requests.get(url, timeout=1, stream=True, allow_redirects=False) as response:
                 # Only fetch the response body if the status code is HTTP 200 (OK)
                 if response.status_code == HTTPStatus.OK:
                     # Only fetch the expected number of bytes to prevent a large file ending up in memory
