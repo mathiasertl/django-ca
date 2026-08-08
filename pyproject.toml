@@ -10,7 +10,7 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["49", "50"]
-acme = ["5.6"]
+acme = ["5.6", "5.7"]
 pydantic = ["2.13"]
 josepy = ["2.2"]
 # Newest uv release: https://pypi.org/project/uv/
@@ -561,7 +561,10 @@ conflicts = [
         { group = "cryptography49" },
         { group = "cryptography50" },
     ],
-    #[ { group = "acme5.6" }, ],
+    [
+        { group = "acme5.6" },
+        { group = "acme5.7" },
+    ],
     #[ { group = "pydantic2.13" }, ],
 ]
 
@@ -645,5 +648,6 @@ gunicorn = [ "gunicorn>=23" ]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
 "cryptography49" = ["cryptography~=49.0"]
 "cryptography50" = ["cryptography~=50.0"]
-"acme5.6" = ["acme>=5.6,<5.8"]
+"acme5.6" = ["acme~=5.6.0"]
+"acme5.7" = ["acme~=5.7.0"]
 "pydantic2.13" = ["pydantic~=2.13.0"]
