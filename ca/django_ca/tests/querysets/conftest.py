@@ -20,7 +20,7 @@ from typing import Generic, TypeVar
 from django.utils import timezone
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.querysets import CertificateAuthorityQuerySet, CertificateQuerySet
@@ -95,7 +95,7 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
     def test_for_ocsp_cache_with_valid_entry(
-        self, settings: SettingsWrapper, obj: ModelTypeVar, queryset: QuerySetTypeVar
+        self, settings: Settings, obj: ModelTypeVar, queryset: QuerySetTypeVar
     ) -> None:
         """Test :py:func:`~django_ca.querysets.X509CertMixinQuerySet.for_ocsp_cache` with a valid entry."""
         settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = timedelta(days=1)
@@ -106,7 +106,7 @@ class X509CertMixinQuerySetTestCaseBase(Generic[ModelTypeVar, QuerySetTypeVar], 
     @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
     @pytest.mark.requires_ca("child")
     def test_for_ocsp_cache_with_renewal_entry(
-        self, settings: SettingsWrapper, obj: ModelTypeVar, queryset: QuerySetTypeVar
+        self, settings: Settings, obj: ModelTypeVar, queryset: QuerySetTypeVar
     ) -> None:
         """Test `for_ocsp_cache` with an entry scheduled for removal."""
         settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = timedelta(days=1)

@@ -20,7 +20,7 @@ from django.urls import reverse
 
 import pytest
 from pytest_django import DjangoAssertNumQueries
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.tests.base.constants import CERT_DATA
 
@@ -52,7 +52,7 @@ def test_get_request(django_assert_num_queries: DjangoAssertNumQueries, client: 
     assert response["cache-control"] == "no-store"
 
 
-def test_disabled(settings: SettingsWrapper, client: Client) -> None:
+def test_disabled(settings: Settings, client: Client) -> None:
     """Test that CA_ENABLE_ACME=False means HTTP 404."""
     settings.CA_ENABLE_ACME = False
     response = client.head(URL)

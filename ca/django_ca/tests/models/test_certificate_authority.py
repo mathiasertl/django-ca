@@ -41,7 +41,7 @@ from django.db import connection
 import pytest
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.conf import model_settings
 from django_ca.key_backends.storages import StoragesOCSPBackend
@@ -181,7 +181,7 @@ def test_generate_crls_with_force(usable_root: CertificateAuthority) -> None:
     ),
 )
 def test_generate_crls_with_profiles(
-    settings: SettingsWrapper, usable_root: CertificateAuthority, parameters: dict[str, Any]
+    settings: Settings, usable_root: CertificateAuthority, parameters: dict[str, Any]
 ) -> None:
     """Test generate_crls() with various CRL profiles."""
     settings.CA_CRL_PROFILES = {"test": parameters}
@@ -200,7 +200,7 @@ def test_generate_crls_with_profiles(
 
 @pytest.mark.usefixtures("clear_cache")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_generate_crls_with_overrides(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
+def test_generate_crls_with_overrides(settings: Settings, usable_root: CertificateAuthority) -> None:
     """Test generate_crls() with overrides for CRL profiles."""
     ca_crl_profile = model_settings.CA_CRL_PROFILES["user"].model_dump(exclude={"encodings", "scope"})
     ca_crl_profile["OVERRIDES"] = {usable_root.serial: {"expires": timedelta(days=3)}}
@@ -219,7 +219,7 @@ def test_generate_crls_with_overrides(settings: SettingsWrapper, usable_root: Ce
 
 @pytest.mark.usefixtures("clear_cache")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_generate_crls_with_skip(settings: SettingsWrapper, usable_root: CertificateAuthority) -> None:
+def test_generate_crls_with_skip(settings: Settings, usable_root: CertificateAuthority) -> None:
     """Test the skip option in CRL profiles."""
     crl_profiles = {
         k: v.model_dump(exclude={"encodings", "scope"}) for k, v in model_settings.CA_CRL_PROFILES.items()

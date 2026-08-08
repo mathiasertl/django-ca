@@ -24,7 +24,7 @@ from django.utils import timezone
 
 import pytest
 from _pytest.fixtures import SubRequest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import ExtensionOID
 from django_ca.models import Certificate, CertificateAuthority, Watcher
@@ -147,7 +147,7 @@ def test_with_expires(root_cert: Certificate) -> None:
 
 
 @pytest.mark.usefixtures("usable_root")
-def test_overwrite(settings: SettingsWrapper, root_cert: Certificate) -> None:
+def test_overwrite(settings: Settings, root_cert: Certificate) -> None:
     """Test overwriting extensions."""
     settings.CA_DEFAULT_SUBJECT = ()
     watcher = "new@example.com"
@@ -165,7 +165,7 @@ def test_overwrite(settings: SettingsWrapper, root_cert: Certificate) -> None:
 
 
 @pytest.mark.usefixtures("usable_root")
-def test_cert_profile(settings: SettingsWrapper, root_cert: Certificate) -> None:
+def test_cert_profile(settings: Settings, root_cert: Certificate) -> None:
     """Test passing a profile."""
     settings.CA_PROFILES = {"server": {"expires": 200}, "webserver": {}}
     settings.CA_DEFAULT_EXPIRES = 31

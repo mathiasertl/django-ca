@@ -29,7 +29,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.conf import model_settings
 from django_ca.constants import ExtensionOID
@@ -138,7 +138,7 @@ def test_with_rsa_with_algorithm(usable_root: CertificateAuthority, subject: x50
 
 
 def test_subject_sort_with_profile_subject(
-    settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str
+    settings: Settings, usable_root: CertificateAuthority, hostname: str
 ) -> None:
     """Test that subject is sorted on the command line.
 
@@ -168,7 +168,7 @@ def test_subject_sort_with_profile_subject(
 
 
 def test_subject_sort_with_no_common_name(
-    settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str
+    settings: Settings, usable_root: CertificateAuthority, hostname: str
 ) -> None:
     """Test that the subject is sorted when the CommonName is added via SubjectAlternativeName.
 
@@ -211,7 +211,7 @@ def test_no_san(usable_root: CertificateAuthority, subject: x509.Name) -> None:
     assert stderr == ""
 
 
-def test_profile_subject(settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str) -> None:
+def test_profile_subject(settings: Settings, usable_root: CertificateAuthority, hostname: str) -> None:
     """Test signing with a subject in the profile."""
     # first, we only pass an subjectAltName, meaning that even the CommonName is used.
     settings.CA_PROFILES = {}
@@ -588,7 +588,7 @@ def test_multiple_sans(usable_root: CertificateAuthority, subject: x509.Name, rf
     )
 
 
-def test_no_subject(settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str) -> None:
+def test_no_subject(settings: Settings, usable_root: CertificateAuthority, hostname: str) -> None:
     """Test signing without a subject (but SANs)."""
     settings.CA_PROFILES = {}
     settings.CA_DEFAULT_SUBJECT = ()
@@ -627,7 +627,7 @@ def test_hsm_backend(usable_hsm_ca: CertificateAuthority, subject: x509.Name) ->
 
 
 def test_encrypted_ca_with_settings(
-    usable_pwd: CertificateAuthority, subject: x509.Name, settings: SettingsWrapper
+    usable_pwd: CertificateAuthority, subject: x509.Name, settings: Settings
 ) -> None:
     """Sign a certificate with an encrypted CA, with the password in CA_PASSWORDS."""
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA[usable_pwd.name]["password"]}
@@ -648,7 +648,7 @@ def test_unencrypted_ca_with_password(usable_root: CertificateAuthority, subject
 
 
 def test_encrypted_ca_with_no_password(
-    usable_pwd: CertificateAuthority, subject: x509.Name, settings: SettingsWrapper
+    usable_pwd: CertificateAuthority, subject: x509.Name, settings: Settings
 ) -> None:
     """Test signing with a CA that is protected with a password, but not giving a password."""
     settings.CA_PASSWORDS = {}
@@ -684,7 +684,7 @@ def test_unparsable_private_key(usable_root: CertificateAuthority, subject: x509
 
 
 def test_unsortable_subject_with_no_profile_subject(
-    settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str
+    settings: Settings, usable_root: CertificateAuthority, hostname: str
 ) -> None:
     """Test passing a subject that cannot be sorted.
 
@@ -712,7 +712,7 @@ def test_unsortable_subject_with_no_profile_subject(
 
 
 def test_unsortable_subject_with_profile_subject(
-    settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str
+    settings: Settings, usable_root: CertificateAuthority, hostname: str
 ) -> None:
     """Test passing a subject that cannot be sorted, but the profile also defines a subject.
 
@@ -730,7 +730,7 @@ def test_unsortable_subject_with_profile_subject(
 
 
 def test_unsortable_subject_with_no_common_name(
-    settings: SettingsWrapper, usable_root: CertificateAuthority, hostname: str
+    settings: Settings, usable_root: CertificateAuthority, hostname: str
 ) -> None:
     """Test passing a subject that cannot be sorted and has no CommonName.
 

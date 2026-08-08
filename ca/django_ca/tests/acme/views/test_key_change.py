@@ -29,7 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.test import Client
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import AcmeAccount, CertificateAuthority, acme_slug as make_slug
 from django_ca.tests.acme.views.assertions import assert_acme_response, assert_malformed
@@ -297,7 +297,7 @@ def test_inner_jws_disallowed_algorithm(
     root: CertificateAuthority,
     kid: str,
     account_slug: str,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """Malformed when the inner JWS uses an algorithm not in the allowlist."""
     # RS256 is allowed (for the outer JWS to pass); PS256 is not.

@@ -22,7 +22,7 @@ from django.urls import reverse
 import pytest
 from freezegun import freeze_time
 from pytest_django import DjangoAssertNumQueries
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.base.constants import TIMESTAMPS
@@ -159,7 +159,7 @@ def test_expired_ca(client: Client) -> None:
 
 
 @pytest.mark.usefixtures("root")  # otherwise we wouldn't find anything ever anyway
-def test_disabled(client: Client, settings: SettingsWrapper) -> None:
+def test_disabled(client: Client, settings: Settings) -> None:
     """Test that CA_ENABLE_ACME=False means HTTP 404."""
     settings.CA_ENABLE_ACME = False
     response = client.get(URL)

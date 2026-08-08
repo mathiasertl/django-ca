@@ -17,7 +17,7 @@ import argparse
 from unittest.mock import patch
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import KeyBackend, key_backends
@@ -52,7 +52,7 @@ def test_key_backends_getitem_with_invalid_backend() -> None:
         key_backends["wrong-backend"]
 
 
-def test_key_backends_iter(settings: SettingsWrapper) -> None:
+def test_key_backends_iter(settings: Settings) -> None:
     """Test dict-style lookup ."""
     assert list(key_backends) == [
         key_backends[DEFAULT_KEY_BACKEND_KEY],
@@ -78,7 +78,7 @@ def test_key_backends_iter(settings: SettingsWrapper) -> None:
     ]
 
 
-def test_key_backends_class_not_found(settings: SettingsWrapper) -> None:
+def test_key_backends_class_not_found(settings: Settings) -> None:
     """Test configuring a class that cannot be found."""
     settings.CA_KEY_BACKENDS = {
         DEFAULT_KEY_BACKEND_KEY: {
@@ -93,7 +93,7 @@ def test_key_backends_class_not_found(settings: SettingsWrapper) -> None:
         key_backends[DEFAULT_KEY_BACKEND_KEY]
 
 
-def test_key_backends_class_is_not_key_backend(settings: SettingsWrapper) -> None:
+def test_key_backends_class_is_not_key_backend(settings: Settings) -> None:
     """Test configuring a class that is not a KeyBackend subclass."""
     backend_path = f"{DummyModel.__module__}.DummyModel"
     settings.CA_KEY_BACKENDS = {
@@ -107,7 +107,7 @@ def test_key_backends_class_is_not_key_backend(settings: SettingsWrapper) -> Non
         key_backends[DEFAULT_KEY_BACKEND_KEY]
 
 
-def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
+def test_key_backend_overwritten_methods(settings: Settings) -> None:
     """Test methods usually overwritten by StoragesBackend."""
     settings.CA_KEY_BACKENDS = {
         DEFAULT_KEY_BACKEND_KEY: {
@@ -125,7 +125,7 @@ def test_key_backend_overwritten_methods(settings: SettingsWrapper) -> None:
     assert backend.add_store_private_key_arguments(group) is None  # type: ignore[func-returns-value]
 
 
-def test_sign_data_not_implemented(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+def test_sign_data_not_implemented(settings: Settings, root: CertificateAuthority) -> None:
     """Test that the default sign_data() method raises NotImplementedError."""
     settings.CA_KEY_BACKENDS = {
         DEFAULT_KEY_BACKEND_KEY: {

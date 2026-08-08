@@ -16,7 +16,7 @@
 from pathlib import Path
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import key_backends
@@ -48,7 +48,7 @@ def test_private_key_options_with_invalid_key_size(key_size: int) -> None:
 
 
 @pytest.mark.usefixtures("clean_key_backends")
-def test_invalid_storages_alias(settings: SettingsWrapper) -> None:
+def test_invalid_storages_alias(settings: Settings) -> None:
     """Test configuring an invalid storage alias."""
     settings.CA_KEY_BACKENDS = {
         DEFAULT_KEY_BACKEND_KEY: {
@@ -62,7 +62,7 @@ def test_invalid_storages_alias(settings: SettingsWrapper) -> None:
         key_backends[DEFAULT_KEY_BACKEND_KEY]
 
 
-def test_eq(settings: SettingsWrapper) -> None:
+def test_eq(settings: Settings) -> None:
     """Test equality."""
     settings.STORAGES = {
         "foo-alias": {"BACKEND": "django.core.files.storage.FileSystemStorage"},

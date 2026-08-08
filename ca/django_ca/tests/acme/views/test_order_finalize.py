@@ -29,7 +29,7 @@ from django.test import Client
 from django.urls import reverse
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.acme.messages import CertificateRequest
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
@@ -94,7 +94,7 @@ def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthor
 
 @pytest.mark.parametrize("use_tz", (True, False))
 def test_basic(
-    settings: SettingsWrapper,
+    settings: Settings,
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
     client: Client,
     url: str,

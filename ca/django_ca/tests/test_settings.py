@@ -33,7 +33,7 @@ from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views import View
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from ca.settings_utils import (
     UrlPatternsModel,
@@ -103,7 +103,7 @@ def assert_url_config(
 
 
 @pytest.mark.parametrize("value", (True, False) * 5)
-def test_settings_module(settings: SettingsWrapper, value: bool) -> None:
+def test_settings_module(settings: Settings, value: bool) -> None:
     """Test setting a value in the settings module."""
     settings.CA_ENABLE_REST_API = value
     assert conf.model_settings.CA_ENABLE_REST_API is value
@@ -501,21 +501,21 @@ def test_load_secret_key_with_no_secret_key_file() -> None:
         load_secret_key(None, None)
 
 
-def test_ca_acme_order_validity_as_int(settings: SettingsWrapper) -> None:
+def test_ca_acme_order_validity_as_int(settings: Settings) -> None:
     """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
     settings.CA_ACME_ORDER_VALIDITY = 1
     assert model_settings.CA_ACME_ORDER_VALIDITY == timedelta(days=1)
 
 
 @pytest.mark.parametrize("setting", ("CA_ACME_DEFAULT_CERT_VALIDITY", "CA_ACME_MAX_CERT_VALIDITY"))
-def test_ca_acme_cert_validity_timedelta_settings_as_int(settings: SettingsWrapper, setting: str) -> None:
+def test_ca_acme_cert_validity_timedelta_settings_as_int(settings: Settings, setting: str) -> None:
     """Test that CA_DEFAULT_CERT_VALIDITY can be set to an int."""
     settings.CA_ACME_DEFAULT_CERT_VALIDITY = 1  # set to one to make sure it's always lower the max
     setattr(settings, setting, 2)
     assert getattr(model_settings, setting) == timedelta(days=2)
 
 
-def test_ca_acme_cert_validity_validation(settings: SettingsWrapper) -> None:
+def test_ca_acme_cert_validity_validation(settings: Settings) -> None:
     """Check error if default is higher than max validity (= makes no sense)."""
     settings.CA_ACME_DEFAULT_CERT_VALIDITY = 45
     msg = r"CA_ACME_DEFAULT_CERT_VALIDITY is greater then CA_ACME_MAX_CERT_VALIDITY\."
@@ -536,7 +536,7 @@ def test_ca_acme_cert_validity_validation(settings: SettingsWrapper) -> None:
     ),
 )
 def test_ca_acme_cert_validity_limits(
-    settings: SettingsWrapper, setting: str, value: int | timedelta, message: str
+    settings: Settings, setting: str, value: int | timedelta, message: str
 ) -> None:
     """Test limits for CA_ACME_DEFAULT_CERT_VALIDITY and CA_ACME_MAX_CERT_VALIDITY."""
     with assert_improperly_configured(message):
@@ -552,13 +552,13 @@ def test_ca_acme_cert_validity_limits(
         ("P2D", "Input should be less than or equal to 1 day"),
     ),
 )
-def test_ca_acme_order_validity_limits(settings: SettingsWrapper, value: timedelta, message: str) -> None:
+def test_ca_acme_order_validity_limits(settings: Settings, value: timedelta, message: str) -> None:
     """Test that CA_ACME_ORDER_VALIDITY can be set to an int."""
     with assert_improperly_configured(message):
         settings.CA_ACME_ORDER_VALIDITY = value
 
 
-def test_ca_crl_profiles_with_reason_codes(settings: SettingsWrapper) -> None:
+def test_ca_crl_profiles_with_reason_codes(settings: Settings) -> None:
     """Test only_some_reasons for CA_CRL_PROFILES."""
     settings.CA_CRL_PROFILES = {
         "ca": {"only_some_reasons": ["key_compromise", x509.ReasonFlags.ca_compromise]}
@@ -571,9 +571,7 @@ def test_ca_crl_profiles_with_reason_codes(settings: SettingsWrapper) -> None:
 
 
 @pytest.mark.parametrize("reason", (x509.ReasonFlags.unspecified, x509.ReasonFlags.remove_from_crl))
-def test_ca_crl_profiles_with_invalid_reason_codes(
-    settings: SettingsWrapper, reason: x509.ReasonFlags
-) -> None:
+def test_ca_crl_profiles_with_invalid_reason_codes(settings: Settings, reason: x509.ReasonFlags) -> None:
     """Test that an in valid only_some_reasons in CA_CRL_PROFILES raises an exception."""
     message = r"unspecified and remove_from_crl are not valid for `only_some_reasons`\."
     with assert_improperly_configured(message):
@@ -590,31 +588,31 @@ def test_ca_crl_profiles_with_invalid_reason_codes(
         (528891388214294454525193873483541400360266179579, "5CA44F619C74689E8C02DDC42FBE51D3053B23FB"),
     ),
 )
-def test_ca_default_ca(settings: SettingsWrapper, value: int, parsed: str) -> None:
+def test_ca_default_ca(settings: Settings, value: int, parsed: str) -> None:
     """Test that a '0' serial is not stripped."""
     settings.CA_DEFAULT_CA = value
     assert model_settings.CA_DEFAULT_CA == parsed
 
 
-def test_ca_default_ca_with_invalid_value(settings: SettingsWrapper) -> None:
+def test_ca_default_ca_with_invalid_value(settings: Settings) -> None:
     """Test setting an invalid CA."""
     with assert_improperly_configured(r"String should match pattern"):
         settings.CA_DEFAULT_CA = "0a:bc:x"
 
 
-def test_ca_default_dsa_signature_hash_algorithm_with_invalid_value(settings: SettingsWrapper) -> None:
+def test_ca_default_dsa_signature_hash_algorithm_with_invalid_value(settings: Settings) -> None:
     """Test invalid ``CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM``."""
     with assert_improperly_configured(None):
         settings.CA_DEFAULT_DSA_SIGNATURE_HASH_ALGORITHM = "foo"
 
 
-def test_ca_default_elliptic_curve_with_invalid_value(settings: SettingsWrapper) -> None:
+def test_ca_default_elliptic_curve_with_invalid_value(settings: Settings) -> None:
     """Test invalid ``CA_DEFAULT_ELLIPTIC_CURVE``."""
     with assert_improperly_configured(r"CA_DEFAULT_ELLIPTIC_CURVE"):
         settings.CA_DEFAULT_ELLIPTIC_CURVE = "foo"
 
 
-def test_ca_default_expires_with_invalid_value(settings: SettingsWrapper) -> None:
+def test_ca_default_expires_with_invalid_value(settings: Settings) -> None:
     """Test invalid ``CA_DEFAULT_EXPIRES``."""
     with assert_improperly_configured(r"Input should be a valid timedelta, invalid digit in duration"):
         settings.CA_DEFAULT_EXPIRES = "foo"
@@ -623,25 +621,25 @@ def test_ca_default_expires_with_invalid_value(settings: SettingsWrapper) -> Non
         settings.CA_DEFAULT_EXPIRES = timedelta(days=-3)
 
 
-def test_ca_default_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+def test_ca_default_key_backend_is_not_configured(settings: Settings) -> None:
     """Test error when no default key backend is configured."""
     with assert_improperly_configured(r"The default key backend is not configured\."):
         settings.CA_KEY_BACKENDS = {"foo": {"BACKEND": "foo.bar"}}
 
 
-def test_ca_default_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+def test_ca_default_ocsp_key_backend_is_not_configured(settings: Settings) -> None:
     """Test error when default OCSP key backend is not configured."""
     with assert_improperly_configured(r"The default OCSP key backend is not configured\."):
         settings.CA_OCSP_KEY_BACKENDS = {"foo": {"BACKEND": "foo.bar"}}
 
 
-def test_ca_default_key_size_with_larger_ca_min_key_size(settings: SettingsWrapper) -> None:
+def test_ca_default_key_size_with_larger_ca_min_key_size(settings: Settings) -> None:
     """Test error when ``A_DEFAULT_KEY_SIZE`` is smaller than minimum key size."""
     with assert_improperly_configured("CA_DEFAULT_KEY_SIZE cannot be lower then 8192"):
         settings.CA_MIN_KEY_SIZE = 8192
 
 
-def test_ca_default_name_order(settings: SettingsWrapper) -> None:
+def test_ca_default_name_order(settings: Settings) -> None:
     """Test variant values that can be used for a default name."""
     settings.CA_DEFAULT_NAME_ORDER = ("dnQualifier", "2.5.4.6", NameOID.COMMON_NAME)
     assert model_settings.CA_DEFAULT_NAME_ORDER == (
@@ -658,19 +656,19 @@ def test_ca_default_name_order(settings: SettingsWrapper) -> None:
         (("invalid-oid",), "invalid-oid: Invalid object identifier"),
     ),
 )
-def test_ca_default_name_order_with_invalid_value(settings: SettingsWrapper, value: Any, msg: str) -> None:
+def test_ca_default_name_order_with_invalid_value(settings: Settings, value: Any, msg: str) -> None:
     """Test invalid values for a default name order."""
     with assert_improperly_configured(msg):
         settings.CA_DEFAULT_NAME_ORDER = value
 
 
-def test_ca_default_profile_not_defined(settings: SettingsWrapper) -> None:
+def test_ca_default_profile_not_defined(settings: Settings) -> None:
     """Test the check if the default profile is defined."""
     with assert_improperly_configured(r"foo: CA_DEFAULT_PROFILE is not defined as a profile\."):
         settings.CA_DEFAULT_PROFILE = "foo"
 
 
-def test_ca_default_elliptic_curve(settings: SettingsWrapper) -> None:
+def test_ca_default_elliptic_curve(settings: Settings) -> None:
     """Test ``CA_DEFAULT_ELLIPTIC_CURVE``."""
     settings.CA_DEFAULT_ELLIPTIC_CURVE = ec.SECP256R1()
     assert model_settings.CA_DEFAULT_ELLIPTIC_CURVE == "secp256r1"
@@ -679,7 +677,7 @@ def test_ca_default_elliptic_curve(settings: SettingsWrapper) -> None:
 
 @pytest.mark.parametrize(("value", "expected"), (("SHA-224", hashes.SHA224), ("SHA3/384", hashes.SHA3_384)))
 def test_ca_default_signature_hash_algorithm(
-    settings: SettingsWrapper, value: Any, expected: type[hashes.HashAlgorithm]
+    settings: Settings, value: Any, expected: type[hashes.HashAlgorithm]
 ) -> None:
     """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
     settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = value
@@ -687,20 +685,20 @@ def test_ca_default_signature_hash_algorithm(
     assert isinstance(model_settings.get_default_signature_hash_algorithm(), expected)
 
 
-def test_ca_default_signature_hash_algorithm_with_hash(settings: SettingsWrapper) -> None:
+def test_ca_default_signature_hash_algorithm_with_hash(settings: Settings) -> None:
     """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
     settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.SHA512()
     assert model_settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM == "SHA-512"
     assert isinstance(model_settings.get_default_signature_hash_algorithm(), hashes.SHA512)
 
 
-def test_ca_default_signature_hash_algorithm_with_unsupported_type(settings: SettingsWrapper) -> None:
+def test_ca_default_signature_hash_algorithm_with_unsupported_type(settings: Settings) -> None:
     """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
     with assert_improperly_configured(rf"{hashes.BLAKE2b.name}: Hash algorithm is not supported\."):
         settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = hashes.BLAKE2b(64)
 
 
-def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: SettingsWrapper) -> None:
+def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: Settings) -> None:
     """Test invalid ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
     with assert_improperly_configured(None):
         settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = "foo"
@@ -725,7 +723,7 @@ def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: Settin
         (None, None),  # None yields no default subject
     ),
 )
-def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x509.Name) -> None:
+def test_ca_default_subject(settings: Settings, value: Any, expected: x509.Name) -> None:
     """Test CA_DEFAULT_SUBJECT setting."""
     settings.CA_DEFAULT_SUBJECT = value
     if isinstance(expected, x509.Name):
@@ -745,13 +743,13 @@ def test_ca_default_subject(settings: SettingsWrapper, value: Any, expected: x50
         ),
     ),
 )
-def test_ca_default_subject_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:
+def test_ca_default_subject_with_invalid_values(settings: Settings, value: Any, msg: str) -> None:
     """Test the check for empty common names."""
     with assert_improperly_configured(msg):
         settings.CA_DEFAULT_SUBJECT = value
 
 
-def test_ca_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+def test_ca_key_backend_is_not_configured(settings: Settings) -> None:
     """Test that the default key backend is configured."""
     # Note: setting value to None (=removing the value) does not currently call settings_changed, so our
     # settings module is not reloaded.
@@ -771,14 +769,14 @@ def test_ca_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
     ),
 )
 def test_ca_notification_days(
-    settings: SettingsWrapper, value: tuple[Any, ...], expected: tuple[timedelta, ...]
+    settings: Settings, value: tuple[Any, ...], expected: tuple[timedelta, ...]
 ) -> None:
     """Test valid values for CA_NOTIFICATION_DAYS."""
     settings.CA_NOTIFICATION_DAYS = value
     assert model_settings.CA_NOTIFICATION_DAYS == expected
 
 
-def test_ca_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> None:
+def test_ca_ocsp_key_backend_is_not_configured(settings: Settings) -> None:
     """Test that the default key backend is configured."""
     # Note: setting value to None (=removing the value) does not currently call settings_changed, so our
     # settings module is not reloaded.
@@ -794,19 +792,19 @@ def test_ca_ocsp_key_backend_is_not_configured(settings: SettingsWrapper) -> Non
     }
 
 
-def test_ca_ocsp_responder_certificate_renewal(settings: SettingsWrapper) -> None:
+def test_ca_ocsp_responder_certificate_renewal(settings: Settings) -> None:
     """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting."""
     settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = 7200
     assert model_settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL == timedelta(seconds=7200)
 
 
-def test_ca_ocsp_responder_certificate_renewal_with_invalid_value(settings: SettingsWrapper) -> None:
+def test_ca_ocsp_responder_certificate_renewal_with_invalid_value(settings: Settings) -> None:
     """Test the CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL setting with an invalid value."""
     with assert_improperly_configured(r"Input should be a valid timedelta"):
         settings.CA_OCSP_RESPONDER_CERTIFICATE_RENEWAL = "600"
 
 
-def test_ca_ocsp_cache_settings(settings: SettingsWrapper) -> None:
+def test_ca_ocsp_cache_settings(settings: Settings) -> None:
     """Test model validator for OCSP cache settings."""
     settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = timedelta(days=1)
     with assert_improperly_configured(
@@ -815,34 +813,34 @@ def test_ca_ocsp_cache_settings(settings: SettingsWrapper) -> None:
         settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = timedelta(days=1)
 
 
-def test_ca_passwords(settings: SettingsWrapper) -> None:
+def test_ca_passwords(settings: Settings) -> None:
     """Test type coercion and sanitization of keys."""
     settings.CA_PASSWORDS = {"AA:BB:CC": "secret-str", "01:23:45": b"secret-bytes"}
     # leading 0 in second serial are stripped, as they never end up in the database in the first place
     assert model_settings.CA_PASSWORDS == {"AABBCC": b"secret-str", "12345": b"secret-bytes"}
 
 
-def test_ca_passwords_with_invalid_type(settings: SettingsWrapper) -> None:
+def test_ca_passwords_with_invalid_type(settings: Settings) -> None:
     """Test setting an invalid password type."""
     with assert_improperly_configured(r"Input should be a valid bytes"):
         settings.CA_PASSWORDS = {"AA:BB:CC": None}
 
 
-def test_ca_profiles_with_removed_profile(settings: SettingsWrapper) -> None:
+def test_ca_profiles_with_removed_profile(settings: Settings) -> None:
     """Test removing a profile by setting it to None."""
     assert "client" in model_settings.CA_PROFILES  # initial assumption
     settings.CA_PROFILES = {"client": None}
     assert "client" not in model_settings.CA_PROFILES
 
 
-def test_ca_profiles_update_description(settings: SettingsWrapper) -> None:
+def test_ca_profiles_update_description(settings: Settings) -> None:
     """Test adding a profile in settings."""
     desc = "test description"
     settings.CA_PROFILES = {"client": {"description": desc}}
     assert str(model_settings.CA_PROFILES["client"].description) == desc
 
 
-def test_ca_profiles_with_cryptography_extensions(settings: SettingsWrapper) -> None:
+def test_ca_profiles_with_cryptography_extensions(settings: Settings) -> None:
     """Test setting extensions in a profile in CA_PROFILES."""
     ext = key_usage(data_encipherment=True)
     settings.CA_PROFILES = {"client": {"extensions": {"key_usage": ext, "extended_key_usage": None}}}
@@ -865,7 +863,7 @@ def test_ca_profiles_with_cryptography_extensions(settings: SettingsWrapper) -> 
         ([{"oid": "C", "value": "AT"}], x509.Name([country("AT")])),
     ),
 )
-def test_ca_profiles_override_subject(settings: SettingsWrapper, subject: Any, expected: x509.Name) -> None:
+def test_ca_profiles_override_subject(settings: Settings, subject: Any, expected: x509.Name) -> None:
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES."""
     assert model_settings.CA_DEFAULT_SUBJECT != expected  # would defeat purpose of test
     settings.CA_PROFILES = {"client": {"subject": subject}}
@@ -876,7 +874,7 @@ def test_ca_profiles_override_subject(settings: SettingsWrapper, subject: Any, e
         assert model_settings.CA_PROFILES["client"].subject is False
 
 
-def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsWrapper) -> None:
+def test_ca_profiles_override_subject_with_deprecated_values(settings: Settings) -> None:
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES with deprecated values."""
     settings.CA_PROFILES = {"client": {"subject": [{"oid": "C", "value": "AT"}]}}
     assert isinstance(model_settings.CA_PROFILES["client"].subject, NameModel)
@@ -890,13 +888,13 @@ def test_ca_profiles_override_subject_with_deprecated_values(settings: SettingsW
         (True, "Input should be a valid dictionary"),
     ),
 )
-def test_ca_profiles_with_invalid_values(settings: SettingsWrapper, value: Any, msg: str) -> None:
+def test_ca_profiles_with_invalid_values(settings: Settings, value: Any, msg: str) -> None:
     """Test invalid values in profiles."""
     with assert_improperly_configured(msg):
         settings.CA_PROFILES = value
 
 
-def test_ca_use_celery(settings: SettingsWrapper) -> None:
+def test_ca_use_celery(settings: Settings) -> None:
     """Test CA_USE_CELERY setting."""
     settings.CA_USE_CELERY = False
     assert model_settings.CA_USE_CELERY is False
@@ -907,7 +905,7 @@ def test_ca_use_celery(settings: SettingsWrapper) -> None:
     assert model_settings.CA_USE_CELERY is True  # because Celery is installed
 
 
-def test_ca_use_celery_is_not_set(settings: SettingsWrapper) -> None:
+def test_ca_use_celery_is_not_set(settings: Settings) -> None:
     """Test CA_USE_CELERY if it is NOT set in settings."""
     # NOTE: deleting a setting does not currently trigger the settings_changed signal, so we trigger it
     # manually
@@ -922,14 +920,14 @@ def test_ca_use_celery_is_not_set(settings: SettingsWrapper) -> None:
 
 
 @pytest.mark.parametrize("value", (False, None))
-def test_ca_use_celery_is_falsy_with_celery_not_installed(settings: SettingsWrapper, value: Any) -> None:
+def test_ca_use_celery_is_falsy_with_celery_not_installed(settings: Settings, value: Any) -> None:
     """Test behavior for CA_USE_CELERY if celery is not installed."""
     with mock.patch.dict("sys.modules", celery=None):
         settings.CA_USE_CELERY = value
         assert model_settings.CA_USE_CELERY is False
 
 
-def test_ca_use_celery_is_true_with_celery_not_installed(settings: SettingsWrapper) -> None:
+def test_ca_use_celery_is_true_with_celery_not_installed(settings: Settings) -> None:
     """Test that CA_USE_CELERY=True and a missing Celery installation throws an error."""
     # Setting sys.modules['celery'] (modules cache) to None will cause the next import of that module
     # to trigger an import error:
@@ -940,7 +938,7 @@ def test_ca_use_celery_is_true_with_celery_not_installed(settings: SettingsWrapp
         settings.CA_USE_CELERY = True
 
 
-def test_ca_crl_profiles_invalid_scope(settings: SettingsWrapper) -> None:
+def test_ca_crl_profiles_invalid_scope(settings: Settings) -> None:
     """Test that setting both `only_contains_ca_certs` and `only_contains_user_certs` is an error."""
     with assert_improperly_configured(SCOPE_ERROR):
         settings.CA_CRL_PROFILES = {"ca": {"only_contains_ca_certs": True, "only_contains_user_certs": True}}
@@ -955,9 +953,7 @@ def test_ca_crl_profiles_invalid_scope(settings: SettingsWrapper) -> None:
         ("only_contains_user_certs", "only_contains_attribute_certs"),
     ),
 )
-def test_ca_crl_profiles_invalid_scope_by_override(
-    settings: SettingsWrapper, base: bool, override: bool
-) -> None:
+def test_ca_crl_profiles_invalid_scope_by_override(settings: Settings, base: bool, override: bool) -> None:
     """Test that setting an invalid scope in an override."""
     with assert_improperly_configured(SCOPE_ERROR):
         settings.CA_CRL_PROFILES = {"ca": {base: True, "OVERRIDES": {"123": {override: True}}}}

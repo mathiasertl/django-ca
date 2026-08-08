@@ -34,7 +34,7 @@ from django.utils import timezone
 
 import pytest
 from freezegun import freeze_time
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca import constants
 from django_ca.conf import model_settings
@@ -199,7 +199,7 @@ def test_private_key_unavailable(
 
 
 def test_key_backend_options(
-    settings: SettingsWrapper,
+    settings: Settings,
     api_client: Client,
     usable_pwd: CertificateAuthority,
     expected_response: dict[str, Any],

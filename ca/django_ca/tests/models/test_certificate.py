@@ -24,7 +24,7 @@ from django.utils import timezone
 
 import pytest
 from _pytest.logging import LogCaptureFixture
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import ReasonFlags
 from django_ca.models import Certificate, CertificateAuthority
@@ -63,7 +63,7 @@ def test_serial(usable_cert: Certificate) -> None:
 
 
 @pytest.mark.freeze_time("2019-02-03 15:43:12")
-def test_get_revocation_time(settings: SettingsWrapper, root_cert: Certificate) -> None:
+def test_get_revocation_time(settings: Settings, root_cert: Certificate) -> None:
     """Test getting the revocation time."""
     assert root_cert.get_revocation_time() is None
     root_cert.revoke()
@@ -78,7 +78,7 @@ def test_get_revocation_time(settings: SettingsWrapper, root_cert: Certificate) 
 
 
 @pytest.mark.freeze_time("2019-02-03 15:43:12")
-def test_get_compromised_time(settings: SettingsWrapper, root_cert: Certificate) -> None:
+def test_get_compromised_time(settings: Settings, root_cert: Certificate) -> None:
     """Test getting the time when the certificate was compromised."""
     assert root_cert.get_compromised_time() is None
     root_cert.revoke(compromised=timezone.now())

@@ -32,7 +32,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 from django_webtest import DjangoTestApp
 from pytest_django.asserts import assertRedirects
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -225,7 +225,7 @@ class TestViewAddView:
         assert response.status_code == HTTPStatus.FORBIDDEN
 
     @pytest.mark.usefixtures("usable_root")
-    def test_get_profiles(self, settings: SettingsWrapper, admin_client: Client) -> None:
+    def test_get_profiles(self, settings: Settings, admin_client: Client) -> None:
         """Test get with a subject that explicitly sets an extension."""
         settings.CA_PROFILES = {"webserver": {"extensions": {"ocsp_no_check": {"critical": True}}}}
         form = get_add_response_form(admin_client)
@@ -233,7 +233,7 @@ class TestViewAddView:
 
     def test_with_unusable_default_ca(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         admin_client: Client,
         usable_root: CertificateAuthority,
         usable_child: CertificateAuthority,
@@ -247,7 +247,7 @@ class TestViewAddView:
 
     def test_with_unusable_default_ca_with_unsable_private_key(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         admin_client: Client,
         usable_root: CertificateAuthority,
         usable_child: CertificateAuthority,
@@ -303,7 +303,7 @@ class TestSubmitAddView:
 
     def test_with_extension_disabled_in_profile(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         admin_client: Client,
         hostname: str,
         usable_root: CertificateAuthority,
@@ -335,7 +335,7 @@ class TestSubmitAddView:
 
     def test_subject_with_multiple_org_units(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         admin_client: Client,
         hostname: str,
         usable_root: CertificateAuthority,
@@ -454,7 +454,7 @@ class TestSubmitAddView:
 
     def test_add_with_password(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         admin_client: Client,
         hostname: str,
         usable_pwd: CertificateAuthority,
@@ -510,7 +510,7 @@ class TestSubmitAddView:
 
     def test_add_with_password_with_ca_passwords(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         admin_client: Client,
         hostname: str,
         usable_pwd: CertificateAuthority,
@@ -1205,7 +1205,7 @@ class TestAddCertificateWebTest:
         self,
         django_app: DjangoTestApp,
         admin_user: User,
-        settings: SettingsWrapper,
+        settings: Settings,
         hostname: str,
         usable_root: CertificateAuthority,
     ) -> None:
@@ -1262,7 +1262,7 @@ class TestAddCertificateWebTest:
         self,
         django_app: DjangoTestApp,
         admin_user: User,
-        settings: SettingsWrapper,
+        settings: Settings,
         hostname: str,
         usable_root: CertificateAuthority,
     ) -> None:
@@ -1469,7 +1469,7 @@ class TestAddCertificateWebTest:
         caplog: LogCaptureFixture,
         django_app: DjangoTestApp,
         admin_user: User,
-        settings: SettingsWrapper,
+        settings: Settings,
         hostname: str,
         usable_root: CertificateAuthority,
     ) -> None:

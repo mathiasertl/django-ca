@@ -19,7 +19,7 @@ from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
@@ -184,7 +184,7 @@ def test_with_reasons_not_included(
     assert_issuing_distribution_point(idp, only_some_reasons=reasons)  # type: ignore[arg-type]
 
 
-def test_use_tz_is_false(usable_root: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_use_tz_is_false(usable_root: CertificateAuthority, settings: Settings) -> None:
     """Generate a CRL with settings.USE_TZ = False."""
     settings.USE_TZ = False
 
@@ -195,9 +195,7 @@ def test_use_tz_is_false(usable_root: CertificateAuthority, settings: SettingsWr
     assert obj.loaded.next_update_utc == TIMESTAMPS["everything_valid"] + timedelta(days=1)
 
 
-def test_use_tz_is_false_with_next_update(
-    usable_root: CertificateAuthority, settings: SettingsWrapper
-) -> None:
+def test_use_tz_is_false_with_next_update(usable_root: CertificateAuthority, settings: Settings) -> None:
     """Generate a CRL with settings.USE_TZ = False and passing a timezone-naive next_update."""
     next_update = datetime.now(UTC).replace(microsecond=10) + timedelta(days=2)
     settings.USE_TZ = False
@@ -210,7 +208,7 @@ def test_use_tz_is_false_with_next_update(
 
 
 def test_use_tz_is_false_with_tz_aware_next_update(
-    usable_root: CertificateAuthority, settings: SettingsWrapper
+    usable_root: CertificateAuthority, settings: Settings
 ) -> None:
     """Generate a CRL with settings.USE_TZ = False and passing a timezone-aware next_update."""
     next_update = datetime.now(tz=UTC).replace(microsecond=10) + timedelta(days=2)

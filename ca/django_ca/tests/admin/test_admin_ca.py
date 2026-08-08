@@ -23,7 +23,7 @@ from django.test import Client, TestCase
 
 import pytest
 from pytest_django.asserts import assertInHTML
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.assertions import assert_change_response
@@ -47,7 +47,7 @@ class TestCertificateAuthorityAdminView(StandardAdminViewTestCaseMixin[Certifica
         return usable_cas
 
     def test_change_view_without_acme(
-        self, settings: SettingsWrapper, admin_client: Client, root: CertificateAuthority
+        self, settings: Settings, admin_client: Client, root: CertificateAuthority
     ) -> None:
         """Basic tests but with ACME support disabled."""
         settings.CA_ENABLE_ACME = False
@@ -59,7 +59,7 @@ class TestCertificateAuthorityAdminView(StandardAdminViewTestCaseMixin[Certifica
         assert "acme_enabled" in adminform.readonly_fields
 
     def test_change_view_without_api(
-        self, settings: SettingsWrapper, admin_client: Client, root: CertificateAuthority
+        self, settings: Settings, admin_client: Client, root: CertificateAuthority
     ) -> None:
         """Basic tests but with API support disabled."""
         settings.CA_ENABLE_REST_API = False
