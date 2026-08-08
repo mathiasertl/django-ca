@@ -25,7 +25,7 @@ from django.test import Client
 from django.utils import timezone
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.conf import model_settings
 from django_ca.models import AcmeAuthorization, AcmeChallenge, CertificateAuthority
@@ -54,7 +54,7 @@ def message() -> bytes:
 
 @pytest.mark.parametrize("use_tz", (True, False))
 def test_basic(
-    settings: SettingsWrapper,
+    settings: Settings,
     client: Client,
     url: str,
     root: CertificateAuthority,

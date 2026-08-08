@@ -26,7 +26,7 @@ from django.test import Client
 
 import pytest
 from _pytest.logging import LogCaptureFixture
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import AcmeAccount, CertificateAuthority
 from django_ca.tests.acme.views.assertions import (
@@ -96,7 +96,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
 
     def test_disabled_acme(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         client: Client,
         url: str,
         message: MessageTypeVar,
@@ -181,7 +181,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         message: MessageTypeVar,
         root: CertificateAuthority,
         kid: str | None,
-        settings: SettingsWrapper,
+        settings: Settings,
     ) -> None:
         """Test that a JWS signed with a disallowed algorithm is rejected."""
         settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS = ()

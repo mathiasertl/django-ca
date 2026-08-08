@@ -28,7 +28,7 @@ from cryptography.x509.oid import CRLEntryExtensionOID
 from django.utils import timezone
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.assertions import assert_command_error, assert_crl, assert_revoked
@@ -92,7 +92,7 @@ def test_file_with_destination_does_not_exist(tmp_path: Path, usable_root: Certi
         dump_crl(path, ca=usable_root)
 
 
-def test_pwd_ca_with_missing_password(settings: SettingsWrapper, usable_pwd: CertificateAuthority) -> None:
+def test_pwd_ca_with_missing_password(settings: Settings, usable_pwd: CertificateAuthority) -> None:
     """Test creating a CRL for a CA with a password without giving a password."""
     settings.CA_PASSWORDS = {}
     with assert_command_error(r"^Password was not given but private key is encrypted$"):
@@ -116,7 +116,7 @@ def test_pwd_ca(capsysbinary: pytest.CaptureFixture[bytes], usable_pwd: Certific
 
 
 def test_pwd_ca_with_password_in_settings(
-    capsysbinary: pytest.CaptureFixture[bytes], settings: SettingsWrapper, usable_pwd: CertificateAuthority
+    capsysbinary: pytest.CaptureFixture[bytes], settings: Settings, usable_pwd: CertificateAuthority
 ) -> None:
     """Test creating a CRL with a CA with a password."""
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA["pwd"]["password"]}

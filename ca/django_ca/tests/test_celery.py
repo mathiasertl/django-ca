@@ -16,7 +16,7 @@
 from unittest import mock
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca import tasks
 from django_ca.celery import DjangoCaTask, run_task, shared_task
@@ -171,7 +171,7 @@ def test_dummy_task_with_args() -> None:
     assert _dummy_task_with_args.delay(3) == 3  # type: ignore[comparison-overlap]
 
 
-def test_run_task(settings: SettingsWrapper) -> None:
+def test_run_task(settings: Settings) -> None:
     """Test run_task() without Celery."""
     # run_task() without celery
     settings.CA_USE_CELERY = False
@@ -180,7 +180,7 @@ def test_run_task(settings: SettingsWrapper) -> None:
     assert task_mock.call_count == 1
 
 
-def test_run_task_with_celery(settings: SettingsWrapper) -> None:
+def test_run_task_with_celery(settings: Settings) -> None:
     """Test run_task() with Celery enabled."""
     # run_task() without celery
     settings.CA_USE_CELERY = True

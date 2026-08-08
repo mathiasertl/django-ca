@@ -30,7 +30,7 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from django.urls import reverse
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.key_backends import key_backends
 from django_ca.key_backends.storages.models import StoragesCreatePrivateKeyOptions
@@ -287,7 +287,7 @@ def test_intermediate_ca(ca_name: str) -> None:
 
 
 @override_tmpcadir(CA_DEFAULT_HOSTNAME="example.com")
-def test_intermediate_ca_default_hostname(ca_name: str, settings: SettingsWrapper) -> None:
+def test_intermediate_ca_default_hostname(ca_name: str, settings: Settings) -> None:
     """Test that a changing CA_DEFAULT_HOSTNAME does not lead to problems."""
     root = init_ca(f"{ca_name}_root", path_length=2)
     child = init_ca(f"{ca_name}_child", parent=root, path_length=1)

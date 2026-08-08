@@ -35,7 +35,7 @@ from django.core.files.storage import storages
 from django.utils.crypto import get_random_string
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import DEFAULT_KEY_BACKEND_KEY
 from django_ca.key_backends import key_backends, ocsp_key_backends
@@ -227,7 +227,7 @@ def key_backend(request: pytest.FixtureRequest) -> StoragesBackend:
 
 
 @pytest.fixture
-def ocsp_response_caching(settings: SettingsWrapper) -> None:
+def ocsp_response_caching(settings: Settings) -> None:
     """Fixture to enable OCSP response caching."""
     settings.CA_OCSP_RESPONSE_CACHE_RENEWAL = CA_OCSP_RESPONSE_CACHE_RENEWAL
     settings.CA_OCSP_RESPONSE_CACHE_EXPIRES = CA_OCSP_RESPONSE_CACHE_EXPIRES
@@ -363,9 +363,7 @@ def softhsm_setup(tmp_path: Path) -> Iterator[Path]:  # pragma: hsm
 
 
 @pytest.fixture
-def softhsm_token(  # pragma: hsm
-    request: pytest.FixtureRequest, settings: SettingsWrapper
-) -> str:
+def softhsm_token(request: pytest.FixtureRequest, settings: Settings) -> str:  # pragma: hsm
     """Get a unique token for the current test."""
     request.getfixturevalue("softhsm_setup")
     token = settings.PKCS11_TOKEN_LABEL
@@ -450,7 +448,7 @@ def subject(hostname: str) -> x509.Name:
 
 
 @pytest.fixture
-def tmpcadir(tmp_path: Path, settings: SettingsWrapper) -> Iterator[Path]:
+def tmpcadir(tmp_path: Path, settings: Settings) -> Iterator[Path]:
     """Fixture to create a temporary directory for storing files using the StoragesBackend."""
     primary_directory = tmp_path / "storages" / "django-ca"
     secondary_directory = tmp_path / "storages" / "secondary"

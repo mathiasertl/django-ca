@@ -26,7 +26,7 @@ from django.db.models import QuerySet
 from django.urls import reverse
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.conf import model_settings
 from django_ca.constants import ExtendedKeyUsageOID
@@ -513,7 +513,7 @@ def test_init_with_parent_with_no_use_parent_private_key_options(
 
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
-def test_default(root: CertificateAuthority, child: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_default(root: CertificateAuthority, child: CertificateAuthority, settings: Settings) -> None:
     """Test the correct CA is returned if CA_DEFAULT_CA is set."""
     settings.CA_DEFAULT_CA = CERT_DATA["child"]["serial"]
     assert CertificateAuthority.objects.default() == child
@@ -522,7 +522,7 @@ def test_default(root: CertificateAuthority, child: CertificateAuthority, settin
 
 
 @pytest.mark.usefixtures("child")
-def test_default_with_disabled(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_default_with_disabled(root: CertificateAuthority, settings: Settings) -> None:
     """Test that an exception is raised if the CA is disabled."""
     settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
     root.enabled = False
@@ -534,7 +534,7 @@ def test_default_with_disabled(root: CertificateAuthority, settings: SettingsWra
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_expired"])
 @pytest.mark.usefixtures("child")
-def test_default_with_expired(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_default_with_expired(root: CertificateAuthority, settings: Settings) -> None:
     """Test that an exception is raised if CA is expired."""
     settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
     with assert_improperly_configured(rf"^CA_DEFAULT_CA: {root.serial} is expired\.$"):
@@ -543,7 +543,7 @@ def test_default_with_expired(root: CertificateAuthority, settings: SettingsWrap
 
 @pytest.mark.freeze_time(TIMESTAMPS["before_everything"])
 @pytest.mark.usefixtures("child")
-def test_default_with_not_yet_valid(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_default_with_not_yet_valid(root: CertificateAuthority, settings: Settings) -> None:
     """Test that an exception is raised if CA is not yet valid."""
     settings.CA_DEFAULT_CA = CERT_DATA["root"]["serial"]
     with assert_improperly_configured(rf"^CA_DEFAULT_CA: {root.serial} is not yet valid\.$"):
@@ -552,7 +552,7 @@ def test_default_with_not_yet_valid(root: CertificateAuthority, settings: Settin
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("root", "child", "ed448", "ed25519")
-def test_default_with_no_default_ca(settings: SettingsWrapper) -> None:
+def test_default_with_no_default_ca(settings: Settings) -> None:
     """Test what is returned when **no** CA is configured as default."""
     settings.CA_DEFAULT_CA = None
     ca = max(CertificateAuthority.objects.all(), key=lambda obj: (obj.not_after, obj.serial))
@@ -568,7 +568,7 @@ def test_default_with_expired_cas() -> None:
 
 
 @pytest.mark.django_db
-def test_default_with_unknown_ca_configured(settings: SettingsWrapper) -> None:
+def test_default_with_unknown_ca_configured(settings: Settings) -> None:
     """Test behavior when an unknown CA is manually configured."""
     settings.CA_DEFAULT_CA = "ABC"
     with assert_improperly_configured(r"^CA_DEFAULT_CA: ABC: CA not found\.$"):

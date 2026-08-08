@@ -33,7 +33,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca import constants
 from django_ca.celery.messages import UseCertificateAuthorityTaskArgs
@@ -228,7 +228,7 @@ def test_basic(
 @pytest.mark.usefixtures("tmpcadir")
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])  # otherwise CRLs might have rounding errors
 def test_basic_without_timezone_support(
-    settings: SettingsWrapper,
+    settings: Settings,
     ca_name: str,
     subject: x509.Name,
     rfc4514_subject: str,
@@ -304,7 +304,7 @@ def test_arguments(ca_name: str, key_backend: StoragesBackend) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
 def test_arguments_without_timezone_support(
-    settings: SettingsWrapper, ca_name: str, key_backend: StoragesBackend
+    settings: Settings, ca_name: str, key_backend: StoragesBackend
 ) -> None:
     """Test arguments without timezone support."""
     settings.USE_TZ = False
@@ -642,7 +642,7 @@ def test_leading_zero(ca_name: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir")
-def test_disabled_arguments(settings: SettingsWrapper) -> None:
+def test_disabled_arguments(settings: Settings) -> None:
     """Test that ACME/REST API options don't work when feature is disabled."""
     settings.CA_ENABLE_ACME = False
     settings.CA_ENABLE_REST_API = False
@@ -889,7 +889,7 @@ def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> No
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 @pytest.mark.usefixtures("mock_tasks")
 def test_expires_override_with_use_tz_false(
-    settings: SettingsWrapper, ca_name: str, usable_root: CertificateAuthority
+    settings: Settings, ca_name: str, usable_root: CertificateAuthority
 ) -> None:
     """Test silently limiting expiry if USE_TZ=False."""
     settings.USE_TZ = False
@@ -951,7 +951,7 @@ def test_password(ca_name: str, key_backend: StoragesBackend) -> None:
 
 @pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])
 def test_parent_password_with_ca_passwords(
-    ca_name: str, usable_pwd: CertificateAuthority, settings: SettingsWrapper
+    ca_name: str, usable_pwd: CertificateAuthority, settings: Settings
 ) -> None:
     """Use a password-encrypted parent where the password is stored in the CA_PASSWORDS setting."""
     settings.CA_PASSWORDS = {usable_pwd.serial: CERT_DATA[usable_pwd.name]["password"]}
@@ -1304,7 +1304,7 @@ def test_hsm_with_child_ca(ca_name: str) -> None:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("tmpcadir", "softhsm_token")
 @pytest.mark.hsm
-def test_hsm_with_so_pin_overwrite(ca_name: str, settings: SettingsWrapper) -> None:
+def test_hsm_with_so_pin_overwrite(ca_name: str, settings: Settings) -> None:
     """Test using a so_pin. At least with SoftHSM2, this yields an error currently."""
     with assert_command_error(
         r"^An operation required a login, but none was provided\. "
@@ -1470,7 +1470,7 @@ def test_invalid_public_key_parameters(ca_name: str) -> None:
         init_ca(name=ca_name, key_type="Ed25519", algorithm=hashes.SHA256())
 
 
-def test_unsupported_elliptic_curve(ca_name: str, settings: SettingsWrapper) -> None:
+def test_unsupported_elliptic_curve(ca_name: str, settings: Settings) -> None:
     """Test passing a valid elliptic curve that is not supported by the backend."""
     settings.CA_KEY_BACKENDS = {
         **settings.CA_KEY_BACKENDS,
@@ -1513,7 +1513,7 @@ def test_root_ca_issuer(ca_name: str) -> None:
         init_ca(name=ca_name, authority_information_access=aia.value)
 
 
-def test_key_type_not_supported_by_backend(settings: SettingsWrapper, ca_name: str) -> None:
+def test_key_type_not_supported_by_backend(settings: Settings, ca_name: str) -> None:
     """Test creating a key with a type that is not supported by the selected backend."""
     settings.CA_KEY_BACKENDS = {
         **settings.CA_KEY_BACKENDS,
@@ -1526,7 +1526,7 @@ def test_key_type_not_supported_by_backend(settings: SettingsWrapper, ca_name: s
         init_ca(ca_name, key_backend=key_backends["dummy"], key_type="DSA")
 
 
-def test_algorithm_not_supported_by_backend(settings: SettingsWrapper, ca_name: str) -> None:
+def test_algorithm_not_supported_by_backend(settings: Settings, ca_name: str) -> None:
     """Test creating a key with a type that is not supported by the selected backend."""
     settings.CA_KEY_BACKENDS = {
         **settings.CA_KEY_BACKENDS,

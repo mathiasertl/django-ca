@@ -15,13 +15,13 @@
 
 from unittest import mock
 
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.tests.base.mocks import mock_celery_task
 from django_ca.tests.base.utils import cmd
 
 
-def test_command(settings: SettingsWrapper) -> None:
+def test_command(settings: Settings) -> None:
     """Test running the command."""
     settings.CA_USE_CELERY = False
     with mock.patch(
@@ -31,7 +31,7 @@ def test_command(settings: SettingsWrapper) -> None:
     task_mock.assert_called_once_with()
 
 
-def test_command_with_celery(settings: SettingsWrapper) -> None:
+def test_command_with_celery(settings: Settings) -> None:
     """Test running the command with Celery enabled."""
     settings.CA_USE_CELERY = True
     with mock_celery_task("django_ca.tasks.generate_ocsp_responses", mock.call((), {})):

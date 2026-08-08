@@ -30,7 +30,7 @@ from cryptography.x509.oid import ExtendedKeyUsageOID
 from django.test import TestCase, override_settings
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import ReasonFlags
 from django_ca.key_backends import key_backends
@@ -43,7 +43,7 @@ from django_ca.tests.management.conftest import assert_parser_error
 
 
 @pytest.fixture
-def key_backend_parser(settings: SettingsWrapper) -> Iterator[argparse.ArgumentParser]:
+def key_backend_parser(settings: Settings) -> Iterator[argparse.ArgumentParser]:
     """Fixture with a paser for various options."""
     # Make sure that some settings are in place
     settings.STORAGES = {

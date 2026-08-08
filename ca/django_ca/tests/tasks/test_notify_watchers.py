@@ -18,7 +18,7 @@
 from django.core import mail
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import Certificate, CertificateExpiryNotification, Watcher
 from django_ca.tasks import notify_watchers
@@ -36,7 +36,7 @@ def watcher() -> Watcher:
 
 
 @pytest.mark.usefixtures("root_cert")
-def test_no_notification_days(settings: SettingsWrapper) -> None:
+def test_no_notification_days(settings: Settings) -> None:
     """When CA_NOTIFICATION_DAYS is empty the task exits immediately without sending anything."""
     settings.CA_NOTIFICATION_DAYS = []
     notify_watchers()
@@ -55,7 +55,7 @@ def test_no_watchers() -> None:
 def test_sends_notification(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """A notification email is sent and a CertificateExpiryNotification is created."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -70,7 +70,7 @@ def test_sends_notification(
 def test_notification_content(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """The email has the correct subject, body and recipient."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -89,7 +89,7 @@ def test_notification_content(
 def test_no_duplicate_notifications(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """Running the task twice does not send a second notification for the same cert+day."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -105,7 +105,7 @@ def test_no_duplicate_notifications(
 def test_cert_outside_notification_window(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """No notification is sent when the cert is not at a configured notification boundary."""
     # root_cert has 3 days left, but only 7 and 14 are configured — no match.
@@ -121,7 +121,7 @@ def test_cert_outside_notification_window(
 def test_revoked_cert_excluded(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """Revoked certificates are excluded from notifications."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -137,7 +137,7 @@ def test_revoked_cert_excluded(
 
 def test_multiple_watchers(
     root_cert: Certificate,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """All watchers are combined into the single notification email for a certificate."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -155,7 +155,7 @@ def test_multiple_watchers(
 def test_existing_notification_prevents_send(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """A pre-existing CertificateExpiryNotification suppresses the email."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -171,7 +171,7 @@ def test_existing_notification_prevents_send(
 def test_multiple_notification_days(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """Only the matching day triggers a notification even when multiple days are configured."""
     # root_cert has 3 days left; only the 3-day boundary should fire.
@@ -190,7 +190,7 @@ def test_multiple_notification_days(
 def test_expired_cert_excluded(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """Already-expired certificates are not notified."""
     settings.CA_NOTIFICATION_DAYS = [3]
@@ -205,7 +205,7 @@ def test_expired_cert_excluded(
 def test_notifications_for_different_days_are_independent(
     root_cert: Certificate,
     watcher: Watcher,
-    settings: SettingsWrapper,
+    settings: Settings,
 ) -> None:
     """A notification for day N does not block a future notification for day M."""
     settings.CA_NOTIFICATION_DAYS = [3, 7]

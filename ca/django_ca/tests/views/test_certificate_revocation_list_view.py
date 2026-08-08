@@ -30,7 +30,7 @@ from django.urls import include, path, re_path, reverse
 
 import pytest
 from pytest_django import DjangoAssertNumQueries
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca import constants
 from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
@@ -277,7 +277,7 @@ def test_regenerate_with_unusable_ca(client: Client, default_url: str) -> None:
 
 
 def test_password_with_missing_password(
-    client: Client, usable_pwd: CertificateAuthority, settings: SettingsWrapper
+    client: Client, usable_pwd: CertificateAuthority, settings: Settings
 ) -> None:
     """Try getting the CRL for an encrypted CA where there is no password (which fails)."""
     settings.CA_PASSWORDS = {}

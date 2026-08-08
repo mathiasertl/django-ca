@@ -20,7 +20,7 @@ from cryptography import x509
 from django.test import TestCase
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.conf import model_settings
 from django_ca.models import CertificateAuthority
@@ -176,7 +176,7 @@ def test_rest_api_arguments_mutually_exclusive(root: CertificateAuthority) -> No
     assert root.api_enabled is False  # state unchanged
 
 
-def test_ocsp_responder_arguments(root: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_ocsp_responder_arguments(root: CertificateAuthority, settings: Settings) -> None:
     """Test ACME arguments."""
     settings.CA_OCSP_KEY_BACKENDS = {
         "default": {
@@ -203,7 +203,7 @@ def test_invalid_acme_profile(root: CertificateAuthority) -> None:
     assert root.acme_profile == model_settings.CA_DEFAULT_PROFILE
 
 
-def test_acme_disabled(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+def test_acme_disabled(settings: Settings, root: CertificateAuthority) -> None:
     """Test ACME arguments do not work when ACME support is disabled."""
     settings.CA_ENABLE_ACME = False
     with pytest.raises(SystemExit, match=r"^2$") as exception_info:

@@ -20,7 +20,7 @@ from unittest import mock
 from cryptography import x509
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.models import CertificateAuthority
 from django_ca.pydantic.certificate import DjangoCertificateAuthorityModel
@@ -2141,7 +2141,7 @@ def test_no_key_backend_options(usable_root: CertificateAuthority) -> None:
     assert stdout == expected["root-no-key-backend-options"].format(ca=usable_root, **data)
 
 
-def test_without_timezone_support(usable_child: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_without_timezone_support(usable_child: CertificateAuthority, settings: Settings) -> None:
     """Test viewing certificate with USE_TZ=False."""
     settings.USE_TZ = False
 
@@ -2166,7 +2166,7 @@ def test_properties(usable_root: CertificateAuthority, hostname: str) -> None:
     assert stdout == expected["root-properties"].format(ca=usable_root, **data)
 
 
-def test_acme_disabled(usable_root: CertificateAuthority, settings: SettingsWrapper) -> None:
+def test_acme_disabled(usable_root: CertificateAuthority, settings: Settings) -> None:
     """Test viewing when ACME is disabled."""
     settings.CA_ENABLE_ACME = False
     stdout, stderr = cmd("view_ca", usable_root.serial, wrap=False)

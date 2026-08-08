@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID, NameOID
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.conf import model_settings
 from django_ca.constants import CONFIGURABLE_EXTENSION_KEYS, END_ENTITY_CERTIFICATE_EXTENSION_KEYS
@@ -144,7 +144,7 @@ def test_init_django_ca_values(subject: x509.Name) -> None:
     assert prof1 == prof2
 
 
-def test_init_no_subject(settings: SettingsWrapper) -> None:
+def test_init_no_subject(settings: Settings) -> None:
     """Test with no default subject."""
     # doesn't really occur in the wild, because model_settings updates CA_PROFILES with the default
     # subject. But it still seems sensible to support this
@@ -674,7 +674,7 @@ def test_init_with_unknown_signature_hash_algorithm() -> None:
     )
 
 
-def test_create_cert_with_no_valid_subject(settings: SettingsWrapper, root: CertificateAuthority) -> None:
+def test_create_cert_with_no_valid_subject(settings: Settings, root: CertificateAuthority) -> None:
     """Test case where no subject at all could be determined."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     settings.CA_DEFAULT_SUBJECT = None

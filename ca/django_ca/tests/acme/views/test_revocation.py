@@ -31,7 +31,7 @@ from django.test import Client
 from django.urls import reverse
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django.fixtures import Settings
 
 from django_ca.constants import ReasonFlags
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
@@ -108,7 +108,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
     )
     def test_basic(
         self,
-        settings: SettingsWrapper,
+        settings: Settings,
         client: Client,
         url: str,
         message: Revocation,
