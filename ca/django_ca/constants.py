@@ -510,6 +510,9 @@ NAME_OID_NAMES = MappingProxyType(
     }
 )
 
+if CRYPTOGRAPHY_VERSION >= (50, 0):  # pragma: cryptography>=50 branch
+    NAME_OID_NAMES = MappingProxyType({**NAME_OID_NAMES, NameOID.UNSIGNED: "Unsigned"})
+
 # Sources for OIDs that can be duplicate:
 # * https://www.ibm.com/docs/en/ibm-mq/7.5?topic=certificates-distinguished-names - OU and DC
 # * multiple_ous cert from the test suite.

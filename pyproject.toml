@@ -9,7 +9,7 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
-cryptography = ["49"]
+cryptography = ["49", "50"]
 acme = ["5.6"]
 pydantic = ["2.13"]
 josepy = ["2.2"]
@@ -552,8 +552,15 @@ max-statements = 60
 required-version = ">=0.11.26"
 default-groups = ["dev", "dist", "docs", "lint", "mypy", "local"]
 conflicts = [
-    [ { group = "DjangoLTS" }, { group = "django5.2" }, { group = "django6.0" }, ],
-    #[ { group = "cryptography49" }, ],
+    [
+        { group = "DjangoLTS" },
+        { group = "django5.2" },
+        { group = "django6.0" },
+    ],
+    [
+        { group = "cryptography49" },
+        { group = "cryptography50" },
+    ],
     #[ { group = "acme5.6" }, ],
     #[ { group = "pydantic2.13" }, ],
 ]
@@ -636,6 +643,7 @@ gunicorn = [ "gunicorn>=23" ]
 "DjangoLTS" = ["Django~=5.2.0"]
 "Django5.2" = ["Django~=5.2.0"]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
-"cryptography49" = ["cryptography>=49,<51"]
+"cryptography49" = ["cryptography~=49.0"]
+"cryptography50" = ["cryptography~=50.0"]
 "acme5.6" = ["acme~=5.6.0"]
 "pydantic2.13" = ["pydantic~=2.13.0"]
