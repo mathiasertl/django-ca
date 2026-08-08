@@ -33,7 +33,7 @@ import pytest
 from django_ca import constants
 from django_ca.models import CertificateAuthority
 from django_ca.tests.admin.base import CertificateModelAdminTestCaseMixin
-from django_ca.tests.base.constants import CERT_DATA
+from django_ca.tests.base.constants import CERT_DATA, CRYPTOGRAPHY_VERSION
 from django_ca.typehints import JSON
 
 
@@ -159,7 +159,6 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"oid": NameOID.GENERATION_QUALIFIER.dotted_string, "value": "test-generationQualifier"},
             {"oid": NameOID.DN_QUALIFIER.dotted_string, "value": "test-dnQualifier"},
             {"oid": NameOID.SERIAL_NUMBER.dotted_string, "value": "test-serialNumber"},
-            # tmp
             {"oid": NameOID.COUNTRY_NAME.dotted_string, "value": "AT"},
             {"oid": NameOID.PSEUDONYM.dotted_string, "value": "test-pseudonym"},
             {"oid": NameOID.LOCALITY_NAME.dotted_string, "value": "test-localityName"},
@@ -167,6 +166,8 @@ class CSRDetailTestCase(CertificateModelAdminTestCaseMixin, TestCase):
             {"oid": NameOID.STREET_ADDRESS.dotted_string, "value": "test-street"},
             {"oid": NameOID.ORGANIZATION_IDENTIFIER.dotted_string, "value": "test-organizationIdentifier"},
         ]
+        if CRYPTOGRAPHY_VERSION >= (50, 0):  # pragma: only cryptography>=50.0
+            expected.insert(10, {"oid": NameOID.UNSIGNED.dotted_string, "value": "test-Unsigned"})
 
         assert json.loads(response.content.decode("utf-8")) == {"subject": expected}
 

@@ -25,7 +25,17 @@ from unittest.mock import Mock
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, padding, rsa, x448, x25519
+from cryptography.hazmat.primitives.asymmetric import (
+    dsa,
+    ec,
+    ed448,
+    ed25519,
+    mlkem,
+    padding,
+    rsa,
+    x448,
+    x25519,
+)
 from cryptography.hazmat.primitives.asymmetric.types import (
     CertificateIssuerPrivateKeyTypes,
     CertificateIssuerPublicKeyTypes,
@@ -251,7 +261,10 @@ def assert_crl(
         algorithm = signer.algorithm
 
     public_key = signer.pub.loaded.public_key()
-    if isinstance(public_key, x448.X448PublicKey | x25519.X25519PublicKey):  # pragma: no cover
+    if isinstance(
+        public_key,
+        x448.X448PublicKey | x25519.X25519PublicKey | mlkem.MLKEM768PublicKey | mlkem.MLKEM1024PublicKey,
+    ):  # pragma: no cover
         raise TypeError()  # just to make mypy happy
 
     assert isinstance(parsed_crl.signature_hash_algorithm, type(algorithm))
