@@ -206,8 +206,49 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         with pytest.raises(ValueError, match=r"^This function can only validate DNS-01 challenges$"):
             validation.validate_dns_01(AcmeChallenge(type=AcmeChallenge.TYPE_HTTP_01))
 
+    def test_ip_identifier_rejected(self) -> None:
+        """Test that dns-01 raises ValueError for IP identifiers (RFC 8738, section 7)."""
+        auth = AcmeAuthorization(value="192.0.2.1", type=AcmeAuthorization.TYPE_IP, order=self.order)
+        chall = AcmeChallenge(type=AcmeChallenge.TYPE_DNS_01, auth=auth)
+        with pytest.raises(
+            ValueError,
+            match=r"^dns-01 cannot be used to validate IP identifiers \(RFC 8738, section 7\)$",
+        ):
+            validation.validate_dns_01(chall)
+
 
 def test_validate_http_01_wrong_challenge_type() -> None:
     """validate_http_01 raises ValueError when passed a non-HTTP-01 challenge."""
     with pytest.raises(ValueError, match=r"^This function can only validate HTTP-01 challenges$"):
         validation.validate_http_01(AcmeChallenge(type=AcmeChallenge.TYPE_DNS_01))
+
+
+@pytest.mark.parametrize(
+    ("ip_value", "expected_url"),
+    (
+        ("192.0.2.1", "http://192.0.2.1/.well-known/acme-challenge/testtoken"),
+        ("2001:db8::1", "http://[2001:db8::1]/.well-known/acme-challenge/testtoken"),
+    ),
+)
+def test_validate_http_01_ip_url(ip_value: str, expected_url: str) -> None:
+    """Test that validate_http_01 builds the correct URL for IP identifiers (RFC 8738, section 5).
+
+    IPv4 addresses are used bare; IPv6 addresses are enclosed in brackets (RFC 3986, section 3.2.2).
+    """
+    auth = AcmeAuthorization(value=ip_value, type=AcmeAuthorization.TYPE_IP)
+    chall = AcmeChallenge(type=AcmeChallenge.TYPE_HTTP_01, auth=auth)
+
+    with (
+        mock.patch.object(
+            AcmeChallenge, "encoded_token", new_callable=mock.PropertyMock, return_value=b"testtoken"
+        ),
+        mock.patch.object(
+            AcmeChallenge, "expected", new_callable=mock.PropertyMock, return_value=b"testtoken.thumbprint"
+        ),
+        mock.patch("django_ca.acme.validation.requests.get") as mock_get,
+    ):
+        mock_get.return_value.__enter__ = mock.Mock(return_value=mock.Mock(status_code=404))
+        mock_get.return_value.__exit__ = mock.Mock(return_value=False)
+        validation.validate_http_01(chall)
+
+    mock_get.assert_called_once_with(expected_url, timeout=1, stream=True, allow_redirects=False)

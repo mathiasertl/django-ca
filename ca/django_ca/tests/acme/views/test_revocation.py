@@ -15,8 +15,9 @@
 
 # pylint: disable=redefined-outer-name  # because of fixtures
 
+import ipaddress
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -31,6 +32,7 @@ from django.test import Client
 from django.urls import reverse
 
 import pytest
+from freezegun import freeze_time as freeze_at
 from pytest_django.fixtures import Settings
 
 from django_ca.constants import ReasonFlags
@@ -49,7 +51,7 @@ from django_ca.tests.acme.views.base import AcmeWithAccountViewTestCaseMixin
 from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.typehints import HttpResponse
-from django_ca.tests.base.utils import root_reverse
+from django_ca.tests.base.utils import ip as ip_san, root_reverse
 from django_ca.utils import get_cert_builder
 
 # ACME views require a currently valid certificate authority
@@ -315,7 +317,11 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
     def test_non_dns_sans(
         self, client: Client, child: CertificateAuthority, alt_extensions: Certificate, account: AcmeAccount
     ) -> None:
-        """Test revoking a certificate that has no SubjectAltName extension."""
+        """Test revoking a certificate whose SANs include an unsupported type (e.g. URI).
+
+        alt_extensions contains DNS, IP, and URI SANs. The URI SAN is unsupported, so
+        revocation must be rejected even though IP SANs are now allowed (RFC 8738).
+        """
         # Since alt_extensions is signed by child, we have to update the account
         self.account2.ca = child
         self.account2.save()
@@ -327,7 +333,52 @@ class TestAcmeCertificateRevocationWithAuthorizationsView(TestAcmeCertificateRev
         url = reverse("django_ca:acme-revoke", kwargs={"serial": CERT_DATA["child"]["serial"]})
         message_cert = alt_extensions.pub.loaded
         resp = self.acme(client, url, child, self.get_message(certificate=message_cert))
-        assert_unauthorized(resp, child, "Certificate contains non-DNS subjectAlternativeNames.")
+        assert_unauthorized(resp, child, "Certificate contains unsupported subjectAlternativeNames.")
+
+    @pytest.mark.usefixtures("tmpcadir")
+    def test_ip_san_revocation(self, client: Client, usable_root: CertificateAuthority) -> None:
+        """Test revoking a cert with an IP SAN when the account holds the matching IP authorization."""
+        # Issue a certificate with an IP SAN against the usable root CA.
+        # Use a timestamp slightly before the test's freeze-time so .current() includes the cert
+        # (which requires not_before < now).
+
+        key_backend_options = StoragesUsePrivateKeyOptions(password=None)
+        csr = CERT_DATA["root-cert"]["csr"]["parsed"]
+        with freeze_at(TIMESTAMPS["everything_valid"] - timedelta(hours=1)):
+            cert = Certificate.objects.create_cert(
+                usable_root,
+                key_backend_options,
+                csr,
+                subject=x509.Name([]),
+                extensions=[
+                    x509.Extension(
+                        oid=x509.SubjectAlternativeName.oid,
+                        critical=False,
+                        value=x509.SubjectAlternativeName([ip_san(ipaddress.IPv4Address("192.0.2.1"))]),
+                    )
+                ],
+                add_crl_url=False,
+                add_ocsp_url=False,
+                add_issuer_url=False,
+                add_issuer_alternative_name=False,
+                allow_empty_subject=True,
+            )
+
+        # Wire up an AcmeCertificate so the revocation view finds it.
+        order = AcmeOrder.objects.create(account=self.account2, status=AcmeOrder.STATUS_VALID)
+        AcmeCertificate.objects.create(order=order, cert=cert)
+
+        # Give account2 a valid IP authorization matching the certificate's SAN.
+        AcmeAuthorization.objects.create(
+            order=order,
+            type=AcmeAuthorization.TYPE_IP,
+            value="192.0.2.1",
+            status=AcmeAuthorization.STATUS_VALID,
+        )
+
+        revoke_url = reverse("django_ca:acme-revoke", kwargs={"serial": usable_root.serial})
+        resp = self.acme(client, revoke_url, usable_root, self.get_message(certificate=cert.pub.loaded))
+        assert resp.status_code == HTTPStatus.OK, resp.content
 
 
 class TestAcmeCertificateRevocationWithJWKView(TestAcmeCertificateRevocationView):

@@ -24,8 +24,16 @@ from freezegun import freeze_time
 
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
 from django_ca.tests.base.assertions import assert_count_equal
-from django_ca.tests.base.constants import TIMESTAMPS
-from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.tests.base.constants import (
+    ACME_PEM_1,
+    ACME_PEM_2,
+    ACME_SLUG_1,
+    ACME_SLUG_2,
+    ACME_THUMBPRINT_1,
+    ACME_THUMBPRINT_2,
+    TIMESTAMPS,
+)
+from django_ca.tests.base.mixins import TestCaseMixin
 
 
 class QuerySetTestCaseMixin(TestCaseMixin):
@@ -50,7 +58,7 @@ class QuerySetTestCaseMixin(TestCaseMixin):
             obj.save()
 
 
-class AcmeQuerySetTestCase(QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTestCase):
+class AcmeQuerySetTestCase(QuerySetTestCaseMixin, TransactionTestCase):
     """Base class for ACME querysets (creates different instances)."""
 
     load_cas = "__usable__"
@@ -62,26 +70,26 @@ class AcmeQuerySetTestCase(QuerySetTestCaseMixin, AcmeValuesMixin, TransactionTe
         self.ca2 = self.cas["root"]
         self.ca2.acme_enabled = True
         self.ca2.save()
-        self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=self.ACME_SLUG_1)
+        self.kid = self.absolute_uri(":acme-account", serial=self.ca.serial, slug=ACME_SLUG_1)
         self.account = AcmeAccount.objects.create(
             ca=self.ca,
             contact="user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
-            slug=self.ACME_SLUG_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
+            slug=ACME_SLUG_1,
             kid=self.kid,
         )
-        self.kid2 = self.absolute_uri(":acme-account", serial=self.ca2.serial, slug=self.ACME_SLUG_2)
+        self.kid2 = self.absolute_uri(":acme-account", serial=self.ca2.serial, slug=ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.ca2,
             contact="user@example.net",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_2,
-            thumbprint=self.ACME_THUMBPRINT_2,
-            slug=self.ACME_SLUG_2,
+            pem=ACME_PEM_2,
+            thumbprint=ACME_THUMBPRINT_2,
+            slug=ACME_SLUG_2,
             kid=self.kid2,
         )
         self.order = AcmeOrder.objects.create(account=self.account)

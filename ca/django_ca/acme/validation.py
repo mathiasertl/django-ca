@@ -13,6 +13,7 @@
 
 """Module collecting methods for ACME challenge validation."""
 
+import ipaddress
 import logging
 from http import HTTPStatus
 
@@ -20,7 +21,7 @@ import dns.exception
 import requests
 from dns import resolver
 
-from django_ca.models import AcmeChallenge
+from django_ca.models import AcmeAuthorization, AcmeChallenge
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ def validate_http_01(challenge: AcmeChallenge) -> bool:
     """Function to validate an HTTP-01 challenge.
 
     .. seealso:: `RFC 8555, section 8.3 <https://datatracker.ietf.org/doc/html/rfc8555#section-8.3>`_
+    .. seealso:: `RFC 8738, section 5 <https://datatracker.ietf.org/doc/html/rfc8738#section-5>`_
 
     Parameters
     ----------
@@ -40,10 +42,23 @@ def validate_http_01(challenge: AcmeChallenge) -> bool:
     if challenge.type != AcmeChallenge.TYPE_HTTP_01:
         raise ValueError("This function can only validate HTTP-01 challenges")
 
-    domain = challenge.auth.value
     decoded_token = challenge.encoded_token.decode("utf-8")
     expected = challenge.expected
-    url = f"http://{domain}/.well-known/acme-challenge/{decoded_token}"
+
+    # RFC 8738, section 5: for IP identifiers the DNS resolution step is skipped and the IP
+    # address is used directly. IPv6 addresses must be enclosed in brackets in the URL
+    # (RFC 3986, section 3.2.2). The Host header is set automatically by the requests library
+    # from the URL host component, satisfying RFC 8738 §5 / RFC 7230 §5.4.
+    if challenge.auth.type == AcmeAuthorization.TYPE_IP:
+        addr = ipaddress.ip_address(challenge.auth.value)
+        if isinstance(addr, ipaddress.IPv6Address):
+            url_host = f"[{addr}]"
+        else:
+            url_host = str(addr)
+    else:
+        url_host = challenge.auth.value
+
+    url = f"http://{url_host}/.well-known/acme-challenge/{decoded_token}"
 
     try:
         with requests.get(url, timeout=1, stream=True, allow_redirects=False) as response:
@@ -73,6 +88,10 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
     """
     if challenge.type != AcmeChallenge.TYPE_DNS_01:
         raise ValueError("This function can only validate DNS-01 challenges")
+
+    # RFC 8738, section 7: dns-01 MUST NOT be used to validate IP identifiers.
+    if challenge.auth.type == AcmeAuthorization.TYPE_IP:
+        raise ValueError("dns-01 cannot be used to validate IP identifiers (RFC 8738, section 7)")
 
     domain = challenge.auth.value  # domain to validate
 

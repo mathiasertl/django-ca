@@ -20,6 +20,7 @@
 """
 
 import abc
+import ipaddress
 import json
 import logging
 import secrets
@@ -797,8 +798,20 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
         # same type (similar to Django). So we cast josepy fields to the actual type.
         not_before = cast(datetime | None, message.not_before)
         not_after = cast(datetime | None, message.not_after)
-        # TODO: test if identifiers are acceptable
-        identifiers = typing.cast(list[messages.Identifier], message.identifiers)
+        raw_identifiers = typing.cast(list[messages.Identifier], message.identifiers)
+
+        # Validate and normalise identifiers. For IP identifiers (RFC 8738, section 3) the value
+        # MUST be a valid textual IP address; normalise to canonical form so storage and comparison
+        # are unambiguous (RFC 1123 §2.1 for IPv4, RFC 5952 §4 for IPv6).
+        identifiers: list[messages.Identifier] = []
+        for ident in raw_identifiers:
+            if ident.typ == messages.IDENTIFIER_IP:
+                try:
+                    canonical = ipaddress.ip_address(ident.value).compressed
+                except ValueError as ex:
+                    raise AcmeMalformed(message=f"Invalid IP address: {ident.value}") from ex
+                ident = messages.Identifier(typ=messages.IDENTIFIER_IP, value=canonical)
+            identifiers.append(ident)
 
         if not_before and not_before < now:
             raise AcmeMalformed(message="Certificate cannot be valid before now.")
@@ -939,16 +952,33 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             check_name(csr.subject)
 
             # We allow a client setting a CommonName, but it *must* be part of the order.
+            # The CN may refer to either a DNS name or an IP address (RFC 8738).
             common_name = next((attr for attr in csr.subject if attr.oid == NameOID.COMMON_NAME), None)
             if common_name is not None:
                 if isinstance(common_name.value, bytes):  # pragma: no cover
                     raise AcmeBadCSR(message="CommonName was not in order.")
-                if x509.DNSName(common_name.value) not in names_from_order:
+                try:
+                    # Normalise to compressed form so the lookup against names_from_order
+                    # (which stores compressed values) is unambiguous (RFC 5952 §4).
+                    addr = ipaddress.ip_address(common_name.value)
+                    cn_general_name: x509.GeneralName = x509.IPAddress(ipaddress.ip_address(addr.compressed))
+                except ValueError:
+                    cn_general_name = x509.DNSName(common_name.value)
+                if cn_general_name not in names_from_order:
                     raise AcmeBadCSR(message="CommonName was not in order.")
 
         try:
             san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-            names_from_csr: set[x509.GeneralName] = set(san_ext.value)
+            # Normalise IP SANs to their compressed form so the set comparison against
+            # names_from_order (which uses compressed values) is unambiguous.
+            names_from_csr: set[x509.GeneralName] = set()
+            for san_name in san_ext.value:
+                if isinstance(san_name, x509.IPAddress) and isinstance(
+                    san_name.value, (ipaddress.IPv4Address, ipaddress.IPv6Address)
+                ):
+                    names_from_csr.add(x509.IPAddress(ipaddress.ip_address(san_name.value.compressed)))
+                else:
+                    names_from_csr.add(san_name)
         except x509.ExtensionNotFound as ex:
             raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
 
@@ -1240,8 +1270,9 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
                 return cert
 
             # If the account holds authorizations for all the identifiers in the certificate, it can also
-            # be revoked, so get a list of all currently valid authorizations that the account holds
-            authz = set(AcmeAuthorization.objects.dns().valid().account(account=self.account).names())
+            # be revoked, so get a list of all currently valid authorizations that the account holds.
+            # Both DNS and IP authorizations are considered (RFC 8738).
+            authz = set(AcmeAuthorization.objects.valid().account(account=self.account).names())
 
             # Get names from the certificate, first from the CommonName...
             # NOTE: returns empty list if subject does not have a CommonName.
@@ -1251,10 +1282,18 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             try:
                 san = cert.pub.loaded.extensions.get_extension_for_class(x509.SubjectAlternativeName)
 
-                # If ANY subjectAlternativeName is NOT a DNS name, we cannot revoke this cert.
-                if list(filter(lambda v: not isinstance(v, x509.DNSName), san.value)):
-                    raise AcmeUnauthorized(message="Certificate contains non-DNS subjectAlternativeNames.")
-                names += [name.value for name in san.value]
+                # Only DNS and IP SANs are supported for authorization-based revocation (RFC 8738).
+                for san_name in san.value:
+                    if isinstance(san_name, x509.DNSName):
+                        names.append(san_name.value)
+                    elif isinstance(san_name, x509.IPAddress):
+                        # IP address values are ipaddress objects; convert to canonical text form
+                        # to match the value stored in AcmeAuthorization.
+                        names.append(str(san_name.value))
+                    else:
+                        raise AcmeUnauthorized(
+                            message="Certificate contains unsupported subjectAlternativeNames."
+                        )
             except x509.ExtensionNotFound:
                 pass
 

@@ -41,8 +41,17 @@ from django_ca.models import (
     Watcher,
 )
 from django_ca.tests.base.assertions import assert_validation_error
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.tests.base.constants import (
+    ACME_PEM_1,
+    ACME_PEM_2,
+    ACME_SLUG_1,
+    ACME_SLUG_2,
+    ACME_THUMBPRINT_1,
+    ACME_THUMBPRINT_2,
+    CERT_DATA,
+    TIMESTAMPS,
+)
+from django_ca.tests.base.mixins import TestCaseMixin
 
 ChallengeTypeVar = typing.TypeVar("ChallengeTypeVar", bound=challenges.KeyAuthorizationChallenge)
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
@@ -296,7 +305,7 @@ class ModelfieldsTests(TestCaseMixin, TestCase):
             )
 
 
-class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeAccountTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.AcmeAccount`."""
 
     load_cas = ("root", "child")
@@ -304,26 +313,26 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.kid1 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=self.ACME_SLUG_1)
+        self.kid1 = self.absolute_uri(":acme-account", serial=self.cas["root"].serial, slug=ACME_SLUG_1)
         self.account1 = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
-            slug=self.ACME_SLUG_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
+            slug=ACME_SLUG_1,
             kid=self.kid1,
         )
-        self.kid2 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=self.ACME_SLUG_2)
+        self.kid2 = self.absolute_uri(":acme-account", serial=self.cas["child"].serial, slug=ACME_SLUG_2)
         self.account2 = AcmeAccount.objects.create(
             ca=self.cas["child"],
             contact="mailto:user@example.net",
             terms_of_service_agreed=False,
             status=AcmeAccount.STATUS_REVOKED,
-            pem=self.ACME_PEM_2,
-            thumbprint=self.ACME_THUMBPRINT_2,
-            slug=self.ACME_SLUG_2,
+            pem=ACME_PEM_2,
+            thumbprint=ACME_THUMBPRINT_2,
+            slug=ACME_SLUG_2,
             kid=self.kid2,
         )
 
@@ -400,7 +409,7 @@ class AcmeAccountTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             self.account1.full_clean()
 
 
-class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeOrderTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.AcmeOrder`."""
 
     load_cas = ("root",)
@@ -412,8 +421,8 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
         )
         self.order1 = AcmeOrder.objects.create(account=self.account)
 
@@ -455,80 +464,7 @@ class AcmeOrderTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         assert self.order1.serial == self.cas["root"].serial
 
 
-class AcmeAuthorizationTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
-    """Test :py:class:`django_ca.models.AcmeAuthorization`."""
-
-    load_cas = ("root",)
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.account = AcmeAccount.objects.create(
-            ca=self.cas["root"],
-            contact="user@example.com",
-            terms_of_service_agreed=True,
-            status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
-        )
-        self.order = AcmeOrder.objects.create(account=self.account)
-        self.auth1 = AcmeAuthorization.objects.create(
-            order=self.order, type=AcmeAuthorization.TYPE_DNS, value="example.com"
-        )
-        self.auth2 = AcmeAuthorization.objects.create(
-            order=self.order, type=AcmeAuthorization.TYPE_DNS, value="example.net"
-        )
-
-    def test_str(self) -> None:
-        """Test the __str__ method."""
-        assert str(self.auth1) == "dns: example.com"
-        assert str(self.auth2) == "dns: example.net"
-
-    def test_account_property(self) -> None:
-        """Test the account property."""
-        assert self.auth1.account == self.account
-        assert self.auth2.account == self.account
-
-    def test_acme_url(self) -> None:
-        """Test acme_url property."""
-        assert self.auth1.acme_url == f"/django_ca/acme/{self.cas['root'].serial}/authz/{self.auth1.slug}/"
-        assert self.auth2.acme_url == f"/django_ca/acme/{self.cas['root'].serial}/authz/{self.auth2.slug}/"
-
-    def test_expires(self) -> None:
-        """Test the expires property."""
-        assert self.auth1.expires == self.order.expires
-        assert self.auth2.expires == self.order.expires
-
-    def test_identifier(self) -> None:
-        """Test the identifier property."""
-        assert self.auth1.identifier == messages.Identifier(
-            typ=messages.IDENTIFIER_FQDN, value=self.auth1.value
-        )
-        assert self.auth2.identifier == messages.Identifier(
-            typ=messages.IDENTIFIER_FQDN, value=self.auth2.value
-        )
-
-    def test_identifier_unknown_type(self) -> None:
-        """Test that an identifier with an unknown type raises a ValueError."""
-        self.auth1.type = "foo"
-        with pytest.raises(ValueError, match=r"^Unknown identifier type: foo$"):
-            self.auth1.identifier  # noqa: B018
-
-    def test_subject_alternative_name(self) -> None:
-        """Test the subject_alternative_name property."""
-        assert self.auth1.subject_alternative_name == "dns:example.com"
-        assert self.auth2.subject_alternative_name == "dns:example.net"
-
-    def test_get_challenges(self) -> None:
-        """Test the get_challenges() method."""
-        chall_qs = self.auth1.get_challenges()
-        assert isinstance(chall_qs[0], AcmeChallenge)
-        assert isinstance(chall_qs[1], AcmeChallenge)
-
-        assert self.auth1.get_challenges() == chall_qs
-        assert AcmeChallenge.objects.all().count() == 2
-
-
-class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeChallengeTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.AcmeChallenge`."""
 
     load_cas = ("root",)
@@ -540,8 +476,8 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             contact="user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
         )
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth = AcmeAuthorization.objects.create(
@@ -633,7 +569,7 @@ class AcmeChallengeTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
         assert self.chall.serial == self.chall.auth.order.account.ca.serial
 
 
-class AcmeCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeCertificateTestCase(TestCaseMixin, TestCase):
     """Test :py:class:`django_ca.models.AcmeCertificate`."""
 
     load_cas = ("root",)
@@ -645,8 +581,8 @@ class AcmeCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
         )
         self.order = AcmeOrder.objects.create(account=self.account)
         self.acme_cert = AcmeCertificate.objects.create(order=self.order)
