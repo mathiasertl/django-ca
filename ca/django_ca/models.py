@@ -17,6 +17,7 @@
 """
 
 import hashlib
+import ipaddress
 import json
 import logging
 import random
@@ -1590,10 +1591,13 @@ class AcmeAuthorization(DjangoCAModel):
         `RFC 8555, 7.1.4 <https://tools.ietf.org/html/rfc8555#section-7.1.4>`_
     """
 
-    # Choices from RFC 8555, section 9.7.7.
-    # TODO: acme.messages defines an "ip" identifier, present in acme >= 1.19.0
+    # Choices from RFC 8555, section 9.7.7 and RFC 8738, section 3.
     TYPE_DNS = IdentifierType.DNS.value
-    TYPE_CHOICES = ((TYPE_DNS, _("DNS")),)
+    TYPE_IP = IdentifierType.IP.value
+    TYPE_CHOICES = (
+        (TYPE_DNS, _("DNS")),
+        (TYPE_IP, _("IP")),
+    )
 
     # RFC 8555, 7.1.4: "Possible values are "pending", "valid", "invalid", "deactivated", "expired", and
     #                   "revoked"."
@@ -1655,7 +1659,11 @@ class AcmeAuthorization(DjangoCAModel):
         """Get the :py:class:`~cg:cryptography.x509.GeneralName` instance for this instance."""
         if self.type == AcmeAuthorization.TYPE_DNS:
             return x509.DNSName(self.value)
-        raise ValueError(f"{self.type}: Unsupported type.")  # pragma: no cover
+        if self.type == AcmeAuthorization.TYPE_IP:
+            # RFC 8738, section 3: value is the textual form of the address (RFC 1123 §2.1 for
+            # IPv4, RFC 5952 §4 for IPv6).
+            return x509.IPAddress(ipaddress.ip_address(self.value))
+        raise ValueError(f"{self.type}: Unsupported type.")
 
     @property
     def identifier(self) -> "messages.Identifier":
@@ -1667,6 +1675,8 @@ class AcmeAuthorization(DjangoCAModel):
         """
         if self.type == AcmeAuthorization.TYPE_DNS:
             return messages.Identifier(typ=messages.IDENTIFIER_FQDN, value=self.value)
+        if self.type == AcmeAuthorization.TYPE_IP:
+            return messages.Identifier(typ=messages.IDENTIFIER_IP, value=self.value)
         raise ValueError(f"Unknown identifier type: {self.type}")
 
     @property
@@ -1687,12 +1697,18 @@ class AcmeAuthorization(DjangoCAModel):
         """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
 
         Note that challenges will be created if they don't exist.
+
+        For DNS identifiers both ``http-01`` and ``dns-01`` are offered. For IP identifiers only ``http-01``
+        is offered, as RFC 8738, section 7 explicitly prohibits using ``dns-01`` to validate IP identifiers.
         """
-        return [
+        auth_challenges: list[AcmeChallenge] = [
             AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_HTTP_01)[0],
-            # AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_TLS_ALPN_01)[0],
-            AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0],
         ]
+        if self.type == AcmeAuthorization.TYPE_DNS:
+            auth_challenges.append(
+                AcmeChallenge.objects.get_or_create(auth=self, type=AcmeChallenge.TYPE_DNS_01)[0]
+            )
+        return auth_challenges
 
     @property
     def usable(self) -> bool:

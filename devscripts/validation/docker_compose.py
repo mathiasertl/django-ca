@@ -44,6 +44,11 @@ from devscripts.docker import (
 from devscripts.out import err, info, ok
 from devscripts.versions import get_last_version
 
+#: IP address of the certbot container in the ``dns`` network (see devscripts/files/compose.certbot.yaml).
+#: The backend validates http-01 challenges for IP identifiers by connecting to this address directly (RFC
+#: 8738, section 5), so the address must be reachable from the backend container.
+CERTBOT_IP_ADDRESS = "10.5.0.5"
+
 
 @contextmanager
 def _compose_up(remove_volumes: bool = True, **kwargs: Any) -> Iterator[None]:
@@ -140,6 +145,16 @@ def _validate_crl_ocsp(
         raise RuntimeError("Certificate is not revoked in CRL.")
 
     ok("CRL and OCSP validation works.")
+
+
+def _certbot_supports_ip_address(environ: dict[str, str]) -> bool:
+    """Check if certbot in the container can request certificates for IP addresses.
+
+    The ``--ip-address`` flag was added in certbot 5.3.0, so certbot from older distributions cannot
+    request certificates for IP addresses (RFC 8738) at all.
+    """
+    proc = compose_exec("certbot", "certbot", "--help", "all", capture_output=True, check=False, env=environ)
+    return "--ip-address" in (proc.stdout or "") + (proc.stderr or "")
 
 
 def get_postgres_version(path: Path | str) -> str:
@@ -321,6 +336,46 @@ def test_acme(release: str, image: str) -> int:
                         "certbot", "django-ca-test-validation.sh", "dns", "dns-01.example.com", env=environ
                     )
                     ok("Created certificate via a dns-01 challenge.")
+
+                    # Request a certificate for an IP address (RFC 8738). Note that only http-01 may be
+                    # used to validate IP identifiers (RFC 8738, section 7).
+                    if _certbot_supports_ip_address(environ):
+                        compose_exec(
+                            "certbot",
+                            "certbot",
+                            "certonly",
+                            "-n",
+                            "--standalone",
+                            "--preferred-challenges",
+                            "http",
+                            "--ip-address",
+                            CERTBOT_IP_ADDRESS,
+                            env=environ,
+                        )
+                        ok("Created certificate for an IP address via a http-01 challenge.")
+
+                        compose_python(
+                            "backend",
+                            f"""
+from ipaddress import ip_address
+
+from cryptography import x509
+
+from django_ca.models import AcmeAuthorization, AcmeCertificate
+
+acme_cert = AcmeCertificate.objects.get(cert__cn="{CERTBOT_IP_ADDRESS}")
+types = [auth.type for auth in acme_cert.order.authorizations.all()]
+assert types == [AcmeAuthorization.TYPE_IP], f"authorization types are {{types}}"
+
+san = acme_cert.cert.pub.loaded.extensions.get_extension_for_class(
+    x509.SubjectAlternativeName
+).value
+expected = [x509.IPAddress(ip_address("{CERTBOT_IP_ADDRESS}"))]
+assert list(san) == expected, f"subjectAlternativeName is {{list(san)}}"
+""",
+                        )
+                    else:
+                        info("certbot does not support --ip-address, skipping IP address certificate.")
 
                     compose_python(
                         "backend",

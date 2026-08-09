@@ -321,10 +321,6 @@ class AcmeAuthorizationQuerySet(AcmeAuthorizationQuerySetBase):
         """Filter authorizations belonging to the given account."""
         return self.filter(order__account=account)
 
-    def dns(self) -> "AcmeAuthorizationQuerySet":
-        """Get all authorizations of type DNS."""
-        return self.filter(type=self.model.TYPE_DNS)
-
     def names(self) -> QuerySet["AcmeAuthorization", str]:
         """Get a flat list of names identified by the current queryset."""
         return self.values_list("value", flat=True)

@@ -205,5 +205,79 @@ def test_invalid_not_before_after(
     assert_malformed(resp, root, expected)
 
 
+@pytest.mark.usefixtures("account")
+@pytest.mark.parametrize(
+    ("ip_value", "expected_type", "expected_value"),
+    (
+        ("192.0.2.1", "ip", "192.0.2.1"),
+        ("2001:db8::1", "ip", "2001:db8::1"),
+    ),
+)
+def test_ip_order(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+    ip_value: str,
+    expected_type: str,
+    expected_value: str,
+) -> None:
+    """Test creating an order for an IP identifier (RFC 8738)."""
+    message = NewOrder(identifiers=[{"type": "ip", "value": ip_value}])
+    with mock_slug() as slug:
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.CREATED, resp.content
+
+    assert resp.json()["identifiers"] == [{"type": expected_type, "value": expected_value}]
+
+    authz = AcmeOrder.objects.get(slug=slug).authorizations.get()
+    assert authz.type == expected_type
+    assert authz.value == expected_value
+    assert authz.status == AcmeAuthorization.STATUS_PENDING
+    assert authz.wildcard is False
+
+
+@pytest.mark.usefixtures("account")
+@pytest.mark.parametrize(
+    ("raw_value", "canonical"),
+    (
+        ("2001:0DB8:0:0:0:0:0:1", "2001:db8::1"),
+        ("::ffff:192.0.2.1", "::ffff:192.0.2.1"),
+    ),
+)
+def test_ip_order_normalisation(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+    raw_value: str,
+    canonical: str,
+) -> None:
+    """Test that non-canonical IP values are normalised (RFC 8738, section 3 / RFC 5952, section 4)."""
+    message = NewOrder(identifiers=[{"type": "ip", "value": raw_value}])
+    with mock_slug() as slug:
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.CREATED, resp.content
+
+    assert resp.json()["identifiers"] == [{"type": "ip", "value": canonical}]
+    authz = AcmeOrder.objects.get(slug=slug).authorizations.get()
+    assert authz.value == canonical
+
+
+@pytest.mark.usefixtures("account")
+@pytest.mark.parametrize(
+    "bad_value",
+    ("not-an-ip", "*.1.2.3.4", "256.0.0.1", ""),
+)
+def test_ip_order_invalid(
+    client: Client, url: str, root: CertificateAuthority, kid: str, bad_value: str
+) -> None:
+    """Test that invalid IP address values are rejected (RFC 8738, section 3)."""
+    message = NewOrder(identifiers=[{"type": "ip", "value": bad_value}])
+    resp = acme_request(client, url, root, message, kid=kid)
+    assert_malformed(resp, root, f"Invalid IP address: {bad_value}")
+    assert AcmeOrder.objects.count() == 0
+
+
 class TestAcmeNewOrderView(AcmeWithAccountViewTestCaseMixin[NewOrder]):
     """Test creating a new order."""

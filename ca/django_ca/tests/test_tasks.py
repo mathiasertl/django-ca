@@ -39,14 +39,14 @@ from django_ca import tasks
 from django_ca.conf import model_settings
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
-from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
-from django_ca.tests.base.mixins import AcmeValuesMixin, TestCaseMixin
+from django_ca.tests.base.constants import ACME_PEM_1, ACME_THUMBPRINT_1, CERT_DATA, TIMESTAMPS
+from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
 
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 
-class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
+class AcmeValidateChallengeTestCaseMixin(TestCaseMixin):
     """Test :py:func:`~django_ca.tasks.acme_validate_challenge`."""
 
     type: str
@@ -59,8 +59,8 @@ class AcmeValidateChallengeTestCaseMixin(TestCaseMixin, AcmeValuesMixin):
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
             status=AcmeAccount.STATUS_VALID,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
         )
         self.order = AcmeOrder.objects.create(account=self.account)
         self.auth = AcmeAuthorization.objects.create(
@@ -307,7 +307,7 @@ class AcmeValidateDns01ChallengeTestCase(AcmeValidateChallengeTestCaseMixin, Tes
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_issue_certificate`."""
 
     load_cas = ("root",)
@@ -318,8 +318,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
         )
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_PROCESSING)
         self.auth = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)
@@ -460,7 +460,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
-class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
+class AcmeCleanupTestCase(TestCaseMixin, TestCase):
     """Test :py:func:`~django_ca.tasks.acme_cleanup`."""
 
     load_cas = ("root",)
@@ -471,8 +471,8 @@ class AcmeCleanupTestCase(TestCaseMixin, AcmeValuesMixin, TestCase):
             ca=self.cas["root"],
             contact="mailto:user@example.com",
             terms_of_service_agreed=True,
-            pem=self.ACME_PEM_1,
-            thumbprint=self.ACME_THUMBPRINT_1,
+            pem=ACME_PEM_1,
+            thumbprint=ACME_THUMBPRINT_1,
         )
         self.order = AcmeOrder.objects.create(account=self.account, status=AcmeOrder.STATUS_PROCESSING)
         self.auth = AcmeAuthorization.objects.create(order=self.order, value=self.hostname)

@@ -15,6 +15,7 @@
 
 # pylint: disable=redefined-outer-name
 
+import ipaddress
 from http import HTTPStatus
 from unittest import mock
 from unittest.mock import patch
@@ -44,7 +45,7 @@ from django_ca.tests.acme.views.constants import HOST_NAME, SERVER_NAME
 from django_ca.tests.acme.views.utils import acme_request
 from django_ca.tests.base.constants import CERT_DATA, FIXTURES_DIR, TIMESTAMPS
 from django_ca.tests.base.typehints import CaptureOnCommitCallbacks, HttpResponse
-from django_ca.tests.base.utils import dns, root_reverse
+from django_ca.tests.base.utils import dns, ip, root_reverse
 
 # ACME views require a currently valid certificate authority
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
@@ -556,6 +557,143 @@ def test_csr_invalid_version(
     assert len(callbacks) == 0
     mockcm.assert_not_called()
     assert_bad_csr(resp, "Invalid CSR version.", root)
+
+
+@pytest.fixture
+def ip_authz(order: AcmeOrder) -> AcmeAuthorization:
+    """A valid IP authorization for 192.0.2.1."""
+    return AcmeAuthorization.objects.create(
+        order=order,
+        type=AcmeAuthorization.TYPE_IP,
+        value="192.0.2.1",
+        status=AcmeAuthorization.STATUS_VALID,
+    )
+
+
+@pytest.fixture
+def ip_authz_v6(order: AcmeOrder) -> AcmeAuthorization:
+    """A valid IP authorization for 2001:db8::1 (compressed form)."""
+    return AcmeAuthorization.objects.create(
+        order=order,
+        type=AcmeAuthorization.TYPE_IP,
+        value="2001:db8::1",
+        status=AcmeAuthorization.STATUS_VALID,
+    )
+
+
+@pytest.mark.usefixtures("ip_authz")
+def test_csr_ip_san(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+) -> None:
+    """Test finalizing an order for an IP identifier with an IPAddress SAN (RFC 8738)."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([]))
+        .add_extension(
+            x509.SubjectAlternativeName([ip(ipaddress.ip_address("192.0.2.1"))]),
+            critical=False,
+        )
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    message = CertificateRequest(csr=csr)
+    with (
+        patch("django_ca.acme.views.run_task"),
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+
+
+@pytest.mark.usefixtures("ip_authz")
+def test_csr_ip_valid_cn(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+) -> None:
+    """Test that a CSR CN set to the ordered IP address is accepted (RFC 8738)."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "192.0.2.1")]))
+        .add_extension(
+            x509.SubjectAlternativeName([ip(ipaddress.ip_address("192.0.2.1"))]),
+            critical=False,
+        )
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    message = CertificateRequest(csr=csr)
+    with (
+        patch("django_ca.acme.views.run_task"),
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+
+
+@pytest.mark.usefixtures("ip_authz")
+def test_csr_ip_cn_not_in_order(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+) -> None:
+    """Test that a CSR CN set to an IP not in the order is rejected."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "192.0.2.99")]))
+        .add_extension(
+            x509.SubjectAlternativeName([ip(ipaddress.ip_address("192.0.2.1"))]),
+            critical=False,
+        )
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    message = CertificateRequest(csr=csr)
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "CommonName was not in order.", root)
+
+
+@pytest.mark.usefixtures("ip_authz_v6")
+def test_csr_ip_non_canonical_san(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str,
+) -> None:
+    """A CSR with a non-compressed IPv6 SAN must match the order's compressed authorization value.
+
+    The order stores '2001:db8::1' (compressed). The CSR presents the same address in
+    non-compressed form. Both sides are normalised before comparison, so the CSR is accepted.
+    """
+    non_canonical_addr = ipaddress.IPv6Address("2001:0DB8:0000:0000:0000:0000:0000:0001")
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([]))
+        .add_extension(
+            x509.SubjectAlternativeName([ip(non_canonical_addr)]),
+            critical=False,
+        )
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    message = CertificateRequest(csr=csr)
+    with (
+        patch("django_ca.acme.views.run_task"),
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
 
 
 class TestAcmeOrderFinalizeView(AcmeWithAccountViewTestCaseMixin[CertificateRequest]):

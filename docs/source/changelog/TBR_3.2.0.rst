@@ -15,6 +15,8 @@ Settings
 ACMEv2
 ******
 
+* Implement IP address validation according to `RFC 8738 <https://datatracker.ietf.org/doc/html/rfc8738>`_.
+  This allows you to create certificates for IP addresses using ACMEv2.
 * Implement Account Key Rollover as specified in `RFC 8555, section 7.3.5
   <https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5>`_.
 * Implement Orders List endpoint as specified in `RFC 8555, section 7.1.2.1
