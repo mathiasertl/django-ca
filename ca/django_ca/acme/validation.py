@@ -13,7 +13,9 @@
 
 """Module collecting methods for ACME challenge validation."""
 
+import ipaddress
 import logging
+import socket
 from http import HTTPStatus
 
 import dns.exception
@@ -23,6 +25,44 @@ from dns import resolver
 from django_ca.models import AcmeChallenge
 
 log = logging.getLogger(__name__)
+
+# Private/link-local/loopback IP networks blocked from ACME HTTP validation
+_SSRF_BLOCKED_NETWORKS = [
+    ipaddress.IPv4Network("10.0.0.0/8"),
+    ipaddress.IPv4Network("127.0.0.0/8"),
+    ipaddress.IPv4Network("169.254.0.0/16"),
+    ipaddress.IPv4Network("172.16.0.0/12"),
+    ipaddress.IPv4Network("192.168.0.0/16"),
+    ipaddress.IPv6Network("::1/128"),
+    ipaddress.IPv6Network("fc00::/7"),
+    ipaddress.IPv6Network("fe80::/10"),
+]
+
+
+def _is_internal_host(host: str) -> bool:
+    """Check if a hostname resolves to or is an internal/private IP address.
+
+    This prevents SSRF attacks where an attacker requests ACME validation
+    for a domain pointing to internal infrastructure
+    (e.g. ``127.0.0.1``, ``169.254.169.254``, ``10.0.0.1``).
+    """
+    # Check raw IP address
+    try:
+        addr = ipaddress.ip_address(host)
+        return any(addr in net for net in _SSRF_BLOCKED_NETWORKS)
+    except ValueError:
+        pass
+
+    # Resolve hostname and check resolved IPs
+    try:
+        for res in socket.getaddrinfo(host, None):
+            ip = ipaddress.ip_address(res[4][0])
+            if any(ip in net for net in _SSRF_BLOCKED_NETWORKS):
+                return True
+    except socket.gaierror:
+        return True  # Block unresolvable hosts
+
+    return False
 
 
 def validate_http_01(challenge: AcmeChallenge) -> bool:
@@ -43,6 +83,12 @@ def validate_http_01(challenge: AcmeChallenge) -> bool:
     domain = challenge.auth.value
     decoded_token = challenge.encoded_token.decode("utf-8")
     expected = challenge.expected
+
+    # Prevent SSRF: block challenges for internal/private IPs
+    if _is_internal_host(domain):
+        log.warning("SSRF prevention: blocked HTTP-01 challenge for internal host: %s", domain)
+        return False
+
     url = f"http://{domain}/.well-known/acme-challenge/{decoded_token}"
 
     try:
