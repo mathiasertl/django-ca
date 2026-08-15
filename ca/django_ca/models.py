@@ -1627,6 +1627,10 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
         error = messages.Error.with_code(code, detail=detail, identifier=identifier, subproblems=subproblems)
         self.error = error.to_json()
 
+    def get_general_names(self) -> tuple[x509.DNSName | x509.IPAddress, ...]:
+        """Return all GeneralName instances for this order."""
+        return tuple(a.general_name for a in self.authorizations.all())
+
     @property
     def serial(self) -> str:
         """Serial of the CA for this order."""
@@ -1715,7 +1719,7 @@ class AcmeAuthorization(DjangoCAModel):
         return self.order.expires  # so far there is no reason to have a different value here
 
     @property
-    def general_name(self) -> x509.GeneralName:
+    def general_name(self) -> x509.DNSName | x509.IPAddress:
         """Get the :py:class:`~cg:cryptography.x509.GeneralName` instance for this instance."""
         if self.type == AcmeAuthorization.TYPE_DNS:
             return x509.DNSName(self.value)
@@ -1743,15 +1747,6 @@ class AcmeAuthorization(DjangoCAModel):
     def serial(self) -> str:
         """Serial of the CA for this authorization."""
         return self.order.serial
-
-    @property
-    def subject_alternative_name(self) -> str:
-        """Get the domain for this challenge as prefixed SubjectAlternativeName.
-
-        This method is intended to be used when creating the ``django_ca.extensions.SubjectAlternativeName``
-        extension for a certificate to be signed.
-        """
-        return f"{self.type}:{self.value}"
 
     def get_challenges(self) -> list["AcmeChallenge"]:
         """Get list of :py:class:`~django_ca.models.AcmeChallenge` objects for this authorization.
