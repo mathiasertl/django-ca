@@ -23,6 +23,7 @@ from unittest import mock
 
 import dns.resolver
 import josepy as jose
+from acme import messages
 from dns.rdtypes.txtbase import TXTBase
 from requests.packages.urllib3.response import HTTPResponse
 
@@ -377,6 +378,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_VALID
+        assert self.order.get_error() is None  # no error is set for a successful order
         assert self.acme_cert.cert.extensions[
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ] == subject_alternative_name(x509.DNSName(self.hostname))
@@ -495,6 +497,12 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_INVALID
 
+        # The order stores a generic error, so that the exception is not leaked to the client.
+        assert self.order.get_error() == messages.Error.with_code(
+            "serverInternal", detail="Internal error while signing the certificate."
+        )
+        assert message not in str(self.order.error)
+
     @override_tmpcadir()
     def test_error_after_signing(self) -> None:
         """Test that an already stored certificate is rolled back if a later statement fails."""
@@ -521,6 +529,11 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         assert self.acme_cert.cert is None
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_INVALID
+
+        # The error is stored even though the certificate was rolled back.
+        assert self.order.get_error() == messages.Error.with_code(
+            "serverInternal", detail="Internal error while signing the certificate."
+        )
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])

@@ -1513,7 +1513,11 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
     # NOTE: identifiers property is provided by reverse relation of the AcmeAuthorization model
     not_before = models.DateTimeField(null=True)
     not_after = models.DateTimeField(null=True)
-    # NOTE: error property is not yet supported
+
+    # RFC 8555, 7.1.6: The error that occurred while processing the order, if any. This is only set if the
+    # order is in the "invalid" state. Stored as the JSON serialization of an acme.messages.Error.
+    error = models.JSONField(null=True, default=None, blank=True)
+
     # NOTE: authorizations property is provided by reverse relation of the AcmeAuthorization model
     # NOTE: finalize property is provided by acme_finalize_url property
     # NOTE: certificate property is provided by reverse relation of the AcmeCertificate model
@@ -1566,6 +1570,62 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
         return self.authorizations.bulk_create(
             [AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers]
         )
+
+    def get_error(self) -> messages.Error | None:
+        """Get the error for this order as ACME message, or ``None`` if no error was set.
+
+        Example::
+
+            >>> order.set_error("badCSR")  # doctest: +SKIP
+            >>> order.get_error()  # doctest: +SKIP
+            Error(typ='urn:ietf:params:acme:error:badCSR', ...)
+
+        Returns
+        -------
+        :py:class:`acme:acme.messages.Error` or ``None``
+        """
+        if self.error is None:
+            return None
+        # NOTE: josepy's from_json() is not typed, so an explicit cast is required.
+        return typing.cast(messages.Error, messages.Error.from_json(self.error))
+
+    def set_error(
+        self,
+        code: str,
+        detail: str | None = None,
+        identifier: messages.Identifier | None = None,
+        subproblems: Iterable[messages.Error] | None = None,
+    ) -> None:
+        """Set the error for this order, storing it in a format understood by :py:func:`get_error`.
+
+        Note that this method only updates the instance, it does not write to the database. RFC 8555,
+        section 7.1.6 only defines the error field for orders in the "invalid" state, so callers usually
+        want to update the status as well::
+
+            >>> order.status = AcmeOrder.STATUS_INVALID  # doctest: +SKIP
+            >>> order.set_error("badCSR", detail="Public key is too small.")  # doctest: +SKIP
+            >>> order.save()  # doctest: +SKIP
+
+        Parameters
+        ----------
+        code : str
+            An ACME error code from :py:data:`acme:acme.messages.ERROR_CODES`, e.g. ``"badCSR"``. A
+            ``ValueError`` is raised for unknown codes.
+        detail : str, optional
+            Human-readable detail about this particular occurrence. As this value is sent to the client,
+            take care not to leak any internal information.
+        identifier : :py:class:`acme:acme.messages.Identifier`, optional
+            The identifier that this error relates to.
+        subproblems : iterable of :py:class:`acme:acme.messages.Error`, optional
+            More specific errors, e.g. one per identifier for a ``compound`` error.
+        """
+        if code not in messages.ERROR_CODES:
+            raise ValueError(f"{code}: Invalid error code.")
+        if subproblems is not None:
+            subproblems = tuple(subproblems)
+
+        error = messages.Error.with_code(code, detail=detail, identifier=identifier, subproblems=subproblems)
+        self.error = error.to_json()
 
     @property
     def serial(self) -> str:
