@@ -55,10 +55,10 @@ resolution-markers = [
 dependencies = [
     { name = "cryptography", version = "49.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-acme5-7') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-cryptography49') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
     { name = "cryptography", version = "50.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-acme5-7') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-cryptography50') or (extra != 'group-9-django-ca-acme5-6' and extra != 'group-9-django-ca-cryptography49') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-7' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra != 'group-9-django-ca-acme5-6' and extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
-    { name = "josepy" },
-    { name = "pyopenssl" },
-    { name = "pyrfc3339" },
-    { name = "requests" },
+    { name = "josepy", marker = "extra == 'group-9-django-ca-acme5-7' or extra != 'group-9-django-ca-acme5-6' or (extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pyopenssl", marker = "extra == 'group-9-django-ca-acme5-7' or extra != 'group-9-django-ca-acme5-6' or (extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "pyrfc3339", marker = "extra == 'group-9-django-ca-acme5-7' or extra != 'group-9-django-ca-acme5-6' or (extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
+    { name = "requests", marker = "extra == 'group-9-django-ca-acme5-7' or extra != 'group-9-django-ca-acme5-6' or (extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8d/53/2e79e7d1c5384414d4670f02729601cf23e61fe13b7b99471d02c620ddbe/acme-5.7.0.tar.gz", hash = "sha256:4be4fe6cf3809c3988d75fa1213ce8e784d9d5d8380cac63c2dca555e105653d", size = 90640, upload-time = "2026-07-15T17:40:26.01Z" }
 wheels = [
@@ -2279,7 +2279,7 @@ wheels = [
 
 [[package]]
 name = "pre-commit"
-version = "4.6.1"
+version = "4.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cfgv" },
@@ -2288,9 +2288,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "virtualenv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/25/3a/ddb78f32a0814e66b18a099377a106a2dcdce92d86a034d69d65df9b256e/pre_commit-4.6.1.tar.gz", hash = "sha256:03e809865c7d178b9979d06c761fcbfe6808fdaded8581a745bb110e52050421", size = 198646, upload-time = "2026-07-21T20:56:58.225Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/89/1f3e8e1fc3e97de0fa963495832f581f025f29471602a309e48808244292/pre_commit-4.6.2.tar.gz", hash = "sha256:8f5d7bfb021ecdbcd9d49d89847082dd24172ccde534390081a679ad046e2441", size = 198670, upload-time = "2026-08-10T22:07:18.421Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/49/bc925106abcdac498074f2cbe6137e94e09f418dd2b7775df5b577dc0313/pre_commit-4.6.1-py2.py3-none-any.whl", hash = "sha256:0e3b2942510d1fb34eec167a3ec57331bf8442122f1153a9fb8b58f5c49b2717", size = 226186, upload-time = "2026-07-21T20:56:57.064Z" },
+    { url = "https://files.pythonhosted.org/packages/45/e2/bbb7129c9e7999a6b8ee9cca3b66486c25c423ab5a75f34071798b74ce94/pre_commit-4.6.2-py2.py3-none-any.whl", hash = "sha256:e2dde9a75d3bce11bd3831c26d134df00a2803c1d818be6a0383c3dcda25dc4e", size = 226202, upload-time = "2026-08-10T22:07:16.942Z" },
 ]
 
 [[package]]
