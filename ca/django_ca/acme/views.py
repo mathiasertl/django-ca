@@ -883,7 +883,7 @@ class AcmeOrderView(AcmePostAsGetView):
 
         cert_url = None
         try:
-            cert = AcmeCertificate.objects.select_related("cert").url().get(order=order)
+            cert: AcmeCertificate = AcmeCertificate.objects.select_related("cert").url().get(order=order)
             if cert.cert and order.status == AcmeOrder.STATUS_VALID:
                 # WARNING: certbot (at least version 0.31.0) will try to fetch the certificate immediately if
                 # we return the URL. That view will fail if the certificate is not yet issued, and certbot
@@ -992,7 +992,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
     def create_certificate(self, order: AcmeOrder, csr: str) -> None:
         """Create certificate and update order in a transaction."""
         # Create AcmeCertificate object (at this point without cert, as it hasn't been issued yet)
-        cert = AcmeCertificate.objects.create(order=order, csr=csr)
+        cert: AcmeCertificate = AcmeCertificate.objects.create(order=order, csr=csr)
 
         # Update the status of the order to "processing"
         order.status = AcmeOrder.STATUS_PROCESSING
@@ -1005,7 +1005,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
     def acme_request(self, message: CertificateRequest, slug: str | None) -> AcmeResponseOrder:
         """Process ACME request."""
         try:
-            order = AcmeOrder.objects.viewable().account(account=self.account).url().get(slug=slug)
+            order: AcmeOrder = AcmeOrder.objects.viewable().account(account=self.account).url().get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -1029,18 +1029,16 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             # Further investigation is on what LE and certbot do is needed here.
             raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
 
-        expires = order.expires
+        expires: datetime = order.expires
         if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
             expires = expires.replace(tzinfo=UTC)
 
-        authorizations = order.authorizations.url().all()  # type: ignore[attr-defined]
+        authorizations: Iterable[AcmeAuthorization] = order.authorizations.url().all()  # type: ignore[attr-defined]
         for auth in authorizations:
             if auth.status != AcmeAuthorization.STATUS_VALID:
                 # This is a state that should never happen in practice, because the order is only marked as
                 # ready once all authorizations are valid.
                 raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
-
-        # TODO: Do we validate that the account holds ALL necessary authorizations?
 
         # Parse and validate the CSR
         csr = self.validate_csr(message, authorizations)

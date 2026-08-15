@@ -196,7 +196,6 @@ def generate_ocsp_responses() -> None:
             log.exception("Error scheduling OCSP response caching for %s", ca.serial)
 
     for cert in Certificate.objects.for_ocsp_cache():
-        print(cert)
         try:
             run_task(generate_ocsp_response, CacheOCSPResponseTaskArgs(serial=cert.serial, ca=False))
         except Exception:  # pylint: disable=broad-exception-caught
@@ -257,7 +256,7 @@ def api_sign_certificate(data: ApiSignCertificateTaskArgs) -> int | None:
     # Get some certificate details
     algorithm = data.get_algorithm()
     csr = x509.load_pem_x509_csr(data.csr)
-    extensions = [ext.cryptography for ext in data.extensions]
+    extensions: list[x509.Extension[x509.ExtensionType]] = [ext.cryptography for ext in data.extensions]
 
     # Add any CA extensions not already set by the request
     extension_oids = tuple(ext.oid for ext in extensions)
@@ -305,7 +304,7 @@ def acme_validate_challenge(challenge_pk: int) -> None:
         return
 
     try:
-        challenge = AcmeChallenge.objects.url().get(pk=challenge_pk)
+        challenge: AcmeChallenge = AcmeChallenge.objects.url().get(pk=challenge_pk)
     except AcmeChallenge.DoesNotExist:
         log.error("Challenge with id=%s not found", challenge_pk)
         return

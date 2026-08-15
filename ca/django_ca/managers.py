@@ -65,6 +65,7 @@ if typing.TYPE_CHECKING:
     from django_ca.querysets import (
         AcmeAccountQuerySet,
         AcmeAuthorizationQuerySet,
+        AcmeChallengeQuerySet,
         AcmeOrderQuerySet,
         CertificateAuthorityQuerySet,
         CertificateQuerySet,
@@ -968,6 +969,10 @@ class AcmeAuthorizationManager(AcmeAuthorizationManagerBase):
 
 class AcmeChallengeManager(AcmeChallengeManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeChallenge`."""
+
+    if typing.TYPE_CHECKING:
+        # pylint: disable=missing-function-docstring; just defining stubs here
+        def url(self) -> "AcmeChallengeQuerySet": ...
 
 
 class AcmeCertificateManager(AcmeCertificateManagerBase):
