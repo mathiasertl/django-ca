@@ -389,7 +389,9 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         return
 
     try:
-        acme_cert = AcmeCertificate.objects.select_related("order__account__ca").get(pk=acme_certificate_pk)
+        acme_cert: AcmeCertificate = AcmeCertificate.objects.select_related("order__account__ca").get(
+            pk=acme_certificate_pk
+        )
     except AcmeCertificate.DoesNotExist:
         log.error("Certificate with id=%s not found", acme_certificate_pk)
         return
@@ -398,6 +400,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         log.error("%s: Cannot issue certificate for this order", acme_cert.order)
         return
 
+    # TODO: Do not use guessing using parse_general_name, AcmeAuthorization has a type field
     names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
     log.info("%s: Issuing certificate for %s", acme_cert.order, ",".join(names))
     subject_alternative_names = x509.SubjectAlternativeName([parse_general_name(name) for name in names])
@@ -410,7 +413,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         )
     ]
 
-    ca = acme_cert.order.account.ca
+    ca: CertificateAuthority = acme_cert.order.account.ca
     profile = profiles[ca.acme_profile]
 
     # Honor not_after from the order if set
@@ -425,24 +428,36 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     csr = acme_cert.parse_csr()
 
-    # Initialize key backend options
-    key_backend_options = ca.key_backend.get_use_private_key_options(ca, {})
+    try:
+        # Nested atomic block, so that a partially issued certificate is rolled back below (the outer
+        # transaction is still committed, as the exception is handled here).
+        with transaction.atomic():
+            # Initialize key backend options
+            key_backend_options = ca.key_backend.get_use_private_key_options(ca, {})
 
-    # Finally, actually create a certificate
-    cert = Certificate.objects.create_cert(
-        ca,
-        key_backend_options,
-        csr=csr,
-        profile=profile,
-        not_after=not_after,
-        extensions=extensions,
-        san_types_for_common_name=(x509.DNSName,),
-    )
+            # Finally, actually create a certificate
+            cert = Certificate.objects.create_cert(
+                ca,
+                key_backend_options,
+                csr=csr,
+                profile=profile,
+                not_after=not_after,
+                extensions=extensions,
+                san_types_for_common_name=(x509.DNSName,),
+            )
 
-    acme_cert.cert = cert
-    acme_cert.order.status = AcmeOrder.STATUS_VALID
-    acme_cert.order.save()
-    acme_cert.save()
+            acme_cert.cert = cert
+            acme_cert.order.status = AcmeOrder.STATUS_VALID
+            acme_cert.order.save()
+            acme_cert.save()
+    except Exception:
+        log.exception("Error issuing certificate.")
+
+        # NOTE: cert is reset, as it may point to a certificate that was rolled back above.
+        acme_cert.cert = None
+        acme_cert.order.status = AcmeOrder.STATUS_INVALID
+        acme_cert.order.save()
+        acme_cert.save()
 
 
 @shared_task
