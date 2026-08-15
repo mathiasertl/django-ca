@@ -48,7 +48,7 @@ from django_ca.models import (
     CertificateOrder,
 )
 from django_ca.profiles import profiles
-from django_ca.utils import parse_general_name
+from django_ca.utils import format_general_name
 
 log = logging.getLogger(__name__)
 
@@ -396,14 +396,18 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         log.error("Certificate with id=%s not found", acme_certificate_pk)
         return
 
+    acme_order: AcmeOrder = acme_cert.order
     if acme_cert.usable is False:
-        log.error("%s: Cannot issue certificate for this order", acme_cert.order)
+        log.error("%s: Cannot issue certificate for this order", acme_order)
         return
 
-    # TODO: Do not use guessing using parse_general_name, AcmeAuthorization has a type field
-    names = [a.subject_alternative_name for a in acme_cert.order.authorizations.all()]
-    log.info("%s: Issuing certificate for %s", acme_cert.order, ",".join(names))
-    subject_alternative_names = x509.SubjectAlternativeName([parse_general_name(name) for name in names])
+    general_names = acme_order.get_general_names()
+    subject_alternative_names = x509.SubjectAlternativeName(general_names)
+    log.info(
+        "%s: Issuing certificate for %s",
+        acme_order,
+        ",".join(format_general_name(name) for name in general_names),
+    )
 
     extensions = [
         x509.Extension(
@@ -413,12 +417,12 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         )
     ]
 
-    ca: CertificateAuthority = acme_cert.order.account.ca
+    ca: CertificateAuthority = acme_order.account.ca
     profile = profiles[ca.acme_profile]
 
     # Honor not_after from the order if set
-    if acme_cert.order.not_after:
-        not_after = acme_cert.order.not_after
+    if acme_order.not_after:
+        not_after = acme_order.not_after
 
         # Make sure not_after is tz-aware, even if USE_TZ=False.
         if timezone.is_naive(not_after):
@@ -447,17 +451,17 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
             )
 
             acme_cert.cert = cert
-            acme_cert.order.status = AcmeOrder.STATUS_VALID
-            acme_cert.order.save()
+            acme_order.status = AcmeOrder.STATUS_VALID
+            acme_order.save()
             acme_cert.save()
     except Exception:
         log.exception("Error issuing certificate.")
 
         # NOTE: cert is reset, as it may point to a certificate that was rolled back above.
         acme_cert.cert = None
-        acme_cert.order.status = AcmeOrder.STATUS_INVALID
-        acme_cert.order.set_error("serverInternal", "Internal error while signing the certificate.")
-        acme_cert.order.save()
+        acme_order.status = AcmeOrder.STATUS_INVALID
+        acme_order.set_error("serverInternal", "Internal error while signing the certificate.")
+        acme_order.save()
         acme_cert.save()
 
 

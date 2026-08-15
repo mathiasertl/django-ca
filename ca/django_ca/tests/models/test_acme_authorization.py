@@ -124,18 +124,6 @@ def test_general_name_unknown_type(auth: AcmeAuthorization) -> None:
         auth.general_name  # noqa: B018
 
 
-def test_subject_alternative_name(auth: AcmeAuthorization, auth2: AcmeAuthorization) -> None:
-    """Test the subject_alternative_name property for DNS authorizations."""
-    assert auth.subject_alternative_name == "dns:example.com"
-    assert auth2.subject_alternative_name == "dns:example.net"
-
-
-def test_subject_alternative_name_ip(auth_ipv4: AcmeAuthorization, auth_ipv6: AcmeAuthorization) -> None:
-    """Test the subject_alternative_name property for IP authorizations (RFC 8738)."""
-    assert auth_ipv4.subject_alternative_name == "ip:192.0.2.1"
-    assert auth_ipv6.subject_alternative_name == "ip:2001:db8::1"
-
-
 def test_get_challenges(auth: AcmeAuthorization) -> None:
     """Test the get_challenges() method for DNS authorizations."""
     challenges = auth.get_challenges()

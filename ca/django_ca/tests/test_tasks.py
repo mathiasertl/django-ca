@@ -371,7 +371,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
         assert logcm.output == [
-            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         ]
 
         self.acme_cert.refresh_from_db()
@@ -422,7 +422,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
         assert logcm.output == [
-            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         ]
 
         self.acme_cert.refresh_from_db()
@@ -452,7 +452,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
             tasks.acme_issue_certificate(self.acme_cert.pk)
 
         assert logcm.output == [
-            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+            f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         ]
 
         self.acme_cert.refresh_from_db()
@@ -486,7 +486,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         assert len(logcm.output) == 2
         assert (
             logcm.output[0]
-            == f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+            == f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         )
         assert logcm.output[1].startswith("ERROR:django_ca.tasks:Error issuing certificate.\nTraceback")
         assert logcm.output[1].endswith(f"Exception: {message}")
