@@ -176,6 +176,63 @@ def test_cert_not_yet_valid(
     }
 
 
+def test_invalid_order_with_error(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: str | None,
+) -> None:
+    """Test that the error of an invalid order is returned to the client (RFC 8555, section 7.1.6)."""
+    order.status = AcmeOrder.STATUS_INVALID
+    order.set_error("serverInternal", "Internal error while signing the certificate.")
+    order.save()
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+    expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "error": {
+            "type": "urn:ietf:params:acme:error:serverInternal",
+            "detail": "Internal error while signing the certificate.",
+        },
+        "expires": pyrfc3339.generate(expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "invalid",
+    }
+
+
+def test_invalid_order_without_error(
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    authz: AcmeAuthorization,
+    kid: str | None,
+) -> None:
+    """Test that the error field is omitted for an invalid order that has no error set."""
+    order.status = AcmeOrder.STATUS_INVALID
+    order.save()
+    authz.status = AcmeAuthorization.STATUS_VALID
+    authz.save()
+
+    resp = acme_request(client, url, root, b"", kid=kid)
+    assert resp.status_code == HTTPStatus.OK, resp.content
+    assert_acme_response(resp, root)
+    expires = timezone.now() + model_settings.CA_ACME_ORDER_VALIDITY
+    assert resp.json() == {
+        "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
+        "expires": pyrfc3339.generate(expires),
+        "identifiers": [{"type": "dns", "value": HOST_NAME}],
+        "status": "invalid",
+    }
+
+
 def test_wrong_account(
     client: Client, url: str, root: CertificateAuthority, order: AcmeOrder, kid: str | None
 ) -> None:

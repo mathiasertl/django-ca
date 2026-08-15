@@ -863,7 +863,7 @@ class AcmeOrderView(AcmePostAsGetView):
     def acme_request(self, slug: str) -> AcmeResponseOrder:
         try:
             order_qs = AcmeOrder.objects.viewable().account(self.account).url()
-            order = order_qs.get(slug=slug)
+            order: AcmeOrder = order_qs.get(slug=slug)
         except AcmeOrder.DoesNotExist as ex:
             # RFC 8555, section 10.5: Avoid leaking info that this slug does not exist by
             # return a normal unauthorized message.
@@ -900,6 +900,7 @@ class AcmeOrderView(AcmePostAsGetView):
             identifiers=tuple({"type": a.type, "value": a.value} for a in authorizations),
             authorizations=tuple(self.request.build_absolute_uri(a.acme_url) for a in authorizations),
             certificate=cert_url,
+            error=order.get_error(),
         )
         response["Location"] = self.request.build_absolute_uri(order.acme_url)
         return response

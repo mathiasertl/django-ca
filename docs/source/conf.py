@@ -371,6 +371,8 @@ nitpick_ignore = [
     ("py:class", "annotated_types.Ge"),
     # we don't add intersphinx mapping for pytest.
     ("py:class", "_pytest.fixtures.FixtureRequest"),
+    # Undocumented in acme
+    ("py:data", "acme:acme.messages.ERROR_CODES"),
 ]
 
 

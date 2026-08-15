@@ -24,52 +24,40 @@ from cryptography import x509
 import pytest
 
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeChallenge, AcmeOrder, CertificateAuthority
-from django_ca.tests.base.constants import ACME_PEM_1, ACME_THUMBPRINT_1
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def account(root: CertificateAuthority) -> AcmeAccount:
-    """A valid ACME account linked to the root CA."""
-    return AcmeAccount.objects.create(
-        ca=root,
-        contact="user@example.com",
-        terms_of_service_agreed=True,
-        status=AcmeAccount.STATUS_VALID,
-        pem=ACME_PEM_1,
-        thumbprint=ACME_THUMBPRINT_1,
+def auth(acme_order: AcmeOrder) -> AcmeAuthorization:
+    """A DNS authorization for example.com."""
+    return AcmeAuthorization.objects.create(
+        order=acme_order, type=AcmeAuthorization.TYPE_DNS, value="example.com"
     )
 
 
 @pytest.fixture
-def order(account: AcmeAccount) -> AcmeOrder:
-    """A pending ACME order."""
-    return AcmeOrder.objects.create(account=account)
-
-
-@pytest.fixture
-def auth(order: AcmeOrder) -> AcmeAuthorization:
-    """A DNS authorization for example.com."""
-    return AcmeAuthorization.objects.create(order=order, type=AcmeAuthorization.TYPE_DNS, value="example.com")
-
-
-@pytest.fixture
-def auth2(order: AcmeOrder) -> AcmeAuthorization:
+def auth2(acme_order: AcmeOrder) -> AcmeAuthorization:
     """A second DNS authorization for example.net."""
-    return AcmeAuthorization.objects.create(order=order, type=AcmeAuthorization.TYPE_DNS, value="example.net")
+    return AcmeAuthorization.objects.create(
+        order=acme_order, type=AcmeAuthorization.TYPE_DNS, value="example.net"
+    )
 
 
 @pytest.fixture
-def auth_ipv4(order: AcmeOrder) -> AcmeAuthorization:
+def auth_ipv4(acme_order: AcmeOrder) -> AcmeAuthorization:
     """An IP authorization for an IPv4 address."""
-    return AcmeAuthorization.objects.create(order=order, type=AcmeAuthorization.TYPE_IP, value="192.0.2.1")
+    return AcmeAuthorization.objects.create(
+        order=acme_order, type=AcmeAuthorization.TYPE_IP, value="192.0.2.1"
+    )
 
 
 @pytest.fixture
-def auth_ipv6(order: AcmeOrder) -> AcmeAuthorization:
+def auth_ipv6(acme_order: AcmeOrder) -> AcmeAuthorization:
     """An IP authorization for an IPv6 address."""
-    return AcmeAuthorization.objects.create(order=order, type=AcmeAuthorization.TYPE_IP, value="2001:db8::1")
+    return AcmeAuthorization.objects.create(
+        order=acme_order, type=AcmeAuthorization.TYPE_IP, value="2001:db8::1"
+    )
 
 
 def test_str(auth: AcmeAuthorization, auth2: AcmeAuthorization) -> None:
@@ -78,10 +66,12 @@ def test_str(auth: AcmeAuthorization, auth2: AcmeAuthorization) -> None:
     assert str(auth2) == "dns: example.net"
 
 
-def test_account_property(auth: AcmeAuthorization, auth2: AcmeAuthorization, account: AcmeAccount) -> None:
+def test_account_property(
+    auth: AcmeAuthorization, auth2: AcmeAuthorization, acme_account: AcmeAccount
+) -> None:
     """Test the account property."""
-    assert auth.account == account
-    assert auth2.account == account
+    assert auth.account == acme_account
+    assert auth2.account == acme_account
 
 
 def test_acme_url(auth: AcmeAuthorization, auth2: AcmeAuthorization, root: CertificateAuthority) -> None:
@@ -90,10 +80,10 @@ def test_acme_url(auth: AcmeAuthorization, auth2: AcmeAuthorization, root: Certi
     assert auth2.acme_url == f"/django_ca/acme/{root.serial}/authz/{auth2.slug}/"
 
 
-def test_expires(auth: AcmeAuthorization, auth2: AcmeAuthorization, order: AcmeOrder) -> None:
+def test_expires(auth: AcmeAuthorization, auth2: AcmeAuthorization, acme_order: AcmeOrder) -> None:
     """Test the expires property."""
-    assert auth.expires == order.expires
-    assert auth2.expires == order.expires
+    assert auth.expires == acme_order.expires
+    assert auth2.expires == acme_order.expires
 
 
 def test_identifier(auth: AcmeAuthorization, auth2: AcmeAuthorization) -> None:

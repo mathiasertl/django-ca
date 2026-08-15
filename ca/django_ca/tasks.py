@@ -456,6 +456,7 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         # NOTE: cert is reset, as it may point to a certificate that was rolled back above.
         acme_cert.cert = None
         acme_cert.order.status = AcmeOrder.STATUS_INVALID
+        acme_cert.order.set_error("serverInternal", "Internal error while signing the certificate.")
         acme_cert.order.save()
         acme_cert.save()
 

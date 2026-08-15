@@ -43,7 +43,13 @@ from django_ca.key_backends.db.backend import DBBackend
 from django_ca.key_backends.hsm import HSMBackend, HSMOCSPBackend
 from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
-from django_ca.models import Certificate, CertificateAuthority, CertificateRevocationList
+from django_ca.models import (
+    AcmeAccount,
+    AcmeOrder,
+    Certificate,
+    CertificateAuthority,
+    CertificateRevocationList,
+)
 from django_ca.tests.base import constants
 from django_ca.tests.base.conftest_helpers import (
     all_ca_names,
@@ -57,11 +63,32 @@ from django_ca.tests.base.conftest_helpers import (
     usable_cert_names,
 )
 from django_ca.tests.base.constants import (
+    ACME_PEM_1,
+    ACME_THUMBPRINT_1,
     CA_OCSP_RESPONSE_CACHE_EXPIRES,
     CA_OCSP_RESPONSE_CACHE_RENEWAL,
     CERT_DATA,
     TIMESTAMPS,
 )
+
+
+@pytest.fixture
+def acme_account(root: CertificateAuthority) -> AcmeAccount:
+    """A valid ACME account linked to the root CA."""
+    return AcmeAccount.objects.create(
+        ca=root,
+        contact="user@example.com",
+        terms_of_service_agreed=True,
+        status=AcmeAccount.STATUS_VALID,
+        pem=ACME_PEM_1,
+        thumbprint=ACME_THUMBPRINT_1,
+    )
+
+
+@pytest.fixture
+def acme_order(acme_account: AcmeAccount) -> AcmeOrder:
+    """A pending ACME order for `acme_account`."""
+    return AcmeOrder.objects.create(account=acme_account)
 
 
 @pytest.fixture(params=all_cert_names)

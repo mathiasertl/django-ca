@@ -29,6 +29,8 @@ ACMEv2
   :ref:`CA_ACME_JWS_SIGNATURE_ALGORITHMS <CA_ACME_JWS_SIGNATURE_ALGORITHMS>`. Symmetric HMAC algorithms
   (``HS256``, ``HS384``, ``HS512``) are no longer accepted. The algorithm is also validated for the inner
   JWS in key-rollover requests.
+* Mark an Order as invalid and store an error message when issuing the certificate fails. This prevents
+  certbot from polling for the certificate until it reaches a timeout.
 
 *************
 OCSP and CRLs
