@@ -430,7 +430,13 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
 
     # Finally, actually create a certificate
     cert = Certificate.objects.create_cert(
-        ca, key_backend_options, csr=csr, profile=profile, not_after=not_after, extensions=extensions
+        ca,
+        key_backend_options,
+        csr=csr,
+        profile=profile,
+        not_after=not_after,
+        extensions=extensions,
+        san_types_for_common_name=(x509.DNSName,),
     )
 
     acme_cert.cert = cert
