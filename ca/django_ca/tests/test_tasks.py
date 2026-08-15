@@ -18,6 +18,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import timedelta
 from http import HTTPStatus
+from typing import Any, NoReturn
 from unittest import mock
 
 import dns.resolver
@@ -38,7 +39,14 @@ from freezegun import freeze_time
 from django_ca import tasks
 from django_ca.conf import model_settings
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
-from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeCertificate, AcmeChallenge, AcmeOrder
+from django_ca.models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeChallenge,
+    AcmeOrder,
+    Certificate,
+)
 from django_ca.tests.base.constants import ACME_PEM_1, ACME_THUMBPRINT_1, CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.mixins import TestCaseMixin
 from django_ca.tests.base.utils import override_tmpcadir, subject_alternative_name
@@ -457,6 +465,62 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
 
         assert self.acme_cert.cert.cn == self.hostname
         assert self.acme_cert.cert.profile == "client"
+
+    @override_tmpcadir()
+    def test_signing_error(self) -> None:
+        """Test that the order is marked as invalid if signing the certificate fails."""
+        message = "Signing the certificate went wrong."
+
+        with (
+            self.patch(
+                "django_ca.managers.CertificateManager.create_cert", side_effect=Exception(message)
+            ) as create_cert_mock,
+            self.assertLogs() as logcm,
+        ):
+            tasks.acme_issue_certificate(self.acme_cert.pk)
+
+        create_cert_mock.assert_called_once()
+
+        assert len(logcm.output) == 2
+        assert (
+            logcm.output[0]
+            == f"INFO:django_ca.tasks:{self.order}: Issuing certificate for dns:{self.hostname}"
+        )
+        assert logcm.output[1].startswith("ERROR:django_ca.tasks:Error issuing certificate.\nTraceback")
+        assert logcm.output[1].endswith(f"Exception: {message}")
+
+        # No certificate was issued and the order is marked as invalid (RFC 8555, section 7.1.6).
+        self.acme_cert.refresh_from_db()
+        assert self.acme_cert.cert is None
+        self.order.refresh_from_db()
+        assert self.order.status == AcmeOrder.STATUS_INVALID
+
+    @override_tmpcadir()
+    def test_error_after_signing(self) -> None:
+        """Test that an already stored certificate is rolled back if a later statement fails."""
+        message = "Storing the certificate went wrong."
+        original_create_cert = Certificate.objects.create_cert
+
+        # Create the certificate as usual, but raise right afterwards, so that the certificate is already
+        # stored in the database when the exception handler is invoked.
+        def create_cert(*args: Any, **kwargs: Any) -> NoReturn:
+            original_create_cert(*args, **kwargs)
+            raise RuntimeError(message)
+
+        with (
+            self.patch("django_ca.managers.CertificateManager.create_cert", side_effect=create_cert),
+            self.assertLogs() as logcm,
+        ):
+            tasks.acme_issue_certificate(self.acme_cert.pk)
+
+        assert logcm.output[1].endswith(f"RuntimeError: {message}")
+
+        # The certificate was signed, but must not be stored in the database, as the order is invalid.
+        assert Certificate.objects.count() == 0
+        self.acme_cert.refresh_from_db()
+        assert self.acme_cert.cert is None
+        self.order.refresh_from_db()
+        assert self.order.status == AcmeOrder.STATUS_INVALID
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])
