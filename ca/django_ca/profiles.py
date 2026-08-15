@@ -225,7 +225,7 @@ class Profile(ProfileConfigurationModel):
         subject = self._update_cn_from_san(subject, configurable_cert_extensions, san_types_for_common_name)
 
         if subject is None:
-            raise ValueError("Cannot determine subject for certificate.")
+            subject = x509.Name([])
 
         if algorithm is None and ca.algorithm:
             if self.algorithm is not None:

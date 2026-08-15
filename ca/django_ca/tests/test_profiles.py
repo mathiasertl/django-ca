@@ -16,6 +16,7 @@
 import doctest
 import re
 from datetime import timedelta
+from ipaddress import IPv4Address
 from typing import Any
 
 from cryptography import x509
@@ -44,6 +45,7 @@ from django_ca.tests.base.utils import (
     crl_distribution_points,
     distribution_point,
     dns,
+    ip,
     issuer_alternative_name,
     key_usage,
     ocsp_no_check,
@@ -54,7 +56,7 @@ from django_ca.tests.base.utils import (
 )
 from django_ca.tests.pydantic.base import assert_validation_errors
 
-pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
+pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.django_db]
 key_backend_options = StoragesUsePrivateKeyOptions(password=None)
 
 
@@ -674,13 +676,15 @@ def test_init_with_unknown_signature_hash_algorithm() -> None:
     )
 
 
-def test_create_cert_with_no_valid_subject(settings: Settings, root: CertificateAuthority) -> None:
+def test_create_cert_with_empty_subject(settings: Settings, usable_root: CertificateAuthority) -> None:
     """Test case where no subject at all could be determined."""
     csr = CERT_DATA["child-cert"]["csr"]["parsed"]
     settings.CA_DEFAULT_SUBJECT = None
     prof = Profile(name="test")
-    with pytest.raises(ValueError, match=r"^Cannot determine subject for certificate\.$"):
-        create_cert(prof, root, csr)
+    san = subject_alternative_name(ip(IPv4Address("1.2.3.4")))
+    cert = create_cert(prof, usable_root, csr, san_types_for_common_name=(x509.DNSName,), extensions=[san])
+    assert cert.subject == x509.Name([])
+    assert cert.extensions.get(ExtensionOID.SUBJECT_ALTERNATIVE_NAME) == san
 
 
 def test_create_cert_with_unsupported_extension(root: CertificateAuthority) -> None:
