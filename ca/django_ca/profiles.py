@@ -91,6 +91,7 @@ class Profile(ProfileConfigurationModel):
         add_ocsp_url: bool | None = None,
         add_issuer_url: bool | None = None,
         add_issuer_alternative_name: bool | None = None,
+        san_types_for_common_name: tuple[type[x509.GeneralName], ...] = (x509.DNSName, x509.IPAddress),
     ) -> x509.Certificate:
         """Create a x509 certificate based on this profile, the passed CA and input parameters.
 
@@ -105,6 +106,10 @@ class Profile(ProfileConfigurationModel):
             >>> profile = get_profile('webserver')
             >>> profile.create_cert(ca, key_backend_options, csr, subject=subject)  # doctest: +ELLIPSIS
             <Certificate(subject=<Name(CN=example.com,...)>, ...)>
+
+        .. versionchanged:: 3.2.0
+
+            The `san_types_for_common_name` parameter was added.
 
         .. versionchanged:: 2.4.0
 
@@ -167,6 +172,11 @@ class Profile(ProfileConfigurationModel):
         add_issuer_alternative_name : bool, optional
             Override if any IssuerAlternativeNames from the CA should be added to the CA. If not passed, the
             value set in the profile is used.
+        san_types_for_common_name: tuple[type[x509.GeneralName], ...], optional
+            GeneralName types that get copied to the subject Common Name, *if* there is no CommonName in
+            `subject`. This used by ACMEv2 to issue certificates without copying an IP addresses.
+
+            .. seealso:: https://github.com/certbot/certbot/issues/10773
 
         Returns
         -------
@@ -212,7 +222,7 @@ class Profile(ProfileConfigurationModel):
                 subject = self.subject.cryptography
 
         # Add first DNSName/IPAddress from subjectAlternativeName as commonName if not present in the subject
-        subject = self._update_cn_from_san(subject, configurable_cert_extensions)
+        subject = self._update_cn_from_san(subject, configurable_cert_extensions, san_types_for_common_name)
 
         if subject is None:
             raise ValueError("Cannot determine subject for certificate.")
@@ -392,7 +402,10 @@ class Profile(ProfileConfigurationModel):
             self._update_issuer_alternative_name(extensions, ca_extensions)
 
     def _update_cn_from_san(
-        self, subject: x509.Name | None, extensions: ConfigurableExtensionDict
+        self,
+        subject: x509.Name | None,
+        extensions: ConfigurableExtensionDict,
+        san_types_for_common_name: tuple[type[x509.GeneralName], ...],
     ) -> x509.Name | None:
         # If we already have a common name, return the subject unchanged
         if subject is not None and subject.get_attributes_for_oid(NameOID.COMMON_NAME):
@@ -402,9 +415,10 @@ class Profile(ProfileConfigurationModel):
             san_ext = cast(
                 x509.Extension[x509.SubjectAlternativeName], extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME]
             )
-            cn_types = (x509.DNSName, x509.IPAddress)
+
+            # Get first DNSName from SubjectAlternativeName
             common_name = next(
-                (str(val.value) for val in san_ext.value if isinstance(val, cn_types)),
+                (str(val.value) for val in san_ext.value if isinstance(val, san_types_for_common_name)),
                 None,
             )
 

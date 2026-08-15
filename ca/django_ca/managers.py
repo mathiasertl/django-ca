@@ -612,8 +612,13 @@ class CertificateManager(
         add_issuer_alternative_name: bool | None = None,
         allow_unrecognized_extensions: bool = False,
         allow_empty_subject: bool = False,
+        san_types_for_common_name: tuple[type[x509.GeneralName], ...] = (x509.DNSName, x509.IPAddress),
     ) -> "Certificate":
         """Create and sign a new certificate based on the given profile.
+
+        .. versionchanged:: 3.2.0
+
+            The `san_types_for_common_name` parameter was added.
 
         .. versionchanged:: 2.4.0
 
@@ -664,6 +669,8 @@ class CertificateManager(
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         allow_empty_subject : bool, optional
             Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
+        san_types_for_common_name: tuple[type[x509.GeneralName], ...], optional
+            Passed to :py:func:`Profiles.create_cert() <django_ca.profiles.Profile.create_cert>`.
         """
         # Get the profile object if none was passed
         if profile is None:
@@ -685,6 +692,7 @@ class CertificateManager(
             add_ocsp_url=add_ocsp_url,
             add_issuer_url=add_issuer_url,
             add_issuer_alternative_name=add_issuer_alternative_name,
+            san_types_for_common_name=san_types_for_common_name,
         )
 
         obj = self.model(ca=ca, csr=LazyCertificateSigningRequest(csr), profile=profile.name)
