@@ -79,5 +79,12 @@ class ApiSignCertificateTaskArgs(CeleryMessageModel):
         return None
 
 
+class AcmeIssueCertificateTaskArgs(CeleryMessageModel):
+    """Parameters for ``django_ca.tasks.acme_issue_certificate``."""
+
+    order_pk: int
+    csr: CSRType
+
+
 class CacheOCSPResponseTaskArgs(SerialTaskArgs):
     """Parameters for ``django_ca.tasks.generate_ocsp_response``."""

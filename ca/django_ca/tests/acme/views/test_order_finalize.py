@@ -25,6 +25,7 @@ import pyrfc3339
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.test import Client
 from django.urls import reverse
@@ -33,6 +34,7 @@ import pytest
 from pytest_django.fixtures import Settings
 
 from django_ca.acme.messages import CertificateRequest
+from django_ca.celery.messages import AcmeIssueCertificateTaskArgs
 from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.assertions import (
@@ -58,6 +60,7 @@ CSR = (
     .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
     .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
 )
+CSR_PEM = CSR.public_bytes(Encoding.PEM)
 
 
 @pytest.fixture
@@ -88,13 +91,19 @@ def message() -> CertificateRequest:
     return CertificateRequest(csr=CSR)
 
 
+@pytest.fixture
+def task_args(order: AcmeOrder) -> AcmeIssueCertificateTaskArgs:
+    """Task args for the default task invocation."""
+    return AcmeIssueCertificateTaskArgs(order_pk=order.pk, csr=CSR_PEM)
+
+
 def assert_bad_csr(response: "HttpResponse", message: str, ca: CertificateAuthority) -> None:
     """Assert a badCSR error."""
     assert_acme_problem(response, "badCSR", ca=ca, status=HTTPStatus.BAD_REQUEST, message=message)
 
 
 @pytest.mark.parametrize("use_tz", (True, False))
-def test_basic(
+def test_basic(  # noqa: PLR0913,PLR0917
     settings: Settings,
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
     client: Client,
@@ -104,6 +113,7 @@ def test_basic(
     order: AcmeOrder,
     authz: AcmeAuthorization,
     kid: str | None,
+    task_args: AcmeIssueCertificateTaskArgs,
     use_tz: bool,
 ) -> None:
     """Basic test for creating an account via ACME."""
@@ -117,9 +127,8 @@ def test_basic(
     assert_acme_response(resp, usable_root)
     assert len(callbacks) == 1
 
-    order = AcmeOrder.objects.get(pk=order.pk)
-    cert = order.acmecertificate
-    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+    order.refresh_from_db()
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, task_args)]
 
     assert resp.json() == {
         "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
@@ -138,6 +147,7 @@ def test_unknown_key_backend(
     order: AcmeOrder,
     authz: AcmeAuthorization,
     kid: str | None,
+    task_args: AcmeIssueCertificateTaskArgs,
 ) -> None:
     """Test that the frontend does not need to know about the backend."""
     usable_root.key_backend_alias = "unknown"
@@ -153,8 +163,7 @@ def test_unknown_key_backend(
     assert len(callbacks) == 1
 
     order = AcmeOrder.objects.get(pk=order.pk)
-    cert = order.acmecertificate
-    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, task_args)]
 
     assert resp.json() == {
         "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
@@ -363,8 +372,8 @@ def test_csr_valid_subject(
     assert_acme_response(resp, root)
 
     order.refresh_from_db()
-    cert = order.acmecertificate
-    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+    task_args = AcmeIssueCertificateTaskArgs(order_pk=order.pk, csr=csr.public_bytes(Encoding.PEM))
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, task_args)]
     assert resp.json() == {
         "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],
         "expires": pyrfc3339.generate(order.expires),
@@ -400,8 +409,8 @@ def test_csr_subject_no_cn(
     assert resp.status_code == HTTPStatus.OK, resp.content
     assert_acme_response(resp, root)
 
-    cert = order.acmecertificate
-    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, acme_certificate_pk=cert.pk)]
+    task_args = AcmeIssueCertificateTaskArgs(order_pk=order.pk, csr=csr.public_bytes(Encoding.PEM))
+    assert mockcm.call_args_list == [mock.call(acme_issue_certificate, task_args)]
 
     assert resp.json() == {
         "authorizations": [f"http://{SERVER_NAME}{authz.acme_url}"],

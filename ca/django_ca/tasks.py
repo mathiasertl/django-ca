@@ -30,6 +30,7 @@ from django.utils import timezone
 from django_ca.acme.validation import validate_dns_01, validate_http_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
+    AcmeIssueCertificateTaskArgs,
     ApiSignCertificateTaskArgs,
     CacheOCSPResponseTaskArgs,
     UseCertificateAuthoritiesTaskArgs,
@@ -380,32 +381,41 @@ def acme_validate_challenge(challenge_pk: int) -> None:
     challenge.auth.order.save()
 
 
-@shared_task
+@shared_task(base=DjangoCaTask)
 @transaction.atomic
-def acme_issue_certificate(acme_certificate_pk: int) -> None:
+def acme_issue_certificate(data: AcmeIssueCertificateTaskArgs) -> None:
     """Actually issue an ACME certificate."""
     if not model_settings.CA_ENABLE_ACME:
         log.error("ACME is not enabled.")
         return
 
     try:
-        acme_cert: AcmeCertificate = AcmeCertificate.objects.select_related("order__account__ca").get(
-            pk=acme_certificate_pk
-        )
-    except AcmeCertificate.DoesNotExist:
-        log.error("Certificate with id=%s not found", acme_certificate_pk)
+        order_qs = AcmeOrder.objects.url().viewable().select_related("acmecertificate")
+        order: AcmeOrder = order_qs.get(pk=data.order_pk)
+    except AcmeOrder.DoesNotExist:
+        log.error("%s: ACME order not found.", data.order_pk)
         return
 
-    acme_order: AcmeOrder = acme_cert.order
-    if acme_cert.usable is False:
-        log.error("%s: Cannot issue certificate for this order", acme_order)
+    # AcmeOrderFinalize view is responsible for setting the status to "processing" after all requested
+    # authorizations where validated.
+    if order.status != AcmeOrder.STATUS_PROCESSING:
+        log.error("%s: %s: ACME order status is not %s.", order, order.status, AcmeOrder.STATUS_PROCESSING)
         return
 
-    general_names = acme_order.get_general_names()
+    # Test if the order as an AcmeCertificate object linked already. This should not happen in practice and
+    # would be a serious consistency violation.
+    if hasattr(order, "acmecertificate"):
+        log.error("%s: ACME order already has a certificate.", order)
+        order.set_error("serverInternal", "Internal error while signing the certificate.")
+        order.status = AcmeOrder.STATUS_INVALID
+        order.save()
+        return
+
+    general_names = order.get_general_names()
     subject_alternative_names = x509.SubjectAlternativeName(general_names)
     log.info(
         "%s: Issuing certificate for %s",
-        acme_order,
+        order,
         ",".join(format_general_name(name) for name in general_names),
     )
 
@@ -417,12 +427,12 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
         )
     ]
 
-    ca: CertificateAuthority = acme_order.account.ca
+    ca: CertificateAuthority = order.account.ca
     profile = profiles[ca.acme_profile]
 
     # Honor not_after from the order if set
-    if acme_order.not_after:
-        not_after = acme_order.not_after
+    if order.not_after:
+        not_after = order.not_after
 
         # Make sure not_after is tz-aware, even if USE_TZ=False.
         if timezone.is_naive(not_after):
@@ -430,12 +440,17 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
     else:
         not_after = datetime.now(tz=UTC) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
 
-    csr = acme_cert.parse_csr()
+    csr = x509.load_pem_x509_csr(data.csr)
 
     try:
         # Nested atomic block, so that a partially issued certificate is rolled back below (the outer
         # transaction is still committed, as the exception is handled here).
         with transaction.atomic():
+            # Create AcmeCertificate object (at this point without cert, as it hasn't been issued yet)
+            acme_cert: AcmeCertificate = AcmeCertificate.objects.create(
+                order=order, csr=data.csr.decode("ascii")
+            )
+
             # Initialize key backend options
             key_backend_options = ca.key_backend.get_use_private_key_options(ca, {})
 
@@ -451,18 +466,17 @@ def acme_issue_certificate(acme_certificate_pk: int) -> None:
             )
 
             acme_cert.cert = cert
-            acme_order.status = AcmeOrder.STATUS_VALID
-            acme_order.save()
+            order.status = AcmeOrder.STATUS_VALID
+            order.save()
             acme_cert.save()
     except Exception:
         log.exception("Error issuing certificate.")
 
         # NOTE: cert is reset, as it may point to a certificate that was rolled back above.
         acme_cert.cert = None
-        acme_order.status = AcmeOrder.STATUS_INVALID
-        acme_order.set_error("serverInternal", "Internal error while signing the certificate.")
-        acme_order.save()
-        acme_cert.save()
+        order.status = AcmeOrder.STATUS_INVALID
+        order.set_error("serverInternal", "Internal error while signing the certificate.")
+        order.save()
 
 
 @shared_task

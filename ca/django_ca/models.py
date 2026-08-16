@@ -1948,16 +1948,3 @@ class AcmeCertificate(DjangoCAModel):
             The CSR as used by cryptography.
         """
         return x509.load_pem_x509_csr(self.csr.encode())
-
-    @property
-    def usable(self) -> bool:
-        """Boolean defining if this instance is "usable", meaning we can use it to issue a certificate.
-
-        An ACME certificate is considered usable if no actual certificate has yet been issued, the order is
-        not expired and in the "processing" state.
-        """
-        return (
-            self.cert is None
-            and self.order.expires > timezone.now()
-            and self.order.status == AcmeOrder.STATUS_PROCESSING
-        )

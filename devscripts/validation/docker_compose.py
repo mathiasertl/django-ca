@@ -363,7 +363,7 @@ from cryptography import x509
 
 from django_ca.models import AcmeAuthorization, AcmeCertificate
 
-acme_cert = AcmeCertificate.objects.get(cert__cn="{CERTBOT_IP_ADDRESS}")
+acme_cert = AcmeCertificate.objects.get(cert__cn="")
 types = [auth.type for auth in acme_cert.order.authorizations.all()]
 assert types == [AcmeAuthorization.TYPE_IP], f"authorization types are {{types}}"
 
@@ -373,6 +373,7 @@ san = acme_cert.cert.pub.loaded.extensions.get_extension_for_class(
 expected = [x509.IPAddress(ip_address("{CERTBOT_IP_ADDRESS}"))]
 assert list(san) == expected, f"subjectAlternativeName is {{list(san)}}"
 """,
+                            capture_output=False,
                         )
                     else:
                         info("certbot does not support --ip-address, skipping IP address certificate.")

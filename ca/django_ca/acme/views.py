@@ -73,6 +73,7 @@ from django_ca.acme.responses import (
 )
 from django_ca.acme.utils import parse_acme_csr
 from django_ca.celery import run_task
+from django_ca.celery.messages import AcmeIssueCertificateTaskArgs
 from django_ca.conf import model_settings
 from django_ca.constants import REASON_CODES
 from django_ca.models import (
@@ -991,16 +992,14 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
     @transaction.atomic
     def create_certificate(self, order: AcmeOrder, csr: str) -> None:
         """Create certificate and update order in a transaction."""
-        # Create AcmeCertificate object (at this point without cert, as it hasn't been issued yet)
-        cert: AcmeCertificate = AcmeCertificate.objects.create(order=order, csr=csr)
-
         # Update the status of the order to "processing"
         order.status = AcmeOrder.STATUS_PROCESSING
         order.save()
 
+        message = AcmeIssueCertificateTaskArgs(order_pk=order.pk, csr=csr)
         # start task only after commit, see:
         # https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
-        transaction.on_commit(lambda: run_task(acme_issue_certificate, acme_certificate_pk=cert.pk))
+        transaction.on_commit(lambda: run_task(acme_issue_certificate, message))
 
     def acme_request(self, message: CertificateRequest, slug: str | None) -> AcmeResponseOrder:
         """Process ACME request."""

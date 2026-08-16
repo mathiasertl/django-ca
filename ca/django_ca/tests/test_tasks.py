@@ -38,6 +38,7 @@ import requests_mock
 from freezegun import freeze_time
 
 from django_ca import tasks
+from django_ca.celery.messages import AcmeIssueCertificateTaskArgs
 from django_ca.conf import model_settings
 from django_ca.key_backends.storages.models import StoragesUsePrivateKeyOptions
 from django_ca.models import (
@@ -323,6 +324,8 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        self.cas["root"].acme_enabled = True
+        self.cas["root"].save()
         self.account = AcmeAccount.objects.create(
             ca=self.cas["root"],
             contact="mailto:user@example.com",
@@ -335,56 +338,56 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
 
         # NOTE: This is of course not the right CSR for the order. It would be validated on submission, and
         # all data from the CSR is discarded anyway.
-        csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
-        self.acme_cert = AcmeCertificate.objects.create(order=self.order, csr=csr)
+        self.csr = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM).decode("utf-8")
+        self.task_args = AcmeIssueCertificateTaskArgs(order_pk=self.order.pk, csr=self.csr)
 
     def test_acme_disabled(self) -> None:
         """Test invoking task when ACME support is not enabled."""
         with self.settings(CA_ENABLE_ACME=False), self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
         assert logcm.output == ["ERROR:django_ca.tasks:ACME is not enabled."]
 
-    def test_unknown_certificate(self) -> None:
-        """Test invoking task with an unknown cert."""
-        AcmeCertificate.objects.all().delete()
+    def test_unknown_order(self) -> None:
+        """Test invoking task with an unknown order."""
+        AcmeOrder.objects.all().delete()
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(AcmeIssueCertificateTaskArgs(order_pk=999, csr=self.csr))
 
-        assert logcm.output == [f"ERROR:django_ca.tasks:Certificate with id={self.acme_cert.pk} not found"]
+        assert logcm.output == ["ERROR:django_ca.tasks:999: ACME order not found."]
 
-    def test_unusable_cert(self) -> None:
+    def test_unusable_order(self) -> None:
         """Test invoking task where the order is not usable."""
         self.order.status = AcmeChallenge.STATUS_VALID  # usually would mean: already issued
         self.order.save()
 
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
 
-        assert logcm.output == [
-            f"ERROR:django_ca.tasks:{self.order}: Cannot issue certificate for this order"
-        ]
+        message = f"{AcmeOrder.STATUS_VALID}: ACME order status is not {AcmeOrder.STATUS_PROCESSING}."
+        assert logcm.output == [(f"ERROR:django_ca.tasks:{self.order}: {message}")]
 
     @override_tmpcadir()
     def test_basic(self) -> None:
         """Test basic certificate issuance."""
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
 
         assert logcm.output == [
             f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         ]
 
-        self.acme_cert.refresh_from_db()
-        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_VALID
         assert self.order.get_error() is None  # no error is set for a successful order
-        assert self.acme_cert.cert.extensions[
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-        ] == subject_alternative_name(x509.DNSName(self.hostname))
-        assert self.acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
-        assert self.acme_cert.cert.cn == self.hostname
-        assert self.acme_cert.cert.profile == model_settings.CA_DEFAULT_PROFILE
+
+        acme_cert = self.order.acmecertificate
+        assert acme_cert.cert is not None, "Check to make mypy happy"
+        assert acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
+            x509.DNSName(self.hostname)
+        )
+        assert acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        assert acme_cert.cert.cn == self.hostname
+        assert acme_cert.cert.profile == model_settings.CA_DEFAULT_PROFILE
 
     @override_settings(USE_TZ=False)
     def test_basic_without_timezone_support(self) -> None:
@@ -398,18 +401,19 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         AcmeAuthorization.objects.create(order=self.order, value=hostname2)
 
         # NOTE; not testing log output here, because order of hostnames might not be stable
-        tasks.acme_issue_certificate(self.acme_cert.pk)
+        tasks.acme_issue_certificate(self.task_args)
 
-        self.acme_cert.refresh_from_db()
-        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_VALID
-        assert self.acme_cert.cert.extensions[
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-        ] == subject_alternative_name(x509.DNSName(self.hostname), x509.DNSName(hostname2))
 
-        assert self.acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
-        assert self.acme_cert.cert.cn in [self.hostname, hostname2]
+        acme_cert = self.order.acmecertificate
+        assert acme_cert.cert is not None, "Check to make mypy happy"
+        assert acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
+            x509.DNSName(self.hostname), x509.DNSName(hostname2)
+        )
+
+        assert acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        assert acme_cert.cert.cn in [self.hostname, hostname2]
 
     @override_tmpcadir()
     def test_not_after(self) -> None:
@@ -419,22 +423,23 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         self.order.save()
 
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
 
         assert logcm.output == [
             f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         ]
 
-        self.acme_cert.refresh_from_db()
-        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_VALID
-        assert self.acme_cert.cert.extensions[
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-        ] == subject_alternative_name(x509.DNSName(self.hostname))
 
-        assert self.acme_cert.cert.not_after == not_after
-        assert self.acme_cert.cert.cn == self.hostname
+        acme_cert = self.order.acmecertificate
+        assert acme_cert.cert is not None, "Check to make mypy happy"
+        assert acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
+            x509.DNSName(self.hostname)
+        )
+
+        assert acme_cert.cert.not_after == not_after
+        assert acme_cert.cert.cn == self.hostname
 
     def test_not_after_with_use_tz_is_false(self) -> None:
         """Test not_after with USE_TZ=False."""
@@ -449,24 +454,24 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         self.ca.save()
 
         with self.assertLogs() as logcm:
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
 
         assert logcm.output == [
             f"INFO:django_ca.tasks:{self.order}: Issuing certificate for DNS:{self.hostname}"
         ]
 
-        self.acme_cert.refresh_from_db()
-        assert self.acme_cert.cert is not None, "Check to make mypy happy"
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_VALID
-        assert self.acme_cert.cert.extensions[
-            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-        ] == subject_alternative_name(x509.DNSName(self.hostname))
 
-        assert self.acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        acme_cert = self.order.acmecertificate
+        assert acme_cert.cert is not None, "Check to make mypy happy"
+        assert acme_cert.cert.extensions[ExtensionOID.SUBJECT_ALTERNATIVE_NAME] == subject_alternative_name(
+            x509.DNSName(self.hostname)
+        )
 
-        assert self.acme_cert.cert.cn == self.hostname
-        assert self.acme_cert.cert.profile == "client"
+        assert acme_cert.cert.not_after == timezone.now() + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
+        assert acme_cert.cert.cn == self.hostname
+        assert acme_cert.cert.profile == "client"
 
     @override_tmpcadir()
     def test_signing_error(self) -> None:
@@ -479,7 +484,7 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
             ) as create_cert_mock,
             self.assertLogs() as logcm,
         ):
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
 
         create_cert_mock.assert_called_once()
 
@@ -492,10 +497,9 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
         assert logcm.output[1].endswith(f"Exception: {message}")
 
         # No certificate was issued and the order is marked as invalid (RFC 8555, section 7.1.6).
-        self.acme_cert.refresh_from_db()
-        assert self.acme_cert.cert is None
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_INVALID
+        assert not AcmeCertificate.objects.filter(order=self.order).exists()
 
         # The order stores a generic error, so that the exception is not leaked to the client.
         assert self.order.get_error() == messages.Error.with_code(
@@ -519,21 +523,31 @@ class AcmeIssueCertificateTestCase(TestCaseMixin, TestCase):
             self.patch("django_ca.managers.CertificateManager.create_cert", side_effect=create_cert),
             self.assertLogs() as logcm,
         ):
-            tasks.acme_issue_certificate(self.acme_cert.pk)
+            tasks.acme_issue_certificate(self.task_args)
 
         assert logcm.output[1].endswith(f"RuntimeError: {message}")
 
         # The certificate was signed, but must not be stored in the database, as the order is invalid.
         assert Certificate.objects.count() == 0
-        self.acme_cert.refresh_from_db()
-        assert self.acme_cert.cert is None
+        assert AcmeCertificate.objects.count() == 0
         self.order.refresh_from_db()
         assert self.order.status == AcmeOrder.STATUS_INVALID
+        assert not hasattr(self.order, "acmecertificate")
 
         # The error is stored even though the certificate was rolled back.
         assert self.order.get_error() == messages.Error.with_code(
             "serverInternal", detail="Internal error while signing the certificate."
         )
+
+    @override_tmpcadir()
+    def test_with_acme_certificate_exists(self) -> None:
+        """Test error when an ACME certificate already exists."""
+        AcmeCertificate.objects.create(order=self.order, csr=self.csr)
+        with self.assertLogs() as logcm:
+            tasks.acme_issue_certificate(self.task_args)
+        self.order.refresh_from_db()
+        assert self.order.status == AcmeOrder.STATUS_INVALID
+        assert logcm.output[0] == f"ERROR:django_ca.tasks:{self.order}: ACME order already has a certificate."
 
 
 @freeze_time(TIMESTAMPS["everything_valid"])

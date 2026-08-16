@@ -85,7 +85,8 @@ def compose_manage(container: str, *args: str, **kwargs: Any) -> subprocess.Comp
 
 def compose_python(container: str, code: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """Run `docker compose exec {container} manage shell ...`."""
-    return compose_manage(container, "shell", "-v", "0", "-c", code, capture_output=True)
+    kwargs.setdefault("capture_output", True)
+    return compose_manage(container, "shell", "-v", "0", "-c", code, **kwargs)
 
 
 def compose_status(tag: str) -> int:
