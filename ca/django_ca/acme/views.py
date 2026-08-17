@@ -36,7 +36,7 @@ from acme import messages
 from acme.jws import JWS, Header
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding
 from cryptography.x509.oid import NameOID
 
@@ -72,6 +72,7 @@ from django_ca.acme.responses import (
     AcmeResponseUnsupportedMediaType,
 )
 from django_ca.acme.utils import parse_acme_csr
+from django_ca.acme.validation import validate_csr
 from django_ca.celery import run_task
 from django_ca.celery.messages import AcmeIssueCertificateTaskArgs
 from django_ca.conf import model_settings
@@ -88,7 +89,7 @@ from django_ca.models import (
 from django_ca.pydantic.validators import email_validator
 from django_ca.querysets import AcmeAccountQuerySet
 from django_ca.tasks import acme_issue_certificate, acme_validate_challenge
-from django_ca.utils import check_name, int_to_hex
+from django_ca.utils import int_to_hex
 
 log = logging.getLogger(__name__)
 MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
@@ -921,7 +922,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
 
     message_cls = CertificateRequest
 
-    def validate_csr(self, message: CertificateRequest, authorizations: Iterable[AcmeAuthorization]) -> str:
+    def load_csr(self, message: CertificateRequest) -> x509.CertificateSigningRequest:
         """Parse and validate the CSR, returns the PEM as str."""
         # Note: Jose wraps the CSR in a josepy.util.ComparableX509, that has *no* public member methods.
         # The only public attribute or function is the wrapped object. We encode it back to get the regular
@@ -935,68 +936,17 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             log.exception("Error parsing CSR.")
             raise AcmeBadCSR(message="Unable to parse CSR.") from ex
 
-        # Do not accept MD5 or SHA1 signatures
-        hash_algorithm = csr.signature_hash_algorithm
-        if hasattr(hashes, "MD5") and isinstance(hash_algorithm, hashes.MD5):
-            raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
-        if hasattr(hashes, "SHA1") and isinstance(hash_algorithm, hashes.SHA1):
-            raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
-
-        if csr.is_signature_valid is False:
-            raise AcmeBadCSR(message="CSR signature is not valid.")
-
-        # Get list of general names from the authorizations
-        names_from_order = {auth.general_name for auth in authorizations}
-
-        # Perform sanity checks on the CSRs subject.
-        # NOTE: certbot does *not* set any subject at all
-        if csr.subject:
-            check_name(csr.subject)
-
-            # We allow a client setting a CommonName, but it *must* be part of the order.
-            # The CN may refer to either a DNS name or an IP address (RFC 8738).
-            common_name = next((attr for attr in csr.subject if attr.oid == NameOID.COMMON_NAME), None)
-            if common_name is not None:
-                if isinstance(common_name.value, bytes):  # pragma: no cover
-                    raise AcmeBadCSR(message="CommonName was not in order.")
-                try:
-                    # Normalise to compressed form so the lookup against names_from_order
-                    # (which stores compressed values) is unambiguous (RFC 5952 §4).
-                    addr = ipaddress.ip_address(common_name.value)
-                    cn_general_name: x509.GeneralName = x509.IPAddress(ipaddress.ip_address(addr.compressed))
-                except ValueError:
-                    cn_general_name = x509.DNSName(common_name.value)
-                if cn_general_name not in names_from_order:
-                    raise AcmeBadCSR(message="CommonName was not in order.")
-
-        try:
-            san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-            # Normalise IP SANs to their compressed form so the set comparison against
-            # names_from_order (which uses compressed values) is unambiguous.
-            names_from_csr: set[x509.GeneralName] = set()
-            for san_name in san_ext.value:
-                if isinstance(san_name, x509.IPAddress) and isinstance(
-                    san_name.value, (ipaddress.IPv4Address, ipaddress.IPv6Address)
-                ):
-                    names_from_csr.add(x509.IPAddress(ipaddress.ip_address(san_name.value.compressed)))
-                else:
-                    names_from_csr.add(san_name)
-        except x509.ExtensionNotFound as ex:
-            raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
-
-        if names_from_order != names_from_csr:
-            raise AcmeBadCSR(message="Names in CSR do not match.")
-
-        return csr.public_bytes(Encoding.PEM).decode("utf-8")
+        return csr
 
     @transaction.atomic
-    def create_certificate(self, order: AcmeOrder, csr: str) -> None:
+    def create_certificate(self, order: AcmeOrder, csr: x509.CertificateSigningRequest) -> None:
         """Create certificate and update order in a transaction."""
         # Update the status of the order to "processing"
         order.status = AcmeOrder.STATUS_PROCESSING
         order.save()
 
-        message = AcmeIssueCertificateTaskArgs(order_pk=order.pk, csr=csr)
+        csr_pem = csr.public_bytes(Encoding.PEM)
+        message = AcmeIssueCertificateTaskArgs(order_pk=order.pk, csr=csr_pem)
         # start task only after commit, see:
         # https://docs.djangoproject.com/en/dev/topics/db/transactions/#django.db.transaction.on_commit
         transaction.on_commit(lambda: run_task(acme_issue_certificate, message))
@@ -1032,15 +982,16 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
             expires = expires.replace(tzinfo=UTC)
 
-        authorizations: Iterable[AcmeAuthorization] = order.authorizations.url().all()  # type: ignore[attr-defined]
-        for auth in authorizations:
-            if auth.status != AcmeAuthorization.STATUS_VALID:
-                # This is a state that should never happen in practice, because the order is only marked as
-                # ready once all authorizations are valid.
-                raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
+        authorizations: Iterable[AcmeAuthorization] = tuple(order.authorizations.url().all())  # type: ignore[attr-defined]
+        if any(auth for auth in authorizations if auth.status != AcmeAuthorization.STATUS_VALID):
+            # This is a state that should never happen in practice, because the order is only marked as
+            # ready once all authorizations are valid.
+            raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
 
         # Parse and validate the CSR
-        csr = self.validate_csr(message, authorizations)
+        names_from_order = {auth.general_name for auth in authorizations}
+        csr = self.load_csr(message)
+        validate_csr(csr, names_from_order)
 
         self.create_certificate(order, csr)
 

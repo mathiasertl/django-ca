@@ -21,7 +21,13 @@ import dns.exception
 import requests
 from dns import resolver
 
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import NameOID
+
+from django_ca.acme.errors import AcmeBadCSR
 from django_ca.models import AcmeAuthorization, AcmeChallenge
+from django_ca.utils import check_name
 
 log = logging.getLogger(__name__)
 
@@ -121,3 +127,67 @@ def validate_dns_01(challenge: AcmeChallenge, timeout: int = 1) -> bool:
                 return True
 
     return False
+
+
+def validate_csr(
+    csr: x509.CertificateSigningRequest, names_from_order: set[x509.DNSName | x509.IPAddress]
+) -> None:
+    """Validate that the CSR is usable to issue a certificate via ACME."""
+    # Do not accept MD5 or SHA1 signatures
+    hash_algorithm = csr.signature_hash_algorithm
+    if hasattr(hashes, "MD5") and isinstance(hash_algorithm, hashes.MD5):
+        raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
+    if hasattr(hashes, "SHA1") and isinstance(hash_algorithm, hashes.SHA1):
+        raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
+
+    if csr.is_signature_valid is False:
+        raise AcmeBadCSR(message="CSR signature is not valid.")
+
+    # Perform sanity checks on the CSRs subject.
+    # NOTE: certbot does *not* set any subject at all
+    if csr.subject:
+        # Perform basic sanity checks for subject. This also rules out multiple CommonName entries.
+        try:
+            check_name(csr.subject)
+        except ValueError as ex:
+            raise AcmeBadCSR(str(ex)) from ex
+
+        # We allow a client setting a CommonName, but it *must* be part of the order.
+        # The CN may refer to either a DNS name or an IP address (RFC 8738).
+        common_name = next((attr for attr in csr.subject.get_attributes_for_oid(NameOID.COMMON_NAME)), None)
+
+        if common_name is not None:
+            if isinstance(common_name.value, bytes):  # pragma: no cover  # CN is always string
+                raise AcmeBadCSR(message="CommonName was not in order.")
+
+            try:
+                # Normalize to compressed form so the lookup against names_from_order
+                # (which stores compressed values) is unambiguous (RFC 5952 §4).
+                addr = ipaddress.ip_address(common_name.value)
+                cn_general_name: x509.GeneralName = x509.IPAddress(ipaddress.ip_address(addr.compressed))
+            except ValueError:
+                cn_general_name = x509.DNSName(common_name.value)
+
+            if cn_general_name not in names_from_order:
+                raise AcmeBadCSR(message="CommonName was not in order.")
+
+    try:
+        san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+    except x509.ExtensionNotFound as ex:
+        raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
+
+    # Normalize IP SANs to their compressed form so the set comparison against
+    # names_from_order (which uses compressed values) is unambiguous.
+    names_from_csr: set[x509.DNSName | x509.IPAddress] = set()
+    for san_name in san_ext.value:
+        if isinstance(san_name, x509.IPAddress) and isinstance(
+            san_name.value, ipaddress.IPv4Address | ipaddress.IPv6Address
+        ):
+            names_from_csr.add(x509.IPAddress(ipaddress.ip_address(san_name.value.compressed)))
+        elif isinstance(san_name, x509.DNSName):
+            names_from_csr.add(san_name)
+        else:
+            raise AcmeBadCSR(message="Name with invalid type requested.")
+
+    if names_from_order != names_from_csr:
+        raise AcmeBadCSR(message="Names in CSR do not match.")
