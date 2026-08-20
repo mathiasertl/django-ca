@@ -565,7 +565,7 @@ dev = [
     "pyrfc3339>=2.0.1",
     "pytest>=8.3.4",
     "pytest-cov>=6.0.0",
-    "pytest-django>=4.10.0",
+    "pytest-django>=4.10.0,<4.13",
     "pytest-env>=1.1.5",
     "pytest-freezer>=0.4.9",
     "pytest-random-order>=1.1.1",
@@ -606,9 +606,9 @@ local = [
 ]
 lint = [
     "pre-commit>=4.1.0",
-    "pylint>=3.3.4",
+    "pylint>=3.3.4,<4.1",
     "pylint-django>=2.6.1",
-    "ruff>=0.14.10",
+    "ruff>=0.14.10,<0.16",
 ]
 mypy = [
     "django-stubs>=5.1.3",
