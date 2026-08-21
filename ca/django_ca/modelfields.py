@@ -236,7 +236,7 @@ class LazyBinaryField(
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
-        return super().formfield(form_class, choices_form_class, **kwargs)
+        return super().formfield(form_class, choices_form_class, **kwargs)  # type: ignore[misc]
 
     def to_python(self, value: WrapperTypeVar | DecodableTypeVar | None) -> WrapperTypeVar | None:
         """Called during deserialization and during Certificate.full_clean().
