@@ -1,7 +1,11 @@
 name: PostgreSQL tests
 on:
   push:
-  pull_request:
+    branches:
+      - main
+    tags:
+      - "*"
+    pull_request:
 
 env:
   UV_PYTHON_PREFERENCE: only-system
