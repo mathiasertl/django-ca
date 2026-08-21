@@ -1093,7 +1093,7 @@ gunicorn = [{ name = "gunicorn", specifier = ">=23" }]
 lint = [
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pylint", specifier = "~=4.0.0" },
-    { name = "pylint-django", specifier = "~=2.5.0" },
+    { name = "pylint-django", specifier = "~=2.7.0" },
     { name = "ruff", specifier = "~=0.15.0" },
 ]
 local = [
@@ -2303,15 +2303,14 @@ wheels = [
 
 [[package]]
 name = "pylint-django"
-version = "2.5.2"
+version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pylint" },
     { name = "pylint-plugin-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/60/b3a67e5c094eb598b382b693897de07925ea18d84c0f2b299ccee490c3cb/pylint-django-2.5.2.tar.gz", hash = "sha256:1933d82b4a92538a3b12aef91adfd7d866befd051d7a02d6245b0f965587d97c", size = 67169, upload-time = "2022-02-18T12:30:15.258Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/b0/eda01fcc866a691f8600407bb57d2d20ed71701a71114fd6631cfa2a6b37/pylint_django-2.5.2-py3-none-any.whl", hash = "sha256:286dce8a31bc8ed5a523e8d8742b5a0e083b87f5f140ea4cde9aad612c03bd2d", size = 80115, upload-time = "2022-02-18T12:30:12.259Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/0d/d775fec0dde8ca5d20e9170a2ca332dfa21b77f7e7e47fc3ab9b2261773c/pylint_django-2.7.0-py3-none-any.whl", hash = "sha256:76ef7e7bbbcf7ee86adbb2beac0ffaa7232509a17bf4a488d81467a1bbaa215b", size = 42892, upload-time = "2026-01-01T11:17:04.292Z" },
 ]
 
 [[package]]

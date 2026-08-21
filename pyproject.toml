@@ -607,7 +607,7 @@ local = [
 lint = [
     "pre-commit>=4.1.0",
     "pylint~=4.0.0",
-    "pylint-django~=2.5.0",
+    "pylint-django~=2.7.0",
     "ruff~=0.15.0",
 ]
 mypy = [

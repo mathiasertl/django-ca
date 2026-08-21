@@ -367,6 +367,7 @@ nitpick_ignore = [
     ("py:class", "annotated_types.Ge"),
     # we don't add intersphinx mapping for pytest.
     ("py:class", "_pytest.fixtures.FixtureRequest"),
+    ("py:func", "pydantic.main.BaseModel.model_validate"),
 ]
 
 
