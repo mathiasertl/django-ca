@@ -27,7 +27,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
-from django_ca.acme.validation import validate_dns_01, validate_http_01
+from django_ca.acme.validation import validate_csr, validate_dns_01, validate_http_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
     AcmeIssueCertificateTaskArgs,
@@ -411,12 +411,28 @@ def acme_issue_certificate(data: AcmeIssueCertificateTaskArgs) -> None:
         order.save()
         return
 
-    general_names = order.get_general_names()
-    subject_alternative_names = x509.SubjectAlternativeName(general_names)
+    # Fetch authorizations for this order.
+    authorizations: tuple[AcmeAuthorization, ...] = tuple(order.authorizations.all())  # type: ignore[attr-defined]
+
+    # Test that all authorizations are valid. This is already asserted by the view triggering this task, so
+    # this should not happen in practice and is just a safeguard.
+    if any(auth for auth in authorizations if auth.status != AcmeAuthorization.STATUS_VALID):
+        log.error("%s: Received ACME order with non-valid authorizations.")
+        order.set_error("badCSR", "Not all authorizations are valid.")
+        order.status = AcmeOrder.STATUS_INVALID
+        order.save()
+        return
+
+    # Load and validate CSR
+    names_from_order = {auth.general_name for auth in authorizations}
+    csr = x509.load_pem_x509_csr(data.csr)
+    validate_csr(csr, names_from_order)  # Already asserted by view, so again just a safeguard.
+
+    subject_alternative_names = x509.SubjectAlternativeName(names_from_order)
     log.info(
         "%s: Issuing certificate for %s",
         order,
-        ",".join(format_general_name(name) for name in general_names),
+        ",".join(format_general_name(name) for name in names_from_order),
     )
 
     extensions = [
@@ -439,8 +455,6 @@ def acme_issue_certificate(data: AcmeIssueCertificateTaskArgs) -> None:
             not_after = timezone.make_aware(not_after)
     else:
         not_after = datetime.now(tz=UTC) + model_settings.CA_ACME_DEFAULT_CERT_VALIDITY
-
-    csr = x509.load_pem_x509_csr(data.csr)
 
     try:
         # Nested atomic block, so that a partially issued certificate is rolled back below (the outer
