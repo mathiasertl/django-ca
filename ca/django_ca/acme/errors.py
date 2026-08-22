@@ -13,7 +13,7 @@
 
 """Collection of exception classes for ACMEv2."""
 
-from typing import Any
+from typing import Any, TypedDict
 
 from django_ca.acme.responses import (
     AcmeResponseBadCSR,
@@ -29,13 +29,13 @@ class AcmeException(Exception):
 
     response: type[AcmeResponseError] = AcmeResponseError
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args)
-        self.kwargs = kwargs
+    def __init__(self, *, typ: str = "", message: str = "") -> None:
+        self.typ = typ
+        self.message = message
 
     def get_response(self) -> AcmeResponseError:
         """Get the corresponding ACME response class."""
-        return self.response(*self.args, **self.kwargs)
+        return self.response(typ=self.typ, message=self.message)
 
 
 class AcmeMalformed(AcmeException):
@@ -60,3 +60,6 @@ class AcmeBadCSR(AcmeException):
     """Exception raised when a CSR is not acceptable."""
 
     response = AcmeResponseBadCSR
+
+    def __init__(self, *, message: str = "") -> None:
+        super().__init__(typ=self.response.message, message=message)

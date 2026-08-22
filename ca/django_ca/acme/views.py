@@ -116,30 +116,38 @@ class ContactValidationMixin:
                 # We rule our quoted local address fields, otherwise it's extremely hard to validate
                 # email addresses.
                 if addr.startswith('"'):
-                    raise AcmeMalformed("invalidContact", "Quoted local part in email is not allowed.")
+                    raise AcmeMalformed(
+                        typ="invalidContact", message="Quoted local part in email is not allowed."
+                    )
 
                 # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
                 # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
                 if "," in addr:
-                    raise AcmeMalformed("invalidContact", "More than one addr-spec is not allowed.")
+                    raise AcmeMalformed(
+                        typ="invalidContact", message="More than one addr-spec is not allowed."
+                    )
 
                 # Validate that there are no hfields in the address.
                 # NOTE: ',' appears to be valid in the local part according to RFC 5322
                 _local, domain = addr.split("@", 1)
                 if "?" in domain:
-                    raise AcmeMalformed("invalidContact", f"{domain}: hfields are not allowed.")
+                    raise AcmeMalformed(typ="invalidContact", message=f"{domain}: hfields are not allowed.")
 
                 # Finally, verify that we're getting at least a valid domain.
                 try:
                     email_validator(addr)
                 except ValueError as ex:
-                    raise AcmeMalformed("invalidContact", f"{domain}: Not a valid email address.") from ex
+                    raise AcmeMalformed(
+                        typ="invalidContact", message=f"{domain}: Not a valid email address."
+                    ) from ex
             else:
                 # RFC 8555, section 7.3
                 #
                 #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
                 #   error of type "unsupportedContact", ...
-                raise AcmeMalformed("unsupportedContact", f"{contact}: Unsupported address scheme.")
+                raise AcmeMalformed(
+                    typ="unsupportedContact", message=f"{contact}: Unsupported address scheme."
+                )
 
 
 class AcmeDirectory(View):
