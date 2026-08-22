@@ -15,6 +15,8 @@ env:
 jobs:
   run:
     name: Django ${{ matrix.django-version }}, ${{ matrix.mariadb-image }}
+    # Skip for Dependabot pull requests (github.head_ref is only set for pull_request events).
+    if: ${{ !startsWith(github.head_ref, 'dependabot/') }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
