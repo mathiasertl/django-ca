@@ -100,7 +100,7 @@ class AcmeResponseError(AcmeResponse):
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR  # 500
     type = "serverInternal"
 
-    def __init__(self, typ: str | None = None, message: str = "") -> None:
+    def __init__(self, typ: str = "", message: str = "") -> None:
         super().__init__(
             {
                 "type": f"urn:ietf:params:acme:error:{typ or self.type}",
