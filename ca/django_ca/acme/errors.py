@@ -13,8 +13,6 @@
 
 """Collection of exception classes for ACMEv2."""
 
-from typing import Any, TypedDict
-
 from django_ca.acme.responses import (
     AcmeResponseBadCSR,
     AcmeResponseError,
@@ -62,4 +60,4 @@ class AcmeBadCSR(AcmeException):
     response = AcmeResponseBadCSR
 
     def __init__(self, *, message: str = "") -> None:
-        super().__init__(typ=self.response.message, message=message)
+        super().__init__(message=message)

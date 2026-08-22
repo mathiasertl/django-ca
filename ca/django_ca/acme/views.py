@@ -58,12 +58,12 @@ from django_ca.acme.responses import (
     AcmeResponseAccountCreated,
     AcmeResponseAuthorization,
     AcmeResponseBadNonce,
+    AcmeResponseCertificateAuthorityNotFound,
     AcmeResponseChallenge,
     AcmeResponseConflict,
     AcmeResponseError,
     AcmeResponseMalformed,
     AcmeResponseMalformedPayload,
-    AcmeResponseNotFound,
     AcmeResponseOrder,
     AcmeResponseOrderCreated,
     AcmeResponseOrders,
@@ -170,13 +170,13 @@ class AcmeDirectory(View):
                 # NOTE: default() already calls usable()
                 ca = CertificateAuthority.objects.acme().default()
             except ImproperlyConfigured:
-                return AcmeResponseNotFound(message="No (usable) default CA configured.")
+                return AcmeResponseCertificateAuthorityNotFound()
         else:
             try:
                 # NOTE: Serial is already sanitized by URL converter
                 ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
             except CertificateAuthority.DoesNotExist:
-                return AcmeResponseNotFound(message=f"{serial}: CA not found.")
+                return AcmeResponseCertificateAuthorityNotFound()
 
         # Get some random data into the directory view, as explained in the Let's Encrypt directory:
         #   https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417
@@ -375,7 +375,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         try:
             self.ca = CertificateAuthority.objects.acme().usable().get(serial=serial)
         except CertificateAuthority.DoesNotExist:
-            return AcmeResponseNotFound(message="The requested CA cannot be found.")
+            return AcmeResponseCertificateAuthorityNotFound()
 
         if combined.jwk:
             if not self.requires_key and not self.accepts_kid_or_jwk:

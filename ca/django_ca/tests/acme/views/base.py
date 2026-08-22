@@ -147,9 +147,9 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         resp = acme_request(client, url, root, message)
         assert_acme_problem(
             resp,
-            "not-found",
-            status=HTTPStatus.NOT_FOUND,
-            message="The requested CA cannot be found.",
+            "unauthorized",
+            status=HTTPStatus.UNAUTHORIZED,
+            message="Certificate authority not found.",
             ca=root,
         )
 
