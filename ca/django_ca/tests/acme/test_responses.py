@@ -21,4 +21,4 @@ from django_ca.acme.responses import AcmeResponseError
 def test_error_with_unknown_type() -> None:
     """Test that an unknown type raises ValueError."""
     with pytest.raises(ValueError, match=r"^foo: Invalid error code\.$"):
-        AcmeResponseError(typ="foo")
+        AcmeResponseError(code="foo")

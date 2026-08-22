@@ -117,28 +117,28 @@ class ContactValidationMixin:
                 # email addresses.
                 if addr.startswith('"'):
                     raise AcmeMalformed(
-                        typ="invalidContact", message="Quoted local part in email is not allowed."
+                        code="invalidContact", detail="Quoted local part in email is not allowed."
                     )
 
                 # Since the local part is not quoted, it cannot contain a ',' either, so a ',' means there
                 # is more than one "addr-spec" in the "to" component. (see RFC 8555 quote above)
                 if "," in addr:
                     raise AcmeMalformed(
-                        typ="invalidContact", message="More than one addr-spec is not allowed."
+                        code="invalidContact", detail="More than one addr-spec is not allowed."
                     )
 
                 # Validate that there are no hfields in the address.
                 # NOTE: ',' appears to be valid in the local part according to RFC 5322
                 _local, domain = addr.split("@", 1)
                 if "?" in domain:
-                    raise AcmeMalformed(typ="invalidContact", message=f"{domain}: hfields are not allowed.")
+                    raise AcmeMalformed(code="invalidContact", detail=f"{domain}: hfields are not allowed.")
 
                 # Finally, verify that we're getting at least a valid domain.
                 try:
                     email_validator(addr)
                 except ValueError as ex:
                     raise AcmeMalformed(
-                        typ="invalidContact", message=f"{domain}: Not a valid email address."
+                        code="invalidContact", detail=f"{domain}: Not a valid email address."
                     ) from ex
             else:
                 # RFC 8555, section 7.3
@@ -146,7 +146,7 @@ class ContactValidationMixin:
                 #   If the server rejects a contact URL for using an unsupported scheme, it MUST raise an
                 #   error of type "unsupportedContact", ...
                 raise AcmeMalformed(
-                    typ="unsupportedContact", message=f"{contact}: Unsupported address scheme."
+                    code="unsupportedContact", detail=f"{contact}: Unsupported address scheme."
                 )
 
 
@@ -269,14 +269,14 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
         if account.status == AcmeAccount.STATUS_DEACTIVATED:
             # NOTE: Account may have other status that makes it unusable, these cases are covered by
             # account.usable below.
-            raise AcmeUnauthorized(message="Account has been deactivated.")
+            raise AcmeUnauthorized(detail="Account has been deactivated.")
         if account.ca.terms_of_service and not account.terms_of_service_agreed:
-            raise AcmeUnauthorized(message="Account did not agree to the terms of service.")
+            raise AcmeUnauthorized(detail="Account did not agree to the terms of service.")
 
         # COVERAGE NOTE: The check for the CA is already done when selecting the CA, so account.ca.usable
         # should always be true at this point. Check is left here as an additional precaution.
         if not account.ca.usable:  # pragma: no cover
-            raise AcmeUnauthorized(message="Certificate Authority is not usable.")
+            raise AcmeUnauthorized(detail="Certificate Authority is not usable.")
 
         # This should return True unless the account was revoked by the server, in which case we let the main
         # function return a generic error message instead.
@@ -328,7 +328,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             response = ex.get_response()
         except Exception:  # pylint: disable=broad-except
             log.exception("Uncaught ACME request exception.")
-            response = AcmeResponseError(message="Internal server error")
+            response = AcmeResponseError(detail="Internal server error")
 
         self.set_link_relations(response)
 
@@ -362,14 +362,14 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             self.jws: acme.jws.JWS = acme.jws.JWS.json_loads(request.body)
             assert isinstance(self.jws, acme.jws.JWS)  # ensure type-safety
         except (jose.errors.DeserializationError, TypeError):
-            return AcmeResponseMalformed(message="Could not parse JWS token.")
+            return AcmeResponseMalformed(detail="Could not parse JWS token.")
 
         combined: acme.jws.Header = self.jws.signature.combined
         assert isinstance(combined, acme.jws.Header)
         if combined.jwk and combined.kid:
             # 'The "jwk" and "kid" fields are mutually exclusive.  Servers MUST reject requests that contain
             # both.'
-            return AcmeResponseMalformed(message="jwk and kid are mutually exclusive.")
+            return AcmeResponseMalformed(detail="jwk and kid are mutually exclusive.")
 
         # Get certificate authority for this request
         try:
@@ -379,19 +379,19 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
 
         if combined.jwk:
             if not self.requires_key and not self.accepts_kid_or_jwk:
-                return AcmeResponseMalformed(message="Request requires a JWK key ID.")
+                return AcmeResponseMalformed(detail="Request requires a JWK key ID.")
 
             self.jwk = combined.jwk  # set JWK from request
         elif combined.kid:
             if self.requires_key and not self.accepts_kid_or_jwk:
-                return AcmeResponseMalformed(message="Request requires a full JWK key.")
+                return AcmeResponseMalformed(detail="Request requires a full JWK key.")
 
             # combined.kid is a full URL pointing to the account.
             try:
                 account_qs = AcmeAccount.objects.viewable().url()
                 account = account_qs.get(ca=self.ca, kid=combined.kid)
             except AcmeAccount.DoesNotExist:
-                return AcmeResponseUnauthorized(message="Account not found.")
+                return AcmeResponseUnauthorized(detail="Account not found.")
 
             if self.is_account_usable(account) is False:
                 # RFC 855, 7.3.6:
@@ -399,7 +399,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
                 #   If a server receives a POST or POST-as-GET from a deactivated account, it MUST return an
                 #   error response with status code 401 (Unauthorized) and type
                 #   "urn:ietf:params:acme:error:unauthorized".
-                return AcmeResponseUnauthorized(message="Account not usable.")
+                return AcmeResponseUnauthorized(detail="Account not usable.")
             # self.prepared['thumbprint'] = account.thumbprint
             # self.prepared['pem'] = account.pem
             # self.prepared['account_pk'] = account.pk
@@ -408,26 +408,26 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             self.account = account
         else:
             # ... 'Either "jwk" (JSON Web Key) or "kid" (Key ID)'
-            return AcmeResponseMalformed(message="JWS contained neither key nor key ID.")
+            return AcmeResponseMalformed(detail="JWS contained neither key nor key ID.")
 
         if len(self.jws.signatures) != 1:  # pragma: no cover
             # RFC 8555, 6.2: "The JWS MUST NOT have multiple signatures"
-            return AcmeResponseMalformed(message="Multiple JWS signatures encountered.")
+            return AcmeResponseMalformed(detail="Multiple JWS signatures encountered.")
 
         # "The JWS Protected Header MUST include the following fields:..."
         if not combined.alg:  # pragma: no cover
             # ... "alg"
-            return AcmeResponseMalformed(message="No algorithm specified.")
+            return AcmeResponseMalformed(detail="No algorithm specified.")
 
         if combined.alg.name not in model_settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS:
-            return AcmeResponseMalformed(message=f"JWS algorithm {combined.alg.name!r} is not allowed.")
+            return AcmeResponseMalformed(detail=f"JWS algorithm {combined.alg.name!r} is not allowed.")
 
         # Verify JWS signature
         try:
             if not self.jws.verify(self.jwk):
-                return AcmeResponseMalformed(message="JWS signature invalid.")
+                return AcmeResponseMalformed(detail="JWS signature invalid.")
         except Exception:  # noqa: BLE001
-            return AcmeResponseMalformed(message="JWS signature invalid.")
+            return AcmeResponseMalformed(detail="JWS signature invalid.")
 
         # self.prepared['nonce'] = jose.encode_b64jose(combined.nonce)
         if combined.nonce is None or not self.validate_nonce(jose.json_util.encode_b64jose(combined.nonce)):
@@ -438,7 +438,7 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
             # ... "url"
             # RFC 8555 is not really clear on the required response code, but merely says "If the two do not
             # match, then the server MUST reject the request as unauthorized."
-            return AcmeResponseUnauthorized(message="URL does not match.")
+            return AcmeResponseUnauthorized(detail="URL does not match.")
 
         return self.process_acme_request(slug=slug)
 
@@ -460,9 +460,9 @@ class AcmePostAsGetView(AcmeBaseView, metaclass=abc.ABCMeta):
 
     def process_acme_request(self, slug: str | None) -> AcmeResponse:
         if self.ignore_body is False and self.jws.payload != b"":
-            return AcmeResponseMalformed(message="Non-empty payload in get-as-post request.")
+            return AcmeResponseMalformed(detail="Non-empty payload in get-as-post request.")
         if slug is None:  # pragma: no cover; just a safety measure
-            return AcmeResponseError(message="PostAsGet view called with slug.")
+            return AcmeResponseError(detail="PostAsGet view called with slug.")
 
         return self.acme_request(slug=slug)
 
@@ -484,7 +484,7 @@ class AcmeMessageBaseView(AcmeBaseView, Generic[MessageTypeVar], metaclass=abc.A
             message = self.message_cls.json_loads(self.jws.payload)
             log.debug("ACME message: %s", message)
         except jose.errors.DeserializationError as e:
-            return AcmeResponseMalformedPayload(message=", ".join(e.args))
+            return AcmeResponseMalformedPayload(detail=", ".join(e.args))
 
         return self.acme_request(message, slug)
 
@@ -579,7 +579,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
                 #
                 #   ... account does not exist, then the server MUST return an error response with status code
                 #   400 (Bad Request) and type "urn:ietf:params:acme:error:accountDoesNotExist".
-                raise AcmeMalformed(typ="accountDoesNotExist", message="Account does not exist.") from ex
+                raise AcmeMalformed(code="accountDoesNotExist", detail="Account does not exist.") from ex
 
         # RFC 8555, section 7.3.1
         #
@@ -594,11 +594,11 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
             pass
 
         if self.ca.acme_registration is False:
-            raise AcmeUnauthorized(message="Account registration is disabled.")
+            raise AcmeUnauthorized(detail="Account registration is disabled.")
 
         if self.ca.acme_requires_contact and not message.emails:
             # NOTE: RFC 8555 does not specify an error code in this case
-            raise AcmeUnauthorized(message="Must provide at least one contact address.")
+            raise AcmeUnauthorized(detail="Must provide at least one contact address.")
 
         # Make sure that contact addresses are valid
         self.validate_contacts(message)
@@ -630,7 +630,7 @@ class AcmeNewAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Re
             subproblems = ", ".join(
                 sorted([f"{k}: {v1.rstrip('.')}" for k, v in ex.message_dict.items() for v1 in v])
             )
-            raise AcmeMalformed(message=f"Invalid account: {subproblems}.") from ex
+            raise AcmeMalformed(detail=f"Invalid account: {subproblems}.") from ex
 
         # self.prepared['thumbprint'] = account.thumbprint
         # self.prepared['pem'] = account.pem
@@ -659,12 +659,12 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
         if account.status == AcmeAccount.STATUS_DEACTIVATED:
             # NOTE: Account may have other status that makes it unusable, these cases are covered by
             # the check if the status is valid below
-            raise AcmeUnauthorized(message="Account has been deactivated.")
+            raise AcmeUnauthorized(detail="Account has been deactivated.")
 
         # COVERAGE NOTE: The check for the CA is already done when selecting the CA, so account.ca.usable
         # should always be true at this point. Check is left here as an additional precaution.
         if not account.ca.usable:  # pragma: no cover
-            raise AcmeUnauthorized(message="Certificate Authority is not usable.")
+            raise AcmeUnauthorized(detail="Certificate Authority is not usable.")
 
         return account.status == AcmeAccount.STATUS_VALID
 
@@ -683,7 +683,7 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
 
     def acme_request(self, message: messages.Registration, slug: str | None = None) -> AcmeResponseAccount:
         if slug != self.account.slug:
-            raise AcmeMalformed(message="Account slug does not match account that signed the request.")
+            raise AcmeMalformed(detail="Account slug does not match account that signed the request.")
 
         if message.status == AcmeAccount.STATUS_DEACTIVATED:
             self._deactivate_account(self.account)
@@ -695,7 +695,7 @@ class AcmeAccountView(ContactValidationMixin, AcmeMessageBaseView[messages.Regis
             self.account.terms_of_service_agreed = message.terms_of_service_agreed
             self.account.save()
         else:
-            raise AcmeMalformed(message="Only contact information can be updated.")
+            raise AcmeMalformed(detail="Only contact information can be updated.")
 
         return AcmeResponseAccount(self.request, self.account)
 
@@ -751,7 +751,7 @@ class AcmeAccountOrdersView(AcmePostAsGetView):
             try:
                 orders_qs = orders_qs.filter(pk__lt=int(cursor))
             except (ValueError, TypeError):
-                return AcmeResponseMalformed(message="Invalid pagination cursor.")
+                return AcmeResponseMalformed(detail="Invalid pagination cursor.")
 
         # Fetch one extra item to detect whether a next page exists.
         page = list(orders_qs[: self._page_size + 1])
@@ -818,19 +818,19 @@ class AcmeNewOrderView(AcmeMessageBaseView[NewOrder]):
                 try:
                     canonical = ipaddress.ip_address(ident.value).compressed
                 except ValueError as ex:
-                    raise AcmeMalformed(message=f"Invalid IP address: {ident.value}") from ex
+                    raise AcmeMalformed(detail=f"Invalid IP address: {ident.value}") from ex
                 ident = messages.Identifier(typ=messages.IDENTIFIER_IP, value=canonical)
             identifiers.append(ident)
 
         if not_before and not_before < now:
-            raise AcmeMalformed(message="Certificate cannot be valid before now.")
+            raise AcmeMalformed(detail="Certificate cannot be valid before now.")
         if not_after and not_after > now + model_settings.CA_ACME_MAX_CERT_VALIDITY:
-            raise AcmeMalformed(message="Certificate cannot be valid that long.")
+            raise AcmeMalformed(detail="Certificate cannot be valid that long.")
         if not_before and not_after and not_before > not_after:
-            raise AcmeMalformed(message="notBefore must be before notAfter.")
+            raise AcmeMalformed(detail="notBefore must be before notAfter.")
         if not identifiers:
             # NOTE: Catches sending an empty tuple, which is not caught in message deserialization
-            raise AcmeMalformed(message="The following fields are required: identifiers")
+            raise AcmeMalformed(detail="The following fields are required: identifiers")
 
         if settings.USE_TZ is False:
             if not_before is not None and timezone.is_aware(not_before):
@@ -940,10 +940,10 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
         try:
             csr = parse_acme_csr(message.encode("csr"))
         except x509.InvalidVersion as ex:
-            raise AcmeBadCSR(message="Invalid CSR version.") from ex
+            raise AcmeBadCSR(detail="Invalid CSR version.") from ex
         except Exception as ex:
             log.exception("Error parsing CSR.")
-            raise AcmeBadCSR(message="Unable to parse CSR.") from ex
+            raise AcmeBadCSR(detail="Unable to parse CSR.") from ex
 
         # Validate that the CSR can be used for signing a certificate.
         names_from_order = {auth.general_name for auth in authorizations}
@@ -989,7 +989,7 @@ class AcmeOrderFinalizeView(AcmeMessageBaseView[CertificateRequest]):
             # processing state, but it's not entirely clear if that request should go here or the normal order
             # resource.
             # Further investigation is on what LE and certbot do is needed here.
-            raise AcmeForbidden(typ="orderNotReady", message="This order is not yet ready.")
+            raise AcmeForbidden(code="orderNotReady", detail="This order is not yet ready.")
 
         expires = order.assert_not_expired()
         authorizations = order.assert_authorizations_valid()
@@ -1210,7 +1210,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             # time based on the database key.
             #   https://josepy.readthedocs.io/en/latest/api/util/
             if jwk != self.jwk or not self.jws.verify(jwk):
-                raise AcmeUnauthorized(message="Request signed by the wrong certificate.")
+                raise AcmeUnauthorized(detail="Request signed by the wrong certificate.")
         else:
             # Get the certificate by serial if it *has* an ACME account.
             # NOTE: The base class already makes sure that the account is currently valid.
@@ -1246,14 +1246,14 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
                         names.append(str(san_name.value))
                     else:
                         raise AcmeUnauthorized(
-                            message="Certificate contains unsupported subjectAlternativeNames."
+                            detail="Certificate contains unsupported subjectAlternativeNames."
                         )
             except x509.ExtensionNotFound:
                 pass
 
             # Finally test if the account holds all authorizations required for revoking this certificate.
             if not set(names) <= authz:
-                raise AcmeUnauthorized(message="Account does not hold necessary authorizations.")
+                raise AcmeUnauthorized(detail="Account does not hold necessary authorizations.")
 
         return cert
 
@@ -1266,7 +1266,7 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
             reason = REASON_CODES[reason_code]
         except KeyError as ex:
             raise AcmeMalformed(
-                typ="badRevocationReason", message=f"{message.reason}: Unsupported revocation reason."
+                code="badRevocationReason", detail=f"{message.reason}: Unsupported revocation reason."
             ) from ex
 
         # Get cryptography certificate from ACME message
@@ -1275,23 +1275,23 @@ class AcmeCertificateRevocationView(AcmeMessageBaseView[messages.Revocation]):
         if not isinstance(cg_cert, x509.Certificate):  # pragma: no cover
             # COVERAGE NOTE: message deserialization already raises an error when no certificate is passed,
             # so this check here is just for more safety (and to make mypy happy).
-            raise AcmeMalformed(message="Request did not contain a certificate.")
+            raise AcmeMalformed(detail="Request did not contain a certificate.")
 
         try:
             cert = self.get_certificate(int_to_hex(cg_cert.serial_number))
         except Certificate.DoesNotExist as ex:
-            raise AcmeUnauthorized(message="Certificate not found.") from ex
+            raise AcmeUnauthorized(detail="Certificate not found.") from ex
 
         # Check that the certificate in the payload matches with the one on record
         if cert.pub.loaded != cg_cert:
-            raise AcmeUnauthorized(message="Certificate does not match records.")
+            raise AcmeUnauthorized(detail="Certificate does not match records.")
 
         # RFC 8555, section 7.6
         #
         #   if the certificate has already been revoked, the server returns an error response with status code
         #   400 (Bad Request) and type "urn:ietf:params:acme:error:alreadyRevoked".
         if cert.revoked:
-            raise AcmeMalformed(typ="alreadyRevoked", message="Certificate was already revoked.")
+            raise AcmeMalformed(code="alreadyRevoked", detail="Certificate was already revoked.")
 
         # Finally actually revoke the certificate
         cert.revoke(reason=reason)
@@ -1326,7 +1326,7 @@ class AcmeKeyChangeView(AcmeBaseView):
             inner_jws = acme.jws.JWS.json_loads(self.jws.payload)
             assert isinstance(inner_jws, JWS)
         except (jose.errors.DeserializationError, TypeError):
-            return AcmeResponseMalformed(message="Could not parse inner JWS.")
+            return AcmeResponseMalformed(detail="Could not parse inner JWS.")
 
         inner_combined: Header = inner_jws.signature.combined
         assert isinstance(inner_combined, Header)
@@ -1334,18 +1334,18 @@ class AcmeKeyChangeView(AcmeBaseView):
         # The inner JWS MUST have its "url" header parameter set to the same value as the outer JWS.
         if inner_combined.url != self.request.build_absolute_uri():
             return AcmeResponseMalformed(
-                message='Inner JWS MUST have the same "url" header parameter as the outer JWS.'
+                detail='Inner JWS MUST have the same "url" header parameter as the outer JWS.'
             )
         # The inner JWS MUST omit the "nonce" header parameter.
         if inner_combined.nonce:
-            return AcmeResponseMalformed(message='Inner JWS MUST omit the "nonce" header parameter.')
+            return AcmeResponseMalformed(detail='Inner JWS MUST omit the "nonce" header parameter.')
 
         # 3. Check that the JWS protected header of the inner JWS has a "jwk" field.
         # -> Also check that there is no KID persent.
         if not inner_combined.jwk:
-            return AcmeResponseMalformed(message="Inner JWS must use JWK for the new key.")
+            return AcmeResponseMalformed(detail="Inner JWS must use JWK for the new key.")
         if inner_combined.kid:
-            return AcmeResponseMalformed(message="Inner JWS must not use KID.")  # pragma: no cover
+            return AcmeResponseMalformed(detail="Inner JWS must not use KID.")  # pragma: no cover
 
         new_jwk = inner_combined.jwk
         assert isinstance(new_jwk, jose.jwk.JWK)
@@ -1355,31 +1355,31 @@ class AcmeKeyChangeView(AcmeBaseView):
             and inner_combined.alg.name not in model_settings.CA_ACME_JWS_SIGNATURE_ALGORITHMS
         ):
             return AcmeResponseMalformed(
-                message=f"Inner JWS algorithm {inner_combined.alg.name!r} is not allowed."
+                detail=f"Inner JWS algorithm {inner_combined.alg.name!r} is not allowed."
             )
 
         # 4. Check that the inner JWS verifies using the key in its "jwk" field.
         try:
             if not inner_jws.verify(new_jwk):
-                return AcmeResponseMalformed(message="Inner JWS signature invalid.")
+                return AcmeResponseMalformed(detail="Inner JWS signature invalid.")
         except Exception:  # pragma: no cover  # noqa: BLE001
-            return AcmeResponseMalformed(message="Inner JWS signature invalid.")
+            return AcmeResponseMalformed(detail="Inner JWS signature invalid.")
 
         # Parse payload of the inner JWS
         try:
             inner_payload: dict[str, str] = json.loads(inner_jws.payload)
             assert isinstance(inner_payload, dict)
         except (json.JSONDecodeError, TypeError):  # pragma: no cover
-            return AcmeResponseMalformed(message="Could not parse inner JWS payload.")
+            return AcmeResponseMalformed(detail="Could not parse inner JWS payload.")
 
         # 5. Check that the payload of the inner JWS is a well-formed keyChange object (as described above).
         account_url = inner_payload.get("account")
         old_key_data = inner_payload.get("oldKey")
 
         if not account_url:
-            return AcmeResponseMalformed(message="Inner payload missing 'account' field.")
+            return AcmeResponseMalformed(detail="Inner payload missing 'account' field.")
         if not old_key_data:
-            return AcmeResponseMalformed(message="Inner payload missing 'oldKey' field.")
+            return AcmeResponseMalformed(detail="Inner payload missing 'oldKey' field.")
 
         # 6. Check that the "url" parameters of the inner and outer JWSs are the same.
         # -> Already done under point 2.
@@ -1387,14 +1387,14 @@ class AcmeKeyChangeView(AcmeBaseView):
         # 7. Check that the "account" field of the keyChange object contains the URL for the account matching
         # the old key (i.e., the "kid" field in the outer JWS).
         if account_url != self.account.kid:
-            return AcmeResponseMalformed(message="'account' in inner JWS does not match requesting account.")
+            return AcmeResponseMalformed(detail="'account' in inner JWS does not match requesting account.")
 
         # oldKey: The JWK representation of the old key.
         try:
             old_jwk: jose.jwk.JWK = jose.jwk.JWK.json_loads(json.dumps(old_key_data))
             assert isinstance(old_jwk, jose.jwk.JWK)
         except Exception:  # pragma: no cover  # noqa: BLE001
-            return AcmeResponseMalformed(message="Could not parse 'oldKey' from inner JWS.")
+            return AcmeResponseMalformed(detail="Could not parse 'oldKey' from inner JWS.")
 
         # 8. Check that the "oldKey" field of the keyChange object is the same as the account key for the
         # account in question.
@@ -1409,10 +1409,10 @@ class AcmeKeyChangeView(AcmeBaseView):
                 .strip()
             )
         except Exception:  # pragma: no cover  # noqa: BLE001
-            return AcmeResponseMalformed(message="Could not serialize 'oldKey'.")
+            return AcmeResponseMalformed(detail="Could not serialize 'oldKey'.")
 
         if old_pem != self.account.pem or old_jwk != self.jwk:
-            return AcmeResponseMalformed(message="'oldKey' does not match current account key.")
+            return AcmeResponseMalformed(detail="'oldKey' does not match current account key.")
 
         # Derive PEM and thumbprint for the new key.
         try:
@@ -1424,7 +1424,7 @@ class AcmeKeyChangeView(AcmeBaseView):
                 .strip()
             )
         except Exception:  # pragma: no cover  # noqa: BLE001
-            return AcmeResponseMalformed(message="Could not serialize new key.")
+            return AcmeResponseMalformed(detail="Could not serialize new key.")
 
         new_thumbprint = jose.json_util.encode_b64jose(new_jwk.thumbprint())
 

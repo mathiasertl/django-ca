@@ -1591,7 +1591,7 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
         if any(auth for auth in authorizations if auth.status != AcmeAuthorization.STATUS_VALID):
             # This is a state that should never happen in practice, because the order is only marked as
             # ready once all authorizations are valid.
-            raise AcmeOrder.InvalidAuthorizations(typ="orderNotReady", message="This order is not yet ready.")
+            raise AcmeOrder.InvalidAuthorizations(code="orderNotReady", detail="This order is not yet ready.")
         return authorizations
 
     def assert_no_acme_certificate(self) -> None:
@@ -1625,7 +1625,7 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
             self.status = AcmeOrder.STATUS_INVALID
             self.set_error("orderNotReady", "This order has expired.")
             self.save()
-            raise AcmeOrder.IsExpired(typ="orderNotReady", message="This order has expired.")
+            raise AcmeOrder.IsExpired(code="orderNotReady", detail="This order has expired.")
         return expires
 
     def get_error(self) -> messages.Error | None:

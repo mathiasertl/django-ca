@@ -27,13 +27,13 @@ class AcmeException(Exception):
 
     response: type[AcmeResponseError] = AcmeResponseError
 
-    def __init__(self, *, typ: str = "", message: str = "") -> None:
-        self.typ = typ
-        self.message = message
+    def __init__(self, code: str = "", detail: str = "") -> None:
+        self.code = code
+        self.detail = detail
 
     def get_response(self) -> AcmeResponseError:
         """Get the corresponding ACME response class."""
-        return self.response(typ=self.typ, message=self.message)
+        return self.response(code=self.code, detail=self.detail)
 
 
 class AcmeMalformed(AcmeException):
@@ -59,5 +59,5 @@ class AcmeBadCSR(AcmeException):
 
     response = AcmeResponseBadCSR
 
-    def __init__(self, *, message: str = "") -> None:
-        super().__init__(message=message)
+    def __init__(self, *, detail: str = "") -> None:
+        super().__init__(detail=detail)

@@ -100,17 +100,17 @@ class AcmeResponseError(AcmeResponse):
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR  # 500
     type = "serverInternal"
 
-    def __init__(self, typ: str = "", message: str = "") -> None:
-        if not typ:
-            typ = self.type
-        if typ not in messages.ERROR_CODES:
-            raise ValueError(f"{typ}: Invalid error code.")
+    def __init__(self, code: str = "", detail: str = "") -> None:
+        if not code:
+            code = self.type
+        if code not in messages.ERROR_CODES:
+            raise ValueError(f"{code}: Invalid error code.")
 
         super().__init__(
             {
-                "type": f"urn:ietf:params:acme:error:{typ}",
+                "type": f"urn:ietf:params:acme:error:{code}",
                 "status": self.status_code,
-                "detail": message or self.message,
+                "detail": detail or self.message,
             },
             content_type="application/problem+json",
         )
