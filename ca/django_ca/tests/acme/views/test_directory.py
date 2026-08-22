@@ -106,12 +106,12 @@ def test_acme_default_disabled(client: Client, root: CertificateAuthority) -> No
     root.save()
 
     response = client.get(URL)
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response["Content-Type"] == "application/problem+json"
     assert response.json() == {
-        "detail": "No (usable) default CA configured.",
-        "status": 404,
-        "type": "urn:ietf:params:acme:error:not-found",
+        "detail": "Certificate authority not found.",
+        "status": HTTPStatus.UNAUTHORIZED,
+        "type": "urn:ietf:params:acme:error:unauthorized",
     }
 
 
@@ -122,12 +122,12 @@ def test_acme_disabled(client: Client, root: CertificateAuthority) -> None:
 
     url = reverse("django_ca:acme-directory", kwargs={"serial": root.serial})
     response = client.get(url)
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response["Content-Type"] == "application/problem+json"
     assert response.json() == {
-        "detail": f"{root.serial}: CA not found.",
-        "status": 404,
-        "type": "urn:ietf:params:acme:error:not-found",
+        "detail": "Certificate authority not found.",
+        "status": HTTPStatus.UNAUTHORIZED,
+        "type": "urn:ietf:params:acme:error:unauthorized",
     }
 
 
@@ -135,12 +135,12 @@ def test_acme_disabled(client: Client, root: CertificateAuthority) -> None:
 def test_no_ca(client: Client) -> None:
     """Test using default CA when **no** CA exists."""
     response = client.get(URL)
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response["Content-Type"] == "application/problem+json"
     assert response.json() == {
-        "detail": "No (usable) default CA configured.",
-        "status": 404,
-        "type": "urn:ietf:params:acme:error:not-found",
+        "detail": "Certificate authority not found.",
+        "status": HTTPStatus.UNAUTHORIZED,
+        "type": "urn:ietf:params:acme:error:unauthorized",
     }
 
 
@@ -149,12 +149,12 @@ def test_no_ca(client: Client) -> None:
 def test_expired_ca(client: Client) -> None:
     """Test using default CA when all CAs are expired."""
     response = client.get(URL)
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response["Content-Type"] == "application/problem+json"
     assert response.json() == {
-        "detail": "No (usable) default CA configured.",
-        "status": 404,
-        "type": "urn:ietf:params:acme:error:not-found",
+        "detail": "Certificate authority not found.",
+        "status": HTTPStatus.UNAUTHORIZED,
+        "type": "urn:ietf:params:acme:error:unauthorized",
     }
 
 
@@ -176,7 +176,7 @@ def test_unknown_serial(client: Client) -> None:
 
     assert response["Content-Type"] == "application/problem+json"
     assert response.json() == {
-        "detail": "ABCDEF: CA not found.",
-        "status": 404,
-        "type": "urn:ietf:params:acme:error:not-found",
+        "detail": "Certificate authority not found.",
+        "status": HTTPStatus.UNAUTHORIZED,
+        "type": "urn:ietf:params:acme:error:unauthorized",
     }

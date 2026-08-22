@@ -101,9 +101,14 @@ class AcmeResponseError(AcmeResponse):
     type = "serverInternal"
 
     def __init__(self, typ: str = "", message: str = "") -> None:
+        if not typ:
+            typ = self.type
+        if typ not in messages.ERROR_CODES:
+            raise ValueError(f"{typ}: Invalid error code.")
+
         super().__init__(
             {
-                "type": f"urn:ietf:params:acme:error:{typ or self.type}",
+                "type": f"urn:ietf:params:acme:error:{typ}",
                 "status": self.status_code,
                 "detail": message or self.message,
             },
@@ -144,20 +149,16 @@ class AcmeResponseUnauthorized(AcmeResponseError):
     message = "You are not authorized to perform this request."
 
 
-class AcmeResponseForbidden(AcmeResponseError):
+class AcmeResponseCertificateAuthorityNotFound(AcmeResponseUnauthorized):
+    """ACME response for when a CA is not found."""
+
+    message = "Certificate authority not found."
+
+
+class AcmeResponseForbidden(AcmeResponseUnauthorized):
     """ACME response with HTTP status code 403 (Forbidden)."""
 
     status_code = HTTPStatus.FORBIDDEN  # 403
-    type = "forbidden"
-    message = "You are forbidden from accessing this resource."
-
-
-class AcmeResponseNotFound(AcmeResponseError):
-    """ACME response when a requested entity cannot be found."""
-
-    status_code = HTTPStatus.NOT_FOUND  # 404
-    type = "not-found"
-    message = "The requested entity could not be found."
 
 
 class AcmeResponseBadNonce(AcmeResponseError):
