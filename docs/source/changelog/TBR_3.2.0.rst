@@ -91,6 +91,7 @@ No changes yet.
 Dependencies
 ************
 
+* Add support for ``django~=6.1.0``.
 * Add support for ``cryptography~=50.0``.
 * Add support for ``acme~=5.7.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=46.0``, ``cryptography~=47.0`` and
@@ -102,7 +103,8 @@ Dependencies
 Deprecation notices
 *******************
 
-None yet.
+* This is the last version to support ``cryptography~=49.0``.
+* This is the last version to support ``acme~=5.6.0``.
 
 *******************
 Setup and packaging

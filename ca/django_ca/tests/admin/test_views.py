@@ -13,6 +13,7 @@
 
 """Base test cases for admin views and CertificateAdmin tests."""
 
+import django
 from django.contrib.auth.models import User  # pylint: disable=[imported-auth-user]  # needed for typehints
 from django.test.client import Client
 from django.urls import reverse
@@ -101,9 +102,9 @@ def test_change_view_with_no_subject_alternative_name(
     response = admin_client.get(no_extensions.admin_change_url)
     assert_cert_change_response(response, no_extensions)
 
-    html = """
-        <div class="form-row field-oid_2_5_29_17">
-            <div>
+    if django.VERSION[:2] >= (6, 1):
+        html = """
+            <div class="form-row field-oid_2_5_29_17">
                 <div class="flex-container">
                     <label>Subject Alternative Name:</label>
                     <div class="readonly">
@@ -114,8 +115,23 @@ def test_change_view_with_no_subject_alternative_name(
                         </span>
                     </div>
                 </div>
-            </div>
-        </div>"""
+            </div>"""
+    else:  # pragma: only django<=6.1
+        html = """
+            <div class="form-row field-oid_2_5_29_17">
+                <div>
+                    <div class="flex-container">
+                        <label>Subject Alternative Name:</label>
+                        <div class="readonly">
+                            <span class="django-ca-extension">
+                                <div class="django-ca-extension-value">
+                                    &lt;Not present&gt;
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>"""
 
     assertContains(response, text=html, html=True)
 

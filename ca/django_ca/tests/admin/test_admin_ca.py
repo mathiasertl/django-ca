@@ -18,6 +18,7 @@ from http import HTTPStatus
 from cryptography import x509
 from cryptography.x509.oid import CertificatePoliciesOID, ExtensionOID
 
+import django
 from django.contrib.admin.helpers import AdminForm
 from django.test import Client, TestCase
 
@@ -74,18 +75,30 @@ class TestCertificateAuthorityAdminView(StandardAdminViewTestCaseMixin[Certifica
         """Test viewing an Ed-based CA, which does not have a signature hash algorithm."""
         response = self.get_change_response(admin_client, ed448)
         assert_change_response(response)
-        assertInHTML(
-            """
-            <div class="form-row field-signature_hash_algorithm">
-                <div>        
-                    <div class="flex-container">    
+        if django.VERSION[:2] >= (6, 1):
+            assertInHTML(
+                """
+                <div class="form-row field-signature_hash_algorithm">
+                    <div class="flex-container">
                         <label>Signature hash algorithm:</label>
                         <div class="readonly">None</div>
                     </div>
-                </div>
-            </div>""",
-            response.content.decode("utf-8"),
-        )
+                </div>""",
+                response.content.decode("utf-8"),
+            )
+        else:  # pragma: only django<=6.1
+            assertInHTML(
+                """
+                <div class="form-row field-signature_hash_algorithm">
+                    <div>
+                        <div class="flex-container">
+                            <label>Signature hash algorithm:</label>
+                            <div class="readonly">None</div>
+                        </div>
+                    </div>
+                </div>""",
+                response.content.decode("utf-8"),
+            )
 
     def test_complex_sign_certificate_policies(
         self, admin_client: Client, root: CertificateAuthority

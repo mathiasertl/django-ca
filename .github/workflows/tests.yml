@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.11", "3.12", "3.13", "3.14" ]
-        django-version: [ "5.2", "6.0" ]
+        django-version: [ "5.2", "6.0", "6.1" ]
         cryptography-version: [ "49", "50" ]
         pydantic-version: [ "2.13" ]
         exclude:
@@ -25,6 +25,10 @@ jobs:
             django-version: "6.0"
           - python-version: "3.11"
             django-version: "6.0"
+          - python-version: "3.10"
+            django-version: "6.1"
+          - python-version: "3.11"
+            django-version: "6.1"
 
 
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}, cryptography ${{ matrix.cryptography-version }}, pydantic ${{ matrix.pydantic-version }}

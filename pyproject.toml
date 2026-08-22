@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # https://devguide.python.org/versions/#versions
 python = ["3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
-django = ["5.2", "6.0"]
+django = ["5.2", "6.0", "6.1"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["49", "50"]
 acme = ["5.6", "5.7"]
@@ -18,18 +18,18 @@ uv = "0.11.26"
 
 # https://www.postgresql.org/support/versioning/
 postgres = [
-    "16",  # until 2028-11-09
-    "17",  # until 2029-11-08
-    "18",  # until 2030-11-14
+    "16", # until 2028-11-09
+    "17", # until 2029-11-08
+    "18", # until 2030-11-14
 ]
 
 # MariaDB releases:
 #   * https://mariadb.org/mariadb/all-releases/
 #   * https://mariadb.org/about/#maintenance-policy
 mariadb = [
-    "11.4",  # LTS, until 2029-05-29
-    "11.8",  # LTS, until 2028-06-04
-    "12",  # latest rolling release
+    "11.4", # LTS, until 2029-05-29
+    "11.8", # LTS, until 2028-06-04
+    "12", # latest rolling release
 ]
 
 # MySQL releases:
@@ -40,29 +40,29 @@ mariadb = [
 # in testing for them explicitly. Versions here are used as Docker
 # image tags.
 mysql = [
-    "8.4",  # until 2029-04-30
-    "9.7",  # until 2029-04-21
+    "8.4", # until 2029-04-30
+    "9.7", # until 2029-04-21
 ]
 
 # https://alpinelinux.org/releases/
 alpine = [
-    "3.22",  # until 2027-05-01
-    "3.23",  # until 2027-11-01
-    "3.24",  # until 2028-06-01
+    "3.22", # until 2027-05-01
+    "3.23", # until 2027-11-01
+    "3.24", # until 2028-06-01
 ]
 
 # List of tested Debian releases:
 #   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
 debian-releases = [
-    "trixie",  # until June 2030
+    "trixie", # until June 2030
 ]
 
 # List of tested Ubuntu releases:
 #   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
 ubuntu-releases = [
-    "jammy",  # 22.04, until 2027-04-21
-    "noble",  # 24.04, until 2029-05-31
-    "resolute",  # 26.04, until 2031-05-29
+    "jammy", # 22.04, until 2027-04-21
+    "noble", # 24.04, until 2029-05-31
+    "resolute", # 26.04, until 2031-05-29
 ]
 
 [django-ca.release.upper-bounds]
@@ -93,15 +93,16 @@ standalone-scripts = [
 # Valid keys: https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
 name = "django-ca"
 authors = [
-    {name = "Mathias Ertl", email = "mati@er.tl"},
+    { name = "Mathias Ertl", email = "mati@er.tl" },
 ]
 license = "GPL-3.0-or-later"
 description = "A Django app providing a TLS certificate authority."
-readme = {file = "docs/source/intro.rst", content-type = "text/x-rst"}
+readme = { file = "docs/source/intro.rst", content-type = "text/x-rst" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: Django :: 5.2",
     "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
     "Framework :: Django",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
@@ -225,7 +226,7 @@ show_error_codes = true
 mypy_path = "ca/:stubs/:docs/source/"
 exclude = [
     "build/",
-    "dist/",  # mypy complains about an extracted wheel
+    "dist/", # mypy complains about an extracted wheel
     "migrations/.*\\.py$",
     "docs/source/include/key_backend_tutorial/create_key_example.py",
 ]
@@ -249,7 +250,7 @@ module = [
     "psycopg",
     "psycopg_c",
     "pytest_cov.*",
-    "pymemcache",  # Never imported directly except for test-imports.py
+    "pymemcache", # Never imported directly except for test-imports.py
     "requests.packages.urllib3.response",
     "sphinxcontrib",
     "sniffio",
@@ -288,7 +289,7 @@ good-names = [
     "cn",
     "ex",
     "pk",
-    "e",  # TODO: consistently use ex
+    "e", # TODO: consistently use ex
     "i",
     "k",
 ]
@@ -328,39 +329,36 @@ disable = [
     # pylint is just buggy with TypedDict inheritance.
     "inherit-non-class",
     "invalid-name",
-    "inconsistent-mro",  # pylint keeps making mistakes here
+    "inconsistent-mro", # pylint keeps making mistakes here
 
     # These are just annoying
     "too-few-public-methods",
     "fixme",
-
     # covered by isort:
     "wrong-import-order",
-
     # covered by pyflakes:
-    "undefined-variable",  # also mypy
+    "undefined-variable", # also mypy
     "unused-import",
     "unused-variable",
-
     # covered by ruff/pylint:
-    "import-outside-toplevel",  # ruff: PLC0415
+    "import-outside-toplevel", # ruff: PLC0415
     "typevar-name-incorrect-variance", # ruff: PLC0105
-    "typevar-double-variance",  # ruff: PLC0131
+    "typevar-double-variance", # ruff: PLC0131
     "single-string-used-for-slots", # ruff: PLC0205
-    "subprocess-run-check",  # ruff: PLW1510
-    "too-many-arguments",  # ruff: PLR0913
-    "too-many-branches",  # ruff: PLR0912
-    "too-many-return-statements",  # ruff: PLR0911
-    "too-many-statements",  # ruff: PLR0915
-    "use-sequence-for-iteration",  # ruff: PLC0208
-    "useless-import-alias",  # ruff: PLC0414
-    "comparison-with-itself",  # ruff: PLR0124
-    "unnecessary-lambda",  # ruff: PLW0108
+    "subprocess-run-check", # ruff: PLW1510
+    "too-many-arguments", # ruff: PLR0913
+    "too-many-branches", # ruff: PLR0912
+    "too-many-return-statements", # ruff: PLR0911
+    "too-many-statements", # ruff: PLR0915
+    "use-sequence-for-iteration", # ruff: PLC0208
+    "useless-import-alias", # ruff: PLC0414
+    "comparison-with-itself", # ruff: PLR0124
+    "unnecessary-lambda", # ruff: PLW0108
 
     # covered by ruff/flake8-bugbear
-    "pointless-statement",  # ruff: B018
-    "expression-not-assigned",  # ruff: B018
-    "raise-missing-from",  # ruff: B904
+    "pointless-statement", # ruff: B018
+    "expression-not-assigned", # ruff: B018
+    "raise-missing-from", # ruff: B904
 
     # covered by ruff/pycodestyle:
     "bad-indentation",
@@ -372,25 +370,23 @@ disable = [
     "trailing-whitespace",
     "unnecessary-semicolon",
     "unneeded-not",
-
     # covered by other ruff plugins
     "exec-used",
-    "broad-except",  # ruff: BLE001
+    "broad-except", # ruff: BLE001
 
     # (seems to be) covered by mypy
-    "unsubscriptable-object",  # mypy: index
+    "unsubscriptable-object", # mypy: index
     "arguments-differ",
-    "no-value-for-parameter",  # mypy: call-arg
+    "no-value-for-parameter", # mypy: call-arg
     "inconsistent-return-statements",
     "assignment-from-no-return",
-    "import-error",  # mypy: import
-    "abstract-class-instantiated",  # mypy: abstract
+    "import-error", # mypy: import
+    "abstract-class-instantiated", # mypy: abstract
     "not-an-iterable",
-    "no-name-in-module",  # mypy: attr-defined
-    "too-many-function-args",  # mypy: call-arg
+    "no-name-in-module", # mypy: attr-defined
+    "too-many-function-args", # mypy: call-arg
     "unsupported-membership-test",
     "unsupported-assignment-operation",
-
     # pylint==2.7.2 shows the error for cyclic imports in arbitrary locations, making them impossible to
     # disable for specific cases. mypy requires cyclic imports for type annotiations, which are usually
     # protected by TYPE_CHECKING - but pylint doesn't know that.
@@ -398,7 +394,6 @@ disable = [
     #   https://github.com/PyCQA/pylint/issues/59
     #   https://github.com/landscapeio/landscape-issues/issues/214
     "cyclic-import",
-
     # pylint==2.9.3 does not detect methods returning a sequence as such:
     #   https://github.com/PyCQA/pylint/issues/4696
     "unpacking-non-sequence",
@@ -449,13 +444,10 @@ filterwarnings = [
     "error:::acme",
     "error:::josepy",
     "error:::pydantic",
-
-
     # Django 6.1 introduced MAILERS setting, we set old EMAIL_BACKEND only in test_settings.py.
     #   -> Remove this ignore once support for Django 5.2 is dropped.
     # pragma: only django<6.1
     "ignore:The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.",
-
     # django-ninja==1.5.1
     #   Found in 1.5.1, only shows up in Python 3.14.
     "ignore:'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16::ninja.signature.utils",
@@ -467,34 +459,34 @@ line-length = 110
 
 [tool.ruff.lint]
 extend-select = [
-    "B",  # flake8-bugbear
-    "D",  # pydocstyle
-    "E",  # pycodestyle
-    "F",  # pyflakes
-    "I",  # isort
-    "G",  # flake8-logging-format
-    "DJ",  # flake8-django
-    "PL",  # pylint
-    "PT",  # flake8-pytest-style
-    "UP",  # pyupgrade
-    "RUF",  # ruff specific checks
+    "B", # flake8-bugbear
+    "D", # pydocstyle
+    "E", # pycodestyle
+    "F", # pyflakes
+    "I", # isort
+    "G", # flake8-logging-format
+    "DJ", # flake8-django
+    "PL", # pylint
+    "PT", # flake8-pytest-style
+    "UP", # pyupgrade
+    "RUF", # ruff specific checks
 ]
 
 ignore = [
-    "D102",  # Missing docstring in public method - includes inherited methods
-    "D104",  # Missing docstring in public package - includes even empty __init__.py files
-    "D105",  # Missing docstring in magic method - includes __str__() etc
-    "D106",  # Missing docstring in public nested class - includes Meta/Media classes
-    "D301",  # Use `r"""` if any backslashes in a docstring - incompatible with doctests!
-    "D401",  # First line of docstring should be in imperative mood
-    "PLR2004",  # Magic value used in comparison - not disabled in default pylint
-    "PLW2901",  # redefined-loop-name - not disabled in default pylint
+    "D102", # Missing docstring in public method - includes inherited methods
+    "D104", # Missing docstring in public package - includes even empty __init__.py files
+    "D105", # Missing docstring in magic method - includes __str__() etc
+    "D106", # Missing docstring in public nested class - includes Meta/Media classes
+    "D301", # Use `r"""` if any backslashes in a docstring - incompatible with doctests!
+    "D401", # First line of docstring should be in imperative mood
+    "PLR2004", # Magic value used in comparison - not disabled in default pylint
+    "PLW2901", # redefined-loop-name - not disabled in default pylint
     "SIM102", # Use a single `if` statement instead of nested `if` statements - sometimes preferred
     "SIM117", # Combine `with` statements - I prefer this sometimes
-    "TRY004",  # Prefer `TypeError` exception for invalid type - impossible to change API sometimes
+    "TRY004", # Prefer `TypeError` exception for invalid type - impossible to change API sometimes
 ]
 unfixable = [
-    "PLW1510",  # `subprocess.run` without explicit `check` argument - not deemed safe
+    "PLW1510", # `subprocess.run` without explicit `check` argument - not deemed safe
 ]
 
 [tool.ruff.lint.flake8-pytest-style]
@@ -556,6 +548,7 @@ conflicts = [
         { group = "DjangoLTS" },
         { group = "django5.2" },
         { group = "django6.0" },
+        { group = "django6.1" },
     ],
     [
         { group = "cryptography49" },
@@ -639,13 +632,14 @@ mypy = [
     "types-requests>=2.32.0.20250301",
     "types-tabulate>=0.9.0.20241207",
 ]
-gunicorn = [ "gunicorn>=23" ]
+gunicorn = ["gunicorn>=23"]
 
 # Dependency groups for use in test matrices (tox, GitHub actions, ...)
 # NOTE: don't forget to add conflicts in [tool.uv] above.
 "DjangoLTS" = ["Django~=5.2.0"]
 "Django5.2" = ["Django~=5.2.0"]
 "Django6.0" = ["Django~=6.0.0;python_version>='3.12'"]
+"Django6.1" = ["Django~=6.1.0;python_version>='3.12'"]
 "cryptography49" = ["cryptography~=49.0"]
 "cryptography50" = ["cryptography~=50.0"]
 "acme5.6" = ["acme~=5.6.0"]

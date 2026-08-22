@@ -23,15 +23,7 @@ This page shows
 3.2.0 (Q3 2026)
 ***************
 
+* Support for ``cryptography~=49.0`` and ``acme~=5.6.0`` will be dropped.
 * The `cache_crls` management command will be removed, used `generate_crls` instead (deprecated since 3.0.0).
 * The `regenerate_ocsp_keys` management command will be removed, use `generate_ocsp_keys` instead (deprecated
   since 3.0.0).
-
-****************
-3.1.0 (Q2 2026)
-****************
-
-* Support for using an ``int`` for `expires` in :py:class:`~django_ca.views.OCSPView` will be removed
-  (deprecated since 3.0.0).
-* The `cache_crl` celery task will be removed, used `generate_crl` instead (deprecated since 3.0.0).
-* The `cache_crls` celery task will be removed, used `generate_crls` instead (deprecated since 3.0.0).
