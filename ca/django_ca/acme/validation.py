@@ -136,12 +136,12 @@ def validate_csr(
     # Do not accept MD5 or SHA1 signatures
     hash_algorithm = csr.signature_hash_algorithm
     if hasattr(hashes, "MD5") and isinstance(hash_algorithm, hashes.MD5):
-        raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
+        raise AcmeBadCSR(detail=f"{hash_algorithm.name}: Insecure hash algorithm.")
     if hasattr(hashes, "SHA1") and isinstance(hash_algorithm, hashes.SHA1):
-        raise AcmeBadCSR(message=f"{hash_algorithm.name}: Insecure hash algorithm.")
+        raise AcmeBadCSR(detail=f"{hash_algorithm.name}: Insecure hash algorithm.")
 
     if csr.is_signature_valid is False:
-        raise AcmeBadCSR(message="CSR signature is not valid.")
+        raise AcmeBadCSR(detail="CSR signature is not valid.")
 
     # Perform sanity checks on the CSRs subject.
     # NOTE: certbot does *not* set any subject at all
@@ -150,7 +150,7 @@ def validate_csr(
         try:
             check_name(csr.subject)
         except ValueError as ex:
-            raise AcmeBadCSR(message=str(ex)) from ex
+            raise AcmeBadCSR(detail=str(ex)) from ex
 
         # We allow a client setting a CommonName, but it *must* be part of the order.
         # The CN may refer to either a DNS name or an IP address (RFC 8738).
@@ -158,7 +158,7 @@ def validate_csr(
 
         if common_name is not None:
             if isinstance(common_name.value, bytes):  # pragma: no cover  # CN is always string
-                raise AcmeBadCSR(message="CommonName was not in order.")
+                raise AcmeBadCSR(detail="CommonName was not in order.")
 
             try:
                 # Normalize to compressed form so the lookup against names_from_order
@@ -169,12 +169,12 @@ def validate_csr(
                 cn_general_name = x509.DNSName(common_name.value)
 
             if cn_general_name not in names_from_order:
-                raise AcmeBadCSR(message="CommonName was not in order.")
+                raise AcmeBadCSR(detail="CommonName was not in order.")
 
     try:
         san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
     except x509.ExtensionNotFound as ex:
-        raise AcmeBadCSR(message="No subject alternative names found in CSR.") from ex
+        raise AcmeBadCSR(detail="No subject alternative names found in CSR.") from ex
 
     # Normalize IP SANs to their compressed form so the set comparison against
     # names_from_order (which uses compressed values) is unambiguous.
@@ -187,7 +187,7 @@ def validate_csr(
         elif isinstance(san_name, x509.DNSName):
             names_from_csr.add(san_name)
         else:
-            raise AcmeBadCSR(message="Name with invalid type requested.")
+            raise AcmeBadCSR(detail="Name with invalid type requested.")
 
     if names_from_order != names_from_csr:
-        raise AcmeBadCSR(message="Names in CSR do not match.")
+        raise AcmeBadCSR(detail="Names in CSR do not match.")

@@ -266,7 +266,7 @@ def test_basic_exception(client: Client, url: str, root: CertificateAuthority, k
     We have to mock this, as at present this is not usually done.
     """
     with mock.patch(
-        "django_ca.acme.views.AcmeOrderView.acme_request", side_effect=AcmeUnauthorized(message="foo")
+        "django_ca.acme.views.AcmeOrderView.acme_request", side_effect=AcmeUnauthorized(detail="foo")
     ):
         resp = acme_request(client, url, root, b"", kid=kid)
     assert_unauthorized(resp, root, "foo")
