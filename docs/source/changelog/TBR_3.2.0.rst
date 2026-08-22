@@ -21,11 +21,12 @@ ACMEv2
   <https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5>`_.
 * Implement Orders List endpoint as specified in `RFC 8555, section 7.1.2.1
   <https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.2.1>`_.
+* **Security:** Expired orders can no longer be used to issue certificates.
 * ACME nonce lifetime is now configured independently of the default cache configuration via the
   :ref:`CA_ACME_NONCE_TIMEOUT <CA_ACME_NONCE_TIMEOUT>` setting mentioned above. This ensures that a cache
   configured with an infinite lifetime won't cause nonces to stay valid forever.
-* No longer follow redirects when validating ``http-01`` challenges.
-* The JWS signature algorithm is now validated against
+* **Security:** No longer follow redirects when validating ``http-01`` challenges.
+* **Security:** The JWS signature algorithm is now validated against
   :ref:`CA_ACME_JWS_SIGNATURE_ALGORITHMS <CA_ACME_JWS_SIGNATURE_ALGORITHMS>`. Symmetric HMAC algorithms
   (``HS256``, ``HS384``, ``HS512``) are no longer accepted. The algorithm is also validated for the inner
   JWS in key-rollover requests.

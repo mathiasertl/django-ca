@@ -55,6 +55,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
 from django_ca.acme.constants import BASE64_URL_ALPHABET, IdentifierType, Status
+from django_ca.acme.errors import AcmeException, AcmeForbidden
 from django_ca.conf import CertificateRevocationListProfile, model_settings
 from django_ca.constants import REVOCATION_REASONS, ReasonFlags
 from django_ca.extensions import get_extension_name
@@ -1533,6 +1534,15 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
         verbose_name = _("ACME Order")
         verbose_name_plural = _("ACME Orders")
 
+    class InvalidAuthorizations(AcmeForbidden):
+        pass
+
+    class HasAcmeCertificate(AcmeException):
+        pass
+
+    class IsExpired(AcmeForbidden):
+        pass
+
     def __str__(self) -> str:
         return f"{self.slug} ({self.account})"
 
@@ -1570,6 +1580,53 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
         return self.authorizations.bulk_create(
             [AcmeAuthorization(type=ident.typ.name, value=ident.value, order=self) for ident in identifiers]
         )
+
+    def assert_authorizations_valid(self) -> tuple["AcmeAuthorization", ...]:
+        """Assert that all authorizations are valid, returning fetched authorizations as tuple.
+
+        Raises `AcmeOrder.InvalidAuthorization` if any authorization is not valid. Does *not* update the order
+        status or problem document, as the AcmeOrderFinalizeView view does want this.
+        """
+        authorizations: tuple[AcmeAuthorization, ...] = tuple(self.authorizations.url().all())  # type: ignore[attr-defined]
+        if any(auth for auth in authorizations if auth.status != AcmeAuthorization.STATUS_VALID):
+            # This is a state that should never happen in practice, because the order is only marked as
+            # ready once all authorizations are valid.
+            raise AcmeOrder.InvalidAuthorizations(typ="orderNotReady", message="This order is not yet ready.")
+        return authorizations
+
+    def assert_no_acme_certificate(self) -> None:
+        """Assert that the order does *not* have a certificate issued already.
+
+        The ACME protocol and implementation are designed to prevent this from ever happening. If this error
+        is ever raised, it is a serious consistency violation.
+
+        Raises `AcmeOrder.HasAcmeCertificate` if the order already has a certificate defined. Also updates the
+        status to invalid and sets a problem document accordingly.
+        """
+        if hasattr(self, "acmecertificate"):
+            log.critical("%s: ACME order already has a certificate.", self)
+            self.set_error("serverInternal", "Internal error while issuing the certificate.")
+            self.status = AcmeOrder.STATUS_INVALID
+            self.save()
+            raise AcmeOrder.HasAcmeCertificate()
+
+    def assert_not_expired(self, now: datetime | None = None) -> datetime:
+        """Assert that the order has not yet expired, returns timezone-aware expiry for convenience.
+
+        Raises `AcmeOrder.HasAcmeCertificate` if the order has already expired. Also updates the status to
+        invalid and sets a problem document accordingly.
+        """
+        now = datetime.now(tz=UTC)
+        expires: datetime = self.expires
+        if expires.tzinfo is None:  # acme.messages.Order requires a timezone-aware object
+            expires = expires.replace(tzinfo=UTC)  # pylint: disable=unexpected-keyword-arg
+
+        if expires <= now:
+            self.status = AcmeOrder.STATUS_INVALID
+            self.set_error("orderNotReady", "This order has expired.")
+            self.save()
+            raise AcmeOrder.IsExpired(typ="orderNotReady", message="This order has expired.")
+        return expires
 
     def get_error(self) -> messages.Error | None:
         """Get the error for this order as ACME message, or ``None`` if no error was set.
@@ -1626,10 +1683,6 @@ class AcmeOrder(DjangoCAModel):  # type: ignore[django-manager-missing]
 
         error = messages.Error.with_code(code, detail=detail, identifier=identifier, subproblems=subproblems)
         self.error = error.to_json()
-
-    def get_general_names(self) -> tuple[x509.DNSName | x509.IPAddress, ...]:
-        """Return all GeneralName instances for this order."""
-        return tuple(a.general_name for a in self.authorizations.all())
 
     @property
     def serial(self) -> str:

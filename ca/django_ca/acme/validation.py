@@ -150,7 +150,7 @@ def validate_csr(
         try:
             check_name(csr.subject)
         except ValueError as ex:
-            raise AcmeBadCSR(str(ex)) from ex
+            raise AcmeBadCSR(message=str(ex)) from ex
 
         # We allow a client setting a CommonName, but it *must* be part of the order.
         # The CN may refer to either a DNS name or an IP address (RFC 8738).

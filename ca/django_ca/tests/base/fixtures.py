@@ -45,6 +45,7 @@ from django_ca.key_backends.hsm.session import SessionPool
 from django_ca.key_backends.storages import StoragesBackend
 from django_ca.models import (
     AcmeAccount,
+    AcmeAuthorization,
     AcmeOrder,
     Certificate,
     CertificateAuthority,
@@ -82,6 +83,14 @@ def acme_account(root: CertificateAuthority) -> AcmeAccount:
         status=AcmeAccount.STATUS_VALID,
         pem=ACME_PEM_1,
         thumbprint=ACME_THUMBPRINT_1,
+    )
+
+
+@pytest.fixture
+def acme_authorization(acme_order: AcmeOrder) -> AcmeAuthorization:
+    """A pending DNS authorization for `acme_order`."""
+    return AcmeAuthorization.objects.create(
+        order=acme_order, type=AcmeAuthorization.TYPE_DNS, value="example.com"
     )
 
 

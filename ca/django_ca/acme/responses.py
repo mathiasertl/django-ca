@@ -14,7 +14,7 @@
 """Collection of Django HTTP response subclasses representing ACME responses."""
 
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from acme import messages
 
@@ -22,7 +22,9 @@ from django.http import HttpRequest, JsonResponse
 from django.urls import reverse
 
 from django_ca.acme.messages import Order
-from django_ca.models import AcmeAccount
+
+if TYPE_CHECKING:
+    from django_ca.models import AcmeAccount
 
 
 class AcmeResponse(JsonResponse):
@@ -41,7 +43,7 @@ class AcmeSimpleResponse(AcmeResponse):
 class AcmeResponseAccount(AcmeResponse):
     """Response containing an ACME account."""
 
-    def __init__(self, request: HttpRequest, account: AcmeAccount) -> None:
+    def __init__(self, request: HttpRequest, account: "AcmeAccount") -> None:
         contact = []
         if account.contact:
             contact = account.contact.split("\n")

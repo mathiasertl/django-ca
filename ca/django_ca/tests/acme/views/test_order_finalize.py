@@ -16,11 +16,14 @@
 # pylint: disable=redefined-outer-name
 
 import ipaddress
+import logging
+from datetime import timedelta
 from http import HTTPStatus
 from unittest import mock
 from unittest.mock import patch
 
 import pyrfc3339
+from acme import messages
 
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
@@ -29,13 +32,21 @@ from cryptography.hazmat.primitives.serialization import Encoding
 
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 import pytest
+from _pytest.logging import LogCaptureFixture
 from pytest_django.fixtures import Settings
 
 from django_ca.acme.messages import CertificateRequest
 from django_ca.celery.messages import AcmeIssueCertificateTaskArgs
-from django_ca.models import AcmeAccount, AcmeAuthorization, AcmeOrder, CertificateAuthority
+from django_ca.models import (
+    AcmeAccount,
+    AcmeAuthorization,
+    AcmeCertificate,
+    AcmeOrder,
+    CertificateAuthority,
+)
 from django_ca.tasks import acme_issue_certificate
 from django_ca.tests.acme.views.assertions import (
     assert_acme_problem,
@@ -248,6 +259,45 @@ def test_not_ready(
     )
 
 
+def test_expired_order(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    kid: str | None,
+) -> None:
+    """Test an order that is still ready, but has already expired.
+
+    NOTE: The order must stay in the "ready" state, as the status is checked before the expiry.
+    """
+    order.expires = timezone.now() - timedelta(seconds=1)
+    order.save()
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+
+    # NOTE: The detail differs from the "not yet ready" errors returned for the other assertions.
+    assert_acme_problem(
+        resp,
+        "orderNotReady",
+        status=HTTPStatus.FORBIDDEN,
+        message="This order has expired.",
+        ca=root,
+    )
+
+    # assert_not_expired() also updates the order in the database.
+    order.refresh_from_db()
+    assert order.status == AcmeOrder.STATUS_INVALID
+    assert order.get_error() == messages.Error.with_code("orderNotReady", detail="This order has expired.")
+
+
 def test_invalid_auth(
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
     client: Client,
@@ -274,6 +324,55 @@ def test_invalid_auth(
         status=HTTPStatus.FORBIDDEN,
         message="This order is not yet ready.",
         ca=root,
+    )
+
+
+@pytest.mark.usefixtures("authz")
+def test_order_with_certificate(
+    caplog: LogCaptureFixture,
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    message: CertificateRequest,
+    root: CertificateAuthority,
+    order: AcmeOrder,
+    kid: str | None,
+) -> None:
+    """Test an order that already has a certificate.
+
+    This is a state that should never happen in practice, as an order is only finalized once.
+    """
+    AcmeCertificate.objects.create(order=order, csr=CSR_PEM.decode())
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+
+    assert (
+        "django_ca.models",
+        logging.CRITICAL,
+        f"{order}: ACME order already has a certificate.",
+    ) in caplog.record_tuples
+
+    # NOTE: AcmeOrder.HasAcmeCertificate is raised without arguments, so the client gets the generic detail
+    # of AcmeResponseError, *not* the detail stored in the order below.
+    assert_acme_problem(
+        resp,
+        "serverInternal",
+        status=HTTPStatus.INTERNAL_SERVER_ERROR,
+        message="Internal server error",
+        ca=root,
+    )
+
+    # assert_no_acme_certificate() also updates the order in the database.
+    order.refresh_from_db()
+    assert order.status == AcmeOrder.STATUS_INVALID
+    assert order.get_error() == messages.Error.with_code(
+        "serverInternal", detail="Internal error while issuing the certificate."
     )
 
 
@@ -420,6 +519,39 @@ def test_csr_subject_no_cn(
     }
 
 
+def test_csr_subject_with_duplicate_attribute(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str | None,
+) -> None:
+    """Test posting a CSR with a subject that does not pass basic sanity checks."""
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "AT"),
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "DE"),
+                ]
+            )
+        )
+        .add_extension(x509.SubjectAlternativeName([dns(HOST_NAME)]), critical=False)
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    message = CertificateRequest(csr=csr)
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, 'Subject contains multiple "countryName" fields', ca=root)
+
+
 def test_csr_subject_no_domain(
     django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
     client: Client,
@@ -495,6 +627,38 @@ def test_csr_no_san(
     assert len(callbacks) == 0
     mockcm.assert_not_called()
     assert_bad_csr(resp, "No subject alternative names found in CSR.", root)
+
+
+def test_csr_san_with_unsupported_type(
+    django_capture_on_commit_callbacks: CaptureOnCommitCallbacks,
+    client: Client,
+    url: str,
+    root: CertificateAuthority,
+    kid: str | None,
+) -> None:
+    """Test posting a CSR with a name that is neither a DNSName nor an IPAddress.
+
+    Only DNS and IP identifiers can be requested via ACME (RFC 8555, section 9.7.7 and RFC 8738).
+    """
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([]))
+        .add_extension(
+            x509.SubjectAlternativeName([dns(HOST_NAME), x509.RFC822Name("user@example.com")]),
+            critical=False,
+        )
+        .sign(CERT_DATA["root-cert"]["key"]["parsed"], hashes.SHA256())
+    )
+    message = CertificateRequest(csr=csr)
+
+    with (
+        patch("django_ca.acme.views.run_task") as mockcm,
+        django_capture_on_commit_callbacks(execute=True) as callbacks,
+    ):
+        resp = acme_request(client, url, root, message, kid=kid)
+    assert len(callbacks) == 0
+    mockcm.assert_not_called()
+    assert_bad_csr(resp, "Name with invalid type requested.", root)
 
 
 def test_csr_different_names(

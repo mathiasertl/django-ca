@@ -27,6 +27,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
+from django_ca.acme.errors import AcmeException
 from django_ca.acme.validation import validate_csr, validate_dns_01, validate_http_01
 from django_ca.celery import DjangoCaTask, run_task, shared_task
 from django_ca.celery.messages import (
@@ -402,31 +403,44 @@ def acme_issue_certificate(data: AcmeIssueCertificateTaskArgs) -> None:
         log.error("%s: %s: ACME order status is not %s.", order, order.status, AcmeOrder.STATUS_PROCESSING)
         return
 
-    # Test if the order as an AcmeCertificate object linked already. This should not happen in practice and
-    # would be a serious consistency violation.
-    if hasattr(order, "acmecertificate"):
-        log.error("%s: ACME order already has a certificate.", order)
-        order.set_error("serverInternal", "Internal error while signing the certificate.")
+    try:
+        order.assert_not_expired()
+        order.assert_no_acme_certificate()
+        authorizations = order.assert_authorizations_valid()
+    except AcmeOrder.InvalidAuthorizations:
+        log.critical("%s: Received ACME order with non-valid authorizations.", order)
         order.status = AcmeOrder.STATUS_INVALID
+        order.set_error("serverInternal", "Internal error while issuing the certificate.")
         order.save()
         return
-
-    # Fetch authorizations for this order.
-    authorizations: tuple[AcmeAuthorization, ...] = tuple(order.authorizations.all())  # type: ignore[attr-defined]
-
-    # Test that all authorizations are valid. This is already asserted by the view triggering this task, so
-    # this should not happen in practice and is just a safeguard.
-    if any(auth for auth in authorizations if auth.status != AcmeAuthorization.STATUS_VALID):
-        log.error("%s: Received ACME order with non-valid authorizations.")
-        order.set_error("badCSR", "Not all authorizations are valid.")
-        order.status = AcmeOrder.STATUS_INVALID
-        order.save()
+    except AcmeException as ex:
+        # We log as critical here, as any validation should have already occurred on the view side. Any issue
+        # indicates a more serious problem.
+        log.critical(
+            "%s: Received order not eligible for certificate issuance while processing certificate: %s",
+            order,
+            ex,
+            exc_info=True,
+        )
         return
 
-    # Load and validate CSR
+    # Load and validate CSR. The view already did both, so this is just a safeguard. If it fails anyway, the
+    # order must still be marked as invalid: letting the exception escape would roll back the surrounding
+    # atomic block, leaving the order in the "processing" state and the client polling it forever.
+    # NOTE: load_pem_x509_csr() cannot raise here, as AcmeIssueCertificateTaskArgs already parsed the CSR.
     names_from_order = {auth.general_name for auth in authorizations}
     csr = x509.load_pem_x509_csr(data.csr)
-    validate_csr(csr, names_from_order)  # Already asserted by view, so again just a safeguard.
+    try:
+        validate_csr(csr, names_from_order)
+    except AcmeException:
+        # Logged as critical, as the view already validated the CSR. Any issue indicates a more serious
+        # problem, so the client only gets the generic error. The details are in the logged traceback, as
+        # AcmeException passes its message as keyword argument and thus stringifies to an empty string.
+        log.critical("%s: Received invalid CSR while processing certificate.", order, exc_info=True)
+        order.status = AcmeOrder.STATUS_INVALID
+        order.set_error("serverInternal", "Internal error while issuing the certificate.")
+        order.save()
+        return
 
     subject_alternative_names = x509.SubjectAlternativeName(names_from_order)
     log.info(
@@ -489,7 +503,7 @@ def acme_issue_certificate(data: AcmeIssueCertificateTaskArgs) -> None:
         # NOTE: cert is reset, as it may point to a certificate that was rolled back above.
         acme_cert.cert = None
         order.status = AcmeOrder.STATUS_INVALID
-        order.set_error("serverInternal", "Internal error while signing the certificate.")
+        order.set_error("serverInternal", "Internal error while issuing the certificate.")
         order.save()
 
 
