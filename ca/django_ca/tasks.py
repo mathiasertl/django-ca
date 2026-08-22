@@ -48,6 +48,7 @@ from django_ca.models import (
     CertificateOrder,
 )
 from django_ca.profiles import profiles
+from django_ca.typehints import ConfigurableExtension
 from django_ca.utils import format_general_name
 
 log = logging.getLogger(__name__)
@@ -256,7 +257,7 @@ def api_sign_certificate(data: ApiSignCertificateTaskArgs) -> int | None:
     # Get some certificate details
     algorithm = data.get_algorithm()
     csr = x509.load_pem_x509_csr(data.csr)
-    extensions: list[x509.Extension[x509.ExtensionType]] = [ext.cryptography for ext in data.extensions]
+    extensions: list[ConfigurableExtension] = [ext.cryptography for ext in data.extensions]
 
     # Add any CA extensions not already set by the request
     extension_oids = tuple(ext.oid for ext in extensions)
