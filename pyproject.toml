@@ -468,8 +468,10 @@ extend-select = [
     "DJ", # flake8-django
     "PL", # pylint
     "PT", # flake8-pytest-style
+    "PYI", # flake8-pyi  # recommended by ty
     "UP", # pyupgrade
     "RUF", # ruff specific checks
+
 ]
 
 ignore = [

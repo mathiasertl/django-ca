@@ -177,7 +177,7 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
         def model_dump(  # type: ignore[override]
             self,
             *,
-            mode: Literal["json", "python"] | str = "python",
+            mode: str = "python",
             include: "IncEx" | None = None,
             exclude: "IncEx" | None = None,
             by_alias: bool = False,
