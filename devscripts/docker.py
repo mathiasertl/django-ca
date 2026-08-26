@@ -16,18 +16,18 @@
 import json
 import os
 import subprocess
-from typing import Any
+from typing import Any, Unpack
 
 import yaml
 
 from devscripts import config, utils
 from devscripts.out import err, info, ok
-from devscripts.utils import run
+from devscripts.utils import SubprocessRunKwargs, run
 
 COMPOSE_SERVICES = ("beat", "backend", "frontend")
 
 
-def docker_run(*args: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
+def docker_run(*args: str, **kwargs: Unpack[SubprocessRunKwargs]) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for running a docker command."""
     return run(["docker", "run", "--rm", *args], **kwargs)
 
@@ -62,15 +62,19 @@ def test_connectivity() -> int:
 #####################
 # Compose functions #
 #####################
-def compose(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+def compose(*args: str, **kwargs: Unpack[SubprocessRunKwargs]) -> subprocess.CompletedProcess[str]:
     """Run docker compose."""
     kwargs["text"] = True
     return utils.run(["docker", "compose", *args], **kwargs)
 
 
-def compose_exec(container: str, *args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+def compose_exec(
+    container: str, *args: str, compose_args: list[str] | None = None, **kwargs: Unpack[SubprocessRunKwargs]
+) -> subprocess.CompletedProcess[str]:
     """Run docker compose exec."""
-    return compose("exec", *kwargs.pop("compose_args", []), container, *args, **kwargs)
+    if compose_args is None:
+        compose_args = []
+    return compose("exec", *compose_args, container, *args, **kwargs)
 
 
 def compose_cp(src: str, dest: str) -> subprocess.CompletedProcess[str]:
@@ -78,12 +82,16 @@ def compose_cp(src: str, dest: str) -> subprocess.CompletedProcess[str]:
     return compose("cp", src, dest)
 
 
-def compose_manage(container: str, *args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+def compose_manage(
+    container: str, *args: str, **kwargs: Unpack[SubprocessRunKwargs]
+) -> subprocess.CompletedProcess[str]:
     """Run `docker compose exec {container} manage`."""
     return compose_exec(container, "manage", *args, **kwargs)
 
 
-def compose_python(container: str, code: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+def compose_python(
+    container: str, code: str, **kwargs: Unpack[SubprocessRunKwargs]
+) -> subprocess.CompletedProcess[str]:
     """Run `docker compose exec {container} manage shell ...`."""
     kwargs.setdefault("capture_output", True)
     return compose_manage(container, "shell", "-v", "0", "-c", code, **kwargs)
@@ -115,7 +123,7 @@ def compose_status(tag: str) -> int:
     return errors
 
 
-def compose_validate_container_versions(release: str, **kwargs: Any) -> int:
+def compose_validate_container_versions(release: str, **kwargs: Unpack[SubprocessRunKwargs]) -> int:
     """Validate that django-ca in all containers identifies correctly."""
     code = "import django_ca; print(django_ca.__version__)"
     errors = 0
