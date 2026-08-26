@@ -18,16 +18,27 @@ import random
 import shlex
 import string
 import subprocess
-import typing
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, cast
+from typing import IO, Any, TypedDict, Unpack, cast
 
 import requests
 
 from devscripts import config
 from devscripts.out import ok
+
+
+class SubprocessRunKwargs(TypedDict, total=False):
+    """Keyword Arguments for `subprocess.run()`."""
+
+    capture_output: bool
+    check: bool
+    env: dict[str, str] | None
+    stdin: int | IO[Any] | None
+    stdout: int | IO[Any] | None
+    stderr: int | IO[Any] | None
+    text: bool | None
 
 
 @contextmanager
@@ -41,7 +52,7 @@ def chdir(path: str | os.PathLike[str]) -> Iterator[str]:
         os.chdir(orig_cwd)
 
 
-def run(args: Sequence[str], **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
+def run(args: Sequence[str], **kwargs: Unpack[SubprocessRunKwargs]) -> "subprocess.CompletedProcess[Any]":
     """Shortcut for subprocess.run()."""
     kwargs.setdefault("check", True)
     if config.SHOW_COMMANDS:
@@ -68,7 +79,7 @@ def git_archive(ref: str, destination: str) -> Path:
     with subprocess.Popen(["git", "archive", ref], stdout=subprocess.PIPE) as git_archive_cmd:
         with subprocess.Popen(["tar", "-x", "-C", destination], stdin=git_archive_cmd.stdout) as tar:
             # TYPEHINT NOTE: stdout is not None b/c of stdout=subprocess.PIPE
-            stdout = cast(typing.IO[bytes], git_archive_cmd.stdout)
+            stdout = cast(IO[bytes], git_archive_cmd.stdout)
             stdout.close()
             tar.communicate()
     return Path(destination)

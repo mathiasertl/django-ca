@@ -22,12 +22,13 @@ import re
 import subprocess
 import sys
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, Unpack
 
 import django
 
-from devscripts import config, utils
+from devscripts import config
 from devscripts.out import err, info
+from devscripts.utils import SubprocessRunKwargs, run
 
 if TYPE_CHECKING:
     from docker.client import DockerClient
@@ -169,12 +170,13 @@ class DevCommand:
         django.setup()
 
     def run(
-        self, *args: str | os.PathLike[str], check: bool = True, **kwargs: Any
+        self, *args: str | os.PathLike[str], **kwargs: Unpack[SubprocessRunKwargs]
     ) -> "subprocess.CompletedProcess[Any]":
         """Shortcut to run the given command."""
         str_args = tuple(str(arg) if isinstance(arg, os.PathLike) else arg for arg in args)
+        kwargs.setdefault("check", True)
         try:
-            return utils.run(str_args, check=check, **kwargs)
+            return run(str_args, **kwargs)
         except subprocess.CalledProcessError as ex:
             raise CommandError(f"{args[0]} returned with exit status {ex.returncode}.") from ex
 

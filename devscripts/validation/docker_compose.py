@@ -23,7 +23,7 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
-from typing import Any, cast
+from typing import Any, Unpack, cast
 
 import yaml
 
@@ -42,6 +42,7 @@ from devscripts.docker import (
     compose_validate_container_versions,
 )
 from devscripts.out import err, info, ok
+from devscripts.utils import SubprocessRunKwargs
 from devscripts.versions import get_last_version
 
 #: IP address of the certbot container in the ``dns`` network (see devscripts/files/compose.certbot.yaml).
@@ -51,7 +52,9 @@ CERTBOT_IP_ADDRESS = "10.5.0.5"
 
 
 @contextmanager
-def _compose_up(remove_volumes: bool = True, interactive: bool = False, **kwargs: Any) -> Iterator[None]:
+def _compose_up(
+    remove_volumes: bool = True, interactive: bool = False, **kwargs: Unpack[SubprocessRunKwargs]
+) -> Iterator[None]:
     try:
         utils.run(["docker", "compose", "up", "-d"], **kwargs)
         yield
@@ -62,21 +65,23 @@ def _compose_up(remove_volumes: bool = True, interactive: bool = False, **kwargs
         down = ["docker", "compose", "down"]
         if remove_volumes is True:
             down.append("-v")
-        down_kwargs = {}
+        down_kwargs: SubprocessRunKwargs = {}
         if "env" in kwargs:
             down_kwargs["env"] = kwargs["env"]
 
         utils.run(down, **down_kwargs)
 
 
-def _openssl_verify(ca_file: str, cert_file: str, **kwargs: Any) -> "subprocess.CompletedProcess[Any]":
+def _openssl_verify(
+    ca_file: str, cert_file: str, **kwargs: Unpack[SubprocessRunKwargs]
+) -> "subprocess.CompletedProcess[Any]":
     return utils.run(
         ["openssl", "verify", "-CAfile", ca_file, "-crl_download", "-crl_check", cert_file], **kwargs
     )
 
 
 def _openssl_ocsp(
-    ca_file: str, cert_file: str, url: str, **kwargs: Any
+    ca_file: str, cert_file: str, url: str, **kwargs: Unpack[SubprocessRunKwargs]
 ) -> "subprocess.CompletedProcess[Any]":
     return utils.run(
         [
