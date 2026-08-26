@@ -71,7 +71,7 @@ class DevCommand:
         """Argument parser parents, can be overwritten by subclasses."""
         return []
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -87,7 +87,7 @@ class DevCommand:
         """Method that is supposed to be implemented by sub-commands."""
         raise NotImplementedError
 
-    def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> Any:
+    def exec(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> Any:  # noqa: ANN401
         """Default argparse entry point."""
         for mod_name, _pip_name in self.modules:
             mod = importlib.import_module(mod_name)
@@ -118,7 +118,7 @@ class DevCommand:
             self._docker_client = self.docker.from_env()
         return self._docker_client
 
-    def docker_build(self, **kwargs: Any) -> "Image":
+    def docker_build(self, **kwargs: Any) -> "Image":  # noqa: ANN401
         """Build a Docker image."""
         dockerfile = kwargs.get("dockerfile", "Dockerfile")
 
@@ -142,7 +142,7 @@ class DevCommand:
 
             raise CommandError("Error building Docker image, see above for details.") from ex
 
-    def docker_run(self, image: Union["Image", str], **kwargs: Any) -> bytes:
+    def docker_run(self, image: Union["Image", str], **kwargs: Any) -> bytes:  # noqa: ANN401
         """Run the specified Docker image."""
         if isinstance(image, str):
             info(f"Run {image}...")
@@ -180,7 +180,7 @@ class DevCommand:
         except subprocess.CalledProcessError as ex:
             raise CommandError(f"{args[0]} returned with exit status {ex.returncode}.") from ex
 
-    def command(self, *args: str) -> Any:
+    def command(self, *args: str) -> Any:  # noqa: ANN401
         """Run a dev.py command."""
         if self.parent is None:
             parser = self.parser
@@ -203,7 +203,7 @@ class DevSubCommand(DevCommand):
         raise CommandError("Subcommand is must be given.")
 
 
-def add_subcommands(parser: argparse.ArgumentParser, path: str, dest: str = "command", **kwargs: Any) -> None:
+def add_subcommands(parser: argparse.ArgumentParser, path: str, dest: str = "command", **kwargs: Any) -> None:  # noqa: ANN401
     """Function to add subcommands gin `path` to `parser`."""
     commands = parser.add_subparsers(dest=dest)
 

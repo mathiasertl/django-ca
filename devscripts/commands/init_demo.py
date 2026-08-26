@@ -60,7 +60,7 @@ class Command(DevCommand):
         """Get a file path."""
         return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
 
-    def ok(self, msg: str = " OK.", **kwargs: Any) -> None:
+    def ok(self, msg: str = " OK.", **kwargs: Any) -> None:  # noqa: ANN401
         """Just print "OK" in green."""
         print(self.termcolor.colored(msg, "green"), **kwargs)
 

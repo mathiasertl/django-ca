@@ -37,7 +37,7 @@ TAB_INDENT = " " * 6
 class PydanticModelDirectiveBase(SphinxDirective):
     """Base class providing common functionalities for both directives."""
 
-    def exec_with_return(self, code: str) -> Any:
+    def exec_with_return(self, code: str) -> Any:  # noqa: ANN401
         """Function to execute a multi-line code block and return the value of the last statement.
 
         .. seealso:: https://stackoverflow.com/a/76636602
@@ -69,7 +69,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
         except FileNotFoundError as ex:
             raise ValueError(f"{rel_filename}: File not found.") from ex
 
-    def diff(self, a: Any, b: Any, from_file: str, to_file: str, what: str) -> str:
+    def diff(self, a: Any, b: Any, from_file: str, to_file: str, what: str) -> str:  # noqa: ANN401
         """Generate diff for better readable output."""
         from_lines = repr(a).splitlines()
         to_lines = repr(b).splitlines()

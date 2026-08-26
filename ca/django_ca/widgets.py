@@ -66,7 +66,7 @@ class DjangoCaWidgetMixin:
         else:
             attrs["class"] = css_classes
 
-    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
         ctx: dict[str, Any] = super().get_context(*args, **kwargs)  # type: ignore[misc]
@@ -91,7 +91,7 @@ class MultiWidget(DjangoCaWidgetMixin, widgets.MultiWidget):  # pylint: disable=
             "all": ("django_ca/admin/css/multiwidget.css",),
         }
 
-    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
         """Get the context."""
         # TYPEHINT NOTE: This is a mixin, not worth creating a protocol just for this
         ctx: dict[str, Any] = super().get_context(*args, **kwargs)
@@ -110,20 +110,20 @@ class KeyValueWidget(widgets.TextInput):
     key_key = "key"
     value_key = "value"
 
-    def format_value(self, value: Any) -> str:
+    def format_value(self, value: Any) -> str:  # noqa: ANN401
         if isinstance(value, str):
             return value
         if value is None:
             value = []
         return json.dumps(value)
 
-    def get_context(self, name: str, value: Any, attrs: dict[str, Any] | None) -> dict[str, Any]:
+    def get_context(self, name: str, value: Any, attrs: dict[str, Any] | None) -> dict[str, Any]:  # noqa: ANN401
         context = super().get_context(name, value, attrs)
 
         # Set the input type to "hidden" in the context. This must *not* be done via a widgets.HiddenInput
         # base class, as Django would then hide widgets that are not MultiValueWidgets, as the widget is
         # marked as hidden via the input_type class variable. (Not true for MultiWidgets because there are
-        # other widgets that are *not* hidden.
+        # other widgets that are *not* hidden).
         context["widget"]["type"] = "hidden"
 
         # Add widget configuration
@@ -165,7 +165,7 @@ class NameWidget(KeyValueWidget):
     key_choices = tuple((oid.dotted_string, name) for oid, name in constants.NAME_OID_DISPLAY_NAMES.items())
     key_key = "oid"
 
-    def format_value(self, value: Any) -> str:
+    def format_value(self, value: Any) -> str:  # noqa: ANN401
         if isinstance(value, x509.Name):
             value = NameModel.model_validate(value)
         if isinstance(value, NameModel):
@@ -182,7 +182,7 @@ class GeneralNameKeyValueWidget(KeyValueWidget):
     key_choices = tuple((key, key) for key in constants.GENERAL_NAME_TYPES)
     key_key = "type"
 
-    def format_value(self, value: Any) -> str:
+    def format_value(self, value: Any) -> str:  # noqa: ANN401
         if isinstance(value, list | tuple):
             models = GeneralNameModelList.validate_python(value)
             value = [m.model_dump(mode="json") for m in models]
@@ -215,7 +215,7 @@ class LabeledCheckboxInput(CheckboxInput):
         self.label = label
         super().__init__()
 
-    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["wrapper_classes"] = " ".join(self.wrapper_classes)
         ctx["widget"]["label"] = self.label
@@ -236,12 +236,12 @@ class CriticalInput(LabeledCheckboxInput):
     css_classes = ("critical",)
     template_name = "django_ca/forms/widgets/critical.html"
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         self.oid = kwargs.pop("oid")
         # TYPEHINT NOTE: django-stubs issue
         super().__init__(label=_("critical"), wrapper_classes=("critical",))  # type: ignore[arg-type]
 
-    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
         ctx = super().get_context(*args, **kwargs)
         ctx["widget"]["oid"] = self.oid.dotted_string
         return ctx
@@ -275,7 +275,7 @@ class ProfileWidget(widgets.Select):
 
     template_name = "django_ca/forms/widgets/profile.html"
 
-    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
         ctx = super().get_context(*args, **kwargs)
         ctx["desc"] = model_settings.CA_PROFILES[model_settings.CA_DEFAULT_PROFILE].description
         return ctx
@@ -299,11 +299,11 @@ class ExtensionWidget(MultiWidget):  # pylint: disable=abstract-method  # is an 
     oid: x509.ObjectIdentifier
     css_classes = ("extension",)
 
-    def __init__(self, attrs: dict[str, str] | None = None, **kwargs: Any) -> None:
+    def __init__(self, attrs: dict[str, str] | None = None, **kwargs: Any) -> None:  # noqa: ANN401
         sub_widgets = (*self.get_widgets(**kwargs), CriticalInput(oid=self.oid))
         super().__init__(widgets=sub_widgets, attrs=attrs)
 
-    def get_widgets(self, **kwargs: Any) -> ExtensionWidgetsType:
+    def get_widgets(self, **kwargs: Any) -> ExtensionWidgetsType:  # noqa: ANN401
         """Get sub-widgets used by this widget."""
         if self.extension_widgets is not None:  # pragma: no branch
             return self.extension_widgets
@@ -346,7 +346,6 @@ class DistributionPointWidget(ExtensionWidget):
     ) -> tuple[str, str, str, list[str], bool]:
         full_name = relative_name = crl_issuer = ""
         reasons: list[str] = []
-        print("### value", value, type(value))
 
         if value is None:
             return full_name, relative_name, crl_issuer, reasons, EXTENSION_DEFAULT_CRITICAL[self.oid]
@@ -372,6 +371,7 @@ class MultipleChoiceExtensionWidget(  # pylint: disable=abstract-method  # is an
     def get_widgets(  # type: ignore[override]  # we are more specific here
         self, choices: typing.Sequence[tuple[str, str]]
     ) -> tuple[widgets.SelectMultiple]:
+
         return (widgets.SelectMultiple(choices=choices),)
 
 
