@@ -18,7 +18,6 @@ import typing
 from django_ca_sphinx.mapping_table import MappingDocumentor
 from django_ca_sphinx.pydantic_model import PydanticModelDirective, PydanticProfileExtensionDirective
 from django_ca_sphinx.pydantic_setting import PydanticSettingDirective
-from django_ca_sphinx.template_include import TemplateDirective
 
 if typing.TYPE_CHECKING:
     from sphinx.application import Sphinx
@@ -27,7 +26,6 @@ if typing.TYPE_CHECKING:
 def setup(app: "Sphinx") -> dict[str, bool]:
     """Sphinx setup function."""
     app.add_autodocumenter(MappingDocumentor)
-    app.add_directive("template-include", TemplateDirective)
     app.add_directive("pydantic-model", PydanticModelDirective)
     app.add_directive("pydantic-profile-extension", PydanticProfileExtensionDirective)
     app.add_directive("pydantic-setting", PydanticSettingDirective)
