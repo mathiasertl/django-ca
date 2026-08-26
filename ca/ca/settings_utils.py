@@ -20,7 +20,7 @@ import warnings
 from collections.abc import Callable, Iterator
 from inspect import isclass
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeVar
 
 from pydantic import BaseModel, BeforeValidator, Field, RootModel, TypeAdapter
 
@@ -33,8 +33,10 @@ try:
 except ImportError:  # pragma: no cover
     yaml = False  # type: ignore[assignment]
 
+T = TypeVar("T")
 
-def url_pattern_type_validator(value: Any) -> Any:
+
+def url_pattern_type_validator(value: Any) -> Any:  # noqa: ANN401  # pydantic recommendation
     """Validator for url pattern type."""
     if value == "path":
         return path
@@ -70,7 +72,7 @@ class UrlPatternModel(BaseModel):  # type: ignore[no-redef]
     name: str | None = None
 
     @property
-    def parsed_view(self) -> Any:
+    def parsed_view(self) -> Any:  # noqa: ANN401
         """Returning a parsed view, class or function-based."""
         if isinstance(self.view, IncludeModel):
             return include(self.view.module, namespace=self.view.namespace)
@@ -336,7 +338,7 @@ def parse_bool(key: str, value: str) -> bool:
         raise ImproperlyConfigured(f"{key}: {ex}") from ex
 
 
-def parse_json(key: str, value: str, typ: type[Any]) -> Any:
+def parse_json(key: str, value: str, typ: type[T]) -> T:
     """Parse a variable that is supposed to represent a JSON string."""
     try:
         return TypeAdapter(typ).validate_json(value)

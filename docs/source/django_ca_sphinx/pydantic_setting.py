@@ -140,7 +140,7 @@ class PydanticSettingDirective(SphinxDirective):
             field_type = origin
         return field_type, optional
 
-    def get_example_value(self, setting: str, field_info: FieldInfo) -> Any:
+    def get_example_value(self, setting: str, field_info: FieldInfo) -> Any:  # noqa: ANN401
         """Get the example value for the given field."""
         example_idx = self.options["example"]
         if not hasattr(field_info, "examples"):
@@ -154,14 +154,14 @@ class PydanticSettingDirective(SphinxDirective):
         except IndexError as ex:
             raise self.error(f"{setting}: Example index out of range.") from ex
 
-    def prepare_value(self, setting: str, value: Any) -> tuple[str, str, str]:
+    def prepare_value(self, setting: str, value: Any) -> tuple[str, str, str]:  # noqa: ANN401
         """Prepare the value for rendering.
 
         This returns the value as it is valid and "pretty" in Python, YAML and environment variable.
         """
         yaml_value = env_value = value
 
-        def _convert_value(v: Any) -> Any:
+        def _convert_value(v: Any) -> Any:  # noqa: ANN401
             if isinstance(v, BaseModel):
                 return v.model_dump(mode="json", exclude_unset=True)
             if isinstance(v, timedelta):
@@ -195,10 +195,10 @@ class PydanticSettingDirective(SphinxDirective):
 
         return repr_value, yaml_value, env_value
 
-    def get_field_type_key(self, field_type: Any) -> str:
+    def get_field_type_key(self, field_type: type[Any]) -> str:
         """Get the field type key for rendering it in the template."""
         if field_type in (bool, int, float, str, dict, list, timedelta):
-            return field_type.__name__  # type: ignore[no-any-return]
+            return field_type.__name__
         if field_type is tuple:
             return "list"
 

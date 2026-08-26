@@ -76,7 +76,7 @@ def import_mod(name: str, path: str | os.PathLike[str]) -> types.ModuleType:
     return mod
 
 
-def simple_diff(what: str, actual: Any, expected: Any) -> int:
+def simple_diff(what: str, actual: Any, expected: Any) -> int:  # noqa: ANN401
     """Simply compare two values and output any difference."""
     if expected == actual:
         return 0

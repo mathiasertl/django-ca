@@ -50,7 +50,7 @@ class MappingDocumentor(DataDocumenter):
         return False, []
 
     @classmethod
-    def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
+    def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:  # noqa: ANN401
         """Determine if this documentor can document the given variable."""
         return super().can_document_member(member, membername, isattr, parent) and isinstance(member, Mapping)
 
@@ -92,7 +92,7 @@ class MappingDocumentor(DataDocumenter):
 
         return f'``"{value.dotted_string}"``'  # return dotted string as default
 
-    def serialize_value(self, value: Any) -> str:
+    def serialize_value(self, value: Any) -> str:  # noqa: ANN401
         """Serialize a value (or key) into a string as displayed in the table."""
         if isinstance(value, bool):
             return f"``{value}``"
