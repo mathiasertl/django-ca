@@ -1,0 +1,13 @@
+[tool.ruff]
+# Extend the root pyproject.toml for ruff
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-third-party = [
+    # third-party modules also existing as local modules must be listed here:
+    "acme", "pydantic"
+]
+
+[tool.ruff.lint]
+# do not enable "D"/pydocstyle, otherwise every example would have to have a module docstring
+extend-ignore = ["ANN401"]
