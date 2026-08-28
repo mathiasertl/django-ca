@@ -65,7 +65,7 @@ class FieldTestCaseMixin(TestCaseMixin):
 
     field_class: type[forms.Field]
 
-    def assertRequiredError(self, value) -> None:  # pylint: disable=invalid-name
+    def assertRequiredError(self, value: Any) -> None:  # pylint: disable=invalid-name
         """Assert that the field raises a required error for the given value."""
         field = self.field_class(required=True)
         error_required = [field.error_messages["required"]]
@@ -184,7 +184,7 @@ def test_crl_distribution_points_field_with_invalid_input(
     required: bool,
     invalid: tuple[list[dict[str, Any]], str, list[dict[str, Any]], tuple[str, ...]],
     error: str,
-):
+) -> None:
     """Test fields.CRLDistributionPointField with invalid input."""
     field = fields.CRLDistributionPointField(required=required)
 
