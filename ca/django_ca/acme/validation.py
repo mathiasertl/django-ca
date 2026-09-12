@@ -15,6 +15,7 @@
 
 import ipaddress
 import logging
+import socket
 from http import HTTPStatus
 
 import dns.exception
@@ -30,6 +31,51 @@ from django_ca.models import AcmeAuthorization, AcmeChallenge
 from django_ca.utils import check_name
 
 log = logging.getLogger(__name__)
+
+# Private/link-local/loopback IP networks blocked from ACME HTTP validation
+_SSRF_BLOCKED_NETWORKS = [
+    ipaddress.IPv4Network("10.0.0.0/8"),
+    ipaddress.IPv4Network("127.0.0.0/8"),
+    ipaddress.IPv4Network("169.254.0.0/16"),
+    ipaddress.IPv4Network("172.16.0.0/12"),
+    ipaddress.IPv4Network("192.168.0.0/16"),
+    ipaddress.IPv6Network("::1/128"),
+    ipaddress.IPv6Network("fc00::/7"),
+    ipaddress.IPv6Network("fe80::/10"),
+]
+
+
+def _is_internal_host(host: str) -> bool:
+    """Check if a hostname resolves to or is an internal/private IP address.
+
+    This prevents SSRF attacks where an attacker requests ACME validation
+    for a domain pointing to internal infrastructure
+    (e.g. ``127.0.0.1``, ``169.254.169.254``, ``10.0.0.1``).
+    """
+    # Check raw IP address
+    try:
+        addr = ipaddress.ip_address(host)
+        return any(addr in net for net in _SSRF_BLOCKED_NETWORKS)
+    except ValueError:
+        pass
+
+    # Resolve hostname and check resolved IPs. Unresolvable hosts are NOT blocked here:
+    # the subsequent HTTP request fails on its own, and blocking on a transient DNS error
+    # would break legitimate validation (and the test suite, which uses .invalid/.localhost).
+    try:
+        addresses = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False
+
+    for res in addresses:
+        sockaddr = res[4]
+        if not sockaddr or not isinstance(sockaddr[0], str):
+            continue
+        ip = ipaddress.ip_address(sockaddr[0])
+        if any(ip in net for net in _SSRF_BLOCKED_NETWORKS):
+            return True
+
+    return False
 
 
 def validate_http_01(challenge: AcmeChallenge) -> bool:
@@ -50,6 +96,11 @@ def validate_http_01(challenge: AcmeChallenge) -> bool:
 
     decoded_token = challenge.encoded_token.decode("utf-8")
     expected = challenge.expected
+
+    # Prevent SSRF: block challenges for internal/private IPs before any HTTP request.
+    if _is_internal_host(challenge.auth.value):
+        log.warning("SSRF prevention: blocked HTTP-01 challenge for internal host: %s", challenge.auth.value)
+        return False
 
     # RFC 8738, section 5: for IP identifiers the DNS resolution step is skipped and the IP
     # address is used directly. IPv6 addresses must be enclosed in brackets in the URL
