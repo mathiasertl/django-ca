@@ -68,7 +68,7 @@ Deprecation notices
 *******************
 
 * This is the last version to support ``cryptography~=49.0``.
-* This is the last version to support ``acme~=5.6.0``.
+* This is the last version to support ``acme~=5.6.0`` and ``acme~=5.7.0``.
 
 *******************
 Setup and packaging

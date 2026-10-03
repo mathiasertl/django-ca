@@ -15,8 +15,8 @@ build:
       - git fetch --all --tags || true
     create_environment:
       - asdf plugin add uv
-      - asdf install uv 0.11.26
-      - asdf global uv 0.11.26
+      - asdf install uv 0.12.22
+      - asdf global uv 0.12.22
     install:
       - uv sync --extra api --extra celery --extra hsm --no-default-groups --group dev --group docs
     pre_build:
@@ -27,4 +27,4 @@ build:
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-   configuration: docs/source/conf.py
+  configuration: docs/source/conf.py

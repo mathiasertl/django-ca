@@ -27,7 +27,8 @@ jobs:
           "mysql:9.7",
           "mariadb:11.4",
           "mariadb:11.8",
-          "mariadb:12",
+          "mariadb:12.3",
+          "mariadb:13",
         ]
 
     services:
