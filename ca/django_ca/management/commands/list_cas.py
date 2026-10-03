@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
     def list_children(self, ca: CertificateAuthority, indent: str = "") -> None:
         """Output list lines for children of the given CA."""
-        children = list(enumerate(self.qs(ca.children.all()), 1))
+        children = list(enumerate(self.qs(ca.children.all()), 1))  # type: ignore[arg-type]  # false positive
         for index, child in children:
             if index == len(children):  # last element
                 self.list_ca(child, indent=indent + "└───")

@@ -782,12 +782,12 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
     ) -> x509.CertificateRevocationListBuilder:
         # Add certificate authorities if applicable
         if only_contains_ca_certs is True or only_contains_user_certs is False:
-            for child_ca in ca.children.for_certificate_revocation_list(now=now, reasons=only_some_reasons):
+            for child_ca in ca.children.for_certificate_revocation_list(now=now, reasons=only_some_reasons):  # type: ignore[arg-type]  # false positive
                 builder = builder.add_revoked_certificate(child_ca.get_revocation())
 
         # Add certificates if applicable
         if only_contains_user_certs is True or only_contains_ca_certs is False:
-            certs = ca.certificate_set.for_certificate_revocation_list(now=now, reasons=only_some_reasons)
+            certs = ca.certificate_set.for_certificate_revocation_list(now=now, reasons=only_some_reasons)  # type: ignore[arg-type]  # false positive
             for cert in certs:
                 builder = builder.add_revoked_certificate(cert.get_revocation())
 

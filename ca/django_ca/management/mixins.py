@@ -502,7 +502,7 @@ class OutputCertificateAuthorityMixin(
         else:
             self.stdout.write("* Certificate authority is a root CA.")
 
-        children = ca.children.all()
+        children = ca.children.all()  # type: ignore[arg-type]  # false positive
         if children:
             self.stdout.write("* Children:")
             for child in children:

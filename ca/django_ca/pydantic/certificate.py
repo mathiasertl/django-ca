@@ -66,8 +66,11 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
     """Model for :class:`cg:~cryptography.x509.Certificate`."""
 
     serial: Serial
-    version: Annotated[  # type: ignore[name-defined]  # false positive
-        Literal[x509.Version.v1.value, x509.Version.v3.value],
+    version: Annotated[
+        Literal[
+            x509.Version.v1.value,  # type: ignore[name-defined]  # false positive
+            x509.Version.v3.value,
+        ],
         BeforeValidator(version_validator),
     ]
     not_valid_before: datetime

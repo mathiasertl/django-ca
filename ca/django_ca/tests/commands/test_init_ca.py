@@ -881,8 +881,8 @@ def test_expires_override(ca_name: str, usable_root: CertificateAuthority) -> No
     assert usable_root.not_after == child.not_after
     assert usable_root.parent is None
     assert child.parent == usable_root
-    assert not list(child.children.all())
-    assert list(usable_root.children.all()) == [child]
+    assert not list(child.children.all())  # type: ignore[arg-type]  # false positive
+    assert list(usable_root.children.all()) == [child]  # type: ignore[arg-type]  # false positive
     assert_authority_key_identifier(usable_root, child)
 
 
