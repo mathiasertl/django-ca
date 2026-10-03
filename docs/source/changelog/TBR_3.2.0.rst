@@ -33,18 +33,6 @@ ACMEv2
 * Mark an Order as invalid and store an error message when issuing the certificate fails. This prevents
   certbot from polling for the certificate until it reaches a timeout.
 
-*************
-OCSP and CRLs
-*************
-
-No changes yet.
-
-********
-REST API
-********
-
-No changes yet.
-
 ************
 Command-line
 ************
@@ -54,12 +42,6 @@ Command-line
 * Removed the ``regenerate_ocsp_keys`` command (deprecated since ``django-ca==3.0.0``). Use
   :command:`generate_ocsp_keys` instead.
 
-***************
-Admin interface
-***************
-
-No changes yet.
-
 ************
 Celery tasks
 ************
@@ -68,24 +50,6 @@ Celery tasks
   :py:func:`django_ca.tasks.generate_crl` instead.
 * Removed the ``django_ca.tasks.cache_crls`` task (deprecated since ``django-ca==3.0.0``). Use
   :py:func:`django_ca.tasks.generate_crls` instead.
-
-**********
-Python API
-**********
-
-No changes yet.
-
-*****
-Views
-*****
-
-No changes yet.
-
-***************************
-Models and database support
-***************************
-
-No changes yet.
 
 ************
 Dependencies
