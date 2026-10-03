@@ -134,7 +134,8 @@ bundled third-party Docker images.
 ==================================================================================== ===== ========== ========
 Version                                                                              Redis PostgreSQL NGINX
 ==================================================================================== ===== ========== ========
-``3.1.0 (to be released)``                                                           8     16         1.28
+`3.2.0 <https://github.com/mathiasertl/django-ca/blob/3.2.0/compose.yaml>`_          8     16         1.28
+`3.1.0 <https://github.com/mathiasertl/django-ca/blob/3.1.0/compose.yaml>`_          8     16         1.28
 `3.0.0 <https://github.com/mathiasertl/django-ca/blob/3.0.0/compose.yaml>`_          8     16         1.28
 `2.5.0 <https://github.com/mathiasertl/django-ca/blob/2.5.0/compose.yaml>`_          **8** 16         **1.28**
 `2.4.0 <https://github.com/mathiasertl/django-ca/blob/2.4.0/compose.yaml>`_          7     16         1.26
@@ -143,8 +144,6 @@ Version                                                                         
 `2.1.1 <https://github.com/mathiasertl/django-ca/blob/2.1.1/docker-compose.yml>`_    7     16         1.26
 `2.1.0 <https://github.com/mathiasertl/django-ca/blob/2.1.0/docker-compose.yml>`_    7     16         1.26
 `2.0.0 <https://github.com/mathiasertl/django-ca/blob/2.0.0/docker-compose.yml>`_    7     16         1.26
-`1.29.0 <https://github.com/mathiasertl/django-ca/blob/1.29.0/docker-compose.yml>`_  7     16         1.24
-`1.28.0 <https://github.com/mathiasertl/django-ca/blob/1.28.0/docker-compose.yml>`_  7     **16**     1.24
 ==================================================================================== ===== ========== ========
 
 Note that until ``django-ca==2.1.1``, this file was called ``docker-compose.yml``.

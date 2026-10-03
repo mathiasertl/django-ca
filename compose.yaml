@@ -1,184 +1,184 @@
 services:
-    cache:
-        image: redis:8-alpine
-        networks:
-            - cache
-        restart: unless-stopped
-        volumes:
-           - redis:/data
-        healthcheck:
-            test: [ "CMD", "nc", "-z", "localhost:6379" ]
-            timeout: 1s
-            start_interval: 1s
-            start_period: 3s
-    db:
-        # See also: https://www.postgresql.org/support/versioning/
-        #   https://www.postgresql.org/developer/roadmap/
-        image: postgres:16-alpine
-        environment:
-            POSTGRES_DB:
-            POSTGRES_DB_FILE:
-            POSTGRES_PASSWORD:
-            POSTGRES_PASSWORD_FILE:
-            POSTGRES_USER:
-            POSTGRES_USER_FILE:
-        networks:
-            - database
-        restart: unless-stopped
-        volumes:
-            - pgdata_16:/var/lib/postgresql/data
-        healthcheck:
-            test: [ "CMD", "pg_isready" ]
-            timeout: 1s
-            start_interval: 1s
-            start_period: 10s
+  cache:
+    image: redis:8-alpine
+    networks:
+      - cache
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost:6379" ]
+      timeout: 1s
+      start_interval: 1s
+      start_period: 3s
+  db:
+    # See also: https://www.postgresql.org/support/versioning/
+    #   https://www.postgresql.org/developer/roadmap/
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:
+      POSTGRES_DB_FILE:
+      POSTGRES_PASSWORD:
+      POSTGRES_PASSWORD_FILE:
+      POSTGRES_USER:
+      POSTGRES_USER_FILE:
+    networks:
+      - database
+    restart: unless-stopped
+    volumes:
+      - pgdata_16:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      timeout: 1s
+      start_interval: 1s
+      start_period: 10s
 
-    beat:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-        command: celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
-        depends_on:
-            cache:
-                condition: service_healthy
-            db:
-                condition: service_healthy
-        healthcheck: &celery-healthcheck
-            test: [ "CMD-SHELL", "[ -d /proc/`cat /tmp/celerybeat.pid` ]" ]
-            timeout: 1s
-            start_interval: 1s
-            start_period: 30s
-        networks:
-            - cache
-            - database
-            - public
-        volumes:
-            - backend_ca_dir:/var/lib/django-ca/certs/
-            - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
-            - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-        environment: &environment
-            DJANGO_CA_ALLOWED_HOSTS:
-            DJANGO_CA_CA_DEFAULT_CA:
-            DJANGO_CA_CA_DEFAULT_HOSTNAME:
-            DJANGO_CA_CA_ENABLE_ACME:
-            DJANGO_CA_CA_ENABLE_REST_API:
-            DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
-            DJANGO_CA_SECRET_KEY:
-            DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
-            DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose:conf/local}
-            DJANGO_CA_STARTUP_CHECK:
-            DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-0}
-            DJANGO_CA_STARTUP_GENERATE_CRLS:
-            DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS:
-            DJANGO_CA_STARTUP_MIGRATE:
-            DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS:
-            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:
-            POSTGRES_DB:
-            POSTGRES_DB_FILE:
-            POSTGRES_PASSWORD:
-            POSTGRES_PASSWORD_FILE:
-            POSTGRES_USER:
-            POSTGRES_USER_FILE:
-        restart: unless-stopped
-        stop_grace_period: 30s
+  beat:
+    image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-3.2.0}
+    command: celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
+    depends_on:
+      cache:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    healthcheck: &celery-healthcheck
+      test: [ "CMD-SHELL", "[ -d /proc/`cat /tmp/celerybeat.pid` ]" ]
+      timeout: 1s
+      start_interval: 1s
+      start_period: 30s
+    networks:
+      - cache
+      - database
+      - public
+    volumes:
+      - backend_ca_dir:/var/lib/django-ca/certs/
+      - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
+      - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
+    environment: &environment
+      DJANGO_CA_ALLOWED_HOSTS:
+      DJANGO_CA_CA_DEFAULT_CA:
+      DJANGO_CA_CA_DEFAULT_HOSTNAME:
+      DJANGO_CA_CA_ENABLE_ACME:
+      DJANGO_CA_CA_ENABLE_REST_API:
+      DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
+      DJANGO_CA_SECRET_KEY:
+      DJANGO_CA_SECRET_KEY_FILE: ${DJANGO_CA_SECRET_KEY_FILE:-/var/lib/django-ca/certs/ca/shared/secret_key}
+      DJANGO_CA_SETTINGS: ${DJANGO_CA_SETTINGS:-conf/:conf/compose:conf/local}
+      DJANGO_CA_STARTUP_CHECK:
+      DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-0}
+      DJANGO_CA_STARTUP_GENERATE_CRLS:
+      DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS:
+      DJANGO_CA_STARTUP_MIGRATE:
+      DJANGO_CA_STARTUP_WAIT_FOR_CONNECTIONS:
+      DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:
+      POSTGRES_DB:
+      POSTGRES_DB_FILE:
+      POSTGRES_PASSWORD:
+      POSTGRES_PASSWORD_FILE:
+      POSTGRES_USER:
+      POSTGRES_USER_FILE:
+    restart: unless-stopped
+    stop_grace_period: 30s
 
-    backend:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-        command: celery.sh -l ${CELERY_LOG_LEVEL:-warning}
-        depends_on:
-            beat:
-              condition: service_healthy
-        healthcheck: *celery-healthcheck
-        networks:
-            - cache
-            - database
-            - public
-        volumes:
-            - backend_ca_dir:/var/lib/django-ca/certs/
-            - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
-            - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-        environment:
-            <<: *environment
-            DJANGO_CA_STARTUP_GENERATE_CRLS: ${DJANGO_CA_STARTUP_GENERATE_CRLS:-0}
-            DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS:-0}
-            DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
-            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
-        restart: unless-stopped
-        stop_grace_period: 30s
+  backend:
+    image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-3.2.0}
+    command: celery.sh -l ${CELERY_LOG_LEVEL:-warning}
+    depends_on:
+      beat:
+        condition: service_healthy
+    healthcheck: *celery-healthcheck
+    networks:
+      - cache
+      - database
+      - public
+    volumes:
+      - backend_ca_dir:/var/lib/django-ca/certs/
+      - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
+      - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
+    environment:
+      <<: *environment
+      DJANGO_CA_STARTUP_GENERATE_CRLS: ${DJANGO_CA_STARTUP_GENERATE_CRLS:-0}
+      DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS:-0}
+      DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
+      DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
+    restart: unless-stopped
+    stop_grace_period: 30s
 
-    frontend:
-        image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-        depends_on:
-            - cache
-            - db
-        networks:
-            - cache
-            - database
-            - frontend
-        volumes:
-            - static:/usr/share/django-ca/static/
-            - frontend_ca_dir:/var/lib/django-ca/certs/
-            - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
-            - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
-            - nginx_templates:/var/lib/django-ca/nginx/templates/
-        environment:
-            <<: *environment
-            DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-1}
-            DJANGO_CA_STARTUP_GENERATE_CRLS: ${DJANGO_CA_STARTUP_GENERATE_CRLS:-0}
-            DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS:-0}
-            DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
-            DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
-            # Pass through Gunicorn configuration
-            GUNICORN_CMD_ARGS:
-            # Instruct the startup script to copy nginx configuration template
-            NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
-        restart: unless-stopped
-        healthcheck:
-            test: ["CMD", "nc", "-w", "1", "-z", "127.0.0.1", "8000"]
-            timeout: 1s
-            start_period: 30s
-            start_interval: 1s
-            interval: 1s
-        stop_signal: SIGINT
+  frontend:
+    image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-3.2.0}
+    depends_on:
+      - cache
+      - db
+    networks:
+      - cache
+      - database
+      - frontend
+    volumes:
+      - static:/usr/share/django-ca/static/
+      - frontend_ca_dir:/var/lib/django-ca/certs/
+      - shared_ca_dir:/var/lib/django-ca/certs/ca/shared/
+      - ocsp_key_dir:/var/lib/django-ca/certs/ocsp/
+      - nginx_templates:/var/lib/django-ca/nginx/templates/
+    environment:
+      <<: *environment
+      DJANGO_CA_STARTUP_COLLECTSTATIC: ${DJANGO_CA_STARTUP_COLLECTSTATIC:-1}
+      DJANGO_CA_STARTUP_GENERATE_CRLS: ${DJANGO_CA_STARTUP_GENERATE_CRLS:-0}
+      DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS: ${DJANGO_CA_STARTUP_GENERATE_OCSP_KEYS:-0}
+      DJANGO_CA_STARTUP_MIGRATE: ${DJANGO_CA_STARTUP_MIGRATE:-0}
+      DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE: ${DJANGO_CA_STARTUP_WAIT_FOR_SECRET_KEY_FILE:-1}
+      # Pass through Gunicorn configuration
+      GUNICORN_CMD_ARGS:
+      # Instruct the startup script to copy nginx configuration template
+      NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "nc", "-w", "1", "-z", "127.0.0.1", "8000" ]
+      timeout: 1s
+      start_period: 30s
+      start_interval: 1s
+      interval: 1s
+    stop_signal: SIGINT
 
-    webserver:
-        # available images: https://hub.docker.com/_/nginx
-        # table of versions: http://nginx.org/en/download.html
-        image: nginx:1.28-alpine
-        depends_on:
-            frontend:
-                condition: service_healthy
-        environment:
-            NGINX_HOST: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
-            NGINX_ADDITIONAL_HOSTS: ${NGINX_ADDITIONAL_HOSTS:-}
-            NGINX_PORT: ${NGINX_PORT:-80}
-            NGINX_HTTPS_PORT: ${NGINX_HTTPS_PORT:-443}
-            NGINX_PRIVATE_KEY:
-            NGINX_PUBLIC_KEY:
-            DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
-        ports:
-            - "80:80"
-        networks:
-            - frontend
-            - public
-        volumes:
-            - nginx_templates:/etc/nginx/templates/
-            - static:/usr/share/nginx/html/static/
+  webserver:
+    # available images: https://hub.docker.com/_/nginx
+    # table of versions: http://nginx.org/en/download.html
+    image: nginx:1.28-alpine
+    depends_on:
+      frontend:
+        condition: service_healthy
+    environment:
+      NGINX_HOST: ${DJANGO_CA_CA_DEFAULT_HOSTNAME:-localhost}
+      NGINX_ADDITIONAL_HOSTS: ${NGINX_ADDITIONAL_HOSTS:-}
+      NGINX_PORT: ${NGINX_PORT:-80}
+      NGINX_HTTPS_PORT: ${NGINX_HTTPS_PORT:-443}
+      NGINX_PRIVATE_KEY:
+      NGINX_PUBLIC_KEY:
+      DJANGO_CA_CA_URL_PATH: ${DJANGO_CA_CA_URL_PATH-django_ca/}
+    ports:
+      - "80:80"
+    networks:
+      - frontend
+      - public
+    volumes:
+      - nginx_templates:/etc/nginx/templates/
+      - static:/usr/share/nginx/html/static/
 
 volumes:
-    shared:
-    static:
-    backend_ca_dir:
-    frontend_ca_dir:
-    shared_ca_dir:
-    ocsp_key_dir:
-    nginx_templates:
-    pgdata_16:
-    redis:
+  shared:
+  static:
+  backend_ca_dir:
+  frontend_ca_dir:
+  shared_ca_dir:
+  ocsp_key_dir:
+  nginx_templates:
+  pgdata_16:
+  redis:
 
 networks:
-    public:
-    frontend:
-        internal: true
-    cache:
-        internal: true
-    database:
-        internal: true
+  public:
+  frontend:
+    internal: true
+  cache:
+    internal: true
+  database:
+    internal: true
