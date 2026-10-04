@@ -69,6 +69,10 @@ Deprecation notices
 
 * This is the last version to support ``cryptography~=49.0``.
 * This is the last version to support ``acme~=5.6.0`` and ``acme~=5.7.0``.
+* This is the next-to-last version to support ``Python~=3.11.0``.
+* This is the next-to-last version to support DSA keys (cryptography is also
+  deprecating and eventually removing support).
+* This is the next-to-last version to support Alpine-based Docker images.
 
 *******************
 Setup and packaging

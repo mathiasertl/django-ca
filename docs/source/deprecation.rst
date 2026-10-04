@@ -9,6 +9,8 @@ This page shows
 ***************
 
 * Support for Python 3.11 will be dropped.
+* Support for DSA keys will be dropped.
+* Support for Alpine-based Docker images will be dropped.
 * The defaults for :ref:`CA_DEFAULT_EXPIRES <settings-ca-default-expires>` and :ref:`CA_ACME_MAX_CERT_VALIDITY
   <CA_ACME_MAX_CERT_VALIDITY>` will be reduced to 47 days (announced with 3.0.0).
 
