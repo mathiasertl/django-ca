@@ -118,19 +118,6 @@ class Command(DevCommand):
         try:
             self.command("validate", "state")
 
-            if args.build:
-                # Clean up before creating any release artifacts
-                self.run("docker", "system", "prune", "-af")
-                self.command("clean")
-
-                # Build release artifacts
-                _release, _docker_tag = self.command("build", "docker", "--release", args.release)
-                ok("Finished building release artifacts.")
-
-            self.command("validate", "docker", "--no-rebuild", "--release", args.release)
-            self.command("validate", "docker-compose", "--no-rebuild", "--release", args.release)
-            ok("Finished validation.")
-
             if args.dry_run:
                 repo.delete_tag(git_tag)
             else:  # This is a real release, so upload artifacts

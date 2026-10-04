@@ -112,8 +112,6 @@ The release script will:
 
 * Validate the current state in your repository.
 * Create a new signed git tag.
-* Build and test the Docker image.
-* Test the various tutorials.
 * Push the git tag.
 
 Update Docker Hub
