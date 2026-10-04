@@ -134,12 +134,13 @@ class Command(DevCommand):
         if alpine:
             docker_tag += "-alpine"
 
-        defines = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
+        args = ["-D", "BUILD_IMAGE", "no", "-D", "RELEASE", release, "-D", "DOCKER_TAG", docker_tag]
         if alpine:
-            defines += ["-D", "DOCKER_IMAGE_VARIANT", "alpine"]
+            args += ["-D", "DOCKER_IMAGE_VARIANT", "alpine"]
+        args += ["-a", "postgres"]
 
         proc = utils.run(
-            ["structured-tutorial", "--non-interactive", *defines, "tutorials/docker/tutorial.yaml"]
+            ["structured-tutorial", "--non-interactive", *args, "tutorials/docker/tutorial.yaml"]
         )
         if proc.returncode != 0:
             errors += err("Error running tutorial.")
