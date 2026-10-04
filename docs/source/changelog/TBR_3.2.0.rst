@@ -73,6 +73,16 @@ Deprecation notices
 * This is the next-to-last version to support DSA keys (cryptography is also
   deprecating and eventually removing support).
 * This is the next-to-last version to support Alpine-based Docker images.
+* Wrapper scripts in Docker images will be renamed in the next release (``django-ca~=3.3.0``), the old names
+  will stop working in the release after that (``django-ca~=4.0.0``). Please use the new names instead:
+
+  ================= ========================
+  Old name          New name
+  ================= ========================
+  ``celerybeat.sh`` ``django-ca-celerybeat``
+  ``celery.sh``     ``django-ca-celery``
+  ``gunicorn.sh``   ``django-ca-gunicorn``
+  ================= ========================
 
 *******************
 Setup and packaging
