@@ -257,7 +257,7 @@ def assert_crl(
         raise TypeError()  # just to make mypy happy
 
     assert isinstance(parsed_crl.signature_hash_algorithm, type(algorithm))
-    assert parsed_crl.is_signature_valid(public_key) is True
+    assert parsed_crl.is_signature_valid(public_key) is True  # type: ignore[arg-type]
     assert parsed_crl.issuer == signer.pub.loaded.subject
     assert parsed_crl.last_update_utc == last_update
     assert parsed_crl.next_update_utc == expires_timestamp

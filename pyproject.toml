@@ -638,7 +638,7 @@ lint = [
     "ruff~=0.15.0",
 ]
 mypy = [
-    "django-stubs>=5.1.3",
+    "django-stubs==6.1.0",
     "mypy~=2.1.0",
     "types-docutils>=0.21.0.20241128",
     "types-freezegun>=1.1.10",

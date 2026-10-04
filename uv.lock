@@ -1526,7 +1526,7 @@ local = [
     { name = "wheel-inspect", specifier = ">=1.7.2" },
 ]
 mypy = [
-    { name = "django-stubs", specifier = ">=5.1.3" },
+    { name = "django-stubs", specifier = "==6.1.0" },
     { name = "mypy", specifier = "~=2.1.0" },
     { name = "types-docutils", specifier = ">=0.21.0.20241128" },
     { name = "types-freezegun", specifier = ">=1.1.10" },
@@ -1569,7 +1569,7 @@ wheels = [
 
 [[package]]
 name = "django-stubs"
-version = "6.1.1"
+version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "5.2.17", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-acme5-5') or (extra == 'group-9-django-ca-acme5-4' and extra == 'group-9-django-ca-acme5-6') or (extra == 'group-9-django-ca-acme5-5' and extra == 'group-9-django-ca-acme5-6') or (extra == 'group-9-django-ca-cryptography46' and extra == 'group-9-django-ca-cryptography47') or (extra == 'group-9-django-ca-cryptography46' and extra == 'group-9-django-ca-cryptography48') or (extra == 'group-9-django-ca-cryptography46' and extra == 'group-9-django-ca-cryptography49') or (extra == 'group-9-django-ca-cryptography46' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-cryptography47' and extra == 'group-9-django-ca-cryptography48') or (extra == 'group-9-django-ca-cryptography47' and extra == 'group-9-django-ca-cryptography49') or (extra == 'group-9-django-ca-cryptography47' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-cryptography48' and extra == 'group-9-django-ca-cryptography49') or (extra == 'group-9-django-ca-cryptography48' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-cryptography49' and extra == 'group-9-django-ca-cryptography50') or (extra == 'group-9-django-ca-pydantic2-12' and extra == 'group-9-django-ca-pydantic2-13')" },
@@ -1578,9 +1578,9 @@ dependencies = [
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2b/d6/fb467f5f769b831680d8cb6705e4bbec335c79b328ff7e347e220e676da8/django_stubs-6.1.1.tar.gz", hash = "sha256:291fd79197416d191ec9f4e443bc6800b64dd5d41e476b91e679495d005f3d61", size = 295523, upload-time = "2026-09-14T08:46:24.686Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/34/e9f03764b32f56c02168814385ddc6d0e49a7b3e4381e8e3f6f5f34f39ff/django_stubs-6.1.0.tar.gz", hash = "sha256:b6aecc5c738a103135f76ba160a6f75e3b27dcf0200c64d7226018cdbc2340dd", size = 293018, upload-time = "2026-08-12T10:55:28.817Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/26/911e381b1cee7fbb7f11f640ec4be4ec1b6ae49dc58ff2cb829cf12dc4b9/django_stubs-6.1.1-py3-none-any.whl", hash = "sha256:a913d0c35242cd820f638486118fd542d687b6a85104bea9cb7e635b52b889e3", size = 559401, upload-time = "2026-09-14T08:46:23.153Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/cf/064d7c48642309f3397b17ff14f3159c5225eb9321185a10039c0e846848/django_stubs-6.1.0-py3-none-any.whl", hash = "sha256:63b23ccca2616d464ed7e37d1ce44960315cb3cecab75b23c928467ef125e560", size = 557040, upload-time = "2026-08-12T10:55:26.959Z" },
 ]
 
 [[package]]
