@@ -9,7 +9,7 @@ python = ["3.11", "3.12", "3.13", "3.14"]
 # https://www.djangoproject.com/download/
 django = ["5.2", "6.0"]
 django-lts = "5.2"  # the current LTS version
-cryptography = ["46", "47", "48", "49"]
+cryptography = ["46", "47", "48", "49", "50"]
 acme = ["5.4", "5.5", "5.6"]
 pydantic = ["2.12", "2.13"]
 josepy = ["2.2"]
@@ -575,6 +575,7 @@ conflicts = [
         { group = "cryptography47" },
         { group = "cryptography48" },
         { group = "cryptography49" },
+        { group = "cryptography50" },
     ],
     [ { group = "acme5.4" }, { group = "acme5.5" }, { group = "acme5.6" }, ],
     [ { group = "pydantic2.12" }, { group = "pydantic2.13" }, ],
@@ -662,6 +663,7 @@ gunicorn = [ "gunicorn>=23" ]
 "cryptography47" = ["cryptography~=47.0"]
 "cryptography48" = ["cryptography~=48.0"]
 "cryptography49" = ["cryptography~=49.0"]
+"cryptography50" = ["cryptography~=50.0"]
 "acme5.4" = ["acme~=5.4.0"]
 "acme5.5" = ["acme~=5.5.0"]
 "acme5.6" = ["acme~=5.6.0"]
