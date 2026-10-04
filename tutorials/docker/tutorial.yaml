@@ -199,12 +199,14 @@ parts:
       - command: |
           docker buildx imagetools inspect mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
           --format "{% raw %}{{ json .SBOM.SPDX }}{% endraw %}"
+    run: false
 
   - id: sbom-view-package-versions
     commands:
       - command: |
           docker buildx imagetools inspect mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} --format \
           "{% raw %}{{ range .SBOM.SPDX.packages }}{{ .name }}@{{ .versionInfo }}{{ println }}{{ end }}{% endraw %}"
+    run: false
 
   - id: sbom-verify-signature
     commands:
@@ -213,6 +215,7 @@ parts:
             oci://ghcr.io/mathiasertl/django-ca:{{ DJANGO_CA_VERSION }} \
             -R mathiasertl/django-ca \
             --predicate-type https://spdx.dev/Document/v2.3
+    run: false
 
   # Start Docker network and Redis
   - id: start-dependencies
