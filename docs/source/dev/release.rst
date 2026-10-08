@@ -10,7 +10,8 @@ Preparation
 
 Run these steps when you begin to create a new release:
 
-* Double-check that the changelog is up to date.
+* Ensure that :doc:`the changelog </changelog>` is up to date.
+* Ensure that :doc:`the deprecation timeline </deprecation>` is up to date.
 * Update requirements in :file:`pyproject.toml`.
 * Check versions of major software dependencies and:
 
@@ -137,7 +138,7 @@ After a release
 * Update :file:`ca/django_ca/deprecation.py` and remove code marked by such warnings.
 * Search for deprecation comments that could be removed::
 
-      $ grep -A 3 -r 'deprecated:' docs/source/ ca/
+      $ grep -A 3 -r 'deprecated:' docs/source/ ca/ devscripts/
 
 * Drop support for older software versions in the ``[django-ca.release]`` section of :file:`pyproject.toml`.
 * Run :command:`./dev.py validate state` and fix any errors.
