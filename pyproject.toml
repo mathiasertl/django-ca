@@ -40,8 +40,9 @@ mariadb = [
 # Innovation releases last just 2-3 months, so there is no point
 # in testing for them explicitly. Versions here are used as Docker
 # image tags.
+#
+# We only test the latest LTS release, as MySQL is barely used nowadays.
 mysql = [
-    "8.4", # until 2029-04-30
     "9.7", # until 2029-04-21
 ]
 
