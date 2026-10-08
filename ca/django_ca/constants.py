@@ -504,14 +504,12 @@ NAME_OID_NAMES = MappingProxyType(
         NameOID.STREET_ADDRESS: "street",
         NameOID.SURNAME: "surname",
         NameOID.TITLE: "title",
+        NameOID.UNSIGNED: "Unsigned",  # added in cryptography==50.0.0
         NameOID.UNSTRUCTURED_NAME: "unstructuredName",  # not specified in RFC 4519
         NameOID.USER_ID: "uid",
         NameOID.X500_UNIQUE_IDENTIFIER: "x500UniqueIdentifier",
     }
 )
-
-if CRYPTOGRAPHY_VERSION >= (50, 0):  # pragma: cryptography>=50 branch
-    NAME_OID_NAMES = MappingProxyType({**NAME_OID_NAMES, NameOID.UNSIGNED: "Unsigned"})
 
 # Sources for OIDs that can be duplicate:
 # * https://www.ibm.com/docs/en/ibm-mq/7.5?topic=certificates-distinguished-names - OU and DC

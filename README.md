@@ -11,7 +11,8 @@
 ## About
 
 **django-ca** is a tool to manage TLS certificate authorities and easily issue and revoke certificates. It is
-based on [cryptography](https://cryptography.io/) and [Django](https://www.djangoproject.com/>). It can be used as an app in an existing Django project or
+based on [cryptography](https://cryptography.io/) and [Django](https://www.djangoproject.com/>). It can be
+used as an app in an existing Django project or
 stand-alone with the basic project included. Certificates can be managed through Django's admin interface or
 via `manage.py` commands - so no webserver is needed, if you’re happy with the command-line.
 
@@ -25,7 +26,7 @@ Documentation is available at https://django-ca.readthedocs.org/.
 4. Private key storage on the file system, in the database or in a Hardware Security Module (HSM).
 5. Management via command line and/or via Django's admin interface.
 6. Get email notifications about expiring certificates.
-7. Written in Python 3.11+, Django 5.2+ and cryptography 49+.
+7. Written in Python 3.11+, Django 5.2+ and cryptography 50+.
 
 Please see https://django-ca.readthedocs.org for more extensive documentation.
 
