@@ -43,8 +43,9 @@ services:
         condition: service_healthy
     healthcheck: &celery-healthcheck
       # Check that the PID file written by django-ca-celery(beat) exists and references a running process.
-      # NOTE: The explicit check for an empty PID guards against "[ -d /proc/ ]", which would always succeed.
-      test: [ "CMD-SHELL", "pid=$$(cat /run/django-ca/celery.pid) && [ -n \"$$pid\" ] && [ -d \"/proc/$$pid\" ]" ]
+      # NOTE: Python is used as the image has no shell. The isdigit() check also guards against an empty PID,
+      #       which would check "/proc/" and always succeed.
+      test: [ "CMD", "python", "-I", "-c", "import os, sys; pid = open('/run/django-ca/celery.pid').read().strip(); sys.exit(not (pid.isdigit() and os.path.isdir('/proc/' + pid)))" ]
       timeout: 1s
       start_interval: 1s
       start_period: 30s
@@ -134,7 +135,8 @@ services:
       NGINX_TEMPLATE: ${NGINX_TEMPLATE:-default}
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "nc", "-w", "1", "-z", "127.0.0.1", "8000" ]
+      # Check that Gunicorn accepts TCP connections (Python is used as the image has no shell or nc).
+      test: [ "CMD", "python", "-I", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), timeout=1).close()" ]
       timeout: 1s
       start_period: 30s
       start_interval: 1s

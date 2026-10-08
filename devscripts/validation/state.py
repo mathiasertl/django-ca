@@ -393,22 +393,18 @@ def check_dockerfile(path: str, distro: str) -> int:
         arg_key, _, arg_value = match.groups()
 
         # Validate we use the newest python and distro
-        if arg_key == "IMAGE":
-            if distro == "debian":
-                expected_image = f"debian:{config.LATEST_DEBIAN_CODENAME}-slim"
-                if arg_value != expected_image:
-                    errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
-            elif distro == "alpine":
-                expected_image = f"python:{config.NEWEST_PYTHON}-alpine{config.ALPINE_RELEASES[-1]}"
-                if arg_value != expected_image:
-                    errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
-            else:
-                errors += err(f"{distro}: Unknown distro found.")
-
-        elif arg_key == "DIST" and distro == "debian":
-            expected_dist = config.DEBIAN_RELEASES[-1]
-            if arg_value != expected_dist:
-                errors += err(f"{arg_value}: Unexpected DIST found (should be {expected_dist}).")
+        if arg_key == "IMAGE" and distro == "alpine":
+            expected_image = f"python:{config.NEWEST_PYTHON}-alpine{config.ALPINE_RELEASES[-1]}"
+            if arg_value != expected_image:
+                errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
+        elif arg_key == "DEBIAN_CODENAME":
+            expected = config.LATEST_DEBIAN_CODENAME
+            if arg_value != expected:
+                errors += err(f"{arg_value}: Unexpected Debian codename found (should be {expected}).")
+        elif arg_key == "DEBIAN_VERSION":
+            expected = config.LATEST_DEBIAN_VERSION
+            if arg_value != expected:
+                errors += err(f"{arg_value}: Unexpected Debian version found (should be {expected}).")
 
         elif arg_key == "PYTHON":
             if arg_value != config.NEWEST_PYTHON:

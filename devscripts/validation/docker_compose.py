@@ -61,6 +61,7 @@ def _compose_up(
     except Exception:  # noqa: BLE001
         if interactive:
             input(f"Error occurred, was working in {os.getcwd()}\n")
+        raise
     finally:
         down = ["docker", "compose", "down"]
         if remove_volumes is True:
@@ -102,11 +103,7 @@ def _openssl_ocsp(
 
 
 def _validate_crl_ocsp(
-    ca_file: str,
-    cert_file: str,
-    cert_subject: str,
-    already_revoked: bool = False,
-    old_management_commands: bool = False,  # use management commands in django-ca<3.0.0.
+    ca_file: str, cert_file: str, cert_subject: str, already_revoked: bool = False
 ) -> None:
     """Test OpenSSL CRL and OCSP validation.
 
@@ -133,10 +130,7 @@ def _validate_crl_ocsp(
         _openssl_verify(ca_file, cert_file)
 
     # Re-cache CRLs
-    if old_management_commands:
-        compose_manage("backend", "cache_crls", "--force")
-    else:
-        compose_manage("backend", "generate_crls", "--force")
+    compose_manage("backend", "generate_crls", "--force")
     time.sleep(1)  # give celery task some time
 
     # "openssl ocsp" always returns 0 if it retrieves a valid OCSP response, even if the cert is revoked
@@ -172,7 +166,7 @@ def get_postgres_version(path: Path | str) -> str:
     return parsed_data["services"]["db"]["image"].split(":")[1].split("-")[0]  # type: ignore[no-any-return]
 
 
-def test_update(docker_tag: str, release: str) -> int:  # noqa: PLR0915
+def test_update(docker_tag: str, release: str, interactive: bool) -> int:  # noqa: PLR0915
     """Validate updating with docker compose."""
     info("Validating docker compose update...")
     errors = 0
@@ -197,7 +191,11 @@ POSTGRES_PASSWORD=mysecretpassword
 
             # Start previous version
             info(f"Start previous version ({last_release}).")
-            with _compose_up(remove_volumes=False, env=dict(os.environ, DJANGO_CA_VERSION=last_release)):
+            with _compose_up(
+                remove_volumes=False,
+                env=dict(os.environ, DJANGO_CA_VERSION=last_release),
+                interactive=interactive,
+            ):
                 # Make sure old containers started properly
                 errors += compose_status(f"{docker_tag.split(':', 1)[0]}:{last_release}")
 
@@ -210,8 +208,8 @@ POSTGRES_PASSWORD=mysecretpassword
                 compose_exec("backend", "./create-testdata.py", "--env", "backend")
                 compose_exec("frontend", "./create-testdata.py", "--env", "frontend")
 
-                compose_manage("backend", "cache_crls")  # TODO: Renamed to generate_crls in 3.0.0
-                compose_manage("backend", "regenerate_ocsp_keys")  # TODO: Renamed to generate_ocsp_keys
+                compose_manage("backend", "generate_crls")
+                compose_manage("backend", "generate_ocsp_keys")
 
                 # Write root CA and cert to disk for OpenSSL validation
                 ca_subject = "rsa.example.com"  # created by create-testdata.py
@@ -223,7 +221,7 @@ POSTGRES_PASSWORD=mysecretpassword
                     )
 
                 # Test CRL and OCSP validation
-                _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}", old_management_commands=True)
+                _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}")
 
             old_postgres_version = get_postgres_version("compose.yaml")
             new_postgres_version = get_postgres_version(config.ROOT_DIR / "compose.yaml")
@@ -273,7 +271,7 @@ POSTGRES_PASSWORD=mysecretpassword
 
             # Start and check new version
             info(f"Start current version ({release}).")
-            with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release)):
+            with _compose_up(env=dict(os.environ, DJANGO_CA_VERSION=release), interactive=interactive):
                 # Make sure containers started properly
                 errors += compose_status(docker_tag)
 
@@ -286,8 +284,8 @@ POSTGRES_PASSWORD=mysecretpassword
                 info("Validate test data...")
                 compose_cp(str(validation_script), f"backend:{standalone_dest}")
                 compose_cp(str(validation_script), f"frontend:{standalone_dest}")
-                compose_exec("backend", "./validate-testdata.py", "--env", "backend")
-                compose_exec("frontend", "./validate-testdata.py", "--env", "frontend")
+                compose_exec("backend", "python", "./validate-testdata.py", "--env", "backend")
+                compose_exec("frontend", "python", "./validate-testdata.py", "--env", "frontend")
 
                 # Test CRL and OCSP validation
                 _validate_crl_ocsp("ca.pem", "cert.pem", f"cert.{ca_subject}", already_revoked=True)
@@ -547,7 +545,7 @@ class Command(DevCommand):
                 errors += self.run_tutorial(release, docker_tag, alpine=True, interactive=args.interactive)
 
         if args.update and errors == 0:
-            errors += test_update(docker_tag, release)
+            errors += test_update(docker_tag, release, interactive=args.interactive)
 
         if args.acme and errors == 0:
             if args.acme_dist is not None:

@@ -163,7 +163,7 @@ def compose_test_connectivity() -> int:
     errors = 0
     for service in COMPOSE_SERVICES:
         compose_cp(str(standalone_dir / "test-connectivity.py"), f"{service}:{standalone_dest}")
-        proc = compose_exec(service, "./test-connectivity.py", check=False)
+        proc = compose_exec(service, "python", "./test-connectivity.py", check=False)
         if proc.returncode != 0:
             errors += 1
 

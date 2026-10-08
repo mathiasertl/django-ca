@@ -53,15 +53,6 @@ def _test_alpine_version(docker_tag: str, alpine_version: str) -> int:
     return ok(f"Docker image uses Alpine Linux {actual_release}.")
 
 
-def _test_debian_version(docker_tag: str, debian_version: str) -> int:
-    proc = docker_run(docker_tag, "lsb_release", "-cs", capture_output=True, text=True)
-    actual_release = proc.stdout.strip()
-
-    if actual_release != debian_version:
-        return err(f"Docker image uses outdated Debian Linux version {actual_release}.")
-    return ok(f"Docker image uses Debian Linux {actual_release}.")
-
-
 def _test_extras(docker_tag: str) -> int:
     cwd = os.getcwd()
     docker_run(
@@ -72,6 +63,8 @@ def _test_extras(docker_tag: str) -> int:
         "-w",
         "/usr/src/django-ca/",
         docker_tag,
+        # NOTE: Pass the script to python, as the image has no /usr/bin/env used in the shebang.
+        "python",
         "devscripts/standalone/test-imports.py",
         "--all-extras",
     )
@@ -82,8 +75,14 @@ def _test_clean(docker_tag: str) -> int:
     """Make sure that the Docker image does not contain any unwanted files."""
     cwd = os.getcwd()
     script = "check-clean-docker.py"
+    # NOTE: Pass the script to python, as the image has no /usr/bin/env used in the shebang.
     proc = docker_run(
-        "-v", f"{cwd}/devscripts/standalone/{script}:/tmp/{script}", docker_tag, f"/tmp/{script}", check=False
+        "-v",
+        f"{cwd}/devscripts/standalone/{script}:/tmp/{script}",
+        docker_tag,
+        "python",
+        f"/tmp/{script}",
+        check=False,
     )
     if proc.returncode != 0:
         return err("Docker image is not clean.")
@@ -98,7 +97,6 @@ def validate_docker_image(release: str, docker_tag: str) -> int:
     errors += _test_clean(docker_tag)
     errors += _test_version(docker_tag, release)
     errors += _test_alpine_version(docker_tag, config.ALPINE_RELEASES[-1])
-    errors += _test_debian_version(docker_tag, config.DEBIAN_RELEASES[-1])
     errors += _test_extras(docker_tag)
     return errors
 
