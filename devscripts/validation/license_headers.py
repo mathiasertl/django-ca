@@ -82,7 +82,7 @@ class Command(DevCommand):
         standalone_scripts = config["django-ca"]["validation"]["standalone-scripts"]
         excludes = config["django-ca"]["validation"]["excludes"]
 
-        for directory in ["ca", "docs/source", "devscripts"]:
+        for directory in ["ca", "docs/source", "devscripts", "scripts"]:
             for path in sorted(Path(directory).glob("**/*.py")):
                 if not any(path.match(exclude) for exclude in excludes):
                     errors += handle_python_file(path, script=str(path) in standalone_scripts)

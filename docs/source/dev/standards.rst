@@ -58,7 +58,7 @@ To run all linters, simply run (:command:`pylint` runs separate as it is very sl
 .. code-block:: console
 
    $ ./dev.py code-quality
-   $ pylint ca/ca/ ca/django_ca/ devscripts/ docs/source/django_ca_sphinx/ *.py
+   $ pylint ca/ca/ ca/django_ca/ devscripts/ scripts/ docs/source/django_ca_sphinx/ *.py
 
 For type-checking, run:
 

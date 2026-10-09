@@ -278,7 +278,7 @@ parts:
           output: |
             Name                       Command               State         Ports
             -----------------------------------------------------------------------------------
-            ca_backend_1     ./celery.sh -l info              Up
+            ca_backend_1     django-ca-celery -l info         Up
             ca_cache_1       docker-entrypoint.sh redis ...   Up
             ...
 

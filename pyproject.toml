@@ -87,6 +87,9 @@ standalone-scripts = [
     "devscripts/standalone/create-testdata.py",
     "devscripts/standalone/clean.py",
     "devscripts/standalone/check-clean-docker.py",
+    "scripts/django-ca-celery.py",
+    "scripts/django-ca-celerybeat.py",
+    "scripts/django-ca-gunicorn.py",
 ]
 
 [project]

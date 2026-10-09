@@ -35,14 +35,16 @@ services:
 
   beat:
     image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-    command: celerybeat.sh -l ${CELERY_LOG_LEVEL:-warning}
+    command: django-ca-celerybeat -l ${CELERY_LOG_LEVEL:-warning}
     depends_on:
       cache:
         condition: service_healthy
       db:
         condition: service_healthy
     healthcheck: &celery-healthcheck
-      test: [ "CMD-SHELL", "[ -d /proc/`cat /tmp/celerybeat.pid` ]" ]
+      # Check that the PID file written by django-ca-celery(beat) exists and references a running process.
+      # NOTE: The explicit check for an empty PID guards against "[ -d /proc/ ]", which would always succeed.
+      test: [ "CMD-SHELL", "pid=$$(cat /run/django-ca/celery.pid) && [ -n \"$$pid\" ] && [ -d \"/proc/$$pid\" ]" ]
       timeout: 1s
       start_interval: 1s
       start_period: 30s
@@ -82,7 +84,7 @@ services:
 
   backend:
     image: ${DJANGO_CA_IMAGE:-mathiasertl/django-ca}:${DJANGO_CA_VERSION:-latest}
-    command: celery.sh -l ${CELERY_LOG_LEVEL:-warning}
+    command: django-ca-celery -l ${CELERY_LOG_LEVEL:-warning}
     depends_on:
       beat:
         condition: service_healthy

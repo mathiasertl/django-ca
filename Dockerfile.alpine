@@ -132,7 +132,12 @@ COPY --from=prepare /usr/src/django-ca/ ./
 RUN ln -s /usr/src/django-ca/ca/manage.py /usr/local/bin/manage
 
 COPY scripts/ /usr/src/django-ca/scripts/
-RUN ln -s /usr/src/django-ca/scripts/*.sh /usr/local/bin/
+# Wrapper scripts are installed without the .py suffix (e.g. "django-ca-gunicorn").
+# Legacy shell scripts (celery.sh, ...) are still installed until django-ca~=4.0.0 (see deprecation notices).
+RUN for script in /usr/src/django-ca/scripts/django-ca-*.py; do \
+        ln -s "${script}" "/usr/local/bin/$(basename "${script}" .py)"; \
+    done && \
+    ln -s /usr/src/django-ca/scripts/*.sh /usr/local/bin/
 
 USER django-ca:django-ca
 EXPOSE 8000
@@ -141,4 +146,4 @@ WORKDIR /usr/src/django-ca/ca/
 
 ENV DJANGO_CA_SETTINGS=conf/:conf/local
 
-CMD [ "gunicorn.sh" ]
+CMD [ "django-ca-gunicorn" ]

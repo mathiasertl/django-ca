@@ -97,7 +97,7 @@ Individual steps:
 ```bash
 uv run ruff format .                 # apply formatting (line length 110)
 uv run ruff check --fix .            # lint + auto-fix
-uv run pylint ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/ dev.py  # slow, run separately
+uv run pylint ca/django_ca/ ca/ca/ docs/source/django_ca_sphinx/ devscripts/ scripts/ dev.py  # slow, run separately
 uv run python dev.py validate state  # checks version matrix consistency across CI/README/tox/pyproject.toml
 uv run python dev.py validate license-headers  # GPL-3 header required on every non-migration .py file
 ```

@@ -276,7 +276,7 @@ parts:
                   -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
                   --name={{ BEAT_HOST }} --network={{ DOCKER_NETWORK }} \
                   {{ DOCKER_TAG }} \
-                  celerybeat.sh -l warning
+                  django-ca-celerybeat -l warning
             run:
               cleanup:
                 - command: docker kill {{ BEAT_HOST }}
@@ -305,7 +305,7 @@ parts:
                   -v ocsp_key_dir:/var/lib/django-ca/certs/ocsp/ \
                   --name={{ BACKEND_HOST }} --network={{ DOCKER_NETWORK }} \
                   {{ DOCKER_TAG }} \
-                  celery.sh -l warning
+                  django-ca-celery -l warning
             run:
               cleanup:
                 - command: docker kill {{ BACKEND_HOST }}
