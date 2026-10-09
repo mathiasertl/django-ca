@@ -48,8 +48,6 @@ mysql = [
 
 # https://alpinelinux.org/releases/
 alpine = [
-    "3.22", # until 2027-05-01
-    "3.23", # until 2027-11-01
     "3.24", # until 2028-06-01
 ]
 
