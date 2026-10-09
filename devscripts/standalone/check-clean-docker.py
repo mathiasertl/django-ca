@@ -40,9 +40,6 @@ patterns = [
     "*.key",
     "*.pem",
     "*.log",
-    # generated files:
-    "*.pyc",
-    "__pycache__",
     # included files that really should not be in the image:
     "dev.py",
     "docs",

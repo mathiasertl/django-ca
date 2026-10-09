@@ -82,4 +82,6 @@ Deprecation notices
 Setup and packaging
 *******************
 
-No changes yet.
+* Docker images now includes bytecode for improved startup times (at the expense of larger images). The
+  bytecode adds about 33 MB to the image size (227 MB -> 260 MB), but startup time of a simple ``manage -h``
+  invocation improves from six seconds to three seconds.

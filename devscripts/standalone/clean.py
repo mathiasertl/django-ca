@@ -60,10 +60,6 @@ def cleanup(root: Path, dry: bool = False, verbose: bool = False) -> None:
         remove(path, dry=dry, verbose=verbose)
     for path in root.glob("*.pem"):
         remove(path, dry=dry, verbose=verbose)
-    for path in root.rglob("__pycache__/"):
-        remove(path, dry=dry, verbose=verbose)
-    for path in root.rglob("*.pyc"):
-        remove(path, dry=dry, verbose=verbose)
     for path in root.rglob("*.sqlite3"):
         remove(path, dry=dry, verbose=verbose)
     for path in root.rglob("*.egg-info/"):
