@@ -34,7 +34,7 @@ No changes yet.
 Command-line
 ************
 
-No changes yet.
+* :command:`manage.py notify_expiring_certs`: The ``--days`` parameter was removed.
 
 ***************
 Admin interface

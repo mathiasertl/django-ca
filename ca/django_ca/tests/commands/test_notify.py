@@ -30,13 +30,3 @@ def test_calls_task() -> None:
     assert stdout == ""
     assert stderr == ""
     mock_run_task.assert_called_once_with(notify_watchers)
-
-
-def test_deprecated_days_option() -> None:
-    """Passing --days prints a deprecation warning to stdout."""
-    with mock.patch("django_ca.management.commands.notify_expiring_certs.run_task") as mock_run_task:
-        stdout, stderr = cmd("notify_expiring_certs", days=3)
-    warning = "The --days option no longer has any effect and will be removed in django-ca==3.3.0."
-    assert stdout == f"{warning}\n"
-    assert stderr == ""
-    mock_run_task.assert_called_once_with(notify_watchers)

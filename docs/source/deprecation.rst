@@ -29,13 +29,6 @@ Docker images
   ================= ========================
 
 ***************
-3.3.0 (Q4 2026)
-***************
-
-* The ``--days`` parameter for the `notify_expiring_certs` management command will be removed (deprecated
-  since 3.1.0).
-
-***************
 3.2.0 (Q3 2026)
 ***************
 
