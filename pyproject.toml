@@ -482,7 +482,7 @@ ignore = [
     "D104", # Missing docstring in public package - includes even empty __init__.py files
     "D105", # Missing docstring in magic method - includes __str__() etc
     "D106", # Missing docstring in public nested class - includes Meta/Media classes
-    "D301", # Use `r"""` if any backslashes in a docstring - incompatible with doctests!
+    "D301", # incompatible with doctests
     "D401", # First line of docstring should be in imperative mood
     "PLR2004", # Magic value used in comparison - not disabled in default pylint
     "PLW2901", # redefined-loop-name - not disabled in default pylint
@@ -638,7 +638,7 @@ mypy = [
 ]
 gunicorn = ["gunicorn>=23"]
 
-# Dependency groups for use in test matrices (tox, GitHub actions, ...)
+# Dependency groups for use in test matrices (tox, GitHub Actions, ...)
 # NOTE: don't forget to add conflicts in [tool.uv] above.
 "DjangoLTS" = ["Django~=5.2.0"]
 "Django5.2" = ["Django~=5.2.0"]
