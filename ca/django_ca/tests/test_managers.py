@@ -468,7 +468,7 @@ def test_init_with_expires_is_wrong_type(
 
 def test_init_with_naive_expires(ca_name: str, subject: x509.Name, key_backend: StoragesBackend) -> None:
     """Test init with a naive expired."""
-    not_after = datetime(2024, 5, 31)  # noqa: DTZ001
+    not_after = datetime(2024, 5, 31)
     with pytest.raises(ValueError, match=r"^not_after must not be a naive datetime\."):
         CertificateAuthority.objects.init(
             ca_name, key_backend, key_backend_options, subject, not_after=not_after

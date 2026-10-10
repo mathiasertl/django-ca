@@ -447,13 +447,13 @@ def test_extensions_with_non_default_critical(
     (
         (
             ["--private-key-usage-period-not-before=2011-11-04T00:05:23.283+00:00"],
-            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": None},  # noqa: DTZ001
+            {"not_before": datetime(2011, 11, 4, 0, 5, 23), "not_after": None},
         ),
         (
             [
                 "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
             ],
-            {"not_before": None, "not_after": datetime(2011, 11, 4, 1, 5, 24)},  # noqa: DTZ001
+            {"not_before": None, "not_after": datetime(2011, 11, 4, 1, 5, 24)},
         ),
         (
             [
@@ -461,8 +461,8 @@ def test_extensions_with_non_default_critical(
                 "--private-key-usage-period-not-after=2011-11-04T01:05:24.283+00:00",
             ],
             {
-                "not_before": datetime(2011, 11, 4, 0, 5, 23),  # noqa: DTZ001
-                "not_after": datetime(2011, 11, 4, 1, 5, 24),  # noqa: DTZ001
+                "not_before": datetime(2011, 11, 4, 0, 5, 23),
+                "not_after": datetime(2011, 11, 4, 1, 5, 24),
             },
         ),
     ),
@@ -493,8 +493,8 @@ def test_private_key_usage_period_extension_with_not_after_before_not_before(
         sign_cert(
             usable_root,
             subject,
-            private_key_usage_period_not_before=datetime(2011, 11, 4, 1, 5, 24),  # noqa: DTZ001
-            private_key_usage_period_not_after=datetime(2011, 11, 4, 0, 5, 23),  # noqa: DTZ001
+            private_key_usage_period_not_before=datetime(2011, 11, 4, 1, 5, 24),
+            private_key_usage_period_not_after=datetime(2011, 11, 4, 0, 5, 23),
         )
 
 
@@ -502,11 +502,11 @@ def test_private_key_usage_period_extension_with_not_after_before_not_before(
 @pytest.mark.parametrize(
     "kwargs",
     (
-        {"private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23)},  # noqa: DTZ001
-        {"private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24)},  # noqa: DTZ001
+        {"private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23)},
+        {"private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24)},
         {
-            "private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23),  # noqa: DTZ001
-            "private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24),  # noqa: DTZ001
+            "private_key_usage_period_not_before": datetime(2011, 11, 4, 0, 5, 23),
+            "private_key_usage_period_not_after": datetime(2011, 11, 4, 1, 5, 24),
         },
     ),
 )

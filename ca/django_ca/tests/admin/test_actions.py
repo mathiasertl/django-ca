@@ -344,7 +344,7 @@ class RevokeChangeActionTestCase(AdminChangeActionTestCaseMixin[Certificate], Te
 
     def test_with_compromised_without_use_tz(self) -> None:
         """Test revoking a certificate with a revocation date with USE_TZ=False."""
-        value = datetime.now() - timedelta(days=1)  # noqa: DTZ005
+        value = datetime.now() - timedelta(days=1)
         data = {"compromised_0": value.strftime("%Y-%m-%d"), "compromised_1": value.strftime("%H:%M:%S")}
 
         with self.mockSignals(), self.settings(USE_TZ=False):
