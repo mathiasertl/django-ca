@@ -2,7 +2,7 @@
 # check=error=true
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
-ARG IMAGE=python:3.14-slim-trixie
+ARG IMAGE=python:3.15-slim-trixie
 
 # These arguments are used to more easily assure a consistent version
 # with dev.py validate state

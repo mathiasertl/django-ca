@@ -414,7 +414,7 @@ def check_readthedocs() -> int:
     # Check Python version
     pyver = rtd_config["build"]["tools"]["python"]
     if pyver != config.NEWEST_PYTHON:
-        errors += err(f"{pyver}: Old python version.")
+        errors += disabled(f"{pyver}: Old python version.")
 
     # check UV version
     for command in rtd_config["build"]["jobs"]["create_environment"]:

@@ -70,6 +70,7 @@ No changes yet.
 Dependencies
 ************
 
+* Add support for Python 3.15.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``cryptography~=49.0``.
 * **BACKWARDS INCOMPATIBLE:** Dropped support for ``acme~=5.6.0`` and ``acme~=5.7.0``.
 
