@@ -2,6 +2,10 @@
 3.3.0 (TBR)
 ###########
 
+.. spelling::
+
+    bytecode
+
 ********
 Settings
 ********
