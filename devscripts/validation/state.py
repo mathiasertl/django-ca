@@ -418,7 +418,7 @@ def check_readthedocs() -> int:
 
     # check UV version
     for command in rtd_config["build"]["jobs"]["create_environment"]:
-        if match := re.search(" uv (.*)", command):
+        if match := re.search(" uv latest:(.*)", command):
             uv_version = match.groups(1)[0]
             if uv_version != config.UV:
                 errors += err(f"{uv_version}: Unexpected UV version.")
