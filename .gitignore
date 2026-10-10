@@ -4,6 +4,7 @@
 *.py[co]
 *.sqlite3
 *.sw[po]
+.analysisignore
 .coverage
 .idea/
 .vagrant/
