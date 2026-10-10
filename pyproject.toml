@@ -245,7 +245,7 @@ module = [
     # docker==6.1.3 does not have typehints. See also:
     #   https://github.com/docker/docker-py/issues/2796
     "docker.*",
-    "enchant.tokenize",
+    "enchant.*", # minimal usage in Sphinx extension
     "httpcore.*",
     "pkcs11.*",
     "pkcs11.util.*",

@@ -23,14 +23,11 @@ from docutils.nodes import document
 from pydantic import BaseModel
 from sphinx.addnodes import pending_xref
 from sphinx.application import Sphinx
+from sphinx.util import logging
 
-try:
-    from sphinxcontrib import spelling
-except ImportError:
-    spelling = None
-
-
+logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.dirname(__file__))
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -58,6 +55,8 @@ from devscripts.versions import get_last_version  # NOQA: E402
 
 django.setup()
 
+# Imported code requires the current path in sys.path and Django setup to be complete.
+from django_ca_sphinx.spelling import MagicWordsFilter, TypeHintsFilter, URIFilter  # noqa: E402
 
 # -- General configuration ------------------------------------------------
 
@@ -83,17 +82,16 @@ extensions = [
     "sphinx_jinja",
     "sphinxcontrib.openapi",
     "sphinxcontrib.jquery",
+    "sphinxcontrib.spelling",
     "django_ca_sphinx",
     "structured_tutorials.sphinx",
 ]
 
-if spelling is not None:
-    from django_ca_sphinx.spelling import URIFilter, MagicWordsFilter, TypeHintsFilter  # isort:skip
 
-    extensions.append("sphinxcontrib.spelling")
-    spelling_exclude_patterns = ["**/generated/*.rst"]
-    spelling_filters = [URIFilter, MagicWordsFilter, TypeHintsFilter]
-    # spelling_show_suggestions = True
+# sphinxcontrib.spelling configuration
+#   https://sphinxcontrib-spelling.readthedocs.io/en/latest/index.html
+spelling_exclude_patterns = ["**/generated/*.rst"]
+spelling_filters = [URIFilter, MagicWordsFilter, TypeHintsFilter]
 
 numpydoc_show_class_members = False
 autodoc_inherit_docstrings = False
@@ -323,7 +321,7 @@ qualname_overrides = {
     "cryptography.x509.extensions.ExtendedKeyUsage": "cg:cryptography.x509.ExtendedKeyUsage",
     "cryptography.x509.extensions.PrivateKeyUsagePeriod": "cg:cryptography.x509.PrivateKeyUsagePeriod",
     "cryptography.hazmat.primitives._asymmetric.AsymmetricPadding": "cg:cryptography.hazmat.primitives.asymmetric.padding.AsymmetricPadding",  # noqa: E501
-    # These only happen when building on GitHub actions (2024-06-27)
+    # These only happen when building on GitHub Actions (2024-06-27)
     "BytesIO": "python:io.BytesIO",
     "StringIO": "python:io.StringIO",
     "ec.EllipticCurve": "cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve",
@@ -410,7 +408,7 @@ def resolve_canonical_names(app: Sphinx, doctree: document) -> None:
 
 
 def strip_signature_for_pydantic_models(
-    app: Any,
+    app: Sphinx,
     obj_type: str,
     name: str,
     obj: Any,
@@ -431,7 +429,18 @@ def strip_signature_for_pydantic_models(
     return None
 
 
+def show_enchant_provider(app: Sphinx) -> None:
+    """Log the currently configured enchant (spelling) provider."""
+    if app.builder.name == "spelling":
+        import enchant  # noqa: PLC0415
+
+        enchant_broker = enchant.Broker()
+        enchant_provider = enchant_broker.request_dict("en_US").provider
+        logger.info("Enchant provider: %s", enchant_provider.name)
+
+
 def setup(app: Sphinx) -> None:
     """Add hook functions to Sphinx hooks."""
+    app.connect("builder-inited", show_enchant_provider)
     app.connect("doctree-read", resolve_canonical_names)
     app.connect("autodoc-process-signature", strip_signature_for_pydantic_models)
