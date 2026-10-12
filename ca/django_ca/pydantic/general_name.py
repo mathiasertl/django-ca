@@ -17,7 +17,7 @@ import binascii
 import ipaddress
 from datetime import datetime
 from ipaddress import ip_address, ip_network
-from typing import Annotated, Any, cast
+from typing import Annotated, cast
 
 from pydantic import BeforeValidator, Discriminator, Tag, TypeAdapter, model_validator
 
@@ -39,7 +39,7 @@ ip_address_classes = (
 )
 
 
-def general_name_discriminator(value: Any) -> str | None:
+def general_name_discriminator(value: object) -> str | None:
     """Decide on the discriminated type for a GeneralName value."""
     if isinstance(value, ip_address_classes):
         return "ipaddress"
@@ -52,7 +52,7 @@ def general_name_discriminator(value: Any) -> str | None:
     return "str"
 
 
-def other_name_type_aliases(value: Any) -> Any:
+def other_name_type_aliases(value: str) -> object:
     """Validator to convert OtherName aliases."""
     return constants.OTHER_NAME_ALIASES.get(value, value)
 
@@ -98,7 +98,7 @@ class OtherNameModel(CryptographyModel[x509.OtherName]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.OtherName):
             try:
@@ -201,7 +201,7 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Validator to parse cryptography values."""
         if isinstance(data, x509.RegisteredID):
             return {"type": "RID", "value": data.value.dotted_string}

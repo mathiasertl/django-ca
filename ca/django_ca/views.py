@@ -25,7 +25,7 @@ import logging
 import typing
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any, cast
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -441,7 +441,7 @@ class GenericOCSPView(OCSPView):
 
     # NOINSPECTION NOTE: It's okay to be more specific here
     # noinspection PyMethodOverriding
-    def dispatch(self, request: HttpRequest, serial: str, **kwargs: Any) -> "HttpResponseBase":
+    def dispatch(self, request: HttpRequest, serial: str, **kwargs: str) -> "HttpResponseBase":
         if request.method == "GET" and "data" not in kwargs:
             return self.http_method_not_allowed(request, serial, **kwargs)
         if request.method == "POST" and "data" in kwargs:
@@ -449,6 +449,8 @@ class GenericOCSPView(OCSPView):
 
         # COVERAGE NOTE: Checking just for safety here.
         if not isinstance(serial, str):  # pragma: no cover
+            raise ImproperlyConfigured("View expects a str for a serial")
+        if (data := kwargs.get("data")) and not isinstance(data, str):  # pragma: no cover
             raise ImproperlyConfigured("View expects a str for a serial")
 
         return super().dispatch(request, **kwargs)

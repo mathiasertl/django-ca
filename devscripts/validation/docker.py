@@ -154,7 +154,7 @@ class Command(DevCommand):
             release = args.release
             docker_tag = self.get_docker_tag(args.release)
         elif args.build:
-            release, docker_tag = self.command("build", "docker")
+            release, docker_tag = self.command("build", "docker")  # type: ignore[misc]
         else:
             release = self.django_ca.__version__
             docker_tag = self.get_docker_tag(release)

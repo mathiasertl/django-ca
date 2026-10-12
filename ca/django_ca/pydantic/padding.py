@@ -24,7 +24,7 @@ from django_ca.pydantic.base import CryptographyModel
 from django_ca.pydantic.type_aliases import AnnotatedSignatureHashAlgorithmName
 
 
-def pss_salt_length_validator(value: Any) -> Any:
+def pss_salt_length_validator(value: object) -> object:
     """Validator for the PSS salt length argument, converting constants to strings."""
     if value == padding.PSS.AUTO:
         return "AUTO"
@@ -42,7 +42,7 @@ class PKCS1v15Model(CryptographyModel[padding.PKCS1v15]):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_cryptography(cls, obj: Any) -> Any:
+    def validate_cryptography(cls, obj: object) -> object:
         """Model validator to parse cryptography models."""
         if isinstance(obj, padding.PKCS1v15):
             return {}
@@ -61,7 +61,7 @@ class MGF1Model(CryptographyModel[padding.MGF1]):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_cryptography(cls, obj: Any) -> Any:
+    def validate_cryptography(cls, obj: object) -> object:
         """Model validator to parse cryptography models."""
         if isinstance(obj, padding.MGF1):
             # pylint: disable-next=protected-access  # no public accessors available
@@ -85,7 +85,7 @@ class PSSModel(CryptographyModel[padding.PSS]):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_cryptography(cls, obj: Any) -> Any:
+    def validate_cryptography(cls, obj: object) -> object:
         """Model validator to parse cryptography models."""
         if isinstance(obj, padding.PSS):
             # pylint: disable-next=protected-access  # no public accessors available
@@ -107,7 +107,7 @@ class PSSModel(CryptographyModel[padding.PSS]):
         return padding.PSS(mgf=self.mgf.cryptography, salt_length=salt_length)
 
 
-def padding_validator(value: Any) -> Any:
+def padding_validator(value: object) -> object:
     """Validator for various padding types."""
     if isinstance(value, padding.PKCS1v15):
         return PKCS1v15Model.model_validate(value)

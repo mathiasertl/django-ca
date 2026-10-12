@@ -16,7 +16,7 @@
 import abc
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generic, Optional, Self, TypeVar
+from typing import TYPE_CHECKING, Generic, Optional, Self, TypeVar
 
 from cryptography import x509
 
@@ -72,11 +72,11 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
         # pylint: disable=missing-function-docstring
         model: type[X509CertMixinTypeVar]
 
-        def exclude(self, *args: Any, **kwargs: Any) -> Self: ...
+        def exclude(self, *args: object, **kwargs: object) -> Self: ...
 
-        def filter(self, *args: Any, **kwargs: Any) -> Self: ...
+        def filter(self, *args: object, **kwargs: object) -> Self: ...
 
-        def get(self, *args: Any, **kwargs: Any) -> X509CertMixinTypeVar: ...
+        def get(self, *args: object, **kwargs: object) -> X509CertMixinTypeVar: ...
 
     def _serial_or_cn_query(self, identifier: str) -> tuple[Q, Q]:
         identifier = identifier.strip()

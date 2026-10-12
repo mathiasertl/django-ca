@@ -43,14 +43,14 @@ from django_ca.typehints import SignatureHashAlgorithmName
 from django_ca.utils import parse_encoding
 
 
-def version_validator(value: Any) -> Any:
+def version_validator(value: object) -> object:
     """Convert cryptography version into an integer."""
     if isinstance(value, x509.Version):
         return value.value
     return value
 
 
-def ecdsa_validator(value: Any) -> Any:
+def ecdsa_validator(value: object) -> object:
     """Validator for ECDSA model type."""
     if isinstance(value, ec.ECDSA):
         return ECDSAModel.model_validate(value)
@@ -86,7 +86,7 @@ class CertificateModel(CryptographyModel[x509.Certificate]):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_cryptography(cls, obj: Any) -> Any:
+    def validate_cryptography(cls, obj: object) -> object:
         """Model validator to parse cryptography models."""
         if isinstance(obj, x509.Certificate):
             pem = obj.public_bytes(Encoding.PEM).decode("ascii")
@@ -198,7 +198,7 @@ class DjangoCertificateAuthorityModel(X509CertMixinModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_django_model(cls, value: Any) -> Any:
+    def validate_django_model(cls, value: object) -> object:
         """Parse Django model values."""
         if isinstance(value, CertificateAuthority):
             if value.parent is None:
@@ -244,7 +244,7 @@ class DjangoCertificateModel(X509CertMixinModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_django_model(cls, value: Any) -> Any:
+    def validate_django_model(cls, value: object) -> object:
         """Parse Django model values."""
         if isinstance(value, Certificate):
             if value.csr is None:

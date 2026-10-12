@@ -411,7 +411,7 @@ def strip_signature_for_pydantic_models(
     app: Sphinx,
     obj_type: str,
     name: str,
-    obj: Any,
+    obj: object,  # really can be anything
     options: dict[str, Any],
     signature: str,
     return_annotation: str,

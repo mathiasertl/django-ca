@@ -140,7 +140,7 @@ class PydanticSettingDirective(SphinxDirective):
             field_type = origin
         return field_type, optional
 
-    def get_example_value(self, setting: str, field_info: FieldInfo) -> Any:
+    def get_example_value(self, setting: str, field_info: FieldInfo) -> object:
         """Get the example value for the given field."""
         example_idx = self.options["example"]
         if not hasattr(field_info, "examples"):
@@ -154,18 +154,18 @@ class PydanticSettingDirective(SphinxDirective):
         except IndexError as ex:
             raise self.error(f"{setting}: Example index out of range.") from ex
 
-    def prepare_value(self, setting: str, value: Any) -> tuple[str, str, str]:
+    def prepare_value(self, setting: str, value: object) -> tuple[str, str, str]:
         """Prepare the value for rendering.
 
         This returns the value as it is valid and "pretty" in Python, YAML and environment variable.
         """
-        yaml_value = env_value = value
+        yaml_value = value
 
-        def _convert_value(v: Any) -> Any:
+        def _convert_value(v: object) -> object:
             if isinstance(v, BaseModel):
                 return v.model_dump(mode="json", exclude_unset=True)
             if isinstance(v, timedelta):
-                return TypeAdapter(timedelta).dump_json(value).decode("ascii").strip('"')
+                return TypeAdapter(timedelta).dump_json(v).decode("ascii").strip('"')
             return v
 
         if isinstance(value, bool):
@@ -174,7 +174,8 @@ class PydanticSettingDirective(SphinxDirective):
             else:
                 env_value = "false"
         elif isinstance(value, timedelta):
-            env_value = yaml_value = _convert_value(value)
+            # TYPEHINT NOTE: nested function returns expected str for timedeltas
+            env_value = yaml_value = _convert_value(value)  # type: ignore[assignment]
         elif isinstance(value, dict):
             yaml_value = {k: _convert_value(v) for k, v in value.items()}
             value = yaml_value
@@ -186,6 +187,8 @@ class PydanticSettingDirective(SphinxDirective):
             yaml_value = value.model_dump(mode="json")
             env_value = value.model_dump_json().strip('"')
             value = value.model_dump()
+        else:
+            env_value = str(value)
 
         repr_value = repr(value)
         if len(repr_value) + len(setting) > 80:
@@ -195,10 +198,10 @@ class PydanticSettingDirective(SphinxDirective):
 
         return repr_value, yaml_value, env_value
 
-    def get_field_type_key(self, field_type: Any) -> str:
+    def get_field_type_key(self, field_type: type[Any]) -> str:
         """Get the field type key for rendering it in the template."""
         if field_type in (bool, int, float, str, dict, list, timedelta):
-            return field_type.__name__  # type: ignore[no-any-return]
+            return field_type.__name__
         if field_type is tuple:
             return "list"
 

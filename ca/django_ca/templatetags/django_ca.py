@@ -13,6 +13,7 @@
 
 """Template tags used by the admin interface."""
 
+import types
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Any
@@ -94,7 +95,7 @@ def extended_key_usage_list(value: x509.ExtendedKeyUsage) -> str:
 
 
 @register.filter
-def enum(mod: Any, cls_name_and_member: str) -> Any:
+def enum(mod: types.ModuleType | type[Any], cls_name_and_member: str) -> object:
     """A filter that makes enum members accessible in Django templates.
 
     Django will try to call callables, and since enums are callable, an empty string is returned instead in
@@ -132,7 +133,7 @@ def oid_name(value: x509.ObjectIdentifier) -> str:
 
 
 @register.filter
-def is_user_notice(value: Any) -> bool:
+def is_user_notice(value: object) -> bool:
     """Return ``True`` if `value` is :py:class:`~cg:cryptography.x509.UserNotice`."""
     return isinstance(value, x509.UserNotice)
 

@@ -14,7 +14,7 @@
 """Model for x509.Name."""
 
 import base64
-from typing import Annotated, Any, cast
+from typing import Annotated, cast
 
 from pydantic import BeforeValidator, ConfigDict, Field, model_validator
 
@@ -70,7 +70,7 @@ class NameAttributeModel(CryptographyModel["x509.NameAttribute[str | bytes]"]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Validator to handle x500 unique identifiers."""
         if isinstance(data, x509.NameAttribute) and data.oid == NameOID.X500_UNIQUE_IDENTIFIER:
             value = cast(bytes, data.value)
@@ -125,7 +125,7 @@ class NameModel(CryptographyRootModel[list[NameAttributeModel], x509.Name]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Validator for parsing :py:class:`~cg:cryptography.x509.Name`."""
         if isinstance(data, x509.Name):
             return list(data)

@@ -892,7 +892,7 @@ def get_crl_cache_key(
     )
 
 
-def get_type_hint(type_hint: Any) -> tuple[type[Any], bool]:
+def get_type_hint(type_hint: type[Any]) -> tuple[type[Any], bool]:
     """Get (nested) type hint for the given model."""
     origin = get_origin(type_hint)
     if origin is Union or origin is types.UnionType:  # pragma: only py<3.14: origin is UnionType in Py<3.14

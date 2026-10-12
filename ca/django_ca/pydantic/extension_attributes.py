@@ -15,7 +15,7 @@
 
 import base64
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Literal, NoReturn, Self
+from typing import TYPE_CHECKING, Annotated, Literal, NoReturn, Self
 
 from annotated_types import MaxLen, MinLen
 from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, model_validator
@@ -155,7 +155,7 @@ class AdmissionsValueModel(CryptographyModel[x509.Admissions]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instance."""
         if isinstance(data, x509.Admissions):
             return {"authority": data.authority, "admissions": data._admissions}  # pylint: disable=protected-access
@@ -238,7 +238,7 @@ class AuthorityKeyIdentifierValueModel(CryptographyModel[x509.AuthorityKeyIdenti
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instance."""
         if isinstance(data, x509.AuthorityKeyIdentifier):
             return {
@@ -349,7 +349,7 @@ class DistributionPointModel(CryptographyModel[x509.DistributionPoint]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:  # pylint: disable=missing-function-docstring
+    def parse_cryptography(cls, data: object) -> object:  # pylint: disable=missing-function-docstring
         if isinstance(data, x509.DistributionPoint):
             reasons = None
             if data.reasons:
@@ -422,7 +422,7 @@ class IssuingDistributionPointValueModel(CryptographyModel[x509.IssuingDistribut
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:  # pylint: disable=missing-function-docstring
+    def parse_cryptography(cls, data: object) -> object:  # pylint: disable=missing-function-docstring
         if isinstance(data, x509.IssuingDistributionPoint):
             reasons = None
             if data.only_some_reasons:
@@ -533,7 +533,7 @@ class SignedCertificateTimestampModel(CryptographyModel[certificate_transparency
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:  # pylint: disable=missing-function-docstring
+    def parse_cryptography(cls, data: object) -> object:  # pylint: disable=missing-function-docstring
         if isinstance(data, certificate_transparency.SignedCertificateTimestamp):
             return {
                 "version": data.version.name,
@@ -781,7 +781,7 @@ class UnrecognizedExtensionValueModel(CryptographyModel[x509.UnrecognizedExtensi
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.UnrecognizedExtension):
             return {"oid": data.oid, "value": data.value}

@@ -13,7 +13,7 @@
 
 """Profile configuration model."""
 
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
@@ -26,7 +26,7 @@ ExtensionKey = ConfigurableExtensionKey
 ExtensionValue = ConfigurableExtensionModel
 
 
-def set_extension_type_validator(value: Any) -> Any:
+def set_extension_type_validator(value: object) -> object:
     """Set the extension type for the extension."""
     if isinstance(value, dict):  # pragma: no branch
         for ext_key, ext_value in value.items():

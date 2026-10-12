@@ -528,7 +528,7 @@ class Command(DevCommand):
                 build_args.append("--no-debian")
             elif not args.alpine or not args.tutorial:
                 build_args.append("--no-alpine")
-            release, docker_tag = self.command(*build_args)
+            release, docker_tag = self.command(*build_args)  # type: ignore[misc]
         else:
             release = self.django_ca.__version__
             docker_tag = self.get_docker_tag(release)

@@ -146,13 +146,13 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
         return None
 
 
-def root_reverse(name: str, **kwargs: Any) -> str:
+def root_reverse(name: str, **kwargs: object) -> str:
     """Shortcut to get a django-ca URI with a root serial."""
     kwargs.setdefault("serial", CERT_DATA["root"]["serial"])
     return reverse(f"django_ca:{name}", kwargs=kwargs)
 
 
-def root_uri(name: str, hostname: str | None = None, **kwargs: Any) -> str:
+def root_uri(name: str, hostname: str | None = None, **kwargs: object) -> str:
     """Full URI with a root serial."""
     if not hostname:  # pragma: no branch
         hostname = SERVER_NAME
@@ -208,20 +208,27 @@ def certificate_policies(
 
 
 @typing.overload
-def cmd(*args: Any, stdout: BytesIO, stderr: BytesIO, **kwargs: Any) -> tuple[bytes, bytes]: ...
-
-
-@typing.overload
-def cmd(*args: Any, stdout: BytesIO, stderr: StringIO | None = None, **kwargs: Any) -> tuple[bytes, str]: ...
-
-
-@typing.overload
-def cmd(*args: Any, stdout: StringIO | None = None, stderr: BytesIO, **kwargs: Any) -> tuple[str, bytes]: ...
+def cmd(*args: object, stdout: BytesIO, stderr: BytesIO, **kwargs: object) -> tuple[bytes, bytes]: ...
 
 
 @typing.overload
 def cmd(
-    *args: Any, stdout: StringIO | None = None, stderr: StringIO | None = None, **kwargs: Any
+    *args: object, stdout: BytesIO, stderr: StringIO | None = None, **kwargs: object
+) -> tuple[bytes, str]: ...
+
+
+@typing.overload
+def cmd(
+    *args: object, stdout: StringIO | None = None, stderr: BytesIO, **kwargs: object
+) -> tuple[str, bytes]: ...
+
+
+@typing.overload
+def cmd(
+    *args: object,
+    stdout: StringIO | None = None,
+    stderr: StringIO | None = None,
+    **kwargs: object,
 ) -> tuple[str, str]: ...
 
 
@@ -237,13 +244,14 @@ def cmd(
     if stderr is None:
         stderr = StringIO()
     stdin = kwargs.pop("stdin", StringIO())
+    assert stdin is None or isinstance(stdin, StringIO | str | bytes), type(stdin)
 
     if isinstance(stdin, StringIO):
         with mock.patch("sys.stdin", stdin):
             call_command(*args, stdout=stdout, stderr=stderr, **kwargs)
     else:
         # mock https://docs.python.org/3/library/io.html#io.BufferedReader.read
-        def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
+        def _read_mock(size: int | None = None) -> StringIO | str | bytes | None:  # pylint: disable=unused-argument
             return stdin
 
         with mock.patch("sys.stdin.buffer.read", side_effect=_read_mock):
@@ -311,7 +319,7 @@ def cmd_e2e(
         stdin_mock = mock.patch("sys.stdin", stdin)
     else:
 
-        def _read_mock(size=None):  # type: ignore # pylint: disable=unused-argument
+        def _read_mock(size: int | None = None) -> StringIO | bytes | None:  # pylint: disable=unused-argument
             return stdin
 
         # TYPE NOTE: mypy detects a different type, but important thing is it's a context manager

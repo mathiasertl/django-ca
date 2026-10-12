@@ -15,6 +15,7 @@
 
 import base64
 from http import HTTPStatus
+from typing import Literal
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -28,21 +29,22 @@ from django_ca.models import Certificate, CertificateAuthority
 from django_ca.tests.base.typehints import HttpResponse
 
 
-def ocsp_get(
+def ocsp_request(
     client: Client,
     certificate: CertificateAuthority | Certificate,
     nonce: bytes | None = None,
     hash_algorithm: type[hashes.HashAlgorithm] = hashes.SHA256,
     nonce_critical: bool = False,
+    method: Literal["get", "post"] = "get",
 ) -> "HttpResponse":
     """Make an OCSP get request."""
     if isinstance(certificate, CertificateAuthority):
         ca = certificate.parent
         assert ca is not None, "OCSP queries can only be done for root CAs."
-        url_name = "django_ca:ocsp-ca-get"
+        url_name = f"django_ca:ocsp-ca-{method}"
     else:
         ca = certificate.ca
-        url_name = "django_ca:ocsp-cert-get"
+        url_name = f"django_ca:ocsp-cert-{method}"
 
     builder = ocsp.OCSPRequestBuilder()
     builder = builder.add_certificate(certificate.pub.loaded, ca.pub.loaded, hash_algorithm())
@@ -51,14 +53,15 @@ def ocsp_get(
         builder = builder.add_extension(x509.OCSPNonce(nonce), nonce_critical)
 
     request = builder.build()
+    request_data = request.public_bytes(Encoding.DER)
 
-    url = reverse(
-        url_name,
-        kwargs={
-            "serial": ca.serial,
-            "data": base64.b64encode(request.public_bytes(Encoding.DER)).decode("utf-8"),
-        },
-    )
-    response = client.get(url)
+    if method == "get":
+        url = reverse(
+            url_name, kwargs={"serial": ca.serial, "data": base64.b64encode(request_data).decode("utf-8")}
+        )
+        response = client.get(url)
+    else:
+        url = reverse(url_name, kwargs={"serial": ca.serial})
+        response = client.post(url, data=request_data, content_type="application/ocsp-request")
     assert response.status_code == HTTPStatus.OK
     return response

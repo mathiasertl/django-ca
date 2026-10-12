@@ -13,8 +13,6 @@
 
 """EC algorithms."""
 
-from typing import Any
-
 from pydantic import model_validator
 
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
@@ -32,7 +30,7 @@ class ECDSAModel(CryptographyModel[ECDSA]):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_cryptography(cls, obj: Any) -> Any:
+    def validate_cryptography(cls, obj: object) -> object:
         """Model validator to parse cryptography models."""
         if isinstance(obj, ECDSA):
             return {"algorithm": obj.algorithm, "deterministic_signing": obj.deterministic_signing}

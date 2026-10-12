@@ -14,8 +14,8 @@
 """Test ACME related views."""
 
 import abc
-import typing
 from http import HTTPStatus
+from typing import Any, Generic, TypeVar
 from unittest import mock
 
 import acme
@@ -37,10 +37,10 @@ from django_ca.tests.acme.views.assertions import (
 from django_ca.tests.acme.views.utils import absolute_acme_uri, acme_request, get_nonce
 from django_ca.tests.base.mixins import TestCaseMixin
 
-MessageTypeVar = typing.TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
+MessageTypeVar = TypeVar("MessageTypeVar", bound=jose.json_util.JSONObjectWithFields)
 
 
-class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
+class AcmeBaseViewTestCaseMixin(TestCaseMixin, Generic[MessageTypeVar]):
     """Base class with test cases for all views."""
 
     post_as_get = False
@@ -129,10 +129,10 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         """Test sending both a jwk and a kid, which are supposed to be mutually exclusive."""
         sign = acme.jws.Signature.sign
 
-        def sign_mock(*args, **kwargs):  # type: ignore[no-untyped-def]
+        def sign_mock(*args: Any, **kwargs: Any) -> acme.jws.Signature:
             """Mock function to set include_jwk to true."""
             kwargs["include_jwk"] = True
-            return sign(*args, **kwargs)
+            return sign(*args, **kwargs)  # type: ignore[no-any-return]  # False positive
 
         with self.patch("acme.jws.Signature.sign", spec_set=True, side_effect=sign_mock):
             resp = acme_request(client, url, root, message, kid="foo")
@@ -215,11 +215,11 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
         """Test sending neither a jwk and a kid."""
         sign = acme.jws.Signature.sign
 
-        def sign_mock(*args, **kwargs):  # type: ignore[no-untyped-def]
+        def sign_mock(*args: Any, **kwargs: Any) -> acme.jws.Signature:
             """Mock function so that JWS has neither jwk nor kid."""
             kwargs.pop("kid")
             kwargs["include_jwk"] = False
-            return sign(*args, **kwargs)
+            return sign(*args, **kwargs)  # type: ignore[no-any-return]  # False positive
 
         with self.patch("acme.jws.Signature.sign", spec_set=True, side_effect=sign_mock):
             resp = acme_request(client, url, root, message, kid="foo")
@@ -262,7 +262,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, typing.Generic[MessageTypeVar]):
 
 @pytest.mark.usefixtures("account")
 class AcmeWithAccountViewTestCaseMixin(
-    AcmeBaseViewTestCaseMixin[MessageTypeVar], typing.Generic[MessageTypeVar], metaclass=abc.ABCMeta
+    AcmeBaseViewTestCaseMixin[MessageTypeVar], Generic[MessageTypeVar], metaclass=abc.ABCMeta
 ):
     """Mixin that also adds accounts to the database."""
 

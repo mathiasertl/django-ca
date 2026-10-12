@@ -18,11 +18,10 @@ import json
 import os
 import subprocess
 import sys
-import types
 import typing
-from typing import Any
 
 from pydantic import BaseModel
+from termcolor import colored
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -46,9 +45,6 @@ class Command(DevCommand):
 
     help_text = "Initialize this project with useful example data."
 
-    modules = (("termcolor", "termcolor"),)
-    termcolor: types.ModuleType
-
     UsePrivateKeyOptions: type[BaseModel]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
@@ -60,9 +56,9 @@ class Command(DevCommand):
         """Get a file path."""
         return os.path.relpath(ca_storage.path(certs[name]["pub_filename"]), os.getcwd())
 
-    def ok(self, msg: str = " OK.", **kwargs: Any) -> None:
+    def ok(self, msg: str = " OK.") -> None:
         """Just print "OK" in green."""
-        print(self.termcolor.colored(msg, "green"), **kwargs)
+        print(colored(msg, "green"))
 
     def output_info(  # pylint: disable=too-many-locals
         self,

@@ -22,27 +22,28 @@ import yaml
 from docutils.nodes import paragraph
 from docutils.parsers.rst import directives
 from docutils.statemachine import StringList
+from sphinx.errors import ExtensionError
+from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.typing import OptionSpec
 
-from cryptography import x509
-
 from django_ca.profiles import Profile
-from django_ca.pydantic.base import CryptographyModel
+from django_ca.pydantic.base import CryptographyModel, CryptographyRootModel
 from django_ca.pydantic.extensions import ExtensionModel
 
+log = logging.getLogger(__name__)
 TAB_INDENT = " " * 6
 
 
 class PydanticModelDirectiveBase(SphinxDirective):
     """Base class providing common functionalities for both directives."""
 
-    def exec_with_return(self, code: str) -> Any:
+    def exec_with_return(self, code: str) -> object:
         """Function to execute a multi-line code block and return the value of the last statement.
 
         .. seealso:: https://stackoverflow.com/a/76636602
         """
-        global_variables: dict[str, Any] = {}
+        global_variables: dict[str, object] = {}
 
         a = ast.parse(code)
         last_expression = None
@@ -56,6 +57,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
         exec(ast.unparse(a), global_variables)  # noqa: S102
         if last_expression:
             return eval(last_expression, global_variables)  # pylint: disable=eval-used
+        return None
 
     def get_code(self, prefix: str, suffix: str) -> tuple[str, str]:
         """Load Python code from a file in `/include/pydantic/{prefix}_{suffix}`."""
@@ -69,7 +71,7 @@ class PydanticModelDirectiveBase(SphinxDirective):
         except FileNotFoundError as ex:
             raise ValueError(f"{rel_filename}: File not found.") from ex
 
-    def diff(self, a: Any, b: Any, from_file: str, to_file: str, what: str) -> str:
+    def diff(self, a: object, b: object, from_file: str, to_file: str, what: str) -> str:
         """Generate diff for better readable output."""
         from_lines = repr(a).splitlines()
         to_lines = repr(b).splitlines()
@@ -108,29 +110,35 @@ class PydanticModelDirective(PydanticModelDirectiveBase):
 
         # Get the value of the last line in the included cryptography file
         try:
-            extension: x509.Extension[x509.ExtensionType] = self.exec_with_return(cryptography_code)
+            # Often an extension, but really any obj within `cryptography.x509`.
+            cryptography_obj = self.exec_with_return(cryptography_code)
         except Exception as ex:
-            raise RuntimeError(f"{cryptography_filename}: Cannot execute code: {ex}") from ex
+            raise ExtensionError(f"{cryptography_filename} Cannot execute code.") from ex
 
         # Get the value of the last line in the included Model file
         try:
-            model: CryptographyModel[Any] = self.exec_with_return(model_code)
+            model = self.exec_with_return(model_code)
+            assert isinstance(model, CryptographyModel | CryptographyRootModel), model
         except Exception as ex:
-            raise RuntimeError(f"{model_filename}: Cannot execute code: {ex}") from ex
+            raise ExtensionError(f"{model_filename}: Cannot execute code.") from ex
 
         try:
-            converted_extension = model.cryptography
+            converted_obj = model.cryptography
         except Exception as ex:
-            raise RuntimeError(f"{model_filename}: Cannot convert to cryptography: {ex}") from ex
+            raise ExtensionError(f"{model_filename}: Cannot convert to cryptography.") from ex
 
         try:
-            converted_model = model.__class__.model_validate(extension)
+            converted_model = model.__class__.model_validate(cryptography_obj)
         except Exception as ex:
-            raise RuntimeError(f"{cryptography_filename}: Cannot call model_validate: {ex}") from ex
+            raise ExtensionError(f"{cryptography_filename}: Cannot call model_validate: {ex}") from ex
 
         # Verify that the two values are equivalent
-        assert extension == converted_extension, self.diff(
-            extension, converted_extension, cryptography_filename, model_filename, "Converted extension"
+        assert cryptography_obj == converted_obj, self.diff(
+            cryptography_obj,
+            converted_obj,
+            cryptography_filename,
+            model_filename,
+            "Converted extension",
         )
         assert model == converted_model, self.diff(
             model, converted_model, model_filename, cryptography_filename, "Loaded model"
@@ -173,7 +181,8 @@ class PydanticProfileExtensionDirective(PydanticModelDirectiveBase):
 
         # Get the value of the last line in the included Model file
         try:
-            model: ExtensionModel[Any] = self.exec_with_return(model_code)
+            model = self.exec_with_return(model_code)
+            assert isinstance(model, ExtensionModel)
         except Exception as ex:
             raise RuntimeError(f"{model_filename}: Cannot execute code: {ex}") from ex
 

@@ -37,7 +37,7 @@ from django_ca.constants import (
 T = TypeVar("T")
 
 
-def dict_env_validator(value: Any) -> Any:
+def dict_env_validator(value: object) -> object:
     """Parse a JSON environment variable as dict."""
     if isinstance(value, str):
         try:
@@ -47,8 +47,8 @@ def dict_env_validator(value: Any) -> Any:
     return value
 
 
-def signature_hash_algorithm_validator(value: Any) -> Any:
-    """Convert a :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` into a canonical name."""
+def signature_hash_algorithm_validator(value: object) -> object:
+    """Convert an :class:`~cg:cryptography.hazmat.primitives.hashes.HashAlgorithm` into a canonical name."""
     if isinstance(value, hashes.HashAlgorithm):
         try:
             return SIGNATURE_HASH_ALGORITHM_NAMES[type(value)]  # type: ignore[index]
@@ -57,7 +57,7 @@ def signature_hash_algorithm_validator(value: Any) -> Any:
     return value
 
 
-def signature_hash_algorithm_validator_with_legacy_names(value: Any) -> Any:
+def signature_hash_algorithm_validator_with_legacy_names(value: object) -> object:
     """Same, but allows legacy names."""
     if isinstance(value, hashes.HashAlgorithm):
         try:
@@ -67,9 +67,9 @@ def signature_hash_algorithm_validator_with_legacy_names(value: Any) -> Any:
     return value
 
 
-def access_method_parser(value: Any) -> Any:
+def access_method_parser(value: object) -> object:
     """Convert access method type aliases to dotted string."""
-    if oid := constants.ACCESS_METHOD_TYPES.get(value):
+    if oid := constants.ACCESS_METHOD_TYPES.get(value):  # type: ignore[call-overload]
         return oid.dotted_string
     return value
 
@@ -83,7 +83,7 @@ def base64_str_validator(value: str) -> str:
     return value
 
 
-def bytes_to_base64_str_validator(value: Any) -> Any:
+def bytes_to_base64_str_validator(value: object) -> object:
     """Encode bytes as base64-encoded string."""
     if isinstance(value, bytes):
         return base64.b64encode(value).decode(encoding="ascii")
@@ -133,7 +133,7 @@ def dns_validator(name: str) -> str:
         raise ValueError(f"Invalid domain: {name}: {ex}") from ex
 
 
-def elliptic_curve_validator(value: Any) -> Any:
+def elliptic_curve_validator(value: object) -> object:
     """Convert a |EllipticCurve| into a canonical name."""
     if isinstance(value, ec.EllipticCurve):
         return ELLIPTIC_CURVE_NAMES[type(value)]
@@ -174,7 +174,7 @@ def extended_key_usage_validator(value: str) -> str:
     return value
 
 
-def int_to_hex_parser(value: Any) -> Any:
+def int_to_hex_parser(value: object) -> object:
     """Convert an integer to an upper-case hex-string."""
     if isinstance(value, int) and not isinstance(value, bool):
         return f"{value:X}"
@@ -188,24 +188,24 @@ def is_power_two_validator(value: int) -> int:
     return value
 
 
-def key_usage_validator(value: Any) -> Any:
+def key_usage_validator(value: object) -> object:
     """Convert a human-readable key usage name to a valid parameter."""
     if value in constants.KEY_USAGE_PARAMETERS:
-        return constants.KEY_USAGE_PARAMETERS[value]
+        return constants.KEY_USAGE_PARAMETERS[value]  # type: ignore[index]
     return value
 
 
-def name_oid_dotted_string_parser(value: Any) -> Any:
+def name_oid_dotted_string_parser(value: object) -> object:
     """Convert human-readable NameOID values into dotted strings."""
     if value in constants.NAME_OID_TYPES:
-        return constants.NAME_OID_TYPES[value].dotted_string
+        return constants.NAME_OID_TYPES[value].dotted_string  # type: ignore[index]
     return value
 
 
-def name_oid_parser(value: Any) -> Any:
+def name_oid_parser(value: object) -> object:
     """Parse a NameOID string or dotted string to a x509 Object Identifier."""
     if value in constants.NAME_OID_TYPES:
-        return constants.NAME_OID_TYPES[value]
+        return constants.NAME_OID_TYPES[value]  # type: ignore[index]
     if isinstance(value, str):
         try:
             return x509.ObjectIdentifier(value)
@@ -246,7 +246,7 @@ def pem_csr_validator(value: bytes) -> bytes:
     return value
 
 
-def reason_flag_validator(value: Any) -> Any:
+def reason_flag_validator(value: object) -> object:
     """Validate a ``str`` to a :class:`~cg:cryptography.x509.ReasonFlags`."""
     if isinstance(value, str):
         return x509.ReasonFlags[value]
@@ -281,7 +281,7 @@ def timedelta_as_number_parser(unit: Literal["seconds", "hours", "days"] = "seco
     .. WARNING:: This validator differs in that it has to be called with a unit for ``timedeltas``.
     """
 
-    def validator(value: Any) -> Any:
+    def validator(value: object) -> object:
         if isinstance(value, float | int):
             return timedelta(**{unit: value})
         return value

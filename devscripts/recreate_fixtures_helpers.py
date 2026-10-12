@@ -73,7 +73,7 @@ TIMEFORMAT = "%Y-%m-%d %H:%M:%S"
 class CertificateEncoder(json.JSONEncoder):
     """Minor class to encode certificate data into json."""
 
-    def default(self, o: Any) -> Any:  # Any/Any matches base class typehints
+    def default(self, o: object) -> object:  # Any/Any matches base class typehints
         if isinstance(o, hashes.HashAlgorithm):
             return o.name
         if isinstance(o, Path):

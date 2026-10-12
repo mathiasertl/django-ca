@@ -220,7 +220,7 @@ class NoValueExtensionModel(BaseExtensionModel[NoValueExtensionTypeVar]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         extension_type_class = cls.get_extension_type_class()
         if isinstance(data, x509.Extension) and isinstance(data.value, extension_type_class):
@@ -242,7 +242,7 @@ class AlternativeNameBaseModel(BaseExtensionModel[AlternativeNameTypeVar]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         extension_type_class = cls.get_extension_type_class()
         if isinstance(data, x509.Extension) and isinstance(data.value, extension_type_class):
@@ -264,7 +264,7 @@ class CRLExtensionBaseModel(BaseExtensionModel[CRLExtensionTypeTypeVar]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         extension_type_class = cls.get_extension_type_class()
         if isinstance(data, x509.Extension) and isinstance(data.value, extension_type_class):
@@ -287,7 +287,7 @@ class InformationAccessBaseModel(BaseExtensionModel[InformationAccessTypeVar]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         extension_type_class = cls.get_extension_type_class()
         if isinstance(data, x509.Extension) and isinstance(data.value, extension_type_class):
@@ -456,7 +456,7 @@ class CRLNumberModel(ExtensionModel[x509.CRLNumber]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.CRLNumber):
             return {"critical": data.critical, "value": data.value.crl_number}
@@ -489,7 +489,7 @@ class CertificatePoliciesModel(ExtensionModel[x509.CertificatePolicies]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.CertificatePolicies):
             return {"critical": data.critical, "value": list(data.value)}
@@ -518,7 +518,7 @@ class DeltaCRLIndicatorModel(ExtensionModel[x509.DeltaCRLIndicator]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.DeltaCRLIndicator):
             return {"critical": data.critical, "value": data.value.crl_number}
@@ -554,7 +554,7 @@ class ExtendedKeyUsageModel(ExtensionModel[x509.ExtendedKeyUsage]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.ExtendedKeyUsage):
             return {"critical": data.critical, "value": list(data.value)}
@@ -593,7 +593,7 @@ class InhibitAnyPolicyModel(ExtensionModel[x509.InhibitAnyPolicy]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.InhibitAnyPolicy):
             return {"critical": data.critical, "value": data.value.skip_certs}
@@ -660,7 +660,7 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.KeyUsage):
             extension_type: x509.KeyUsage = data.value
@@ -914,7 +914,7 @@ class SubjectKeyIdentifierModel(ExtensionModel[x509.SubjectKeyIdentifier]):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_cryptography(cls, data: Any) -> Any:
+    def parse_cryptography(cls, data: object) -> object:
         """Parse cryptography instances."""
         if isinstance(data, x509.Extension) and isinstance(data.value, x509.SubjectKeyIdentifier):
             return {"critical": data.critical, "value": data.value.digest}
@@ -1020,7 +1020,7 @@ EXTENSION_MODELS: "MappingProxyType[x509.ObjectIdentifier, type[ExtensionModel[A
 )
 
 
-def validate_cryptography_extensions(v: Any, info: ValidationInfo) -> Any:
+def validate_cryptography_extensions(v: object, info: ValidationInfo) -> object:
     """Parse a cryptography extension into a Pydantic model."""
     if isinstance(v, x509.Extension):
         if isinstance(v.value, x509.UnrecognizedExtension):

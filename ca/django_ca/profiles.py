@@ -16,7 +16,7 @@
 from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime, timedelta
 from threading import local
-from typing import TYPE_CHECKING, Annotated, Any, cast
+from typing import TYPE_CHECKING, Annotated, cast
 
 from pydantic import BaseModel, Field
 
@@ -489,7 +489,7 @@ class DefaultProfileProxy:
     .. NOTE:: We don't implement setattr/delattr, because Profiles are supposed to be read-only anyway.
     """
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> object:
         return getattr(profiles[model_settings.CA_DEFAULT_PROFILE], name)
 
     def __eq__(self, other: object) -> bool:

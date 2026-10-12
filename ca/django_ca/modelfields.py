@@ -28,6 +28,8 @@ from cryptography.hazmat.primitives.serialization import Encoding
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.models.expressions import Expression
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants, fields
@@ -181,9 +183,10 @@ class LazyBinaryField(
     formfield_class: type[forms.Field]
     wrapper: type[WrapperTypeVar]
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: object, **kwargs: object) -> None:
         kwargs.setdefault("editable", True)
-        super().__init__(*args, **kwargs)
+        # TYPEHINT NOTE: args/kwargs is hinted to object, django-stubs knows more specific types for arguments
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
 
     def deconstruct(self) -> tuple[str, str, Sequence[str], dict[str, str]]:
         """Used in migrations."""
@@ -197,7 +200,7 @@ class LazyBinaryField(
         return name, path, args, kwargs
 
     def from_db_value(  # pylint: disable=unused-argument
-        self, value: bytes | None, expression: Any, condition: Any
+        self, value: bytes | None, expression: Expression, condition: BaseDatabaseWrapper
     ) -> WrapperTypeVar | None:
         """Called when data is loaded from the database.
 
@@ -231,12 +234,17 @@ class LazyBinaryField(
         self,
         form_class: type[forms.Field] | None = None,
         choices_form_class: type[forms.ChoiceField] | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> forms.Field | None:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
-        return super().formfield(form_class=form_class, choices_form_class=choices_form_class, **kwargs)
+        # TYPEHINT NOTE: args/kwargs is hinted to object, django-stubs knows more specific types for arguments
+        return super().formfield(
+            form_class=form_class,
+            choices_form_class=choices_form_class,
+            **kwargs,  # type: ignore[arg-type]
+        )
 
     def to_python(self, value: WrapperTypeVar | DecodableTypeVar | None) -> WrapperTypeVar | None:
         """Called during deserialization and during Certificate.full_clean().
@@ -297,12 +305,12 @@ class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionMo
     if TYPE_CHECKING:
 
         def __get__(  # type: ignore[override]
-            self, instance: Any, owner: Any
+            self, instance: object, owner: object
         ) -> x509.Extension[ExtensionTypeTypeVar] | None: ...
 
         def __set__(
             self,
-            instance: Any,
+            instance: object,
             value: x509.Extension[ExtensionTypeTypeVar]
             | ExtensionModelTypeVar
             | SerializedPydanticExtension
@@ -313,28 +321,32 @@ class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionMo
         self,
         form_class: type[forms.Field] | None = None,
         choices_form_class: type[forms.ChoiceField] | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> forms.Field | None:
         # COVERAGE NOTE: not None e.g. for ModelForm which defines a form field, but we never do that.
         if form_class is None:  # pragma: no branch
             form_class = self.formfield_class
+
+        # TYPEHINT NOTE: args/kwargs is hinted to object, django-stubs knows more specific types for arguments
         return super(models.JSONField, self).formfield(
-            form_class=form_class, choices_form_class=choices_form_class, **kwargs
+            form_class=form_class,
+            choices_form_class=choices_form_class,
+            **kwargs,  # type: ignore[arg-type]
         )
 
-    def unparsable(self, value: JSON) -> ValidationError:
+    def unparsable(self, value: object) -> ValidationError:
         """Raise a ValidationError for an unparsable value."""
         return ValidationError(
             self.error_messages["unparsable-extension"], code="unparsable-extension", params={"value": value}
         )
 
     # COVERAGE NOTE: Currently overwritten in the only implementing subclass
-    def parse_raw_extension(self, value: JSON) -> x509.Extension[ExtensionTypeTypeVar]:  # pragma: no cover
+    def parse_raw_extension(self, value: object) -> x509.Extension[ExtensionTypeTypeVar]:  # pragma: no cover
         """Give implementing subclasses the opportunity to implement their own parsing."""
         raise self.unparsable(value)
 
     def from_db_value(
-        self, value: Any, expression: Any, connection: Any
+        self, value: str | None, expression: Expression, connection: BaseDatabaseWrapper
     ) -> x509.Extension[ExtensionTypeTypeVar] | None:
         """Convert the value loaded from the database to a cryptography extension."""
         if value is None:
@@ -349,7 +361,7 @@ class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionMo
         # to parse the value. parse_raw_extension() just raises ValidationError in the base class.
         return self.parse_raw_extension(parsed_json)
 
-    def to_python(self, value: Any) -> x509.Extension[ExtensionTypeTypeVar] | None:
+    def to_python(self, value: object) -> x509.Extension[ExtensionTypeTypeVar] | None:
         """Convert the set value to the correct Python type.
 
         This function is called during full_clean() to convert the value to the expected Python type:
@@ -380,7 +392,7 @@ class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionMo
         # to parse the value. parse_raw_extension() just raises ValidationError in the base class.
         return self.parse_raw_extension(value)
 
-    def get_prep_value(self, value: Any) -> SerializedPydanticExtension | None:
+    def get_prep_value(self, value: object) -> SerializedPydanticExtension | None:
         """Prepare the value so that it can be stored in the database.
 
         This function is invoked during ``save()``. `value` may be the cryptography extension value (in
@@ -413,7 +425,9 @@ class ExtensionField(models.JSONField, Generic[ExtensionTypeTypeVar, ExtensionMo
 
         return self.model_class.model_validate(value).model_dump(mode="json")
 
-    def validate(self, value: x509.Extension[ExtensionTypeTypeVar], model_instance: Any) -> None:
+    def validate(
+        self, value: x509.Extension[ExtensionTypeTypeVar], model_instance: models.Model | None
+    ) -> None:
         """Handle field-specific validation.
 
         This method is called during full_clean(), but *after* `to_python()` is called. We can thus expect
@@ -505,7 +519,7 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies, Certific
 
         return x509.CertificatePolicies(policies)
 
-    def parse_raw_extension(self, value: JSON) -> x509.Extension[x509.CertificatePolicies]:
+    def parse_raw_extension(self, value: object) -> x509.Extension[x509.CertificatePolicies]:
         oid = self.extension_class.oid
         if not isinstance(value, dict):
             raise self.unparsable(value)
