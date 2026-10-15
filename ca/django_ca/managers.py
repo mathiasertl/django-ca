@@ -246,9 +246,9 @@ class CertificateAuthorityManager(
         caa: str = "",
         website: str = "",
         terms_of_service: str = "",
-        acme_enabled: bool = False,
-        acme_registration: bool = True,
-        acme_requires_contact: bool = True,
+        acme_enabled: bool | None = None,
+        acme_registration: bool | None = None,
+        acme_requires_contact: bool | None = None,
         acme_profile: str | None = None,
         openssh_ca: bool = False,
         sign_authority_information_access: x509.Extension[x509.AuthorityInformationAccess] | None = None,
@@ -261,6 +261,11 @@ class CertificateAuthorityManager(
         api_enabled: bool | None = None,
     ) -> "CertificateAuthority":
         """Create a new certificate authority.
+
+        .. versionchanged:: 3.3.0
+
+            The `acme_enabled`, `acme_registration` and `acme_requires_contact` parameters now support and
+            default to `None`, preserving the models default.
 
         .. versionchanged:: 2.3.0
 
@@ -405,10 +410,7 @@ class CertificateAuthorityManager(
 
         if default_hostname is None:
             default_hostname = model_settings.CA_DEFAULT_HOSTNAME
-
-        if acme_profile is None:
-            acme_profile = model_settings.CA_DEFAULT_PROFILE
-        elif acme_profile not in model_settings.CA_PROFILES:
+        if acme_profile is not None and acme_profile not in model_settings.CA_PROFILES:
             raise ValueError(f"{acme_profile}: Profile is not defined.")
 
         if parent:
@@ -483,10 +485,6 @@ class CertificateAuthorityManager(
             caa_identity=caa,
             website=website,
             terms_of_service=terms_of_service,
-            acme_enabled=acme_enabled,
-            acme_registration=acme_registration,
-            acme_profile=acme_profile,
-            acme_requires_contact=acme_requires_contact,
             sign_authority_information_access=sign_authority_information_access,
             sign_certificate_policies=sign_certificate_policies,
             sign_crl_distribution_points=sign_crl_distribution_points,
@@ -500,6 +498,14 @@ class CertificateAuthorityManager(
             ca.ocsp_responder_key_validity = ocsp_responder_key_validity
         if ocsp_response_validity is not None:
             ca.ocsp_response_validity = ocsp_response_validity
+        if acme_enabled is not None:
+            ca.acme_enabled = acme_enabled
+        if acme_registration is not None:
+            ca.acme_registration = acme_registration
+        if acme_profile is not None:
+            ca.acme_profile = acme_profile
+        if acme_requires_contact is not None:
+            ca.acme_requires_contact = acme_requires_contact
         if api_enabled is not None:
             ca.api_enabled = api_enabled
 

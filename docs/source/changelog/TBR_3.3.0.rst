@@ -52,7 +52,8 @@ No changes yet.
 Python API
 **********
 
-No changes yet.
+* :func:`django_ca.managers.CertificateAuthorityManager.init`: The `acme_enabled`, `acme_registration` and
+  `acme_requires_contact` parameters now support and default to `None`, preserving the models default.
 
 *****
 Views
