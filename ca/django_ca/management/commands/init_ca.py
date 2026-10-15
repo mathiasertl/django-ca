@@ -18,7 +18,6 @@
 
 from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -294,6 +293,7 @@ class Command(
         subject: x509.Name,
         parent: CertificateAuthority | None,
         expires: timedelta,
+        default_hostname: bool | str | None,
         # private key storage options
         key_backend: KeyBackend[BaseModel, BaseModel, BaseModel],
         key_type: ParsableKeyType,
@@ -333,6 +333,14 @@ class Command(
         caa: str,
         website: str,
         tos: str,
+        # output certificate group
+        output_format: str,
+        serial_format: str,
+        json_indent: int,
+        pem: bool,
+        bundle: bool,
+        extensions: bool,
+        wrap: bool,
         # Authority Information Access extension  for certificates (MUST be non-critical)
         sign_authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension  for certificates
@@ -347,7 +355,12 @@ class Command(
         ocsp_key_backend: str,
         ocsp_responder_key_validity: int | None,
         ocsp_response_validity: int | None,
-        **options: Any,
+        api_enabled: bool | None = None,  # default is important - not passed if API is not enabled
+        acme_enabled: bool | None = None,
+        acme_registration: bool | None = None,
+        acme_profile: str | None = None,
+        acme_requires_contact: bool | None = None,
+        **options: object,
     ) -> None:
         # Make sure that selected private key options are supported by the selected key backend
         if key_type not in key_backend.supported_key_types:
@@ -360,6 +373,8 @@ class Command(
             raise CommandError(
                 f"{elliptic_curve}: Elliptic curve not supported by {key_backend.alias} key backend."
             )
+        self.validate_api_parameters(api_enabled)
+        self.validate_acme_parameters(acme_enabled, acme_registration, acme_profile, acme_requires_contact)
 
         try:
             key_backend_options = key_backend.get_create_private_key_options(
@@ -432,56 +447,58 @@ class Command(
         if not common_name:
             raise CommandError("Subject must contain a common name (CN=...).")
 
-        extensions: list[CertificateExtension] = [
+        ca_extensions: list[CertificateExtension] = [
             x509.Extension(oid=ExtensionOID.KEY_USAGE, critical=key_usage_critical, value=key_usage)
         ]
 
         # Add the Authority Information Access extension
         if authority_information_access is not None:
             self.add_extension(
-                extensions,
+                ca_extensions,
                 authority_information_access,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.AUTHORITY_INFORMATION_ACCESS],
             )
         # Add the Certificate Policies extension
         if certificate_policies is not None:
-            self.add_extension(extensions, certificate_policies, certificate_policies_critical)
+            self.add_extension(ca_extensions, certificate_policies, certificate_policies_critical)
         # Add the CRL Distribution Points extension
         if crl_full_names is not None:
             distribution_point = x509.DistributionPoint(
                 full_name=crl_full_names, relative_name=None, crl_issuer=None, reasons=None
             )
             self.add_extension(
-                extensions, x509.CRLDistributionPoints([distribution_point]), crl_distribution_points_critical
+                ca_extensions,
+                x509.CRLDistributionPoints([distribution_point]),
+                crl_distribution_points_critical,
             )
         # Add the Extended Key Usage extension
         if extended_key_usage is not None:
-            self.add_extension(extensions, extended_key_usage, extended_key_usage_critical)
+            self.add_extension(ca_extensions, extended_key_usage, extended_key_usage_critical)
         # Add the inhibitAnyPolicy extension
         if inhibit_any_policy is not None:
             self.add_extension(
-                extensions,
+                ca_extensions,
                 x509.InhibitAnyPolicy(skip_certs=inhibit_any_policy),
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.INHIBIT_ANY_POLICY],
             )
         # Add the Issuer Alternative Name extension
         if issuer_alternative_name is not None:
             self.add_extension(
-                extensions,
+                ca_extensions,
                 issuer_alternative_name,
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.ISSUER_ALTERNATIVE_NAME],
             )
         # Add the NameConstraints extension
         if permit_name or exclude_name:
             self.add_extension(
-                extensions,
+                ca_extensions,
                 x509.NameConstraints(excluded_subtrees=exclude_name, permitted_subtrees=permit_name),
                 constants.EXTENSION_DEFAULT_CRITICAL[ExtensionOID.NAME_CONSTRAINTS],
             )
         # Add the Policy Constraints extension
         if require_explicit_policy is not None or inhibit_policy_mapping is not None:
             self.add_extension(
-                extensions,
+                ca_extensions,
                 x509.PolicyConstraints(
                     require_explicit_policy=require_explicit_policy,
                     inhibit_policy_mapping=inhibit_policy_mapping,
@@ -491,7 +508,7 @@ class Command(
         # Add the Subject Alternative Name extension
         if subject_alternative_name is not None:
             self.add_extension(
-                extensions,
+                ca_extensions,
                 subject_alternative_name,
                 subject_alternative_name_critical,
             )
@@ -531,21 +548,6 @@ class Command(
         if options["default_hostname"] is not None:
             kwargs["default_hostname"] = options["default_hostname"]
 
-        if model_settings.CA_ENABLE_ACME:  # pragma: no branch; parser throws error already
-            # These settings are only there if ACME is enabled
-            for opt in ["acme_enabled", "acme_registration", "acme_requires_contact"]:
-                if options[opt] is not None:
-                    kwargs[opt] = options[opt]
-
-            if acme_profile := options["acme_profile"]:
-                if acme_profile not in model_settings.CA_PROFILES:
-                    raise CommandError(f"{acme_profile}: Profile is not defined.")
-                kwargs["acme_profile"] = acme_profile
-
-        if model_settings.CA_ENABLE_REST_API:  # pragma: no branch; parser throws error already
-            if (api_enabled := options.get("api_enabled")) is not None:
-                kwargs["api_enabled"] = api_enabled
-
         try:
             ca = CertificateAuthority.objects.init(
                 name=name,
@@ -556,12 +558,18 @@ class Command(
                 algorithm=algorithm,
                 parent=parent,
                 use_parent_private_key_options=signer_key_backend_options,
+                default_hostname=default_hostname,
                 path_length=path_length,
                 key_type=key_type,
-                extensions=extensions,
+                extensions=ca_extensions,
                 caa=caa,
                 website=website,
                 terms_of_service=tos,
+                acme_enabled=acme_enabled,
+                acme_registration=acme_registration,
+                acme_profile=acme_profile,
+                acme_requires_contact=acme_requires_contact,
+                # openssh_ca=openssh_ca,  # TODO: Add suport for OpenSSH CAs
                 sign_authority_information_access=sign_authority_information_access_ext,
                 sign_certificate_policies=sign_certificate_policies_ext,
                 sign_crl_distribution_points=sign_crl_distribution_points_ext,
@@ -569,7 +577,7 @@ class Command(
                 ocsp_key_backend_alias=ocsp_key_backend,
                 ocsp_response_validity=ocsp_response_validity,
                 ocsp_responder_key_validity=ocsp_responder_key_validity,
-                **kwargs,
+                api_enabled=api_enabled,
             )
 
             load_key_backend_options = key_backend.get_use_private_key_options(ca, options)
@@ -592,4 +600,13 @@ class Command(
         )
         run_task(generate_ocsp_key, message)
         run_task(generate_crl, message)
-        self.output_certificate(ca, **options)
+        self.output_certificate(
+            ca,
+            output_format=output_format,
+            serial_format=serial_format,
+            json_indent=json_indent,
+            pem=pem,
+            bundle=bundle,
+            extensions=extensions,
+            wrap=wrap,
+        )

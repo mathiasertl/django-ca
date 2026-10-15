@@ -93,7 +93,7 @@ from django_ca.utils import SERIAL_RE, add_colons, format_name_rfc4514, name_for
 if TYPE_CHECKING:
     from django.contrib.admin.filters import _ListFilterChoices
 
-FormfieldOverrides = dict[type["models.Field[Any, Any]"], dict[str, Any]]
+FormfieldOverrides = dict[type["models.Field[object, object]"], dict[str, object]]
 log = logging.getLogger(__name__)
 
 #: Tuple of extensions that can be set when creating a new certificate via the admin interface.
@@ -313,7 +313,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
 
         return extension_as_admin_html(ext)
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> object:
         if name.startswith("oid_"):
             oid = x509.ObjectIdentifier(name[4:].replace("_", "."))
             func = functools.partial(self.output_template, oid=oid)
@@ -347,7 +347,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
 
     def get_readonly_fields(  # type: ignore[override] # pylint: disable=missing-function-docstring
         self, request: HttpRequest, obj: X509CertMixinTypeVar | None = None
-    ) -> list[str] | tuple[Any, ...]:
+    ) -> list[str] | tuple[object, ...]:
         fields = list(super().get_readonly_fields(request, obj=obj))
 
         if obj is None:  # pragma: no cover
@@ -471,7 +471,7 @@ class CertificateAuthorityAdmin(CertificateMixin[CertificateAuthority], Certific
 
     def get_readonly_fields(  # type: ignore[override]
         self, request: HttpRequest, obj: CertificateAuthority | None = None
-    ) -> list[str] | tuple[Any, ...]:
+    ) -> list[str] | tuple[object, ...]:
         fields = tuple(super().get_readonly_fields(request, obj=obj))
         if obj is None:  # pragma: no cover  # we never add certificate authorities, so it's never None
             return fields
@@ -693,9 +693,9 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
     )
     x509_fieldset_index = 1
 
-    def get_ca_details(self) -> dict[int, dict[str, Any]]:
+    def get_ca_details(self) -> dict[int, dict[str, object]]:
         """Get CA details for the embedded JSON data."""
-        data: dict[int, dict[str, Any]] = {}
+        data: dict[int, dict[str, object]] = {}
         for ca in CertificateAuthority.objects.usable():
             if ca.is_usable() is False:
                 continue
@@ -733,7 +733,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         request: HttpRequest,
         obj: Certificate | None = None,
         change: bool = False,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> type[CertificateModelForm]:
         """Override to get specialized forms for signing/resigning certs."""
         if hasattr(request, "_resign_obj"):
@@ -742,7 +742,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
             return CreateCertificateForm
 
         # TYPE NOTE: django-stubs does not seem to add typehints for this function
-        return cast(type[CertificateModelForm], super().get_form(request, obj=obj, **kwargs))
+        return cast(type[CertificateModelForm], super().get_form(request, obj=obj, change=change, **kwargs))
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
         """Get initial data based on default profile.
@@ -824,7 +824,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
         self,
         request: HttpRequest,
         form_url: str = "",
-        extra_context: dict[str, Any] | None = None,
+        extra_context: dict[str, object] | None = None,
     ) -> HttpResponse:
         extra_context = extra_context or {}
         extra_context["csr_details_url"] = reverse(f"admin:{self.csr_details_view_name}")
@@ -1007,7 +1007,7 @@ class CertificateAdmin(DjangoObjectActions, CertificateMixin[Certificate], Certi
 
     def get_readonly_fields(  # type: ignore[override]
         self, request: HttpRequest, obj: Certificate | None = None
-    ) -> list[str] | tuple[Any, ...]:
+    ) -> list[str] | tuple[object, ...]:
         if obj is None:
             return []
         return super().get_readonly_fields(request, obj=obj)

@@ -242,7 +242,7 @@ class CriticalInput(LabeledCheckboxInput):
         # TYPEHINT NOTE: django-stubs issue
         super().__init__(label=_("critical"), wrapper_classes=("critical",))  # type: ignore[arg-type]
 
-    def get_context(self, *args: Any, **kwargs: object) -> dict[str, Any]:
+    def get_context(self, *args: object, **kwargs: object) -> dict[str, object]:
         ctx = super().get_context(*args, **kwargs)
         assert isinstance(ctx["widget"], dict)
         ctx["widget"]["oid"] = self.oid.dotted_string

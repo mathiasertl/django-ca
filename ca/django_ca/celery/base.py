@@ -41,20 +41,20 @@ def dummy_shared_task(
 
 @overload
 def dummy_shared_task(
-    *args: Any,
-    **kwargs: Any,
+    *args: Any,  # noqa: ANN401
+    **kwargs: Any,  # noqa: ANN401
 ) -> Callable[[Callable[TaskParamSpec, TaskReturnSpec]], "Proxy[TaskParamSpec, TaskReturnSpec]"]: ...
 
 
 def dummy_shared_task(
-    *args: Any,
-    **kwargs: Any,
+    *args: object,
+    **kwargs: object,
 ) -> "Proxy[TaskParamSpec, TaskReturnSpec] | Callable[[Callable[TaskParamSpec, TaskReturnSpec]], Proxy[TaskParamSpec, TaskReturnSpec]]":  # noqa: E501
     """Dummy decorator so that we can use the decorator whether celery is installed or not."""
 
     def create_shared_task(
-        *_not_used: Any,  # pylint: disable=unused-argument
-        **options: Any,
+        *_not_used: object,  # pylint: disable=unused-argument
+        **options: object,
     ) -> Callable[[Callable[TaskParamSpec, TaskReturnSpec]], "Proxy[TaskParamSpec, TaskReturnSpec]"]:
         def __inner(
             func: Callable[TaskParamSpec, TaskReturnSpec],
@@ -90,7 +90,7 @@ except ImportError:  # pragma: no cover
 
         name: str = "fake_task"
 
-        def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        def __call__(self, *args: object, **kwargs: object) -> object:
             raise NotImplementedError("Tasks must define __call__.")
 
         def run(self, data: BaseModel | None) -> BaseModel | None:  # pragma: no cover
@@ -98,7 +98,7 @@ except ImportError:  # pragma: no cover
             # This becomes the task function
             raise NotImplementedError("Tasks must define the run method.")
 
-        def delay(self, *args: Any, **kwargs: Any) -> Any:
+        def delay(self, *args: object, **kwargs: object) -> object:
             """Dummy for delay()."""
             raise NotImplementedError("Tasks must define delay.")
 
@@ -110,7 +110,7 @@ class CeleryMessageModel(BaseModel):
 class DjangoCaTask(Task):  # pylint: disable=abstract-method  # pylint complains about run()
     """Custom base class for Celery tasks."""
 
-    def __call__(self, data: dict[str, JSON] | None = None) -> Any:
+    def __call__(self, data: dict[str, JSON] | None = None) -> object:
         type_hints = get_type_hints(self.run)
 
         # Task defines a `data` argument
@@ -136,8 +136,7 @@ class DjangoCaTask(Task):  # pylint: disable=abstract-method  # pylint complains
         # If the task defines any other type hint besides `data`, it is also an error.
         raise TypeError(f"{self.name}: Task does not define a `data` argument or defines extra arguments.")
 
-    # TODO: return type annotation should be AsyncResult
-    def delay(self, data: BaseModel | None = None) -> Any:
+    def delay(self, data: BaseModel | None = None) -> Any:  # noqa: ANN401
         kwargs = {}
         if isinstance(data, BaseModel):
             kwargs["data"] = data.model_dump(mode="json", exclude_unset=True)
@@ -150,7 +149,7 @@ def run_task(
     task: "Proxy[TaskParamSpec, TaskReturnSpec]",
     *args: "TaskParamSpec.args",
     **kwargs: "TaskParamSpec.kwargs",
-) -> Any:
+) -> object:
     """Function that passes `task` to celery or invokes it directly, depending on if Celery is installed."""
     eager = kwargs.pop("eager", False)
 

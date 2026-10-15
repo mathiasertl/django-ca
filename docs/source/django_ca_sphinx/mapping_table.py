@@ -17,7 +17,6 @@
 """
 
 from collections.abc import Mapping
-from typing import Any
 
 from docutils.statemachine import StringList
 from sphinx.ext.autodoc import DataDocumenter, ObjectMember
@@ -50,7 +49,7 @@ class MappingDocumentor(DataDocumenter):
         return False, []
 
     @classmethod
-    def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: object) -> bool:
+    def can_document_member(cls, member: object, membername: str, isattr: bool, parent: object) -> bool:
         """Determine if this documentor can document the given variable."""
         return super().can_document_member(member, membername, isattr, parent) and isinstance(member, Mapping)
 

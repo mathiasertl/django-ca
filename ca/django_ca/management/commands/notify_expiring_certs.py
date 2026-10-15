@@ -15,8 +15,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from django.core.management.base import BaseCommand
 
 from django_ca.celery import run_task
@@ -28,5 +26,5 @@ class Command(BaseCommand):
 
     help = "Send notifications about expiring certificates to watchers."
 
-    def handle(self, **options: Any) -> None:
+    def handle(self, **options: object) -> None:
         run_task(notify_watchers)

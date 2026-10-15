@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from cryptography import x509
 
 from django.core.management.base import CommandError, CommandParser
@@ -37,7 +35,7 @@ The authority that that signed the certificate must exist in the database."""
         self.add_ca(parser, allow_disabled=False)
         parser.add_argument("pub", help="Path to the public key (PEM or DER format).")
 
-    def handle(self, pub: str, ca: CertificateAuthority, **options: Any) -> None:
+    def handle(self, pub: str, ca: CertificateAuthority, **options: object) -> None:
         with open(pub, "rb") as stream:
             pub_data = stream.read()
 

@@ -17,8 +17,7 @@
 """
 
 import sys
-from datetime import timedelta
-from typing import Any
+from datetime import datetime, timedelta
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -66,7 +65,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                          default values, options like --key-usage still override the profile.""",
         )
 
-    def handle(
+    def handle(  # noqa: PLR0913, PLR0917
         self,
         ca: CertificateAuthority,
         subject: x509.Name | None,
@@ -75,9 +74,43 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         csr_path: str,
         profile: str | None,
         algorithm: SignatureHashAlgorithm | None,
-        # Subject Alternative Name extension - used in the function directly
+        # output certificate group
+        output_format: str,
+        serial_format: str,
+        json_indent: int,
+        pem: bool,
+        bundle: bool,
+        extensions: bool,
+        wrap: bool,
+        # Authority Information Access extension (MUST be non-critical)
+        authority_information_access: x509.AuthorityInformationAccess | None,
+        # Certificate Policies extension
+        certificate_policies: x509.CertificatePolicies | None,
+        certificate_policies_critical: bool,
+        # CRL Distribution Points extension
+        crl_full_names: list[x509.GeneralName] | None,
+        crl_distribution_points_critical: bool,
+        # Extended Key Usage extension
+        extended_key_usage: x509.ExtendedKeyUsage | None,
+        extended_key_usage_critical: bool,
+        # Issuer Alternative Name extension:
+        issuer_alternative_name: x509.IssuerAlternativeName | None,
+        # Key Usage extension:
+        key_usage: x509.KeyUsage | None,
+        key_usage_critical: bool,
+        # OCSP No Check extension
+        ocsp_no_check: bool,
+        ocsp_no_check_critical: bool,
+        # PrivateKeyUsagePeriod extension:
+        private_key_usage_period_not_before: datetime | None,
+        private_key_usage_period_not_after: datetime | None,
+        # Subject Alternative Name extension:
         subject_alternative_name: x509.SubjectAlternativeName | None,
-        **options: Any,
+        subject_alternative_name_critical: bool,
+        # TLSFeature extension:
+        tls_feature: x509.TLSFeature | None,
+        tls_feature_critical: bool,
+        **options: object,
     ) -> None:
         # Validate parameters early so that we can return better feedback to the user.
         profile_obj = profiles[profile]
@@ -90,8 +123,25 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
         watchers = [Watcher.from_addr(addr) for addr in watch]
 
         # Process any extensions given via the command-line
-        extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(
-            subject_alternative_name=subject_alternative_name, **options
+        cert_extensions: list[ConfigurableExtension] = self.get_end_entity_extensions(
+            authority_information_access=authority_information_access,
+            certificate_policies=certificate_policies,
+            certificate_policies_critical=certificate_policies_critical,
+            crl_full_names=crl_full_names,
+            crl_distribution_points_critical=crl_distribution_points_critical,
+            extended_key_usage=extended_key_usage,
+            extended_key_usage_critical=extended_key_usage_critical,
+            issuer_alternative_name=issuer_alternative_name,
+            key_usage=key_usage,
+            key_usage_critical=key_usage_critical,
+            ocsp_no_check=ocsp_no_check,
+            ocsp_no_check_critical=ocsp_no_check_critical,
+            private_key_usage_period_not_before=private_key_usage_period_not_before,
+            private_key_usage_period_not_after=private_key_usage_period_not_after,
+            subject_alternative_name=subject_alternative_name,
+            subject_alternative_name_critical=subject_alternative_name_critical,
+            tls_feature=tls_feature,
+            tls_feature_critical=tls_feature_critical,
         )
 
         cname = None
@@ -128,7 +178,7 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
                 csr,
                 profile=profile_obj,
                 not_after=expires,
-                extensions=extensions,
+                extensions=cert_extensions,
                 subject=subject,
                 algorithm=algorithm,
             )
@@ -137,4 +187,13 @@ https://django-ca.readthedocs.io/en/latest/extensions.html for more information.
 
         cert.watchers.add(*watchers)
 
-        self.output_certificate(cert, **options)
+        self.output_certificate(
+            cert,
+            output_format=output_format,
+            serial_format=serial_format,
+            json_indent=json_indent,
+            pem=pem,
+            bundle=bundle,
+            extensions=extensions,
+            wrap=wrap,
+        )

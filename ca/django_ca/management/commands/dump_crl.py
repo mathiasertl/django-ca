@@ -18,7 +18,6 @@
 
 import sys
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -98,7 +97,7 @@ class Command(UsePrivateKeyMixin, BaseCommand):
         only_contains_attribute_certs: bool,
         expires: timedelta,
         reasons: list[str] | None,
-        **options: Any,
+        **options: object,
     ) -> None:
         key_backend_options, _algorithm = self.get_signing_options(ca, ca.algorithm, options)
 

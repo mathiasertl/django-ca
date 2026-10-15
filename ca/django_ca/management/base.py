@@ -534,7 +534,6 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         # TLSFeature extension
         tls_feature: x509.TLSFeature | None,
         tls_feature_critical: bool,
-        **options: Any,
     ) -> list[ConfigurableExtension]:
         """Get extensions for end-entity certificates from the command line."""
         extensions: list[ConfigurableExtension] = []
@@ -607,7 +606,7 @@ class GenerateCommandBase(UsePrivateKeyMixin, BaseCommand):
         )
         self.add_use_private_key_arguments(parser)
 
-    def handle(self, serials: list[str], exclude: list[str], force: bool, **options: Any) -> None:
+    def handle(self, serials: list[str], exclude: list[str], force: bool, **options: object) -> None:
         if serials and exclude:
             raise CommandError("Cannot name serials and exclude list at the same time.")
 

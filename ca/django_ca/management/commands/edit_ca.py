@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from cryptography import x509
 from cryptography.x509.oid import ExtensionOID
 
@@ -59,6 +57,9 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         self,
         ca: CertificateAuthority,
         enabled: bool | None,
+        caa: str | None,
+        website: str | None,
+        tos: str | None,
         # Authority Information Access extension  for certificates (MUST be non-critical)
         sign_authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension for certificates
@@ -73,8 +74,11 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         ocsp_key_backend: str | None,
         ocsp_responder_key_validity: int | None,
         ocsp_response_validity: int | None,
-        **options: Any,
+        api_enabled: bool | None = None,  # default is important - not passed if API is not enabled
+        **options: object,
     ) -> None:
+        self.validate_api_parameters(api_enabled)
+
         # TODO: it's currently not possible to clear sign_ fields
         if sign_authority_information_access is not None:
             ca.sign_authority_information_access = x509.Extension(
@@ -108,12 +112,12 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
         if enabled is not None:
             ca.enabled = enabled
 
-        if options["caa"] is not None:
-            ca.caa_identity = options["caa"]
-        if options["website"] is not None:
-            ca.website = options["website"]
-        if options["tos"] is not None:
-            ca.terms_of_service = options["tos"]
+        if caa is not None:
+            ca.caa_identity = caa
+        if website is not None:
+            ca.website = website
+        if tos is not None:
+            ca.terms_of_service = tos
 
         # Set ACME options
         if model_settings.CA_ENABLE_ACME:  # pragma: no branch; parser throws error already
@@ -126,9 +130,8 @@ class Command(CertificateAuthorityDetailMixin, BaseCommand):
                     raise CommandError(f"{acme_profile}: Profile is not defined.")
                 ca.acme_profile = acme_profile
 
-        if model_settings.CA_ENABLE_REST_API:  # pragma: no branch; parser throws error already
-            if (api_enabled := options.get("api_enabled")) is not None:
-                ca.api_enabled = api_enabled
+        if model_settings.CA_ENABLE_REST_API and api_enabled is not None:
+            ca.api_enabled = api_enabled
 
         # Set OCSP responder options
         if ocsp_key_backend is not None:

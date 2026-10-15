@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from pydantic import BaseModel, ValidationError
 
 from cryptography import x509
@@ -100,8 +98,11 @@ Note that the private key will be copied to the directory configured by the CA_D
         ocsp_key_backend: str,
         ocsp_responder_key_validity: int | None,
         ocsp_response_validity: int | None,
-        **options: Any,
+        api_enabled: bool | None = None,  # default is important - not passed if API is not enabled
+        acme_profile: str | None = None,  # default is important - not passed if ACME is not enabled
+        **options: object,
     ) -> None:
+        self.validate_api_parameters(api_enabled)
         with open(key, "rb") as key_stream:
             key_data = key_stream.read()
         with open(pem, "rb") as pem_stream:
@@ -206,13 +207,12 @@ Note that the private key will be copied to the directory configured by the CA_D
                 if options[param] is not None:
                     setattr(ca, param, options[param])
 
-            if acme_profile := options["acme_profile"]:
+            if acme_profile is not None:
                 ca.acme_profile = acme_profile
 
         # Set API options
-        if model_settings.CA_ENABLE_REST_API:  # pragma: no branch; parser throws error already
-            if (api_enabled := options.get("api_enabled")) is not None:
-                ca.api_enabled = api_enabled
+        if model_settings.CA_ENABLE_REST_API and api_enabled is not None:
+            ca.api_enabled = api_enabled
 
         # Store certificate and derived fields in database
         ca.update_certificate(loaded_certificate)

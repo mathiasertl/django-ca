@@ -13,10 +13,9 @@
 
 """Specialized Django forms for the admin interface."""
 
-import typing
 from collections.abc import Iterable
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -34,7 +33,7 @@ from django_ca.models import Certificate, CertificateAuthority, X509CertMixin
 from django_ca.querysets import CertificateAuthorityQuerySet
 from django_ca.widgets import ProfileWidget
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django_stubs_ext import StrPromise
 
     CertificateModelForm = forms.ModelForm[Certificate]
@@ -71,7 +70,7 @@ class X509CertMixinAdminForm(X509CertMixinModelForm):
 
     _meta: "ModelFormOptions[X509CertMixin]"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(*args, **kwargs)
 
         meta = self._meta
@@ -102,7 +101,7 @@ class CertificateAuthorityForm(X509CertMixinAdminForm):
     sign_certificate_policies = fields.CertificatePoliciesField(required=False)
 
     class Meta:
-        labels: typing.ClassVar[dict[str, "StrPromise"]] = {"acme_registration": _("Account registration")}
+        labels: ClassVar[dict[str, "StrPromise"]] = {"acme_registration": _("Account registration")}
 
 
 class CreateCertificateBaseForm(CertificateModelForm):
@@ -174,12 +173,12 @@ class CreateCertificateBaseForm(CertificateModelForm):
     # browser will prevent form submission without entering a different non-empty password.
     password.widget.attrs.update({"autocomplete": "new-password"})
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(*args, **kwargs)
 
         # Set choices, so we can filter out CAs where the private key does not exist locally
-        field = typing.cast("forms.ModelChoiceField[CertificateAuthority]", self.fields["ca"])
-        qs = typing.cast(CertificateAuthorityQuerySet, field.queryset)
+        field = cast("forms.ModelChoiceField[CertificateAuthority]", self.fields["ca"])
+        qs = cast(CertificateAuthorityQuerySet, field.queryset)
         # NOTE: field.initial is set in admin
         field.choices = [
             (field.prepare_value(ca), field.label_from_instance(ca))
@@ -204,7 +203,7 @@ class CreateCertificateBaseForm(CertificateModelForm):
             return None
         return password.encode("utf-8")
 
-    def clean(self) -> dict[str, Any] | None:
+    def clean(self) -> dict[str, object] | None:
         data = super().clean()
 
         # COVERAGE Unclear if/when this happens, but django-stubs==1.15.0 reports data as Optional.
@@ -213,11 +212,11 @@ class CreateCertificateBaseForm(CertificateModelForm):
 
         expires = data.get("not_after")
         ca: CertificateAuthority = data["ca"]
-        subject = typing.cast(x509.Name | None, data.get("subject"))
-        algorithm = typing.cast(hashes.HashAlgorithm | None, data.get("algorithm"))
+        subject = cast(x509.Name | None, data.get("subject"))
+        algorithm = cast(hashes.HashAlgorithm | None, data.get("algorithm"))
         subject_alternative_name = data.get("subject_alternative_name", (None, False))
 
-        subject_alternative_name = typing.cast(
+        subject_alternative_name = cast(
             x509.Extension[x509.SubjectAlternativeName] | None, subject_alternative_name
         )
 
@@ -302,9 +301,5 @@ class RevokeCertificateForm(CertificateModelForm):
     class Meta:
         model = Certificate
         fields = ("revoked_reason", "compromised")
-        field_classes: typing.ClassVar[dict[str, type[forms.Field]]] = {
-            "compromised": forms.SplitDateTimeField,
-        }
-        widgets: typing.ClassVar[dict[str, type[forms.Widget]]] = {
-            "compromised": AdminSplitDateTime,
-        }
+        field_classes: ClassVar[dict[str, type[forms.Field]]] = {"compromised": forms.SplitDateTimeField}
+        widgets: ClassVar[dict[str, type[forms.Widget]]] = {"compromised": AdminSplitDateTime}

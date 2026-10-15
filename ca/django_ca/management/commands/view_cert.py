@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from django.core.management import CommandParser
 
 from django_ca.management.base import BaseCommand
@@ -35,5 +33,25 @@ class Command(OutputCertificateMixin, CertCommandMixin, BaseCommand):
         self.add_output_certificate_arguments(parser, default_format="text")
         super().add_arguments(parser)
 
-    def handle(self, cert: Certificate, **options: Any) -> None:
-        self.output_certificate(cert, **options)
+    def handle(
+        self,
+        cert: Certificate,
+        output_format: str,
+        serial_format: str,
+        json_indent: int,
+        pem: bool,
+        bundle: bool,
+        extensions: bool,
+        wrap: bool,
+        **options: object,
+    ) -> None:
+        self.output_certificate(
+            cert,
+            output_format=output_format,
+            serial_format=serial_format,
+            json_indent=json_indent,
+            pem=pem,
+            bundle=bundle,
+            extensions=extensions,
+            wrap=wrap,
+        )

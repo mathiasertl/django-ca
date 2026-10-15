@@ -17,11 +17,11 @@ import functools
 import warnings
 from collections.abc import Callable
 from inspect import signature
-from typing import Any, TypeVar, cast
+from typing import TypeVar, cast
 
 # IMPORTANT: Do **not** import any module from django_ca here, or you risk circular imports.
 
-F = TypeVar("F", bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., object])
 
 
 class RemovedInDjangoCA400Warning(PendingDeprecationWarning):
@@ -54,7 +54,7 @@ def deprecate_function(category: DeprecationWarningType, stacklevel: int = 2) ->
 
     def decorator_deprecate(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: object, **kwargs: object) -> object:
             warnings.warn(
                 f"{func.__name__}() is deprecated and will be removed in django-ca {category.version}.",
                 category=category,
@@ -83,7 +83,7 @@ def deprecate_argument(
 
     def decorator_deprecate(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: object, **kwargs: object) -> object:
             sig = signature(func)
             bound = sig.bind(*args, **kwargs)
             if arg in bound.arguments:
@@ -98,7 +98,7 @@ def deprecate_argument(
 
 def deprecate_type(
     arg: str,
-    types: type[Any] | tuple[type[Any], ...],
+    types: type[object] | tuple[type[object], ...],
     category: DeprecationWarningType,
     stacklevel: int = 2,
 ) -> Callable[[F], F]:
@@ -106,7 +106,7 @@ def deprecate_type(
 
     def decorator_deprecate(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: object, **kwargs: object) -> object:
             sig = signature(func)
             bound = sig.bind(*args, **kwargs)
             if arg in bound.arguments and isinstance(bound.arguments.get(arg), types):

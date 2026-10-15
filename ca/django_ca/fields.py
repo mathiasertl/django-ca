@@ -15,9 +15,8 @@
 
 import abc
 import json
-import typing
 from collections.abc import Iterable
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Generic, NoReturn, Union, cast
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -42,7 +41,7 @@ from django_ca.pydantic.name import NameModel
 from django_ca.typehints import AlternativeNameTypeVar, CRLExtensionTypeTypeVar, ExtensionTypeTypeVar
 from django_ca.widgets import GeneralNameKeyValueWidget, KeyValueWidget, NameWidget
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django_ca.modelfields import LazyCertificateSigningRequest
 
 _EXTENDED_KEY_USAGE_CHOICES = sorted(
@@ -61,7 +60,7 @@ class CertificateSigningRequestField(forms.CharField):
         "Could not parse PEM-encoded CSR. They usually look like this: <pre>{}\n...\n{}</pre>"
     )
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         # COVERAGE NOTE: Below condition is never false, as we never pass a custom help text.
         if not kwargs.get("help_text"):  # pragma: no branch
             kwargs["help_text"] = _(
@@ -134,8 +133,8 @@ class KeyValueField(forms.CharField):
 
     def to_python(  # type: ignore[override]  # return type is str in CharField.to_python()
         self,
-        value: str | list[dict[str, Any]] | None,
-    ) -> list[dict[str, Any]]:
+        value: str | list[dict[str, object]] | None,
+    ) -> list[dict[str, object]]:
         # This method receives a coerced value (= list of key/value pairs) when a form is submitted and then
         # displayed again (due to an error or the "Save and continue editing" button in the admin interface).
         if isinstance(value, list):
@@ -147,7 +146,7 @@ class KeyValueField(forms.CharField):
             return []
         return json.loads(value)  # type: ignore[no-any-return]
 
-    def pydantic_validation_error(self, ex: PydanticValidationError) -> typing.NoReturn:
+    def pydantic_validation_error(self, ex: PydanticValidationError) -> NoReturn:
         """Transform Pydantic ValidationError exceptions into Django ValidationError."""
         raise ValidationError([error["msg"] for error in ex.errors()]) from ex
 
@@ -203,18 +202,18 @@ class ReasonsField(forms.MultipleChoiceField):
        field always returns invalid choice errors otherwise.
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(choices=REVOCATION_REASONS, **kwargs)
 
 
-class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
+class ExtensionField(forms.MultiValueField, Generic[ExtensionTypeTypeVar], metaclass=abc.ABCMeta):
     """Base class for form fields that serialize to a :py:class:`~cg:cryptography.Extension`."""
 
     extension_type: type[ExtensionTypeTypeVar]
     # TYPEHINT NOTE: the value can be handled by the get_fields() method.
     fields: tuple[forms.Field, ...] | None = None  # type: ignore[assignment]
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         fields = [*self.get_fields(), forms.BooleanField(required=False, initial=True)]
         kwargs.setdefault("label", get_extension_name(self.extension_type.oid))
         super().__init__(fields=fields, require_all_fields=False, **kwargs)
@@ -241,7 +240,7 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
         )
 
     @abc.abstractmethod
-    def get_value(self, *value: Any) -> ExtensionTypeTypeVar | None:
+    def get_value(self, *value: Any) -> ExtensionTypeTypeVar | None:  # noqa: ANN401
         """Get the extension value from the "compressed" form representation.
 
         Return `None` if no value was set and the extension should **not** be added.
@@ -249,7 +248,7 @@ class ExtensionField(forms.MultiValueField, typing.Generic[ExtensionTypeTypeVar]
 
 
 class AlternativeNameField(ExtensionField[AlternativeNameTypeVar]):
-    """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+    """Form field for an :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
     extension_type: type[AlternativeNameTypeVar]
     fields = (GeneralNameKeyValueField(required=False),)
@@ -266,7 +265,7 @@ class MultipleChoiceExtensionField(ExtensionField[ExtensionTypeTypeVar]):
     choices = tuple[tuple[str, str], ...]
     widget: type[widgets.MultipleChoiceExtensionWidget]
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: object) -> None:
         kwargs["widget"] = self.widget(choices=self.choices)
         super().__init__(**kwargs)
 
@@ -338,7 +337,7 @@ class DistributionPointField(ExtensionField[CRLExtensionTypeTypeVar]):
 
 
 class AuthorityInformationAccessField(ExtensionField[x509.AuthorityInformationAccess]):
-    """Form field for a :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
+    """Form field for an :py:class:`~cg:cryptography.x509.AuthorityInformationAccess` extension."""
 
     extension_type = x509.AuthorityInformationAccess
     fields = (GeneralNameKeyValueField(required=False), GeneralNameKeyValueField(required=False))
@@ -382,7 +381,7 @@ class CertificatePoliciesField(ExtensionField[x509.CertificatePolicies]):
         if not policy_identifier or not (practice_statements or explicit_text):
             return None
 
-        policy_qualifiers = typing.cast(list[str | x509.UserNotice], practice_statements.splitlines())
+        policy_qualifiers = cast(list[str | x509.UserNotice], practice_statements.splitlines())
         if explicit_text:
             policy_qualifiers.append(x509.UserNotice(notice_reference=None, explicit_text=explicit_text))
 
@@ -418,7 +417,7 @@ class FreshestCRLField(DistributionPointField[x509.FreshestCRL]):
 
 
 class IssuerAlternativeNameField(AlternativeNameField[x509.IssuerAlternativeName]):
-    """Form field for a :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
+    """Form field for an :py:class:`~cg:cryptography.x509.IssuerAlternativeName` extension."""
 
     extension_type = x509.IssuerAlternativeName
     widget = widgets.IssuerAlternativeNameWidget
@@ -438,7 +437,7 @@ class KeyUsageField(MultipleChoiceExtensionField[x509.KeyUsage]):
 
 
 class OCSPNoCheckField(ExtensionField[x509.OCSPNoCheck]):
-    """Form field for a :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
+    """Form field for an :py:class:`~cg:cryptography.x509.OCSPNoCheck` extension."""
 
     extension_type = x509.OCSPNoCheck
     fields = (forms.BooleanField(required=False),)

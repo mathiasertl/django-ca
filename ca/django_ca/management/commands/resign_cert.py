@@ -17,7 +17,6 @@
 """
 
 from datetime import timedelta
-from typing import Any
 
 from cryptography import x509
 
@@ -81,7 +80,8 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
         cert: Certificate,
         expires: timedelta | None,
         watch: list[str],
-        **options: Any,
+        out: str | None,
+        **options: object,
     ) -> None:
         profile_obj = self.get_profile(cert)
         self.verify_certificate_authority(ca=cert.ca, expires=expires, profile=profile_obj)
@@ -136,8 +136,8 @@ default profile, currently {model_settings.CA_DEFAULT_PROFILE}."""
 
         cert.watchers.add(*watchers)
 
-        if options["out"]:
-            with open(options["out"], "w", encoding="ascii") as stream:
+        if out is not None:
+            with open(out, "w", encoding="ascii") as stream:
                 stream.write(cert.pub.pem)
         else:
             self.stdout.write(cert.pub.pem)
