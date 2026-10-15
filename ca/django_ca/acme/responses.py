@@ -14,7 +14,7 @@
 """Collection of Django HTTP response subclasses representing ACME responses."""
 
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from acme import messages
 
@@ -36,7 +36,7 @@ class AcmeSimpleResponse(AcmeResponse):
 
     message_cls: type[messages.ResourceBody]
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs: object) -> None:
         super().__init__(self.message_cls(**kwargs).to_json())
 
 

@@ -48,7 +48,7 @@ class HSMKeyBackendMixin:
         token: str,
         so_pin: str | None = None,
         user_pin: str | None = None,
-    ):
+    ) -> None:
         if so_pin is not None and user_pin is not None:
             raise ValueError(f"{alias}: Set either so_pin or user_pin.")
 

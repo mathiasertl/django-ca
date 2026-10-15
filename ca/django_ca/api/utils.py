@@ -13,8 +13,7 @@
 
 """API utility functions."""
 
-import typing
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -23,7 +22,7 @@ from django.http import Http404
 
 from django_ca.models import Certificate, CertificateAuthority
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from django.contrib.auth.models import User  # pylint: disable=imported-auth-user
 else:
     from django.contrib.auth import get_user_model
@@ -52,7 +51,7 @@ def create_api_user(
     sign_certificate: bool = True,
     view_certificate: bool = True,
     revoke_certificate: bool = True,
-    **extra_fields: Any,
+    **extra_fields: Any,  # noqa: ANN401
 ) -> User:
     """Create an API user capable of using the REST API.
 

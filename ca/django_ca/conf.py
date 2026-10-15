@@ -18,7 +18,7 @@ from collections.abc import Iterable
 from copy import deepcopy
 from datetime import timedelta
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, Annotated, Any, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Annotated, Generic, Self, TypeVar
 
 from annotated_types import Ge, Le
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
@@ -61,7 +61,7 @@ _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
 DictSetting = Annotated[dict[_KT, _KV], BeforeValidator(dict_env_validator)]
 
-_DEFAULT_CA_PROFILES: dict[str, dict[str, Any]] = {
+_DEFAULT_CA_PROFILES: dict[str, dict[str, object]] = {
     "client": {
         # see: http://security.stackexchange.com/questions/68491/
         "description": _("A certificate for a client."),
@@ -240,7 +240,7 @@ class KeyBackendConfigurationModel(BaseModel):
     """Base model for a key backend configuration."""
 
     BACKEND: str
-    OPTIONS: dict[str, Any] = Field(default_factory=dict)
+    OPTIONS: dict[str, object] = Field(default_factory=dict)
 
 
 class SettingsModel(BaseModel):
@@ -428,7 +428,7 @@ class SettingsModel(BaseModel):
 
     @field_validator("CA_PROFILES", mode="before")
     @classmethod
-    def parse_ca_profiles(cls, value: Any) -> Any:
+    def parse_ca_profiles(cls, value: object) -> object:
         """Update the default CA profiles with the value from settings."""
         if isinstance(value, dict):
             profiles = copy.deepcopy(_DEFAULT_CA_PROFILES)
@@ -446,7 +446,7 @@ class SettingsModel(BaseModel):
 
     @field_validator("CA_USE_CELERY", mode="before")
     @classmethod
-    def validate_ca_use_celery(cls, value: Any) -> Any:
+    def validate_ca_use_celery(cls, value: object) -> object:
         """Validate that CA_USE_CELERY is not set if Celery is not installed, set if the value is not set."""
         spec = find_spec("celery")
         if value is True and spec is None:
@@ -559,8 +559,8 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
         if reload_on_change is True:  # pragma: no branch
             self._connect_settings_changed()
 
-    def __dir__(self, object: Any = None) -> Iterable[str]:  # pylint: disable=redefined-builtin
-        # Used by ipython for tab completion, see:
+    def __dir__(self) -> Iterable[str]:  # pylint: disable=redefined-builtin
+        # Used by IPython for tab completion, see:
         #   http://ipython.org/ipython-doc/dev/config/integrating.html
         getters = [getter for getter in dir(self.settings_model) if getter.startswith("get_")]
         return list(super().__dir__()) + list(self.settings_model.model_fields) + getters
@@ -568,7 +568,7 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
     def _connect_settings_changed(self) -> None:
         setting_changed.connect(self._reload_from_signal)
 
-    def _reload_from_signal(self, **kwargs: Any) -> None:
+    def _reload_from_signal(self, **kwargs: object) -> None:
         self.reload()
 
     def reload(self) -> None:
@@ -578,7 +578,7 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
         except ValueError as ex:
             raise ImproperlyConfigured(str(ex)) from ex
 
-    def __getattr__(self, item: str) -> Any:
+    def __getattr__(self, item: str) -> object:
         return getattr(self.__settings__, item)
 
 

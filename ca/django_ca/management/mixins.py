@@ -272,6 +272,39 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--api-disable", dest="api_enabled", action="store_false", help="Disable API support."
         )
 
+    def validate_api_parameters(self, api_enabled: bool | None) -> None:
+        """Validate that API parameters are **not** set if CA_ENABLE_REST_API is not True."""
+        if model_settings.CA_ENABLE_REST_API:
+            return
+
+        if api_enabled is not None:  # pragma: no branch; parser throws error already
+            raise CommandError("--api-enabled|--api-disable passed, but REST API is not enabled.")
+
+    def validate_acme_parameters(
+        self,
+        acme_enabled: bool | None,
+        acme_registration: bool | None,
+        acme_profile: str | None,
+        acme_requires_contact: bool | None,
+    ) -> None:
+        """Validate that API parameters are **not** set if CA_ENABLE_REST_API is not True."""
+        if model_settings.CA_ENABLE_ACME:
+            return
+
+        if acme_enabled is not None:  # pragma: no branch; parser throws error already
+            raise CommandError("--acme-enable|--acme-disable passed, but ACME is not enabled.")
+        if acme_registration is not None:  # pragma: no branch; parser throws error already
+            raise CommandError(
+                "--acme-enable-account-registration|--acme-disable-account-registration passed, "
+                "but ACME is not enabled."
+            )
+        if acme_profile is not None:  # pragma: no branch; parser throws error already
+            raise CommandError("--acme-profile passed, but ACME is not enabled.")
+        if acme_requires_contact is not None:  # pragma: no branch; parser throws error already
+            raise CommandError(
+                "--acme-contact-optional|--acme-contact-required passed, but ACME is not enabled."
+            )
+
 
 class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass=abc.ABCMeta):  # noqa: PYI059
     """Mixin base class providing arguments and functions for outputting details on the command line."""
@@ -459,7 +492,6 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
         bundle: bool,
         extensions: bool,
         wrap: bool,
-        **options: Any,
     ) -> None:
         """Main function for outputting a CA/Certificate."""
         if output_format == "serial":

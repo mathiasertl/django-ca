@@ -65,7 +65,7 @@ class FieldTestCaseMixin(TestCaseMixin):
 
     field_class: type[forms.Field]
 
-    def assertRequiredError(self, value: Any) -> None:  # pylint: disable=invalid-name
+    def assertRequiredError(self, value: object) -> None:  # pylint: disable=invalid-name
         """Assert that the field raises a required error for the given value."""
         field = self.field_class(required=True)
         error_required = [field.error_messages["required"]]
@@ -90,7 +90,7 @@ def test_alternative_name_fields(
     required: bool,
     field_class: type[fields.AlternativeNameField],
     extension_type: type[x509.ExtensionType],
-    value: Any,
+    value: object,
     general_names: list[x509.GeneralName],
 ) -> None:
     """Test output for AlternativeName fields."""

@@ -15,7 +15,7 @@
 
 import abc
 from http import HTTPStatus
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 from unittest import mock
 
 import acme
@@ -129,7 +129,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, Generic[MessageTypeVar]):
         """Test sending both a jwk and a kid, which are supposed to be mutually exclusive."""
         sign = acme.jws.Signature.sign
 
-        def sign_mock(*args: Any, **kwargs: Any) -> acme.jws.Signature:
+        def sign_mock(*args: object, **kwargs: object) -> acme.jws.Signature:
             """Mock function to set include_jwk to true."""
             kwargs["include_jwk"] = True
             return sign(*args, **kwargs)  # type: ignore[no-any-return]  # False positive
@@ -215,7 +215,7 @@ class AcmeBaseViewTestCaseMixin(TestCaseMixin, Generic[MessageTypeVar]):
         """Test sending neither a jwk and a kid."""
         sign = acme.jws.Signature.sign
 
-        def sign_mock(*args: Any, **kwargs: Any) -> acme.jws.Signature:
+        def sign_mock(*args: object, **kwargs: object) -> acme.jws.Signature:
             """Mock function so that JWS has neither jwk nor kid."""
             kwargs.pop("kid")
             kwargs["include_jwk"] = False

@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from django.core.management.base import CommandParser
 
 from django_ca.management.base import BaseCommand
@@ -56,6 +54,6 @@ class Command(CertCommandMixin, BaseCommand):
         )
         super().add_arguments(parser)
 
-    def handle(self, cert: Certificate, **options: Any) -> None:
-        cert.watchers.add(*[Watcher.from_addr(addr) for addr in options["add"]])
-        cert.watchers.remove(*[Watcher.from_addr(addr) for addr in options["rm"]])
+    def handle(self, cert: Certificate, add: list[str], rm: list[str], **options: object) -> None:
+        cert.watchers.add(*[Watcher.from_addr(addr) for addr in add])
+        cert.watchers.remove(*[Watcher.from_addr(addr) for addr in rm])

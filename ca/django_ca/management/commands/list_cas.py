@@ -16,8 +16,6 @@
 .. seealso:: https://docs.djangoproject.com/en/dev/howto/custom-management-commands/
 """
 
-from typing import Any
-
 from django.core.management.base import CommandParser
 
 from django_ca.management.base import BaseCommand
@@ -65,7 +63,7 @@ class Command(BaseCommand):
 
             self.list_children(child, child_indent)
 
-    def handle(self, tree: bool, **options: Any) -> None:
+    def handle(self, tree: bool, **options: object) -> None:
         if tree:
             for ca in self.qs(CertificateAuthority.objects.filter(parent__isnull=True)):
                 self.list_ca(ca)

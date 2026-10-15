@@ -15,7 +15,7 @@
 
 import hashlib
 from copy import deepcopy
-from typing import Any, ClassVar, Generic, NoReturn, Self, TypeVar, cast
+from typing import ClassVar, Generic, NoReturn, Self, TypeVar, cast
 
 import pkcs11
 from pkcs11 import MGF, Mechanism, Session
@@ -72,7 +72,7 @@ class PKCS11PrivateKeyMixin:
             self._pkcs11_public_key,
         )
 
-    def __deepcopy__(self, memo: Any) -> Self:  # pragma: no cover
+    def __deepcopy__(self, memo: object) -> Self:  # pragma: no cover
         return type(self)(
             deepcopy(self._session),
             self._key_id.decode(),

@@ -101,7 +101,7 @@ class KeyBackendBase:
     #: one of the named values if ``--key-type=EC`` is passed.
     supported_elliptic_curves: tuple[str, ...]
 
-    def __init__(self, alias: str, **kwargs: Any) -> None:
+    def __init__(self, alias: str, **kwargs: object) -> None:
         self.alias = alias
 
         for key, value in kwargs.items():
@@ -133,7 +133,7 @@ class KeyBackend(
     #: Prefix to use for loading options. Empty for the default alias, and `{alias}_` otherwise.
     options_prefix: str = ""
 
-    def __init__(self, alias: str, **kwargs: Any) -> None:
+    def __init__(self, alias: str, **kwargs: object) -> None:
         super().__init__(alias, **kwargs)
 
         if self.alias != DEFAULT_KEY_BACKEND_KEY:

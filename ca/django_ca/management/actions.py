@@ -95,7 +95,7 @@ class AlgorithmAction(SingleValueAction[str, SignatureHashAlgorithm]):
     Namespace(algorithm=<cryptography.hazmat.primitives.hashes.SHA256 object at ...>)
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         hash_algorithms: set[str] = set()
         # Calculate all supported algorithms supported by any configured backend.
         for backend in key_backends:
@@ -114,7 +114,7 @@ class AlgorithmAction(SingleValueAction[str, SignatureHashAlgorithm]):
 class CertificateAction(SingleValueAction[str, Certificate]):
     """Action for naming a certificate."""
 
-    def __init__(self, allow_revoked: bool = False, **kwargs: Any) -> None:
+    def __init__(self, allow_revoked: bool = False, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self.allow_revoked = allow_revoked
 
@@ -135,7 +135,7 @@ class CertificateAction(SingleValueAction[str, Certificate]):
 class CertificateAuthorityAction(SingleValueAction[str, CertificateAuthority]):
     """Action for naming a certificate authority."""
 
-    def __init__(self, allow_disabled: bool = False, **kwargs: Any) -> None:
+    def __init__(self, allow_disabled: bool = False, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self.allow_disabled = allow_disabled
 
@@ -161,7 +161,7 @@ class DatetimeAction(SingleValueAction[str, datetime]):
     The returned datetime value is guaranteed to have a timezone attached to it.
     """
 
-    def __init__(self, precision: Literal["s", "m", "h"] | None = None, **kwargs: Any) -> None:
+    def __init__(self, precision: Literal["s", "m", "h"] | None = None, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("metavar", "YYYY-mm-ddTHH:MM:SS")
         super().__init__(**kwargs)
         self.precision = precision
@@ -200,7 +200,11 @@ class ExpiresAction(SingleValueAction[str, timedelta]):
     3
     """
 
-    def __init__(self, unit: Literal["days", "hours", "minutes", "seconds"] = "days", **kwargs: Any) -> None:
+    def __init__(
+        self,
+        unit: Literal["days", "hours", "minutes", "seconds"] = "days",
+        **kwargs: Any,  # noqa: ANN401
+    ) -> None:
         super().__init__(**kwargs)
         self.unit = unit
 
@@ -245,7 +249,7 @@ class EllipticCurveAction(SingleValueAction[EllipticCurveName, ec.EllipticCurve]
     Namespace(elliptic_curve=<cryptography.hazmat.primitives.asymmetric.ec.SECP256R1 object at ...>)
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("choices", sorted(constants.ELLIPTIC_CURVE_TYPES))
         kwargs.setdefault("metavar", "{secp256r1,secp384r1,secp521r1,...}")
         super().__init__(**kwargs)
@@ -273,7 +277,7 @@ class IntegerRangeAction(SingleValueAction[int, int]):
         The optional maximum value.
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         self.min = kwargs.pop("min", None)
         self.max = kwargs.pop("max", None)
         kwargs["type"] = int  # so parse_value() will receive an int
@@ -291,7 +295,7 @@ class IntegerRangeAction(SingleValueAction[int, int]):
 class KeyBackendAction(SingleValueAction[str, KeyBackend[BaseModel, BaseModel, BaseModel]]):
     """Action for configuring the key backend to use for a new certificate authority."""
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("choices", list(model_settings.CA_KEY_BACKENDS))
         kwargs.setdefault("default", key_backends[DEFAULT_KEY_BACKEND_KEY])
         super().__init__(**kwargs)
@@ -311,7 +315,7 @@ class KeySizeAction(SingleValueAction[str, int]):
     Namespace(size=4096)
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("metavar", "{2048,4096,8192,...}")
         super().__init__(**kwargs)
 
@@ -344,7 +348,7 @@ class MultipleURLAction(argparse.Action):
     Namespace(url=['https://example.com', 'https://example.net'])
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("default", [])
         kwargs.setdefault("metavar", "URL")
         super().__init__(**kwargs)
@@ -377,7 +381,7 @@ class PasswordAction(argparse.Action):
     Namespace(password=b'secret')
     """
 
-    def __init__(self, prompt: str = "Password: ", **kwargs: Any) -> None:
+    def __init__(self, prompt: str = "Password: ", **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self.prompt = prompt
 
@@ -414,7 +418,7 @@ class CertificationPracticeStatementAction(argparse.Action):
     ['https://example.com/cps']
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs["metavar"] = "URL"
         super().__init__(**kwargs)
 
@@ -463,7 +467,7 @@ class PolicyIdentifierAction(argparse.Action):
             policy_qualifiers=[])>])>
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         self.allow_any_policy = kwargs.pop("allow_any_policy", False)
         kwargs["metavar"] = "OID"
         super().__init__(**kwargs)
@@ -506,7 +510,7 @@ class ReasonAction(SingleValueAction[str, ReasonFlags]):
     Namespace(reason=<ReasonFlags.key_compromise: 'keyCompromise'>)
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs["choices"] = sorted([r.name for r in ReasonFlags])
         kwargs.setdefault("default", ReasonFlags.unspecified)
         super().__init__(**kwargs)
@@ -575,7 +579,7 @@ class UserNoticeAction(argparse.Action):
     [<UserNotice(notice_reference=None, explicit_text='example text')>]
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs["metavar"] = "TEXT"
         kwargs.setdefault("dest", "certificate_policies")
         super().__init__(**kwargs)
@@ -615,7 +619,7 @@ class CryptographyExtensionAction(argparse.Action, typing.Generic[ExtensionType]
 class AlternativeNameLegacyAction(CryptographyExtensionAction[AlternativeNameExtensionType]):
     """Action for AlternativeName extensions."""
 
-    def __init__(self, extension_type: type[AlternativeNameExtensionType], **kwargs: Any) -> None:
+    def __init__(self, extension_type: type[AlternativeNameExtensionType], **kwargs: Any) -> None:  # noqa: ANN401
         self.extension_type = extension_type
         super().__init__(**kwargs)
 
@@ -655,7 +659,7 @@ class AlternativeNameAction(CryptographyExtensionAction[AlternativeNameExtension
     <SubjectAlternativeName(<GeneralNames([<UniformResourceIdentifier(value='https://example.com')>])>)>
     """
 
-    def __init__(self, extension_type: type[AlternativeNameExtensionType], **kwargs: Any) -> None:
+    def __init__(self, extension_type: type[AlternativeNameExtensionType], **kwargs: Any) -> None:  # noqa: ANN401
         self.extension_type = extension_type
         kwargs["metavar"] = "NAME"
         super().__init__(**kwargs)
@@ -708,7 +712,7 @@ class AuthorityInformationAccessAction(CryptographyExtensionAction[x509.Authorit
     Namespace(extension=<AuthorityInformationAccess(...)
     """
 
-    def __init__(self, access_method: x509.ObjectIdentifier, **kwargs: Any) -> None:
+    def __init__(self, access_method: x509.ObjectIdentifier, **kwargs: Any) -> None:  # noqa: ANN401
         self.access_method = access_method
         kwargs["type"] = general_name_type
         kwargs["metavar"] = ("NAME",)
@@ -751,7 +755,7 @@ class ExtendedKeyUsageAction(CryptographyExtensionAction[x509.ExtendedKeyUsage])
 
     extension_type = x509.ExtendedKeyUsage
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("nargs", "+")
         super().__init__(**kwargs)
 
@@ -804,7 +808,7 @@ class KeyUsageAction(CryptographyExtensionAction[x509.KeyUsage]):
 
     extension_type = x509.KeyUsage
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         # TODO: add choices once support for old comma-separated lists are removed.
         kwargs.setdefault("nargs", "+")
         super().__init__(**kwargs)
@@ -835,7 +839,7 @@ class TLSFeatureAction(CryptographyExtensionAction[x509.TLSFeature]):
 
     extension_type = x509.TLSFeature
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         kwargs.setdefault("nargs", "+")
         super().__init__(**kwargs)
 
