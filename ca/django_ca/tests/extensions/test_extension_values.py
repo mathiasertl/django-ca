@@ -53,7 +53,7 @@ class ExtensionExampleDict(_ExtensionExampleDict, total=False):
 ExtensionExampleValues = dict[str, ExtensionExampleDict]
 
 
-def pytest_generate_tests(metafunc: Any) -> None:
+def pytest_generate_tests(metafunc: Any) -> None:  # noqa: ANN401
     """Generate parametrized test functions based on test_values property."""
     if hasattr(metafunc.cls, "test_values"):
         func_arg_list = metafunc.cls.test_values

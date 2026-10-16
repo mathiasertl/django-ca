@@ -505,7 +505,7 @@ class BaseSignCertCommand(UsePrivateKeyMixin, BaseSignCommand, metaclass=abc.ABC
         self.add_extension(extensions, value, critical=False)
 
     def get_end_entity_extensions(  # pylint: disable=too-many-locals # noqa: PLR0913,PLR0917
-        self,  # pylint: disable=unused-argument
+        self,
         # Authority Information Access extension
         authority_information_access: x509.AuthorityInformationAccess | None,
         # Certificate Policies extension

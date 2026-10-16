@@ -482,7 +482,7 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
     def output_as_json(self, value: X509CertMixinTypeVar, indent: int | None, serial_format: str) -> None:
         """Output certificate as JSON."""
 
-    def output_certificate(  # pylint: disable=unused-argument
+    def output_certificate(
         self,
         value: X509CertMixinTypeVar,
         output_format: str,

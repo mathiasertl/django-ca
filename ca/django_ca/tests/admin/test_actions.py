@@ -177,7 +177,7 @@ class AdminChangeActionTestCaseMixin(
         with self.mockSignals(False, False) as (pre, post):
             yield pre, post
 
-    def assertRequiresLogin(self, response: "HttpResponse", **kwargs: Any) -> None:
+    def assertRequiresLogin(self, response: "HttpResponse", **kwargs: Any) -> None:  # noqa: ANN401
         """Overwritten as a shortcut to also test that the certificate was not revoked."""
         super().assertRequiresLogin(response, **kwargs)
         self.assertFailedRequest(response)

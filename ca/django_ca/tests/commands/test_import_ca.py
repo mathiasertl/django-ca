@@ -69,7 +69,10 @@ pytestmark = [pytest.mark.usefixtures("tmpcadir"), pytest.mark.usefixtures("db")
 
 
 def import_ca(
-    name: str, key_path: Path | None = None, pem_path: Path | None = None, **kwargs: Any
+    name: str,
+    key_path: Path | None = None,
+    pem_path: Path | None = None,
+    **kwargs: Any,  # noqa: ANN401
 ) -> CertificateAuthority:
     """Execute the import_ca command."""
     key_path = key_path or CERT_DATA["root"]["key_path"]

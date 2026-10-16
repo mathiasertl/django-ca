@@ -32,7 +32,7 @@ from django_ca.tests.base.constants import CERT_DATA
 from django_ca.tests.base.typehints import HttpResponse
 
 
-def absolute_acme_uri(path: str, **kwargs: Any) -> str:
+def absolute_acme_uri(path: str, **kwargs: Any) -> str:  # noqa: ANN401
     """Override to set a default for `hostname`."""
     if path.startswith(":"):
         path = reverse(f"django_ca{path}", kwargs=kwargs)
@@ -54,7 +54,11 @@ def get_nonce(client: Client, ca: CertificateAuthority) -> bytes:
 
 
 def acme_post(
-    client: Client, url: str, data: Any, content_type: str = "application/jose+json", **extra: str
+    client: Client,
+    url: str,
+    data: Any,  # noqa: ANN401
+    content_type: str = "application/jose+json",
+    **extra: str,
 ) -> "HttpResponse":
     """Make a post request with some ACME specific default data."""
     return client.post(

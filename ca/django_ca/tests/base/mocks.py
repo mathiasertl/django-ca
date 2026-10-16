@@ -37,7 +37,7 @@ def mock_signal(signal: Signal) -> Iterator[mock.Mock]:
     #   (**kwargs); all signal handlers must take these arguments.
     #
     # https://docs.djangoproject.com/en/dev/topics/signals/#connecting-to-specific-signals
-    def callback(sender: models.Model, **kwargs: Any) -> None:  # pragma: no cover
+    def callback(sender: models.Model, **kwargs: object) -> None:  # pragma: no cover
         # pylint: disable=unused-argument
         pass
 

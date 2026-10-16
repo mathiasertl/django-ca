@@ -51,7 +51,7 @@ WEBSITE = "https://website.example.com"
 TOS = "https://tos.example.com"
 
 
-def edit_ca(ca: CertificateAuthority, **kwargs: Any) -> None:
+def edit_ca(ca: CertificateAuthority, **kwargs: Any) -> None:  # noqa: ANN401
     """Execute the edit_ca command."""
     stdout, stderr = cmd("edit_ca", ca.serial, **kwargs)
     assert stdout == ""

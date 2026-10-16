@@ -79,7 +79,7 @@ def assert_unauthorized(
     resp: "HttpResponse",
     ca: CertificateAuthority,
     message: str = AcmeResponseUnauthorized.message,
-    **kwargs: Any,
+    **kwargs: Any,  # noqa: ANN401
 ) -> None:
     """Assert an unauthorized response."""
     assert_acme_problem(
@@ -88,7 +88,11 @@ def assert_unauthorized(
 
 
 def assert_malformed(
-    resp: "HttpResponse", ca: CertificateAuthority, message: str = "", typ: str = "malformed", **kwargs: Any
+    resp: "HttpResponse",
+    ca: CertificateAuthority,
+    message: str = "",
+    typ: str = "malformed",
+    **kwargs: Any,  # noqa: ANN401
 ) -> None:
     """Assert an unauthorized response."""
     assert_acme_problem(resp, typ=typ, status=HTTPStatus.BAD_REQUEST, message=message, ca=ca, **kwargs)

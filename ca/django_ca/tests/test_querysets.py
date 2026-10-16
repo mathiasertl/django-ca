@@ -15,7 +15,6 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any
 
 from django.db import models
 from django.test import TransactionTestCase
@@ -46,7 +45,7 @@ class QuerySetTestCaseMixin(TestCaseMixin):
         assert_count_equal(qs, items)
 
     @contextmanager
-    def attr(self, obj: models.Model, attr: str, value: Any) -> Iterator[None]:
+    def attr(self, obj: models.Model, attr: str, value: object) -> Iterator[None]:
         """Context manager to temporarily set an attribute for an object."""
         original = getattr(obj, attr)
         try:

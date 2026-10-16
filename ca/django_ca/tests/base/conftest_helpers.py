@@ -171,7 +171,7 @@ def generate_ca_fixture(name: str) -> typing.Callable[[pytest.FixtureRequest, An
     @pytest.fixture
     def fixture(
         request: pytest.FixtureRequest,
-        db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
+        db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures  # noqa: ANN401
     ) -> CertificateAuthority:
         data = CERT_DATA[name]
         ca_fixture_name = f"{name}_pub"
@@ -242,7 +242,7 @@ def generate_cert_fixture(name: str) -> typing.Callable[[pytest.FixtureRequest],
     @pytest.fixture
     def fixture(
         request: pytest.FixtureRequest,
-        db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures
+        db: Any,  # pylint: disable=unused-argument  # usefixtures does not work for fixtures  # noqa: ANN401
     ) -> Certificate:
         sanitized_name = name.replace("-", "_")
         data = CERT_DATA[name]
@@ -281,7 +281,10 @@ def load_pub(name: str) -> x509.Certificate:
 
 
 def load_ca(
-    name: str, pub: x509.Certificate, parent: CertificateAuthority | None, **kwargs: Any
+    name: str,
+    pub: x509.Certificate,
+    parent: CertificateAuthority | None,
+    **kwargs: Any,  # noqa: ANN401
 ) -> CertificateAuthority:
     """Load a CA."""
     # Set default URLs

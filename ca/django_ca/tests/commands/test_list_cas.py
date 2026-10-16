@@ -42,7 +42,10 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
     load_cas = "__usable__"
 
     def assertOutput(  # pylint: disable=invalid-name
-        self, output: str, expected: str, **context: Any
+        self,
+        output: str,
+        expected: str,
+        **context: Any,  # noqa: ANN401
     ) -> None:
         """Assert the output of this command."""
         context.update(CERT_DATA)

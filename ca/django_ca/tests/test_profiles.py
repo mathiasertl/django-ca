@@ -73,7 +73,11 @@ def doctest_globs(usable_root: CertificateAuthority) -> dict[str, Any]:
 
 
 def create_cert(
-    prof: Profile, ca: CertificateAuthority, csr: x509.CertificateSigningRequest, *args: Any, **kwargs: Any
+    prof: Profile,
+    ca: CertificateAuthority,
+    csr: x509.CertificateSigningRequest,
+    *args: Any,  # noqa: ANN401
+    **kwargs: Any,  # noqa: ANN401
 ) -> Certificate:
     """Shortcut to create a cert with the given profile."""
     cert = Certificate(ca=ca)
@@ -153,7 +157,6 @@ def test_init_no_subject(settings: Settings) -> None:
     settings.CA_DEFAULT_SUBJECT = ({"oid": "CN", "value": "testcase"},)
     prof = Profile(name="test")
     assert isinstance(prof.subject, NameModel)
-    # pylint: disable-next=no-member  # issue with pylint
     assert prof.subject.cryptography == x509.Name([cn("testcase")])
 
 

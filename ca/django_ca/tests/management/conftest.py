@@ -17,14 +17,13 @@ import argparse
 import os
 import sys
 from io import StringIO
-from typing import Any
 from unittest import mock
 
 import pytest
 
 
 def assert_parser_error(
-    parser: argparse.ArgumentParser, args: list[str], expected: str, **kwargs: Any
+    parser: argparse.ArgumentParser, args: list[str], expected: str, **kwargs: str
 ) -> str:
     """Assert that given args throw a parser error."""
     kwargs.setdefault("script", os.path.basename(sys.argv[0]))

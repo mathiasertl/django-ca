@@ -75,7 +75,7 @@ def assert_scope(
     assert idp.only_contains_attribute_certs is attribute, idp
 
 
-def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
+def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:  # noqa: ANN401
     """Create a CA."""
     subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, name)])
     kwargs.setdefault("not_after", datetime.now(tz=UTC) + timedelta(days=365 * 2))
@@ -89,7 +89,7 @@ def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
 
 
 @contextmanager
-def crl(ca: CertificateAuthority, **kwargs: Any) -> Iterator[tuple[str, x509.CertificateRevocationList]]:
+def crl(ca: CertificateAuthority, **kwargs: Any) -> Iterator[tuple[str, x509.CertificateRevocationList]]:  # noqa: ANN401
     """Dump CRL to a tmpdir, yield path to it."""
     kwargs["ca"] = ca
     with tempfile.TemporaryDirectory() as tempdir:
@@ -117,7 +117,7 @@ def dumped(*certificates: X509CertMixin) -> Iterator[list[str]]:
 
 
 @contextmanager
-def sign_cert(ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any) -> Iterator[str]:
+def sign_cert(ca: CertificateAuthority, hostname: str = "example.com", **kwargs: Any) -> Iterator[str]:  # noqa: ANN401
     """Create a signed certificate in a temporary directory."""
     stdin = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
     subject = x509.Name([cn(hostname)])

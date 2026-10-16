@@ -23,7 +23,7 @@ from django_ca.tests.base.constants import CERT_DATA, TIMESTAMPS
 from django_ca.tests.base.utils import cmd
 
 
-def import_cert(name: str, **kwargs: Any) -> Certificate:
+def import_cert(name: str, **kwargs: Any) -> Certificate:  # noqa: ANN401
     """Execute the import_cert command."""
     cert_path = CERT_DATA[name]["pub_path"]
     out, err = cmd("import_cert", cert_path, **kwargs)

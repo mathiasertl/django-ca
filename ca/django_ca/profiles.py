@@ -67,7 +67,6 @@ class Profile(ProfileConfigurationModel):
     )
 
     def _get_extensions(self, extensions: ConfigurableExtensionDict) -> None:
-        # pylint: disable-next=no-member  # issue with pylint
         for key, ext in self.extensions.items():
             oid = CERTIFICATE_EXTENSION_KEY_OIDS[key]
             if ext is None:
@@ -215,10 +214,8 @@ class Profile(ProfileConfigurationModel):
 
         if self.subject is not None:
             if subject is not None:
-                # pylint: disable-next=no-member  # issue with pylint
                 subject = merge_x509_names(self.subject.cryptography, subject)
             else:
-                # pylint: disable-next=no-member  # issue with pylint
                 subject = self.subject.cryptography
 
         # Add first DNSName/IPAddress from subjectAlternativeName as commonName if not present in the subject

@@ -67,8 +67,8 @@ def key_change_request(  # pylint: disable=too-many-locals  # noqa: PLR0913,PLR0
     inner_url: str | None = None,
     inner_nonce: bytes | None = None,
     inner_alg: jose.jwa.JWASignature = jose.jwa.RS256,
-    payload_cb: Any = None,
-) -> Any:
+    payload_cb: Any = None,  # noqa: ANN401
+) -> Any:  # noqa: ANN401
     """Build and send a key-change ACME request.
 
     The outer JWS is signed by *old_key* (defaults to the standard test key) and the inner JWS is signed

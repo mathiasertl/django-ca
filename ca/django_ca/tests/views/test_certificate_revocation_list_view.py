@@ -17,7 +17,6 @@ from datetime import timedelta
 
 # pylint: disable=redefined-outer-name  # because of test fixtures
 from http import HTTPStatus
-from typing import Any
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -29,6 +28,7 @@ from django.test import Client
 from django.urls import include, path, re_path, reverse
 
 import pytest
+from freezegun.api import FrozenDateTimeFactory
 from pytest_django import DjangoAssertNumQueries
 from pytest_django.fixtures import Settings
 
@@ -223,7 +223,7 @@ def test_with_object_not_in_database(
 
 def test_with_expired_crl(
     client: Client,
-    freezer: Any,
+    freezer: FrozenDateTimeFactory,
     usable_root: CertificateAuthority,
     default_url: str,
     root_crl: CertificateRevocationList,

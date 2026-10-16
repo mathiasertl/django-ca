@@ -39,7 +39,7 @@ def assert_changelist_response(response: "HttpResponse", *objects: models.Model)
     """Assert that the passed response is a model ``changelist`` view."""
     assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}"
 
-    def sorter(obj: models.Model) -> Any:
+    def sorter(obj: models.Model) -> Any:  # noqa: ANN401
         return obj.pk
 
     assert sorted(response.context["cl"].result_list, key=sorter) == sorted(objects, key=sorter)

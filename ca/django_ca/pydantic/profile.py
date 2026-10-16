@@ -61,7 +61,6 @@ class ProfileConfigurationModel(BaseModel):
     @model_validator(mode="after")
     def validate_extensions(self) -> Self:
         """Validate the extension dictionary."""
-        # pylint: disable-next=no-member  # issue with pylint
         for key, value in self.extensions.items():
             if value is None:
                 continue

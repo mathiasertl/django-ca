@@ -118,7 +118,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-ca"
-copyright = f"2016 - {datetime.now(tz=UTC).year}, Mathias Ertl"
+copyright = f"2016 - {datetime.now(tz=UTC).year}, Mathias Ertl"  # noqa: A001
 author = "Mathias Ertl"
 
 import django_ca  # NOQA: E402

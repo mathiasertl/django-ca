@@ -89,7 +89,7 @@ class PKCS11PrivateKeyMixin:
     def private_bytes(
         self,
         encoding: serialization.Encoding,
-        format: serialization.PrivateFormat,  # pylint: disable=redefined-builtin  # given by cryptography
+        format: serialization.PrivateFormat,  # noqa: A002  # given by cryptography
         encryption_algorithm: serialization.KeySerializationEncryption,
     ) -> bytes:
         raise NotImplementedError(

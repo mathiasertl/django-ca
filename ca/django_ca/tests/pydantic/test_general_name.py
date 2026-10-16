@@ -71,7 +71,7 @@ def test_doctests() -> None:
         ),
     ),
 )
-def test_other_name(typ: str, value: Any, encoded: bytes) -> None:
+def test_other_name(typ: str, value: object, encoded: bytes) -> None:
     """Test OtherName instances."""
     model = OtherNameModel(oid="1.2.3", type=typ, value=value)
     expected = x509.OtherName(type_id=x509.ObjectIdentifier("1.2.3"), value=encoded)
@@ -241,6 +241,6 @@ def test_general_name(parameters: dict[str, Any], name: x509.GeneralName, discri
         ),
     ),
 )
-def test_general_name_type_errors(typ: str, value: Any, errors: ExpectedErrors) -> None:
+def test_general_name_type_errors(typ: str, value: object, errors: ExpectedErrors) -> None:
     """Test GeneralNameModel errors."""
     assert_validation_errors(GeneralNameModel, {"type": typ, "value": value}, errors)

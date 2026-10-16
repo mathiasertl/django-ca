@@ -82,7 +82,10 @@ CACHE_KEY_KWARGS = {
 
 @contextmanager
 def generate_ocsp_key(
-    ca: CertificateAuthority, key_backend_options: BaseModel, *args: Any, **kwargs: Any
+    ca: CertificateAuthority,
+    key_backend_options: BaseModel,
+    *args: Any,  # noqa: ANN401
+    **kwargs: Any,  # noqa: ANN401
 ) -> Iterator[tuple[CertificateIssuerPrivateKeyTypes, Certificate]]:
     """Context manager to  create an OCSP key and test some basic properties."""
     cert = ca.generate_ocsp_key(key_backend_options, *args, **kwargs)
@@ -373,7 +376,7 @@ def test_get_authority_key_identifier_with_no_extension(child: CertificateAuthor
     """Test getting the authority key identifier when a CA does not have the extension."""
 
     # NOTE: all have this, so we have to mock this.
-    def side_effect(cls: Any) -> NoReturn:
+    def side_effect(cls: Any) -> NoReturn:  # noqa: ANN401
         raise x509.ExtensionNotFound("mocked", x509.SubjectKeyIdentifier.oid)
 
     with mock.patch(

@@ -218,7 +218,6 @@ class CertificateRevocationListProfile(CertificateRevocationListBaseModel):
     @model_validator(mode="after")
     def validate_overrides(self) -> Self:
         """Validate that overrides do not create an invalid scope."""
-        # pylint: disable-next=no-member  # pylint doesn't recognize the type of OVERRIDES.
         for override in self.OVERRIDES.values():
             only_contains_user_certs = self.only_contains_user_certs
             only_contains_ca_certs = self.only_contains_ca_certs
@@ -559,7 +558,7 @@ class SettingsProxyBase(Generic[BaseModelTypeVar]):
         if reload_on_change is True:  # pragma: no branch
             self._connect_settings_changed()
 
-    def __dir__(self) -> Iterable[str]:  # pylint: disable=redefined-builtin
+    def __dir__(self) -> Iterable[str]:
         # Used by IPython for tab completion, see:
         #   http://ipython.org/ipython-doc/dev/config/integrating.html
         getters = [getter for getter in dir(self.settings_model) if getter.startswith("get_")]

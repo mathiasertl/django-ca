@@ -147,7 +147,7 @@ def assert_ocsp_responder_certificate(ca: CertificateAuthority) -> Certificate:
     return cert
 
 
-def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:
+def init_ca(name: str, **kwargs: Any) -> CertificateAuthority:  # noqa: ANN401
     """Run a basic init_ca command."""
     stdout = io.StringIO()
     stderr = io.StringIO()

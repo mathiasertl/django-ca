@@ -39,7 +39,7 @@ from django_ca.tests.base.utils import cmd, cmd_e2e, get_idp
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.django_db]
 
 
-def dump_crl(*args: Any, **kwargs: Any) -> bytes:
+def dump_crl(*args: Any, **kwargs: Any) -> bytes:  # noqa: ANN401
     """Execute the dump_crl command."""
     out, err = cmd("dump_crl", *args, stdout=BytesIO(), stderr=BytesIO(), **kwargs)
     assert err == b""
