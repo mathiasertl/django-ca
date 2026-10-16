@@ -14,7 +14,6 @@
 """Mixin classes for admin view test cases."""
 
 import json
-from typing import Any
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -66,7 +65,7 @@ class AddCertificateSeleniumTestCase(
         """Assert that the field was not modified."""
         assert self.key_value_field.get_attribute("data-modified") != "true"
 
-    def assertChapterHasValue(self, chapter: WebElement, value: Any) -> None:  # pylint: disable=invalid-name
+    def assertChapterHasValue(self, chapter: WebElement, value: object) -> None:  # pylint: disable=invalid-name
         """Assert that the given chapter has the given value."""
         loaded_value = json.loads(chapter.get_attribute("data-value"))  # type: ignore[arg-type]
         assert loaded_value == value

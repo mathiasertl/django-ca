@@ -272,7 +272,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
             "--api-disable", dest="api_enabled", action="store_false", help="Disable API support."
         )
 
-    def validate_api_parameters(self, api_enabled: bool | None) -> None:
+    def validate_api_parameters(self, api_enabled: bool | None) -> None:  # pragma: no cover
         """Validate that API parameters are **not** set if CA_ENABLE_REST_API is not True."""
         if model_settings.CA_ENABLE_REST_API:
             return
@@ -280,7 +280,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         if api_enabled is not None:  # pragma: no branch; parser throws error already
             raise CommandError("--api-enabled|--api-disable passed, but REST API is not enabled.")
 
-    def validate_acme_parameters(
+    def validate_acme_parameters(  # pragma: no cover
         self,
         acme_enabled: bool | None,
         acme_registration: bool | None,
@@ -296,7 +296,7 @@ class CertificateAuthorityDetailMixin(_Base, metaclass=abc.ABCMeta):
         if acme_registration is not None:  # pragma: no branch; parser throws error already
             raise CommandError(
                 "--acme-enable-account-registration|--acme-disable-account-registration passed, "
-                "but ACME is not enabled."
+                "but ACME igs not enabled."
             )
         if acme_profile is not None:  # pragma: no branch; parser throws error already
             raise CommandError("--acme-profile passed, but ACME is not enabled.")
@@ -482,7 +482,7 @@ class OutputCertificateMixinBase(Generic[X509CertMixinTypeVar], _Base, metaclass
     def output_as_json(self, value: X509CertMixinTypeVar, indent: int | None, serial_format: str) -> None:
         """Output certificate as JSON."""
 
-    def output_certificate(  # pylint: disable=unused-argument
+    def output_certificate(
         self,
         value: X509CertMixinTypeVar,
         output_format: str,

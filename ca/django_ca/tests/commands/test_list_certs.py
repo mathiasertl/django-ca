@@ -45,7 +45,7 @@ class ListCertsTestCase(TestCaseMixin, TestCase):
             info = f"{word}: {strftime}"
         return f"{add_colons(cert.serial)} - {cert.cn} ({info})"
 
-    def assertCerts(self, *certs: Certificate, **kwargs: Any) -> None:  # pylint: disable=invalid-name
+    def assertCerts(self, *certs: Certificate, **kwargs: Any) -> None:  # pylint: disable=invalid-name  # noqa: ANN401
         """Assert that command outputs the given certs."""
         stdout, stderr = cmd("list_certs", **kwargs)
         sorted_certs = sorted(certs, key=lambda c: (c.not_after, c.cn, c.serial))

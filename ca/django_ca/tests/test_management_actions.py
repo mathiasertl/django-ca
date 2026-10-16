@@ -18,7 +18,6 @@ import os
 import sys
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Any
 from unittest import mock
 
 from cryptography import x509
@@ -89,7 +88,7 @@ class AlternativeNameLegacyAction(ParserTestCaseMixin, TestCase):
             "--alt", action=actions.AlternativeNameLegacyAction, extension_type=x509.SubjectAlternativeName
         )
 
-    def assertValue(self, namespace: argparse.Namespace, value: Any) -> None:  # pylint: disable=invalid-name
+    def assertValue(self, namespace: argparse.Namespace, value: x509.ExtensionType) -> None:  # pylint: disable=invalid-name
         """Assert a given extension value."""
         extension = x509.Extension(oid=x509.SubjectAlternativeName.oid, critical=False, value=value)
         assert namespace.alt == extension

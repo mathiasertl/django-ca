@@ -656,7 +656,7 @@ def test_ca_default_name_order(settings: Settings) -> None:
         (("invalid-oid",), "invalid-oid: Invalid object identifier"),
     ),
 )
-def test_ca_default_name_order_with_invalid_value(settings: Settings, value: Any, msg: str) -> None:
+def test_ca_default_name_order_with_invalid_value(settings: Settings, value: object, msg: str) -> None:
     """Test invalid values for a default name order."""
     with assert_improperly_configured(msg):
         settings.CA_DEFAULT_NAME_ORDER = value
@@ -677,7 +677,7 @@ def test_ca_default_elliptic_curve(settings: Settings) -> None:
 
 @pytest.mark.parametrize(("value", "expected"), (("SHA-224", hashes.SHA224), ("SHA3/384", hashes.SHA3_384)))
 def test_ca_default_signature_hash_algorithm(
-    settings: Settings, value: Any, expected: type[hashes.HashAlgorithm]
+    settings: Settings, value: object, expected: type[hashes.HashAlgorithm]
 ) -> None:
     """Test ``CA_DEFAULT_SIGNATURE_HASH_ALGORITHM``."""
     settings.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM = value
@@ -723,7 +723,7 @@ def test_ca_default_signature_hash_algorithm_with_invalid_value(settings: Settin
         (None, None),  # None yields no default subject
     ),
 )
-def test_ca_default_subject(settings: Settings, value: Any, expected: x509.Name) -> None:
+def test_ca_default_subject(settings: Settings, value: object, expected: x509.Name) -> None:
     """Test CA_DEFAULT_SUBJECT setting."""
     settings.CA_DEFAULT_SUBJECT = value
     if isinstance(expected, x509.Name):
@@ -743,7 +743,7 @@ def test_ca_default_subject(settings: Settings, value: Any, expected: x509.Name)
         ),
     ),
 )
-def test_ca_default_subject_with_invalid_values(settings: Settings, value: Any, msg: str) -> None:
+def test_ca_default_subject_with_invalid_values(settings: Settings, value: object, msg: str) -> None:
     """Test the check for empty common names."""
     with assert_improperly_configured(msg):
         settings.CA_DEFAULT_SUBJECT = value
@@ -863,7 +863,7 @@ def test_ca_profiles_with_cryptography_extensions(settings: Settings) -> None:
         ([{"oid": "C", "value": "AT"}], x509.Name([country("AT")])),
     ),
 )
-def test_ca_profiles_override_subject(settings: Settings, subject: Any, expected: x509.Name) -> None:
+def test_ca_profiles_override_subject(settings: Settings, subject: object, expected: x509.Name) -> None:
     """Test overriding CA_DEFAULT_SUBJECT in CA_PROFILES."""
     assert model_settings.CA_DEFAULT_SUBJECT != expected  # would defeat purpose of test
     settings.CA_PROFILES = {"client": {"subject": subject}}
@@ -888,7 +888,7 @@ def test_ca_profiles_override_subject_with_deprecated_values(settings: Settings)
         (True, "Input should be a valid dictionary"),
     ),
 )
-def test_ca_profiles_with_invalid_values(settings: Settings, value: Any, msg: str) -> None:
+def test_ca_profiles_with_invalid_values(settings: Settings, value: object, msg: str) -> None:
     """Test invalid values in profiles."""
     with assert_improperly_configured(msg):
         settings.CA_PROFILES = value
@@ -920,7 +920,7 @@ def test_ca_use_celery_is_not_set(settings: Settings) -> None:
 
 
 @pytest.mark.parametrize("value", (False, None))
-def test_ca_use_celery_is_falsy_with_celery_not_installed(settings: Settings, value: Any) -> None:
+def test_ca_use_celery_is_falsy_with_celery_not_installed(settings: Settings, value: bool | None) -> None:
     """Test behavior for CA_USE_CELERY if celery is not installed."""
     with mock.patch.dict("sys.modules", celery=None):
         settings.CA_USE_CELERY = value

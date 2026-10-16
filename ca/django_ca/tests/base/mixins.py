@@ -128,7 +128,7 @@ class TestCaseMixin(TestCaseProtocol):
                 self.fail(f"{CERT_DATA[name]['ca']}: Could not load CertificateAuthority.")
         return names
 
-    def absolute_uri(self, name: str, hostname: str | None = None, **kwargs: Any) -> str:
+    def absolute_uri(self, name: str, hostname: str | None = None, **kwargs: Any) -> str:  # noqa: ANN401
         """Build an absolute uri for the given request.
 
         The `name` is assumed to be a URL name or a full path. If `name` starts with a colon, ``django_ca``
@@ -183,7 +183,7 @@ class TestCaseMixin(TestCaseProtocol):
         name: str,
         enabled: bool = True,
         parent: CertificateAuthority | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> CertificateAuthority:
         """Load a CA from one of the preloaded files."""
         if parent is None and CERT_DATA[name].get("parent"):
@@ -228,13 +228,13 @@ class TestCaseMixin(TestCaseProtocol):
         return cert
 
     @contextmanager
-    def patch(self, *args: Any, **kwargs: Any) -> Iterator[mock.MagicMock]:
+    def patch(self, *args: Any, **kwargs: Any) -> Iterator[mock.MagicMock]:  # noqa: ANN401
         """Shortcut to :py:func:`py:unittest.mock.patch`."""
         with mock.patch(*args, **kwargs) as mocked:
             yield mocked
 
     @contextmanager
-    def patch_object(self, *args: Any, **kwargs: Any) -> Iterator[Any]:
+    def patch_object(self, *args: Any, **kwargs: Any) -> Iterator[Any]:  # noqa: ANN401
         """Shortcut to :py:func:`py:unittest.mock.patch.object`."""
         with mock.patch.object(*args, **kwargs) as mocked:
             yield mocked
@@ -281,7 +281,9 @@ class AdminTestCaseMixin(TestCaseMixin, typing.Generic[DjangoCAModelTypeVar]):
         assert response.content.decode("utf-8") == expected_content
 
     def assertRequiresLogin(  # pylint: disable=invalid-name
-        self, response: "HttpResponse", **kwargs: Any
+        self,
+        response: "HttpResponse",
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Assert that the given response is a redirect to the login page."""
         path = reverse("admin:login")

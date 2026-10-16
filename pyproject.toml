@@ -358,6 +358,9 @@ disable = [
     "comparison-with-itself", # ruff: PLR0124
     "unnecessary-lambda", # ruff: PLW0108
 
+    # covered by ruff/flake8-builtin
+    "redefined-builtin", # ruff: A001 (builtin-variable-shadowing)
+    
     # covered by ruff/flake8-bugbear
     "pointless-statement", # ruff: B018
     "expression-not-assigned", # ruff: B018
@@ -462,6 +465,7 @@ line-length = 110
 
 [tool.ruff.lint]
 extend-select = [
+    "A",
     "ANN", # flake8-pyi  # recommended by ty
     "B", # flake8-bugbear
     "D", # pydocstyle

@@ -544,10 +544,6 @@ class Command(
                 oid=ExtensionOID.ISSUER_ALTERNATIVE_NAME, critical=False, value=sign_issuer_alternative_name
             )
 
-        kwargs = {}
-        if options["default_hostname"] is not None:
-            kwargs["default_hostname"] = options["default_hostname"]
-
         try:
             ca = CertificateAuthority.objects.init(
                 name=name,

@@ -125,7 +125,7 @@ MUST_BE_NON_CRITICAL_ERROR = (
 
 def assert_extension_model(
     model_class: type[ExtensionModelTypeVar],
-    parameters: Any,
+    parameters: object,
     expected: x509.ExtensionType,
     critical: bool | None,
 ) -> ExtensionModelTypeVar:

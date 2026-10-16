@@ -47,7 +47,7 @@ def test_pkcs1v15_model() -> None:
         (hashes.SHA256(), hashes.SHA256()),
     ),
 )
-def test_mgf1model(parameter: Any, hash_algorithm: HashAlgorithm) -> None:
+def test_mgf1model(parameter: object, hash_algorithm: HashAlgorithm) -> None:
     """Test MGF1Model."""
     model = assert_cryptography_model(
         MGF1Model, {"algorithm": parameter}, padding.MGF1(hash_algorithm), has_equality=False
@@ -116,7 +116,7 @@ def test_asymmetric_padding_types_with_pkcs1v15() -> None:
         {"name": "EMSA-PSS", "salt_length": padding.PSS.AUTO, "mgf": {"algorithm": "SHA-256"}},
     ),
 )
-def test_asymmetric_padding_types_with_pss(value: Any) -> None:
+def test_asymmetric_padding_types_with_pss(value: object) -> None:
     """Test type alias."""
     model = AsymmetricPaddingTypesModel(value=value)
     assert isinstance(model.value, PSSModel)

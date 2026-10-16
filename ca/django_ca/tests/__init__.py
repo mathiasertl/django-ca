@@ -37,7 +37,9 @@ pytest.register_assert_rewrite(
 
 
 def reload_settings(  # pylint: disable=unused-argument
-    sender: type[Any], setting: str, **kwargs: Any
+    sender: type[Any],
+    setting: str,
+    **kwargs: Any,  # noqa: ANN401
 ) -> None:
     """Reload ``django_ca.conf.model_settings`` if the settings are changed."""
     # WARNING:

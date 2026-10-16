@@ -17,7 +17,7 @@ import json
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Literal
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -171,7 +171,7 @@ def get_add_response_form(client: Client) -> CreateCertificateForm:
     return form
 
 
-def assert_initial_field_value(form: CreateCertificateForm, field: str, value: Any) -> BoundField:
+def assert_initial_field_value(form: CreateCertificateForm, field: str, value: object) -> BoundField:
     """Assert an initial value in a form field."""
     bound_field = form.fields[field].get_bound_field(form, field)
     assert bound_field.initial == value
@@ -721,7 +721,7 @@ class ProfileFieldSeleniumTestCase(CertificateModelAdminTestCaseMixin, SeleniumT
     load_cas = "__usable__"
 
     def get_expected(
-        self, profile: Profile, oid: x509.ObjectIdentifier, default: Any = None
+        self, profile: Profile, oid: x509.ObjectIdentifier, default: object = None
     ) -> SerializedPydanticExtension:
         """Get expected value for a given extension for the given profile."""
         ext_key = CONFIGURABLE_EXTENSION_KEYS[oid]

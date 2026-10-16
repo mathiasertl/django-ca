@@ -31,7 +31,7 @@ ExpectedErrors = list[tuple[str, tuple[str, ...], str | re.Pattern[str]]]
 def assert_cryptography_model(
     model_class: type[BaseModelTypeVar],
     parameters: dict[str, Any],
-    expected: Any,
+    expected: object,
     has_equality: bool = True,
 ) -> BaseModelTypeVar:
     """Test that a cryptography model matches the expected value."""

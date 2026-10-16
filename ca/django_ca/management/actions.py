@@ -277,9 +277,9 @@ class IntegerRangeAction(SingleValueAction[int, int]):
         The optional maximum value.
     """
 
-    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
-        self.min = kwargs.pop("min", None)
-        self.max = kwargs.pop("max", None)
+    def __init__(self, min: int | None = None, max: int | None = None, **kwargs: Any) -> None:  # noqa: A002, ANN401
+        self.min = min
+        self.max = max
         kwargs["type"] = int  # so parse_value() will receive an int
         kwargs.setdefault("metavar", "INT")
         super().__init__(**kwargs)
@@ -467,8 +467,8 @@ class PolicyIdentifierAction(argparse.Action):
             policy_qualifiers=[])>])>
     """
 
-    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
-        self.allow_any_policy = kwargs.pop("allow_any_policy", False)
+    def __init__(self, allow_any_policy: bool = False, **kwargs: Any) -> None:  # noqa: ANN401
+        self.allow_any_policy = allow_any_policy
         kwargs["metavar"] = "OID"
         super().__init__(**kwargs)
 

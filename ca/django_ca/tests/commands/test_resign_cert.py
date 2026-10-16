@@ -35,7 +35,7 @@ from django_ca.tests.base.utils import basic_constraints, cmd, cmd_e2e
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"])]
 
 
-def resign_cert(serial: str, stderr: str = "", **kwargs: Any) -> Certificate:
+def resign_cert(serial: str, stderr: str = "", **kwargs: Any) -> Certificate:  # noqa: ANN401
     """Execute the resign_cert command."""
     with assert_create_cert_signals():
         stdout, actual_stderr = cmd("resign_cert", serial, **kwargs)

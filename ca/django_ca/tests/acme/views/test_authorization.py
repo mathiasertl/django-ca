@@ -64,7 +64,7 @@ def test_basic(
 ) -> None:
     """Basic test for creating an account via ACME."""
 
-    def sorter(d: dict[str, Any]) -> Any:
+    def sorter(d: dict[str, Any]) -> Any:  # noqa: ANN401
         return d["token"]
 
     settings.USE_TZ = use_tz

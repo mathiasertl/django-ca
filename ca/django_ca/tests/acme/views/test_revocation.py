@@ -83,7 +83,7 @@ class TestAcmeCertificateRevocationView(AcmeWithAccountViewTestCaseMixin[Revocat
             "certificate", decoder=jose.json_util.decode_csr, encoder=jose.json_util.encode_csr
         )
 
-    def get_message(self, **kwargs: Any) -> Revocation:
+    def get_message(self, **kwargs: Any) -> Revocation:  # noqa: ANN401
         """Get default message."""
         default_certificate = CERT_DATA["root-cert"]["pub"]["parsed"]
         kwargs.setdefault("certificate", default_certificate)

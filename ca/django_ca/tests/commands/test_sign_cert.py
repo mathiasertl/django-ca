@@ -69,7 +69,7 @@ csr: bytes = CERT_DATA["root-cert"]["csr"]["parsed"].public_bytes(Encoding.PEM)
 pytestmark = [pytest.mark.freeze_time(TIMESTAMPS["everything_valid"]), pytest.mark.django_db]
 
 
-def sign_cert(ca: CertificateAuthority, subject: x509.Name, **kwargs: Any) -> tuple[str, str]:
+def sign_cert(ca: CertificateAuthority, subject: x509.Name, **kwargs: Any) -> tuple[str, str]:  # noqa: ANN401
     """Shortcut for the sign_cert command."""
     return cmd("sign_cert", ca=ca, subject=subject, **kwargs)
 

@@ -125,7 +125,7 @@ class Dns01ValidationTestCase(TestCaseMixin, TestCase):
         assert resolve_mock.call_args_list[0].args[:2] == expected
 
     @contextmanager
-    def resolve(self, side_effect: Any) -> Iterator[mock.Mock]:
+    def resolve(self, side_effect: object) -> Iterator[mock.Mock]:
         """Simpler function for mocking top-level resolve function."""
         with mock.patch("dns.resolver.resolve", side_effect=side_effect, autospec=True) as resolve_mock:
             yield resolve_mock

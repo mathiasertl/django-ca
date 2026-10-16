@@ -13,7 +13,7 @@
 
 """Some minor tests for type hints."""
 
-from typing import Any, get_args
+from typing import get_args
 
 from josepy import jwa
 
@@ -88,7 +88,7 @@ def test_end_entity_certificate_extension_keys() -> None:
         (typehints.CertificateExtensionType, typehints.CertificateExtension),
     ),
 )
-def test_extension_types_equality(extension_types: Any, extensions: Any) -> None:
+def test_extension_types_equality(extension_types: object, extensions: object) -> None:
     """Test that extension_types typehints match the full extension typehints."""
     assert sorted(get_args(extension_types), key=_extension_type_sorter) == sorted(
         [get_args(ext)[0] for ext in get_args(extensions)], key=_extension_type_sorter

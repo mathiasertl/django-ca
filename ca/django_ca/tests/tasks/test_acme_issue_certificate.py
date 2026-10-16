@@ -423,7 +423,7 @@ def test_error_after_signing(
 
     # Create the certificate as usual, but raise right afterwards, so that the certificate is already
     # stored in the database when the exception handler is invoked.
-    def create_cert(*args: Any, **kwargs: Any) -> NoReturn:
+    def create_cert(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ANN401
         original_create_cert(*args, **kwargs)
         raise RuntimeError(message)
 
