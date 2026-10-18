@@ -2,7 +2,8 @@
 # check=error=true
 # https://hub.docker.com/r/docker/dockerfile
 # https://docs.docker.com/build/dockerfile/release-notes/
-ARG IMAGE=python:3.15-slim-trixie
+ARG DIST=trixie
+ARG IMAGE=debian:$DIST-slim
 
 # These arguments are used to more easily assure a consistent version
 # with dev.py validate state
@@ -23,7 +24,10 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
          lsb-release netcat-openbsd libpq5 libmariadb3
 
 # Add user (some tests check if it's impossible to write a file)
-RUN adduser --system --uid=9000 --group --disabled-login django-ca
+RUN groupadd --gid 9000 django-ca
+RUN useradd --system --uid 9000 --gid 9000 \
+    --shell /usr/sbin/nologin --no-create-home --home-dir /nonexistent \
+    django-ca
 
 # Activate the virtual environment (even if it's not created yet).
 ENV PATH="/usr/src/django-ca/.venv/bin:$PATH"
@@ -36,14 +40,22 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean &&  \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-         build-essential libpq-dev libmariadb-dev pkg-config softhsm2
+         build-essential ca-certificates libpq-dev libmariadb-dev pkg-config softhsm2
 
 # Install uv: https://docs.astral.sh/uv/guides/integration/docker/
 COPY --from=uv /uv /uvx /bin/
-ENV UV_PYTHON_PREFERENCE=only-system
 ENV UV_LINK_MODE=copy
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LOCKED=1
+
+# Use uv-managed Python, installed to a fixed location so that it can be copied to the final stage. The
+# virtual environment references the interpreter by absolute path, so the path must be identical there.
+ARG PYTHON=3.15
+ENV UV_PYTHON_PREFERENCE=only-managed
+ENV UV_PYTHON_INSTALL_DIR=/opt/python
+ENV UV_PYTHON=$PYTHON
+RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
+    uv python install --no-bin "$PYTHON"
 
 # Install dependencies in separate step to improve caching and build performance. See also:
 #   https://docs.astral.sh/uv/guides/integration/docker/#caching
@@ -68,6 +80,12 @@ RUN --mount=type=cache,target=/root/.cache/uv,id=django-ca-uv-debian \
 FROM build AS test
 ENV SKIP_SELENIUM_TESTS=y
 ENV SQLITE_NAME=:memory:
+
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean &&  \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y openssl
 
 # Install additional requirements for testing:
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -131,6 +149,7 @@ RUN mkdir -p /usr/share/django-ca/static /usr/share/django-ca/media /var/lib/dja
     chown -R django-ca:django-ca /usr/share/django-ca/ /var/lib/django-ca/ /run/django-ca/ && \
     chmod 0700 /run/django-ca/
 
+COPY --from=prepare /opt/python/ /opt/python/
 COPY --from=prepare /usr/src/django-ca/ ./
 RUN ln -s /usr/src/django-ca/ca/manage.py /usr/local/bin/manage
 
@@ -142,7 +161,8 @@ RUN for script in /usr/src/django-ca/scripts/django-ca-*.py; do \
     done && \
     ln -s /usr/src/django-ca/scripts/*.sh /usr/local/bin/
 
-USER django-ca:django-ca
+# NOTE: Kubernetes’ runAsNonRoot can only verify numeric IDs, not names.
+USER 9000:9000
 EXPOSE 8000
 VOLUME ["/var/lib/django-ca/", "/usr/share/django-ca/media/"]
 WORKDIR /usr/src/django-ca/ca/
