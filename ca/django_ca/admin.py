@@ -242,7 +242,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
         return self._download_response(request, pk, bundle=True)
 
     def has_delete_permission(self, request: HttpRequest, obj: models.Model | None = None) -> bool:
-        # pylint: disable=missing-function-docstring,unused-argument; Django standard
+        # pylint: disable=unused-argument; Django standard
         return False
 
     @admin.display(description=_("Primary name"))
@@ -326,7 +326,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
         return f"oid_{oid.dotted_string.replace('.', '_')}"
 
     # TYPE NOTE: django-stubs typehints obj as Optional[Model], but we can be more specific here
-    def get_fieldsets(  # type: ignore[override] # pylint: disable=missing-function-docstring
+    def get_fieldsets(  # type: ignore[override]
         self, request: HttpRequest, obj: X509CertMixinTypeVar | None = None
     ) -> FieldSets:
         fieldsets = super().get_fieldsets(request, obj=obj)
@@ -345,7 +345,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
             )
         return fieldsets  # type: ignore[return-value]  # see other return above
 
-    def get_readonly_fields(  # type: ignore[override] # pylint: disable=missing-function-docstring
+    def get_readonly_fields(  # type: ignore[override]
         self, request: HttpRequest, obj: X509CertMixinTypeVar | None = None
     ) -> list[str] | tuple[object, ...]:
         fields = list(super().get_readonly_fields(request, obj=obj))
@@ -362,7 +362,7 @@ class CertificateMixin(Generic[X509CertMixinTypeVar], MixinBase, metaclass=Media
         extension_fields = [self.get_oid_name(oid) for oid in obj.extensions]
         return fields + extension_fields
 
-    class Media:  # pylint: disable=missing-class-docstring
+    class Media:
         css: ClassVar[dict[str, tuple[str, ...]]] = {
             "all": ("django_ca/admin/css/base.css",),
         }

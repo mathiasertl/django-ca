@@ -161,7 +161,6 @@ class AcmeDirectory(View):
         return request.build_absolute_uri(reverse(f"django_ca:{name}", kwargs={"serial": ca.serial}))
 
     def get(self, request: HttpRequest, serial: str | None = None) -> HttpResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
         if not model_settings.CA_ENABLE_ACME:
             raise Http404("Page not found.")
 
@@ -344,7 +343,6 @@ class AcmeBaseView(AcmeGetNonceViewMixin, View, metaclass=abc.ABCMeta):
     def post(  # noqa: PLR0911
         self, request: HttpRequest, serial: str, slug: str | None = None
     ) -> AcmeResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
         # pylint: disable=attribute-defined-outside-init
 
         # TODO: RFC 8555, 6.2 has a nice list of things to check here that we don't yet fully cover

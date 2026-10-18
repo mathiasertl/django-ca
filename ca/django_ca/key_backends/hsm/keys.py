@@ -43,8 +43,6 @@ EdwardsPublicKeyTypeVar = TypeVar("EdwardsPublicKeyTypeVar", ed448.Ed448PublicKe
 class PKCS11PrivateKeyMixin:
     """Mixin providing common functionality to PKCS11 key implementations."""
 
-    # pylint: disable=missing-function-docstring  # implements standard functions of the base class.
-
     key_type: pkcs11.KeyType
 
     def __init__(
@@ -130,8 +128,6 @@ class PKCS11PrivateKeyMixin:
 
 class PKCS11EdwardsPrivateKeyMixin(PKCS11PrivateKeyMixin, Generic[EdwardsPublicKeyTypeVar]):
     """Specialized mixin for Ed448 and Ed5519 keys (which handle identical)."""
-
-    # pylint: disable=missing-function-docstring  # implements standard functions of the base class.
 
     public_key_algorithm: ClassVar[str]
     key_type = pkcs11.KeyType.EC_EDWARDS

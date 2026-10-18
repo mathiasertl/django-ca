@@ -172,8 +172,7 @@ class ExtensionModel(CryptographyModel[ExtensionTypeTypeVar], metaclass=abc.ABCM
         """ExtensionType subclass for this extension."""
 
     if TYPE_CHECKING:
-        # pylint: disable=unused-argument,missing-function-docstring
-
+        # pylint: disable=unused-argument; just defining stubs here
         def model_dump(  # type: ignore[override]
             self,
             *,
@@ -295,7 +294,6 @@ class InformationAccessBaseModel(BaseExtensionModel[InformationAccessTypeVar]):
         return data
 
     @model_validator(mode="after")
-    # pylint: disable-next=missing-function-docstring
     def check_consistency(self) -> "Self":
         for desc in self.value:
             if desc.access_method not in self._acceptable_oids:
@@ -677,7 +675,6 @@ class KeyUsageModel(ExtensionModel[x509.KeyUsage]):
         return data
 
     @model_validator(mode="after")
-    # pylint: disable-next=missing-function-docstring
     def check_key_agreement(self) -> "KeyUsageModel":
         if "key_agreement" not in self.value and (
             "encipher_only" in self.value or "decipher_only" in self.value

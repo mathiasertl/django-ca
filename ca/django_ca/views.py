@@ -180,7 +180,6 @@ class CertificateRevocationListView(View):
         return encoded_crl
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
         if get_encoding := request.GET.get("encoding"):
             if get_encoding not in CERTIFICATE_REVOCATION_LIST_ENCODING_TYPES:
                 return HttpResponseBadRequest("Invalid encoding requested.", content_type="text/plain")
@@ -236,7 +235,6 @@ class OCSPView(View):
     """If set to ``True``, validate child CAs instead."""
 
     def get(self, request: HttpRequest, data: str) -> HttpResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
         try:
             decoded_data = base64.b64decode(data)
         except binascii.Error:
@@ -249,7 +247,6 @@ class OCSPView(View):
             return self.fail()
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
         try:
             return self.handle_ocsp_request_data(request.body)
         except Exception:  # pylint: disable=broad-except; we really need to catch everything here
@@ -571,7 +568,6 @@ class GenericCAIssuersView(View):
     """
 
     def get(self, request: HttpRequest, serial: str) -> HttpResponse:
-        # pylint: disable=missing-function-docstring; standard Django view function
         cache_key = f"ca_{serial}_der"
         der = cache.get(cache_key)
         if der is None:

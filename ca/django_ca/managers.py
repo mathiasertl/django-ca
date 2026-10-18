@@ -101,7 +101,7 @@ class CertificateManagerMixin(Generic[X509CertMixinTypeVar, QuerySetTypeVar]):
         #
         # The type overrides are because of the return type, as mypy thinks they should return a manager.
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=unused-argument; just defining stubs here
 
         def all(self) -> QuerySetTypeVar: ...
 
@@ -139,9 +139,6 @@ class CertificateAuthorityManager(
 
     if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
-        #
-        # pylint: disable=missing-function-docstring; just defining stubs here
-
         def acme(self) -> "CertificateAuthorityQuerySet": ...
 
         def default(self) -> "CertificateAuthority": ...
@@ -725,7 +722,7 @@ class CertificateRevocationListManager(CertificateRevocationListManagerBase):
     if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=unused-argument; just defining stubs here
 
         def newest(self) -> "CertificateRevocationList" | None: ...
 
@@ -931,9 +928,6 @@ class AcmeAccountManager(AcmeAccountManagerBase):
 
     if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
-        #
-        # pylint: disable=missing-function-docstring; just defining stubs here
-
         def url(self) -> "AcmeAccountQuerySet": ...
 
         def viewable(self) -> "AcmeAccountQuerySet": ...
@@ -945,7 +939,7 @@ class AcmeOrderManager(AcmeOrderManagerBase):
     if TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=unused-argument; just defining stubs here
 
         def account(self, account: "AcmeAccount") -> "AcmeOrderQuerySet": ...
 
@@ -960,7 +954,7 @@ class AcmeAuthorizationManager(AcmeAuthorizationManagerBase):
     if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
         #
-        # pylint: disable=missing-function-docstring,unused-argument; just defining stubs here
+        # pylint: disable=unused-argument; just defining stubs here
 
         def account(self, account: "AcmeAccount") -> "AcmeAuthorizationQuerySet": ...
 
@@ -977,7 +971,7 @@ class AcmeChallengeManager(AcmeChallengeManagerBase):
     """Model manager for :py:class:`~django_ca.models.AcmeChallenge`."""
 
     if typing.TYPE_CHECKING:
-        # pylint: disable=missing-function-docstring; just defining stubs here
+        # See CertificateManagerMixin for description on this branch
         def url(self) -> "AcmeChallengeQuerySet": ...
 
 
@@ -986,8 +980,6 @@ class AcmeCertificateManager(AcmeCertificateManagerBase):
 
     if typing.TYPE_CHECKING:
         # See CertificateManagerMixin for description on this branch
-        #
-        # pylint: disable=missing-function-docstring; just defining stubs here
         def account(self) -> "AcmeCertificateQuerySet": ...
 
         def url(self) -> "AcmeCertificateQuerySet": ...

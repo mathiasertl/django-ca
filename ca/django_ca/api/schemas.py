@@ -68,7 +68,7 @@ class CertificateAuthorityUpdateSchema(ModelSchema):
         },
     )
 
-    class Meta:  # pylint: disable=missing-class-docstring
+    class Meta:
         model = CertificateAuthority
         fields = (
             "name",
@@ -100,7 +100,7 @@ class CertificateOrderSchema(ModelSchema):
         description="When the order was last updated.", json_schema_extra={"example": DATETIME_EXAMPLE}
     )
 
-    class Meta:  # pylint: disable=missing-class-docstring
+    class Meta:
         model = CertificateOrder
         fields = sorted(["created", "updated", "slug", "status"])
 

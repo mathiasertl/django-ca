@@ -69,7 +69,6 @@ class X509CertMixinQuerySet(Generic[X509CertMixinTypeVar], metaclass=abc.ABCMeta
     """Mixin with common methods for |CertificateAuthority| and |Certificate| models."""
 
     if TYPE_CHECKING:
-        # pylint: disable=missing-function-docstring
         model: type[X509CertMixinTypeVar]
 
         def exclude(self, *args: object, **kwargs: object) -> Self: ...

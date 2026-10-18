@@ -326,6 +326,7 @@ enable = [
 ]
 
 # https://pylint.readthedocs.io/en/latest/faq.html?highlight=flake8#i-am-using-another-popular-linter-alongside-pylint-which-messages-should-i-disable-to-avoid-duplicates
+# https://github.com/astral-sh/ruff/issues/970
 disable = [
     "too-many-positional-arguments",
     # devscripts have some larger overlapping parts
@@ -337,35 +338,46 @@ disable = [
 
     # These are just annoying
     "too-few-public-methods",
-    "fixme",
-    # covered by isort:
-    "wrong-import-order",
-    # covered by pyflakes:
-    "undefined-variable", # also mypy
-    "unused-import",
-    "unused-variable",
+    "fixme", # ruff: FIX001/FIX002/FIX003/FIX004
+
     # covered by ruff/pylint:
+    "comparison-with-itself", # ruff: PLR0124
+    "consider-using-dict-items", # ruff: PLC0206 (dict-index-missing-items)
     "import-outside-toplevel", # ruff: PLC0415
-    "typevar-name-incorrect-variance", # ruff: PLC0105
-    "typevar-double-variance", # ruff: PLC0131
+    "non-ascii-module-import", # ruff: PLC2403 (non-ascii-import-name)
+    "non-ascii-name", # ruff: PLC2401 (non-ascii-name)
     "single-string-used-for-slots", # ruff: PLC0205
     "subprocess-run-check", # ruff: PLW1510
     "too-many-arguments", # ruff: PLR0913
     "too-many-branches", # ruff: PLR0912
     "too-many-return-statements", # ruff: PLR0911
     "too-many-statements", # ruff: PLR0915
+    "typevar-double-variance", # ruff: PLC0131
+    "typevar-name-incorrect-variance", # ruff: PLC0105
+    "typevar-name-mismatch", # ruff: PLC0132 (type-param-name-mismatch)
+    "unnecessary-direct-lambda-call", # ruff: PLC3002 (unnecessary-direct-lambda-call)
+    "unnecessary-dunder-call", # ruff: PLC2801 (unnecessary-dunder-call)
+    "unnecessary-lambda", # ruff: PLW0108
+    "use-implicit-booleaness-not-len", # ruff: PLC1802 (len-test)
+    "use-maxsplit-arg", # ruff: PLC0207 (missing-maxsplit-arg)
     "use-sequence-for-iteration", # ruff: PLC0208
     "useless-import-alias", # ruff: PLC0414
-    "comparison-with-itself", # ruff: PLR0124
-    "unnecessary-lambda", # ruff: PLW0108
 
     # covered by ruff/flake8-builtin
     "redefined-builtin", # ruff: A001 (builtin-variable-shadowing)
-    
-    # covered by ruff/flake8-bugbear
+
+    # covered by ruff/flake8-bugbear:
     "pointless-statement", # ruff: B018
     "expression-not-assigned", # ruff: B018
     "raise-missing-from", # ruff: B904
+
+    # covered by ruff/flake8-blind-except:
+    "broad-except", # ruff: BLE001 (blind-except)
+
+    # covered by ruff/pydocstyle:
+    "empty-docstring", # ruff: D419 (empty-docstring)
+    "missing-module-docstring", # ruff: D100 (undocumented-public-module)
+    "missing-function-docstring", # ruff: D103 (undocumented-public-function)
 
     # covered by ruff/pycodestyle:
     "bad-indentation",
@@ -373,13 +385,33 @@ disable = [
     "line-too-long",
     "missing-class-docstring",
     "missing-final-newline",
+    "multiple-imports", # ruff: E401 (multiple-imports-on-one-line)
     "multiple-statements",
+    "singleton-comparison", # ruff: E711 (none-comparison) / E712 (true-false-comparison)
     "trailing-whitespace",
-    "unnecessary-semicolon",
-    "unneeded-not",
-    # covered by other ruff plugins
-    "exec-used",
-    "broad-except", # ruff: BLE001
+    "unidiomatic-typecheck", # ruff: E721 (type-comparison)
+    "unnecessary-lambda-assignment", # ruff: E731 (lambda-assignment)
+    "unnecessary-semicolon", # ruff: E703 (useless-semicolon)
+    "wrong-import-position", # ruff: E402 (module-import-not-at-top-of-file)
+
+    # covered by ruff/pyflakes:
+    "undefined-variable", # ruff: F821 (undefined-name)  # also mypy
+    "unused-import", # ruff: F401 (unused-variable)
+    "unused-variable", # ruff: F841 (unused-variable)
+
+    # covered by ruff/isort:
+    "ungrouped-imports", # ruff: I001 (unsorted-imports)
+    "wrong-import-order", # ruff: I001 (unsorted-imports)
+
+    # covered by ruff/flake8-bandit:
+    "exec-used", # ruff: S102 (exec-builtin)
+
+    # covered by ruff/flake8-simplify:
+    "consider-iterating-dictionary", # ruff: SIM118 (in-dict-keys)
+    "unneeded-not", # ruff: SIM208 (double-negation)
+
+    # Rules in preview
+    #"trailing-newlines", # ruff: W391 (too-many-newlines-at-end-of-file)
 
     # (seems to be) covered by mypy
     "unsubscriptable-object", # mypy: index

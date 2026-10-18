@@ -591,7 +591,6 @@ class SettingsProxy(SettingsProxyBase[SettingsModel]):
     __settings__: SettingsModel
 
     if TYPE_CHECKING:
-        # pylint: disable=missing-function-docstring
         # Our custom mypy plugin currently does not proxy getter methods, as I couldn't get this to
         # work properly. We thus add some typehints here so that mypy (and PyCharm) finds these methods.
         def get_default_signature_hash_algorithm(self) -> SignatureHashAlgorithm: ...

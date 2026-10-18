@@ -87,8 +87,6 @@ class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
     We do the same thing three times here, just to make sure that the result is really different.
     """
 
-    # pylint: disable=missing-function-docstring
-
     seen_dirs: typing.ClassVar[set[str]] = set()
 
     @override_tmpcadir()
@@ -115,7 +113,7 @@ class OverrideCaDirForFuncTestCase(TestCaseMixin, TestCase):
         with pytest.raises(ValueError, match=msg):
 
             @override_tmpcadir()
-            class Foo:  # pylint: disable=missing-class-docstring,unused-variable
+            class Foo:  # pylint: disable=unused-variable
                 pass
 
 
@@ -137,8 +135,6 @@ class TypingTestCase(TestCaseMixin):  # never executed as it's not actually a su
 
     Note that none of these tests are designed to ever be executed.
     """
-
-    # pylint: disable=missing-function-docstring
 
     def cmd_basic(self) -> tuple[str, str]:
         stdout, stderr = cmd("example")

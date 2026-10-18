@@ -15,7 +15,6 @@
 
 .. seealso:: https://docs.djangoproject.com/en/dev/topics/http/urls/
 """
-# pylint: disable=missing-function-docstring; All functions are given by Django
 
 from django.urls.converters import SlugConverter
 
