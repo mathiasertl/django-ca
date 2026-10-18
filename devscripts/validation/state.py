@@ -98,8 +98,9 @@ def check(
     return errors
 
 
+# pylint: disable-next=too-many-locals
 def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
-    """Check GitHub actions."""
+    """Check GitHub Actions."""
     errors = 0
 
     expected_python = config.PYTHON_RELEASES
@@ -394,7 +395,7 @@ def check_dockerfile(path: str, distro: str) -> int:
         # Validate we use the newest python and distro
         if arg_key == "IMAGE":
             if distro == "debian":
-                expected_image = f"python:{config.NEWEST_PYTHON}-slim-{config.DEBIAN_RELEASES[-1]}"
+                expected_image = "debian:$DIST-slim"
                 if arg_value != expected_image:
                     errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
             elif distro == "alpine":
@@ -403,6 +404,15 @@ def check_dockerfile(path: str, distro: str) -> int:
                     errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
             else:
                 errors += err(f"{distro}: Unknown distro found.")
+
+        elif arg_key == "DIST" and distro == "debian":
+            expected_dist = config.DEBIAN_RELEASES[-1]
+            if arg_value != expected_dist:
+                errors += err(f"{arg_value}: Unexpected DIST found (should be {expected_dist}).")
+
+        elif arg_key == "PYTHON":
+            if arg_value != config.NEWEST_PYTHON:
+                errors += err(f"{arg_value}: Unexpected PYTHON found (should be {config.NEWEST_PYTHON}).")
 
         # Validate we use the newest UV
         elif arg_key == "UV" and arg_value != config.UV:

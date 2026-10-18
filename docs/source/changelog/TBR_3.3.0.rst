@@ -4,7 +4,9 @@
 
 .. spelling::
 
+    Bytecode
     bytecode
+    distroless
 
 ********
 Settings
@@ -90,7 +92,11 @@ Deprecation notices
 Setup and packaging
 *******************
 
-* Docker images: Wrapper scripts for starting Gunicorn and Celery where translated to Python under new names:
+Docker images
+=============
+
+* **Security:** SBOMs are now included in GitHub images. Previously, only `ghcr.io`-hosted images included it.
+* Wrapper scripts for starting Gunicorn and Celery where translated to Python under new names:
 
   ================= ========================
   Old name          New name
@@ -100,8 +106,10 @@ Setup and packaging
   ``gunicorn.sh``   ``django-ca-gunicorn``
   ================= ========================
 
-  Old names will removed in the next release.
+  Old names will be removed in the next release.
 
-* Docker images now includes bytecode for improved startup times (at the expense of larger images). The
-  bytecode adds about 33 MB to the image size (227 MB -> 260 MB), but startup time of a simple ``manage -h``
-  invocation improves from six seconds to three seconds.
+* Python is now installed via `uv` and are based on the plain Debian image. This is in preparation for using
+  "distroless" images.
+* Bytecode is not included for improved startup times (at the expense of larger images). The bytecode adds
+  about 120 MB to the image size (227 MB ->345 MB), but startup time of a simple ``manage -h`` invocation
+  improves from six seconds to 1.5 seconds.

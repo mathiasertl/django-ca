@@ -85,7 +85,8 @@ jobs:
           cache-to: type=gha,mode=max,scope=test-${{ matrix.python-version }}-${{ matrix.debian-version }}
           # NOTE: Use 0.0.0 as version to improve cache-reuse
           build-args: |
-            IMAGE=python:${{ matrix.python-version }}-slim-${{ matrix.debian-version }}
+            DIST=${{ matrix.debian-version }}
+            PYTHON=${{ matrix.python-version }}
             DJANGO_CA_VERSION=0.0.0+py${{ matrix.python-version }}
             COVERAGE_ARGS=--no-cov
 
