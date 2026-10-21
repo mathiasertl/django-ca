@@ -33,12 +33,10 @@ runs:
         DOCKER_HUB_IMAGE="mathiasertl/django-ca"
 
         while IFS= read -r tag; do
-          # Pull image first, b/c with buildx, it's not available in the local daemon
-          docker pull $tag
-
           new_tag="${tag/$GHCR_IMAGE/$DOCKER_HUB_IMAGE}"
-          docker tag "$tag" "$new_tag"
-          docker push "$new_tag"
+
+          # Do NOT use pull/retag/push, as it wouldn't copy the SBOM.
+          docker buildx imagetools create --tag $new_tag $tag
         done <<< "${{ inputs.tags }}"
 
         DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$new_tag" | cut -d@ -f2)
