@@ -258,11 +258,21 @@ def test_allows_intermediate(root: CertificateAuthority, child: CertificateAutho
 def test_generate_ocsp_key(usable_ca: CertificateAuthority) -> None:
     """Test generate_ocsp_key()."""
     private_key_options = StoragesUsePrivateKeyOptions(password=CERT_DATA[usable_ca.name].get("password"))
-    with generate_ocsp_key(usable_ca, private_key_options) as (key, _cert):
+    with generate_ocsp_key(usable_ca, private_key_options) as (key, cert):
         ca_key = usable_ca.key_backend.get_key(  # type: ignore[attr-defined]  # we assume StoragesBackend
             usable_ca, private_key_options
         )
         assert isinstance(key, type(ca_key))
+        assert cert.cn == f"OCSP Responder for {usable_ca.cn}"
+
+
+def test_generate_ocsp_key_with_empty_subject(usable_root: CertificateAuthority) -> None:
+    """Test generate_ocsp_key() with an empty subject for the CA."""
+    usable_root.cn = ""  # trick function to read no cn
+    usable_root.name = "MyName"
+    usable_root.save()
+    with generate_ocsp_key(usable_root, KEY_BACKEND_OPTIONS) as (_key, cert):
+        assert cert.cn == "OCSP Responder for MyName"
 
 
 def test_generate_ocsp_responder_certificate(usable_root: CertificateAuthority) -> None:
