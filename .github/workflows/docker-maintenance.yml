@@ -9,6 +9,7 @@ on:
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
     - cron: '23 6 * * 1'
+  workflow_dispatch:
 
 env:
   # Do not set UV_PYTHON_PREFERENCE to 'only_system', as release branches
