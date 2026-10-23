@@ -24,7 +24,10 @@ No changes yet.
 OCSP and CRLs
 *************
 
-No changes yet.
+* The subject of OCSP responder certificates now mirrors the CAs subject, with the CommonName replaced with
+  `OCSP Responder for {CommonName-of-CA}`. Certificates must have either a non-empty subject or a critical
+  SubjectAlternativeName extension according to RFC 5280. Fixes
+  `#270 <https://github.com/mathiasertl/django-ca/issues/270>`_.
 
 ********
 REST API
