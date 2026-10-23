@@ -843,7 +843,7 @@ class TestPrivateKeyUsagePeriod(ExtensionTestCaseMixin):
             "not_before": {
                 "admin_html": "<ul><li>Not before: 2025-07-06T00:00:00+00:00</li></ul>",
                 "extension_type": x509.PrivateKeyUsagePeriod(
-                    not_before=datetime(2025, 7, 6),  # noqa: DTZ001
+                    not_before=datetime(2025, 7, 6),
                     not_after=None,
                 ),
                 "text": "* Not before: 2025-07-06T00:00:00+00:00",
@@ -852,7 +852,7 @@ class TestPrivateKeyUsagePeriod(ExtensionTestCaseMixin):
                 "admin_html": "<ul><li>Not after: 2025-07-06T00:00:00+00:00</li></ul>",
                 "extension_type": x509.PrivateKeyUsagePeriod(
                     not_before=None,
-                    not_after=datetime(2025, 7, 6),  # noqa: DTZ001
+                    not_after=datetime(2025, 7, 6),
                 ),
                 "text": "* Not after: 2025-07-06T00:00:00+00:00",
             },
@@ -860,8 +860,8 @@ class TestPrivateKeyUsagePeriod(ExtensionTestCaseMixin):
                 "admin_html": "<ul><li>Not before: 2025-07-05T00:00:00+00:00</li>"
                 "<li>Not after: 2025-07-06T00:00:00+00:00</li></ul>",
                 "extension_type": x509.PrivateKeyUsagePeriod(
-                    not_before=datetime(2025, 7, 5),  # noqa: DTZ001
-                    not_after=datetime(2025, 7, 6),  # noqa: DTZ001
+                    not_before=datetime(2025, 7, 5),
+                    not_after=datetime(2025, 7, 6),
                 ),
                 "text": "* Not before: 2025-07-05T00:00:00+00:00\n* Not after: 2025-07-06T00:00:00+00:00",
             },
