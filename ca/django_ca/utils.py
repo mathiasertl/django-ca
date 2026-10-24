@@ -46,7 +46,7 @@ from django_ca.pydantic.validators import (
 from django_ca.typehints import EncodingNames, ParsableKeyType, SignatureHashAlgorithm
 
 #: Regular expression to match general names.
-GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.I)
+GENERAL_NAME_RE = re.compile("^(email|URI|IP|DNS|RID|dirName|otherName):(.*)", flags=re.IGNORECASE)
 
 #: Regular expression matching certificate serials as hex
 SERIAL_RE = re.compile("^([0-9A-F][0-9A-F]:?)+[0-9A-F][0-9A-F]?$")

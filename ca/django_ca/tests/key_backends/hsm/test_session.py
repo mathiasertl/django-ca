@@ -80,9 +80,8 @@ def test_duplicate_rw_session(softhsm_token: str, session: Session, pool_key: Po
     assert SessionPool._session_refcount == {pool_key: 1}
     with pytest.raises(
         ValueError, match=r"^Requested R/W session, but R/O session is already initialized\.$"
-    ):
-        with SessionPool(settings.PKCS11_PATH, softhsm_token, None, settings.PKCS11_USER_PIN, rw=True):
-            pass
+    ), SessionPool(settings.PKCS11_PATH, softhsm_token, None, settings.PKCS11_USER_PIN, rw=True):
+        pass
 
     # Test that the ref count has not increased
     assert SessionPool._session_pool == {pool_key: session}

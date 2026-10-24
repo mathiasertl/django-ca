@@ -106,7 +106,7 @@ class LazyField(Generic[LoadedTypeVar, DecodableTypeVar], metaclass=abc.ABCMeta)
         else:
             raise ValueError(f"{value}: Could not parse {self._type.__name__}")
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, self.__class__) and self._bytes == other._bytes
 
     def __hash__(self) -> int:  # pragma: no cover

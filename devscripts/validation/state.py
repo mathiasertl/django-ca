@@ -151,7 +151,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
         with open(config.ROOT_DIR / workflow, encoding="utf-8") as stream:
             action_config = yaml.safe_load(stream)
 
-        for _job_name, job in action_config["jobs"].items():
+        for job in action_config["jobs"].values():
             errors += check_github_action_versions(job)
 
             if matrix := job.get("strategy", {}).get("matrix"):

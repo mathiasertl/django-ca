@@ -71,7 +71,7 @@ class DummyBackend(KeyBackend[DummyModel, DummyModel, DummyModel]):  # pragma: n
     supported_elliptic_curves = ("sect571r1",)
     supported_hash_algorithms = ("SHA-256", "SHA-512")
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, DummyBackend)
 
     def __hash__(self) -> int:

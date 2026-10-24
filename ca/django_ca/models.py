@@ -311,7 +311,7 @@ class X509CertMixin(DjangoCAModel):
 
         This property is used for display purposes, where a reproducible output is desired.
         """
-        return list(sorted(self.pub.loaded.extensions, key=lambda e: get_extension_name(e.oid)))
+        return sorted(self.pub.loaded.extensions, key=lambda e: get_extension_name(e.oid))
 
     @property
     def issuer(self) -> x509.Name:
