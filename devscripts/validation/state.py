@@ -166,6 +166,13 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
                 if key == "NEWEST_PYDANTIC" and value != expected_pydantic[-1]:
                     errors += err(f"    env.NEWEST_PYDANTIC is {value}.")
 
+            for step_config in job["steps"]:
+                uses = step_config.get("uses", "")
+                if uses.startswith("actions/setup-python@"):
+                    python_version = step_config.get("with", {}).get("python-version")
+                    if python_version != config.PYTHON_RELEASES[-1] and not python_version.startswith("${{"):
+                        errors += err(f"{uses} uses Python {python_version}.")
+
     return errors
 
 
