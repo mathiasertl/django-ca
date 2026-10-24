@@ -300,9 +300,9 @@ class PydanticSettingDirective(SphinxDirective):
             return [container]
 
         except DirectiveError:  # from raise self.error()
-            log.exception()
+            log.exception("Uncaught DirectiveError.")
             raise
         except Exception as ex:
             # Otherwise, wrap it in a directive error
-            log.exception()
+            log.exception("Uncaught Exception.")
             raise self.error(f"{setting}: Unexpected error: {ex}, {type(ex)}") from ex

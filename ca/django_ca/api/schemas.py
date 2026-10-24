@@ -115,7 +115,7 @@ class CertificateFilterSchema(Schema):
     profile: str | None = Field(
         description="Only return certificates generated with the given profile.",
         default=None,
-        json_schema_extra={"enum": sorted(model_settings.CA_PROFILES)},
+        json_schema_extra={"enum": sorted(model_settings.CA_PROFILES)},  # type: ignore[dict-item]
     )
     revoked: bool = Field(default=False, description="Include revoked certificates.")
 
@@ -128,6 +128,6 @@ class RevokeCertificateSchema(Schema):
     reason: ReasonFlags = Field(
         default=ReasonFlags.unspecified,
         description="""The reason why the certificate was revoked. Valid values are `unspecified`,
-        `keyCompromise`, `cACompromise`, `affiliationChanged`, `superseeded`, `cessationOfOperation`, 
+        `keyCompromise`, `cACompromise`, `affiliationChanged`, `superseeded`, `cessationOfOperation`,
         `certificateHold`, `privilegeWithdrawn`, `aACompromise` and `removeFromCRL`.""",
     )
