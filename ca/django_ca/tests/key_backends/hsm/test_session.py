@@ -78,9 +78,10 @@ def test_duplicate_rw_session(softhsm_token: str, session: Session, pool_key: Po
     """Test that requesting a read/write session when it is already open read-only is an error."""
     assert SessionPool._session_pool == {pool_key: session}
     assert SessionPool._session_refcount == {pool_key: 1}
-    with pytest.raises(
-        ValueError, match=r"^Requested R/W session, but R/O session is already initialized\.$"
-    ), SessionPool(settings.PKCS11_PATH, softhsm_token, None, settings.PKCS11_USER_PIN, rw=True):
+    with (
+        pytest.raises(ValueError, match=r"^Requested R/W session, but R/O session is already initialized\.$"),
+        SessionPool(settings.PKCS11_PATH, softhsm_token, None, settings.PKCS11_USER_PIN, rw=True),
+    ):
         pass
 
     # Test that the ref count has not increased

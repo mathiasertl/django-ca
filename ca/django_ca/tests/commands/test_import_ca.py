@@ -431,11 +431,14 @@ def test_model_validation_error(ca_name: str, key_backend: StoragesBackend) -> N
 def test_model_command_error(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test model retrieval raising a CommandError."""
     msg = "some command error"
-    with assert_command_error(rf"^{msg}$", returncode=3), mock.patch.object(
-        key_backend,
-        "get_store_private_key_options",
-        autospec=True,
-        side_effect=CommandError(msg, returncode=3),
+    with (
+        assert_command_error(rf"^{msg}$", returncode=3),
+        mock.patch.object(
+            key_backend,
+            "get_store_private_key_options",
+            autospec=True,
+            side_effect=CommandError(msg, returncode=3),
+        ),
     ):
         import_ca(ca_name, key_backend=key_backend, password=123)
 
@@ -443,11 +446,14 @@ def test_model_command_error(ca_name: str, key_backend: StoragesBackend) -> None
 def test_import_generic_exception(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test model retrieval raising arbitrary exception."""
     msg = "some command error"
-    with assert_command_error(rf"^{msg}$"), mock.patch.object(
-        key_backend,
-        "store_private_key",
-        autospec=True,
-        side_effect=ValueError(msg),
+    with (
+        assert_command_error(rf"^{msg}$"),
+        mock.patch.object(
+            key_backend,
+            "store_private_key",
+            autospec=True,
+            side_effect=ValueError(msg),
+        ),
     ):
         import_ca(ca_name, key_backend=key_backend, password=None)
 
@@ -455,10 +461,13 @@ def test_import_generic_exception(ca_name: str, key_backend: StoragesBackend) ->
 def test_model_generic_exception(ca_name: str, key_backend: StoragesBackend) -> None:
     """Test model retrieval raising arbitrary exception."""
     msg = "some command error"
-    with assert_command_error(rf"^{msg}$"), mock.patch.object(
-        key_backend,
-        "get_store_private_key_options",
-        autospec=True,
-        side_effect=ValueError(msg),
+    with (
+        assert_command_error(rf"^{msg}$"),
+        mock.patch.object(
+            key_backend,
+            "get_store_private_key_options",
+            autospec=True,
+            side_effect=ValueError(msg),
+        ),
     ):
         import_ca(ca_name, key_backend=key_backend)

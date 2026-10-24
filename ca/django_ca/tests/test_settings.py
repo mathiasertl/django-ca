@@ -1011,9 +1011,12 @@ def test_extend_url_patterns(value: list[dict[str, Any]], expected: list[URLPatt
 
 def test_extend_url_patterns_with_invalid_value() -> None:
     """Test loading an invalid EXTEND_URL_PATTERNS into settings."""
-    with mock.patch.dict(
-        os.environ, {"DJANGO_CA_EXTEND_URL_PATTERNS": '[{"foo": {"foo": "bar"}}]'}, clear=True
-    ), assert_improperly_configured(r"Field required"):
+    with (
+        mock.patch.dict(
+            os.environ, {"DJANGO_CA_EXTEND_URL_PATTERNS": '[{"foo": {"foo": "bar"}}]'}, clear=True
+        ),
+        assert_improperly_configured(r"Field required"),
+    ):
         dict(load_settings(FIXTURES_DIR))
 
 
