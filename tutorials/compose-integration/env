@@ -1,0 +1,16 @@
+# Optionally use a different Docker tag for django-ca. For available tags, see:
+#   https://hub.docker.com/r/mathiasertl/django-ca
+DJANGO_CA_VERSION={{ DOCKER_TAG.split(":")[1] }}
+
+DJANGO_CA_CA_DEFAULT_HOSTNAME=webserver
+
+# The URL base path used for ACMEv2/OCSP/CRL URLs.
+DJANGO_CA_CA_URL_PATH=""
+
+# PostgreSQL superuser password (required by the Docker image)
+POSTGRES_PASSWORD=change-me
+
+# NGINX TLS configuration
+#NGINX_TEMPLATE=tls
+#NGINX_PRIVATE_KEY={{ TLS_LIVE_DIR }}/{{ CA_HOSTNAME }}/privkey.pem
+#NGINX_PUBLIC_KEY={{ TLS_LIVE_DIR }}/{{ CA_HOSTNAME }}/fullchain.pem

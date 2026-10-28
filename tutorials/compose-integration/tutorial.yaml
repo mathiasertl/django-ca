@@ -1,0 +1,102 @@
+configuration:
+  run:
+    temporary_directory: true
+    context:
+      BUILD_IMAGE: "y"
+      EXEC_BACKEND: docker compose exec backend
+      INTEGRATION_BACKEND: docker compose exec integration
+parts:
+  - name: "Build Docker image"
+    commands:
+      # Get the full docker tag (mathiasertl/django-ca:$DOCKER_VERSION)
+      - command: |
+          {% if DOCKER_TAG -%}
+            echo {{ DOCKER_TAG }}
+          {%- else -%}
+            {{ orig_cwd }}/dev.py tutorial-helpers get-docker-tag
+          {%- endif %}
+        run:
+          show_output: false
+          test:
+            - regex: "^(?P<DOCKER_TAG>.*)$"
+      - command: |
+          {% if BUILD_IMAGE == "y" -%}
+            docker build \
+              -f {{ orig_cwd }}/Dockerfile \
+              -t {{ DOCKER_TAG }} \
+              --build-arg DJANGO_CA_VERSION={{ RELEASE }} \
+              --build-arg COVERAGE_ARGS="--no-cov" \
+              {{ orig_cwd }}
+          {%- else -%}
+            # Not building image (BUILD_IMAGE=n), using {{ DOCKER_TAG }}.
+          {%- endif %}
+  - name: Copy Dockerfile
+    source: ../../Dockerfile
+    destination: ./
+  - name: Copy Dockerfile.integration
+    source: Dockerfile.integration
+    destination: ./
+  - name: Copy compose.yaml
+    source: ../../compose.yaml
+    destination: ./
+  - name: Copy compose.override.yaml
+    source: compose.override.yaml
+    destination: ./
+  - name: Copy .env
+    source: env
+    destination: ./.env
+  - name: Copy conf/
+    source: conf/00-config.yaml
+    destination: ./conf/
+  - name: Start django-ca
+    commands:
+      - command: mkdir integration
+      - command: docker compose up -d
+        run:
+          cleanup:
+            - command: docker compose ps -a
+            - command: docker compose down -v
+              show_output: false
+          test:
+            - host: localhost
+              port: 80
+  - name: Initialize CAs...
+    commands:
+      - command: |
+          {{ EXEC_BACKEND }} manage init_ca --path-length=1 --output-format=pem \
+            Root CN=Root > integration/root.pem
+      - command: |
+          {{ EXEC_BACKEND }} manage init_ca --path=ca/shared/ --parent=Root --acme-enable \
+            --output-format=pem \
+            Intermediate CN=Intermediate > integration/intermediate.pem
+
+  - name: "Running test for GitHub issue #270..."
+    commands:
+      - command: |
+          docker compose exec -T backend manage sign_cert \
+            --ca=Intermediate --subject=CN=gh-270.example.com \
+            --output-format=pem > integration/cert.pem
+        run:
+          show_output: false
+          stdin:
+            source: example.com.csr.pem
+
+      # NOTE: -T to run is necessary to capture stdout/stderr
+      - command: |
+          docker compose run --rm -qT integration java OcspCheck.java shared/intermediate.pem shared/cert.pem
+        run:
+          show_output: false
+          test:
+            - regex: "OK: OCSP status good"
+      - command: |
+          docker compose exec backend manage revoke_cert gh-270.example.com
+
+      # NOTE: -T to run is necessary to capture stdout/stderr
+      - command: |
+          docker compose run --rm -qT integration java OcspCheck.java shared/intermediate.pem shared/cert.pem
+        run:
+          status_code: 1
+          show_output: false
+          test:
+            - regex: "Certificate has been revoked"
+              stream: stderr

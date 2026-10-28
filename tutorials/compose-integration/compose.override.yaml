@@ -1,0 +1,17 @@
+services:
+  beat:
+    volumes: &volumes
+      - ./conf:/usr/src/django-ca/ca/conf/local/:ro
+      - ./integration/:/usr/src/django-ca/ca/integration/
+  backend:
+    volumes: *volumes
+  frontend:
+    volumes: *volumes
+  integration:
+    build:
+      context: "{{ orig_cwd }}"
+      dockerfile: tutorials/compose-integration/Dockerfile.integration
+    volumes:
+      - ./integration/:/integration/shared/
+    networks:
+      - public

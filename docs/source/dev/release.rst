@@ -101,6 +101,10 @@ Also run the source tutorial::
 
     $ structured-tutorial -a postgres -a redis-broker -a redis-cache -a export_source tutorials/source/tutorial.yaml
 
+And integration tests::
+
+    $ structured-tutorial tutorials/compose-integration/tutorial.yaml
+
 ****************
 Create a release
 ****************
