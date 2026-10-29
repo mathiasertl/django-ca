@@ -58,5 +58,8 @@ UV: str = RELEASE["uv"]
 NEWEST_PYTHON = PYTHON_RELEASES[-1]
 
 ALPINE_RELEASES = tuple(typing.cast(list[str], RELEASE["alpine"]))
-DEBIAN_RELEASES = tuple(typing.cast(list[str], RELEASE["debian-releases"]))
-UBUNTU_RELEASES = tuple(typing.cast(list[str], RELEASE["ubuntu-releases"]))
+DEBIAN_RELEASES = typing.cast(dict[str, str], RELEASE["debian-releases"])
+UBUNTU_RELEASES = typing.cast(dict[str, str], RELEASE["ubuntu-releases"])
+
+LATEST_DEBIAN_CODENAME = max(DEBIAN_RELEASES.items(), key=lambda t: t[1])[0]
+LATEST_DEBIAN_VERSION = max(DEBIAN_RELEASES.items(), key=lambda t: t[1])[1]

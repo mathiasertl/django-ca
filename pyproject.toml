@@ -53,17 +53,17 @@ alpine = [
 
 # List of tested Debian releases:
 #   https://en.wikipedia.org/wiki/Debian_version_history#Release_table
-debian-releases = [
-    "trixie", # until June 2030
-]
+debian-releases = {
+    trixie = "13", # until June 2030
+}
 
 # List of tested Ubuntu releases:
 #   https://en.wikipedia.org/wiki/Ubuntu_version_history#Table_of_versions
-ubuntu-releases = [
-    "jammy", # 22.04, until 2027-04-21
-    "noble", # 24.04, until 2029-05-31
-    "resolute", # 26.04, until 2031-05-29
-]
+ubuntu-releases = {
+    "jammy" = "22.04", # until 2027-04-21
+    "noble" = "24.04", # until 2029-05-31
+    "resolute" = "26.04", # until 2031-05-29
+}
 
 [django-ca.release.upper-bounds]
 # Upper bounds for software, commonly used in release branches.

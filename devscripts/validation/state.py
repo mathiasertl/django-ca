@@ -107,7 +107,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
     expected_django = config.DJANGO
     expected_cryptography = config.CRYPTOGRAPHY
     expected_pydantic = config.PYDANTIC
-    expected_debian = config.DEBIAN_RELEASES
+    expected_debian = tuple(config.DEBIAN_RELEASES)
     expected_alpine = config.ALPINE_RELEASES
 
     # Some versions are treated differently if on a release branch
@@ -116,7 +116,7 @@ def check_github_actions_tests(release_branch: bool) -> int:  # noqa: PLR0912
         expected_django = (config.RELEASE["django-lts"],)
         expected_cryptography = (config.CRYPTOGRAPHY[-1],)
         expected_pydantic = (config.PYDANTIC[-1],)
-        expected_debian = (config.DEBIAN_RELEASES[-1],)
+        expected_debian = (config.LATEST_DEBIAN_CODENAME,)
         expected_alpine = (config.ALPINE_RELEASES[-1],)
 
     for action_path in Path(".github", "actions").glob("*/action.yaml"):
@@ -395,7 +395,7 @@ def check_dockerfile(path: str, distro: str) -> int:
         # Validate we use the newest python and distro
         if arg_key == "IMAGE":
             if distro == "debian":
-                expected_image = "debian:$DIST-slim"
+                expected_image = f"debian:{config.LATEST_DEBIAN_CODENAME}-slim"
                 if arg_value != expected_image:
                     errors += err(f"{arg_value}: Unexpected image found (should be {expected_image}).")
             elif distro == "alpine":
