@@ -602,6 +602,10 @@ conflicts = [
     #],
     #[ { group = "pydantic2.13" }, ],
 ]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { env = "SETUPTOOLS_SCM_PRETEND_VERSION" },
+]
 
 [dependency-groups]
 dev = [
