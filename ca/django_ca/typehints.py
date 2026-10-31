@@ -41,7 +41,6 @@ if sys.version_info < (3, 12):  # pragma: only py<3.12
 else:  # pragma: only py>=3.12
     from typing import TypeAliasType as TypeAliasType  # noqa: PLC0414
 
-
 #: JSON serializable data.
 JSON = TypeAliasType("JSON", "dict[str, JSON] | list[JSON] | str | int | float | bool | None")
 

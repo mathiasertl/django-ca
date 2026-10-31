@@ -8,7 +8,7 @@ env:
   UV_NO_SYNC: 1
   NEWEST_PYTHON: "3.15"
   NEWEST_CRYPTOGRAPHY: "50"
-  NEWEST_PYDANTIC: "2.13"
+  NEWEST_PYDANTIC: "2.14"
 
 jobs:
   run:
@@ -19,7 +19,7 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13", "3.14", "3.15" ]
         django-version: [ "5.2", "6.0", "6.1" ]
         cryptography-version: [ "50" ]
-        pydantic-version: [ "2.13" ]
+        pydantic-version: [ "2.13", "2.14" ]
         exclude:
           - python-version: "3.10"
             django-version: "6.0"

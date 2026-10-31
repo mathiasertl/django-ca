@@ -14,6 +14,7 @@
 """pydantic-setting directive."""
 
 import json
+import sys
 import types
 from datetime import timedelta
 from typing import Annotated, Any, ClassVar, Literal, Self, Union, get_args, get_origin
@@ -35,6 +36,11 @@ from django.conf import settings
 
 from ca.settings_utils import ProjectSettingsModelMixin
 from django_ca.conf import SettingsModel
+
+if sys.version_info < (3, 15):  # pragma: only py<3.15
+    from typing_extensions import TypeForm as TypeForm  # noqa: PLC0414
+else:  # pragma: only py>=3.15
+    from typing import TypeForm as TypeForm  # noqa: PLC0414
 
 # Logger with the Sphinx logging API:
 #   https://www.sphinx-doc.org/en/master/extdev/logging.html
@@ -113,7 +119,7 @@ class PydanticSettingDirective(SphinxDirective):
     }
     has_content = False
 
-    def get_field_type(self, field_type: type[Any] | None) -> tuple[type[Any], bool]:
+    def get_field_type(self, field_type: TypeForm[Any] | None) -> tuple[TypeForm[Any], bool]:
         """Get the field type from the given field info.
 
         For optional typehints, as well as dicts, tuples and lists, this will return the unsubscripted
@@ -198,7 +204,7 @@ class PydanticSettingDirective(SphinxDirective):
 
         return repr_value, yaml_value, env_value
 
-    def get_field_type_key(self, field_type: type[Any]) -> str:
+    def get_field_type_key(self, field_type: TypeForm[Any]) -> str:
         """Get the field type key for rendering it in the template."""
         if field_type in (bool, int, float, str, dict, list, timedelta):
             return field_type.__name__
@@ -214,7 +220,8 @@ class PydanticSettingDirective(SphinxDirective):
         if origin is Annotated:
             return self.get_field_type_key(get_args(field_type)[0])
 
-        if isinstance(type(field_type), type) and issubclass(field_type, BaseModel):
+        if isinstance(field_type, type) and issubclass(field_type, BaseModel):
+            log.info("Dict: %s", field_type.__name__)
             return "dict"
 
         return str(field_type)

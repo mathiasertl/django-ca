@@ -16,6 +16,7 @@
 import importlib
 import logging
 import os
+import sys
 import warnings
 from collections.abc import Callable, Iterator
 from inspect import isclass
@@ -32,6 +33,11 @@ try:
     import yaml
 except ImportError:  # pragma: no cover
     yaml = False  # type: ignore[assignment]
+
+if sys.version_info < (3, 15):  # pragma: only py<3.15
+    from typing_extensions import TypeForm as TypeForm  # noqa: PLC0414
+else:  # pragma: only py>=3.15
+    from typing import TypeForm as TypeForm  # noqa: PLC0414
 
 T = TypeVar("T")
 
@@ -338,7 +344,7 @@ def parse_bool(key: str, value: str) -> bool:
         raise ImproperlyConfigured(f"{key}: {ex}") from ex
 
 
-def parse_json(key: str, value: str, typ: type[T]) -> T:
+def parse_json(key: str, value: str, typ: TypeForm[T]) -> T:
     """Parse a variable that is supposed to represent a JSON string."""
     try:
         return TypeAdapter(typ).validate_json(value)

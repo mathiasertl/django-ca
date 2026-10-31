@@ -11,7 +11,7 @@ django = ["5.2", "6.0", "6.1"]
 django-lts = "5.2"  # the current LTS version
 cryptography = ["50"]
 acme = ["5.8"]
-pydantic = ["2.13"]
+pydantic = ["2.13", "2.14"]
 josepy = ["2.2"]
 # Newest uv release: https://pypi.org/project/uv/
 uv = "0.13"
@@ -139,8 +139,8 @@ dependencies = [
     "packaging",
     "pydantic>=2.13",
     "requests>=2.32.3",
-    # typing_extensions==4.6.0 adds TypeAliasType, which was added in Python 3.12
-    "typing_extensions>=4.6.0;python_version<'3.12'",
+    # typing_extensions==4.13.0 adds TypeForm, which was added in Python 3.15
+    "typing_extensions>=4.13.0;python_version<'3.15'",
 ]
 
 [project.optional-dependencies]
@@ -600,7 +600,10 @@ conflicts = [
     #[
     #    { group = "acme5.8" },
     #],
-    #[ { group = "pydantic2.13" }, ],
+    [
+        { group = "pydantic2.13" },
+        { group = "pydantic2.14" },
+    ],
 ]
 
 [dependency-groups]
@@ -685,3 +688,4 @@ gunicorn = ["gunicorn>=23"]
 "cryptography50" = ["cryptography~=50.0"]
 "acme5.8" = ["acme~=5.8.0"]
 "pydantic2.13" = ["pydantic~=2.13.0"]
+"pydantic2.14" = ["pydantic~=2.14.0"]
