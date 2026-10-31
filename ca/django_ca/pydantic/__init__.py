@@ -57,7 +57,12 @@ from django_ca.pydantic.extensions import (
     TLSFeatureModel,
     UnrecognizedExtensionModel,
 )
-from django_ca.pydantic.general_name import GeneralNameModel, OtherNameModel
+from django_ca.pydantic.general_name import (
+    GeneralNameModel,
+    GeneralNameModelList,
+    GeneralNameModelTuple,
+    OtherNameModel,
+)
 from django_ca.pydantic.name import NameAttributeModel, NameModel
 
 __all__ = (
@@ -78,6 +83,8 @@ __all__ = (
     "ExtendedKeyUsageModel",
     "FreshestCRLModel",
     "GeneralNameModel",
+    "GeneralNameModelList",
+    "GeneralNameModelTuple",
     "InhibitAnyPolicyModel",
     "IssuerAlternativeNameModel",
     "KeyUsageModel",

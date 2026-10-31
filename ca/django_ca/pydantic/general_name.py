@@ -285,3 +285,4 @@ class GeneralNameModel(CryptographyModel[x509.GeneralName]):
 
 
 GeneralNameModelList = TypeAdapter(list[GeneralNameModel])
+GeneralNameModelTuple = TypeAdapter(tuple[GeneralNameModel, ...])

@@ -203,9 +203,15 @@ class ProjectSettingsModel(ProjectSettingsModelMixin, BaseModel):
     """Model representing only project settings (used to load settings)."""
 
 
-def get_empty_extend_settings() -> dict[str, Any]:
+def get_empty_extend_settings() -> dict[str, list[object] | dict[str, object]]:
     """Get list of empty extend settings."""
-    return {"EXTEND_INSTALLED_APPS": [], "EXTEND_URL_PATTERNS": [], "EXTEND_CELERY_BEAT_SCHEDULE": {}}
+    return {
+        "EXTEND_INSTALLED_APPS": [],
+        "EXTEND_URL_PATTERNS": [],
+        "EXTEND_CELERY_BEAT_SCHEDULE": {},
+        "CA_EXTEND_PERMIT_NAMES": [],
+        "CA_EXTEND_PROHIBIT_NAMES": [],
+    }
 
 
 def load_secret_key(secret_key: str | None, secret_key_file: str | None) -> str:
@@ -274,7 +280,7 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
                     if isinstance(extend_settings[setting_name], list):
                         extend_settings[setting_name] += setting_value
                     elif isinstance(extend_settings[setting_name], dict):  # pragma: no branch
-                        extend_settings[setting_name].update(setting_value)
+                        extend_settings[setting_name].update(setting_value)  # type: ignore[union-attr]
                 else:
                     yield setting_name, setting_value
 
@@ -288,6 +294,8 @@ def load_settings_from_files(base_dir: Path) -> Iterator[tuple[str, Any]]:
 def load_settings_from_environment() -> Iterator[tuple[str, Any]]:
     """Load settings from the environment."""
     types = {k: v.annotation for k, v in ProjectSettingsModel.model_fields.items()}
+    types.update({k: type(v) for k, v in get_empty_extend_settings().items()})
+    types.update({"CA_PERMIT_NAMES": list, "CA_PROHIBIT_NAMES": list})
     for key, value in {k[10:]: v for k, v in os.environ.items() if k.startswith("DJANGO_CA_")}.items():
         if key == "SETTINGS":  # points to yaml files loaded in get_settings_files
             continue
@@ -323,13 +331,13 @@ def load_settings(base_dir: Path) -> Iterator[tuple[str, Any]]:
             if isinstance(extends[_setting], list):
                 extends[_setting] += _value
             elif isinstance(extends[_setting], dict):  # pragma: no branch
-                extends[_setting].update(_value)
+                extends[_setting].update(_value)  # type: ignore[union-attr]
         else:
             yield _setting, _value
 
     # Convert some complex settings as expected by the project.
     try:
-        extends["EXTEND_URL_PATTERNS"] = UrlPatternsModel.model_validate(extends["EXTEND_URL_PATTERNS"])
+        extends["EXTEND_URL_PATTERNS"] = UrlPatternsModel.model_validate(extends["EXTEND_URL_PATTERNS"])  # type: ignore[assignment]
     except ValueError as ex:
         raise ImproperlyConfigured(ex) from ex
 

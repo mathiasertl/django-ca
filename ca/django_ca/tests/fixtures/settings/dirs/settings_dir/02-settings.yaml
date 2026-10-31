@@ -9,6 +9,21 @@ EXTEND_URL_PATTERNS:
 EXTEND_INSTALLED_APPS:
   - yourapp2
 
+CA_PERMIT_NAMES:
+  - type: DNS
+    value: permit-02.example.com
+
+CA_EXTEND_PERMIT_NAMES:
+  - type: DNS
+    value: permit-02.extend.example.com
+
+CA_PROHIBIT_NAMES:
+  - type: DNS
+    value: prohibit-02.example.com
+
+CA_EXTEND_PROHIBIT_NAMES:
+  - type: DNS
+    value: prohibit-02.extend.example.com
 
 EXTEND_CELERY_BEAT_SCHEDULE:
   custom-task-two:

@@ -46,11 +46,29 @@ from ca.settings_utils import (
 )
 from django_ca import conf
 from django_ca.conf import CertificateRevocationListProfile, KeyBackendConfigurationModel, model_settings
-from django_ca.pydantic import KeyUsageModel, NameModel
+from django_ca.pydantic import GeneralNameModel, KeyUsageModel, NameModel
 from django_ca.pydantic.profile import ProfileConfigurationModel
 from django_ca.tests.base.assertions import assert_improperly_configured
 from django_ca.tests.base.constants import FIXTURES_DIR
 from django_ca.tests.base.utils import country, key_usage, state
+
+FILES_EXTEND_PERMIT_NAMES = [
+    {"type": "DNS", "value": "permit-01.extend.example.com"},
+    {"type": "DNS", "value": "permit-02.extend.example.com"},
+]
+
+FILES_EXTEND_PROHIBIT_NAMES = [
+    {"type": "DNS", "value": "prohibit-01.extend.example.com"},
+    {"type": "DNS", "value": "prohibit-02.extend.example.com"},
+]
+
+ENV_EXTEND_PROHIBIT_NAMES = [{"type": "DNS", "value": "prohibit-extend.env.example.com"}]
+
+ENV_EXTEND_PERMIT_NAMES = [{"type": "DNS", "value": "permit-extend.env.example.com"}]
+
+ENV_PROHIBIT_NAMES = [{"type": "DNS", "value": "prohibit.env.example.com"}]
+
+ENV_PERMIT_NAMES = [{"type": "DNS", "value": "permit.env.example.com"}]
 
 SCOPE_ERROR = (
     r"Only one of `only_contains_ca_certs`, `only_contains_user_certs` and `only_contains_attribute_certs` "
@@ -146,6 +164,16 @@ def test_load_settings_from_files() -> None:
 
     with mock.patch.dict(os.environ, {"DJANGO_CA_SETTINGS": f"{single_file}:{settings_dir}:{empty_file}"}):
         assert dict(load_settings_from_files(FIXTURES_DIR)) == {
+            "SINGLE_FILE": True,
+            "SETTINGS_DIR_ONE": True,
+            "CA_PERMIT_NAMES": [{"type": "DNS", "value": "permit-02.example.com"}],
+            "CA_PROHIBIT_NAMES": [{"type": "DNS", "value": "prohibit-02.example.com"}],
+            "SETTINGS_DIR_TWO": True,
+            "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2"],
+            "EXTEND_URL_PATTERNS": [
+                {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
+                {"route": "/path2", "view": {"view": "yourapp2.views.YourView"}},
+            ],
             "EXTEND_CELERY_BEAT_SCHEDULE": {
                 "custom-task-one": {
                     "schedule": 300,
@@ -156,14 +184,8 @@ def test_load_settings_from_files() -> None:
                     "task": "myapp.tasks.custom_task_two",
                 },
             },
-            "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2"],
-            "EXTEND_URL_PATTERNS": [
-                {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
-                {"route": "/path2", "view": {"view": "yourapp2.views.YourView"}},
-            ],
-            "SETTINGS_DIR_ONE": True,
-            "SETTINGS_DIR_TWO": True,
-            "SINGLE_FILE": True,
+            "CA_EXTEND_PERMIT_NAMES": FILES_EXTEND_PERMIT_NAMES,
+            "CA_EXTEND_PROHIBIT_NAMES": FILES_EXTEND_PROHIBIT_NAMES,
             "SETTINGS_FILES": (
                 single_file.parent / "single-file.yaml",
                 settings_dir / "01-settings.yaml",
@@ -215,11 +237,28 @@ def test_load_settings_from_files_and_environment() -> None:
             "DJANGO_CA_EXTEND_INSTALLED_APPS": '["envapp"]',
             "DJANGO_CA_EXTEND_URL_PATTERNS": url_patters,
             "DJANGO_CA_SETTINGS_DIR_ONE": "foo",
+            "DJANGO_CA_CA_PERMIT_NAMES": json.dumps(ENV_PERMIT_NAMES),
+            "DJANGO_CA_CA_EXTEND_PERMIT_NAMES": json.dumps(ENV_EXTEND_PERMIT_NAMES),
+            "DJANGO_CA_CA_PROHIBIT_NAMES": json.dumps(ENV_PROHIBIT_NAMES),
+            "DJANGO_CA_CA_EXTEND_PROHIBIT_NAMES": json.dumps(ENV_EXTEND_PROHIBIT_NAMES),
         },
         clear=True,
     ):
         assert dict(load_settings(settings_dir)) == {
+            "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
+            "CA_PERMIT_NAMES": ENV_PERMIT_NAMES,
+            "CA_PROHIBIT_NAMES": ENV_PROHIBIT_NAMES,
+            "SETTINGS_DIR_TWO": True,
+            "SETTINGS_FILES": (settings_dir / "01-settings.yaml", settings_dir / "02-settings.yaml"),
             "CA_DIR": "/does/not/exist/",
+            "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2", "envapp"],
+            "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate(
+                [
+                    {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
+                    {"route": "/path2", "view": {"view": "yourapp2.views.YourView"}},
+                    *RAW_URL_PATTERNS,
+                ]
+            ),
             "EXTEND_CELERY_BEAT_SCHEDULE": {
                 "custom-task-one": {
                     "schedule": 300,
@@ -230,17 +269,8 @@ def test_load_settings_from_files_and_environment() -> None:
                     "task": "myapp.tasks.custom_task_two",
                 },
             },
-            "EXTEND_INSTALLED_APPS": ["yourapp1", "yourapp2", "envapp"],
-            "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate(
-                [
-                    {"route": "/path1", "view": {"view": "yourapp1.views.YourView"}},
-                    {"route": "/path2", "view": {"view": "yourapp2.views.YourView"}},
-                    *RAW_URL_PATTERNS,
-                ]
-            ),
-            "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
-            "SETTINGS_DIR_TWO": True,
-            "SETTINGS_FILES": (settings_dir / "01-settings.yaml", settings_dir / "02-settings.yaml"),
+            "CA_EXTEND_PERMIT_NAMES": FILES_EXTEND_PERMIT_NAMES + ENV_EXTEND_PERMIT_NAMES,
+            "CA_EXTEND_PROHIBIT_NAMES": FILES_EXTEND_PROHIBIT_NAMES + ENV_EXTEND_PROHIBIT_NAMES,
         }
 
 
@@ -260,12 +290,14 @@ def test_load_settings_from_files_and_environment_with_skip_files() -> None:
         clear=True,
     ):
         assert dict(load_settings(settings_dir)) == {
+            "SKIP_LOCAL_CONFIGURATION_FILES": "1",
             "CA_DIR": "/does/not/exist/",
             "EXTEND_CELERY_BEAT_SCHEDULE": {},
+            "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
             "EXTEND_INSTALLED_APPS": ["envapp"],
             "EXTEND_URL_PATTERNS": UrlPatternsModel.model_validate([*RAW_URL_PATTERNS]),
-            "SETTINGS_DIR_ONE": "foo",  # overwritten by environment
-            "SKIP_LOCAL_CONFIGURATION_FILES": "1",
+            "CA_EXTEND_PERMIT_NAMES": [],
+            "CA_EXTEND_PROHIBIT_NAMES": [],
         }
 
 
@@ -314,6 +346,10 @@ def test_boolean_setting_from_environment(setting: str, value: str, expected: bo
             "CELERY_BEAT_SCHEDULE",
             {"generate-crls": {"task": "django_ca.tasks.generate_crls", "schedule": 86100}},
         ),
+        ("CA_PERMIT_NAMES", ENV_PERMIT_NAMES),
+        ("CA_EXTEND_PERMIT_NAMES", ENV_EXTEND_PERMIT_NAMES),
+        ("CA_PROHIBIT_NAMES", ENV_PROHIBIT_NAMES),
+        ("CA_EXTEND_PROHIBIT_NAMES", ENV_EXTEND_PROHIBIT_NAMES),
     ),
 )
 def test_complex_setting_from_environment(setting: str, expected: bool) -> None:
@@ -1026,4 +1062,48 @@ def test_extend_celery_beat_schedule_from_environment(tmp_path: Path) -> None:
             "EXTEND_INSTALLED_APPS": [],
             "EXTEND_URL_PATTERNS": UrlPatternsModel(root=[]),
             "SETTINGS_FILES": (),
+            "CA_EXTEND_PERMIT_NAMES": [],
+            "CA_EXTEND_PROHIBIT_NAMES": [],
         }
+
+
+def test_name_validation_getters(settings: Settings) -> None:
+    """Test get_(permitted|extended)_names."""
+    settings.CA_PERMIT_NAMES = ENV_PERMIT_NAMES
+    settings.CA_PROHIBIT_NAMES = ENV_PROHIBIT_NAMES
+    settings.CA_EXTEND_PERMIT_NAMES = FILES_EXTEND_PERMIT_NAMES
+    settings.CA_EXTEND_PROHIBIT_NAMES = FILES_EXTEND_PROHIBIT_NAMES
+
+    assert model_settings.CA_PERMIT_NAMES == tuple(
+        GeneralNameModel.model_validate(v) for v in ENV_PERMIT_NAMES
+    )
+    assert model_settings.CA_PROHIBIT_NAMES == tuple(
+        GeneralNameModel.model_validate(v) for v in ENV_PROHIBIT_NAMES
+    )
+    assert model_settings.CA_EXTEND_PERMIT_NAMES == tuple(
+        GeneralNameModel.model_validate(v) for v in FILES_EXTEND_PERMIT_NAMES
+    )
+    assert model_settings.CA_EXTEND_PROHIBIT_NAMES == tuple(
+        GeneralNameModel.model_validate(v) for v in FILES_EXTEND_PROHIBIT_NAMES
+    )
+
+    assert list(model_settings.get_permitted_names()) == [
+        *model_settings.CA_PERMIT_NAMES,
+        *model_settings.CA_EXTEND_PERMIT_NAMES,
+    ]
+    assert list(model_settings.get_prohibited_names()) == [
+        *model_settings.CA_PROHIBIT_NAMES,
+        *model_settings.CA_EXTEND_PROHIBIT_NAMES,
+    ]
+
+
+@pytest.mark.parametrize(
+    "setting_name",
+    ("CA_PERMIT_NAMES", "CA_EXTEND_PERMIT_NAMES", "CA_PROHIBIT_NAMES", "CA_EXTEND_PROHIBIT_NAMES"),
+)
+def test_invalid_name_validation_field(settings: Settings, setting_name: str) -> None:
+    """Test CA_(EXTEND_)(PERMIT|PROHIBIT)_NAMES only allows valid types."""
+    with pytest.raises(
+        ImproperlyConfigured, match=r"dirName: Invalid type, only email, URI, IP, DNS are allowed\."
+    ):
+        setattr(settings, setting_name, [{"type": "dirName", "value": "CN=example.com"}])

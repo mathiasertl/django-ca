@@ -14,7 +14,7 @@
 """Application configuration for django-ca."""
 
 import copy
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from copy import deepcopy
 from datetime import timedelta
 from importlib.util import find_spec
@@ -33,7 +33,7 @@ from django.core.signals import setting_changed
 from django.utils.translation import gettext_lazy as _
 
 from django_ca import constants
-from django_ca.pydantic import NameModel
+from django_ca.pydantic import GeneralNameModel, NameModel
 from django_ca.pydantic.profile import ProfileConfigurationModel
 from django_ca.pydantic.type_aliases import (
     AnnotatedEllipticCurveName,
@@ -349,6 +349,8 @@ class SettingsModel(BaseModel):
         default=True, description="Set to ``False`` to disable all ACME functionality.", examples=[True]
     )
     CA_ENABLE_REST_API: bool = False
+    CA_EXTEND_PERMIT_NAMES: tuple[GeneralNameModel, ...] = Field(default_factory=tuple)
+    CA_EXTEND_PROHIBIT_NAMES: tuple[GeneralNameModel, ...] = Field(default_factory=tuple)
     CA_KEY_BACKENDS: dict[str, KeyBackendConfigurationModel] = Field(
         default_factory=dict, description="The backends available to store private keys."
     )
@@ -413,6 +415,10 @@ class SettingsModel(BaseModel):
         description="Passwords for encrypted private keys of certificate authorities.",
         examples=[{"example-serial": "example-secret-password"}],
     )
+
+    CA_PERMIT_NAMES: tuple[GeneralNameModel, ...] = Field(default_factory=tuple)
+    CA_PROHIBIT_NAMES: tuple[GeneralNameModel, ...] = Field(default_factory=tuple)
+
     CA_PROFILES: DictSetting[str, ProfileConfigurationModel] = Field(
         default_factory=lambda: {
             k: ProfileConfigurationModel(**v) for k, v in deepcopy(_DEFAULT_CA_PROFILES).items()
@@ -523,6 +529,23 @@ class SettingsModel(BaseModel):
 
         return self
 
+    @field_validator(
+        "CA_PERMIT_NAMES",
+        "CA_EXTEND_PERMIT_NAMES",
+        "CA_PROHIBIT_NAMES",
+        "CA_EXTEND_PROHIBIT_NAMES",
+        mode="after",
+    )
+    @classmethod
+    def validate_name_validation_fields(
+        cls, general_names: tuple[GeneralNameModel, ...]
+    ) -> tuple[GeneralNameModel, ...]:
+        validated_types = ("email", "URI", "IP", "DNS")
+        for name in general_names:
+            if name.type not in validated_types:
+                raise ValueError(f"{name.type}: Invalid type, only {', '.join(validated_types)} are allowed.")
+        return general_names
+
     def get_default_signature_hash_algorithm(self) -> SignatureHashAlgorithm:
         """Get the |HashAlgorithm| instance for this model."""
         return constants.SIGNATURE_HASH_ALGORITHM_TYPES[self.CA_DEFAULT_SIGNATURE_HASH_ALGORITHM]()
@@ -534,6 +557,16 @@ class SettingsModel(BaseModel):
     def get_default_elliptic_curve(self) -> ec.EllipticCurve:
         """Get the |EllipticCurve| instance for this model."""
         return constants.ELLIPTIC_CURVE_TYPES[self.CA_DEFAULT_ELLIPTIC_CURVE]()
+
+    def get_permitted_names(self) -> Iterator[GeneralNameModel]:
+        """Get names that we're allowed to issue."""
+        yield from self.CA_PERMIT_NAMES
+        yield from self.CA_EXTEND_PERMIT_NAMES
+
+    def get_prohibited_names(self) -> Iterator[GeneralNameModel]:
+        """Get the names that we're explicitly forbidden from issuing."""
+        yield from self.CA_PROHIBIT_NAMES
+        yield from self.CA_EXTEND_PROHIBIT_NAMES
 
 
 class SettingsProxyBase(Generic[BaseModelTypeVar]):
@@ -598,6 +631,10 @@ class SettingsProxy(SettingsProxyBase[SettingsModel]):
         def get_default_dsa_signature_hash_algorithm(self) -> SignatureHashAlgorithm: ...
 
         def get_default_elliptic_curve(self) -> ec.EllipticCurve: ...
+
+        def get_permitted_names(self) -> Iterator[GeneralNameModel]: ...
+
+        def get_prohibited_names(self) -> Iterator[GeneralNameModel]: ...
 
 
 model_settings = SettingsProxy()
