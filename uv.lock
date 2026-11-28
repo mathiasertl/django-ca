@@ -1234,7 +1234,7 @@ pydantic2-14 = [{ name = "pydantic", specifier = "~=2.14.0" }]
 
 [[package]]
 name = "django-ninja"
-version = "1.7.3"
+version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-9-django-ca-django5-2' or extra == 'group-9-django-ca-djangolts' or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-django6-1') or (extra == 'group-9-django-ca-pydantic2-13' and extra == 'group-9-django-ca-pydantic2-14')" },
@@ -1243,9 +1243,9 @@ dependencies = [
     { name = "pydantic", version = "2.13.5", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-django-ca-pydantic2-13' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-1') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-django6-1') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-1' and extra == 'group-9-django-ca-djangolts')" },
     { name = "pydantic", version = "2.14.2", source = { registry = "https://pypi.org/simple" }, marker = "extra != 'group-9-django-ca-pydantic2-13' or extra == 'group-9-django-ca-pydantic2-14' or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-0') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-django6-1') or (extra == 'group-9-django-ca-django5-2' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-django6-1') or (extra == 'group-9-django-ca-django6-0' and extra == 'group-9-django-ca-djangolts') or (extra == 'group-9-django-ca-django6-1' and extra == 'group-9-django-ca-djangolts')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1c/8e/8c12dd873d76762e61fa7225bbab5d2b87dce358a8f7d764508b1363c17c/django_ninja-1.7.3.tar.gz", hash = "sha256:8a73ecccaa86639202427e81667b8fca6dfc250d2b6e5108369688029a4cb593", size = 2342134, upload-time = "2026-10-29T10:21:03.197Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/53/3453836e6246b5d4b0e55c36d2dfab4cad6091d08483bdc4505906a1197c/django_ninja-1.8.0.tar.gz", hash = "sha256:0f043a1aebd2c45e2a124a83e5bd0961491b18cdf81ea57c6abd80607b2c6ef8", size = 2347023, upload-time = "2026-11-08T10:52:03.703Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/7d/7df99529f54178c67282d25983aad66bc0593ffbf5c1d420bb2840389c90/django_ninja-1.7.3-py3-none-any.whl", hash = "sha256:5e3c2dcead83a2512ea772dbc435ca51632cf46bf3be1523bac41e5bb394891c", size = 2376577, upload-time = "2026-10-29T10:21:01.199Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/d5/fbfdae4ab7a81f4980cec09ef17f86d4ac2d96058787bd6282d775be91bc/django_ninja-1.8.0-py3-none-any.whl", hash = "sha256:132f37a36ac5ec9569fdc141da6984c1806bdd08af36f855980fab6cdcb10038", size = 2382930, upload-time = "2026-11-08T10:52:01.541Z" },
 ]
 
 [[package]]
